@@ -4,8 +4,8 @@ mod types;
 pub use types::{Change, Error, Options, VisitEntry};
 
 mod recorder;
-pub use recorder::Recorder;
+pub use recorder::{Record, Recorder};
 
-///
-pub mod content;
 pub(crate) mod function;
+///
+pub mod traits;

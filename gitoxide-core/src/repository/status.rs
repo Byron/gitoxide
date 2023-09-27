@@ -4,7 +4,7 @@ use gix::bstr::{BStr, BString};
 use gix::index::Entry;
 use gix::prelude::FindExt;
 use gix::Progress;
-use gix_status::index_as_worktree::content::FastEq;
+use gix_status::index_as_worktree::traits::FastEq;
 use gix_status::index_as_worktree::Change;
 
 pub enum Submodules {

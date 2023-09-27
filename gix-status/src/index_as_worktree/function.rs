@@ -7,8 +7,8 @@ use gix_features::parallel::{in_parallel_if, Reduce};
 
 use crate::{
     index_as_worktree::{
-        content,
-        content::CompareBlobs,
+        traits,
+        traits::{CompareBlobs, SubmoduleStatus},
         types::{Error, Options},
         Change, VisitEntry,
     },
@@ -26,11 +26,12 @@ use crate::{
 /// like whether a file has conflicts, and files that were added with `git add` are shown as a special
 /// changes despite not technically requiring a change to the index since `git add` already added the file to the index.
 #[allow(clippy::too_many_arguments)]
-pub fn index_as_worktree<'index, T, Find, E>(
+pub fn index_as_worktree<'index, T, U, Find, E1, E2>(
     index: &'index mut gix_index::State,
     worktree: &Path,
-    collector: &mut impl VisitEntry<'index, ContentChange = T>,
+    collector: &mut impl VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>,
     compare: impl CompareBlobs<Output = T> + Send + Clone,
+    submodule: impl SubmoduleStatus<Output = U, Error = E2> + Send + Clone,
     find: Find,
     progress: &mut dyn gix_features::progress::Progress,
     pathspec: impl Pathspec + Send + Clone,
@@ -38,8 +39,10 @@ pub fn index_as_worktree<'index, T, Find, E>(
 ) -> Result<(), Error>
 where
     T: Send,
-    E: std::error::Error + Send + Sync + 'static,
-    Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Send + Clone,
+    U: Send,
+    E1: std::error::Error + Send + Sync + 'static,
+    E2: std::error::Error + Send + Sync + 'static,
+    Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E1> + Send + Clone,
 {
     // the order is absolutely critical here we use the old timestamp to detect racy index entries
     // (modified at or after the last index update) during the index update we then set those
@@ -78,16 +81,17 @@ where
                         options,
                     },
                     compare,
+                    submodule,
                     find,
                     pathspec,
                 )
             }
         },
-        |entries, (state, diff, find, pathspec)| {
+        |entries, (state, blobdiff, submdule, find, pathspec)| {
             entries
                 .iter_mut()
                 .filter_map(|entry| {
-                    let res = state.process(entry, diff, find, pathspec);
+                    let res = state.process(entry, blobdiff, submdule, find, pathspec);
                     count.fetch_add(1, Ordering::Relaxed);
                     res
                 })
@@ -109,19 +113,21 @@ struct State<'a, 'b> {
     options: &'a Options,
 }
 
-type StatusResult<'index, T> = Result<(&'index gix_index::Entry, &'index BStr, Option<Change<T>>, bool), Error>;
+type StatusResult<'index, T, U> = Result<(&'index gix_index::Entry, &'index BStr, Option<Change<T, U>>, bool), Error>;
 
 impl<'index> State<'_, 'index> {
-    fn process<T, Find, E>(
+    fn process<T, U, Find, E1, E2>(
         &mut self,
         entry: &'index mut gix_index::Entry,
         diff: &mut impl CompareBlobs<Output = T>,
+        submodule: &mut impl SubmoduleStatus<Output = U, Error = E2>,
         find: &mut Find,
         pathspec: &mut impl Pathspec,
-    ) -> Option<StatusResult<'index, T>>
+    ) -> Option<StatusResult<'index, T, U>>
     where
-        E: std::error::Error + Send + Sync + 'static,
-        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
+        E1: std::error::Error + Send + Sync + 'static,
+        E2: std::error::Error + Send + Sync + 'static,
+        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E1>,
     {
         let conflict = match entry.stage() {
             0 => false,
@@ -140,7 +146,7 @@ impl<'index> State<'_, 'index> {
         if !pathspec.is_included(path, Some(false)) {
             return None;
         }
-        let status = self.compute_status(&mut *entry, path, diff, find);
+        let status = self.compute_status(&mut *entry, path, diff, submodule, find);
         Some(status.map(move |status| (&*entry, path, status, conflict)))
     }
 
@@ -183,18 +189,20 @@ impl<'index> State<'_, 'index> {
     /// which is a constant.
     ///
     /// Adapted from [here](https://github.com/Byron/gitoxide/pull/805#discussion_r1164676777).
-    fn compute_status<T, Find, E>(
+    fn compute_status<T, U, Find, E1, E2>(
         &mut self,
         entry: &mut gix_index::Entry,
-        git_path: &BStr,
+        rela_path: &BStr,
         diff: &mut impl CompareBlobs<Output = T>,
+        submodule: &mut impl SubmoduleStatus<Output = U, Error = E2>,
         find: &mut Find,
-    ) -> Result<Option<Change<T>>, Error>
+    ) -> Result<Option<Change<T, U>>, Error>
     where
-        E: std::error::Error + Send + Sync + 'static,
-        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
+        E1: std::error::Error + Send + Sync + 'static,
+        E2: std::error::Error + Send + Sync + 'static,
+        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E1>,
     {
-        let worktree_path = gix_path::try_from_bstr(git_path).map_err(|_| Error::IllformedUtf8)?;
+        let worktree_path = gix_path::try_from_bstr(rela_path).map_err(|_| Error::IllformedUtf8)?;
         let worktree_path = match self.path_stack.verified_path(worktree_path.as_ref()) {
             Ok(path) => path,
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
@@ -206,11 +214,17 @@ impl<'index> State<'_, 'index> {
                 // if a file turned into a directory it was removed
                 // the only exception here are submodules which are
                 // part of the index despite being directories
-                //
-                // TODO: submodules:
-                //   if entry.mode.contains(Mode::COMMIT) &&
-                //     resolve_gitlink_ref(ce->name, "HEAD", &sub))
-                return Ok(Some(Change::Removed));
+                if entry.mode.is_submodule() {
+                    let status = submodule
+                        .status(entry, rela_path)
+                        .map_err(|err| Error::SubmoduleStatus {
+                            rela_path: rela_path.into(),
+                            source: Box::new(err),
+                        })?;
+                    return Ok(status.map(|status| Change::SubmoduleModification(status)));
+                } else {
+                    return Ok(Some(Change::Removed));
+                }
             }
             Ok(metadata) => metadata,
             Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
@@ -265,7 +279,7 @@ impl<'index> State<'_, 'index> {
             id: &entry.id,
             find,
         };
-        let content_change = diff.compare_blobs::<Error>(entry, metadata.len() as usize, read_file, read_blob)?;
+        let content_change = diff.compare_blobs(entry, metadata.len() as usize, read_file, read_blob)?;
         // This file is racy clean! Set the size to 0 so we keep detecting this as the file is updated.
         if content_change.is_some() && racy_clean {
             entry.stat.size = 0;
@@ -288,8 +302,10 @@ struct ReduceChange<'a, 'index, T: VisitEntry<'index>> {
     phantom: PhantomData<fn(&'index ())>,
 }
 
-impl<'index, T, C: VisitEntry<'index, ContentChange = T>> Reduce for ReduceChange<'_, 'index, C> {
-    type Input = Vec<StatusResult<'index, T>>;
+impl<'index, T, U, C: VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>> Reduce
+    for ReduceChange<'_, 'index, C>
+{
+    type Input = Vec<StatusResult<'index, T, U>>;
 
     type FeedProduce = ();
 
@@ -327,7 +343,7 @@ where
     find: Find,
 }
 
-impl<'a> content::ReadDataOnce<'a, Error> for WorktreeBlob<'a> {
+impl<'a> traits::ReadDataOnce<'a> for WorktreeBlob<'a> {
     fn read_data(self) -> Result<&'a [u8], Error> {
         let res = read::data_to_buf_with_meta(
             self.path,
@@ -339,7 +355,7 @@ impl<'a> content::ReadDataOnce<'a, Error> for WorktreeBlob<'a> {
     }
 }
 
-impl<'a, Find, E> content::ReadDataOnce<'a, Error> for OdbBlob<'a, Find, E>
+impl<'a, Find, E> traits::ReadDataOnce<'a> for OdbBlob<'a, Find, E>
 where
     E: std::error::Error + Send + Sync + 'static,
     Find: FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,

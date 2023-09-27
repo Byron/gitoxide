@@ -7,11 +7,13 @@ use bstr::BStr;
 use filetime::{set_file_mtime, FileTime};
 use gix_index as index;
 use gix_index::Entry;
+use gix_status::index_as_worktree::traits::SubmoduleStatus;
+use gix_status::index_as_worktree::Record;
 use gix_status::{
     index_as_worktree,
     index_as_worktree::{
-        content::{CompareBlobs, FastEq, ReadDataOnce},
-        Change, Options, Recorder,
+        traits::{CompareBlobs, FastEq, ReadDataOnce},
+        Change as WorktreeChange, Options, Recorder,
     },
 };
 
@@ -28,12 +30,32 @@ const TEST_OPTIONS: index::entry::stat::Options = index::entry::stat::Options {
     use_stdev: false,
 };
 
+type Change = WorktreeChange<(), ()>;
+
 fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
     fixture_filtered(name, &[], expected_status)
 }
 
+fn submodule_fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) {
+    fixture_filtered_detailed("status_submodule", name, &[], expected_status, false)
+}
+
+fn submodule_fixture_status(name: &str, expected_status: &[(&BStr, Option<Change>, bool)], submodule_dirty: bool) {
+    fixture_filtered_detailed("status_submodule", name, &[], expected_status, submodule_dirty)
+}
+
 fn fixture_filtered(name: &str, pathspecs: &[&str], expected_status: &[(&BStr, Option<Change>, bool)]) {
-    let worktree = fixture_path(name);
+    fixture_filtered_detailed(name, "", pathspecs, expected_status, false)
+}
+
+fn fixture_filtered_detailed(
+    name: &str,
+    subdir: &str,
+    pathspecs: &[&str],
+    expected_status: &[(&BStr, Option<Change>, bool)],
+    submodule_dirty: bool,
+) {
+    let worktree = fixture_path(name).join(subdir);
     let git_dir = worktree.join(".git");
     let mut index =
         gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, false, Default::default()).unwrap();
@@ -45,6 +67,7 @@ fn fixture_filtered(name: &str, pathspecs: &[&str], expected_status: &[(&BStr, O
         &worktree,
         &mut recorder,
         FastEq,
+        SubmoduleStatusMock { dirty: submodule_dirty },
         |_, _| Ok::<_, std::convert::Infallible>(gix_object::BlobRef { data: &[] }),
         &mut gix_features::progress::Discard,
         Pathspec(search),
@@ -55,8 +78,31 @@ fn fixture_filtered(name: &str, pathspecs: &[&str], expected_status: &[(&BStr, O
         },
     )
     .unwrap();
-    recorder.records.sort_unstable_by_key(|(name, _, _)| *name);
-    assert_eq!(recorder.records, expected_status)
+    recorder.records.sort_unstable_by_key(|r| r.relative_path);
+    assert_eq!(records_to_tuple(recorder.records), expected_status)
+}
+
+fn records_to_tuple<'index>(
+    records: impl IntoIterator<Item = Record<'index, (), ()>>,
+) -> Vec<(&'index BStr, Option<Change>, bool)> {
+    records
+        .into_iter()
+        .map(|r| (r.relative_path, r.change, r.conflict))
+        .collect()
+}
+
+#[derive(Clone)]
+struct SubmoduleStatusMock {
+    dirty: bool,
+}
+
+impl SubmoduleStatus for SubmoduleStatusMock {
+    type Output = ();
+    type Error = std::convert::Infallible;
+
+    fn status(&mut self, _entry: &Entry, _rela_path: &BStr) -> Result<Option<Self::Output>, Self::Error> {
+        Ok(self.dirty.then_some(()))
+    }
 }
 
 fn to_pathspecs(input: &[&str]) -> Vec<gix_pathspec::Pattern> {
@@ -71,10 +117,10 @@ fn removed() {
     fixture(
         "status_removed",
         &[
-            (BStr::new(b"dir/content"), Some(Change::Removed), false),
-            (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), false),
-            (BStr::new(b"empty"), Some(Change::Removed), false),
-            (BStr::new(b"executable"), Some(Change::Removed), false),
+            (BStr::new(b"dir/content"), Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"empty"), Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"executable"), Some(Change::Removed), NO_CONFLICT),
         ],
     );
 
@@ -82,9 +128,38 @@ fn removed() {
         "status_removed",
         &["dir"],
         &[
-            (BStr::new(b"dir/content"), Some(Change::Removed), false),
-            (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), false),
+            (BStr::new(b"dir/content"), Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), NO_CONFLICT),
         ],
+    );
+}
+
+#[test]
+fn subomdule_nochange() {
+    submodule_fixture("no-change", &[]);
+}
+
+#[test]
+fn subomdule_deleted_dir() {
+    submodule_fixture("deleted-dir", &[(BStr::new(b"m1"), Some(Change::Removed), NO_CONFLICT)]);
+}
+
+#[test]
+fn subomdule_typechange() {
+    submodule_fixture("type-change", &[(BStr::new(b"m1"), Some(Change::Type), NO_CONFLICT)]);
+}
+
+#[test]
+fn subomdule_empty_dir_no_change() {
+    submodule_fixture("empty-dir-no-change", &[]);
+}
+
+#[test]
+fn subomdule_empty_dir_no_change_is_passed_to_submodule_handler() {
+    submodule_fixture_status(
+        "empty-dir-no-change",
+        &[(BStr::new(b"m1"), Some(Change::SubmoduleModification(())), NO_CONFLICT)],
+        true,
     );
 }
 
@@ -92,7 +167,7 @@ fn removed() {
 fn intent_to_add() {
     fixture(
         "status_intent_to_add",
-        &[(BStr::new(b"content"), Some(Change::IntentToAdd), false)],
+        &[(BStr::new(b"content"), Some(Change::IntentToAdd), NO_CONFLICT)],
     );
 }
 
@@ -131,7 +206,7 @@ fn modified() {
                     executable_bit_changed: true,
                     content_change: None,
                 }),
-                false,
+                NO_CONFLICT,
             ),
             (
                 BStr::new(b"dir/content2"),
@@ -139,20 +214,22 @@ fn modified() {
                     executable_bit_changed: false,
                     content_change: Some(()),
                 }),
-                false,
+                NO_CONFLICT,
             ),
-            (BStr::new(b"empty"), Some(Change::Type), false),
+            (BStr::new(b"empty"), Some(Change::Type), NO_CONFLICT),
             (
                 BStr::new(b"executable"),
                 Some(Change::Modification {
                     executable_bit_changed: true,
                     content_change: Some(()),
                 }),
-                false,
+                NO_CONFLICT,
             ),
         ],
     );
 }
+
+const NO_CONFLICT: bool = false;
 
 #[test]
 fn racy_git() {
@@ -172,13 +249,13 @@ fn racy_git() {
     impl CompareBlobs for CountCalls {
         type Output = ();
 
-        fn compare_blobs<'a, E>(
+        fn compare_blobs<'a, 'b>(
             &mut self,
-            entry: &'a Entry,
+            entry: &Entry,
             worktree_blob_size: usize,
-            worktree_blob: impl ReadDataOnce<'a, E>,
-            entry_blob: impl ReadDataOnce<'a, E>,
-        ) -> Result<Option<Self::Output>, E> {
+            worktree_blob: impl ReadDataOnce<'a>,
+            entry_blob: impl ReadDataOnce<'b>,
+        ) -> Result<Option<Self::Output>, gix_status::index_as_worktree::Error> {
             self.0.fetch_add(1, Ordering::Relaxed);
             self.1
                 .compare_blobs(entry, worktree_blob_size, worktree_blob, entry_blob)
@@ -203,6 +280,7 @@ fn racy_git() {
         worktree,
         &mut recorder,
         counter.clone(),
+        SubmoduleStatusMock { dirty: false },
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
         &mut gix_features::progress::Discard,
         Pathspec::default(),
@@ -214,7 +292,11 @@ fn racy_git() {
     )
     .unwrap();
     assert_eq!(count.load(Ordering::Relaxed), 0, "no blob content is accessed");
-    assert_eq!(recorder.records, &[], "the testcase triggers racy git");
+    assert_eq!(
+        records_to_tuple(recorder.records),
+        &[],
+        "the testcase triggers racy git"
+    );
 
     // Now we also backdate the index timestamp to match the artificially created
     // mtime above this is now a realistic realworld race-condition which should trigger racy git
@@ -226,6 +308,7 @@ fn racy_git() {
         worktree,
         &mut recorder,
         counter,
+        SubmoduleStatusMock { dirty: false },
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
         &mut gix_features::progress::Discard,
         Pathspec::default(),
@@ -242,7 +325,7 @@ fn racy_git() {
         "no we needed to access the blob content"
     );
     assert_eq!(
-        recorder.records,
+        records_to_tuple(recorder.records),
         &[(
             BStr::new(b"content"),
             Some(Change::Modification {
