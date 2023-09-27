@@ -35,7 +35,7 @@ pub fn parse(input: &BStr) -> Result<Url, parse::Error> {
         InputScheme::Url { protocol_end } if input[..protocol_end].eq_ignore_ascii_case(b"file") => {
             parse::file_url(input, protocol_end)
         }
-        InputScheme::Url { .. } => parse::url(input),
+        InputScheme::Url { protocol_end } => parse::url(input, protocol_end),
         InputScheme::Scp { colon } => parse::scp(input, colon),
     }
 }

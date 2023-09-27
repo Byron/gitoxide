@@ -19,6 +19,9 @@ pub enum Error {
         kind: UrlKind,
         source: url::ParseError,
     },
+
+    #[error("The host portion of the following URL is too long ({} bytes, {len} bytes total): {truncated_url:?}", truncated_url.len())]
+    TooLong { truncated_url: BString, len: usize },
     #[error("{} \"{url}\" does not specify a path to a repository", kind.as_str())]
     MissingRepositoryPath { url: BString, kind: UrlKind },
     #[error("URL {url:?} is relative which is not allowed in this context")]
@@ -79,7 +82,17 @@ pub(crate) fn find_scheme(input: &BStr) -> InputScheme {
     InputScheme::Local
 }
 
-pub(crate) fn url(input: &BStr) -> Result<crate::Url, Error> {
+pub(crate) fn url(input: &BStr, protocol_end: usize) -> Result<crate::Url, Error> {
+    const MAX_LEN: usize = 1024;
+    let bytes_to_path = input[protocol_end + "://".len()..]
+        .find(b"/")
+        .unwrap_or(input.len() - protocol_end);
+    if bytes_to_path > MAX_LEN {
+        return Err(Error::TooLong {
+            truncated_url: input[..(protocol_end + "://".len() + MAX_LEN).min(input.len())].into(),
+            len: input.len(),
+        });
+    }
     let (input, url) = input_to_utf8_and_url(input, UrlKind::Url)?;
     let scheme = url.scheme().into();
 

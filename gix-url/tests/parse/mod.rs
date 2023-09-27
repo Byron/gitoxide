@@ -1,5 +1,7 @@
 use bstr::{BStr, ByteSlice};
 use gix_url::{testing::TestUrlExtension, Scheme};
+use std::path::Path;
+use std::time::Duration;
 
 fn assert_url(url: &str, expected: gix_url::Url) -> Result<gix_url::Url, crate::Error> {
     let actual = gix_url::parse(url.into())?;
@@ -133,4 +135,19 @@ mod unknown {
             url(Scheme::Ext("abc".into()), None, "example.com", None, b"/~byron/hello"),
         )
     }
+}
+
+#[test]
+fn fuzzed() {
+    let base = Path::new("tests").join("fixtures").join("fuzzed");
+    let location = base.join(Path::new("very-long").with_extension("url"));
+    let url = std::fs::read(&location).unwrap();
+    let start = std::time::Instant::now();
+    gix_url::parse(url.as_bstr()).ok();
+    assert!(
+        start.elapsed() < Duration::from_millis(100),
+        "URL at '{}' parsed too slowly, took {:.00}s",
+        location.display(),
+        start.elapsed().as_secs_f32()
+    )
 }
