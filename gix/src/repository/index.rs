@@ -55,6 +55,16 @@ impl crate::Repository {
         })
     }
 
+    /// Return the shared worktree index if present, or return a new empty one which has an association to the place where the index would be.
+    pub fn index_or_empty(&self) -> Result<worktree::Index, worktree::open_index::Error> {
+        Ok(self.try_index()?.unwrap_or_else(|| {
+            worktree::Index::new(gix_fs::FileSnapshot::new(gix_index::File::from_state(
+                gix_index::State::new(self.object_hash()),
+                self.index_path(),
+            )))
+        }))
+    }
+
     /// Return a shared worktree index which is updated automatically if the in-memory snapshot has become stale as the underlying file
     /// on disk has changed, or `None` if no such file exists.
     ///
