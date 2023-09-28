@@ -17,7 +17,7 @@ pub trait WriteTo {
     /// the object, as such it's possible for [`size`](Self::size) to
     /// return a sensible value but [`write_to`](Self::write_to) to
     /// fail because the object was not actually valid in some way.
-    fn size(&self) -> usize;
+    fn size(&self) -> u64;
 
     /// Returns a loose object header based on the object's data
     fn loose_header(&self) -> smallvec::SmallVec<[u8; 28]> {
@@ -37,7 +37,7 @@ where
         <T as WriteTo>::kind(self)
     }
 
-    fn size(&self) -> usize {
+    fn size(&self) -> u64 {
         <T as WriteTo>::size(self)
     }
 }

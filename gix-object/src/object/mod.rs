@@ -24,7 +24,7 @@ mod write {
             self.kind()
         }
 
-        fn size(&self) -> usize {
+        fn size(&self) -> u64 {
             use crate::ObjectRef::*;
             match self {
                 Tree(v) => v.size(),
@@ -52,7 +52,7 @@ mod write {
             self.kind()
         }
 
-        fn size(&self) -> usize {
+        fn size(&self) -> u64 {
             use crate::Object::*;
             match self {
                 Tree(v) => v.size(),
@@ -185,6 +185,8 @@ pub enum LooseDecodeError {
     InvalidHeader(#[from] LooseHeaderDecodeError),
     #[error(transparent)]
     InvalidContent(#[from] DecodeError),
+    #[error("Object sized {size} does not fit into memory - this can happen on 32 bit systems")]
+    OutOfMemory { size: u64 },
 }
 
 impl<'a> ObjectRef<'a> {
@@ -193,7 +195,7 @@ impl<'a> ObjectRef<'a> {
         let (kind, size, offset) = loose_header(data)?;
 
         let body = &data[offset..]
-            .get(..size)
+            .get(..size.try_into().map_err(|_| LooseDecodeError::OutOfMemory { size })?)
             .ok_or(LooseHeaderDecodeError::InvalidHeader {
                 message: "object data was shorter than its size declared in the header",
             })?;
