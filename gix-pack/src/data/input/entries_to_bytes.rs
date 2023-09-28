@@ -97,7 +97,7 @@ where
         let interrupt_never = std::sync::atomic::AtomicBool::new(false);
         let digest = hash::bytes(
             &mut self.output,
-            num_bytes_written as usize,
+            num_bytes_written,
             self.object_hash,
             &mut gix_features::progress::Discard,
             &interrupt_never,
