@@ -8,12 +8,9 @@
 //! While also being able to check check if the working tree is dirty, quickly.
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
-///
-pub mod read;
+use bstr::BStr;
 
 pub mod index_as_worktree;
-
-use bstr::BStr;
 pub use index_as_worktree::function::index_as_worktree;
 
 /// A trait to facilitate working working with pathspecs.

@@ -20,7 +20,7 @@ pub enum Error {
 }
 
 /// Options that control how the index status with a worktree is computed.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct Options {
     /// Capabilities of the file system which affect the status computation.
     pub fs: gix_fs::Capabilities,
@@ -30,6 +30,11 @@ pub struct Options {
     pub thread_limit: Option<usize>,
     /// Options that control how stat comparisons are made when checking if a file is fresh.
     pub stat: gix_index::entry::stat::Options,
+    /// Pre-configured state to allow processing attributes.
+    ///
+    /// These are needed to potentially refresh the index with data read from the worktree, which needs to be converted back
+    /// to the form stored in git.
+    pub attributes: gix_worktree::stack::state::Attributes,
 }
 
 /// Provide additional information collected during the runtime of [`index_as_worktree()`](crate::index_as_worktree()).

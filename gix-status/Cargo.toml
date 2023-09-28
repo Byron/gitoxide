@@ -21,6 +21,8 @@ gix-object = { version = "^0.37.0", path = "../gix-object" }
 gix-path = { version = "^0.10.0", path = "../gix-path" }
 gix-features = { version = "^0.35.0", path = "../gix-features" }
 gix-pathspec = { version = "^0.3.0", path = "../gix-pathspec" }
+gix-filter = { version = "^0.5.0", path = "../gix-filter" }
+gix-worktree = { version = "^0.26.0", path = "../gix-worktree", default-features = false, features = ["attributes"] }
 
 thiserror = "1.0.26"
 filetime = "0.2.15"

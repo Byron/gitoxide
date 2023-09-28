@@ -4,7 +4,9 @@ use std::{io, marker::PhantomData, path::Path};
 use bstr::BStr;
 use filetime::FileTime;
 use gix_features::parallel::{in_parallel_if, Reduce};
+use gix_filter::pipeline::convert::ToGitOutcome;
 
+use crate::index_as_worktree::traits::read_data::Stream;
 use crate::{
     index_as_worktree::{
         traits,
@@ -12,7 +14,7 @@ use crate::{
         types::{Error, Options},
         Change, Outcome, VisitEntry,
     },
-    read, Pathspec,
+    Pathspec, SymlinkCheck,
 };
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them
@@ -24,6 +26,8 @@ use crate::{
 /// the current time for which it will be considered fresh as long as it is included which depends on `pathspec`.
 ///
 /// `should_interrupt` can be used to stop all processing.
+/// `filter` is used to convert worktree files back to their internal git representation. For this to be correct,
+/// [`Options::attributes`] must be configured as well.
 ///
 /// ### Note
 ///
@@ -45,8 +49,9 @@ pub fn index_as_worktree<'index, T, U, Find, E1, E2>(
     find: Find,
     progress: &mut dyn gix_features::progress::Progress,
     pathspec: impl Pathspec + Send + Clone,
+    filter: gix_filter::Pipeline,
     should_interrupt: &AtomicBool,
-    options: Options,
+    mut options: Options,
 ) -> Result<Outcome, Error>
 where
     T: Send,
@@ -70,6 +75,14 @@ where
     let range = index
         .prefixed_entries_range(pathspec.common_prefix())
         .unwrap_or(0..index.entries().len());
+
+    let stack = gix_worktree::Stack::from_state_and_ignore_case(
+        worktree,
+        options.fs.ignore_case,
+        gix_worktree::stack::State::AttributesStack(std::mem::take(&mut options.attributes)),
+        index,
+        index.path_backing(),
+    );
     let (entries, path_backing) = index.entries_mut_and_pathbacking();
     let mut num_entries = entries.len();
     let entries = &mut entries[range];
@@ -87,48 +100,51 @@ where
     progress.init(entries.len().into(), gix_features::progress::count("files"));
     let count = progress.counter();
 
+    let new_state = {
+        let options = &options;
+        let (skipped_by_pathspec, skipped_by_entry_flags) = (&skipped_by_pathspec, &skipped_by_entry_flags);
+        let (symlink_metadata_calls, entries_updated) = (&symlink_metadata_calls, &entries_updated);
+        let (racy_clean, worktree_bytes) = (&racy_clean, &worktree_bytes);
+        let (worktree_reads, odb_bytes, odb_reads) = (&worktree_reads, &odb_bytes, &odb_reads);
+        move |_| {
+            (
+                State {
+                    buf: Vec::new(),
+                    buf2: Vec::new(),
+                    attr_stack: stack,
+                    path_stack: SymlinkCheck::new(worktree.into()),
+                    timestamp,
+                    path_backing,
+                    filter,
+                    options,
+
+                    skipped_by_pathspec,
+                    skipped_by_entry_flags,
+                    symlink_metadata_calls,
+                    entries_updated,
+                    racy_clean,
+                    worktree_reads,
+                    worktree_bytes,
+                    odb_reads,
+                    odb_bytes,
+                },
+                compare,
+                submodule,
+                find,
+                pathspec,
+            )
+        }
+    };
     in_parallel_if(
         || true, // TODO: heuristic: when is parallelization not worth it? Git says 500 items per thread, but to 20 threads, we can be more fine-grained though.
         gix_features::interrupt::Iter::new(entries.chunks_mut(chunk_size), should_interrupt),
         thread_limit,
-        {
-            let options = &options;
-            let (skipped_by_pathspec, skipped_by_entry_flags) = (&skipped_by_pathspec, &skipped_by_entry_flags);
-            let (symlink_metadata_calls, entries_updated) = (&symlink_metadata_calls, &entries_updated);
-            let (racy_clean, worktree_bytes) = (&racy_clean, &worktree_bytes);
-            let (worktree_reads, odb_bytes, odb_reads) = (&worktree_reads, &odb_bytes, &odb_reads);
-            move |_| {
-                (
-                    State {
-                        buf: Vec::new(),
-                        odb_buf: Vec::new(),
-                        path_stack: crate::SymlinkCheck::new(worktree.to_owned()),
-                        timestamp,
-                        path_backing,
-                        options,
-
-                        skipped_by_pathspec,
-                        skipped_by_entry_flags,
-                        symlink_metadata_calls,
-                        entries_updated,
-                        racy_clean,
-                        worktree_reads,
-                        worktree_bytes,
-                        odb_reads,
-                        odb_bytes,
-                    },
-                    compare,
-                    submodule,
-                    find,
-                    pathspec,
-                )
-            }
-        },
+        new_state,
         |entries, (state, blobdiff, submdule, find, pathspec)| {
             entries
                 .iter_mut()
                 .filter_map(|entry| {
-                    let res = state.process(entry, blobdiff, submdule, find, pathspec);
+                    let res = state.process(entry, pathspec, blobdiff, submdule, find);
                     count.fetch_add(1, Ordering::Relaxed);
                     res
                 })
@@ -158,9 +174,16 @@ where
 
 struct State<'a, 'b> {
     buf: Vec<u8>,
-    odb_buf: Vec<u8>,
+    buf2: Vec<u8>,
     timestamp: FileTime,
-    path_stack: crate::SymlinkCheck,
+    /// This is the cheap stack that only assure that we don't go through symlinks.
+    /// It's always used to get the path to perform an lstat on.
+    path_stack: SymlinkCheck,
+    /// This is the expensive stack that will need to check for `.gitattributes` files each time
+    /// it changes directory. It's only used when we know we have to read a worktree file, which in turn
+    /// requires attributes to drive the filter configuration.
+    attr_stack: gix_worktree::Stack,
+    filter: gix_filter::Pipeline,
     path_backing: &'b [u8],
     options: &'a Options,
 
@@ -181,10 +204,10 @@ impl<'index> State<'_, 'index> {
     fn process<T, U, Find, E1, E2>(
         &mut self,
         entry: &'index mut gix_index::Entry,
+        pathspec: &mut impl Pathspec,
         diff: &mut impl CompareBlobs<Output = T>,
         submodule: &mut impl SubmoduleStatus<Output = U, Error = E2>,
         find: &mut Find,
-        pathspec: &mut impl Pathspec,
     ) -> Option<StatusResult<'index, T, U>>
     where
         E1: std::error::Error + Send + Sync + 'static,
@@ -266,10 +289,9 @@ impl<'index> State<'_, 'index> {
         E2: std::error::Error + Send + Sync + 'static,
         Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E1>,
     {
-        let worktree_path = gix_path::try_from_bstr(rela_path).map_err(|_| Error::IllformedUtf8)?;
-        let worktree_path = match self.path_stack.verified_path(worktree_path.as_ref()) {
+        let worktree_path = match self.path_stack.verified_path(gix_path::from_bstr(rela_path).as_ref()) {
             Ok(path) => path,
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
+            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
             Err(err) => return Err(Error::Io(err)),
         };
         self.symlink_metadata_calls.fetch_add(1, Ordering::Relaxed);
@@ -336,27 +358,24 @@ impl<'index> State<'_, 'index> {
         }
 
         self.buf.clear();
-        let read_file = WorktreeBlob {
+        self.buf2.clear();
+        let fetch_data = ReadDataImpl {
             buf: &mut self.buf,
             path: worktree_path,
+            rela_path,
             entry,
+            file_len: metadata.len(),
+            filter: &mut self.filter,
+            attr_stack: &mut self.attr_stack,
             options: self.options,
-        };
-        self.odb_buf.clear();
-        let read_blob = OdbBlob {
-            buf: &mut self.odb_buf,
             id: &entry.id,
             find,
+            worktree_reads: self.worktree_reads,
+            worktree_bytes: self.worktree_bytes,
+            odb_reads: self.odb_reads,
+            odb_bytes: self.odb_bytes,
         };
-        let content_change = diff.compare_blobs(entry, metadata.len() as usize, read_file, read_blob)?;
-        if !self.buf.is_empty() {
-            self.worktree_reads.fetch_add(1, Ordering::Relaxed);
-            self.worktree_bytes.fetch_add(self.buf.len() as u64, Ordering::Relaxed);
-        }
-        if !self.odb_buf.is_empty() {
-            self.odb_reads.fetch_add(1, Ordering::Relaxed);
-            self.odb_bytes.fetch_add(self.odb_buf.len() as u64, Ordering::Relaxed);
-        }
+        let content_change = diff.compare_blobs(entry, metadata.len(), fetch_data, &mut self.buf2)?;
         // This file is racy clean! Set the size to 0 so we keep detecting this as the file is updated.
         if content_change.is_some() && racy_clean {
             entry.stat.size = 0;
@@ -404,43 +423,91 @@ impl<'index, T, U, C: VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>
     }
 }
 
-struct WorktreeBlob<'a> {
+struct ReadDataImpl<'a, Find, E>
+where
+    E: std::error::Error + Send + Sync + 'static,
+    Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
+{
     buf: &'a mut Vec<u8>,
     path: &'a Path,
+    rela_path: &'a BStr,
+    file_len: u64,
     entry: &'a gix_index::Entry,
+    filter: &'a mut gix_filter::Pipeline,
+    attr_stack: &'a mut gix_worktree::Stack,
     options: &'a Options,
-}
-
-struct OdbBlob<'a, Find, E>
-where
-    E: std::error::Error + Send + Sync + 'static,
-    Find: FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
-{
-    buf: &'a mut Vec<u8>,
     id: &'a gix_hash::oid,
     find: Find,
+    worktree_bytes: &'a AtomicU64,
+    worktree_reads: &'a AtomicUsize,
+    odb_bytes: &'a AtomicU64,
+    odb_reads: &'a AtomicUsize,
 }
 
-impl<'a> traits::ReadDataOnce<'a> for WorktreeBlob<'a> {
-    fn read_data(self) -> Result<&'a [u8], Error> {
-        let res = read::data_to_buf_with_meta(
-            self.path,
-            self.buf,
-            self.entry.mode == gix_index::entry::Mode::SYMLINK,
-            &self.options.fs,
-        )?;
-        Ok(res)
-    }
-}
-
-impl<'a, Find, E> traits::ReadDataOnce<'a> for OdbBlob<'a, Find, E>
+impl<'a, Find, E> traits::ReadData<'a> for ReadDataImpl<'a, Find, E>
 where
     E: std::error::Error + Send + Sync + 'static,
-    Find: FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
+    Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
 {
-    fn read_data(mut self) -> Result<&'a [u8], Error> {
+    fn read_blob(mut self) -> Result<&'a [u8], Error> {
         (self.find)(self.id, self.buf)
-            .map(|b| b.data)
+            .map(|b| {
+                self.odb_reads.fetch_add(1, Ordering::Relaxed);
+                self.odb_bytes.fetch_add(b.data.len() as u64, Ordering::Relaxed);
+                b.data
+            })
             .map_err(move |err| Error::Find(Box::new(err)))
+    }
+
+    fn stream_worktree_file(mut self) -> Result<Stream<'a>, Error> {
+        self.buf.clear();
+        // symlinks are only stored as actual symlinks if the FS supports it otherwise they are just
+        // normal files with their content equal to the linked path (so can be read normally)
+        //
+        let is_symlink = self.entry.mode == gix_index::entry::Mode::SYMLINK;
+        // TODO: what to do about precompose unicode and ignore_case for symlinks
+        let out = if is_symlink && self.options.fs.symlink {
+            // conversion to bstr can never fail because symlinks are only used
+            // on unix (by git) so no reason to use the try version here
+            let symlink_path = gix_path::into_bstr(std::fs::read_link(self.path)?);
+            self.buf.extend_from_slice(&symlink_path);
+            self.worktree_bytes.fetch_add(self.buf.len() as u64, Ordering::Relaxed);
+            Stream {
+                inner: ToGitOutcome::Buffer(self.buf),
+                bytes: None,
+                len: None,
+            }
+        } else {
+            self.buf.clear();
+            let platform = self.attr_stack.at_entry(self.rela_path, Some(false), &mut self.find)?;
+            let file = std::fs::File::open(self.path)?;
+            let out = self
+                .filter
+                .convert_to_git(
+                    file,
+                    self.path,
+                    &mut |_path, attrs| {
+                        platform.matching_attributes(attrs);
+                    },
+                    &mut |buf| {
+                        (self.find)(self.id, buf)
+                            .map(|_| Some(()))
+                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                    },
+                )
+                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+            let len = match out {
+                ToGitOutcome::Unchanged(_) => Some(self.file_len),
+                ToGitOutcome::Process(_) | ToGitOutcome::Buffer(_) => None,
+            };
+            Stream {
+                inner: out,
+                bytes: Some(self.worktree_bytes),
+                len,
+            }
+        };
+
+        self.worktree_reads.fetch_add(1, Ordering::Relaxed);
+        Ok(out)
     }
 }

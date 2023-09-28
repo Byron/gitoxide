@@ -13,7 +13,7 @@ use gix_status::index_as_worktree::{Outcome, Record};
 use gix_status::{
     index_as_worktree,
     index_as_worktree::{
-        traits::{CompareBlobs, FastEq, ReadDataOnce},
+        traits::{CompareBlobs, FastEq, ReadData},
         Change as WorktreeChange, Options, Recorder,
     },
 };
@@ -37,8 +37,16 @@ fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) -> Out
     fixture_filtered(name, &[], expected_status)
 }
 
+fn fixture_with_index(
+    name: &str,
+    prepare_index: impl FnMut(&mut gix_index::State),
+    expected_status: &[(&BStr, Option<Change>, bool)],
+) -> Outcome {
+    fixture_filtered_detailed(name, "", &[], expected_status, prepare_index, false)
+}
+
 fn submodule_fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) -> Outcome {
-    fixture_filtered_detailed("status_submodule", name, &[], expected_status, false)
+    fixture_filtered_detailed("status_submodule", name, &[], expected_status, |_| {}, false)
 }
 
 fn submodule_fixture_status(
@@ -46,11 +54,11 @@ fn submodule_fixture_status(
     expected_status: &[(&BStr, Option<Change>, bool)],
     submodule_dirty: bool,
 ) -> Outcome {
-    fixture_filtered_detailed("status_submodule", name, &[], expected_status, submodule_dirty)
+    fixture_filtered_detailed("status_submodule", name, &[], expected_status, |_| {}, submodule_dirty)
 }
 
 fn fixture_filtered(name: &str, pathspecs: &[&str], expected_status: &[(&BStr, Option<Change>, bool)]) -> Outcome {
-    fixture_filtered_detailed(name, "", pathspecs, expected_status, false)
+    fixture_filtered_detailed(name, "", pathspecs, expected_status, |_| {}, false)
 }
 
 fn fixture_filtered_detailed(
@@ -58,12 +66,14 @@ fn fixture_filtered_detailed(
     subdir: &str,
     pathspecs: &[&str],
     expected_status: &[(&BStr, Option<Change>, bool)],
+    mut prepare_index: impl FnMut(&mut gix_index::State),
     submodule_dirty: bool,
 ) -> Outcome {
     let worktree = fixture_path(name).join(subdir);
     let git_dir = worktree.join(".git");
     let mut index =
         gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, false, Default::default()).unwrap();
+    prepare_index(&mut index);
     let mut recorder = Recorder::default();
     let search = gix_pathspec::Search::from_specs(to_pathspecs(pathspecs), None, std::path::Path::new(""))
         .expect("valid specs can be normalized");
@@ -76,6 +86,7 @@ fn fixture_filtered_detailed(
         |_, _| Ok::<_, std::convert::Infallible>(gix_object::BlobRef { data: &[] }),
         &mut gix_features::progress::Discard,
         Pathspec(search),
+        Default::default(),
         &AtomicBool::default(),
         Options {
             fs: gix_fs::Capabilities::probe(&git_dir),
@@ -297,14 +308,21 @@ fn unchanged() {
 }
 
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "needs work, on windows plenty of additional files are considered modified for some reason"
-)]
-fn modified() {
+fn refresh() {
+    let expected_outcome = Outcome {
+        entries_to_process: 5,
+        entries_processed: 5,
+        symlink_metadata_calls: 5,
+        entries_updated: if cfg!(windows) { 2 } else { 1 },
+        worktree_files_read: 4,
+        worktree_bytes: if cfg!(windows) { 41 } else { 38 },
+        ..Default::default()
+    };
     assert_eq!(
-        fixture(
+        fixture_with_index(
             "status_changed",
+            |index| { index.entries_mut().iter_mut().for_each(|e| e.stat = Default::default()) },
+            #[cfg(not(windows))]
             &[
                 (
                     BStr::new(b"dir/content"),
@@ -332,18 +350,116 @@ fn modified() {
                     NO_CONFLICT,
                 ),
             ],
+            #[cfg(windows)]
+            &[
+                (
+                    BStr::new("dir/content2"),
+                    Some(Change::Modification {
+                        executable_bit_changed: false,
+                        content_change: Some(())
+                    }),
+                    NO_CONFLICT
+                ),
+                (
+                    BStr::new("empty"),
+                    Some(Change::Modification {
+                        executable_bit_changed: false,
+                        content_change: Some(())
+                    }),
+                    NO_CONFLICT
+                ),
+                (
+                    BStr::new("executable"),
+                    Some(Change::Modification {
+                        executable_bit_changed: false,
+                        content_change: Some(())
+                    }),
+                    NO_CONFLICT
+                )
+            ],
         ),
-        Outcome {
-            entries_to_process: 5,
-            entries_processed: 5,
-            symlink_metadata_calls: 5,
-            entries_updated: 1,
-            worktree_files_read: 2,
-            worktree_bytes: 23,
-            racy_clean: 1,
-            ..Default::default()
-        }
+        expected_outcome,
     );
+}
+
+#[test]
+fn modified() {
+    #[cfg(not(windows))]
+    let expected_outcome = Outcome {
+        entries_to_process: 5,
+        entries_processed: 5,
+        symlink_metadata_calls: 5,
+        worktree_files_read: 2,
+        worktree_bytes: 23,
+        ..Default::default()
+    };
+    #[cfg(windows)]
+    let expected_outcome = Outcome {
+        entries_to_process: 5,
+        entries_processed: 5,
+        symlink_metadata_calls: 5,
+        ..Default::default()
+    };
+
+    let actual_outcome = fixture(
+        "status_changed",
+        #[cfg(not(windows))]
+        &[
+            (
+                BStr::new(b"dir/content"),
+                Some(Change::Modification {
+                    executable_bit_changed: true,
+                    content_change: None,
+                }),
+                NO_CONFLICT,
+            ),
+            (
+                BStr::new(b"dir/content2"),
+                Some(Change::Modification {
+                    executable_bit_changed: false,
+                    content_change: Some(()),
+                }),
+                NO_CONFLICT,
+            ),
+            (BStr::new(b"empty"), Some(Change::Type), NO_CONFLICT),
+            (
+                BStr::new(b"executable"),
+                Some(Change::Modification {
+                    executable_bit_changed: true,
+                    content_change: Some(()),
+                }),
+                NO_CONFLICT,
+            ),
+        ],
+        #[cfg(windows)]
+        &[
+            (
+                BStr::new("dir/content2"),
+                Some(Change::Modification {
+                    executable_bit_changed: false,
+                    content_change: Some(()),
+                }),
+                NO_CONFLICT,
+            ),
+            (
+                BStr::new("empty"),
+                Some(Change::Modification {
+                    executable_bit_changed: false,
+                    content_change: Some(()),
+                }),
+                NO_CONFLICT,
+            ),
+            (
+                BStr::new("executable"),
+                Some(Change::Modification {
+                    executable_bit_changed: false,
+                    content_change: Some(()),
+                }),
+                NO_CONFLICT,
+            ),
+        ],
+    );
+    assert_eq!(ignore_updated(ignore_racyclean(actual_outcome)), expected_outcome,);
 }
 
 const NO_CONFLICT: bool = false;
@@ -369,13 +485,12 @@ fn racy_git() {
         fn compare_blobs<'a, 'b>(
             &mut self,
             entry: &Entry,
-            worktree_blob_size: usize,
-            worktree_blob: impl ReadDataOnce<'a>,
-            entry_blob: impl ReadDataOnce<'b>,
+            worktree_file_size: u64,
+            data: impl ReadData<'a>,
+            buf: &mut Vec<u8>,
         ) -> Result<Option<Self::Output>, gix_status::index_as_worktree::Error> {
             self.0.fetch_add(1, Ordering::Relaxed);
-            self.1
-                .compare_blobs(entry, worktree_blob_size, worktree_blob, entry_blob)
+            self.1.compare_blobs(entry, worktree_file_size, data, buf)
         }
     }
 
@@ -401,6 +516,7 @@ fn racy_git() {
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
         &mut gix_features::progress::Discard,
         Pathspec::default(),
+        Default::default(),
         &AtomicBool::default(),
         Options {
             fs,
@@ -439,6 +555,7 @@ fn racy_git() {
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "no odb access expected")),
         &mut gix_features::progress::Discard,
         Pathspec::default(),
+        Default::default(),
         &AtomicBool::default(),
         Options {
             fs,
@@ -506,5 +623,11 @@ impl gix_status::Pathspec for Pathspec {
 // This can easily happen in some fixtures, which can cause flakyness. It's time-dependent after all.
 fn ignore_racyclean(mut out: Outcome) -> Outcome {
     out.racy_clean = 0;
+    out
+}
+
+// This can easily happen in some fixtures, which can cause flakyness. It's time-dependent after all.
+fn ignore_updated(mut out: Outcome) -> Outcome {
+    out.entries_updated = 0;
     out
 }
