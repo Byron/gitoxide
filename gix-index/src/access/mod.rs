@@ -4,7 +4,7 @@ use std::ops::Range;
 use bstr::{BStr, ByteSlice, ByteVec};
 use filetime::FileTime;
 
-use crate::{entry, extension, Entry, PathStorage, State, Version};
+use crate::{entry, extension, Entry, PathStorage, PathStorageRef, State, Version};
 
 // TODO: integrate this somehow, somewhere, depending on later usage.
 #[allow(dead_code)]
@@ -41,7 +41,7 @@ impl State {
         &self.entries
     }
     /// Return our path backing, the place which keeps all paths one after another, with entries storing only the range to access them.
-    pub fn path_backing(&self) -> &PathStorage {
+    pub fn path_backing(&self) -> &PathStorageRef {
         &self.path_backing
     }
 
@@ -58,7 +58,7 @@ impl State {
     /// Return mutable entries along with their path, as obtained from `backing`.
     pub fn entries_mut_with_paths_in<'state, 'backing>(
         &'state mut self,
-        backing: &'backing PathStorage,
+        backing: &'backing PathStorageRef,
     ) -> impl Iterator<Item = (&'state mut Entry, &'backing BStr)> {
         self.entries.iter_mut().map(move |e| {
             let path = backing[e.path.clone()].as_bstr();
@@ -279,7 +279,7 @@ impl State {
     }
 
     /// Return a writable slice to entries and read-access to their path storage at the same time.
-    pub fn entries_mut_and_pathbacking(&mut self) -> (&mut [Entry], &PathStorage) {
+    pub fn entries_mut_and_pathbacking(&mut self) -> (&mut [Entry], &PathStorageRef) {
         (&mut self.entries, &self.path_backing)
     }
 

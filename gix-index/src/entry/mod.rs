@@ -1,4 +1,8 @@
-/// The stage of an entry, one of 0 = base, 1 = ours, 2 = theirs
+/// The stage of an entry, one of…
+/// * 0 = no conflict,
+/// * 1 = base,
+/// * 2 = ours,
+/// * 3 = theirs
 pub type Stage = u32;
 
 ///
@@ -71,7 +75,7 @@ mod access {
             backing[self.path.clone()].as_bstr()
         }
 
-        /// Return an entry's stage.
+        /// Return an entry's stage. See [entry::Stage] for possible values.
         pub fn stage(&self) -> entry::Stage {
             self.flags.stage()
         }
