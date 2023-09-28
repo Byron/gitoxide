@@ -1,6 +1,6 @@
 use std::{io::Read, path::Path};
 
-use bstr::{BStr, ByteSlice};
+use bstr::ByteSlice;
 use gix_filter::{eol, pipeline::CrlfRoundTripCheck};
 
 use crate::{driver::apply::driver_with_process, pipeline::pipeline};
@@ -132,14 +132,11 @@ fn no_filter_means_reader_is_returned_unchanged() -> gix_testtools::Result {
 }
 
 #[allow(clippy::ptr_arg)]
-fn no_call(_path: &BStr, _buf: &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
+fn no_call(_buf: &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
     unreachable!("index function will not be called")
 }
 
 #[allow(clippy::ptr_arg)]
-fn no_object_in_index(
-    _path: &BStr,
-    _buf: &mut Vec<u8>,
-) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
+fn no_object_in_index(_buf: &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
     Ok(None)
 }
