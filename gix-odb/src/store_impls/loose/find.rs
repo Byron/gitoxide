@@ -14,13 +14,11 @@ pub enum Error {
         path: PathBuf,
     },
     #[error("file at '{path}' showed invalid size of inflated data, expected {expected}, got {actual}")]
-    SizeMismatch {
-        actual: usize,
-        expected: usize,
-        path: PathBuf,
-    },
+    SizeMismatch { actual: u64, expected: u64, path: PathBuf },
     #[error(transparent)]
     Decode(#[from] gix_object::decode::LooseHeaderDecodeError),
+    #[error("Cannot store {size} in memory as it's not representable")]
+    OutOfMemory { size: u64 },
     #[error("Could not {action} data at '{path}'")]
     Io {
         source: std::io::Error,
@@ -137,7 +135,7 @@ impl Store {
 
     /// Return only the decompressed size of the object and its kind without fully reading it into memory as tuple of `(size, kind)`.
     /// Returns `None` if `id` does not exist in the database.
-    pub fn try_header(&self, id: &gix_hash::oid) -> Result<Option<(usize, gix_object::Kind)>, Error> {
+    pub fn try_header(&self, id: &gix_hash::oid) -> Result<Option<(u64, gix_object::Kind)>, Error> {
         const BUF_SIZE: usize = 256;
         let mut buf = [0_u8; BUF_SIZE];
         let path = hash_path(id, self.path.clone());
@@ -224,16 +222,17 @@ impl Store {
             let decompressed_body_bytes_sans_header =
                 decompressed_start + header_size..decompressed_start + consumed_out;
 
-            if consumed_out != size + header_size {
+            if consumed_out as u64 != size + header_size as u64 {
                 return Err(Error::SizeMismatch {
-                    expected: size + header_size,
-                    actual: consumed_out,
+                    expected: size + header_size as u64,
+                    actual: consumed_out as u64,
                     path,
                 });
             }
             buf.copy_within(decompressed_body_bytes_sans_header, 0);
         } else {
-            buf.resize(bytes_read + size + header_size, 0);
+            let new_len = bytes_read as u64 + size + header_size as u64;
+            buf.resize(new_len.try_into().map_err(|_| Error::OutOfMemory { size: new_len })?, 0);
             {
                 let (input, output) = buf.split_at_mut(bytes_read);
                 let num_decompressed_bytes = zlib::stream::inflate::read(
@@ -246,17 +245,21 @@ impl Store {
                     action: "deflate",
                     path: path.to_owned(),
                 })?;
-                if num_decompressed_bytes + consumed_out != size + header_size {
+                if num_decompressed_bytes as u64 + consumed_out as u64 != size + header_size as u64 {
                     return Err(Error::SizeMismatch {
-                        expected: size + header_size,
-                        actual: num_decompressed_bytes + consumed_out,
+                        expected: size + header_size as u64,
+                        actual: num_decompressed_bytes as u64 + consumed_out as u64,
                         path,
                     });
                 }
             };
             buf.copy_within(decompressed_start + header_size.., 0);
         }
-        buf.resize(size, 0);
+        buf.resize(
+            size.try_into()
+                .expect("BUG: here the size is already confirmed to fit into memory"),
+            0,
+        );
         Ok(gix_object::Data { kind, data: buf })
     }
 }

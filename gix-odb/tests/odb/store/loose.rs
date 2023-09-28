@@ -420,7 +420,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                 let id = id?;
                 let expected = db.try_find(&id, &mut buf)?.expect("exists");
                 let (size, kind) = db.try_header(&id)?.expect("header exists");
-                assert_eq!(size, expected.data.len());
+                assert_eq!(size, expected.data.len() as u64);
                 assert_eq!(kind, expected.kind);
             }
             Ok(())

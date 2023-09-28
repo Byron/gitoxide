@@ -1,4 +1,4 @@
-use std::{convert::TryInto, fs, io, io::Write, path::PathBuf};
+use std::{fs, io, io::Write, path::PathBuf};
 
 use gix_features::{hash, zlib::stream::deflate};
 use gix_object::WriteTo;
@@ -48,7 +48,7 @@ impl crate::traits::Write for Store {
     /// This will cost at least 4 IO operations.
     fn write_buf(&self, kind: gix_object::Kind, from: &[u8]) -> Result<gix_hash::ObjectId, crate::write::Error> {
         let mut to = self.dest().map_err(Box::new)?;
-        to.write_all(&gix_object::encode::loose_header(kind, from.len()))
+        to.write_all(&gix_object::encode::loose_header(kind, from.len() as u64))
             .map_err(|err| Error::Io {
                 source: err,
                 message: "write header to tempfile in",
@@ -74,15 +74,12 @@ impl crate::traits::Write for Store {
         mut from: &mut dyn io::Read,
     ) -> Result<gix_hash::ObjectId, crate::write::Error> {
         let mut to = self.dest().map_err(Box::new)?;
-        to.write_all(&gix_object::encode::loose_header(
-            kind,
-            size.try_into().expect("object size to fit into usize"),
-        ))
-        .map_err(|err| Error::Io {
-            source: err,
-            message: "write header to tempfile in",
-            path: self.path.to_owned(),
-        })?;
+        to.write_all(&gix_object::encode::loose_header(kind, size))
+            .map_err(|err| Error::Io {
+                source: err,
+                message: "write header to tempfile in",
+                path: self.path.to_owned(),
+            })?;
 
         io::copy(&mut from, &mut to)
             .map_err(|err| Error::Io {

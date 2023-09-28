@@ -1,6 +1,5 @@
 use std::{
     cell::RefCell,
-    convert::TryInto,
     io::{self, Write},
 };
 
@@ -24,11 +23,10 @@ impl crate::traits::Write for Sink {
     fn write_stream(
         &self,
         kind: gix_object::Kind,
-        size: u64,
+        mut size: u64,
         from: &mut dyn io::Read,
     ) -> Result<gix_hash::ObjectId, crate::write::Error> {
-        let mut size = size.try_into().expect("object size to fit into usize");
-        let mut buf = [0u8; 8096];
+        let mut buf = [0u8; u16::MAX as usize];
         let header = gix_object::encode::loose_header(kind, size);
 
         let possibly_compress = |buf: &[u8]| -> io::Result<()> {
@@ -43,11 +41,11 @@ impl crate::traits::Write for Sink {
         possibly_compress(&header).map_err(Box::new)?;
 
         while size != 0 {
-            let bytes = size.min(buf.len());
+            let bytes = (size as usize).min(buf.len());
             from.read_exact(&mut buf[..bytes]).map_err(Box::new)?;
             hasher.update(&buf[..bytes]);
             possibly_compress(&buf[..bytes]).map_err(Box::new)?;
-            size -= bytes;
+            size -= bytes as u64;
         }
         if let Some(compressor) = self.compressor.as_ref() {
             let mut c = compressor.borrow_mut();

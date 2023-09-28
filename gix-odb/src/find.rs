@@ -104,11 +104,11 @@ mod header {
         }
     }
 
-    impl From<(usize, gix_object::Kind)> for Header {
-        fn from((object_size, kind): (usize, gix_object::Kind)) -> Self {
+    impl From<(u64, gix_object::Kind)> for Header {
+        fn from((object_size, kind): (u64, gix_object::Kind)) -> Self {
             Header::Loose {
                 kind,
-                size: object_size as u64,
+                size: object_size,
             }
         }
     }
