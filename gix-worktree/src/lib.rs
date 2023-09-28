@@ -10,6 +10,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 use bstr::BString;
+pub use gix_glob;
 
 /// A cache for efficiently executing operations on directories and files which are encountered in sorted order.
 /// That way, these operations can be re-used for subsequent invocations in the same directory.
