@@ -21,6 +21,7 @@ pub struct Options {
     pub submodules: Submodules,
     pub thread_limit: Option<usize>,
     pub statistics: bool,
+    pub allow_write: bool,
 }
 
 pub fn show(
@@ -34,6 +35,7 @@ pub fn show(
         // TODO: implement this
         submodules: _,
         thread_limit,
+        allow_write,
         statistics,
     }: Options,
 ) -> anyhow::Result<()> {
@@ -67,11 +69,15 @@ pub fn show(
             _ => unreachable!("state must be attributes stack only"),
         },
     };
+    let mut printer = Printer {
+        out,
+        changes: Vec::new(),
+    };
     let outcome = gix_status::index_as_worktree(
         index,
         repo.work_dir()
             .context("This operation cannot be run on a bare repository")?,
-        &mut Printer(out),
+        &mut printer,
         FastEq,
         Submodule,
         {
@@ -87,6 +93,27 @@ pub fn show(
         &gix::interrupt::IS_INTERRUPTED,
         options,
     )?;
+
+    if outcome.entries_to_update != 0 && allow_write {
+        {
+            let entries = index.entries_mut();
+            for (entry_index, change) in printer.changes {
+                let entry = &mut entries[entry_index];
+                match change {
+                    ApplyChange::SetSizeToZero => {
+                        entry.stat.size = 0;
+                    }
+                    ApplyChange::NewStat(new_stat) => {
+                        entry.stat = new_stat;
+                    }
+                }
+            }
+        }
+        index.write(gix::index::write::Options {
+            extensions: Default::default(),
+            skip_hash: false, // TODO: make this based on configuration
+        })?;
+    }
 
     if statistics {
         writeln!(err, "{outcome:#?}").ok();
@@ -109,7 +136,15 @@ impl gix_status::index_as_worktree::traits::SubmoduleStatus for Submodule {
     }
 }
 
-struct Printer<W>(W);
+struct Printer<W> {
+    out: W,
+    changes: Vec<(usize, ApplyChange)>,
+}
+
+enum ApplyChange {
+    SetSizeToZero,
+    NewStat(gix::index::entry::Stat),
+}
 
 impl<'index, W> gix_status::index_as_worktree::VisitEntry<'index> for Printer<W>
 where
@@ -122,28 +157,40 @@ where
         &mut self,
         _entries: &'index [Entry],
         _entry: &'index Entry,
-        _entry_index: usize,
+        entry_index: usize,
         rela_path: &'index BStr,
         status: EntryStatus<Self::ContentChange>,
     ) {
-        self.visit_inner(rela_path, status).ok();
+        self.visit_inner(entry_index, rela_path, status).ok();
     }
 }
 
 impl<W: std::io::Write> Printer<W> {
-    fn visit_inner(&mut self, rela_path: &BStr, status: EntryStatus<()>) -> std::io::Result<()> {
+    fn visit_inner(&mut self, entry_index: usize, rela_path: &BStr, status: EntryStatus<()>) -> std::io::Result<()> {
         let char_storage;
         let status = match status {
             EntryStatus::Conflict(conflict) => as_str(conflict),
             EntryStatus::Change(change) => {
+                if matches!(
+                    change,
+                    Change::Modification {
+                        set_entry_stat_size_zero: true,
+                        ..
+                    }
+                ) {
+                    self.changes.push((entry_index, ApplyChange::SetSizeToZero))
+                }
                 char_storage = change_to_char(&change);
                 std::str::from_utf8(std::slice::from_ref(&char_storage)).expect("valid ASCII")
             }
-            EntryStatus::NeedsUpdate(_) => return Ok(()),
+            EntryStatus::NeedsUpdate(stat) => {
+                self.changes.push((entry_index, ApplyChange::NewStat(stat)));
+                return Ok(());
+            }
             EntryStatus::IntentToAdd => "A",
         };
 
-        writeln!(&mut self.0, "{status: >3} {rela_path}")
+        writeln!(&mut self.out, "{status: >3} {rela_path}")
     }
 }
 

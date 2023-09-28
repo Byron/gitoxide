@@ -136,6 +136,7 @@ pub fn main() -> Result<()> {
         Subcommands::Status(crate::plumbing::options::status::Platform {
             statistics,
             submodules,
+            no_write,
             pathspec,
         }) => prepare_and_run(
             "status",
@@ -156,6 +157,7 @@ pub fn main() -> Result<()> {
                         format,
                         statistics,
                         thread_limit: thread_limit.or(cfg!(target_os = "macos").then_some(3)), // TODO: make this a configurable when in `gix`, this seems to be optimal on MacOS, linux scales though!
+                        allow_write: !no_write,
                         submodules: match submodules {
                             Submodules::All => core::repository::status::Submodules::All,
                             Submodules::RefChange => core::repository::status::Submodules::RefChange,
