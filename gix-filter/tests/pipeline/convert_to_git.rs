@@ -19,7 +19,7 @@ fn no_driver_but_filter_with_autocrlf() -> gix_testtools::Result {
         )
     })?;
 
-    let out = pipe.convert_to_git(
+    let mut out = pipe.convert_to_git(
         "hi\r\n".as_bytes(),
         Path::new("any.txt"),
         &mut |_path, _attrs| {},
@@ -31,6 +31,9 @@ fn no_driver_but_filter_with_autocrlf() -> gix_testtools::Result {
         "hi\n",
         "the read is read into memory if there is no driver"
     );
+    let mut buf = Vec::new();
+    out.read_to_end(&mut buf)?;
+    assert_eq!(buf.as_bstr(), "hi\n", "we can consume the output");
     Ok(())
 }
 

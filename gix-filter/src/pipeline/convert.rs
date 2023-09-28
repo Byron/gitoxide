@@ -315,7 +315,7 @@ where
         match self {
             ToGitOutcome::Unchanged(r) => r.read(buf),
             ToGitOutcome::Process(r) => r.read(buf),
-            ToGitOutcome::Buffer(mut r) => r.read(buf),
+            ToGitOutcome::Buffer(r) => r.read(buf),
         }
     }
 }
