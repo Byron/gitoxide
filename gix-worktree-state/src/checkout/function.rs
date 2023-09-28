@@ -54,11 +54,6 @@ where
     let num_files = files.counter();
     let num_bytes = bytes.counter();
     let dir = dir.into();
-    let case = if options.fs.ignore_case {
-        gix_glob::pattern::Case::Fold
-    } else {
-        gix_glob::pattern::Case::Sensitive
-    };
     let (chunk_size, thread_limit, num_threads) = gix_features::parallel::optimize_chunk_size_and_thread_limit(
         100,
         index.entries().len().into(),
@@ -66,12 +61,16 @@ where
         None,
     );
 
-    let state = stack::State::for_checkout(options.overwrite_existing, std::mem::take(&mut options.attributes));
-    let attribute_files = state.id_mappings_from_index(index, paths, case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         options: (&options).into(),
-        path_cache: Stack::new(dir, state, case, Vec::with_capacity(512), attribute_files),
+        path_cache: Stack::from_state_and_ignore_case(
+            dir,
+            options.fs.ignore_case,
+            stack::State::for_checkout(options.overwrite_existing, std::mem::take(&mut options.attributes)),
+            index,
+            paths,
+        ),
         filters: options.filters,
         find,
     };
