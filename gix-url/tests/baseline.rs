@@ -1,6 +1,7 @@
 use std::any::Any;
 
 use bstr::ByteSlice;
+use gix_testtools::once_cell::sync::Lazy;
 
 /// To see all current failures run the following command or execute cargo-nextest directly with
 /// the below shown arguments.
@@ -10,6 +11,10 @@ use bstr::ByteSlice;
 /// ``
 #[test]
 fn run() {
+    // ensure the baseline is evaluated before we disable the panic hook, otherwise we swallow
+    // errors inside the baseline generation
+    Lazy::force(&baseline::URLS);
+
     let panic_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(|_| {}));
 
