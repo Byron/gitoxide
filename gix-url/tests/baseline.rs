@@ -1,64 +1,93 @@
 use std::any::Any;
 
 use bstr::ByteSlice;
+use gix_testtools::once_cell::sync::Lazy;
 
+/// To see all current failures run the following command or execute cargo-nextest directly with
+/// the below shown arguments.
+///
+/// ```bash
+/// just nt -p gix-url --test baseline --success-output immediate
+/// ``
 #[test]
 fn run() {
+    // ensure the baseline is evaluated before we disable the panic hook, otherwise we swallow
+    // errors inside the baseline generation
+    Lazy::force(&baseline::URLS);
+
     let panic_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(|_| {}));
 
-    let mut count = 0;
+    let mut test_count = 0;
     let mut failures = Vec::new();
-    let (mut failed_roundtrips, mut serialized_url_does_not_match_input) = (0, 0);
+    let (mut failure_count_roundtrips, mut failure_count_reserialization) = (0, 0);
     for (url, expected) in baseline::URLS.iter() {
-        count += 1;
+        test_count += 1;
         let actual = match gix_url::parse(url) {
             Ok(actual) => actual,
-            Err(err) => {
-                failures.push(err.to_string());
+            Err(message) => {
+                failures.push(format!("failure(parse): {message}"));
                 continue;
             }
         };
-        let url_as_string = actual.to_bstring();
-        serialized_url_does_not_match_input += usize::from(url_as_string != *url);
-        failed_roundtrips += usize::from(gix_url::parse(url_as_string.as_ref()).ok().as_ref() != Some(&actual));
-        let result = std::panic::catch_unwind(|| assert_urls_equal(expected, &actual)).map_err(|panic| {
+        if let Err(message) = std::panic::catch_unwind(|| assert_urls_equal(expected, &actual)).map_err(|panic| {
             match downcast_panic_to_str(&panic) {
                 Some(s) => format!("{url}: {s}\nexpected: {expected:?}\nactual: {actual:?}"),
                 None => format!("{url}: expected: {expected:?}\nactual: {actual:?}"),
             }
-        });
-        if let Err(message) = result {
-            failures.push(message);
+        }) {
+            failures.push(format!("failure(compare): {message}"));
+            continue;
         }
+        // perform additional checks only after we determined that we parsed the url correctly
+        let url_serialized_again = actual.to_bstring();
+        failure_count_reserialization += usize::from(url_serialized_again != *url);
+        failure_count_roundtrips +=
+            usize::from(gix_url::parse(url_serialized_again.as_ref()).ok().as_ref() != Some(&actual));
     }
 
     std::panic::set_hook(panic_hook);
-    assert_ne!(count, 0, "the baseline is never empty");
+
+    assert_ne!(test_count, 0, "the baseline is never empty");
     if failures.is_empty() {
         todo!("The baseline is currently meddling with hooks, thats not needed anymore since the failure rate is 0: move this into a module of the normal tests");
     }
-    for message in &failures {
-        eprintln!("{message}");
-    }
-    eprintln!(
-        "{} failed out of {count} tests ({} passed)",
-        failures.len(),
-        count - failures.len()
-    );
-    assert!(
-        serialized_url_does_not_match_input <= 126,
-        "we shouldn't get worse when serializing to match our input URL"
-    );
 
-    let kind = baseline::Kind::new();
-    assert_eq!(failed_roundtrips, 0);
+    let failure_count = failures.len();
+    let passed_count = test_count - failure_count;
+    let expected_failure_count = baseline::Kind::new().max_num_failures();
+
+    eprintln!("failed {failure_count}/{test_count} tests ({passed_count} passed)");
+
+    for message in &failures {
+        // print messages to out instead of err to separate them from general test information
+        println!("{message}");
+    }
+
+    use core::cmp::Ordering;
+    match Ord::cmp(&failure_count, &expected_failure_count) {
+        Ordering::Equal => {
+            eprintln!("the number of failing tests is as expected");
+        }
+        Ordering::Less => {
+            panic!(
+                "{} more passing tests than expected. Great work! Please change the expected number of failures to {failure_count} to make this panic go away",
+                expected_failure_count - failure_count,
+            )
+        }
+        Ordering::Greater => {
+            panic!(
+                "{} more failing tests than expected! This should get better, not worse. Please check your changes manually for any regressions",
+                failure_count - expected_failure_count,
+            )
+        }
+    }
+
     assert!(
-        failures.len() <= kind.max_num_failures(),
-        "Expected no more than {} failures, but got {} - this should get better, not worse",
-        kind.max_num_failures(),
-        failures.len(),
-    )
+        failure_count_reserialization <= 42,
+        "the number of reserialization errors should ideally get better, not worse - if this panic is not due to regressions but to new passing test cases, you can set this check to {failure_count_reserialization}"
+    );
+    assert_eq!(failure_count_roundtrips, 0, "there should be no roundtrip errors");
 }
 
 fn downcast_panic_to_str<'a>(panic: &'a Box<dyn Any + Send + 'static>) -> Option<&'a str> {
