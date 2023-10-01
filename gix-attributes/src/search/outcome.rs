@@ -1,5 +1,5 @@
 use bstr::{BString, ByteSlice};
-use byteyarn::Yarn;
+use byteyarn::YarnBox;
 use gix_glob::Pattern;
 
 use crate::{
@@ -59,7 +59,7 @@ impl Outcome {
         self.selected.clear();
         self.selected.extend(attribute_names.map(|name| {
             (
-                Yarn::inlined(name).unwrap_or_else(|| name.to_string().into_boxed_str().into()),
+                YarnBox::new(name).immortalize(),
                 collection.name_to_meta.get(name).map(|meta| meta.id),
             )
         }));
@@ -315,7 +315,7 @@ impl MetadataCollection {
             None => {
                 let order = AttributeId(self.name_to_meta.len());
                 self.name_to_meta.insert(
-                    Yarn::inlined(name).unwrap_or_else(|| name.to_string().into_boxed_str().into()),
+                    YarnBox::new(name).immortalize(),
                     Metadata {
                         id: order,
                         macro_attributes: Default::default(),
@@ -335,10 +335,7 @@ impl MetadataCollection {
             Some(meta) => meta.id,
             None => {
                 let order = AttributeId(self.name_to_meta.len());
-                self.name_to_meta.insert(
-                    Yarn::inlined(name).unwrap_or_else(|| name.to_string().into_boxed_str().into()),
-                    order.into(),
-                );
+                self.name_to_meta.insert(YarnBox::new(name).immortalize(), order.into());
                 order
             }
         }
