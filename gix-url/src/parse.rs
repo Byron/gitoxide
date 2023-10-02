@@ -85,7 +85,9 @@ pub(crate) fn find_scheme(input: &BStr) -> InputScheme {
 pub(crate) fn url(input: &BStr, protocol_end: usize) -> Result<crate::Url, Error> {
     const MAX_LEN: usize = 1024;
     let bytes_to_path = input[protocol_end + "://".len()..]
-        .find(b"/")
+        .iter()
+        .skip_while(|b| **b == b'/')
+        .position(|b| *b == b'/')
         .unwrap_or(input.len() - protocol_end);
     if bytes_to_path > MAX_LEN {
         return Err(Error::TooLong {

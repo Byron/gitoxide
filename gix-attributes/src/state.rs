@@ -1,5 +1,5 @@
 use bstr::{BStr, ByteSlice};
-use byteyarn::{ByteYarn, YarnRef};
+use byteyarn::{ByteYarn, YarnBox, YarnRef};
 
 use crate::{State, StateRef};
 
@@ -49,10 +49,7 @@ impl<'a> From<ValueRef<'a>> for Value {
 
 impl From<&str> for Value {
     fn from(v: &str) -> Self {
-        Value(
-            ByteYarn::inlined(v.as_bytes())
-                .unwrap_or_else(|| ByteYarn::from_boxed_bytes(v.as_bytes().to_vec().into_boxed_slice())),
-        )
+        Value(YarnBox::new(v).immortalize().into())
     }
 }
 
