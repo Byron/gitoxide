@@ -1609,6 +1609,7 @@ name = "gix-fetchhead"
 version = "0.0.1"
 dependencies = [
  "gix-hash 0.13.0",
+ "gix-testtools",
  "gix-url",
 ]
 
