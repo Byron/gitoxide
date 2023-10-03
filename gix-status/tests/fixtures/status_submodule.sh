@@ -32,3 +32,17 @@ cp -R no-change empty-dir-no-change
   rm -Rf m1
   mkdir m1
 )
+
+cp -R no-change conflict
+(cd conflict
+  (cd m1
+    git checkout @~1
+  )
+
+  git commit -am "change submodule head"
+  git checkout -b other @~1
+  git rm -rf m1
+  git commit -m "removed submodule"
+
+  git merge main || :
+)

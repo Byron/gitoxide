@@ -32,32 +32,29 @@ const TEST_OPTIONS: index::entry::stat::Options = index::entry::stat::Options {
 };
 
 type Change = WorktreeChange<(), ()>;
+type Expectation<'a> = (&'a BStr, usize, Option<Change>, bool);
 
-fn fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) -> Outcome {
+fn fixture(name: &str, expected_status: &[Expectation<'_>]) -> Outcome {
     fixture_filtered(name, &[], expected_status)
 }
 
 fn fixture_with_index(
     name: &str,
     prepare_index: impl FnMut(&mut gix_index::State),
-    expected_status: &[(&BStr, Option<Change>, bool)],
+    expected_status: &[Expectation<'_>],
 ) -> Outcome {
     fixture_filtered_detailed(name, "", &[], expected_status, prepare_index, false)
 }
 
-fn submodule_fixture(name: &str, expected_status: &[(&BStr, Option<Change>, bool)]) -> Outcome {
+fn submodule_fixture(name: &str, expected_status: &[Expectation<'_>]) -> Outcome {
     fixture_filtered_detailed("status_submodule", name, &[], expected_status, |_| {}, false)
 }
 
-fn submodule_fixture_status(
-    name: &str,
-    expected_status: &[(&BStr, Option<Change>, bool)],
-    submodule_dirty: bool,
-) -> Outcome {
+fn submodule_fixture_status(name: &str, expected_status: &[Expectation<'_>], submodule_dirty: bool) -> Outcome {
     fixture_filtered_detailed("status_submodule", name, &[], expected_status, |_| {}, submodule_dirty)
 }
 
-fn fixture_filtered(name: &str, pathspecs: &[&str], expected_status: &[(&BStr, Option<Change>, bool)]) -> Outcome {
+fn fixture_filtered(name: &str, pathspecs: &[&str], expected_status: &[Expectation<'_>]) -> Outcome {
     fixture_filtered_detailed(name, "", pathspecs, expected_status, |_| {}, false)
 }
 
@@ -65,7 +62,7 @@ fn fixture_filtered_detailed(
     name: &str,
     subdir: &str,
     pathspecs: &[&str],
-    expected_status: &[(&BStr, Option<Change>, bool)],
+    expected_status: &[Expectation<'_>],
     mut prepare_index: impl FnMut(&mut gix_index::State),
     submodule_dirty: bool,
 ) -> Outcome {
@@ -100,12 +97,10 @@ fn fixture_filtered_detailed(
     outcome
 }
 
-fn records_to_tuple<'index>(
-    records: impl IntoIterator<Item = Record<'index, (), ()>>,
-) -> Vec<(&'index BStr, Option<Change>, bool)> {
+fn records_to_tuple<'index>(records: impl IntoIterator<Item = Record<'index, (), ()>>) -> Vec<Expectation<'index>> {
     records
         .into_iter()
-        .map(|r| (r.relative_path, r.change, r.conflict))
+        .map(|r| (r.relative_path, r.entry_index, r.change, r.conflict))
         .collect()
 }
 
@@ -135,10 +130,10 @@ fn removed() {
     let out = fixture(
         "status_removed",
         &[
-            (BStr::new(b"dir/content"), Some(Change::Removed), NO_CONFLICT),
-            (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), NO_CONFLICT),
-            (BStr::new(b"empty"), Some(Change::Removed), NO_CONFLICT),
-            (BStr::new(b"executable"), Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"dir/content"), 0, Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"dir/sub-dir/symlink"), 1, Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"empty"), 2, Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"executable"), 3, Some(Change::Removed), NO_CONFLICT),
         ],
     );
     assert_eq!(
@@ -155,8 +150,8 @@ fn removed() {
         "status_removed",
         &["dir"],
         &[
-            (BStr::new(b"dir/content"), Some(Change::Removed), NO_CONFLICT),
-            (BStr::new(b"dir/sub-dir/symlink"), Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"dir/content"), 0, Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"dir/sub-dir/symlink"), 1, Some(Change::Removed), NO_CONFLICT),
         ],
     );
     assert_eq!(
@@ -192,7 +187,7 @@ fn subomdule_deleted_dir() {
     assert_eq!(
         ignore_racyclean(submodule_fixture(
             "deleted-dir",
-            &[(BStr::new(b"m1"), Some(Change::Removed), NO_CONFLICT)]
+            &[(BStr::new(b"m1"), 1, Some(Change::Removed), NO_CONFLICT)]
         )),
         Outcome {
             entries_to_process: 2,
@@ -211,7 +206,7 @@ fn subomdule_typechange() {
     assert_eq!(
         ignore_racyclean(submodule_fixture(
             "type-change",
-            &[(BStr::new(b"m1"), Some(Change::Type), NO_CONFLICT)]
+            &[(BStr::new(b"m1"), 1, Some(Change::Type), NO_CONFLICT)]
         )),
         Outcome {
             entries_to_process: 2,
@@ -246,7 +241,12 @@ fn subomdule_empty_dir_no_change_is_passed_to_submodule_handler() {
     assert_eq!(
         ignore_racyclean(submodule_fixture_status(
             "empty-dir-no-change",
-            &[(BStr::new(b"m1"), Some(Change::SubmoduleModification(())), NO_CONFLICT)],
+            &[(
+                BStr::new(b"m1"),
+                1,
+                Some(Change::SubmoduleModification(())),
+                NO_CONFLICT
+            )],
             true,
         )),
         Outcome {
@@ -266,7 +266,7 @@ fn intent_to_add() {
     assert_eq!(
         fixture(
             "status_intent_to_add",
-            &[(BStr::new(b"content"), Some(Change::IntentToAdd), NO_CONFLICT)],
+            &[(BStr::new(b"content"), 0, Some(Change::IntentToAdd), NO_CONFLICT)],
         ),
         Outcome {
             entries_to_process: 1,
@@ -284,6 +284,7 @@ fn conflict() {
             "status_conflict",
             &[(
                 BStr::new(b"content"),
+                0,
                 Some(Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
@@ -299,6 +300,20 @@ fn conflict() {
             worktree_bytes: 51,
             ..Default::default()
         }
+    );
+}
+
+#[test]
+fn submodule_conflict() {
+    assert_eq!(
+        submodule_fixture("conflict", &[(BStr::new(b"m1"), 1, None, true)]),
+        Outcome {
+            entries_to_process: 3,
+            entries_processed: 3,
+            symlink_metadata_calls: 2,
+            ..Default::default()
+        },
+        "submodule status is still called for OUR side of an entry, but never for THEIRS"
     );
 }
 
@@ -326,6 +341,7 @@ fn refresh() {
             &[
                 (
                     BStr::new(b"dir/content"),
+                    0,
                     Some(Change::Modification {
                         executable_bit_changed: true,
                         content_change: None,
@@ -334,15 +350,17 @@ fn refresh() {
                 ),
                 (
                     BStr::new(b"dir/content2"),
+                    1,
                     Some(Change::Modification {
                         executable_bit_changed: false,
                         content_change: Some(()),
                     }),
                     NO_CONFLICT,
                 ),
-                (BStr::new(b"empty"), Some(Change::Type), NO_CONFLICT),
+                (BStr::new(b"empty"), 3, Some(Change::Type), NO_CONFLICT),
                 (
                     BStr::new(b"executable"),
+                    4,
                     Some(Change::Modification {
                         executable_bit_changed: true,
                         content_change: Some(()),
@@ -354,6 +372,7 @@ fn refresh() {
             &[
                 (
                     BStr::new("dir/content2"),
+                    1,
                     Some(Change::Modification {
                         executable_bit_changed: false,
                         content_change: Some(())
@@ -362,6 +381,7 @@ fn refresh() {
                 ),
                 (
                     BStr::new("empty"),
+                    3,
                     Some(Change::Modification {
                         executable_bit_changed: false,
                         content_change: Some(())
@@ -370,6 +390,7 @@ fn refresh() {
                 ),
                 (
                     BStr::new("executable"),
+                    4,
                     Some(Change::Modification {
                         executable_bit_changed: false,
                         content_change: Some(())
@@ -384,29 +405,19 @@ fn refresh() {
 
 #[test]
 fn modified() {
-    #[cfg(not(windows))]
-    let expected_outcome = Outcome {
-        entries_to_process: 5,
-        entries_processed: 5,
-        symlink_metadata_calls: 5,
-        worktree_files_read: 2,
-        worktree_bytes: 23,
-        ..Default::default()
-    };
-    #[cfg(windows)]
     let expected_outcome = Outcome {
         entries_to_process: 5,
         entries_processed: 5,
         symlink_metadata_calls: 5,
         ..Default::default()
     };
-
     let actual_outcome = fixture(
         "status_changed",
         #[cfg(not(windows))]
         &[
             (
                 BStr::new(b"dir/content"),
+                0,
                 Some(Change::Modification {
                     executable_bit_changed: true,
                     content_change: None,
@@ -415,15 +426,17 @@ fn modified() {
             ),
             (
                 BStr::new(b"dir/content2"),
+                1,
                 Some(Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
                 }),
                 NO_CONFLICT,
             ),
-            (BStr::new(b"empty"), Some(Change::Type), NO_CONFLICT),
+            (BStr::new(b"empty"), 3, Some(Change::Type), NO_CONFLICT),
             (
                 BStr::new(b"executable"),
+                4,
                 Some(Change::Modification {
                     executable_bit_changed: true,
                     content_change: Some(()),
@@ -435,6 +448,7 @@ fn modified() {
         &[
             (
                 BStr::new("dir/content2"),
+                1,
                 Some(Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
@@ -443,6 +457,7 @@ fn modified() {
             ),
             (
                 BStr::new("empty"),
+                3,
                 Some(Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
@@ -451,6 +466,7 @@ fn modified() {
             ),
             (
                 BStr::new("executable"),
+                4,
                 Some(Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
@@ -459,7 +475,10 @@ fn modified() {
             ),
         ],
     );
-    assert_eq!(ignore_updated(ignore_racyclean(actual_outcome)), expected_outcome,);
+    assert_eq!(
+        ignore_worktree_stats(ignore_updated(ignore_racyclean(actual_outcome))),
+        expected_outcome,
+    );
 }
 
 const NO_CONFLICT: bool = false;
@@ -585,6 +604,7 @@ fn racy_git() {
         records_to_tuple(recorder.records),
         &[(
             BStr::new(b"content"),
+            0,
             Some(Change::Modification {
                 executable_bit_changed: false,
                 content_change: Some(()),
@@ -626,8 +646,13 @@ fn ignore_racyclean(mut out: Outcome) -> Outcome {
     out
 }
 
-// This can easily happen in some fixtures, which can cause flakyness. It's time-dependent after all.
 fn ignore_updated(mut out: Outcome) -> Outcome {
     out.entries_updated = 0;
+    out
+}
+
+fn ignore_worktree_stats(mut out: Outcome) -> Outcome {
+    out.worktree_bytes = 0;
+    out.worktree_files_read = 0;
     out
 }

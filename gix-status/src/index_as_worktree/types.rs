@@ -118,12 +118,13 @@ pub trait VisitEntry<'index> {
     type ContentChange;
     /// Data obtained when checking the submodule status.
     type SubmoduleStatus;
-    /// Observe the `change` of `entry` at the repository-relative `rela_path`, indicating whether
-    /// or not it has a `conflict`.
+    /// Observe the `change` of `entry` at the repository-relative `rela_path` at `entry_index`
+    /// (relative to the complete list of all index entries), indicating whether or not it has a `conflict`.
     /// If `change` is `None`, there is no change.
     fn visit_entry(
         &mut self,
         entry: &'index gix_index::Entry,
+        entry_index: usize,
         rela_path: &'index BStr,
         change: Option<Change<Self::ContentChange, Self::SubmoduleStatus>>,
         conflict: bool,

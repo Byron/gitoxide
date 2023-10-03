@@ -1,3 +1,4 @@
+use std::slice::ChunksMut;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::{io, marker::PhantomData, path::Path};
 
@@ -19,7 +20,7 @@ use crate::{
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them
 /// observable in `collector`, along with information produced by `compare` which gets to see blobs that may have changes, and
-/// `submodule` which can take a look at submodules in detail to produce status information.
+/// `submodule` which can take a look at submodules in detail to produce status information (BASE version if its conflicting).
 /// `options` are used to configure the operation.
 ///
 /// Note that `index` is updated with the latest seen stat information from the worktree, and its timestamp is adjusted to
@@ -85,6 +86,7 @@ where
     );
     let (entries, path_backing) = index.entries_mut_and_pathbacking();
     let mut num_entries = entries.len();
+    let entry_index_offset = range.start;
     let entries = &mut entries[range];
 
     let _span = gix_features::trace::detail!("gix_status::index_as_worktree", 
@@ -137,14 +139,21 @@ where
     };
     in_parallel_if(
         || true, // TODO: heuristic: when is parallelization not worth it? Git says 500 items per thread, but to 20 threads, we can be more fine-grained though.
-        gix_features::interrupt::Iter::new(entries.chunks_mut(chunk_size), should_interrupt),
+        gix_features::interrupt::Iter::new(
+            OffsetIter {
+                inner: entries.chunks_mut(chunk_size),
+                offset: entry_index_offset,
+            },
+            should_interrupt,
+        ),
         thread_limit,
         new_state,
-        |entries, (state, blobdiff, submdule, find, pathspec)| {
+        |(entry_offset, entries), (state, blobdiff, submdule, find, pathspec)| {
             entries
                 .iter_mut()
-                .filter_map(|entry| {
-                    let res = state.process(entry, pathspec, blobdiff, submdule, find);
+                .enumerate()
+                .filter_map(|(entry_index, entry)| {
+                    let res = state.process(entry, entry_offset + entry_index, pathspec, blobdiff, submdule, find);
                     count.fetch_add(1, Ordering::Relaxed);
                     res
                 })
@@ -198,12 +207,22 @@ struct State<'a, 'b> {
     odb_reads: &'a AtomicUsize,
 }
 
-type StatusResult<'index, T, U> = Result<(&'index gix_index::Entry, &'index BStr, Option<Change<T, U>>, bool), Error>;
+type StatusResult<'index, T, U> = Result<
+    (
+        &'index gix_index::Entry,
+        usize,
+        &'index BStr,
+        Option<Change<T, U>>,
+        bool,
+    ),
+    Error,
+>;
 
 impl<'index> State<'_, 'index> {
     fn process<T, U, Find, E1, E2>(
         &mut self,
         entry: &'index mut gix_index::Entry,
+        entry_index: usize,
         pathspec: &mut impl Pathspec,
         diff: &mut impl CompareBlobs<Output = T>,
         submodule: &mut impl SubmoduleStatus<Output = U, Error = E2>,
@@ -234,7 +253,7 @@ impl<'index> State<'_, 'index> {
             return None;
         }
         let status = self.compute_status(&mut *entry, path, diff, submodule, find);
-        Some(status.map(move |status| (&*entry, path, status, conflict)))
+        Some(status.map(move |status| (&*entry, entry_index, path, status, conflict)))
     }
 
     /// # On how racy-git is handled here
@@ -412,8 +431,8 @@ impl<'index, T, U, C: VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>
 
     fn feed(&mut self, items: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
         for item in items {
-            let (entry, path, change, conflict) = item?;
-            self.collector.visit_entry(entry, path, change, conflict);
+            let (entry, entry_index, path, change, conflict) = item?;
+            self.collector.visit_entry(entry, entry_index, path, change, conflict);
         }
         Ok(())
     }
@@ -509,5 +528,21 @@ where
 
         self.worktree_reads.fetch_add(1, Ordering::Relaxed);
         Ok(out)
+    }
+}
+
+struct OffsetIter<'a, T> {
+    inner: ChunksMut<'a, T>,
+    offset: usize,
+}
+
+impl<'a, T> Iterator for OffsetIter<'a, T> {
+    type Item = (usize, &'a mut [T]);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let block = self.inner.next()?;
+        let offset = self.offset;
+        self.offset += block.len();
+        Some((offset, block))
     }
 }
