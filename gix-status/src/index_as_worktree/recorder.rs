@@ -1,7 +1,7 @@
 use bstr::BStr;
 use gix_index as index;
 
-use crate::index_as_worktree::{Change, VisitEntry};
+use crate::index_as_worktree::{EntryStatus, VisitEntry};
 
 /// A record of a change.
 ///
@@ -14,10 +14,8 @@ pub struct Record<'index, T, U> {
     pub entry_index: usize,
     /// The path to the entry.
     pub relative_path: &'index BStr,
-    /// The change itself, or `None` if there is only a conflict.
-    pub change: Option<Change<T, U>>,
-    /// information about the conflict itself
-    pub conflict: bool,
+    /// The status information itself.
+    pub status: EntryStatus<T, U>,
 }
 
 /// Convenience implementation of [`VisitEntry`] that collects all non-trivial changes into a `Vec`.
@@ -33,20 +31,17 @@ impl<'index, T: Send, U: Send> VisitEntry<'index> for Recorder<'index, T, U> {
 
     fn visit_entry(
         &mut self,
+        _entries: &'index [index::Entry],
         entry: &'index index::Entry,
         entry_index: usize,
-        rela_path: &'index BStr,
-        change: Option<Change<Self::ContentChange, Self::SubmoduleStatus>>,
-        conflict: bool,
+        relative_path: &'index BStr,
+        status: EntryStatus<Self::ContentChange, Self::SubmoduleStatus>,
     ) {
-        if conflict || change.is_some() {
-            self.records.push(Record {
-                entry,
-                entry_index,
-                relative_path: rela_path,
-                change,
-                conflict,
-            })
-        }
+        self.records.push(Record {
+            entry,
+            entry_index,
+            relative_path,
+            status,
+        })
     }
 }

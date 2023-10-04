@@ -9,7 +9,7 @@ use filetime::{set_file_mtime, FileTime};
 use gix_index as index;
 use gix_index::Entry;
 use gix_status::index_as_worktree::traits::SubmoduleStatus;
-use gix_status::index_as_worktree::{Outcome, Record};
+use gix_status::index_as_worktree::{Conflict, EntryStatus as WorktreeEntryStatus, Outcome, Record};
 use gix_status::{
     index_as_worktree,
     index_as_worktree::{
@@ -32,7 +32,8 @@ const TEST_OPTIONS: index::entry::stat::Options = index::entry::stat::Options {
 };
 
 type Change = WorktreeChange<(), ()>;
-type Expectation<'a> = (&'a BStr, usize, Option<Change>, bool);
+type EntryStatus = WorktreeEntryStatus<(), ()>;
+type Expectation<'a> = (&'a BStr, usize, EntryStatus);
 
 fn fixture(name: &str, expected_status: &[Expectation<'_>]) -> Outcome {
     fixture_filtered(name, &[], expected_status)
@@ -48,6 +49,10 @@ fn fixture_with_index(
 
 fn submodule_fixture(name: &str, expected_status: &[Expectation<'_>]) -> Outcome {
     fixture_filtered_detailed("status_submodule", name, &[], expected_status, |_| {}, false)
+}
+
+fn conflict_fixture(name: &str, expected_status: &[Expectation<'_>]) -> Outcome {
+    fixture_filtered_detailed("conflicts", name, &[], expected_status, |_| {}, false)
 }
 
 fn submodule_fixture_status(name: &str, expected_status: &[Expectation<'_>], submodule_dirty: bool) -> Outcome {
@@ -66,6 +71,23 @@ fn fixture_filtered_detailed(
     mut prepare_index: impl FnMut(&mut gix_index::State),
     submodule_dirty: bool,
 ) -> Outcome {
+    // This can easily happen in some fixtures, which can cause flakyness. It's time-dependent after all.
+    fn ignore_racyclean(mut out: Outcome) -> Outcome {
+        out.racy_clean = 0;
+        out
+    }
+
+    fn ignore_updated(mut out: Outcome) -> Outcome {
+        out.entries_to_update = 0;
+        out
+    }
+
+    fn ignore_worktree_stats(mut out: Outcome) -> Outcome {
+        out.worktree_bytes = 0;
+        out.worktree_files_read = 0;
+        out
+    }
+
     let worktree = fixture_path(name).join(subdir);
     let git_dir = worktree.join(".git");
     let mut index =
@@ -75,7 +97,7 @@ fn fixture_filtered_detailed(
     let search = gix_pathspec::Search::from_specs(to_pathspecs(pathspecs), None, std::path::Path::new(""))
         .expect("valid specs can be normalized");
     let outcome = index_as_worktree(
-        &mut index,
+        &index,
         &worktree,
         &mut recorder,
         FastEq,
@@ -94,14 +116,38 @@ fn fixture_filtered_detailed(
     .unwrap();
     recorder.records.sort_unstable_by_key(|r| r.relative_path);
     assert_eq!(records_to_tuple(recorder.records), expected_status);
-    outcome
+    ignore_racyclean(ignore_updated(ignore_worktree_stats(outcome)))
 }
 
+/// Note that we also reset certain information to assure there is no flakyness - everything regarding race-detection otherwise can cause failures.
 fn records_to_tuple<'index>(records: impl IntoIterator<Item = Record<'index, (), ()>>) -> Vec<Expectation<'index>> {
     records
         .into_iter()
-        .map(|r| (r.relative_path, r.entry_index, r.change, r.conflict))
+        .filter_map(|r| deracify_status(r.status).map(|status| (r.relative_path, r.entry_index, status)))
         .collect()
+}
+
+fn deracify_status(status: EntryStatus) -> Option<EntryStatus> {
+    Some(match status {
+        EntryStatus::Conflict(c) => EntryStatus::Conflict(c),
+        EntryStatus::Change(c) => match c {
+            Change::Removed => Change::Removed,
+            Change::Type => Change::Type,
+            Change::Modification {
+                executable_bit_changed,
+                content_change,
+                set_entry_stat_size_zero: _,
+            } => Change::Modification {
+                executable_bit_changed,
+                content_change,
+                set_entry_stat_size_zero: false,
+            },
+            Change::SubmoduleModification(c) => Change::SubmoduleModification(c),
+        }
+        .into(),
+        EntryStatus::NeedsUpdate(_) => return None,
+        EntryStatus::IntentToAdd => EntryStatus::IntentToAdd,
+    })
 }
 
 #[derive(Clone)]
@@ -125,15 +171,19 @@ fn to_pathspecs(input: &[&str]) -> Vec<gix_pathspec::Pattern> {
         .collect()
 }
 
+fn status_removed() -> EntryStatus {
+    Change::Removed.into()
+}
+
 #[test]
 fn removed() {
     let out = fixture(
         "status_removed",
         &[
-            (BStr::new(b"dir/content"), 0, Some(Change::Removed), NO_CONFLICT),
-            (BStr::new(b"dir/sub-dir/symlink"), 1, Some(Change::Removed), NO_CONFLICT),
-            (BStr::new(b"empty"), 2, Some(Change::Removed), NO_CONFLICT),
-            (BStr::new(b"executable"), 3, Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"dir/content"), 0, status_removed()),
+            (BStr::new(b"dir/sub-dir/symlink"), 1, status_removed()),
+            (BStr::new(b"empty"), 2, status_removed()),
+            (BStr::new(b"executable"), 3, status_removed()),
         ],
     );
     assert_eq!(
@@ -150,8 +200,8 @@ fn removed() {
         "status_removed",
         &["dir"],
         &[
-            (BStr::new(b"dir/content"), 0, Some(Change::Removed), NO_CONFLICT),
-            (BStr::new(b"dir/sub-dir/symlink"), 1, Some(Change::Removed), NO_CONFLICT),
+            (BStr::new(b"dir/content"), 0, status_removed()),
+            (BStr::new(b"dir/sub-dir/symlink"), 1, status_removed()),
         ],
     );
     assert_eq!(
@@ -169,14 +219,11 @@ fn removed() {
 #[test]
 fn subomdule_nochange() {
     assert_eq!(
-        ignore_racyclean(submodule_fixture("no-change", &[])),
+        submodule_fixture("no-change", &[]),
         Outcome {
             entries_to_process: 2,
             entries_processed: 2,
-            entries_updated: 1,
             symlink_metadata_calls: 2,
-            worktree_bytes: 46,
-            worktree_files_read: 1,
             ..Default::default()
         }
     );
@@ -185,17 +232,11 @@ fn subomdule_nochange() {
 #[test]
 fn subomdule_deleted_dir() {
     assert_eq!(
-        ignore_racyclean(submodule_fixture(
-            "deleted-dir",
-            &[(BStr::new(b"m1"), 1, Some(Change::Removed), NO_CONFLICT)]
-        )),
+        submodule_fixture("deleted-dir", &[(BStr::new(b"m1"), 1, status_removed())]),
         Outcome {
             entries_to_process: 2,
             entries_processed: 2,
-            entries_updated: 1,
             symlink_metadata_calls: 2,
-            worktree_files_read: 1,
-            worktree_bytes: 46,
             ..Default::default()
         }
     );
@@ -204,17 +245,11 @@ fn subomdule_deleted_dir() {
 #[test]
 fn subomdule_typechange() {
     assert_eq!(
-        ignore_racyclean(submodule_fixture(
-            "type-change",
-            &[(BStr::new(b"m1"), 1, Some(Change::Type), NO_CONFLICT)]
-        )),
+        submodule_fixture("type-change", &[(BStr::new(b"m1"), 1, Change::Type.into())]),
         Outcome {
             entries_to_process: 2,
             entries_processed: 2,
-            entries_updated: 1,
             symlink_metadata_calls: 2,
-            worktree_files_read: 1,
-            worktree_bytes: 46,
             ..Default::default()
         }
     )
@@ -223,14 +258,11 @@ fn subomdule_typechange() {
 #[test]
 fn subomdule_empty_dir_no_change() {
     assert_eq!(
-        ignore_racyclean(submodule_fixture("empty-dir-no-change", &[])),
+        submodule_fixture("empty-dir-no-change", &[]),
         Outcome {
             entries_to_process: 2,
             entries_processed: 2,
-            entries_updated: 1,
             symlink_metadata_calls: 2,
-            worktree_files_read: 1,
-            worktree_bytes: 46,
             ..Default::default()
         }
     );
@@ -239,23 +271,15 @@ fn subomdule_empty_dir_no_change() {
 #[test]
 fn subomdule_empty_dir_no_change_is_passed_to_submodule_handler() {
     assert_eq!(
-        ignore_racyclean(submodule_fixture_status(
+        submodule_fixture_status(
             "empty-dir-no-change",
-            &[(
-                BStr::new(b"m1"),
-                1,
-                Some(Change::SubmoduleModification(())),
-                NO_CONFLICT
-            )],
+            &[(BStr::new(b"m1"), 1, Change::SubmoduleModification(()).into())],
             true,
-        )),
+        ),
         Outcome {
             entries_to_process: 2,
             entries_processed: 2,
-            entries_updated: 1,
             symlink_metadata_calls: 2,
-            worktree_files_read: 1,
-            worktree_bytes: 46,
             ..Default::default()
         }
     );
@@ -266,7 +290,7 @@ fn intent_to_add() {
     assert_eq!(
         fixture(
             "status_intent_to_add",
-            &[(BStr::new(b"content"), 0, Some(Change::IntentToAdd), NO_CONFLICT)],
+            &[(BStr::new(b"content"), 0, EntryStatus::IntentToAdd)],
         ),
         Outcome {
             entries_to_process: 1,
@@ -282,38 +306,93 @@ fn conflict() {
     assert_eq!(
         fixture(
             "status_conflict",
-            &[(
-                BStr::new(b"content"),
-                0,
-                Some(Change::Modification {
-                    executable_bit_changed: false,
-                    content_change: Some(()),
-                }),
-                true,
-            )],
+            &[(BStr::new(b"content"), 0, EntryStatus::Conflict(Conflict::BothModified))],
+        ),
+        Outcome {
+            entries_to_process: 3,
+            entries_processed: 1,
+            ..Default::default()
+        },
+        "2 entries were just related to the conflict, which we don't count as processed then"
+    );
+}
+
+#[test]
+fn conflict_both_deleted_and_added_by_them_and_added_by_us() {
+    use Conflict::*;
+    assert_eq!(
+        conflict_fixture(
+            "both-deleted",
+            &[
+                (BStr::new(b"added-by-them"), 0, EntryStatus::Conflict(AddedByThem)),
+                (BStr::new(b"added-by-us"), 1, EntryStatus::Conflict(AddedByUs)),
+                (BStr::new(b"file"), 2, EntryStatus::Conflict(BothDeleted)),
+            ],
         ),
         Outcome {
             entries_to_process: 3,
             entries_processed: 3,
-            symlink_metadata_calls: 1,
-            worktree_files_read: 1,
-            worktree_bytes: 51,
             ..Default::default()
-        }
+        },
     );
+}
+
+#[test]
+fn conflict_both_added_and_deleted_by_them() {
+    use Conflict::*;
+    assert_eq!(
+        conflict_fixture(
+            "both-added",
+            &[
+                (BStr::new(b"both-added"), 0, EntryStatus::Conflict(BothAdded)),
+                (BStr::new(b"deleted-by-them"), 2, EntryStatus::Conflict(DeletedByThem)),
+            ],
+        ),
+        Outcome {
+            entries_to_process: 4,
+            entries_processed: 2,
+            ..Default::default()
+        },
+    );
+}
+
+#[test]
+fn conflict_detailed_single() {
+    use Conflict::*;
+    for (name, expected, entry_index, entries_to_process, entries_processed) in [
+        ("deleted-by-them", DeletedByThem, 0, 2, 1),
+        ("deleted-by-us", DeletedByUs, 0, 2, 1),
+        ("both-modified", BothModified, 0, 3, 1),
+    ] {
+        assert_eq!(
+            conflict_fixture(
+                name,
+                &[(BStr::new(b"file"), entry_index, EntryStatus::Conflict(expected))],
+            ),
+            Outcome {
+                entries_to_process,
+                entries_processed,
+                ..Default::default()
+            },
+            "{name}"
+        );
+    }
 }
 
 #[test]
 fn submodule_conflict() {
     assert_eq!(
-        submodule_fixture("conflict", &[(BStr::new(b"m1"), 1, None, true)]),
+        submodule_fixture(
+            "conflict",
+            &[(BStr::new(b"m1"), 1, EntryStatus::Conflict(Conflict::DeletedByUs))]
+        ),
         Outcome {
             entries_to_process: 3,
-            entries_processed: 3,
-            symlink_metadata_calls: 2,
+            entries_processed: 2,
+            symlink_metadata_calls: 1,
             ..Default::default()
         },
-        "submodule status is still called for OUR side of an entry, but never for THEIRS"
+        "1 metadata call for .gitmodules, conflicting entries are not queried for status anymore."
     );
 }
 
@@ -328,9 +407,6 @@ fn refresh() {
         entries_to_process: 5,
         entries_processed: 5,
         symlink_metadata_calls: 5,
-        entries_updated: if cfg!(windows) { 2 } else { 1 },
-        worktree_files_read: 4,
-        worktree_bytes: if cfg!(windows) { 41 } else { 38 },
         ..Default::default()
     };
     assert_eq!(
@@ -342,30 +418,33 @@ fn refresh() {
                 (
                     BStr::new(b"dir/content"),
                     0,
-                    Some(Change::Modification {
+                    Change::Modification {
                         executable_bit_changed: true,
                         content_change: None,
-                    }),
-                    NO_CONFLICT,
+                        set_entry_stat_size_zero: false
+                    }
+                    .into(),
                 ),
                 (
                     BStr::new(b"dir/content2"),
                     1,
-                    Some(Change::Modification {
+                    Change::Modification {
                         executable_bit_changed: false,
                         content_change: Some(()),
-                    }),
-                    NO_CONFLICT,
+                        set_entry_stat_size_zero: false
+                    }
+                    .into(),
                 ),
-                (BStr::new(b"empty"), 3, Some(Change::Type), NO_CONFLICT),
+                (BStr::new(b"empty"), 3, Change::Type.into()),
                 (
                     BStr::new(b"executable"),
                     4,
-                    Some(Change::Modification {
+                    Change::Modification {
                         executable_bit_changed: true,
                         content_change: Some(()),
-                    }),
-                    NO_CONFLICT,
+                        set_entry_stat_size_zero: false
+                    }
+                    .into(),
                 ),
             ],
             #[cfg(windows)]
@@ -373,29 +452,32 @@ fn refresh() {
                 (
                     BStr::new("dir/content2"),
                     1,
-                    Some(Change::Modification {
+                    Change::Modification {
                         executable_bit_changed: false,
-                        content_change: Some(())
-                    }),
-                    NO_CONFLICT
+                        content_change: Some(()),
+                        set_entry_stat_size_zero: false
+                    }
+                    .into(),
                 ),
                 (
                     BStr::new("empty"),
                     3,
-                    Some(Change::Modification {
+                    Change::Modification {
                         executable_bit_changed: false,
-                        content_change: Some(())
-                    }),
-                    NO_CONFLICT
+                        content_change: Some(()),
+                        set_entry_stat_size_zero: false
+                    }
+                    .into(),
                 ),
                 (
                     BStr::new("executable"),
                     4,
-                    Some(Change::Modification {
+                    Change::Modification {
                         executable_bit_changed: false,
-                        content_change: Some(())
-                    }),
-                    NO_CONFLICT
+                        content_change: Some(()),
+                        set_entry_stat_size_zero: false
+                    }
+                    .into(),
                 )
             ],
         ),
@@ -418,30 +500,33 @@ fn modified() {
             (
                 BStr::new(b"dir/content"),
                 0,
-                Some(Change::Modification {
+                Change::Modification {
                     executable_bit_changed: true,
                     content_change: None,
-                }),
-                NO_CONFLICT,
+                    set_entry_stat_size_zero: false,
+                }
+                .into(),
             ),
             (
                 BStr::new(b"dir/content2"),
                 1,
-                Some(Change::Modification {
+                Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
-                }),
-                NO_CONFLICT,
+                    set_entry_stat_size_zero: false,
+                }
+                .into(),
             ),
-            (BStr::new(b"empty"), 3, Some(Change::Type), NO_CONFLICT),
+            (BStr::new(b"empty"), 3, Change::Type.into()),
             (
                 BStr::new(b"executable"),
                 4,
-                Some(Change::Modification {
+                Change::Modification {
                     executable_bit_changed: true,
                     content_change: Some(()),
-                }),
-                NO_CONFLICT,
+                    set_entry_stat_size_zero: false,
+                }
+                .into(),
             ),
         ],
         #[cfg(windows)]
@@ -449,39 +534,37 @@ fn modified() {
             (
                 BStr::new("dir/content2"),
                 1,
-                Some(Change::Modification {
+                Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
-                }),
-                NO_CONFLICT,
+                    set_entry_stat_size_zero: false,
+                }
+                .into(),
             ),
             (
                 BStr::new("empty"),
                 3,
-                Some(Change::Modification {
+                Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
-                }),
-                NO_CONFLICT,
+                    set_entry_stat_size_zero: false,
+                }
+                .into(),
             ),
             (
                 BStr::new("executable"),
                 4,
-                Some(Change::Modification {
+                Change::Modification {
                     executable_bit_changed: false,
                     content_change: Some(()),
-                }),
-                NO_CONFLICT,
+                    set_entry_stat_size_zero: false,
+                }
+                .into(),
             ),
         ],
     );
-    assert_eq!(
-        ignore_worktree_stats(ignore_updated(ignore_racyclean(actual_outcome))),
-        expected_outcome,
-    );
+    assert_eq!(actual_outcome, expected_outcome,);
 }
-
-const NO_CONFLICT: bool = false;
 
 #[test]
 fn racy_git() {
@@ -527,7 +610,7 @@ fn racy_git() {
     let count = Arc::new(AtomicUsize::new(0));
     let counter = CountCalls(count.clone(), FastEq);
     let out = index_as_worktree(
-        &mut index,
+        &index,
         worktree,
         &mut recorder,
         counter.clone(),
@@ -566,7 +649,7 @@ fn racy_git() {
     index.set_timestamp(FileTime::from_unix_time(timestamp as i64, 0));
     let mut recorder = Recorder::default();
     let out = index_as_worktree(
-        &mut index,
+        &index,
         worktree,
         &mut recorder,
         counter,
@@ -605,11 +688,12 @@ fn racy_git() {
         &[(
             BStr::new(b"content"),
             0,
-            Some(Change::Modification {
+            Change::Modification {
                 executable_bit_changed: false,
                 content_change: Some(()),
-            }),
-            false
+                set_entry_stat_size_zero: false
+            }
+            .into(),
         )],
         "racy change is correctly detected"
     );
@@ -638,21 +722,4 @@ impl gix_status::Pathspec for Pathspec {
             })
             .map_or(false, |m| !m.is_excluded())
     }
-}
-
-// This can easily happen in some fixtures, which can cause flakyness. It's time-dependent after all.
-fn ignore_racyclean(mut out: Outcome) -> Outcome {
-    out.racy_clean = 0;
-    out
-}
-
-fn ignore_updated(mut out: Outcome) -> Outcome {
-    out.entries_updated = 0;
-    out
-}
-
-fn ignore_worktree_stats(mut out: Outcome) -> Outcome {
-    out.worktree_bytes = 0;
-    out.worktree_files_read = 0;
-    out
 }

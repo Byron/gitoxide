@@ -53,10 +53,12 @@ pub struct Outcome {
     pub entries_skipped_by_entry_flags: usize,
     /// The amount of times we queried symlink-metadata for a file on disk.
     pub symlink_metadata_calls: usize,
-    /// The amount of entries whose stats have been updated as its modification couldn't be determined without an expensive calculation.
+    /// The amount of entries whose stats would need to be updated as its modification couldn't be determined without
+    /// an expensive calculation.
     ///
     /// With these updates, this calculation will be avoided next time the status runs.
-    pub entries_updated: usize,
+    /// Note that the stat updates are delegated to the caller.
+    pub entries_to_update: usize,
     /// The amount of entries that were considered racy-clean - they will need thorough checking to see if they are truly clean,
     /// i.e. didn't change.
     pub racy_clean: usize,
@@ -79,7 +81,7 @@ impl Outcome {
 }
 
 /// How an index entry needs to be changed to obtain the destination worktree state, i.e. `entry.apply(this_change) == worktree-entry`.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Change<T = (), U = ()> {
     /// This corresponding file does not exist in the worktree anymore.
     Removed,
@@ -95,6 +97,11 @@ pub enum Change<T = (), U = ()> {
         /// If there is no content change and only the executable bit
         /// changed then this is `None`.
         content_change: Option<T>,
+        /// If true, the caller is expected to set [entry.stat.size = 0](gix_index::entry::Stat::size) to assure this
+        /// otherwise racily clean entry can still be detected as dirty next time this is called, but this time without
+        /// reading it from disk to hash it. It's a performance optimization and not doing so won't change the correctness
+        /// of the operation.
+        set_entry_stat_size_zero: bool,
     },
     /// A submodule is initialized and checked out, and there was modification to either:
     ///
@@ -105,28 +112,73 @@ pub enum Change<T = (), U = ()> {
     /// The exact nature of the modification is handled by the caller which may retain information per submodule or
     /// re-compute details as needed when seeing this variant.
     SubmoduleModification(U),
-    /// An index entry that correspond to an untracked worktree file marked with `git add --intent-to-add`.
+}
+
+/// Information about an entry.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum EntryStatus<T = (), U = ()> {
+    /// The entry is in a conflicting state, and we didn't collect any more information about it.
+    Conflict(Conflict),
+    /// There is no conflict and a change was discovered.
+    Change(Change<T, U>),
+    /// The entry didn't change, but its state caused extra work that can be avoided next time if its stats would be updated to the
+    /// given stat.
+    NeedsUpdate(
+        /// The new stats which represent what's currently in the working tree. If these replace the current stats in the entry,
+        /// next time this operation runs we can determine the actual state much faster.
+        gix_index::entry::Stat,
+    ),
+    /// An index entry that corresponds to an untracked worktree file marked with `git add --intent-to-add`.
     ///
-    /// This means it's not available in the object database yet
-    /// even though now an entry exists that represents the worktree file.
+    /// This means it's not available in the object database yet even though now an entry exists that represents the worktree file.
+    /// The entry represents the promise of adding a new file, no matter the actual stat or content.
+    /// Effectively this means nothing changed.
+    /// This also means the file is still present, and that no detailed change checks were performed.
     IntentToAdd,
 }
 
-/// Observe changes by comparing an index entry to the worktree or another index.
+impl<T, U> From<Change<T, U>> for EntryStatus<T, U> {
+    fn from(value: Change<T, U>) -> Self {
+        EntryStatus::Change(value)
+    }
+}
+
+/// Describes a conflicting entry as comparison between 'our' version and 'their' version of it.
+///
+/// If one side isn't specified, it is assumed to have modified the entry. In general, there would be no conflict
+/// if both parties ended up in the same state.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum Conflict {
+    /// Both deleted a different version of the entry.
+    BothDeleted,
+    /// We added, they modified, ending up in different states.
+    AddedByUs,
+    /// They deleted the entry, we modified it.
+    DeletedByThem,
+    /// They added the entry, we modified it, ending up in different states.
+    AddedByThem,
+    /// We deleted the entry, they modified it, ending up in different states.
+    DeletedByUs,
+    /// Both added the entry in different states.
+    BothAdded,
+    /// Both modified the entry, ending up in different states.
+    BothModified,
+}
+
+/// Observe the status of an entry by comparing an index entry to the worktree.
 pub trait VisitEntry<'index> {
     /// Data generated by comparing an entry with a file.
     type ContentChange;
     /// Data obtained when checking the submodule status.
     type SubmoduleStatus;
-    /// Observe the `change` of `entry` at the repository-relative `rela_path` at `entry_index`
-    /// (relative to the complete list of all index entries), indicating whether or not it has a `conflict`.
-    /// If `change` is `None`, there is no change.
+    /// Observe the `status` of `entry` at the repository-relative `rela_path` at `entry_index`
+    /// (for accessing `entry` and surrounding in the complete list of `entries`).
     fn visit_entry(
         &mut self,
+        entries: &'index [gix_index::Entry],
         entry: &'index gix_index::Entry,
         entry_index: usize,
         rela_path: &'index BStr,
-        change: Option<Change<Self::ContentChange, Self::SubmoduleStatus>>,
-        conflict: bool,
+        status: EntryStatus<Self::ContentChange, Self::SubmoduleStatus>,
     );
 }

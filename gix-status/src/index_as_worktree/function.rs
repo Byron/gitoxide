@@ -1,6 +1,6 @@
-use std::slice::ChunksMut;
+use std::slice::Chunks;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::{io, marker::PhantomData, path::Path};
+use std::{io, path::Path};
 
 use bstr::BStr;
 use filetime::FileTime;
@@ -8,6 +8,7 @@ use gix_features::parallel::{in_parallel_if, Reduce};
 use gix_filter::pipeline::convert::ToGitOutcome;
 
 use crate::index_as_worktree::traits::read_data::Stream;
+use crate::index_as_worktree::{Conflict, EntryStatus};
 use crate::{
     index_as_worktree::{
         traits,
@@ -23,26 +24,29 @@ use crate::{
 /// `submodule` which can take a look at submodules in detail to produce status information (BASE version if its conflicting).
 /// `options` are used to configure the operation.
 ///
-/// Note that `index` is updated with the latest seen stat information from the worktree, and its timestamp is adjusted to
-/// the current time for which it will be considered fresh as long as it is included which depends on `pathspec`.
+/// Note that `index` may require changes to be up-to-date with the working tree and avoid expensive computations by updating respective entries
+/// with stat information from the worktree, and its timestamp is adjusted to the current time for which it will be considered fresh
+/// as long as it is included which depends on `pathspec`. All this is delegated to the caller.
 ///
 /// `should_interrupt` can be used to stop all processing.
 /// `filter` is used to convert worktree files back to their internal git representation. For this to be correct,
 /// [`Options::attributes`] must be configured as well.
 ///
+/// **It's important to note that the `index` should have its [timestamp updated](gix_index::State::set_timestamp()) with a timestamp
+/// from just before making this call *if* [entries were updated](Outcome::entries_to_update)**
+///
 /// ### Note
 ///
-/// Technically, this function does more as this also provides additional information, like whether a file has conflicts,
-/// and files that were added with `git add` are shown as a special as well. It also updates index entry stats like `git status` would
-/// if it had to determine the hash. If that happened, the index should be written back, see [Outcome::skipped]
-/// The latter is a 'change' that is not technically requiring a change to the index since `git add` already added the
-/// file to the index, but didn't hash it.
+/// Technically, this function does more as it also provides additional information, like whether a file has conflicts,
+/// and files that were added with `git add` are shown as a special as well. It also provides updates to entry filesystem
+/// stats like `git status` would if it had to determine the hash.
+/// If that happened, the index should be written back after updating the entries with these updated stats, see [Outcome::skipped].
 ///
 /// Thus some care has to be taken to do the right thing when letting the index match the worktree by evaluating the changes observed
 /// by the `collector`.
 #[allow(clippy::too_many_arguments)]
 pub fn index_as_worktree<'index, T, U, Find, E1, E2>(
-    index: &'index mut gix_index::State,
+    index: &'index gix_index::State,
     worktree: &Path,
     collector: &mut impl VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>,
     compare: impl CompareBlobs<Output = T> + Send + Clone,
@@ -65,7 +69,6 @@ where
     // (modified at or after the last index update) during the index update we then set those
     // entries size to 0 (see below) to ensure they keep showing up as racy and reset the timestamp.
     let timestamp = index.timestamp();
-    index.set_timestamp(FileTime::now());
     let (chunk_size, thread_limit, _) = gix_features::parallel::optimize_chunk_size_and_thread_limit(
         500, // just like git
         index.entries().len().into(),
@@ -84,10 +87,10 @@ where
         index,
         index.path_backing(),
     );
-    let (entries, path_backing) = index.entries_mut_and_pathbacking();
+    let (entries, path_backing) = (index.entries(), index.path_backing());
     let mut num_entries = entries.len();
     let entry_index_offset = range.start;
-    let entries = &mut entries[range];
+    let entries = &entries[range];
 
     let _span = gix_features::trace::detail!("gix_status::index_as_worktree", 
                                              num_entries = entries.len(), 
@@ -95,7 +98,7 @@ where
                                              thread_limit = ?thread_limit);
 
     let entries_skipped_by_common_prefix = num_entries - entries.len();
-    let (skipped_by_pathspec, skipped_by_entry_flags, symlink_metadata_calls, entries_updated) = Default::default();
+    let (skipped_by_pathspec, skipped_by_entry_flags, symlink_metadata_calls, entries_to_update) = Default::default();
     let (worktree_bytes, worktree_reads, odb_bytes, odb_reads, racy_clean) = Default::default();
 
     num_entries = entries.len();
@@ -105,7 +108,7 @@ where
     let new_state = {
         let options = &options;
         let (skipped_by_pathspec, skipped_by_entry_flags) = (&skipped_by_pathspec, &skipped_by_entry_flags);
-        let (symlink_metadata_calls, entries_updated) = (&symlink_metadata_calls, &entries_updated);
+        let (symlink_metadata_calls, entries_to_update) = (&symlink_metadata_calls, &entries_to_update);
         let (racy_clean, worktree_bytes) = (&racy_clean, &worktree_bytes);
         let (worktree_reads, odb_bytes, odb_reads) = (&worktree_reads, &odb_bytes, &odb_reads);
         move |_| {
@@ -123,7 +126,7 @@ where
                     skipped_by_pathspec,
                     skipped_by_entry_flags,
                     symlink_metadata_calls,
-                    entries_updated,
+                    entries_to_update,
                     racy_clean,
                     worktree_reads,
                     worktree_bytes,
@@ -141,27 +144,57 @@ where
         || true, // TODO: heuristic: when is parallelization not worth it? Git says 500 items per thread, but to 20 threads, we can be more fine-grained though.
         gix_features::interrupt::Iter::new(
             OffsetIter {
-                inner: entries.chunks_mut(chunk_size),
+                inner: entries.chunks(chunk_size),
                 offset: entry_index_offset,
             },
             should_interrupt,
         ),
         thread_limit,
         new_state,
-        |(entry_offset, entries), (state, blobdiff, submdule, find, pathspec)| {
-            entries
-                .iter_mut()
-                .enumerate()
-                .filter_map(|(entry_index, entry)| {
-                    let res = state.process(entry, entry_offset + entry_index, pathspec, blobdiff, submdule, find);
-                    count.fetch_add(1, Ordering::Relaxed);
-                    res
-                })
-                .collect()
+        |(entry_offset, chunk_entries), (state, blobdiff, submdule, find, pathspec)| {
+            let all_entries = index.entries();
+            let mut out = Vec::new();
+            let mut idx = 0;
+            while let Some(entry) = chunk_entries.get(idx) {
+                let absolute_entry_index = entry_offset + idx;
+                if idx == 0 && entry.stage() != 0 {
+                    let offset = entry_offset.checked_sub(1).and_then(|prev_idx| {
+                        let prev_entry = &all_entries[prev_idx];
+                        let entry_path = entry.path_in(state.path_backing);
+                        if prev_entry.stage() == 0 || prev_entry.path_in(state.path_backing) != entry_path {
+                            // prev_entry (in previous chunk) does not belong to our conflict
+                            return None;
+                        }
+                        Conflict::try_from_entry(all_entries, state.path_backing, absolute_entry_index, entry_path)
+                            .map(|(_conflict, offset)| offset)
+                    });
+                    if let Some(entries_to_skip_as_conflict_originates_in_previous_chunk) = offset {
+                        // skip current entry as it's done, along with following conflict entries
+                        idx += entries_to_skip_as_conflict_originates_in_previous_chunk + 1;
+                        continue;
+                    }
+                }
+                let res = state.process(
+                    all_entries,
+                    entry,
+                    absolute_entry_index,
+                    pathspec,
+                    blobdiff,
+                    submdule,
+                    find,
+                    &mut idx,
+                );
+                idx += 1;
+                count.fetch_add(1, Ordering::Relaxed);
+                if let Some(res) = res {
+                    out.push(res);
+                }
+            }
+            out
         },
         ReduceChange {
             collector,
-            phantom: PhantomData,
+            entries: index.entries(),
         },
     )?;
 
@@ -171,7 +204,7 @@ where
         entries_skipped_by_common_prefix,
         entries_skipped_by_pathspec: skipped_by_pathspec.load(Ordering::Relaxed),
         entries_skipped_by_entry_flags: skipped_by_entry_flags.load(Ordering::Relaxed),
-        entries_updated: entries_updated.load(Ordering::Relaxed),
+        entries_to_update: entries_to_update.load(Ordering::Relaxed),
         symlink_metadata_calls: symlink_metadata_calls.load(Ordering::Relaxed),
         racy_clean: racy_clean.load(Ordering::Relaxed),
         worktree_files_read: worktree_reads.load(Ordering::Relaxed),
@@ -193,13 +226,13 @@ struct State<'a, 'b> {
     /// requires attributes to drive the filter configuration.
     attr_stack: gix_worktree::Stack,
     filter: gix_filter::Pipeline,
-    path_backing: &'b [u8],
+    path_backing: &'b gix_index::PathStorageRef,
     options: &'a Options,
 
     skipped_by_pathspec: &'a AtomicUsize,
     skipped_by_entry_flags: &'a AtomicUsize,
     symlink_metadata_calls: &'a AtomicUsize,
-    entries_updated: &'a AtomicUsize,
+    entries_to_update: &'a AtomicUsize,
     racy_clean: &'a AtomicUsize,
     worktree_bytes: &'a AtomicU64,
     worktree_reads: &'a AtomicUsize,
@@ -207,37 +240,26 @@ struct State<'a, 'b> {
     odb_reads: &'a AtomicUsize,
 }
 
-type StatusResult<'index, T, U> = Result<
-    (
-        &'index gix_index::Entry,
-        usize,
-        &'index BStr,
-        Option<Change<T, U>>,
-        bool,
-    ),
-    Error,
->;
+type StatusResult<'index, T, U> = Result<(&'index gix_index::Entry, usize, &'index BStr, EntryStatus<T, U>), Error>;
 
 impl<'index> State<'_, 'index> {
+    #[allow(clippy::too_many_arguments)]
     fn process<T, U, Find, E1, E2>(
         &mut self,
-        entry: &'index mut gix_index::Entry,
+        entries: &'index [gix_index::Entry],
+        entry: &'index gix_index::Entry,
         entry_index: usize,
         pathspec: &mut impl Pathspec,
         diff: &mut impl CompareBlobs<Output = T>,
         submodule: &mut impl SubmoduleStatus<Output = U, Error = E2>,
         find: &mut Find,
+        outer_entry_index: &mut usize,
     ) -> Option<StatusResult<'index, T, U>>
     where
         E1: std::error::Error + Send + Sync + 'static,
         E2: std::error::Error + Send + Sync + 'static,
         Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E1>,
     {
-        let conflict = match entry.stage() {
-            0 => false,
-            1 => true,
-            _ => return None,
-        };
         if entry.flags.intersects(
             gix_index::entry::Flags::UPTODATE
                 | gix_index::entry::Flags::SKIP_WORKTREE
@@ -252,8 +274,21 @@ impl<'index> State<'_, 'index> {
             self.skipped_by_pathspec.fetch_add(1, Ordering::Relaxed);
             return None;
         }
-        let status = self.compute_status(&mut *entry, path, diff, submodule, find);
-        Some(status.map(move |status| (&*entry, entry_index, path, status, conflict)))
+        let status = if entry.stage() != 0 {
+            Ok(
+                Conflict::try_from_entry(entries, self.path_backing, entry_index, path).map(|(conflict, offset)| {
+                    *outer_entry_index += offset; // let out loop skip over entries related to the conflict
+                    EntryStatus::Conflict(conflict)
+                }),
+            )
+        } else {
+            self.compute_status(entry, path, diff, submodule, find)
+        };
+        match status {
+            Ok(None) => None,
+            Ok(Some(status)) => Some(Ok((entry, entry_index, path, status))),
+            Err(err) => Some(Err(err)),
+        }
     }
 
     /// # On how racy-git is handled here
@@ -297,12 +332,12 @@ impl<'index> State<'_, 'index> {
     /// Adapted from [here](https://github.com/Byron/gitoxide/pull/805#discussion_r1164676777).
     fn compute_status<T, U, Find, E1, E2>(
         &mut self,
-        entry: &mut gix_index::Entry,
+        entry: &gix_index::Entry,
         rela_path: &BStr,
         diff: &mut impl CompareBlobs<Output = T>,
         submodule: &mut impl SubmoduleStatus<Output = U, Error = E2>,
         find: &mut Find,
-    ) -> Result<Option<Change<T, U>>, Error>
+    ) -> Result<Option<EntryStatus<T, U>>, Error>
     where
         E1: std::error::Error + Send + Sync + 'static,
         E2: std::error::Error + Send + Sync + 'static,
@@ -310,7 +345,7 @@ impl<'index> State<'_, 'index> {
     {
         let worktree_path = match self.path_stack.verified_path(gix_path::from_bstr(rela_path).as_ref()) {
             Ok(path) => path,
-            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
+            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Some(Change::Removed.into())),
             Err(err) => return Err(Error::Io(err)),
         };
         self.symlink_metadata_calls.fetch_add(1, Ordering::Relaxed);
@@ -327,19 +362,19 @@ impl<'index> State<'_, 'index> {
                             rela_path: rela_path.into(),
                             source: Box::new(err),
                         })?;
-                    return Ok(status.map(|status| Change::SubmoduleModification(status)));
+                    return Ok(status.map(|status| Change::SubmoduleModification(status).into()));
                 } else {
-                    return Ok(Some(Change::Removed));
+                    return Ok(Some(Change::Removed.into()));
                 }
             }
             Ok(metadata) => metadata,
-            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Some(Change::Removed)),
+            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Some(Change::Removed.into())),
             Err(err) => {
                 return Err(err.into());
             }
         };
         if entry.flags.contains(gix_index::entry::Flags::INTENT_TO_ADD) {
-            return Ok(Some(Change::IntentToAdd));
+            return Ok(Some(EntryStatus::IntentToAdd));
         }
         let new_stat = gix_index::entry::Stat::from_fs(&metadata)?;
         let executable_bit_changed =
@@ -347,7 +382,7 @@ impl<'index> State<'_, 'index> {
                 .mode
                 .change_to_match_fs(&metadata, self.options.fs.symlink, self.options.fs.executable_bit)
             {
-                Some(gix_index::entry::mode::Change::Type { .. }) => return Ok(Some(Change::Type)),
+                Some(gix_index::entry::mode::Change::Type { .. }) => return Ok(Some(Change::Type.into())),
                 Some(gix_index::entry::mode::Change::ExecutableBit) => true,
                 None => false,
             };
@@ -396,26 +431,26 @@ impl<'index> State<'_, 'index> {
         };
         let content_change = diff.compare_blobs(entry, metadata.len(), fetch_data, &mut self.buf2)?;
         // This file is racy clean! Set the size to 0 so we keep detecting this as the file is updated.
-        if content_change.is_some() && racy_clean {
-            entry.stat.size = 0;
-        }
         if content_change.is_some() || executable_bit_changed {
-            Ok(Some(Change::Modification {
-                executable_bit_changed,
-                content_change,
-            }))
+            let set_entry_stat_size_zero = content_change.is_some() && racy_clean;
+            Ok(Some(
+                Change::Modification {
+                    executable_bit_changed,
+                    content_change,
+                    set_entry_stat_size_zero,
+                }
+                .into(),
+            ))
         } else {
-            // don't diff against this file next time since we know the file is unchanged.
-            entry.stat = new_stat;
-            self.entries_updated.fetch_add(1, Ordering::Relaxed);
-            Ok(None)
+            self.entries_to_update.fetch_add(1, Ordering::Relaxed);
+            Ok(Some(EntryStatus::NeedsUpdate(new_stat)))
         }
     }
 }
 
 struct ReduceChange<'a, 'index, T: VisitEntry<'index>> {
     collector: &'a mut T,
-    phantom: PhantomData<fn(&'index ())>,
+    entries: &'index [gix_index::Entry],
 }
 
 impl<'index, T, U, C: VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>> Reduce
@@ -431,8 +466,9 @@ impl<'index, T, U, C: VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>
 
     fn feed(&mut self, items: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
         for item in items {
-            let (entry, entry_index, path, change, conflict) = item?;
-            self.collector.visit_entry(entry, entry_index, path, change, conflict);
+            let (entry, entry_index, path, status) = item?;
+            self.collector
+                .visit_entry(self.entries, entry, entry_index, path, status);
         }
         Ok(())
     }
@@ -532,17 +568,66 @@ where
 }
 
 struct OffsetIter<'a, T> {
-    inner: ChunksMut<'a, T>,
+    inner: Chunks<'a, T>,
     offset: usize,
 }
 
 impl<'a, T> Iterator for OffsetIter<'a, T> {
-    type Item = (usize, &'a mut [T]);
+    type Item = (usize, &'a [T]);
 
     fn next(&mut self) -> Option<Self::Item> {
         let block = self.inner.next()?;
         let offset = self.offset;
         self.offset += block.len();
         Some((offset, block))
+    }
+}
+
+impl Conflict {
+    /// Given `entries` and `path_backing`, both values obtained from an [index](gix_index::State), use `start_index` and enumerate
+    /// all conflict stages that still match `entry_path` to produce a conflict description.
+    /// Also return the amount of extra-entries that were part of the conflict declaration (not counting the entry at `start_index`)
+    ///
+    /// If for some reason entry at `start_index` isn't in conflicting state, `None` is returned.
+    pub fn try_from_entry(
+        entries: &[gix_index::Entry],
+        path_backing: &gix_index::PathStorageRef,
+        start_index: usize,
+        entry_path: &BStr,
+    ) -> Option<(Self, usize)> {
+        use Conflict::*;
+        let mut mask = None::<u8>;
+
+        let mut count = 0_usize;
+        for stage in (start_index..(start_index + 3).min(entries.len())).filter_map(|idx| {
+            let entry = &entries[idx];
+            let stage = entry.stage();
+            (stage > 0 && entry.path_in(path_backing) == entry_path).then_some(stage)
+        }) {
+            // This could be `1 << (stage - 1)` but let's be specific.
+            *mask.get_or_insert(0) |= match stage {
+                1 => 0b001,
+                2 => 0b010,
+                3 => 0b100,
+                _ => 0,
+            };
+            count += 1;
+        }
+
+        mask.map(|mask| {
+            (
+                match mask {
+                    0b001 => BothDeleted,
+                    0b010 => AddedByUs,
+                    0b011 => DeletedByThem,
+                    0b100 => AddedByThem,
+                    0b101 => DeletedByUs,
+                    0b110 => BothAdded,
+                    0b111 => BothModified,
+                    _ => unreachable!("BUG: bitshifts and typical entry layout doesn't allow for more"),
+                },
+                count - 1,
+            )
+        })
     }
 }
