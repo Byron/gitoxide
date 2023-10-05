@@ -1,4 +1,4 @@
-use crate::{filter, repository::IndexPersistedOrInMemory, Id, Repository};
+use crate::{filter, worktree::IndexPersistedOrInMemory, Id, Repository};
 
 ///
 pub mod pipeline {

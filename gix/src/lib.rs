@@ -133,8 +133,6 @@ pub use gix_ref as refs;
 pub use gix_refspec as refspec;
 pub use gix_revwalk as revwalk;
 pub use gix_sec as sec;
-#[cfg(feature = "status")]
-pub use gix_status as status;
 pub use gix_tempfile as tempfile;
 pub use gix_trace as trace;
 pub use gix_traverse as traverse;
@@ -316,6 +314,10 @@ pub mod init;
 
 /// Not to be confused with 'status'.
 pub mod state;
+
+///
+#[cfg(feature = "status")]
+pub mod status;
 
 ///
 pub mod shallow;

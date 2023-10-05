@@ -9,7 +9,7 @@ use std::{
 
 pub use gix_submodule::*;
 
-use crate::{bstr::BStr, repository::IndexPersistedOrInMemory, Repository, Submodule};
+use crate::{bstr::BStr, worktree::IndexPersistedOrInMemory, Repository, Submodule};
 
 pub(crate) type ModulesFileStorage = gix_features::threading::OwnShared<gix_fs::SharedFileSnapshotMut<File>>;
 /// A lazily loaded and auto-updated worktree index.
@@ -96,16 +96,22 @@ impl<'repo> Submodule<'repo> {
     }
 
     /// Return the url from which to clone or update the submodule.
+    ///
+    /// This method takes into consideration submodule configuration overrides.
     pub fn url(&self) -> Result<gix_url::Url, config::url::Error> {
         self.state.modules.url(self.name())
     }
 
     /// Return the `update` field from this submodule's configuration, if present, or `None`.
+    ///
+    /// This method takes into consideration submodule configuration overrides.
     pub fn update(&self) -> Result<Option<config::Update>, config::update::Error> {
         self.state.modules.update(self.name())
     }
 
     /// Return the `branch` field from this submodule's configuration, if present, or `None`.
+    ///
+    /// This method takes into consideration submodule configuration overrides.
     pub fn branch(&self) -> Result<Option<config::Branch>, config::branch::Error> {
         self.state.modules.branch(self.name())
     }
@@ -126,6 +132,8 @@ impl<'repo> Submodule<'repo> {
     }
 
     /// Return the `ignore` field from this submodule's configuration, if present, or `None`.
+    ///
+    /// This method takes into consideration submodule configuration overrides.
     pub fn ignore(&self) -> Result<Option<config::Ignore>, config::Error> {
         self.state.modules.ignore(self.name())
     }

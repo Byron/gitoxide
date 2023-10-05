@@ -104,17 +104,6 @@ pub mod branch_remote_tracking_ref_name {
     }
 }
 
-/// A type to represent an index which either was loaded from disk as it was persisted there, or created on the fly in memory.
-#[cfg(feature = "index")]
-pub enum IndexPersistedOrInMemory {
-    /// The index as loaded from disk, and shared across clones of the owning `Repository`.
-    Persisted(crate::worktree::Index),
-    /// A temporary index as created from the `HEAD^{tree}`, with the file path set to the place where it would be stored naturally.
-    ///
-    /// Note that unless saved explicitly, it will not persist.
-    InMemory(gix_index::File),
-}
-
 ///
 #[cfg(feature = "attributes")]
 pub mod pathspec_defaults_ignore_case {
