@@ -205,6 +205,12 @@ pub mod status {
         /// Define how to display submodule status.
         #[clap(long, default_value = "all")]
         pub submodules: Submodules,
+        /// Print additional statistics to help understanding performance.
+        #[clap(long, short = 's')]
+        pub statistics: bool,
+        /// Don't write back a changed index, which forces this operation to always be idempotent.
+        #[clap(long)]
+        pub no_write: bool,
         /// The git path specifications to list attributes for, or unset to read from stdin one per line.
         #[clap(value_parser = CheckPathSpec)]
         pub pathspec: Vec<BString>,

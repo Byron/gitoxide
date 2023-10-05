@@ -39,7 +39,7 @@ pub fn checksum_on_disk_or_mmap(
     let data_len_without_trailer = data.len() - object_hash.len_in_bytes();
     let actual = match gix_features::hash::bytes_of_file(
         data_path,
-        data_len_without_trailer,
+        data_len_without_trailer as u64,
         object_hash,
         progress,
         should_interrupt,

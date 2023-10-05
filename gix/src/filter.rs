@@ -150,8 +150,8 @@ impl<'repo> Pipeline<'repo> {
             &mut |_, attrs| {
                 entry.matching_attributes(attrs);
             },
-            &mut |rela_path, buf| -> Result<_, gix_odb::find::Error> {
-                let entry = match index.entry_by_path(rela_path) {
+            &mut |buf| -> Result<_, gix_odb::find::Error> {
+                let entry = match index.entry_by_path(gix_path::into_bstr(rela_path).as_ref()) {
                     None => return Ok(None),
                     Some(entry) => entry,
                 };

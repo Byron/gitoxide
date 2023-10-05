@@ -56,7 +56,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
         };
         match &mut self.state {
             #[cfg(feature = "attributes")]
-            State::CreateDirectoryAndAttributesStack { attributes, .. } => {
+            State::CreateDirectoryAndAttributesStack { attributes, .. } | State::AttributesStack(attributes) => {
                 attributes.push_directory(
                     stack.root(),
                     stack.current(),
@@ -89,16 +89,6 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                     &mut self.statistics.ignore,
                 )?
             }
-            #[cfg(feature = "attributes")]
-            State::AttributesStack(attributes) => attributes.push_directory(
-                stack.root(),
-                stack.current(),
-                rela_dir,
-                self.buf,
-                self.id_mappings,
-                &mut self.find,
-                &mut self.statistics.attributes,
-            )?,
             State::IgnoreStack(ignore) => ignore.push_directory(
                 stack.root(),
                 stack.current(),
@@ -139,17 +129,13 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
         self.statistics.delegate.pop_directory += 1;
         match &mut self.state {
             #[cfg(feature = "attributes")]
-            State::CreateDirectoryAndAttributesStack { attributes, .. } => {
+            State::CreateDirectoryAndAttributesStack { attributes, .. } | State::AttributesStack(attributes) => {
                 attributes.pop_directory();
             }
             #[cfg(feature = "attributes")]
             State::AttributesAndIgnoreStack { attributes, ignore } => {
                 attributes.pop_directory();
                 ignore.pop_directory();
-            }
-            #[cfg(feature = "attributes")]
-            State::AttributesStack(attributes) => {
-                attributes.pop_directory();
             }
             State::IgnoreStack(ignore) => {
                 ignore.pop_directory();

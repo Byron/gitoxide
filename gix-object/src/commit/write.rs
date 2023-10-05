@@ -27,9 +27,9 @@ impl crate::WriteTo for Commit {
         Kind::Commit
     }
 
-    fn size(&self) -> usize {
+    fn size(&self) -> u64 {
         let hash_in_hex = self.tree.kind().len_in_hex();
-        b"tree".len() + 1 /*space*/ + hash_in_hex + 1 /* nl */
+        (b"tree".len() + 1 /*space*/ + hash_in_hex + 1 /* nl */
         + self.parents.iter().count() * (b"parent".len() + 1 + hash_in_hex + 1)
             + b"author".len() + 1 /* space */ + self.author.size() + 1 /* nl */
             + b"committer".len() + 1 /* space */ + self.committer.size() + 1 /* nl */
@@ -46,7 +46,7 @@ impl crate::WriteTo for Commit {
                 })
                 .sum::<usize>()
             + 1 /* nl */
-            + self.message.len()
+            + self.message.len()) as u64
     }
 }
 
@@ -73,9 +73,9 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
         Kind::Commit
     }
 
-    fn size(&self) -> usize {
+    fn size(&self) -> u64 {
         let hash_in_hex = self.tree().kind().len_in_hex();
-        b"tree".len() + 1 /* space */ + hash_in_hex + 1 /* nl */
+        (b"tree".len() + 1 /* space */ + hash_in_hex + 1 /* nl */
             + self.parents.iter().count() * (b"parent".len() + 1 /* space */ + hash_in_hex + 1 /* nl */)
             + b"author".len() + 1 /* space */ + self.author.size() + 1 /* nl */
             + b"committer".len() + 1 /* space */ + self.committer.size() + 1 /* nl */
@@ -92,6 +92,6 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
                 })
                 .sum::<usize>()
             + 1 /* nl */
-            + self.message.len()
+            + self.message.len()) as u64
     }
 }

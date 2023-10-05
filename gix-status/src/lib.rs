@@ -8,12 +8,9 @@
 //! While also being able to check check if the working tree is dirty, quickly.
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
-///
-pub mod read;
+use bstr::BStr;
 
 pub mod index_as_worktree;
-
-use bstr::BStr;
 pub use index_as_worktree::function::index_as_worktree;
 
 /// A trait to facilitate working working with pathspecs.
@@ -31,3 +28,13 @@ pub trait Pathspec {
     /// `is_dir` is `true` if `relative_path` is a directory.
     fn is_included(&mut self, relative_path: &BStr, is_dir: Option<bool>) -> bool;
 }
+
+/// A stack that validates we are not going through a symlink in a way that is read-only.
+///
+/// It can efficiently validate paths when these are queried in sort-order, which leads to each component
+/// to only be checked once.
+pub struct SymlinkCheck {
+    inner: gix_fs::Stack,
+}
+
+mod stack;

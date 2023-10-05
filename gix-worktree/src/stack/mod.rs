@@ -77,6 +77,27 @@ impl Stack {
             statistics: Statistics::default(),
         }
     }
+
+    /// Create a new stack that takes into consideration the `ignore_case` result of a filesystem probe in `root`. It takes a configured
+    /// `state` to control what it can do, while initializing attribute or ignore files that are to be queried from the ODB using
+    /// `index` and `path_backing`.
+    ///
+    /// This is the easiest way to correctly setup a stack.
+    pub fn from_state_and_ignore_case(
+        root: impl Into<PathBuf>,
+        ignore_case: bool,
+        state: State,
+        index: &gix_index::State,
+        path_backing: &gix_index::PathStorageRef,
+    ) -> Self {
+        let case = if ignore_case {
+            gix_glob::pattern::Case::Fold
+        } else {
+            gix_glob::pattern::Case::Sensitive
+        };
+        let attribute_files = state.id_mappings_from_index(index, path_backing, case);
+        Stack::new(root, state, case, Vec::with_capacity(512), attribute_files)
+    }
 }
 
 /// Entry points for attribute query

@@ -19,7 +19,7 @@ macro_rules! check {
     };
 }
 /// Generates a loose header buffer
-pub fn loose_header(kind: crate::Kind, size: usize) -> smallvec::SmallVec<[u8; 28]> {
+pub fn loose_header(kind: crate::Kind, size: u64) -> smallvec::SmallVec<[u8; 28]> {
     let mut v = smallvec::SmallVec::new();
     check!(v.write_all(kind.as_bytes()));
     check!(v.write_all(SPACE));

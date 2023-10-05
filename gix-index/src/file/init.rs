@@ -78,7 +78,7 @@ impl File {
                     let num_bytes_to_hash = meta.len() - object_hash.len_in_bytes() as u64;
                     let actual_hash = gix_features::hash::bytes(
                         &mut file,
-                        num_bytes_to_hash as usize,
+                        num_bytes_to_hash,
                         object_hash,
                         &mut gix_features::progress::Discard,
                         &Default::default(),

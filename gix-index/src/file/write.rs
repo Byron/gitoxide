@@ -22,6 +22,7 @@ impl File {
         mut out: impl std::io::Write,
         options: write::Options,
     ) -> std::io::Result<(Version, gix_hash::ObjectId)> {
+        let _span = gix_features::trace::detail!("gix_index::File::write_to()", skip_hash = options.skip_hash);
         let (version, hash) = if options.skip_hash {
             let out: &mut dyn std::io::Write = &mut out;
             let version = self.state.write_to(out, options)?;
@@ -40,6 +41,7 @@ impl File {
     ///
     /// Note that the hash produced will be stored which is why we need to be mutable.
     pub fn write(&mut self, options: write::Options) -> Result<(), Error> {
+        let _span = gix_features::trace::detail!("gix_index::File::write()", path = ?self.path);
         let mut lock = std::io::BufWriter::with_capacity(
             64 * 1024,
             gix_lock::File::acquire_to_update_resource(&self.path, gix_lock::acquire::Fail::Immediately, None)?,

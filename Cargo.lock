@@ -2253,12 +2253,14 @@ dependencies = [
  "bstr",
  "filetime",
  "gix-features 0.35.0",
+ "gix-filter",
  "gix-fs 0.7.0",
  "gix-hash 0.13.0",
  "gix-index 0.25.0",
  "gix-object 0.37.0",
  "gix-path 0.10.0",
  "gix-pathspec",
+ "gix-worktree 0.26.0",
  "thiserror",
 ]
 

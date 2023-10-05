@@ -1,6 +1,6 @@
 use std::{io::Read, path::Path};
 
-use bstr::{BStr, ByteSlice};
+use bstr::ByteSlice;
 use gix_filter::{eol, pipeline::CrlfRoundTripCheck};
 
 use crate::{driver::apply::driver_with_process, pipeline::pipeline};
@@ -19,7 +19,7 @@ fn no_driver_but_filter_with_autocrlf() -> gix_testtools::Result {
         )
     })?;
 
-    let out = pipe.convert_to_git(
+    let mut out = pipe.convert_to_git(
         "hi\r\n".as_bytes(),
         Path::new("any.txt"),
         &mut |_path, _attrs| {},
@@ -31,6 +31,9 @@ fn no_driver_but_filter_with_autocrlf() -> gix_testtools::Result {
         "hi\n",
         "the read is read into memory if there is no driver"
     );
+    let mut buf = Vec::new();
+    out.read_to_end(&mut buf)?;
+    assert_eq!(buf.as_bstr(), "hi\n", "we can consume the output");
     Ok(())
 }
 
@@ -132,14 +135,11 @@ fn no_filter_means_reader_is_returned_unchanged() -> gix_testtools::Result {
 }
 
 #[allow(clippy::ptr_arg)]
-fn no_call(_path: &BStr, _buf: &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
+fn no_call(_buf: &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
     unreachable!("index function will not be called")
 }
 
 #[allow(clippy::ptr_arg)]
-fn no_object_in_index(
-    _path: &BStr,
-    _buf: &mut Vec<u8>,
-) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
+fn no_object_in_index(_buf: &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
     Ok(None)
 }

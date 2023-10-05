@@ -12,8 +12,8 @@ impl<'a> crate::WriteTo for BlobRef<'a> {
         Kind::Blob
     }
 
-    fn size(&self) -> usize {
-        self.data.len()
+    fn size(&self) -> u64 {
+        self.data.len() as u64
     }
 }
 
@@ -27,7 +27,7 @@ impl crate::WriteTo for Blob {
         Kind::Blob
     }
 
-    fn size(&self) -> usize {
+    fn size(&self) -> u64 {
         self.to_ref().size()
     }
 }

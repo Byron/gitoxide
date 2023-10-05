@@ -21,12 +21,9 @@ pub mod configuration {
 
 ///
 pub mod to_git {
-    use bstr::BStr;
-
-    /// A function that writes a buffer like `fn(rela_path, &mut buf)` with by tes of an object in the index that is the one
-    /// that should be converted.
+    /// A function that fills `buf` `fn(&mut buf)` with the data stored in the index of the file that should be converted.
     pub type IndexObjectFn<'a> =
-        dyn FnMut(&BStr, &mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> + 'a;
+        dyn FnMut(&mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> + 'a;
 
     /// The error returned by [Pipeline::convert_to_git()][super::Pipeline::convert_to_git()].
     #[derive(Debug, thiserror::Error)]
@@ -91,7 +88,7 @@ impl Pipeline {
             self.options.eol_config,
         )?;
 
-        let mut changed = false;
+        let mut in_buffer = false;
         // this is just an approximation, but it's as good as it gets without reading the actual input.
         let would_convert_eol = eol::convert_to_git(
             b"\r\n",
@@ -119,12 +116,13 @@ impl Pipeline {
                 }
                 self.bufs.clear();
                 read.read_to_end(&mut self.bufs.src)?;
-                changed = true;
+                in_buffer = true;
             }
         }
-        if !changed && (apply_ident_filter || encoding.is_some() || would_convert_eol) {
+        if !in_buffer && (apply_ident_filter || encoding.is_some() || would_convert_eol) {
             self.bufs.clear();
             src.read_to_end(&mut self.bufs.src)?;
+            in_buffer = true;
         }
 
         if let Some(encoding) = encoding {
@@ -139,28 +137,25 @@ impl Pipeline {
                 },
             )?;
             self.bufs.swap();
-            changed = true;
         }
 
         if eol::convert_to_git(
             &self.bufs.src,
             digest,
             &mut self.bufs.dest,
-            &mut |buf| index_object(bstr_path.as_ref(), buf),
+            &mut |buf| index_object(buf),
             eol::convert_to_git::Options {
                 round_trip_check: self.options.crlf_roundtrip_check.to_eol_roundtrip_check(rela_path),
                 config: self.options.eol_config,
             },
         )? {
             self.bufs.swap();
-            changed = true;
         }
 
         if apply_ident_filter && ident::undo(&self.bufs.src, &mut self.bufs.dest) {
             self.bufs.swap();
-            changed = true;
         }
-        Ok(if changed {
+        Ok(if in_buffer {
             ToGitOutcome::Buffer(&self.bufs.src)
         } else {
             ToGitOutcome::Unchanged(src)
@@ -320,17 +315,17 @@ where
         match self {
             ToGitOutcome::Unchanged(r) => r.read(buf),
             ToGitOutcome::Process(r) => r.read(buf),
-            ToGitOutcome::Buffer(mut r) => r.read(buf),
+            ToGitOutcome::Buffer(r) => r.read(buf),
         }
     }
 }
 
-impl<R> ToGitOutcome<'_, R>
+impl<'a, R> ToGitOutcome<'a, R>
 where
     R: std::io::Read,
 {
     /// If we contain a buffer, and not a stream, return it.
-    pub fn as_bytes(&self) -> Option<&[u8]> {
+    pub fn as_bytes(&self) -> Option<&'a [u8]> {
         match self {
             ToGitOutcome::Unchanged(_) | ToGitOutcome::Process(_) => None,
             ToGitOutcome::Buffer(b) => Some(b),

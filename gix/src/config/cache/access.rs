@@ -158,13 +158,7 @@ impl Cache {
     pub(crate) fn stat_options(&self) -> Result<gix_index::entry::stat::Options, config::stat_options::Error> {
         use crate::config::tree::gitoxide;
         Ok(gix_index::entry::stat::Options {
-            trust_ctime: boolean(
-                self,
-                "core.trustCTime",
-                &Core::TRUST_C_TIME,
-                // For now, on MacOS it's known to not be trust-worthy at least with the Rust STDlib, being 2s off
-                !cfg!(target_os = "macos"),
-            )?,
+            trust_ctime: boolean(self, "core.trustCTime", &Core::TRUST_C_TIME, true)?,
             use_nsec: boolean(self, "gitoxide.core.useNsec", &gitoxide::Core::USE_NSEC, false)?,
             use_stdev: boolean(self, "gitoxide.core.useStdev", &gitoxide::Core::USE_STDEV, false)?,
             check_stat: self

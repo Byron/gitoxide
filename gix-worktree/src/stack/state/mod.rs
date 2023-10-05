@@ -71,11 +71,6 @@ impl State {
     pub fn for_add(attributes: Attributes, ignore: Ignore) -> Self {
         State::AttributesAndIgnoreStack { attributes, ignore }
     }
-
-    /// Configure a state for status retrieval, which needs access to ignore files only.
-    pub fn for_status(ignore: Ignore) -> Self {
-        State::IgnoreStack(ignore)
-    }
 }
 
 /// Utilities

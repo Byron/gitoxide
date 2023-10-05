@@ -170,7 +170,7 @@ impl<'driver> Configuration<'driver> {
         let attr_digest = digest;
         digest = match digest {
             None => Some(config.auto_crlf.into()),
-            Some(AttributesDigest::TextAuto) => Some(config.to_eol().into()),
+            Some(AttributesDigest::Text) => Some(config.to_eol().into()),
             _ => digest,
         };
 

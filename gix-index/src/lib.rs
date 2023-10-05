@@ -121,9 +121,10 @@ mod impls {
                     f,
                     "{} {}{:?} {} {}",
                     match entry.flags.stage() {
-                        0 => "BASE   ",
-                        1 => "OURS   ",
-                        2 => "THEIRS ",
+                        0 => "       ",
+                        1 => "BASE   ",
+                        2 => "OURS   ",
+                        3 => "THEIRS ",
                         _ => "UNKNOWN",
                     },
                     if entry.flags.is_empty() {

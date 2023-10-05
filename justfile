@@ -67,7 +67,10 @@ check:
         cargo check --features verbose-object-parsing-errors
     cd gix-attributes && cargo check --features serde
     cd gix-glob && cargo check --features serde
-    cd gix-worktree && cargo check --features serde
+    cd gix-worktree; \
+        set -ex; \
+        cargo check --features serde; \
+        cargo check --no-default-features;
     cd gix-actor && cargo check --features serde
     cd gix-date && cargo check --features serde
     cargo check -p gix-tempfile --features signals

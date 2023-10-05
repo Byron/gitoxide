@@ -345,7 +345,7 @@ pub mod decode {
     /// ([`kind`](super::Kind), `size`, `consumed bytes`).
     ///
     /// `size` is the uncompressed size of the payload in bytes.
-    pub fn loose_header(input: &[u8]) -> Result<(super::Kind, usize, usize), LooseHeaderDecodeError> {
+    pub fn loose_header(input: &[u8]) -> Result<(super::Kind, u64, usize), LooseHeaderDecodeError> {
         use LooseHeaderDecodeError::*;
         let kind_end = input.find_byte(0x20).ok_or(InvalidHeader {
             message: "Expected '<type> <size>'",
@@ -366,7 +366,7 @@ pub mod decode {
 
 /// A standalone function to compute a hash of kind `hash_kind` for an object of `object_kind` and its `data`.
 pub fn compute_hash(hash_kind: gix_hash::Kind, object_kind: Kind, data: &[u8]) -> gix_hash::ObjectId {
-    let header = encode::loose_header(object_kind, data.len());
+    let header = encode::loose_header(object_kind, data.len() as u64);
 
     let mut hasher = gix_features::hash::hasher(hash_kind);
     hasher.update(&header);

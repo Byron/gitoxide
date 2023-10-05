@@ -111,6 +111,7 @@ mod with_core_worktree_config {
     }
 
     #[test]
+    #[cfg(feature = "index")]
     fn bare_relative() -> crate::Result {
         let repo = repo("bare-relative-worktree");
 
@@ -123,6 +124,8 @@ mod with_core_worktree_config {
             repo.work_dir().is_none(),
             "we simply don't load core.worktree in bare repos either to match this behaviour"
         );
+        assert!(repo.try_index()?.is_none());
+        assert!(repo.index_or_empty()?.entries().is_empty());
         Ok(())
     }
 

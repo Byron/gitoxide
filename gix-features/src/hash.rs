@@ -96,7 +96,7 @@ pub fn hasher(kind: gix_hash::Kind) -> Sha1 {
 #[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]
 pub fn bytes_of_file(
     path: &std::path::Path,
-    num_bytes_from_start: usize,
+    num_bytes_from_start: u64,
     kind: gix_hash::Kind,
     progress: &mut dyn crate::progress::Progress,
     should_interrupt: &std::sync::atomic::AtomicBool,
@@ -110,28 +110,42 @@ pub fn bytes_of_file(
     )
 }
 
-/// Similar to [`bytes_of_file`], but operates on an already open file.
+/// Similar to [`bytes_of_file`], but operates on a stream of bytes.
 #[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]
 pub fn bytes(
     read: &mut dyn std::io::Read,
-    num_bytes_from_start: usize,
+    num_bytes_from_start: u64,
     kind: gix_hash::Kind,
     progress: &mut dyn crate::progress::Progress,
     should_interrupt: &std::sync::atomic::AtomicBool,
 ) -> std::io::Result<gix_hash::ObjectId> {
-    let mut hasher = hasher(kind);
+    bytes_with_hasher(read, num_bytes_from_start, hasher(kind), progress, should_interrupt)
+}
+
+/// Similar to [`bytes()`], but takes a `hasher` instead of a hash kind.
+#[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]
+pub fn bytes_with_hasher(
+    read: &mut dyn std::io::Read,
+    num_bytes_from_start: u64,
+    mut hasher: Sha1,
+    progress: &mut dyn crate::progress::Progress,
+    should_interrupt: &std::sync::atomic::AtomicBool,
+) -> std::io::Result<gix_hash::ObjectId> {
     let start = std::time::Instant::now();
     // init progress before the possibility for failure, as convenience in case people want to recover
-    progress.init(Some(num_bytes_from_start), crate::progress::bytes());
+    progress.init(
+        Some(num_bytes_from_start as prodash::progress::Step),
+        crate::progress::bytes(),
+    );
 
     const BUF_SIZE: usize = u16::MAX as usize;
     let mut buf = [0u8; BUF_SIZE];
     let mut bytes_left = num_bytes_from_start;
 
     while bytes_left > 0 {
-        let out = &mut buf[..BUF_SIZE.min(bytes_left)];
+        let out = &mut buf[..BUF_SIZE.min(bytes_left as usize)];
         read.read_exact(out)?;
-        bytes_left -= out.len();
+        bytes_left -= out.len() as u64;
         progress.inc_by(out.len());
         hasher.update(out);
         if should_interrupt.load(std::sync::atomic::Ordering::SeqCst) {
