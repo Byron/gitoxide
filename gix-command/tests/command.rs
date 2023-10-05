@@ -82,32 +82,26 @@ mod spawn {
 
         #[test]
         fn sh_shell_specific_script_code_with_single_extra_arg() -> crate::Result {
-            let out = gix_command::prepare("echo")
+            let out = gix_command::prepare("printf")
                 .with_shell()
                 .arg("1")
                 .spawn()?
                 .wait_with_output()?;
             assert!(out.status.success());
-            #[cfg(not(windows))]
-            assert_eq!(out.stdout.as_bstr(), "1\n");
-            #[cfg(windows)]
-            assert_eq!(out.stdout.as_bstr(), "1\r\n");
+            assert_eq!(out.stdout.as_bstr(), "1");
             Ok(())
         }
 
         #[test]
         fn sh_shell_specific_script_code_with_multiple_extra_args() -> crate::Result {
-            let out = gix_command::prepare("echo")
+            let out = gix_command::prepare("printf")
                 .with_shell()
-                .arg("1")
-                .arg("2")
+                .arg("%s")
+                .arg("arg")
                 .spawn()?
                 .wait_with_output()?;
             assert!(out.status.success());
-            #[cfg(not(windows))]
-            assert_eq!(out.stdout.as_bstr(), "1 2\n");
-            #[cfg(windows)]
-            assert_eq!(out.stdout.as_bstr(), "1 2\r\n");
+            assert_eq!(out.stdout.as_bstr(), "arg");
             Ok(())
         }
     }
