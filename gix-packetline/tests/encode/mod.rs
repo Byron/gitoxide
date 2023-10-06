@@ -27,9 +27,7 @@ mod data_to_write {
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn error_if_data_exceeds_limit() {
         fn vec_sized(size: usize) -> Vec<u8> {
-            let mut v = Vec::new();
-            v.resize(size, 0);
-            v
+            vec![0; size]
         }
 
         let res = data_to_write(&vec_sized(65516 + 1), io::sink()).await;

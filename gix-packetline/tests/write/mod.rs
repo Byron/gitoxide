@@ -38,11 +38,7 @@ async fn write_text_and_write_binary() -> crate::Result {
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn huge_writes_are_split_into_lines() -> crate::Result {
     let buf = {
-        let data = {
-            let mut v = Vec::new();
-            v.resize(MAX_DATA_LEN * 2, 0);
-            v
-        };
+        let data = vec![0u8; MAX_DATA_LEN * 2];
         let mut w = Writer::new(Vec::new());
         w.write(&data).await?;
         w.into_inner()

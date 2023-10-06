@@ -219,8 +219,8 @@ mod baseline {
                         is_inconsistent = spec.as_bstr() == "git-inconsistency";
                         !is_inconsistent
                     })
-                    .filter_map(|s| (!s.trim().is_empty()).then(|| s.trim()))
-                    .map(|pathspec| gix_pathspec::parse(pathspec, Default::default()).expect("valid pathspec"))
+                    .filter(|s| !s.trim().is_empty())
+                    .map(|pathspec| gix_pathspec::parse(pathspec.trim(), Default::default()).expect("valid pathspec"))
                     .collect();
                 Expected {
                     pathspecs,

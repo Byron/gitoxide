@@ -237,7 +237,7 @@ mod lock_timeout {
             let value = value.map_err(|err| config::lock_timeout::Error::from(self).with_source(err))?;
             Ok(match value {
                 val if val < 0 => Fail::AfterDurationWithBackoff(Duration::from_secs(u64::MAX)),
-                val if val == 0 => Fail::Immediately,
+                0 => Fail::Immediately,
                 val => Fail::AfterDurationWithBackoff(Duration::from_millis(
                     val.try_into().expect("i64 to u64 always works if positive"),
                 )),

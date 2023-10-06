@@ -11,7 +11,7 @@ impl crate::Repository {
     pub fn object_cache_size(&mut self, bytes: impl Into<Option<usize>>) {
         let bytes = bytes.into();
         match bytes {
-            Some(bytes) if bytes == 0 => self.objects.unset_object_cache(),
+            Some(0) => self.objects.unset_object_cache(),
             Some(bytes) => self
                 .objects
                 .set_object_cache(move || Box::new(crate::object::cache::MemoryCappedHashmap::new(bytes))),

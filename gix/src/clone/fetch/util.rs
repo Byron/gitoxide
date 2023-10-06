@@ -189,7 +189,7 @@ fn setup_branch_config(
     remote_name: &BStr,
 ) -> Result<(), Error> {
     let short_name = match branch.category_and_short_name() {
-        Some((cat, shortened)) if cat == gix_ref::Category::LocalBranch => match shortened.to_str() {
+        Some((gix_ref::Category::LocalBranch, shortened)) => match shortened.to_str() {
             Ok(s) => s,
             Err(_) => return Ok(()),
         },

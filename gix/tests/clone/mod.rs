@@ -30,7 +30,6 @@ mod blocking_io {
         let mut prepare = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
             .with_remote_name(remote_name)?
             .configure_remote({
-                let called_configure_remote = called_configure_remote;
                 move |r| {
                     called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
                     let mut r = r.with_fetch_tags(desired_fetch_tags);
@@ -372,14 +371,13 @@ mod blocking_io {
                     .updates
                     .iter()
                     .enumerate()
-                    .filter_map(|(idx, update)| {
+                    .filter(|(_, update)| {
                         matches!(
                             update.mode,
                             gix::remote::fetch::refs::update::Mode::ImplicitTagNotSentByRemote
                         )
-                        .then(|| idx)
                     })
-                    .map(|idx| &out.ref_map.mappings[idx])
+                    .map(|(idx, _)| &out.ref_map.mappings[idx])
                 {
                     out_of_graph_tags.push(
                         mapping

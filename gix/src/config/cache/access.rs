@@ -303,7 +303,7 @@ impl Cache {
                 &gitoxide::Pathspec::LITERAL,
             ]
             .iter()
-            .find_map(|key| (key.environment_override().expect("set") == name).then_some(key))
+            .find(|key| key.environment_override().expect("set") == name)
             .expect("we must know all possible input variable names");
 
             let val = self

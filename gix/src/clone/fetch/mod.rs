@@ -94,7 +94,7 @@ impl PrepareFetch {
             .expect("valid static spec");
         let mut clone_fetch_tags = None;
         if let Some(f) = self.configure_remote.as_mut() {
-            remote = f(remote).map_err(|err| Error::RemoteConfiguration(err))?;
+            remote = f(remote).map_err(Error::RemoteConfiguration)?;
         } else {
             clone_fetch_tags = remote::fetch::Tags::All.into();
         }
@@ -117,7 +117,7 @@ impl PrepareFetch {
         let pending_pack: remote::fetch::Prepare<'_, '_, _> = {
             let mut connection = remote.connect(remote::Direction::Fetch).await?;
             if let Some(f) = self.configure_connection.as_mut() {
-                f(&mut connection).map_err(|err| Error::RemoteConnection(err))?;
+                f(&mut connection).map_err(Error::RemoteConnection)?;
             }
             connection
                 .prepare_fetch(&mut *progress, {

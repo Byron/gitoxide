@@ -78,7 +78,7 @@ impl packed::Transaction {
                 edit.peeled = loop {
                     let kind = find(next_id, &mut buf)?;
                     match kind {
-                        Some(kind) if kind == gix_object::Kind::Tag => {
+                        Some(gix_object::Kind::Tag) => {
                             next_id = gix_object::TagRefIter::from_bytes(&buf).target_id().map_err(|_| {
                                 prepare::Error::Resolve(
                                     format!("Couldn't get target object id from tag {next_id}").into(),

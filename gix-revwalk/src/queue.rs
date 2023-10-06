@@ -29,7 +29,7 @@ impl<K: Ord, T> Eq for Item<K, T> {}
 
 impl<K: Ord, T> PartialOrd<Self> for Item<K, T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Ord::cmp(self, other).into()
+        Some(Ord::cmp(self, other))
     }
 }
 

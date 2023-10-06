@@ -176,12 +176,11 @@ impl Outcome {
         source: Option<&std::path::PathBuf>,
         sequence_number: usize,
     ) -> bool {
-        self.attrs_stack.extend(attrs.filter_map(|attr| {
-            self.matches_by_id[attr.id.0]
-                .r#match
-                .is_none()
-                .then(|| (attr.id, attr.inner.clone(), None))
-        }));
+        self.attrs_stack.extend(
+            attrs
+                .filter(|attr| self.matches_by_id[attr.id.0].r#match.is_none())
+                .map(|attr| (attr.id, attr.inner.clone(), None)),
+        );
         while let Some((id, assignment, parent_order)) = self.attrs_stack.pop() {
             let slot = &mut self.matches_by_id[id.0];
             if slot.r#match.is_some() {
@@ -212,12 +211,12 @@ impl Outcome {
             if is_macro {
                 // TODO(borrowchk): one fine day we should be able to re-borrow `slot` without having to redo the array access.
                 let slot = &self.matches_by_id[id.0];
-                self.attrs_stack.extend(slot.macro_attributes.iter().filter_map(|attr| {
-                    self.matches_by_id[attr.id.0]
-                        .r#match
-                        .is_none()
-                        .then(|| (attr.id, attr.inner.clone(), Some(id)))
-                }));
+                self.attrs_stack.extend(
+                    slot.macro_attributes
+                        .iter()
+                        .filter(|attr| self.matches_by_id[attr.id.0].r#match.is_none())
+                        .map(|attr| (attr.id, attr.inner.clone(), Some(id))),
+                );
             }
         }
         false

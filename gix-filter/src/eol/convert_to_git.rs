@@ -81,7 +81,7 @@ pub(crate) mod function {
                 return Ok(false);
             }
 
-            if let Some(()) = index_object(buf).map_err(|err| Error::FetchObjectFromIndex(err))? {
+            if let Some(()) = index_object(buf).map_err(Error::FetchObjectFromIndex)? {
                 let has_crlf_in_index = buf
                     .find_byte(b'\r')
                     .map(|_| Stats::from_bytes(buf))

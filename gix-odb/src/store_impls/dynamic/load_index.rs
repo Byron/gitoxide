@@ -711,7 +711,7 @@ impl PartialEq<Self> for Either {
 
 impl PartialOrd<Self> for Either {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.path().partial_cmp(other.path())
+        Some(self.path().cmp(other.path()))
     }
 }
 

@@ -409,8 +409,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                 "iteration should yield the same pack offsets as the index"
             );
 
-            let mut buf = Vec::new();
-            buf.resize(entry.decompressed_size as usize, 0);
+            let mut buf = vec![0u8; entry.decompressed_size as usize];
             let pack_entry = pack.entry(offset_from_index);
             assert_eq!(
                 pack_entry.pack_offset(),
