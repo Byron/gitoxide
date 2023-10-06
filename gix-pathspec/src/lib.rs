@@ -134,7 +134,7 @@ pub enum SearchMode {
     PathAwareGlob,
 }
 
-/// Parse a git-style pathspec into a [`Pattern`][Pattern],
+/// Parse a git-style pathspec into a [`Pattern`],
 /// setting the given `default` values in case these aren't specified in `input`.
 ///
 /// Note that empty [paths](Pattern::path) are allowed here, and generally some processing has to be performed.

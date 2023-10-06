@@ -66,35 +66,35 @@ mod write {
 
 /// Convenient extraction of typed object.
 impl Object {
-    /// Turns this instance into a [`Blob`][Blob], panic otherwise.
+    /// Turns this instance into a [`Blob`], panic otherwise.
     pub fn into_blob(self) -> Blob {
         match self {
             Object::Blob(v) => v,
             _ => panic!("BUG: not a blob"),
         }
     }
-    /// Turns this instance into a [`Commit`][Commit] panic otherwise.
+    /// Turns this instance into a [`Commit`] panic otherwise.
     pub fn into_commit(self) -> Commit {
         match self {
             Object::Commit(v) => v,
             _ => panic!("BUG: not a commit"),
         }
     }
-    /// Turns this instance into a [`Tree`][Tree] panic otherwise.
+    /// Turns this instance into a [`Tree`] panic otherwise.
     pub fn into_tree(self) -> Tree {
         match self {
             Object::Tree(v) => v,
             _ => panic!("BUG: not a tree"),
         }
     }
-    /// Turns this instance into a [`Tag`][Tag] panic otherwise.
+    /// Turns this instance into a [`Tag`] panic otherwise.
     pub fn into_tag(self) -> Tag {
         match self {
             Object::Tag(v) => v,
             _ => panic!("BUG: not a tag"),
         }
     }
-    /// Turns this instance into a [`Blob`][Blob] if it is one.
+    /// Turns this instance into a [`Blob`] if it is one.
     #[allow(clippy::result_large_err)]
     pub fn try_into_blob(self) -> Result<Blob, Self> {
         match self {
@@ -102,14 +102,14 @@ impl Object {
             _ => Err(self),
         }
     }
-    /// Turns this instance into a [`BlobRef`][BlobRef] if it is a blob.
+    /// Turns this instance into a [`BlobRef`] if it is a blob.
     pub fn try_into_blob_ref(&self) -> Option<BlobRef<'_>> {
         match self {
             Object::Blob(v) => Some(v.to_ref()),
             _ => None,
         }
     }
-    /// Turns this instance into a [`Commit`][Commit] if it is one.
+    /// Turns this instance into a [`Commit`] if it is one.
     #[allow(clippy::result_large_err)]
     pub fn try_into_commit(self) -> Result<Commit, Self> {
         match self {
@@ -117,7 +117,7 @@ impl Object {
             _ => Err(self),
         }
     }
-    /// Turns this instance into a [`Tree`][Tree] if it is one.
+    /// Turns this instance into a [`Tree`] if it is one.
     #[allow(clippy::result_large_err)]
     pub fn try_into_tree(self) -> Result<Tree, Self> {
         match self {
@@ -125,7 +125,7 @@ impl Object {
             _ => Err(self),
         }
     }
-    /// Turns this instance into a [`Tag`][Tag] if it is one.
+    /// Turns this instance into a [`Tag`] if it is one.
     #[allow(clippy::result_large_err)]
     pub fn try_into_tag(self) -> Result<Tag, Self> {
         match self {
@@ -134,28 +134,28 @@ impl Object {
         }
     }
 
-    /// Returns a [`Blob`][Blob] if it is one.
+    /// Returns a [`Blob`] if it is one.
     pub fn as_blob(&self) -> Option<&Blob> {
         match self {
             Object::Blob(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Commit`][Commit] if it is one.
+    /// Returns a [`Commit`] if it is one.
     pub fn as_commit(&self) -> Option<&Commit> {
         match self {
             Object::Commit(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Tree`][Tree] if it is one.
+    /// Returns a [`Tree`] if it is one.
     pub fn as_tree(&self) -> Option<&Tree> {
         match self {
             Object::Tree(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Tag`][Tag] if it is one.
+    /// Returns a [`Tag`] if it is one.
     pub fn as_tag(&self) -> Option<&Tag> {
         match self {
             Object::Tag(v) => Some(v),

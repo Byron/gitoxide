@@ -20,7 +20,7 @@ use std::path::Path;
 /// A single commit-graph file.
 ///
 /// All operations on a `File` are local to that graph file. Since a commit graph can span multiple
-/// files, all interesting graph operations belong on [`Graph`][crate::Graph].
+/// files, all interesting graph operations belong on [`Graph`].
 pub struct File {
     base_graph_count: u8,
     base_graphs_list_offset: Option<usize>,

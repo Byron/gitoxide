@@ -50,7 +50,7 @@ pub struct Cache<S> {
 pub mod cache;
 
 ///
-/// It can optionally compress the content, similarly to what would happen when using a [`loose::Store`][crate::loose::Store].
+/// It can optionally compress the content, similarly to what would happen when using a [`loose::Store`].
 ///
 #[derive(Clone)]
 pub struct Sink {

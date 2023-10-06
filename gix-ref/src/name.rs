@@ -4,7 +4,7 @@ use gix_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{Category, FullName, FullNameRef, PartialName, PartialNameRef};
 
-/// The error used in the [`PartialNameRef`][super::PartialNameRef]`::try_from`(…) implementations.
+/// The error used in the [`PartialNameRef`]`::try_from`(…) implementations.
 pub type Error = gix_validate::reference::name::Error;
 
 impl<'a> Category<'a> {

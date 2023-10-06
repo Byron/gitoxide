@@ -98,7 +98,7 @@ pub struct CommitRef<'a> {
     pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
 }
 
-/// Like [`CommitRef`][crate::CommitRef], but as `Iterator` to support (up to) entirely allocation free parsing.
+/// Like [`CommitRef`], but as `Iterator` to support (up to) entirely allocation free parsing.
 /// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
 #[derive(Copy, Clone)]
 pub struct CommitRefIter<'a> {

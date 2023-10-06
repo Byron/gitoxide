@@ -27,7 +27,7 @@ pub trait Visit {
     fn visit_nontree(&mut self, entry: &gix_object::tree::EntryRef<'_>) -> visit::Action;
 }
 
-/// A [Visit][Visit] implementation to record every observed change and keep track of the changed paths.
+/// A [Visit] implementation to record every observed change and keep track of the changed paths.
 ///
 /// Recorders can also be instructed to track the filename only, or no location at all.
 #[derive(Clone, Debug)]

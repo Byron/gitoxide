@@ -31,7 +31,7 @@ mod from_tree {
                 fs_monitor: None,
             }
         }
-        /// Create an index [`State`][crate::State] by traversing `tree` recursively, accessing sub-trees
+        /// Create an index [`State`] by traversing `tree` recursively, accessing sub-trees
         /// with `find`.
         ///
         /// **No extension data is currently produced**.

@@ -258,7 +258,7 @@ pub enum ToWorktreeOutcome<'input, 'pipeline> {
 }
 
 impl<'input, 'pipeline> ToWorktreeOutcome<'input, 'pipeline> {
-    /// Return true if this outcome is delayed. In that case, one isn't allowed to use [`Read`][std::io::Read] or cause a panic.
+    /// Return true if this outcome is delayed. In that case, one isn't allowed to use [`Read`] or cause a panic.
     pub fn is_delayed(&self) -> bool {
         matches!(
             self,

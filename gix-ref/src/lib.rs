@@ -5,7 +5,7 @@
 //! Refs are the way to keep track of objects and come in two flavors.
 //!
 //! * symbolic refs are pointing to another reference
-//! * peeled refs point to the an object by its [`ObjectId`][gix_hash::ObjectId]
+//! * peeled refs point to the an object by its [`ObjectId`]
 //!
 //! They can be identified by a relative path and stored in various flavors.
 //!
