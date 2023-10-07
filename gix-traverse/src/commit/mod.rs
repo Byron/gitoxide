@@ -5,6 +5,9 @@ use smallvec::SmallVec;
 pub mod ancestors;
 pub use ancestors::{Ancestors, Sorting};
 
+// Topological traversal
+pub mod topo;
+
 /// Specify how to handle commit parents during traversal.
 #[derive(Default, Copy, Clone)]
 pub enum Parents {

@@ -5,4 +5,5 @@ fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
 }
 
 mod commit;
+mod topo;
 mod tree;
