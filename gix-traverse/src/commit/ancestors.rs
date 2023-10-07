@@ -1,4 +1,3 @@
-use gix_object::FindExt;
 use smallvec::SmallVec;
 
 /// An iterator over the ancestors one or more starting commits
@@ -7,18 +6,8 @@ pub struct Ancestors<Find, Predicate, StateMut> {
     cache: Option<gix_commitgraph::Graph>,
     predicate: Predicate,
     state: StateMut,
-    parents: Parents,
+    parents: super::Parents,
     sorting: Sorting,
-}
-
-/// Specify how to handle commit parents during traversal.
-#[derive(Default, Copy, Clone)]
-pub enum Parents {
-    /// Traverse all parents, useful for traversing the entire ancestry.
-    #[default]
-    All,
-    /// Only traverse along the first parent, which commonly ignores all branches.
-    First,
 }
 
 /// Specify how to sort commits during traversal.
@@ -69,23 +58,6 @@ pub enum Sorting {
     },
 }
 
-/// The collection of parent ids we saw as part of the iteration.
-///
-/// Note that this list is truncated if [`Parents::First`] was used.
-pub type ParentIds = SmallVec<[gix_hash::ObjectId; 1]>;
-
-/// Information about a commit that we obtained naturally as part of the iteration.
-#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct Info {
-    /// The id of the commit.
-    pub id: gix_hash::ObjectId,
-    /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`] is enabled.
-    pub parent_ids: ParentIds,
-    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`], as the walk
-    /// needs to require the commit-date.
-    pub commit_time: Option<gix_date::SecondsSinceUnixEpoch>,
-}
-
 ///
 #[allow(clippy::empty_docs)]
 pub mod ancestors {
@@ -100,7 +72,10 @@ pub mod ancestors {
     use gix_object::{CommitRefIter, FindExt};
     use smallvec::SmallVec;
 
-    use super::{collect_parents, Ancestors, Either, Info, ParentIds, Parents, Sorting};
+    use super::{
+        super::{Either, Info, ParentIds, Parents},
+        collect_parents, Ancestors, Sorting,
+    };
 
     /// The error is part of the item returned by the [Ancestors] iterator.
     #[derive(Debug, thiserror::Error)]
@@ -339,7 +314,7 @@ pub mod ancestors {
 
             let (commit_time, oid) = state.queue.pop()?;
             let mut parents: ParentIds = Default::default();
-            match super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
+            match super::super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
                 Ok(Either::CachedCommit(commit)) => {
                     if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
                         // drop corrupt caches and try again with ODB
@@ -406,7 +381,7 @@ pub mod ancestors {
             let state = self.state.borrow_mut();
             let oid = state.next.pop_front()?;
             let mut parents: ParentIds = Default::default();
-            match super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
+            match super::super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
                 Ok(Either::CachedCommit(commit)) => {
                     if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
                         // drop corrupt caches and try again with ODB
@@ -457,11 +432,6 @@ pub mod ancestors {
 
 pub use ancestors::{Error, State};
 
-enum Either<'buf, 'cache> {
-    CommitRefIter(gix_object::CommitRefIter<'buf>),
-    CachedCommit(gix_commitgraph::file::Commit<'cache>),
-}
-
 fn collect_parents(
     dest: &mut SmallVec<[(gix_hash::ObjectId, gix_date::SecondsSinceUnixEpoch); 2]>,
     cache: Option<&gix_commitgraph::Graph>,
@@ -482,19 +452,4 @@ fn collect_parents(
         }
     }
     true
-}
-
-fn find<'cache, 'buf, Find>(
-    cache: Option<&'cache gix_commitgraph::Graph>,
-    objects: Find,
-    id: &gix_hash::oid,
-    buf: &'buf mut Vec<u8>,
-) -> Result<Either<'buf, 'cache>, gix_object::find::existing_iter::Error>
-where
-    Find: gix_object::Find,
-{
-    match cache.and_then(|cache| cache.commit_by_id(id).map(Either::CachedCommit)) {
-        Some(c) => Ok(c),
-        None => objects.find_commit_iter(id, buf).map(Either::CommitRefIter),
-    }
 }
