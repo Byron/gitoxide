@@ -53,21 +53,42 @@ pub(crate) mod function {
             }
             PathsOrPatterns::Patterns(patterns) => {
                 let mut pathspec = repo.pathspec(
-                    patterns,
+                    patterns.iter(),
                     true,
                     &index,
                     gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
                         .adjust_for_bare(repo.is_bare()),
                 )?;
+                let mut pathspec_matched_entry = false;
                 for (path, _entry) in pathspec
                     .index_entries_with_paths(&index)
                     .ok_or_else(|| anyhow!("Pathspec didn't match a single path in the index"))?
                 {
+                    pathspec_matched_entry = true;
                     let entry = cache.at_entry(path, Some(false))?;
                     if !entry.matching_attributes(&mut matches) {
                         continue;
                     }
                     print_match(&matches, path, &mut out)?;
+                }
+
+                if !pathspec_matched_entry {
+                    // TODO(borrowchk): this shouldn't be necessary at all, but `pathspec` stays borrowed mutably for some reason.
+                    //                  It's probably due to the strange lifetimes of `index_entries_with_paths()`.
+                    let pathspec = repo.pathspec(
+                        patterns.iter(),
+                        true,
+                        &index,
+                        gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                            .adjust_for_bare(repo.is_bare()),
+                    )?;
+                    for pattern in pathspec.search().patterns() {
+                        let entry = cache.at_entry(pattern.path(), Some(false))?;
+                        if !entry.matching_attributes(&mut matches) {
+                            continue;
+                        }
+                        print_match(&matches, pattern.path(), &mut out)?;
+                    }
                 }
             }
         }
