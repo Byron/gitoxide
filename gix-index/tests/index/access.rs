@@ -152,6 +152,16 @@ fn prefixed_entries() {
     check_prefix(&file, "x", &["x"]);
     check_prefix(&file, "b", &["b"]);
     check_prefix(&file, "c", &["c"]);
+
+    assert_eq!(
+        file.prefixed_entries_range("".into()),
+        Some(0..11),
+        "empty prefixes match everything"
+    );
+    assert!(
+        file.prefixed_entries_range("foo".into()).is_none(),
+        "there is no match for this prefix"
+    );
 }
 
 fn check_prefix(index: &gix_index::State, prefix: &str, expected: &[&str]) {

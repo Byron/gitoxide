@@ -57,22 +57,43 @@ pub fn query(
             }
         }
         PathsOrPatterns::Patterns(patterns) => {
-            for (path, _entry) in repo
-                .pathspec(
-                    patterns.into_iter(),
-                    repo.work_dir().is_some(),
-                    &index,
-                    gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
-                        .adjust_for_bare(repo.is_bare()),
-                )?
+            let mut pathspec_matched_something = false;
+            let mut pathspec = repo.pathspec(
+                patterns.iter(),
+                repo.work_dir().is_some(),
+                &index,
+                gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping.adjust_for_bare(repo.is_bare()),
+            )?;
+
+            for (path, _entry) in pathspec
                 .index_entries_with_paths(&index)
                 .ok_or_else(|| anyhow!("Pathspec didn't yield any entry"))?
             {
+                pathspec_matched_something = true;
                 let entry = cache.at_entry(path, Some(false))?;
                 let match_ = entry
                     .matching_exclude_pattern()
                     .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
                 print_match(match_, path, &mut out)?;
+            }
+
+            if !pathspec_matched_something {
+                // TODO(borrowchk): this shouldn't be necessary at all, but `pathspec` stays borrowed mutably for some reason.
+                //                  It's probably due to the strange lifetimes of `index_entries_with_paths()`.
+                let pathspec = repo.pathspec(
+                    patterns.iter(),
+                    repo.work_dir().is_some(),
+                    &index,
+                    gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                        .adjust_for_bare(repo.is_bare()),
+                )?;
+                for pattern in pathspec.search().patterns() {
+                    let entry = cache.at_entry(pattern.path(), None)?;
+                    let match_ = entry
+                        .matching_exclude_pattern()
+                        .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
+                    print_match(match_, pattern.path(), &mut out)?;
+                }
             }
         }
     }
