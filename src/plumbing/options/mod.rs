@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use clap_complete::Shell;
 use gitoxide_core as core;
 use gix::bstr::BString;
 
@@ -134,9 +135,15 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
-    /// Generate shell completions in `/etc/bash_completion.d/gix.bash`.
-    /// NOTE: Requires `sudo` to write to `/etc/`.
-    GenerateCompletions,
+    /// Generate shell completions
+    GenerateCompletions {
+        /// Shell for generating completions.
+        #[clap(long, short)]
+        shell: Shell,
+        /// Output directory. If not provided, will write to stdout.
+        #[clap(long, short)]
+        out_dir: Option<String>,
+    },
 }
 
 #[cfg(feature = "gitoxide-core-tools-archive")]
