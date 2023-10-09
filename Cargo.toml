@@ -33,7 +33,12 @@ default = ["max"]
 ## Everything, all at once.
 ##
 ## As fast as possible, tracing, with TUI progress, progress line rendering with auto-configuration, all transports based on their most mature implementation (HTTP), all `ein` tools, CLI colors and local-time support, JSON output, regex support for rev-specs.
-max = ["max-control", "fast", "gitoxide-core-blocking-client", "http-client-curl"]
+max = [
+  "max-control",
+  "fast",
+  "gitoxide-core-blocking-client",
+  "http-client-curl",
+]
 
 ## Like `max`, but only Rust is allowed.
 ##
@@ -41,22 +46,55 @@ max = ["max-control", "fast", "gitoxide-core-blocking-client", "http-client-curl
 ## transports as it uses Rust's HTTP implementation.
 ##
 ## As fast as possible, with TUI progress, progress line rendering with auto-configuration, all transports available but less mature pure Rust HTTP implementation, all `ein` tools, CLI colors and local-time support, JSON output, regex support for rev-specs.
-max-pure = ["max-control", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "http-client-reqwest", "gitoxide-core-blocking-client" ]
+max-pure = [
+  "max-control",
+  "gix-features/rustsha1",
+  "gix-features/zlib-rust-backend",
+  "http-client-reqwest",
+  "gitoxide-core-blocking-client",
+]
 
 ## Like `max`, but with more control for configuration. See the *Package Maintainers* headline for more information.
-max-control = ["tracing", "fast-safe", "pretty-cli", "gitoxide-core-tools-query", "gitoxide-core-tools-corpus", "gitoxide-core-tools", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "gix/revparse-regex" ]
+max-control = [
+  "tracing",
+  "fast-safe",
+  "pretty-cli",
+  "gitoxide-core-tools-query",
+  "gitoxide-core-tools-corpus",
+  "gitoxide-core-tools",
+  "prodash-render-line",
+  "prodash-render-tui",
+  "prodash/render-line-autoconfigure",
+  "gix/revparse-regex",
+]
 
 ## All of the good stuff, with less fanciness for smaller binaries.
 ##
 ## As fast as possible, progress line rendering, all transports based on their most mature implementation (HTTP), all `ein` tools, CLI colors and local-time support, JSON output.
-lean = ["fast", "tracing", "pretty-cli", "http-client-curl", "gitoxide-core-tools-query", "gitoxide-core-tools-corpus", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
+lean = [
+  "fast",
+  "tracing",
+  "pretty-cli",
+  "http-client-curl",
+  "gitoxide-core-tools-query",
+  "gitoxide-core-tools-corpus",
+  "gitoxide-core-tools",
+  "gitoxide-core-blocking-client",
+  "prodash-render-line",
+]
 
 ## The smallest possible build, best suitable for small single-core machines.
 ##
 ## This build is essentially limited to local operations without any fanciness.
 ##
 ## Optimized for size, no parallelism thus much slower, progress line rendering.
-small = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend", "prodash-render-line", "is-terminal"  ]
+small = [
+  "pretty-cli",
+  "gix-features/rustsha1",
+  "gix-features/zlib-rust-backend",
+  "prodash-render-line",
+  "is-terminal",
+]
 
 ## Like lean, but uses Rusts async implementations for networking.
 ##
@@ -67,7 +105,16 @@ small = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend"
 ##
 ## Due to async client-networking not being implemented for most transports, this one supports only the 'git+tcp' and HTTP transport.
 ## It uses, however, a fully asynchronous networking implementation which can serve a real-world example on how to implement custom async transports.
-lean-async = ["fast", "tracing", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-tools-query", "gitoxide-core-tools-corpus", "gitoxide-core-async-client", "prodash-render-line"]
+lean-async = [
+  "fast",
+  "tracing",
+  "pretty-cli",
+  "gitoxide-core-tools",
+  "gitoxide-core-tools-query",
+  "gitoxide-core-tools-corpus",
+  "gitoxide-core-async-client",
+  "prodash-render-line",
+]
 
 #! ### Package Maintainers
 #! `*-control` features leave it to you to configure C libraries, involving choices for `zlib`, ! hashing and transport implementation.
@@ -106,29 +153,62 @@ fast = ["gix/max-performance", "gix/comfort"]
 fast-safe = ["gix/max-performance-safe", "gix/comfort"]
 
 ## Enable tracing in `gitoxide-core`.
-tracing = ["dep:tracing-forest", "dep:tracing-subscriber", "dep:tracing", "gix-features/tracing", "gix-features/tracing-detail" ]
+tracing = [
+  "dep:tracing-forest",
+  "dep:tracing-subscriber",
+  "dep:tracing",
+  "gix-features/tracing",
+  "gix-features/tracing-detail",
+]
 
 ## Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of binary size.
 ## Provides a terminal user interface for detailed and exhaustive progress.
 ## Provides a line renderer for leaner progress display, without the need for a full-blown TUI.
-pretty-cli = [ "gitoxide-core/serde", "prodash/progress-tree", "prodash/progress-tree-log", "prodash/local-time", "env_logger/humantime", "env_logger/color", "env_logger/auto-color" ]
+pretty-cli = [
+  "gitoxide-core/serde",
+  "prodash/progress-tree",
+  "prodash/progress-tree-log",
+  "prodash/local-time",
+  "env_logger/humantime",
+  "env_logger/color",
+  "env_logger/auto-color",
+]
 
 ## The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
 ## that appears after a short duration.
-prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "prodash/signal-hook", "is-terminal", "crosstermion"]
+prodash-render-line-crossterm = [
+  "prodash-render-line",
+  "prodash/render-line-crossterm",
+  "prodash/signal-hook",
+  "is-terminal",
+  "crosstermion",
+]
 
 ## Progress reporting with a TUI, can then be enabled with the `--progress` flag.
-prodash-render-tui = ["prodash/render-tui", "prodash/render-tui-crossterm", "gix/progress-tree", "futures-lite"]
+prodash-render-tui = [
+  "prodash/render-tui",
+  "prodash/render-tui-crossterm",
+  "gix/progress-tree",
+  "futures-lite",
+]
 
 ## Progress reporting by visually drawing lines into the terminal without switching to an alternate window.
-prodash-render-line = ["prodash/render-line", "prodash-render-line-crossterm", "gix/progress-tree"]
+prodash-render-line = [
+  "prodash/render-line",
+  "prodash-render-line-crossterm",
+  "gix/progress-tree",
+]
 
 ## Prints statistical information to inform about cache efficiency when those are dropped.
 ## Use this as a way to understand if bigger caches actually produce greater yiedls.
 cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
 ##  A way to enable most `gitoxide-core` tools found in `ein tools`, namely `organize` and `estimate hours`.
-gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours", "gitoxide-core-tools-archive"]
+gitoxide-core-tools = [
+  "gitoxide-core/organize",
+  "gitoxide-core/estimate-hours",
+  "gitoxide-core-tools-archive",
+]
 
 ## A program to perform analytics on a `git` repository, using an auto-maintained sqlite database
 gitoxide-core-tools-query = ["gitoxide-core/query"]
@@ -168,11 +248,14 @@ gix = { version = "^0.54.1", path = "gix", default-features = false }
 time = "0.3.23"
 
 clap = { version = "4.1.1", features = ["derive", "cargo"] }
+clap_complete = "4.4.3"
 prodash = { workspace = true, optional = true }
 is-terminal = { version = "0.4.0", optional = true }
 env_logger = { version = "0.10.0", default-features = false }
 crosstermion = { version = "0.11.0", optional = true, default-features = false }
-futures-lite = { version = "1.12.0", optional = true, default-features = false, features = ["std"] }
+futures-lite = { version = "1.12.0", optional = true, default-features = false, features = [
+  "std",
+] }
 
 # for 'tracing'
 tracing-forest = { version = "0.1.5", features = ["serde"], optional = true }
@@ -216,80 +299,80 @@ build-override = { opt-level = 0 }
 
 [workspace]
 members = [
-    "gix-actor",
-    "gix-url",
-    "gix-hash",
-    "gix-validate",
-    "gix-ref",
-    "gix-command",
-    "gix-config",
-    "gix-config-value",
-    "gix-discover",
-    "gix-features",
-    "gix-trace",
-    "gix-commitgraph",
-    "gix-chunk",
-    "gix-quote",
-    "gix-object",
-    "gix-glob",
-    "gix-diff",
-    "gix-date",
-    "gix-traverse",
-    "gix-index",
-    "gix-bitmap",
-    "gix-worktree",
-    "gix-worktree-state",
-    "gix-status",
-    "gix-revision",
-    "gix-packetline",
-    "gix-packetline-blocking",
-    "gix-mailmap",
-    "gix-macros",
-    "gix-note",
-    "gix-negotiate",
-    "gix-fetchhead",
-    "gix-prompt",
-    "gix-filter",
-    "gix-sec",
-    "gix-lfs",
-    "gix-rebase",
-    "gix-sequencer",
-    "gix-submodule",
-    "gix-transport",
-    "gix-credentials",
-    "gix-protocol",
-    "gix-pack",
-    "gix-odb",
-    "gix-tempfile",
-    "gix-lock",
-    "gix-attributes",
-    "gix-ignore",
-    "gix-pathspec",
-    "gix-refspec",
-    "gix-path",
-    "gix-utils",
-    "gix-fs",
-    "gix",
-    "gitoxide-core",
-    "gix-hashtable",
-    "gix-tui",
-    "gix-tix",
-    "gix-archive",
-    "gix-worktree-stream",
-    "gix-revwalk",
+  "gix-actor",
+  "gix-url",
+  "gix-hash",
+  "gix-validate",
+  "gix-ref",
+  "gix-command",
+  "gix-config",
+  "gix-config-value",
+  "gix-discover",
+  "gix-features",
+  "gix-trace",
+  "gix-commitgraph",
+  "gix-chunk",
+  "gix-quote",
+  "gix-object",
+  "gix-glob",
+  "gix-diff",
+  "gix-date",
+  "gix-traverse",
+  "gix-index",
+  "gix-bitmap",
+  "gix-worktree",
+  "gix-worktree-state",
+  "gix-status",
+  "gix-revision",
+  "gix-packetline",
+  "gix-packetline-blocking",
+  "gix-mailmap",
+  "gix-macros",
+  "gix-note",
+  "gix-negotiate",
+  "gix-fetchhead",
+  "gix-prompt",
+  "gix-filter",
+  "gix-sec",
+  "gix-lfs",
+  "gix-rebase",
+  "gix-sequencer",
+  "gix-submodule",
+  "gix-transport",
+  "gix-credentials",
+  "gix-protocol",
+  "gix-pack",
+  "gix-odb",
+  "gix-tempfile",
+  "gix-lock",
+  "gix-attributes",
+  "gix-ignore",
+  "gix-pathspec",
+  "gix-refspec",
+  "gix-path",
+  "gix-utils",
+  "gix-fs",
+  "gix",
+  "gitoxide-core",
+  "gix-hashtable",
+  "gix-tui",
+  "gix-tix",
+  "gix-archive",
+  "gix-worktree-stream",
+  "gix-revwalk",
 
-    "tests/tools",
+  "tests/tools",
 
-    "gix-diff/tests",
-    "gix-pack/tests",
-    "gix-odb/tests",
-    "gix-worktree-state/tests",
-    "gix-status/tests",
-    "gix-worktree/tests",
-    "gix-index/tests",
-    "gix-ref/tests",
-    "gix-config/tests",
-    "gix-traverse/tests",
+  "gix-diff/tests",
+  "gix-pack/tests",
+  "gix-odb/tests",
+  "gix-worktree-state/tests",
+  "gix-status/tests",
+  "gix-worktree/tests",
+  "gix-index/tests",
+  "gix-ref/tests",
+  "gix-config/tests",
+  "gix-traverse/tests",
 ]
 
 [workspace.dependencies]

@@ -8,7 +8,8 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap_complete::{generate, shells::Bash};
 use gitoxide_core as core;
 use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
 use gix::bstr::{io::BufReadExt, BString};
@@ -1219,6 +1220,39 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
+        Subcommands::GenerateCompletions => {
+            let mut app = Args::command();
+
+            let bin_name = "gix";
+
+            app.set_bin_name(bin_name);
+
+            // TODO: For additonal shells, find preferred completion workflow
+            let outdir = std::path::Path::new("/etc/").join("bash_completion.d/");
+
+            match &mut std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create(true)
+                .open(&outdir.join(bin_name))
+            {
+                Ok(write_buffer) => {
+                    generate(Bash, &mut app, bin_name, write_buffer);
+                    // generate(Fish, &mut app, bin_name, write_buffer);
+                    // generate(Zsh, &mut app, bin_name, write_buffer);
+                    // generate(PowerShell, &mut app, bin_name, write_buffer);
+                    // generate(Elvish, &mut app, bin_name, write_buffer);
+
+                    println!("completion file generated in: {outdir:?}");
+                }
+                Err(e) => {
+                    eprintln!("failed to open path '{outdir:?}': {}", e);
+                    std::process::exit(1);
+                }
+            };
+
+            Ok(())
+        }
     }?;
     Ok(())
 }

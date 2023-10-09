@@ -134,6 +134,9 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+    /// Generate shell completions in `/etc/bash_completion.d/gix.bash`.
+    /// NOTE: Requires `sudo` to write to `/etc/`.
+    GenerateCompletions,
 }
 
 #[cfg(feature = "gitoxide-core-tools-archive")]
