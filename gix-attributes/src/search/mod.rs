@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use byteyarn::Yarn;
+use kstring::KString;
 use smallvec::SmallVec;
 
 use crate::{Assignment, AssignmentRef};
@@ -99,7 +99,7 @@ pub struct Outcome {
     /// A stack of attributes to use for processing attributes of matched patterns and for resolving their macros.
     attrs_stack: SmallVec<[(AttributeId, Assignment, Option<AttributeId>); 8]>,
     /// A set of attributes we should limit ourselves to, or empty if we should fill in all attributes, made of
-    selected: SmallVec<[(Yarn, Option<AttributeId>); AVERAGE_NUM_ATTRS]>,
+    selected: SmallVec<[(KString, Option<AttributeId>); AVERAGE_NUM_ATTRS]>,
     /// storage for all patterns we have matched so far (in order to avoid referencing them, we copy them, but only once).
     patterns: RefMap<gix_glob::Pattern>,
     /// storage for all assignments we have matched so far (in order to avoid referencing them, we copy them, but only once).
@@ -135,7 +135,7 @@ pub struct MetadataCollection {
     /// A mapping of an attribute or macro name to its order, that is the time when it was *first* seen.
     ///
     /// This is the inverse of the order attributes are searched.
-    name_to_meta: HashMap<Yarn, Metadata>,
+    name_to_meta: HashMap<KString, Metadata>,
 }
 
 /// Metadata associated with an attribute or macro name.

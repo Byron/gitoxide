@@ -1,6 +1,6 @@
 use bstr::{BString, ByteSlice};
-use byteyarn::YarnBox;
 use gix_glob::Pattern;
+use kstring::{KString, KStringRef};
 
 use crate::{
     search::{
@@ -44,7 +44,7 @@ impl Outcome {
     pub fn initialize_with_selection<'a>(
         &mut self,
         collection: &MetadataCollection,
-        attribute_names: impl IntoIterator<Item = impl Into<&'a str>>,
+        attribute_names: impl IntoIterator<Item = impl Into<KStringRef<'a>>>,
     ) {
         self.initialize_with_selection_inner(collection, &mut attribute_names.into_iter().map(Into::into))
     }
@@ -52,15 +52,15 @@ impl Outcome {
     fn initialize_with_selection_inner(
         &mut self,
         collection: &MetadataCollection,
-        attribute_names: &mut dyn Iterator<Item = &str>,
+        attribute_names: &mut dyn Iterator<Item = KStringRef<'_>>,
     ) {
         self.initialize(collection);
 
         self.selected.clear();
         self.selected.extend(attribute_names.map(|name| {
             (
-                YarnBox::new(name).immortalize(),
-                collection.name_to_meta.get(name).map(|meta| meta.id),
+                name.to_owned(),
+                collection.name_to_meta.get(name.as_str()).map(|meta| meta.id),
             )
         }));
         self.reset_remaining();
@@ -314,7 +314,7 @@ impl MetadataCollection {
             None => {
                 let order = AttributeId(self.name_to_meta.len());
                 self.name_to_meta.insert(
-                    YarnBox::new(name).immortalize(),
+                    KString::from_ref(name),
                     Metadata {
                         id: order,
                         macro_attributes: Default::default(),
@@ -334,7 +334,7 @@ impl MetadataCollection {
             Some(meta) => meta.id,
             None => {
                 let order = AttributeId(self.name_to_meta.len());
-                self.name_to_meta.insert(YarnBox::new(name).immortalize(), order.into());
+                self.name_to_meta.insert(KString::from_ref(name), order.into());
                 order
             }
         }
