@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use clap_complete::Shell;
 use gitoxide_core as core;
 use gix::bstr::BString;
 
@@ -134,6 +135,15 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+    /// Generate shell completions to stdout or a directory.
+    #[clap(visible_alias = "generate-completions", visible_alias = "shell-completions")]
+    Completions {
+        /// The shell to generate completions for. Otherwise it's derived from the environment.
+        #[clap(long, short)]
+        shell: Option<Shell>,
+        /// The output directory in case multiple files are generated. If not provided, will write to stdout.
+        out_dir: Option<String>,
+    },
 }
 
 #[cfg(feature = "gitoxide-core-tools-archive")]
