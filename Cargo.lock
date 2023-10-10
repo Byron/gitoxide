@@ -1614,6 +1614,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-fetchhead-tests"
+version = "0.0.0"
+dependencies = [
+ "gix-testtools",
+]
+
+[[package]]
 name = "gix-filter"
 version = "0.6.0"
 dependencies = [
