@@ -1,16 +1,12 @@
 use bstr::{BStr, BString, ByteSlice};
-use byteyarn::YarnRef;
+use kstring::KStringRef;
 
 use crate::{Name, NameRef};
 
 impl<'a> NameRef<'a> {
     /// Turn this ref into its owned counterpart.
     pub fn to_owned(self) -> Name {
-        Name(
-            self.0
-                .immortalize()
-                .map_or_else(|| self.0.to_boxed_str().into(), YarnRef::to_box),
-        )
+        Name(self.0.into())
     }
 
     /// Return the inner `str`.
@@ -39,7 +35,7 @@ impl<'a> TryFrom<&'a BStr> for NameRef<'a> {
         }
 
         attr_valid(attr)
-            .then(|| NameRef(YarnRef::from(attr.to_str().expect("no illformed utf8"))))
+            .then(|| NameRef(KStringRef::from_ref(attr.to_str().expect("no illformed utf8"))))
             .ok_or_else(|| Error { attribute: attr.into() })
     }
 }

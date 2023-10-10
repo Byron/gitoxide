@@ -1,21 +1,29 @@
 use bstr::{BStr, ByteSlice};
-use byteyarn::{ByteYarn, YarnBox, YarnRef};
+use kstring::{KString, KStringRef};
 
 use crate::{State, StateRef};
 
 /// A container to encapsulate a tightly packed and typically unallocated byte value that isn't necessarily UTF8 encoded.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct Value(ByteYarn);
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Value(KString);
 
 /// A reference container to encapsulate a tightly packed and typically unallocated byte value that isn't necessarily UTF8 encoded.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub struct ValueRef<'a>(YarnRef<'a, [u8]>);
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ValueRef<'a>(#[cfg_attr(feature = "serde", serde(borrow))] KStringRef<'a>);
 
 /// Lifecycle
 impl<'a> ValueRef<'a> {
     /// Keep `input` as our value.
     pub fn from_bytes(input: &'a [u8]) -> Self {
-        Self(YarnRef::from(input))
+        Self(KStringRef::from_ref(
+            // SAFETY: our API makes accessing that value as `str` impossible, so illformed UTF8 is never exposed as such.
+            #[allow(unsafe_code)]
+            unsafe {
+                std::str::from_utf8_unchecked(input)
+            },
+        ))
     }
 }
 
@@ -34,22 +42,19 @@ impl ValueRef<'_> {
 
 impl<'a> From<&'a str> for ValueRef<'a> {
     fn from(v: &'a str) -> Self {
-        ValueRef(v.as_bytes().into())
+        ValueRef(v.into())
     }
 }
 
 impl<'a> From<ValueRef<'a>> for Value {
     fn from(v: ValueRef<'a>) -> Self {
-        Value(
-            v.0.immortalize()
-                .map_or_else(|| v.0.to_boxed_bytes().into(), YarnRef::to_box),
-        )
+        Value(v.0.into())
     }
 }
 
 impl From<&str> for Value {
     fn from(v: &str) -> Self {
-        Value(YarnBox::new(v).immortalize().into())
+        Value(KString::from_ref(v))
     }
 }
 

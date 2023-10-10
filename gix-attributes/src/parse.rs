@@ -1,12 +1,13 @@
 use std::borrow::Cow;
 
 use bstr::{BStr, ByteSlice};
-use byteyarn::YarnRef;
+use kstring::KStringRef;
 
 use crate::{name, AssignmentRef, Name, NameRef, StateRef};
 
 /// The kind of attribute that was parsed.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     /// A pattern to match paths against
     Pattern(gix_glob::Pattern),
@@ -75,7 +76,7 @@ fn check_attr(attr: &BStr) -> Result<NameRef<'_>, name::Error> {
     }
 
     attr_valid(attr)
-        .then(|| NameRef(YarnRef::from(attr.to_str().expect("no illformed utf8"))))
+        .then(|| NameRef(KStringRef::from_ref(attr.to_str().expect("no illformed utf8"))))
         .ok_or_else(|| name::Error { attribute: attr.into() })
 }
 

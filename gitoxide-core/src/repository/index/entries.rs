@@ -294,13 +294,7 @@ pub(crate) mod function {
         Ok((pathspec.into_parts().0, index, cache))
     }
 
-    #[cfg(feature = "serde")]
-    #[derive(serde::Serialize)]
-    struct AttrsForSerde {
-        is_excluded: bool,
-        attributes: Vec<String>,
-    }
-
+    #[cfg_attr(feature = "serde", derive(serde::Serialize))]
     struct Attrs {
         is_excluded: bool,
         attributes: Vec<gix::attrs::Assignment>,
@@ -337,7 +331,7 @@ pub(crate) mod function {
             flags: u32,
             mode: u32,
             path: std::borrow::Cow<'a, str>,
-            meta: Option<AttrsForSerde>,
+            meta: Option<Attrs>,
         }
 
         serde_json::to_writer(
@@ -354,14 +348,7 @@ pub(crate) mod function {
                     path.extend_from_slice(entry.path(index));
                     path.to_string().into()
                 },
-                meta: attrs.map(|attrs| AttrsForSerde {
-                    is_excluded: attrs.is_excluded,
-                    attributes: attrs
-                        .attributes
-                        .into_iter()
-                        .map(|attr| attr.as_ref().to_string())
-                        .collect(),
-                }),
+                meta: attrs,
             },
         )?;
 
