@@ -139,7 +139,7 @@ mod unknown {
 
 #[test]
 fn fuzzed() {
-    for name in ["very-long", "very-long2", "very-long3"] {
+    for name in ["very-long4", "very-long3", "very-long2", "very-long"] {
         let base = Path::new("tests").join("fixtures").join("fuzzed");
         let location = base.join(Path::new(name).with_extension("url"));
         let url = std::fs::read(&location).unwrap();
