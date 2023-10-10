@@ -135,13 +135,13 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
-    /// Generate shell completions
-    GenerateCompletions {
-        /// Shell for generating completions.
+    /// Generate shell completions to stdout or a directory.
+    #[clap(visible_alias = "generate-completions", visible_alias = "shell-completions")]
+    Completions {
+        /// The shell to generate completions for. Otherwise it's derived from the environment.
         #[clap(long, short)]
-        shell: Shell,
-        /// Output directory. If not provided, will write to stdout.
-        #[clap(long, short)]
+        shell: Option<Shell>,
+        /// The output directory in case multiple files are generated. If not provided, will write to stdout.
         out_dir: Option<String>,
     },
 }
