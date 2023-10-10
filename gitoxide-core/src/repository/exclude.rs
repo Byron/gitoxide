@@ -88,11 +88,18 @@ pub fn query(
                         .adjust_for_bare(repo.is_bare()),
                 )?;
                 for pattern in pathspec.search().patterns() {
-                    let entry = cache.at_entry(pattern.path(), None)?;
+                    let path = pattern.path();
+                    let entry = cache.at_entry(
+                        path,
+                        pattern
+                            .signature
+                            .contains(gix::pathspec::MagicSignature::MUST_BE_DIR)
+                            .into(),
+                    )?;
                     let match_ = entry
                         .matching_exclude_pattern()
                         .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then_some(m));
-                    print_match(match_, pattern.path(), &mut out)?;
+                    print_match(match_, path, &mut out)?;
                 }
             }
         }

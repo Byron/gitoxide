@@ -83,11 +83,18 @@ pub(crate) mod function {
                             .adjust_for_bare(repo.is_bare()),
                     )?;
                     for pattern in pathspec.search().patterns() {
-                        let entry = cache.at_entry(pattern.path(), Some(false))?;
+                        let path = pattern.path();
+                        let entry = cache.at_entry(
+                            path,
+                            pattern
+                                .signature
+                                .contains(gix::pathspec::MagicSignature::MUST_BE_DIR)
+                                .into(),
+                        )?;
                         if !entry.matching_attributes(&mut matches) {
                             continue;
                         }
-                        print_match(&matches, pattern.path(), &mut out)?;
+                        print_match(&matches, path, &mut out)?;
                     }
                 }
             }
