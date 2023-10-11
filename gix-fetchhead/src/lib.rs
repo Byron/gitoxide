@@ -20,7 +20,7 @@ pub struct FetchHeadEntry {
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct FetchHead {
     //List of fetch entries contained in the FETCH_HEAD FILE
-    pub entries: Vec<FetchHeadEntry>
+    pub entries: Vec<FetchHeadEntry>,
 }
 
 pub mod parse;
