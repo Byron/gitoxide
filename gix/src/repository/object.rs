@@ -10,7 +10,7 @@ use gix_ref::{
 };
 use smallvec::SmallVec;
 
-use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference, Tree};
+use crate::{commit, ext::ObjectIdExt, object, tag, Blob, Id, Object, Reference, Tree};
 
 /// Methods related to object creation.
 impl crate::Repository {
@@ -312,11 +312,23 @@ impl crate::Repository {
 
     /// Return an empty tree object, suitable for [getting changes](crate::Tree::changes()).
     ///
-    /// Note that it is special and doesn't physically exist in the object database even though it can be returned.
+    /// Note that the returned object is special and doesn't necessarily physically exist in the object database.
     /// This means that this object can be used in an uninitialized, empty repository which would report to have no objects at all.
     pub fn empty_tree(&self) -> Tree<'_> {
         self.find_object(gix_hash::ObjectId::empty_tree(self.object_hash()))
             .expect("always present")
             .into_tree()
+    }
+
+    /// Return an empty blob object.
+    ///
+    /// Note that the returned object is special and doesn't necessarily physically exist in the object database.
+    /// This means that this object can be used in an uninitialized, empty repository which would report to have no objects at all.
+    pub fn empty_blob(&self) -> Blob<'_> {
+        Blob {
+            id: gix_hash::ObjectId::empty_blob(self.object_hash()),
+            data: Vec::new(),
+            repo: self,
+        }
     }
 }

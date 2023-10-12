@@ -4,7 +4,7 @@ use std::convert::TryInto;
 use gix_hash::ObjectId;
 pub use gix_object::Kind;
 
-use crate::{Commit, Id, Object, ObjectDetached, Tag, Tree};
+use crate::{Blob, Commit, Id, Object, ObjectDetached, Tag, Tree};
 
 mod errors;
 pub(crate) mod cache {
@@ -74,6 +74,14 @@ impl<'repo> Object<'repo> {
         }
     }
 
+    /// Transform this object into a blob, or panic if it is none.
+    pub fn into_blob(self) -> Blob<'repo> {
+        match self.try_into() {
+            Ok(tree) => tree,
+            Err(this) => panic!("Tried to use {} as tree, but was {}", this.id, this.kind),
+        }
+    }
+
     /// Transform this object into a tree, or panic if it is none.
     pub fn into_tree(self) -> Tree<'repo> {
         match self.try_into() {
@@ -122,6 +130,15 @@ impl<'repo> Object<'repo> {
             id: this.id,
             actual: this.kind,
             expected: gix_object::Kind::Tree,
+        })
+    }
+
+    /// Transform this object into a blob, or return it as part of the `Err` if it is no blob.
+    pub fn try_into_blob(self) -> Result<Blob<'repo>, try_into::Error> {
+        self.try_into().map_err(|this: Self| try_into::Error {
+            id: this.id,
+            actual: this.kind,
+            expected: gix_object::Kind::Blob,
         })
     }
 }

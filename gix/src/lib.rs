@@ -158,7 +158,8 @@ mod types;
 #[cfg(any(feature = "excludes", feature = "attributes"))]
 pub use types::AttributeStack;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+    Blob, Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree,
+    Worktree,
 };
 #[cfg(feature = "attributes")]
 pub use types::{Pathspec, PathspecDetached, Submodule};

@@ -90,9 +90,10 @@ fn writes_avoid_io_using_duplicate_check() -> crate::Result {
                 assert_eq!(new_id, id);
             }
             Blob => {
-                let new_id = repo.write_blob(&obj.data)?;
+                let blob = obj.into_blob();
+                let new_id = repo.write_blob(&blob.data)?;
                 assert_eq!(new_id, id);
-                let new_id = repo.write_blob_stream(std::io::Cursor::new(&obj.data))?;
+                let new_id = repo.write_blob_stream(std::io::Cursor::new(&blob.data))?;
                 assert_eq!(new_id, id);
             }
         }
