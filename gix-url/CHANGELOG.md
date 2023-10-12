@@ -17,6 +17,52 @@ layers.
 There are still many (edge) cases in Git's url parsing implementation which are not handled correctly by Gitoxide. If you notice any such deviation please
 open a new issue to help us making Gitoxide even more correct.
 
+### Bug Fixes
+
+ - <csr-id-ea0ea88dfc232601b462fcf52fed4d34a17bc116/> another fuzz-issue that could cause long parse times of URLs
+ - <csr-id-60126d7097280bf364fb83ef73588df414198855/> denial of service attack by passing a URL with a very long host.
+   We now check for certain size limits and prevent passing long URLs to
+   the `url` crate.
+
+### New Features
+
+ - <csr-id-4184a5e9019f2ac20213b5362d60c71e0bf295d3/> enable fuzzing for git url parsing
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release over the course of 17 calendar days.
+ - 17 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Another fuzz-issue that could cause long parse times of URLs ([`ea0ea88`](https://github.com/Byron/gitoxide/commit/ea0ea88dfc232601b462fcf52fed4d34a17bc116))
+    - Add yet another bypass attack that runs into the `url` DoS issue ([`6aa63b1`](https://github.com/Byron/gitoxide/commit/6aa63b19338d1b4d86906a1e16eeb7b48cbc83a4))
+    - Merge branch 'improvements' ([`3939a45`](https://github.com/Byron/gitoxide/commit/3939a455be2269280248cdfed4a5983f8d178141))
+    - Assure we don't accidentally parse a valid-looking URL to `url` and cause long compute times. ([`7497553`](https://github.com/Byron/gitoxide/commit/7497553e753dcff92cc7c78941d8bbef8b97bdb7))
+    - Merge branch 'gix-url-fixture-improvements' ([`3d60c02`](https://github.com/Byron/gitoxide/commit/3d60c0245ec4b787cfcb111319d730a6e5031ef4))
+    - Fix panics not shown in gix-url baseline generation ([`2488ad9`](https://github.com/Byron/gitoxide/commit/2488ad9f5ca2913a1a67f40b91291463602a3f21))
+    - Improve output of the gix-url baseline test ([`a530037`](https://github.com/Byron/gitoxide/commit/a5300378899d205ce96f53581b98d3149e1e8c66))
+    - Denial of service attack by passing a URL with a very long host. ([`60126d7`](https://github.com/Byron/gitoxide/commit/60126d7097280bf364fb83ef73588df414198855))
+    - Merge branch 'gix-url-parse-rewrite' ([`a12e4a8`](https://github.com/Byron/gitoxide/commit/a12e4a88d5f5636cd694c72ce45a8b75aa754d28))
+    - Enable fuzzing for git url parsing ([`4184a5e`](https://github.com/Byron/gitoxide/commit/4184a5e9019f2ac20213b5362d60c71e0bf295d3))
+    - Assure we don't loose test coverage; possibly adjust expecations ([`30bb7dc`](https://github.com/Byron/gitoxide/commit/30bb7dc27f4b5def6abb91adc81ff49a1b935cff))
+    - Refactor ([`e318a4c`](https://github.com/Byron/gitoxide/commit/e318a4c243f67807bee55ea4571dfb1c068f1d09))
+    - Refactor baseline tests ([`4b4ac8a`](https://github.com/Byron/gitoxide/commit/4b4ac8abee65a27f8677ef25f4f127bf6f6416b7))
+    - Add platform specific baseline tests and run always run them. ([`e9aa690`](https://github.com/Byron/gitoxide/commit/e9aa690d7c0692e5476c2065feb31b0c75e81128))
+    - Update changelogs ([`4349353`](https://github.com/Byron/gitoxide/commit/43493531bbf3049bee3d7b14b7a6dbe874e37ebc))
+    - Align test with real behavior ([`a31af62`](https://github.com/Byron/gitoxide/commit/a31af624f88f80dab0a3f2ccd36502bb494ab046))
+    - Fix absolute windows file urls with extra slash ([`3bf12a3`](https://github.com/Byron/gitoxide/commit/3bf12a3e9bda6ebe0f8942d9b3f1f7c3e357b435))
+</details>
+
 ## 0.24.0 (2023-09-24)
 
 ### New Features
@@ -34,7 +80,7 @@ open a new issue to help us making Gitoxide even more correct.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 14 commits contributed to the release over the course of 14 calendar days.
  - 16 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -46,10 +92,20 @@ open a new issue to help us making Gitoxide even more correct.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-features v0.35.0, gix-actor v0.27.0, gix-object v0.37.0, gix-glob v0.13.0, gix-attributes v0.19.0, gix-filter v0.5.0, gix-fs v0.7.0, gix-commitgraph v0.21.0, gix-revwalk v0.8.0, gix-traverse v0.33.0, gix-worktree-stream v0.5.0, gix-archive v0.5.0, gix-tempfile v10.0.0, gix-lock v10.0.0, gix-ref v0.37.0, gix-config v0.30.0, gix-url v0.24.0, gix-credentials v0.20.0, gix-diff v0.36.0, gix-discover v0.25.0, gix-ignore v0.8.0, gix-index v0.25.0, gix-mailmap v0.19.0, gix-negotiate v0.8.0, gix-pack v0.43.0, gix-odb v0.53.0, gix-pathspec v0.3.0, gix-transport v0.37.0, gix-protocol v0.40.0, gix-revision v0.22.0, gix-refspec v0.18.0, gix-status v0.1.0, gix-submodule v0.4.0, gix-worktree v0.26.0, gix-worktree-state v0.3.0, gix v0.54.0, gitoxide-core v0.32.0, gitoxide v0.30.0, safety bump 37 crates ([`7891fb1`](https://github.com/Byron/gitoxide/commit/7891fb17348ec2f4c997665f9a25be36e2713da4))
     - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'fix-exploit' ([`c53bbd2`](https://github.com/Byron/gitoxide/commit/c53bbd265005c7eedc316205b217e137e2b9896e))
     - Prevent hosts or paths that look like arguments to be passed to invoked commands. ([`b06a0dd`](https://github.com/Byron/gitoxide/commit/b06a0dd781accad317fdec5f86f069df4c21875c))
     - Add `Url::host_argument_safe()` and `Url::path_argument_safe()` ([`d80b5f6`](https://github.com/Byron/gitoxide/commit/d80b5f69772a6e36b0131d3a538e896a8a6a29b1))
+    - Parse absolute paths in file urls on Windows ([`637e1ae`](https://github.com/Byron/gitoxide/commit/637e1ae996610b28812cf27efe13777666b44cc9))
+    - Parse absolute paths as local urls on Windows ([`3af8834`](https://github.com/Byron/gitoxide/commit/3af8834a4a6ee33473d1690fd98b40b22d41a55d))
+    - Create test urls from raw parts directly ([`5ac705c`](https://github.com/Byron/gitoxide/commit/5ac705cfaf8932469115f25b54a47f444c163bc0))
+    - Fix file urls with dos driver letter on unix ([`99f4447`](https://github.com/Byron/gitoxide/commit/99f444799d44bbe54ac05307b79da6add9181b8b))
+    - Fix dropping of host during file url conversion ([`f3e1331`](https://github.com/Byron/gitoxide/commit/f3e13312c2f0ea50b716189902c8b809a1a98cbc))
+    - Use helper function for common url parsing steps ([`2344f91`](https://github.com/Byron/gitoxide/commit/2344f913b0539942ae852e2b093558e04c79bb8a))
+    - Thanks clippy ([`d077f56`](https://github.com/Byron/gitoxide/commit/d077f56aa220d83f46e8d318c7bf48ec77072fdc))
+    - Add missing slash to file url test ([`ffaead6`](https://github.com/Byron/gitoxide/commit/ffaead685b49d6c6eebdf5c563d2dc3cdbfb9e13))
+    - Remove wrong ssh alias url test ([`4da440d`](https://github.com/Byron/gitoxide/commit/4da440d0f81a2fc462b2c04840a83beb7a738344))
 </details>
 
 ## 0.23.0 (2023-09-08)
@@ -63,7 +119,7 @@ open a new issue to help us making Gitoxide even more correct.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 17 calendar days.
+ - 8 commits contributed to the release over the course of 17 calendar days.
  - 17 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -79,6 +135,9 @@ open a new issue to help us making Gitoxide even more correct.
     - Prepare changelogs for release ([`375db06`](https://github.com/Byron/gitoxide/commit/375db06a8442378c3f7a922fae38e2a6694d9d04))
     - Merge branch `dyn`ification ([`f658fcc`](https://github.com/Byron/gitoxide/commit/f658fcc52dc2200ae34ca53dc10be97fb9012057))
     - Use `dyn` trait where possible. ([`072ee32`](https://github.com/Byron/gitoxide/commit/072ee32f693a31161cd6a843da6582d13efbb20b))
+    - Handle missing host and path separator in file url ([`f05edae`](https://github.com/Byron/gitoxide/commit/f05edaef5e8d6a2d90adc84c8dc5c4b5ab0017b6))
+    - Use same logic for file urls and local file paths ([`679a7f4`](https://github.com/Byron/gitoxide/commit/679a7f46e8121b5a0a5a396c2ce89f6706068507))
+    - Return errors for empty paths and relative urls ([`8af79ec`](https://github.com/Byron/gitoxide/commit/8af79ec98d82f3d2542fc43928103a20c2e4fc1a))
     - Merge branch 'gix-submodule' ([`363ee77`](https://github.com/Byron/gitoxide/commit/363ee77400805f473c9ad66eadad9214e7ab66f4))
 </details>
 
@@ -90,6 +149,51 @@ open a new issue to help us making Gitoxide even more correct.
 
  - <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
 
+### Reverted (BREAKING)
+
+ - <csr-id-fb0b8a769a8992e8079c66fea7d4708d9db0323d/> url parsing error NotALocalFile
+   The `NotALocalFile` error variant was previously returned if the input
+   url contained a colon but the slice after that character contained no
+   slash character (`/` or `\`). This behavior is wrong.
+   
+   SCP like URLs may not need a slash character to specify the repositories
+   location. Similarly, a local directory that contains a colon in its name
+   is a valid repository path as well.
+   
+   The new implementation correctly parses such URLs.
+ - <csr-id-dd1a1257d66d2f280be0adfce0a100a6a83e1c65/> url parsing error MissingResourceLocation
+   The `MissingResourceLocation` error variant was previously returned if
+   the input URL had either scheme ssh (no matter if URL or SCP format) or
+   git and the URL contained no or an empty path section. In the future we
+   will instead return the `MissingRepositoryPath` error in such a case.
+   
+   The only benefit of such a seperation is that it allows the caller to
+   infer the kind of URL we tried to parse. A future commit will add a new
+   field to the `MissingRepositoryPath` error variant which will clearly
+   communicate this information and can therefore be used instead for this
+   purpose.
+
+### Chore (BREAKING)
+
+ - <csr-id-313a7b3ddc5786af1f120fa99dd659d725b6845a/> restructure gix-url parsing error variants
+   All error variants now own a copy of the input which is used in their
+   display implementation. I noticed that URL parsing errors are almost never
+   acted upon but only wrapped and bubbled up to the user. It therefore
+   makes sense to ensure the message for this error is informative enough
+   by default.
+   
+   If an error can be thrown for different types of URLs it now also
+   includes a kind field. With this field the caller can determine what
+   kind of URL we tried to parse. Additionally, this information is used
+   for the error message too.
+   
+   For testing the assert_matches crate was added which implements the
+   unstable feature with the same name in stable rust. It makes testing the
+   invalid variants much more convenient.
+   
+   BREAKING because public fields of some error variants are now no longer
+   available
+
 ### Bug Fixes (BREAKING)
 
  - <csr-id-8857580cb270b737bf04437a6f5e65307df1c99b/> let `Url::canonicalize(d)()` take the current working dir as argument.
@@ -99,9 +203,9 @@ open a new issue to help us making Gitoxide even more correct.
 
 <csr-read-only-do-not-edit/>
 
- - 21 commits contributed to the release over the course of 17 calendar days.
+ - 28 commits contributed to the release over the course of 17 calendar days.
  - 30 days passed between releases.
- - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -115,11 +219,18 @@ open a new issue to help us making Gitoxide even more correct.
     - Make `gix-url` publishable by adding baseline test ([`d3746df`](https://github.com/Byron/gitoxide/commit/d3746df5dd402d8a461c2b07eaa0f8d8803fadf8))
     - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
     - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
+    - Restructure gix-url parsing error variants ([`313a7b3`](https://github.com/Byron/gitoxide/commit/313a7b3ddc5786af1f120fa99dd659d725b6845a))
+    - Url parsing error NotALocalFile ([`fb0b8a7`](https://github.com/Byron/gitoxide/commit/fb0b8a769a8992e8079c66fea7d4708d9db0323d))
+    - Url parsing error MissingResourceLocation ([`dd1a125`](https://github.com/Byron/gitoxide/commit/dd1a1257d66d2f280be0adfce0a100a6a83e1c65))
+    - Rewrite gix-url parsing ([`14facd9`](https://github.com/Byron/gitoxide/commit/14facd98632b44eb350c33a5aa425d2e68d25889))
     - Merge branch 'gix-url-fixture-tests' ([`1b957c5`](https://github.com/Byron/gitoxide/commit/1b957c524cae288ac2063f6ba7e4d10d523eb8f3))
     - For now, ignore baseline tests as most of them fail. ([`c0be6ab`](https://github.com/Byron/gitoxide/commit/c0be6aba49d734d166f279933220b02989c584de))
     - Don't call crate 'WIP' in manifest anymore. ([`229bd48`](https://github.com/Byron/gitoxide/commit/229bd4899213f749a7cc124aa2b82a1368fba40f))
     - Merge branch 'submodule-active' ([`a3afaa4`](https://github.com/Byron/gitoxide/commit/a3afaa42741616a0f1abeef9b54557e7c2b800cb))
+    - Add support for "git+ssh" and "ssh+git" urls ([`3faac36`](https://github.com/Byron/gitoxide/commit/3faac3648b4d39bff4a05602b481bf8e6d71b77e))
     - Let `Url::canonicalize(d)()` take the current working dir as argument. ([`8857580`](https://github.com/Byron/gitoxide/commit/8857580cb270b737bf04437a6f5e65307df1c99b))
+    - Fix wrong assertion in gix-url baseline test ([`f18bfd8`](https://github.com/Byron/gitoxide/commit/f18bfd8d81a56e9a68d465c49ef2da192de6c279))
+    - Improve error printing for gix-url baseline test ([`0e9a18e`](https://github.com/Byron/gitoxide/commit/0e9a18ed6921116cca6e48345d6937ad7120e83e))
     - Fix prints of panics in gix-url baseline test ([`938baee`](https://github.com/Byron/gitoxide/commit/938baee58383fd995d39c5528e2a104d33de8826))
     - Add assert output to failures in gix-url baseline test ([`163e139`](https://github.com/Byron/gitoxide/commit/163e1391526dad528e0bca0cc876e50e48381e74))
     - Thanks clippy ([`fe5dbe1`](https://github.com/Byron/gitoxide/commit/fe5dbe16b5a8cfefa31a561506218ede73f3ec7e))

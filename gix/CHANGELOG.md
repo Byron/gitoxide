@@ -17,6 +17,62 @@ layers.
 There are still many (edge) cases in Git's url parsing implementation which are not handled correctly by Gitoxide. If you notice any such deviation please
 open a new issue to help us making Gitoxide even more correct.
 
+### Other
+
+ - <csr-id-f478a3722f0be35c109ea60b79cd4ac6e607480b/> inform about the absence of strict hash verification and strict object creation.
+   Those are present in `git2` and enabled by default, and `gitoxde` definitely
+   wants to do the same at some point.
+
+### New Features
+
+ - <csr-id-c79a7daa30fe90d14d8e3387ec48116b37faf460/> add `Repository::head_tree()` to more easily obtain the current tree.
+ - <csr-id-787a9aa91c1abaa7572f5d19f8a2acbb7ecc0732/> Add `Repository::has_object()` as a high-level alternative.
+   Previously, one would have to call `repo.objects.contains()`, which
+   is fine, but this method is necessary for symmetry of the API
+   and one shouldn't have to drop down a level to do this.
+   
+   This method also knows empty trees as special case.
+ - <csr-id-3cec935e692eeb33ffcac98988e34a390f755bf3/> add `Object::try_into_blob()` and `into_blob()` and `Repository::empty_blob()`
+   This way it's easier to assert that an object is actually a blob.
+ - <csr-id-7d9ecdd1c230204468a965f703d5efd00fa7fb79/> add `Repository::index_or_empty()`.
+   This is useful if a missing index should mean it's empty.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 16 calendar days.
+ - 17 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'improvements' ([`429e7b2`](https://github.com/Byron/gitoxide/commit/429e7b25f93c8a7947db19bafa74babf199a1aa6))
+    - Inform about the absence of strict hash verification and strict object creation. ([`f478a37`](https://github.com/Byron/gitoxide/commit/f478a3722f0be35c109ea60b79cd4ac6e607480b))
+    - Add `Repository::head_tree()` to more easily obtain the current tree. ([`c79a7da`](https://github.com/Byron/gitoxide/commit/c79a7daa30fe90d14d8e3387ec48116b37faf460))
+    - Add `Repository::has_object()` as a high-level alternative. ([`787a9aa`](https://github.com/Byron/gitoxide/commit/787a9aa91c1abaa7572f5d19f8a2acbb7ecc0732))
+    - Add `Object::try_into_blob()` and `into_blob()` and `Repository::empty_blob()` ([`3cec935`](https://github.com/Byron/gitoxide/commit/3cec935e692eeb33ffcac98988e34a390f755bf3))
+    - Thanks clippy ([`345712d`](https://github.com/Byron/gitoxide/commit/345712dcdfddcccc630bbfef2ed4f461b21550d3))
+    - Merge branch 'reset' ([`b842691`](https://github.com/Byron/gitoxide/commit/b8426919a491dc3a7df01ee3f258fc0d8a3a327c))
+    - Trust Ctime again ([`f929d42`](https://github.com/Byron/gitoxide/commit/f929d420cb768f2df1d7886564ca03b3c3254a82))
+    - Add `Repository::index_or_empty()`. ([`7d9ecdd`](https://github.com/Byron/gitoxide/commit/7d9ecdd1c230204468a965f703d5efd00fa7fb79))
+    - Adapt to changes in `gix-status` ([`54fb7c2`](https://github.com/Byron/gitoxide/commit/54fb7c24a97cb2339a67ad269344ce65166a545d))
+    - Merge branch 'gix-url-parse-rewrite' ([`a12e4a8`](https://github.com/Byron/gitoxide/commit/a12e4a88d5f5636cd694c72ce45a8b75aa754d28))
+    - Update changelogs ([`4349353`](https://github.com/Byron/gitoxide/commit/43493531bbf3049bee3d7b14b7a6dbe874e37ebc))
+</details>
+
 ## 0.54.1 (2023-09-25)
 
 ### Bug Fixes
@@ -31,7 +87,7 @@ open a new issue to help us making Gitoxide even more correct.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -42,6 +98,7 @@ open a new issue to help us making Gitoxide even more correct.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix v0.54.1 ([`f603fd7`](https://github.com/Byron/gitoxide/commit/f603fd7a68206a6989a9f959216eba6cca0a6733))
     - Local refs created during fetching will now always be valid. ([`300a838`](https://github.com/Byron/gitoxide/commit/300a83821358f2a43649515606ebb84741e82780))
 </details>
 
