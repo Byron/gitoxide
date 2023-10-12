@@ -20,6 +20,7 @@ mod error {
 
 pub use error::Error;
 
+/// Remove Lifetime
 impl<'repo> Commit<'repo> {
     /// Create an owned instance of this object, copying our data in the process.
     pub fn detached(&self) -> ObjectDetached {

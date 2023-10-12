@@ -1,3 +1,5 @@
+use crate::{Blob, ObjectDetached};
+
 ///
 #[cfg(feature = "blob-diff")]
 pub mod diff {
@@ -145,5 +147,22 @@ pub mod diff {
             //       OK to just know how these objects are saved to know what constitutes a line.
             gix_diff::blob::intern::InternedInput::new(self.old.data.as_bytes(), self.new.data.as_bytes())
         }
+    }
+}
+
+/// Remove Lifetime
+impl Blob<'_> {
+    /// Create an owned instance of this object, copying our data in the process.
+    pub fn detached(&self) -> ObjectDetached {
+        ObjectDetached {
+            id: self.id,
+            kind: gix_object::Kind::Blob,
+            data: self.data.clone(),
+        }
+    }
+
+    /// Sever the connection to the `Repository` and turn this instance into a standalone object.
+    pub fn detach(self) -> ObjectDetached {
+        self.into()
     }
 }

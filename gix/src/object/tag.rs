@@ -1,4 +1,4 @@
-use crate::{ext::ObjectIdExt, Tag};
+use crate::{ext::ObjectIdExt, ObjectDetached, Tag};
 
 impl<'repo> Tag<'repo> {
     /// Decode the entire tag object and return it for accessing all tag information.
@@ -22,5 +22,22 @@ impl<'repo> Tag<'repo> {
     /// Decode this tag partially and return the tagger, if the field exists.
     pub fn tagger(&self) -> Result<Option<gix_actor::SignatureRef<'_>>, gix_object::decode::Error> {
         gix_object::TagRefIter::from_bytes(&self.data).tagger()
+    }
+}
+
+/// Remove Lifetime
+impl Tag<'_> {
+    /// Create an owned instance of this object, copying our data in the process.
+    pub fn detached(&self) -> ObjectDetached {
+        ObjectDetached {
+            id: self.id,
+            kind: gix_object::Kind::Tag,
+            data: self.data.clone(),
+        }
+    }
+
+    /// Sever the connection to the `Repository` and turn this instance into a standalone object.
+    pub fn detach(self) -> ObjectDetached {
+        self.into()
     }
 }

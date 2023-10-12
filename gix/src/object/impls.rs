@@ -7,7 +7,7 @@ impl<'repo> From<Object<'repo>> for ObjectDetached {
         ObjectDetached {
             id: v.id,
             kind: v.kind,
-            data: std::mem::take(&mut v.data),
+            data: steal_from_freelist(&mut v.data),
         }
     }
 }
@@ -17,7 +17,7 @@ impl<'repo> From<Commit<'repo>> for ObjectDetached {
         ObjectDetached {
             id: v.id,
             kind: gix_object::Kind::Commit,
-            data: std::mem::take(&mut v.data),
+            data: steal_from_freelist(&mut v.data),
         }
     }
 }
@@ -27,7 +27,27 @@ impl<'repo> From<Tag<'repo>> for ObjectDetached {
         ObjectDetached {
             id: v.id,
             kind: gix_object::Kind::Tag,
-            data: std::mem::take(&mut v.data),
+            data: steal_from_freelist(&mut v.data),
+        }
+    }
+}
+
+impl<'repo> From<Blob<'repo>> for ObjectDetached {
+    fn from(mut v: Blob<'repo>) -> Self {
+        ObjectDetached {
+            id: v.id,
+            kind: gix_object::Kind::Blob,
+            data: steal_from_freelist(&mut v.data),
+        }
+    }
+}
+
+impl<'repo> From<Tree<'repo>> for ObjectDetached {
+    fn from(mut v: Tree<'repo>) -> Self {
+        ObjectDetached {
+            id: v.id,
+            kind: gix_object::Kind::Tree,
+            data: steal_from_freelist(&mut v.data),
         }
     }
 }

@@ -4,7 +4,7 @@ pub use gix_object::tree::EntryMode;
 use gix_object::{bstr::BStr, TreeRefIter};
 use gix_odb::FindExt;
 
-use crate::{object::find, Id, Tree};
+use crate::{object::find, Id, ObjectDetached, Tree};
 
 /// Initialization
 impl<'repo> Tree<'repo> {
@@ -248,5 +248,22 @@ mod _impls {
         fn try_from(t: Tree<'_>) -> Result<Self, Self::Error> {
             t.decode().map(Into::into)
         }
+    }
+}
+
+/// Remove Lifetime
+impl Tree<'_> {
+    /// Create an owned instance of this object, copying our data in the process.
+    pub fn detached(&self) -> ObjectDetached {
+        ObjectDetached {
+            id: self.id,
+            kind: gix_object::Kind::Tree,
+            data: self.data.clone(),
+        }
+    }
+
+    /// Sever the connection to the `Repository` and turn this instance into a standalone object.
+    pub fn detach(self) -> ObjectDetached {
+        self.into()
     }
 }
