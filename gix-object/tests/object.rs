@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
 
 use gix_hash::ObjectId;
 
@@ -17,6 +18,35 @@ fn compute_hash() {
     );
     assert_eq!(
         gix_object::compute_hash(hk, gix_object::Kind::Tree, &[]),
+        gix_hash::ObjectId::empty_tree(hk)
+    );
+}
+
+#[test]
+fn compute_stream_hash() {
+    let hk = gix_hash::Kind::Sha1;
+    assert_eq!(
+        gix_object::compute_stream_hash(
+            hk,
+            gix_object::Kind::Blob,
+            &mut &[][..],
+            0,
+            &mut gix_features::progress::Discard,
+            &AtomicBool::default()
+        )
+        .expect("in-memory works"),
+        gix_hash::ObjectId::empty_blob(hk)
+    );
+    assert_eq!(
+        gix_object::compute_stream_hash(
+            hk,
+            gix_object::Kind::Tree,
+            &mut &[][..],
+            0,
+            &mut gix_features::progress::Discard,
+            &AtomicBool::default()
+        )
+        .expect("in-memory works"),
         gix_hash::ObjectId::empty_tree(hk)
     );
 }
