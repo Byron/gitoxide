@@ -35,6 +35,13 @@ impl<'repo> Commit<'repo> {
     pub fn detach(self) -> ObjectDetached {
         self.into()
     }
+
+    /// Retrieve this instance's encoded data, leaving its own data empty.
+    ///
+    /// This method works around the immovability of members of this type.
+    pub fn take_data(&mut self) -> Vec<u8> {
+        std::mem::take(&mut self.data)
+    }
 }
 
 impl<'repo> Commit<'repo> {
