@@ -2371,7 +2371,7 @@ dependencies = [
 
 [[package]]
 name = "gix-transport"
-version = "0.37.0"
+version = "0.37.1"
 dependencies = [
  "async-std",
  "async-trait",
