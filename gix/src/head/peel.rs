@@ -47,6 +47,10 @@ impl<'repo> Head<'repo> {
     }
 
     // TODO: tests
+    // TODO: Fix this! It's not consistently peeling tags. The whole peeling business should be reconsidered to do what people usually
+    //       want which is to peel references, if present, and then peel objects with control over which object type to end at.
+    //       Finding a good interface for that isn't easy as ideally, it's an iterator that shows the intermediate objects so the user
+    //       can select which tag of a chain to choose.
     /// Follow the symbolic reference of this head until its target object and peel it by following tag objects until there is no
     /// more object to follow, and return that object id.
     ///
