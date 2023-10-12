@@ -148,18 +148,14 @@ impl CompareBlobs for HashEq {
                         stream.read_to_end(buf)?;
                         gix_object::compute_hash(entry.id.kind(), gix_object::Kind::Blob, buf)
                     }
-                    Some(len) => {
-                        let header = gix_object::encode::loose_header(gix_object::Kind::Blob, len);
-                        let mut hasher = gix_features::hash::hasher(entry.id.kind());
-                        hasher.update(&header);
-                        gix_features::hash::bytes_with_hasher(
-                            &mut stream,
-                            len,
-                            hasher,
-                            &mut gix_features::progress::Discard,
-                            &AtomicBool::default(),
-                        )?
-                    }
+                    Some(len) => gix_object::compute_stream_hash(
+                        entry.id.kind(),
+                        gix_object::Kind::Blob,
+                        &mut stream,
+                        len,
+                        &mut gix_features::progress::Discard,
+                        &AtomicBool::default(),
+                    )?,
                 };
                 Ok((entry.id != file_hash).then_some(file_hash))
             }

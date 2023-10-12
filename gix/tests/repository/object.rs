@@ -68,6 +68,7 @@ fn writes_avoid_io_using_duplicate_check() -> crate::Result {
 
     for id in repo.objects.iter()? {
         let id = id?;
+        assert!(repo.has_object(id));
         let obj = repo.find_object(id)?;
         let header = repo.find_header(id)?;
         assert_eq!(obj.kind, header.kind(), "header and object agree");
@@ -90,9 +91,10 @@ fn writes_avoid_io_using_duplicate_check() -> crate::Result {
                 assert_eq!(new_id, id);
             }
             Blob => {
-                let new_id = repo.write_blob(&obj.data)?;
+                let blob = obj.into_blob();
+                let new_id = repo.write_blob(&blob.data)?;
                 assert_eq!(new_id, id);
-                let new_id = repo.write_blob_stream(std::io::Cursor::new(&obj.data))?;
+                let new_id = repo.write_blob_stream(std::io::Cursor::new(&blob.data))?;
                 assert_eq!(new_id, id);
             }
         }
@@ -155,6 +157,7 @@ mod find {
         let repo = basic_repo()?;
         let empty_tree = gix::hash::ObjectId::empty_tree(repo.object_hash());
         assert_eq!(repo.find_object(empty_tree)?.into_tree().iter().count(), 0);
+        assert!(repo.has_object(empty_tree));
         assert_eq!(
             repo.find_header(empty_tree)?,
             gix_odb::find::Header::Loose {

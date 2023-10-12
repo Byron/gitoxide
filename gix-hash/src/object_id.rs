@@ -123,6 +123,7 @@ impl ObjectId {
 
     /// Returns an instances whose bytes are all zero.
     #[inline]
+    #[doc(alias = "zero", alias = "git2")]
     pub const fn null(kind: Kind) -> ObjectId {
         match kind {
             Kind::Sha1 => Self::null_sha1(),
@@ -131,6 +132,7 @@ impl ObjectId {
 
     /// Returns `true` if this hash consists of all null bytes.
     #[inline]
+    #[doc(alias = "is_zero", alias = "git2")]
     pub fn is_null(&self) -> bool {
         match self {
             ObjectId::Sha1(digest) => &digest[..] == oid::null_sha1().as_bytes(),

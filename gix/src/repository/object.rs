@@ -10,7 +10,7 @@ use gix_ref::{
 };
 use smallvec::SmallVec;
 
-use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference, Tree};
+use crate::{commit, ext::ObjectIdExt, object, tag, Blob, Id, Object, Reference, Tree};
 
 /// Methods related to object creation.
 impl crate::Repository {
@@ -26,7 +26,7 @@ impl crate::Repository {
     #[momo]
     pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::Error> {
         let id = id.into();
-        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
+        if id == ObjectId::empty_tree(self.object_hash()) {
             return Ok(Object {
                 id,
                 kind: gix_object::Kind::Tree,
@@ -46,13 +46,32 @@ impl crate::Repository {
     #[momo]
     pub fn find_header(&self, id: impl Into<ObjectId>) -> Result<gix_odb::find::Header, object::find::existing::Error> {
         let id = id.into();
-        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
+        if id == ObjectId::empty_tree(self.object_hash()) {
             return Ok(gix_odb::find::Header::Loose {
                 kind: gix_object::Kind::Tree,
                 size: 0,
             });
         }
         self.objects.header(id)
+    }
+
+    /// Return `true` if `id` exists in the object database.
+    ///
+    /// # Performance
+    ///
+    /// This method can be slow if the underlying [object database](crate::Repository::objects) has
+    /// an unsuitable [RefreshMode](gix_odb::store::RefreshMode) and `id` is not likely to exist.
+    /// Use [`repo.objects.refresh_never()`](gix_odb::store::Handle::refresh_never) to avoid expensive
+    /// IO-bound refreshes if an object wasn't found.
+    #[doc(alias = "exists", alias = "git2")]
+    #[momo]
+    pub fn has_object(&self, id: impl AsRef<gix_hash::oid>) -> bool {
+        let id = id.as_ref();
+        if id == ObjectId::empty_tree(self.object_hash()) {
+            true
+        } else {
+            self.objects.contains(id)
+        }
     }
 
     /// Obtain information about an object without fully decoding it, or `None` if the object doesn't exist.
@@ -64,7 +83,7 @@ impl crate::Repository {
         id: impl Into<ObjectId>,
     ) -> Result<Option<gix_odb::find::Header>, object::find::Error> {
         let id = id.into();
-        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
+        if id == ObjectId::empty_tree(self.object_hash()) {
             return Ok(Some(gix_odb::find::Header::Loose {
                 kind: gix_object::Kind::Tree,
                 size: 0,
@@ -77,7 +96,7 @@ impl crate::Repository {
     #[momo]
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
         let id = id.into();
-        if id == gix_hash::ObjectId::empty_tree(self.object_hash()) {
+        if id == ObjectId::empty_tree(self.object_hash()) {
             return Ok(Some(Object {
                 id,
                 kind: gix_object::Kind::Tree,
@@ -236,7 +255,7 @@ impl crate::Repository {
         reference: FullName,
         message: &str,
         tree: ObjectId,
-        parents: SmallVec<[gix_hash::ObjectId; 1]>,
+        parents: SmallVec<[ObjectId; 1]>,
     ) -> Result<Id<'_>, commit::Error> {
         use gix_ref::{
             transaction::{Change, RefEdit},
@@ -310,13 +329,25 @@ impl crate::Repository {
         self.commit_as(committer, author, reference, message, tree, parents)
     }
 
-    /// Return an empty tree object, suitable for [getting changes](crate::Tree::changes()).
+    /// Return an empty tree object, suitable for [getting changes](Tree::changes()).
     ///
-    /// Note that it is special and doesn't physically exist in the object database even though it can be returned.
+    /// Note that the returned object is special and doesn't necessarily physically exist in the object database.
     /// This means that this object can be used in an uninitialized, empty repository which would report to have no objects at all.
     pub fn empty_tree(&self) -> Tree<'_> {
-        self.find_object(gix_hash::ObjectId::empty_tree(self.object_hash()))
+        self.find_object(ObjectId::empty_tree(self.object_hash()))
             .expect("always present")
             .into_tree()
+    }
+
+    /// Return an empty blob object.
+    ///
+    /// Note that the returned object is special and doesn't necessarily physically exist in the object database.
+    /// This means that this object can be used in an uninitialized, empty repository which would report to have no objects at all.
+    pub fn empty_blob(&self) -> Blob<'_> {
+        Blob {
+            id: gix_hash::ObjectId::empty_blob(self.object_hash()),
+            data: Vec::new(),
+            repo: self,
+        }
     }
 }

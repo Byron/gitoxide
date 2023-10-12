@@ -18,17 +18,18 @@ fn short_id() -> crate::Result {
 #[test]
 fn tree() -> crate::Result {
     let repo = basic_repo()?;
-    let commit = repo.head_commit()?;
+    let tree_id = repo.head_tree_id()?;
+    assert_eq!(tree_id, hex_to_id("21d3ba9a26b790a4858d67754ae05d04dfce4d0c"));
 
-    let tree = commit.tree()?;
-    assert_eq!(tree.id, commit.tree_id().expect("id present"));
+    let tree = tree_id.object()?.into_tree();
+    assert_eq!(tree.id, tree_id);
 
-    // It's possible to convert a `gix::Tree` into a lower-level tree modify it.
-    let _modififyable_tree: gix::objs::Tree = tree.try_into()?;
-
+    // It's possible to convert a `gix::Tree` into a lower-level tree and modify it.
+    let _modififyable_tree: gix::objs::Tree = tree.clone().try_into()?;
     assert_eq!(
-        commit.tree_id().ok().map(gix::Id::detach),
-        Some(hex_to_id("21d3ba9a26b790a4858d67754ae05d04dfce4d0c"))
+        _modififyable_tree,
+        tree.decode()?.into(),
+        "try_from and decode() yield the same object"
     );
     Ok(())
 }

@@ -212,6 +212,15 @@ impl crate::Repository {
         Ok(self.head()?.peel_to_commit_in_place()?)
     }
 
+    /// Return the tree id the `HEAD` reference currently points to after peeling it fully.
+    ///
+    /// Note that this may fail for various reasons, most notably because the repository
+    /// is freshly initialized and doesn't have any commits yet. It could also fail if the
+    /// head does not point to a commit.
+    pub fn head_tree_id(&self) -> Result<crate::Id<'_>, reference::head_tree_id::Error> {
+        Ok(self.head()?.peel_to_commit_in_place()?.tree_id()?)
+    }
+
     /// Find the reference with the given partial or full `name`, like `main`, `HEAD`, `heads/branch` or `origin/other`,
     /// or return an error if it wasn't found.
     ///

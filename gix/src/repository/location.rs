@@ -37,6 +37,7 @@ impl crate::Repository {
     }
 
     /// Return the work tree containing all checked out files, if there is one.
+    #[doc(alias = "workdir", alias = "git2")]
     pub fn work_dir(&self) -> Option<&std::path::Path> {
         self.work_tree.as_deref()
     }

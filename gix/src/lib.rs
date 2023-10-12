@@ -75,6 +75,11 @@
 //! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/*/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
 //! * [`git2::Repository::submodule_status()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodule_status) ➡ [`Submodule::state()`] - status provides more information and conveniences though, and an actual worktree status isn't performed.
 //!
+//! #### Integrity checks
+//!
+//! `git2` by default performs integrity checks via [`strict_hash_verification()`](https://docs.rs/git2/latest/git2/opts/fn.strict_hash_verification.html) and
+//! [`strict_object_creation`](https://docs.rs/git2/latest/git2/opts/fn.strict_object_creation.html) which `gitoxide` *currently* **does not have**.
+//!
 //! ### Feature Flags
 #![cfg_attr(
     feature = "document-features",
@@ -158,7 +163,8 @@ mod types;
 #[cfg(any(feature = "excludes", feature = "attributes"))]
 pub use types::AttributeStack;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+    Blob, Commit, Head, Id, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree,
+    Worktree,
 };
 #[cfg(feature = "attributes")]
 pub use types::{Pathspec, PathspecDetached, Submodule};

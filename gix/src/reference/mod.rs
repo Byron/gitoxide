@@ -10,7 +10,7 @@ pub mod iter;
 pub mod remote;
 
 mod errors;
-pub use errors::{edit, find, head_commit, head_id, peel};
+pub use errors::{edit, find, head_commit, head_id, head_tree_id, peel};
 
 use crate::ext::ObjectIdExt;
 

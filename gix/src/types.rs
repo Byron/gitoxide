@@ -31,6 +31,7 @@ pub struct Id<'r> {
 }
 
 /// A decoded object with a reference to its owning repository.
+#[derive(Clone)]
 pub struct Object<'repo> {
     /// The id of the object
     pub id: ObjectId,
@@ -47,7 +48,24 @@ impl<'a> Drop for Object<'a> {
     }
 }
 
+/// A blob along with access to its owning repository.
+#[derive(Clone)]
+pub struct Blob<'repo> {
+    /// The id of the tree
+    pub id: ObjectId,
+    /// The blob's data.
+    pub data: Vec<u8>,
+    pub(crate) repo: &'repo Repository,
+}
+
+impl<'a> Drop for Blob<'a> {
+    fn drop(&mut self) {
+        self.repo.reuse_buffer(&mut self.data);
+    }
+}
+
 /// A decoded tree object with access to its owning repository.
+#[derive(Clone)]
 pub struct Tree<'repo> {
     /// The id of the tree
     pub id: ObjectId,
@@ -63,6 +81,7 @@ impl<'a> Drop for Tree<'a> {
 }
 
 /// A decoded tag object with access to its owning repository.
+#[derive(Clone)]
 pub struct Tag<'repo> {
     /// The id of the tree
     pub id: ObjectId,
@@ -78,6 +97,7 @@ impl<'a> Drop for Tag<'a> {
 }
 
 /// A decoded commit object with access to its owning repository.
+#[derive(Clone)]
 pub struct Commit<'repo> {
     /// The id of the commit
     pub id: ObjectId,

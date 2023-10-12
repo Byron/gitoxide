@@ -22,8 +22,8 @@ pub mod edit {
 
 ///
 pub mod peel {
-    /// The error returned by [`Reference::peel_to_id_in_place(…)`][crate::Reference::peel_to_id_in_place()] and
-    /// [`Reference::into_fully_peeled_id(…)`][crate::Reference::into_fully_peeled_id()].
+    /// The error returned by [`Reference::peel_to_id_in_place(…)`](crate::Reference::peel_to_id_in_place()) and
+    /// [`Reference::into_fully_peeled_id(…)`](crate::Reference::into_fully_peeled_id()).
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -36,7 +36,7 @@ pub mod peel {
 
 ///
 pub mod head_id {
-    /// The error returned by [`Repository::head_id(…)`][crate::Repository::head_id()].
+    /// The error returned by [`Repository::head_id(…)`](crate::Repository::head_id()).
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -51,7 +51,7 @@ pub mod head_id {
 
 ///
 pub mod head_commit {
-    /// The error returned by [`Repository::head_commit`(…)][crate::Repository::head_commit()].
+    /// The error returned by [`Repository::head_commit`(…)](crate::Repository::head_commit()).
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -59,6 +59,21 @@ pub mod head_commit {
         Head(#[from] crate::reference::find::existing::Error),
         #[error(transparent)]
         PeelToCommit(#[from] crate::head::peel::to_commit::Error),
+    }
+}
+
+///
+pub mod head_tree_id {
+    /// The error returned by [`Repository::head_tree_id`(…)](crate::Repository::head_tree_id()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Head(#[from] crate::reference::find::existing::Error),
+        #[error(transparent)]
+        PeelToCommit(#[from] crate::head::peel::to_commit::Error),
+        #[error(transparent)]
+        DecodeCommit(#[from] gix_object::decode::Error),
     }
 }
 
