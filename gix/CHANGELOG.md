@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.55.0 (2023-10-12)
+
+<csr-id-f478a3722f0be35c109ea60b79cd4ac6e607480b/>
 
 This release contains a complete rewrite of the internal url parsing logic, the public interface stays mostly the same however. Gitoxide will now be
 more correct, interpreting more urls the same way Git does. Improvements include the added support for ssh aliases (`github:byron/gitoxide` has previously
@@ -41,7 +43,7 @@ open a new issue to help us making Gitoxide even more correct.
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 16 calendar days.
+ - 13 commits contributed to the release over the course of 16 calendar days.
  - 17 days passed between releases.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -59,6 +61,7 @@ open a new issue to help us making Gitoxide even more correct.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Merge branch 'improvements' ([`429e7b2`](https://github.com/Byron/gitoxide/commit/429e7b25f93c8a7947db19bafa74babf199a1aa6))
     - Inform about the absence of strict hash verification and strict object creation. ([`f478a37`](https://github.com/Byron/gitoxide/commit/f478a3722f0be35c109ea60b79cd4ac6e607480b))
     - Add `Repository::head_tree()` to more easily obtain the current tree. ([`c79a7da`](https://github.com/Byron/gitoxide/commit/c79a7daa30fe90d14d8e3387ec48116b37faf460))

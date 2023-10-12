@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.20.0 (2023-10-12)
 
 ### Bug Fixes
 
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 10 calendar days.
+ - 6 commits contributed to the release over the course of 10 calendar days.
  - 17 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1050](https://github.com/Byron/gitoxide/issues/1050)
@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1050](https://github.com/Byron/gitoxide/issues/1050)**
     - Revert "feat!: Use `yarn` for lower memory footprint and better performance." ([`355fd19`](https://github.com/Byron/gitoxide/commit/355fd191dbdae803c660781603d7986047760471))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Revert 'byteyarn' addition in favor of `kstring` ([`ac1d8d4`](https://github.com/Byron/gitoxide/commit/ac1d8d4a323fc5fb27b8c458f1babb4acc56ca52))
     - Thanks clippy ([`345712d`](https://github.com/Byron/gitoxide/commit/345712dcdfddcccc630bbfef2ed4f461b21550d3))
     - Merge branch 'improvements' ([`3939a45`](https://github.com/Byron/gitoxide/commit/3939a455be2269280248cdfed4a5983f8d178141))

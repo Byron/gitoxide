@@ -5,63 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### New Features
-
- - <csr-id-de66b4c26a937a4f6462dff5ec58275dae01813a/> `status` now supports filters.
-   This is important as it allows to streaming-read from the worktree and
-   correctly change, for example, `git-lfs` files back into their manifests,
-   and to arrive at the correct hash.
- - <csr-id-0e10b62557fbd5b33a4aebab24e442e23304ac0a/> a way for `status` to stop early.
-   That way, 'is_dirty()` scenarios can be done without wasting too much time.
-
-### New Features (BREAKING)
-
- - <csr-id-60c948f55ec432ab40b826a9ce8cb3d8fe15a543/> replace `conflict` marker with detailed decoding of stages.
-   We also adjust the returned data structure to allow the input to be immutable,
-   which delegates entry updates to the caller.
-   
-   This also paves the way for rename tracking, which requires free access to entries
-   for searching renames among the added and removed items, and/or copies among the added ones.
- - <csr-id-b55a8d58b8bd9e1ba2f9049668c166e75fb0a360/> add entries-relative index to each change.
-   That way it's possible to lookup other, surrounding entries in case
-   of conflicts or easily find entries that didn't change.
- - <csr-id-0d01eb28ebb2305873726ba1892204fd151f4c4f/> provide statistics at the end of a index status operation
- - <csr-id-53de126ea571ef9ed911e66c26a4c36cfdc7e0dd/> add support for submodule status
-   Previously, submodules where ignored. Now they are treated correctly
-   as 'directory' which is compared to what's in the worktree.
-   
-   We also simplify blob handling.
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 10 commits contributed to the release over the course of 8 calendar days.
- - 17 days passed between releases.
- - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' were seen in commit messages
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Merge branch 'improvements' ([`429e7b2`](https://github.com/Byron/gitoxide/commit/429e7b25f93c8a7947db19bafa74babf199a1aa6))
-    - Adapt to changes in `gix-object` ([`f712aeb`](https://github.com/Byron/gitoxide/commit/f712aeb1fe14ab60c58da5317410e397115f8d35))
-    - Merge branch 'reset' ([`b842691`](https://github.com/Byron/gitoxide/commit/b8426919a491dc3a7df01ee3f258fc0d8a3a327c))
-    - Replace `conflict` marker with detailed decoding of stages. ([`60c948f`](https://github.com/Byron/gitoxide/commit/60c948f55ec432ab40b826a9ce8cb3d8fe15a543))
-    - Add entries-relative index to each change. ([`b55a8d5`](https://github.com/Byron/gitoxide/commit/b55a8d58b8bd9e1ba2f9049668c166e75fb0a360))
-    - `status` now supports filters. ([`de66b4c`](https://github.com/Byron/gitoxide/commit/de66b4c26a937a4f6462dff5ec58275dae01813a))
-    - A way for `status` to stop early. ([`0e10b62`](https://github.com/Byron/gitoxide/commit/0e10b62557fbd5b33a4aebab24e442e23304ac0a))
-    - Provide statistics at the end of a index status operation ([`0d01eb2`](https://github.com/Byron/gitoxide/commit/0d01eb28ebb2305873726ba1892204fd151f4c4f))
-    - Add support for submodule status ([`53de126`](https://github.com/Byron/gitoxide/commit/53de126ea571ef9ed911e66c26a4c36cfdc7e0dd))
-    - Add symlink checking for `gix status` ([`c044919`](https://github.com/Byron/gitoxide/commit/c044919383b14f9355cf279add64297c2acedeed))
-</details>
-
 ## 0.23.1 (2023-08-02)
 
 ### Bug Fixes
@@ -324,11 +267,69 @@ This is a maintenance release with no functional changes.
 
 A maintenance release without user-facing changes.
 
-## 0.2.0 (2022-05-18)
+## 0.2.0 (2023-10-12)
 
 A maintenance release without documented changes.
 
+### New Features (BREAKING)
+
+ - <csr-id-60c948f55ec432ab40b826a9ce8cb3d8fe15a543/> replace `conflict` marker with detailed decoding of stages.
+   We also adjust the returned data structure to allow the input to be immutable,
+   which delegates entry updates to the caller.
+   
+   This also paves the way for rename tracking, which requires free access to entries
+   for searching renames among the added and removed items, and/or copies among the added ones.
+ - <csr-id-b55a8d58b8bd9e1ba2f9049668c166e75fb0a360/> add entries-relative index to each change.
+   That way it's possible to lookup other, surrounding entries in case
+   of conflicts or easily find entries that didn't change.
+ - <csr-id-0d01eb28ebb2305873726ba1892204fd151f4c4f/> provide statistics at the end of a index status operation
+ - <csr-id-53de126ea571ef9ed911e66c26a4c36cfdc7e0dd/> add support for submodule status
+   Previously, submodules where ignored. Now they are treated correctly
+   as 'directory' which is compared to what's in the worktree.
+   
+   We also simplify blob handling.
+
+### New Features
+
+ - <csr-id-de66b4c26a937a4f6462dff5ec58275dae01813a/> `status` now supports filters.
+   This is important as it allows to streaming-read from the worktree and
+   correctly change, for example, `git-lfs` files back into their manifests,
+   and to arrive at the correct hash.
+ - <csr-id-0e10b62557fbd5b33a4aebab24e442e23304ac0a/> a way for `status` to stop early.
+   That way, 'is_dirty()` scenarios can be done without wasting too much time.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 8 calendar days.
+ - 17 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
+    - Merge branch 'improvements' ([`429e7b2`](https://github.com/Byron/gitoxide/commit/429e7b25f93c8a7947db19bafa74babf199a1aa6))
+    - Adapt to changes in `gix-object` ([`f712aeb`](https://github.com/Byron/gitoxide/commit/f712aeb1fe14ab60c58da5317410e397115f8d35))
+    - Merge branch 'reset' ([`b842691`](https://github.com/Byron/gitoxide/commit/b8426919a491dc3a7df01ee3f258fc0d8a3a327c))
+    - Replace `conflict` marker with detailed decoding of stages. ([`60c948f`](https://github.com/Byron/gitoxide/commit/60c948f55ec432ab40b826a9ce8cb3d8fe15a543))
+    - Add entries-relative index to each change. ([`b55a8d5`](https://github.com/Byron/gitoxide/commit/b55a8d58b8bd9e1ba2f9049668c166e75fb0a360))
+    - `status` now supports filters. ([`de66b4c`](https://github.com/Byron/gitoxide/commit/de66b4c26a937a4f6462dff5ec58275dae01813a))
+    - A way for `status` to stop early. ([`0e10b62`](https://github.com/Byron/gitoxide/commit/0e10b62557fbd5b33a4aebab24e442e23304ac0a))
+    - Provide statistics at the end of a index status operation ([`0d01eb2`](https://github.com/Byron/gitoxide/commit/0d01eb28ebb2305873726ba1892204fd151f4c4f))
+    - Add support for submodule status ([`53de126`](https://github.com/Byron/gitoxide/commit/53de126ea571ef9ed911e66c26a4c36cfdc7e0dd))
+    - Add symlink checking for `gix status` ([`c044919`](https://github.com/Byron/gitoxide/commit/c044919383b14f9355cf279add64297c2acedeed))
+</details>
+
 ## 0.1.0 (2023-09-24)
+
+<csr-id-93feea269eebd114e866e6f29f4a73c0096df9e0/>
 
 An initial release with the ability to checkout indices with simple files only.
 
