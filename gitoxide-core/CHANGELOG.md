@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.33.0 (2023-10-12)
+
+### New Features
+
+ - <csr-id-46e591914d548bacae2656ffe14a0ea7ca2eb7ae/> `gix status` auto-writes changed indices.
+   This prevents expensive operations to re-occour.
+ - <csr-id-7ba2fa1c7781230913b0a04ad8684fa7d0143c18/> `gix status -s/--statistics` to obtain additional information on what happened.
+   This is useful for understanding performance characteristics in detail.
+
+### Bug Fixes
+
+ - <csr-id-0f3a4b0f864645b94f91897507b4d2737ff1ae25/> `gix attrs query` now allows to match directories as signalled by the trailing slash
+   Patterns exist that end in a trailing slash and that will naturally match these now, and
+   `git` can do the same.
+ - <csr-id-ac1d8d4a323fc5fb27b8c458f1babb4acc56ca52/> revert 'byteyarn' addition in favor of `kstring`
+   It turns out not to work on certain 32bit targets that `gix` now has to support
+   due to Fedora packaging.
+ - <csr-id-760d451e3e2abfc13c8d11b91609dd39ccc13bc5/> `gix attrs query` now shows attributes even for paths that aren't already tracked
+ - <csr-id-6fb851b88d3da043e747753697097d79e2fce73a/> `gix exclude query` now also displays paths that don't match existing index entries.
+
+### New Features (BREAKING)
+
+ - <csr-id-53de126ea571ef9ed911e66c26a4c36cfdc7e0dd/> add support for submodule status
+   Previously, submodules where ignored. Now they are treated correctly
+   as 'directory' which is compared to what's in the worktree.
+   
+   We also simplify blob handling.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 14 commits contributed to the release over the course of 17 calendar days.
+ - 17 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1050](https://github.com/Byron/gitoxide/issues/1050)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1050](https://github.com/Byron/gitoxide/issues/1050)**
+    - Revert "adapt to changes in `gix-attributes`" ([`aa47342`](https://github.com/Byron/gitoxide/commit/aa47342109bf2fe2b33d7f8ac07c56aa1692936b))
+ * **Uncategorized**
+    - Release gix-transport v0.37.1, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0 ([`14ddbd4`](https://github.com/Byron/gitoxide/commit/14ddbd4c15128b1d5631a2388a00e024842b7b83))
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
+    - `gix attrs query` now allows to match directories as signalled by the trailing slash ([`0f3a4b0`](https://github.com/Byron/gitoxide/commit/0f3a4b0f864645b94f91897507b4d2737ff1ae25))
+    - Revert 'byteyarn' addition in favor of `kstring` ([`ac1d8d4`](https://github.com/Byron/gitoxide/commit/ac1d8d4a323fc5fb27b8c458f1babb4acc56ca52))
+    - Merge branch 'fix-input' ([`a899f74`](https://github.com/Byron/gitoxide/commit/a899f74a20c3e9a40f456387d71b48ca9187af17))
+    - `gix attrs query` now shows attributes even for paths that aren't already tracked ([`760d451`](https://github.com/Byron/gitoxide/commit/760d451e3e2abfc13c8d11b91609dd39ccc13bc5))
+    - `gix exclude query` now also displays paths that don't match existing index entries. ([`6fb851b`](https://github.com/Byron/gitoxide/commit/6fb851b88d3da043e747753697097d79e2fce73a))
+    - Merge branch 'reset' ([`b842691`](https://github.com/Byron/gitoxide/commit/b8426919a491dc3a7df01ee3f258fc0d8a3a327c))
+    - `gix status` auto-writes changed indices. ([`46e5919`](https://github.com/Byron/gitoxide/commit/46e591914d548bacae2656ffe14a0ea7ca2eb7ae))
+    - `gix status -s/--statistics` to obtain additional information on what happened. ([`7ba2fa1`](https://github.com/Byron/gitoxide/commit/7ba2fa1c7781230913b0a04ad8684fa7d0143c18))
+    - Adapt to changes in `gix-status` ([`54fb7c2`](https://github.com/Byron/gitoxide/commit/54fb7c24a97cb2339a67ad269344ce65166a545d))
+    - Add support for submodule status ([`53de126`](https://github.com/Byron/gitoxide/commit/53de126ea571ef9ed911e66c26a4c36cfdc7e0dd))
+    - Release gix v0.54.1 ([`f603fd7`](https://github.com/Byron/gitoxide/commit/f603fd7a68206a6989a9f959216eba6cca0a6733))
+</details>
+
 ## 0.32.0 (2023-09-24)
 
 <csr-id-ed327f6163f54756e58c20f86a563a97efb256ca/>
@@ -34,7 +95,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    `cargo-auditable` by default. Related issues:
    
    - https://github.com/NixOS/nixpkgs/issues/253911
-- https://github.com/rust-secure-code/cargo-auditable/issues/124
 
 ### Chore (BREAKING)
 
@@ -51,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 33 calendar days.
+ - 27 commits contributed to the release over the course of 33 calendar days.
  - 33 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1003](https://github.com/Byron/gitoxide/issues/1003), [#1023](https://github.com/Byron/gitoxide/issues/1023)
@@ -73,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1023](https://github.com/Byron/gitoxide/issues/1023)**
     - Don't use `th` in `git rev parse -e` unconditionally, use `.` instead. ([`429682d`](https://github.com/Byron/gitoxide/commit/429682d775ba1046bc30bbd52e9d5a8dc841378f))
  * **Uncategorized**
+    - Release gix-features v0.35.0, gix-actor v0.27.0, gix-object v0.37.0, gix-glob v0.13.0, gix-attributes v0.19.0, gix-filter v0.5.0, gix-fs v0.7.0, gix-commitgraph v0.21.0, gix-revwalk v0.8.0, gix-traverse v0.33.0, gix-worktree-stream v0.5.0, gix-archive v0.5.0, gix-tempfile v10.0.0, gix-lock v10.0.0, gix-ref v0.37.0, gix-config v0.30.0, gix-url v0.24.0, gix-credentials v0.20.0, gix-diff v0.36.0, gix-discover v0.25.0, gix-ignore v0.8.0, gix-index v0.25.0, gix-mailmap v0.19.0, gix-negotiate v0.8.0, gix-pack v0.43.0, gix-odb v0.53.0, gix-pathspec v0.3.0, gix-transport v0.37.0, gix-protocol v0.40.0, gix-revision v0.22.0, gix-refspec v0.18.0, gix-status v0.1.0, gix-submodule v0.4.0, gix-worktree v0.26.0, gix-worktree-state v0.3.0, gix v0.54.0, gitoxide-core v0.32.0, gitoxide v0.30.0, safety bump 37 crates ([`7891fb1`](https://github.com/Byron/gitoxide/commit/7891fb17348ec2f4c997665f9a25be36e2713da4))
     - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'reset' ([`54a8495`](https://github.com/Byron/gitoxide/commit/54a849545140f7f1c0c7564c418071c0a76a34e7))
     - `gix status` with basic index-worktree comparison ([`f094f71`](https://github.com/Byron/gitoxide/commit/f094f71dc1a50955552509d108556c01517c6ed6))
@@ -100,7 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 <csr-unknown>
- don’t use th in git rev parse -e unconditionally, use . instead.That way it shouldn’t be grammatically incorrect.<csr-unknown/>
+https://github.com/rust-secure-code/cargo-auditable/issues/124<csr-unknown/>
 
 ## 0.31.0 (2023-08-22)
 

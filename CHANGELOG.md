@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.31.0 (2023-10-12)
 
 This release includes an overhaul of the url parsing implementation, allowing more urls to be parsed correctly and refining the error messages for
 invalid ones. Improvements include the added support for ssh aliases (`github:byron/gitoxide` has previously been parsed as local path), adjustments
@@ -14,6 +14,40 @@ changes that bring the interpretation of file urls more in line with Git's imple
 
 There are still many (edge) cases in Git's url parsing implementation which are not handled correctly by Gitoxide. If you notice any such deviation please
 open a new issue to help us making Gitoxide even more correct.
+
+### New Features
+
+ - <csr-id-70923a0fad3d409069bd9d0b492e6a9b7b113261/> add shell completions for bash
+ - <csr-id-46e591914d548bacae2656ffe14a0ea7ca2eb7ae/> `gix status` auto-writes changed indices.
+   This prevents expensive operations to re-occour.
+ - <csr-id-7ba2fa1c7781230913b0a04ad8684fa7d0143c18/> `gix status -s/--statistics` to obtain additional information on what happened.
+   This is useful for understanding performance characteristics in detail.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 7 calendar days.
+ - 17 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'feat_completions' ([`681c607`](https://github.com/Byron/gitoxide/commit/681c60774704a3c1d3ed8de916078833cf0398a7))
+    - Refactor ([`fdd2df8`](https://github.com/Byron/gitoxide/commit/fdd2df8e42f2a14a90e9a575e19811f25ab62237))
+    - User decides completion output ([`215c3ac`](https://github.com/Byron/gitoxide/commit/215c3acfd25554b9c2259d069f3916a9d6d911f5))
+    - Add shell completions for bash ([`70923a0`](https://github.com/Byron/gitoxide/commit/70923a0fad3d409069bd9d0b492e6a9b7b113261))
+    - Merge branch 'reset' ([`b842691`](https://github.com/Byron/gitoxide/commit/b8426919a491dc3a7df01ee3f258fc0d8a3a327c))
+    - Trust Ctime again ([`f929d42`](https://github.com/Byron/gitoxide/commit/f929d420cb768f2df1d7886564ca03b3c3254a82))
+    - `gix status` auto-writes changed indices. ([`46e5919`](https://github.com/Byron/gitoxide/commit/46e591914d548bacae2656ffe14a0ea7ca2eb7ae))
+    - `gix status -s/--statistics` to obtain additional information on what happened. ([`7ba2fa1`](https://github.com/Byron/gitoxide/commit/7ba2fa1c7781230913b0a04ad8684fa7d0143c18))
+</details>
 
 ## 0.30.0 (2023-09-24)
 
