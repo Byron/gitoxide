@@ -1,4 +1,4 @@
-//! This is the documentation of the binaries that come with `gitoxide`. These are called…
+//! This is the documentation of the binaries that come with `gitoxide`. These are called `gix` and `ein`.
 //!
 //! #### `gix`
 //!
