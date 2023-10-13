@@ -1222,12 +1222,11 @@ pub fn main() -> Result<()> {
         Subcommands::Completions { shell, out_dir } => {
             let mut app = Args::command();
 
-            let bin_name = "gix";
-            app.set_bin_name(bin_name);
-
             let shell = shell
                 .or_else(clap_complete::Shell::from_env)
                 .ok_or_else(|| anyhow!("The shell could not be derived from the environment"))?;
+
+            let bin_name = app.get_name().to_owned();
             if let Some(out_dir) = out_dir {
                 clap_complete::generate_to(shell, &mut app, bin_name, &out_dir)?;
             } else {
