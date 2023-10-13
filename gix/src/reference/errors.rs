@@ -43,9 +43,7 @@ pub mod head_id {
         #[error(transparent)]
         Head(#[from] crate::reference::find::existing::Error),
         #[error(transparent)]
-        PeelToId(#[from] crate::head::peel::Error),
-        #[error("Branch '{name}' does not have any commits")]
-        Unborn { name: gix_ref::FullName },
+        PeelToId(#[from] crate::head::peel::into_id::Error),
     }
 }
 
