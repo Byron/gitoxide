@@ -7,11 +7,13 @@ mod peel {
         for name in ["detached", "symbolic", "tag-detached", "tag-symbolic"] {
             let repo = named_subrepo_opts("make_head_repos.sh", name, gix::open::Options::isolated())?;
             assert_eq!(repo.head()?.into_peeled_id()?, expected_commit);
+            assert_eq!(repo.head()?.into_peeled_object()?.id, expected_commit);
             assert_eq!(repo.head_id()?, expected_commit);
             let commit = repo.head_commit()?;
             assert_eq!(commit.id, expected_commit);
             assert_eq!(repo.head_tree_id()?, commit.tree_id()?);
             assert_eq!(repo.head()?.try_into_peeled_id()?.expect("born"), expected_commit);
+            assert_eq!(repo.head()?.peel_to_object_in_place()?.id, expected_commit);
             assert_eq!(repo.head()?.try_peel_to_id_in_place()?.expect("born"), expected_commit);
         }
         Ok(())

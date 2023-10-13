@@ -42,7 +42,20 @@ pub mod into_id {
 pub mod to_commit {
     use crate::object;
 
-    /// The error returned by [`Head::peel_to_commit_in_place()`][super::Head::peel_to_commit_in_place()].
+    /// The error returned by [`Head::peel_to_commit_in_place()`](super::Head::peel_to_commit_in_place()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        PeelToObject(#[from] super::to_object::Error),
+        #[error(transparent)]
+        ObjectKind(#[from] object::try_into::Error),
+    }
+}
+
+///
+pub mod to_object {
+    /// The error returned by [`Head::peel_to_object_in_place()`](super::Head::peel_to_object_in_place()).
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -50,13 +63,11 @@ pub mod to_commit {
         Peel(#[from] super::Error),
         #[error("Branch '{name}' does not have any commits")]
         Unborn { name: gix_ref::FullName },
-        #[error(transparent)]
-        ObjectKind(#[from] object::try_into::Error),
     }
 }
 
 impl<'repo> Head<'repo> {
-    /// Peel this instance and consume to make obtaining its final target id possible, while returning an error on unborn heads.
+    /// Peel this instance and consume it to make obtaining its final target id possible, while returning an error on unborn heads.
     ///
     /// The final target is obtained by following symbolic references and peeling tags to their final destination, which
     /// typically is a commit, but can be any object.
@@ -66,6 +77,14 @@ impl<'repo> Head<'repo> {
             Kind::Symbolic(gix_ref::Reference { name, .. }) | Kind::Unborn(name) => into_id::Error::Unborn { name },
             Kind::Detached { .. } => unreachable!("id can be returned after peeling"),
         })
+    }
+
+    /// Peel this instance and consume it to make obtaining its final target object possible, while returning an error on unborn heads.
+    ///
+    /// The final target is obtained by following symbolic references and peeling tags to their final destination, which
+    /// typically is a commit, but can be any object as well.
+    pub fn into_peeled_object(mut self) -> Result<crate::Object<'repo>, to_object::Error> {
+        self.peel_to_object_in_place()
     }
 
     /// Consume this instance and transform it into the final object that it points to, or `Ok(None)` if the `HEAD`
@@ -120,15 +139,21 @@ impl<'repo> Head<'repo> {
     /// more object to follow, transform the id into a commit if possible and return that.
     ///
     /// Returns an error if the head is unborn or if it doesn't point to a commit.
-    pub fn peel_to_commit_in_place(&mut self) -> Result<crate::Commit<'repo>, to_commit::Error> {
+    pub fn peel_to_object_in_place(&mut self) -> Result<crate::Object<'repo>, to_object::Error> {
         let id = self
             .try_peel_to_id_in_place()?
-            .ok_or_else(|| to_commit::Error::Unborn {
+            .ok_or_else(|| to_object::Error::Unborn {
                 name: self.referent_name().expect("unborn").to_owned(),
             })?;
-        Ok(id
-            .object()
-            .map_err(|err| to_commit::Error::Peel(Error::FindExistingObject(err)))?
-            .try_into_commit()?)
+        id.object()
+            .map_err(|err| to_object::Error::Peel(Error::FindExistingObject(err)))
+    }
+
+    /// Follow the symbolic reference of this head until its target object and peel it by following tag objects until there is no
+    /// more object to follow, transform the id into a commit if possible and return that.
+    ///
+    /// Returns an error if the head is unborn or if it doesn't point to a commit.
+    pub fn peel_to_commit_in_place(&mut self) -> Result<crate::Commit<'repo>, to_commit::Error> {
+        Ok(self.peel_to_object_in_place()?.try_into_commit()?)
     }
 }

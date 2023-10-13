@@ -67,9 +67,7 @@ pub mod head_tree_id {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Head(#[from] crate::reference::find::existing::Error),
-        #[error(transparent)]
-        PeelToCommit(#[from] crate::head::peel::to_commit::Error),
+        HeadCommit(#[from] crate::reference::head_commit::Error),
         #[error(transparent)]
         DecodeCommit(#[from] gix_object::decode::Error),
     }

@@ -216,7 +216,7 @@ impl crate::Repository {
     /// is freshly initialized and doesn't have any commits yet. It could also fail if the
     /// head does not point to a commit.
     pub fn head_tree_id(&self) -> Result<crate::Id<'_>, reference::head_tree_id::Error> {
-        Ok(self.head()?.peel_to_commit_in_place()?.tree_id()?)
+        Ok(self.head_commit()?.tree_id()?)
     }
 
     /// Find the reference with the given partial or full `name`, like `main`, `HEAD`, `heads/branch` or `origin/other`,
