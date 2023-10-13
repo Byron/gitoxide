@@ -291,7 +291,6 @@ members = [
     "gix-ref/tests",
     "gix-config/tests",
     "gix-traverse/tests",
-    "gix-fetchhead/tests",
 ]
 
 [workspace.dependencies]
