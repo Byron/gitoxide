@@ -1608,9 +1608,9 @@ dependencies = [
 name = "gix-fetchhead"
 version = "0.0.1"
 dependencies = [
- "gix-hash 0.13.0",
+ "gix-hash 0.13.1",
+ "gix-object 0.38.0",
  "gix-testtools",
- "gix-url",
 ]
 
 [[package]]

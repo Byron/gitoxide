@@ -1,6 +1,8 @@
 #![deny(rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
+use gix_object::bstr::BString;
+
 /// Represents parsed data from the FETCH_HEAD file.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct FetchHeadEntry {
@@ -14,7 +16,7 @@ pub struct FetchHeadEntry {
     pub branch: &'static str,
 
     //Remote url
-    pub remote: gix_url::Url,
+    pub remote: BString,
 }
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]

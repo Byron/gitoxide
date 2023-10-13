@@ -13,7 +13,7 @@ doctest = false
 
 [dependencies]
 gix-hash = { version = "^0.13.0", path = "../gix-hash" }
-gix-url = { version = "^0.24.0", path = "../gix-url" }
+gix-object = { version = "^0.38.0", path = "../gix-object" }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
