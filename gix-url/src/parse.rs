@@ -169,7 +169,10 @@ pub(crate) fn file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url
     let input = input_to_utf8(input, UrlKind::Url)?;
     let input_after_protocol = &input[protocol_colon + "://".len()..];
 
-    let Some(first_slash) = input_after_protocol.find('/') else {
+    let Some(first_slash) = input_after_protocol
+        .find('/')
+        .or_else(|| cfg!(windows).then(|| input_after_protocol.find('\\')).flatten())
+    else {
         return Err(Error::MissingRepositoryPath {
             url: input.to_owned().into(),
             kind: UrlKind::Url,

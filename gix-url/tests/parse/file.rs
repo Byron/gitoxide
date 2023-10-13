@@ -1,4 +1,3 @@
-use assert_matches::assert_matches;
 use bstr::ByteSlice;
 use gix_url::Scheme;
 
@@ -93,11 +92,19 @@ fn no_relative_paths_if_protocol() -> crate::Result {
     assert_url_roundtrip("file://../", url(Scheme::File, None, "..", None, b"/"))?;
     assert_url_roundtrip("file://./", url(Scheme::File, None, ".", None, b"/"))?;
     assert_url_roundtrip("file://a/", url(Scheme::File, None, "a", None, b"/"))?;
-    assert_matches!(
+    if cfg!(windows) {
+        assert_eq!(
+            gix_url::parse("file://.\\".into())?,
+            url(Scheme::File, None, ".", None, b"\\"),
+            "we are just as none-sensical as git here due to special handling."
+        );
+    } else {
+        assert_matches::assert_matches!(
             gix_url::parse("file://.\\".into()),
             Err(gix_url::parse::Error::MissingRepositoryPath { .. }),
             "DEVIATION: on windows, this parses with git into something nonesensical Diag: url=file://./ Diag: protocol=file Diag: hostandport=./ Diag: path=//./"
         );
+    }
     Ok(())
 }
 
@@ -121,6 +128,15 @@ fn url_from_relative_path_with_colon_in_name() -> crate::Result {
 mod windows {
     use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
     use gix_url::Scheme;
+
+    #[test]
+    fn reproduce_1063() -> crate::Result {
+        let input = "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\tmp.vIa4tyjv17";
+        let url_input = "file://C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\tmp.vIa4tyjv17";
+        assert_url(url_input, url(Scheme::File, None, None, None, input.as_bytes()))?;
+        assert_url(input, url_alternate(Scheme::File, None, None, None, input.as_bytes()))?;
+        Ok(())
+    }
 
     #[test]
     fn url_from_absolute_path() -> crate::Result {
