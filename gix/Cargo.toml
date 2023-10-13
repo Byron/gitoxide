@@ -249,7 +249,7 @@ gix-archive = { version = "^0.6.0", path = "../gix-archive", default-features = 
 
 # For communication with remotes
 gix-protocol = { version = "^0.41.0", path = "../gix-protocol", optional = true }
-gix-transport = { version = "^0.37.1", path = "../gix-transport", optional = true }
+gix-transport = { version = "^0.38.0", path = "../gix-transport", optional = true }
 
 # Just to get the progress-tree feature
 prodash = { workspace = true, optional = true, features = ["progress-tree"] }
