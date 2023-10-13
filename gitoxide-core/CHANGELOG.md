@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-8011c73ee401bfca03811a249c46a4dd468af1b8/> bump `gix-transport` version to prevent it from being picked up.
+   `gix-transport` v0.37.1 could accidentally be picked up by older, incompatible,
+   `gix` versions which now fail to build.
+   
+   Thus v0.37.1 is now yanked and replaced with v0.38.0 along with a new
+   release of `gix` to go with it.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Bump `gix-transport` version to prevent it from being picked up. ([`8011c73`](https://github.com/Byron/gitoxide/commit/8011c73ee401bfca03811a249c46a4dd468af1b8))
+    - Release gix v0.55.1 ([`4642c0c`](https://github.com/Byron/gitoxide/commit/4642c0c78f45b1956837bc874f6757fc302bee4a))
+</details>
+
 ## 0.33.0 (2023-10-12)
 
 ### New Features
@@ -37,8 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 17 calendar days.
- - 17 days passed between releases.
+ - 15 commits contributed to the release over the course of 17 calendar days.
+ - 18 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1050](https://github.com/Byron/gitoxide/issues/1050)
 
@@ -51,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1050](https://github.com/Byron/gitoxide/issues/1050)**
     - Revert "adapt to changes in `gix-attributes`" ([`aa47342`](https://github.com/Byron/gitoxide/commit/aa47342109bf2fe2b33d7f8ac07c56aa1692936b))
  * **Uncategorized**
+    - Release gitoxide-core v0.33.0, gitoxide v0.31.0 ([`db0b851`](https://github.com/Byron/gitoxide/commit/db0b85192deb3a41c56970cfe4c5a87bfeefb8c7))
     - Release gix-transport v0.37.1, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0 ([`14ddbd4`](https://github.com/Byron/gitoxide/commit/14ddbd4c15128b1d5631a2388a00e024842b7b83))
     - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - `gix attrs query` now allows to match directories as signalled by the trailing slash ([`0f3a4b0`](https://github.com/Byron/gitoxide/commit/0f3a4b0f864645b94f91897507b4d2737ff1ae25))
@@ -159,9 +190,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Thanks clippy ([`5044c3b`](https://github.com/Byron/gitoxide/commit/5044c3b87456cf58ebfbbd00f23c9ba671cb290c))
     - Merge branch 'gix-submodule' ([`363ee77`](https://github.com/Byron/gitoxide/commit/363ee77400805f473c9ad66eadad9214e7ab66f4))
 </details>
-
-<csr-unknown>
-https://github.com/rust-secure-code/cargo-auditable/issues/124<csr-unknown/>
 
 ## 0.31.0 (2023-08-22)
 

@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-8011c73ee401bfca03811a249c46a4dd468af1b8/> bump `gix-transport` version to prevent it from being picked up.
+   `gix-transport` v0.37.1 could accidentally be picked up by older, incompatible,
+   `gix` versions which now fail to build.
+   
+   Thus v0.37.1 is now yanked and replaced with v0.38.0 along with a new
+   release of `gix` to go with it.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Bump `gix-transport` version to prevent it from being picked up. ([`8011c73`](https://github.com/Byron/gitoxide/commit/8011c73ee401bfca03811a249c46a4dd468af1b8))
+</details>
+
 ## 0.55.1 (2023-10-12)
 
 ### New Features
@@ -21,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -32,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix v0.55.1 ([`4642c0c`](https://github.com/Byron/gitoxide/commit/4642c0c78f45b1956837bc874f6757fc302bee4a))
     - Add `take_data()` to all primitive object types. ([`5732303`](https://github.com/Byron/gitoxide/commit/5732303180d26374016b70bdd7fa0278dd84cff3))
     - Add `detach()` and `detached()` too all object types. ([`88f2e6c`](https://github.com/Byron/gitoxide/commit/88f2e6c4c540b9c8032e6eee9c5da65a9bcfeef8))
 </details>

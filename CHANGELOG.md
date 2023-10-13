@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A re-release to deal with breakage in the dependency tree (self-caused).
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Improve documentation slightly ([`b7c9275`](https://github.com/Byron/gitoxide/commit/b7c92753f52e71f118b6e21ab672ae56961306c5))
+</details>
+
 ## 0.31.0 (2023-10-12)
 
 This release includes an overhaul of the url parsing implementation, allowing more urls to be parsed correctly and refining the error messages for
@@ -28,7 +50,7 @@ open a new issue to help us making Gitoxide even more correct.
 <csr-read-only-do-not-edit/>
 
  - 8 commits contributed to the release over the course of 7 calendar days.
- - 17 days passed between releases.
+ - 18 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
