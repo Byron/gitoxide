@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT OR Apache-2.0"
-version = "0.55.1"
+version = "0.55.2"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
@@ -248,7 +248,7 @@ gix-worktree-stream = { version = "^0.6.0", path = "../gix-worktree-stream", opt
 gix-archive = { version = "^0.6.0", path = "../gix-archive", default-features = false, optional = true }
 
 # For communication with remotes
-gix-protocol = { version = "^0.41.0", path = "../gix-protocol", optional = true }
+gix-protocol = { version = "^0.41.1", path = "../gix-protocol", optional = true }
 gix-transport = { version = "^0.38.0", path = "../gix-transport", optional = true }
 
 # Just to get the progress-tree feature

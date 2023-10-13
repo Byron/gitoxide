@@ -1147,7 +1147,7 @@ checksum = "b6c80984affa11d98d1b88b66ac8853f143217b399d3c74116778ff8fdb4ed2e"
 
 [[package]]
 name = "gitoxide"
-version = "0.31.0"
+version = "0.31.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -1173,7 +1173,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.33.0"
+version = "0.33.1"
 dependencies = [
  "anyhow",
  "async-io",
@@ -1211,7 +1211,7 @@ dependencies = [
 
 [[package]]
 name = "gix"
-version = "0.55.1"
+version = "0.55.2"
 dependencies = [
  "anyhow",
  "async-std",
@@ -2070,7 +2070,7 @@ dependencies = [
 
 [[package]]
 name = "gix-protocol"
-version = "0.41.0"
+version = "0.41.1"
 dependencies = [
  "async-std",
  "async-trait",
