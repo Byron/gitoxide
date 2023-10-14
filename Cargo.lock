@@ -2431,7 +2431,7 @@ version = "0.0.0"
 
 [[package]]
 name = "gix-url"
-version = "0.25.0"
+version = "0.25.1"
 dependencies = [
  "assert_matches",
  "bstr",

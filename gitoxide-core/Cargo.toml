@@ -64,7 +64,7 @@ futures-io = { version = "0.3.16", optional = true }
 blocking = { version = "1.0.2", optional = true }
 
 # for 'organize' functionality
-gix-url = { version = "^0.25.0", path = "../gix-url", optional = true }
+gix-url = { version = "^0.25.1", path = "../gix-url", optional = true }
 jwalk = { version = "0.8.0", optional = true }
 
 # for 'hours'

@@ -223,7 +223,7 @@ gix-revwalk = { version = "^0.9.0", path = "../gix-revwalk" }
 gix-negotiate = { version = "^0.9.0", path = "../gix-negotiate", optional = true }
 
 gix-path = { version = "^0.10.0", path = "../gix-path" }
-gix-url = { version = "^0.25.0", path = "../gix-url" }
+gix-url = { version = "^0.25.1", path = "../gix-url" }
 gix-traverse = { version = "^0.34.0", path = "../gix-traverse" }
 gix-diff = { version = "^0.37.0", path = "../gix-diff", default-features = false }
 gix-mailmap = { version = "^0.20.0", path = "../gix-mailmap", optional = true }

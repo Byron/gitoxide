@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.25.1 (2023-10-14)
+
+### Bug Fixes
+
+ - <csr-id-562b0c931db1d22b8e59903cb59afa9a36d5884c/> make file:// url parsing with full backslashed path more robust on windows.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 1 day passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1063](https://github.com/Byron/gitoxide/issues/1063)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1063](https://github.com/Byron/gitoxide/issues/1063)**
+    - Make file:// url parsing with full backslashed path more robust on windows. ([`562b0c9`](https://github.com/Byron/gitoxide/commit/562b0c931db1d22b8e59903cb59afa9a36d5884c))
+ * **Uncategorized**
+    - Merge branch 'head-conversions' ([`c2cf20c`](https://github.com/Byron/gitoxide/commit/c2cf20cd2d685c2c24527729fff35fd0a7903742))
+    - Fix yet another fuzzed test-case related to url::parse DoS ([`21729ed`](https://github.com/Byron/gitoxide/commit/21729edb0c12831eb9ea488cc3b66b5e79eacfae))
+</details>
+
 ## 0.25.0 (2023-10-12)
 
 This release contains a complete rewrite of the internal url parsing logic, the public interface stays mostly the same however. Gitoxide will now be
@@ -32,7 +60,7 @@ open a new issue to help us making Gitoxide even more correct.
 
 <csr-read-only-do-not-edit/>
 
- - 18 commits contributed to the release over the course of 17 calendar days.
+ - 19 commits contributed to the release over the course of 17 calendar days.
  - 17 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -44,6 +72,7 @@ open a new issue to help us making Gitoxide even more correct.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Another fuzz-issue that could cause long parse times of URLs ([`ea0ea88`](https://github.com/Byron/gitoxide/commit/ea0ea88dfc232601b462fcf52fed4d34a17bc116))
     - Add yet another bypass attack that runs into the `url` DoS issue ([`6aa63b1`](https://github.com/Byron/gitoxide/commit/6aa63b19338d1b4d86906a1e16eeb7b48cbc83a4))
