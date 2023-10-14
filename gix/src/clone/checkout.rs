@@ -87,7 +87,7 @@ pub mod main_worktree {
             let workdir = repo.work_dir().ok_or_else(|| Error::BareRepository {
                 git_dir: repo.git_dir().to_owned(),
             })?;
-            let root_tree = match repo.head()?.peel_to_id_in_place().transpose()? {
+            let root_tree = match repo.head()?.try_peel_to_id_in_place()? {
                 Some(id) => id.object().expect("downloaded from remote").peel_to_tree()?.id,
                 None => {
                     return Ok((

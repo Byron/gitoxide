@@ -11,8 +11,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut most_recent_commit_id = None;
     let num_commits = repo
         .head()?
-        .into_fully_peeled_id()
-        .ok_or("Cannot provide meaningful stats on empty repos")??
+        .try_into_peeled_id()?
+        .ok_or("Cannot provide meaningful stats on empty repos")?
         .ancestors()
         .all()?
         .map_while(Result::ok)

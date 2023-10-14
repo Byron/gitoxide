@@ -33,7 +33,6 @@ fn empty_input() {
 fn file_missing_host_path_separator() {
     assert_matches!(parse("file://.."), Err(MissingRepositoryPath { .. }));
     assert_matches!(parse("file://."), Err(MissingRepositoryPath { .. }));
-    assert_matches!(parse("file://.\\"), Err(MissingRepositoryPath { .. }));
     assert_matches!(parse("file://a"), Err(MissingRepositoryPath { .. }));
 }
 

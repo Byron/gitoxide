@@ -128,7 +128,7 @@ mod find {
                 2 => repo.object_cache_size(128 * 1024),
                 _ => unreachable!("BUG"),
             }
-            for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all()? {
+            for commit_id in repo.head()?.into_peeled_id()?.ancestors().all()? {
                 let commit = commit_id?;
                 assert_eq!(commit.id().object()?.kind, gix_object::Kind::Commit);
                 assert_eq!(commit.id().header()?.kind(), gix_object::Kind::Commit);
@@ -363,7 +363,7 @@ mod commit {
             vec!["commit: hello there", "commit: c2", "commit (initial): c1"],
             "we get the actual HEAD log, not the log of some reference"
         );
-        let current_commit = repo.head()?.into_fully_peeled_id().expect("born")?;
+        let current_commit = repo.head()?.into_peeled_id()?;
         assert_eq!(current_commit, first_commit_id, "the commit was set");
 
         let second_commit_id = repo.commit(

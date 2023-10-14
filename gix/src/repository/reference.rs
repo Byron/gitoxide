@@ -174,7 +174,8 @@ impl crate::Repository {
         .attach(self))
     }
 
-    /// Resolve the `HEAD` reference, follow and peel its target and obtain its object id.
+    /// Resolve the `HEAD` reference, follow and peel its target and obtain its object id,
+    /// following symbolic references and tags until a commit is found.
     ///
     /// Note that this may fail for various reasons, most notably because the repository
     /// is freshly initialized and doesn't have any commits yet.
@@ -182,12 +183,7 @@ impl crate::Repository {
     /// Also note that the returned id is likely to point to a commit, but could also
     /// point to a tree or blob. It won't, however, point to a tag as these are always peeled.
     pub fn head_id(&self) -> Result<crate::Id<'_>, reference::head_id::Error> {
-        let mut head = self.head()?;
-        head.peel_to_id_in_place()
-            .ok_or_else(|| reference::head_id::Error::Unborn {
-                name: head.referent_name().expect("unborn").to_owned(),
-            })?
-            .map_err(Into::into)
+        Ok(self.head()?.into_peeled_id()?)
     }
 
     /// Return the name to the symbolic reference `HEAD` points to, or `None` if the head is detached.
@@ -203,7 +199,8 @@ impl crate::Repository {
         Ok(self.head()?.try_into_referent())
     }
 
-    /// Return the commit object the `HEAD` reference currently points to after peeling it fully.
+    /// Return the commit object the `HEAD` reference currently points to after peeling it fully,
+    /// following symbolic references and tags until a commit is found.
     ///
     /// Note that this may fail for various reasons, most notably because the repository
     /// is freshly initialized and doesn't have any commits yet. It could also fail if the
@@ -212,13 +209,14 @@ impl crate::Repository {
         Ok(self.head()?.peel_to_commit_in_place()?)
     }
 
-    /// Return the tree id the `HEAD` reference currently points to after peeling it fully.
+    /// Return the tree id the `HEAD` reference currently points to after peeling it fully,
+    /// following symbolic references and tags until a commit is found.
     ///
     /// Note that this may fail for various reasons, most notably because the repository
     /// is freshly initialized and doesn't have any commits yet. It could also fail if the
     /// head does not point to a commit.
     pub fn head_tree_id(&self) -> Result<crate::Id<'_>, reference::head_tree_id::Error> {
-        Ok(self.head()?.peel_to_commit_in_place()?.tree_id()?)
+        Ok(self.head_commit()?.tree_id()?)
     }
 
     /// Find the reference with the given partial or full `name`, like `main`, `HEAD`, `heads/branch` or `origin/other`,

@@ -75,7 +75,7 @@ mod ancestors {
     fn all() -> crate::Result {
         let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
         for use_commit_graph in [false, true] {
-            let head = repo.head()?.into_fully_peeled_id().expect("born")?;
+            let head = repo.head()?.into_peeled_id()?;
             let commits_graph_order = head
                 .ancestors()
                 .use_commit_graph(use_commit_graph)
@@ -118,7 +118,7 @@ mod ancestors {
     fn pre_epoch() -> crate::Result {
         let repo = crate::repo("make_pre_epoch_repo.sh")?.to_thread_local();
         for use_commit_graph in [false, true] {
-            let head = repo.head()?.into_fully_peeled_id().expect("born")?;
+            let head = repo.head()?.into_peeled_id()?;
             let commits = head
                 .ancestors()
                 .sorting(commit::Sorting::ByCommitTimeNewestFirst) // assure we have time set
@@ -137,7 +137,7 @@ mod ancestors {
     #[test]
     fn filtered() -> crate::Result {
         let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
-        let head = repo.head()?.into_fully_peeled_id().expect("born")?;
+        let head = repo.head()?.into_peeled_id()?;
 
         for use_commit_graph in [false, true] {
             for sorting in [

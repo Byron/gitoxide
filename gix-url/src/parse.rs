@@ -87,7 +87,7 @@ pub(crate) fn url(input: &BStr, protocol_end: usize) -> Result<crate::Url, Error
     let bytes_to_path = input[protocol_end + "://".len()..]
         .iter()
         .filter(|b| !b.is_ascii_whitespace())
-        .skip_while(|b| **b == b'/')
+        .skip_while(|b| **b == b'/' || **b == b'\\')
         .position(|b| *b == b'/')
         .unwrap_or(input.len() - protocol_end);
     if bytes_to_path > MAX_LEN || protocol_end > MAX_LEN {
@@ -169,7 +169,10 @@ pub(crate) fn file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url
     let input = input_to_utf8(input, UrlKind::Url)?;
     let input_after_protocol = &input[protocol_colon + "://".len()..];
 
-    let Some(first_slash) = input_after_protocol.find('/') else {
+    let Some(first_slash) = input_after_protocol
+        .find('/')
+        .or_else(|| cfg!(windows).then(|| input_after_protocol.find('\\')).flatten())
+    else {
         return Err(Error::MissingRepositoryPath {
             url: input.to_owned().into(),
             kind: UrlKind::Url,
