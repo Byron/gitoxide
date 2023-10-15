@@ -33,6 +33,7 @@ default = ["max"]
 ## Everything, all at once.
 ##
 ## As fast as possible, tracing, with TUI progress, progress line rendering with auto-configuration, all transports based on their most mature implementation (HTTP), all `ein` tools, CLI colors and local-time support, JSON output, regex support for rev-specs.
+## Can be amended with the `http-client-curl-rustls` feature to avoid `openssl` as backend.
 max = ["max-control", "fast", "gitoxide-core-blocking-client", "http-client-curl"]
 
 ## Like `max`, but only Rust is allowed.
@@ -150,6 +151,8 @@ gitoxide-core-tools-archive = ["gitoxide-core/archive"]
 gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) using **curl**.
 http-client-curl = ["gix/blocking-http-transport-curl"]
+## Implies `http-client-curl` and configures `curl` to use the `rust-tls` backend.
+http-client-curl-rustls = ["gix/blocking-http-transport-curl-rustls"]
 ## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) using **reqwest**.
 http-client-reqwest = ["gix/blocking-http-transport-reqwest-rust-tls"]
 
