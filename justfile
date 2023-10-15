@@ -191,7 +191,7 @@ jtt := target_dir / "debug/jtt"
 
 # run journey tests (max)
 journey-tests:
-    cargo build
+    cargo build --features http-client-curl-rustls
     cargo build -p gix-testtools --bin jtt
     ./tests/journey.sh {{ ein }} {{ gix }} {{ jtt }} max
 
