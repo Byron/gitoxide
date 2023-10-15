@@ -125,7 +125,10 @@ where
             });
         }
 
-        let negotiate_span = gix_trace::detail!("negotiate");
+        let negotiate_span = gix_trace::detail!(
+            "negotiate",
+            protocol_version = self.ref_map.handshake.server_protocol_version as usize
+        );
         let mut negotiator = repo
             .config
             .resolved

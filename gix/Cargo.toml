@@ -120,6 +120,8 @@ async-network-client-async-std = ["async-std", "async-network-client", "gix-tran
 blocking-network-client = ["gix-protocol/blocking-client", "gix-pack/streaming-input", "attributes", "credentials"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport avaialble.
 blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
+## Stacks with `blocking-http-transport-curl` and also enables the `rustls` backend to avoid `openssl`.
+blocking-http-transport-curl-rustls = ["blocking-http-transport-curl", "dep:curl-for-configuration-only", "curl-for-configuration-only?/rustls"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport avaialble.
 blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
@@ -259,6 +261,9 @@ thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 smallvec = "1.9.0"
 async-std = { version = "1.12.0", optional = true }
+
+# Must match the one in `gix-transport`.
+curl-for-configuration-only = { package = "curl", version = "0.4", optional = true }
 
 ## For use in rev-parse, which provides searching commits by running a regex on their message.
 ##

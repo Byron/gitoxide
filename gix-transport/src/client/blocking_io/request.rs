@@ -1,4 +1,5 @@
 use std::io;
+use std::io::Write;
 
 use crate::client::{ExtendedBufRead, MessageKind, WriteMode};
 
@@ -60,6 +61,7 @@ impl<'a> RequestWriter<'a> {
     /// Doing so will also write the message type this instance was initialized with.
     pub fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead + Unpin + 'a>> {
         self.write_message(self.on_into_read)?;
+        self.writer.inner_mut().flush()?;
         Ok(self.reader)
     }
 

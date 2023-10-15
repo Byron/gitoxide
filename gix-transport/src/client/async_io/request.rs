@@ -83,7 +83,9 @@ impl<'a> RequestWriter<'a> {
     ///
     /// Doing so will also write the message type this instance was initialized with.
     pub async fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead + Unpin + 'a>> {
+        use futures_lite::AsyncWriteExt;
         self.write_message(self.on_into_read).await?;
+        self.writer.inner_mut().flush().await?;
         Ok(self.reader)
     }
 
