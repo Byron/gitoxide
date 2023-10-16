@@ -13,7 +13,7 @@ impl From<gix_discover::repository::Kind> for Kind {
             gix_discover::repository::Kind::Submodule { .. } | gix_discover::repository::Kind::SubmoduleGitDir => {
                 Kind::WorkTree { is_linked: false }
             }
-            gix_discover::repository::Kind::Bare => Kind::Bare,
+            gix_discover::repository::Kind::PossiblyBare => Kind::Bare,
             gix_discover::repository::Kind::WorkTreeGitDir { .. } => Kind::WorkTree { is_linked: true },
             gix_discover::repository::Kind::WorkTree { linked_git_dir } => Kind::WorkTree {
                 is_linked: linked_git_dir.is_some(),

@@ -91,10 +91,10 @@ mod with_core_worktree_config {
             "git can't chdir into missing worktrees, has no error handling there"
         );
 
-        assert_eq!(
-            repo.work_dir(),
-            repo.git_dir().parent(),
-            "we just ignore missing configured worktree dirs and fall back to the default one"
+        assert!(
+            !repo.work_dir().expect("configured").exists(),
+            "non-existing or invalid worktrees (this one is a file) are taken verbatim and \
+            may lead to errors later - just like in `git` and we explicitly do not try to be smart about it"
         )
     }
 
@@ -103,11 +103,11 @@ mod with_core_worktree_config {
         let repo = repo("relative-worktree-file");
         assert_eq!(count_deleted(repo.git_dir()), 0, "git can't chdir into a file");
 
-        assert_eq!(
-            repo.work_dir(),
-            repo.git_dir().parent(),
-            "we just ignore missing configured worktree dirs and fall back to the default one"
-        )
+        assert!(
+            repo.work_dir().expect("configured").is_file(),
+            "non-existing or invalid worktrees (this one is a file) are taken verbatim and \
+            may lead to errors later - just like in `git` and we explicitly do not try to be smart about it"
+        );
     }
 
     #[test]

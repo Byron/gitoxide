@@ -34,8 +34,12 @@ pub fn named_repo(name: &str) -> Result<Repository> {
     Ok(ThreadSafeRepository::open_opts(repo_path, restricted())?.to_thread_local())
 }
 
-pub fn named_subrepo_opts(fixture: &str, name: &str, opts: open::Options) -> Result<Repository> {
-    let repo_path = gix_testtools::scripted_fixture_read_only(fixture)?.join(name);
+pub fn named_subrepo_opts(
+    fixture: &str,
+    name: &str,
+    opts: open::Options,
+) -> std::result::Result<Repository, gix::open::Error> {
+    let repo_path = gix_testtools::scripted_fixture_read_only(fixture).unwrap().join(name);
     Ok(ThreadSafeRepository::open_opts(repo_path, opts)?.to_thread_local())
 }
 

@@ -1,6 +1,10 @@
 pub fn repo(name: &str) -> crate::Result<gix::Repository> {
     use crate::util::named_subrepo_opts;
-    named_subrepo_opts("make_submodules.sh", name, gix::open::Options::isolated())
+    Ok(named_subrepo_opts(
+        "make_submodules.sh",
+        name,
+        gix::open::Options::isolated(),
+    )?)
 }
 
 mod open {
