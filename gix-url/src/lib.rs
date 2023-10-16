@@ -124,6 +124,13 @@ impl Url {
         self.user = user;
         prev
     }
+
+    /// Set the given `password`, or unset it with `None`. Return the previous value.
+    pub fn set_password(&mut self, password: Option<String>) -> Option<String> {
+        let prev = self.password.take();
+        self.password = password;
+        prev
+    }
 }
 
 /// Builder
