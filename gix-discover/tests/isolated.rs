@@ -12,7 +12,7 @@ fn upwards_bare_repo_with_index() -> gix_testtools::Result {
     let (repo_path, _trust) = gix_discover::upwards(".".as_ref())?;
     assert_eq!(
         repo_path.kind(),
-        gix_discover::repository::Kind::Bare,
+        gix_discover::repository::Kind::PossiblyBare,
         "bare stays bare, even with index, as it resolves the path as needed in this special case"
     );
     Ok(())
@@ -25,7 +25,7 @@ fn in_cwd_upwards_bare_repo_without_index() -> gix_testtools::Result {
 
     let _keep = gix_testtools::set_current_dir(repo.join("bare.git"))?;
     let (repo_path, _trust) = gix_discover::upwards(".".as_ref())?;
-    assert_eq!(repo_path.kind(), gix_discover::repository::Kind::Bare);
+    assert_eq!(repo_path.kind(), gix_discover::repository::Kind::PossiblyBare);
     Ok(())
 }
 

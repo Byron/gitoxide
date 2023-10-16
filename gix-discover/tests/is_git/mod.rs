@@ -45,7 +45,7 @@ fn missing_configuration_file_is_not_a_dealbreaker_in_bare_repo() -> crate::Resu
     for name in ["bare-no-config-after-init.git", "bare-no-config.git"] {
         let repo = repo_path()?.join(name);
         let kind = gix_discover::is_git(&repo)?;
-        assert_eq!(kind, gix_discover::repository::Kind::Bare);
+        assert_eq!(kind, gix_discover::repository::Kind::PossiblyBare);
     }
     Ok(())
 }
@@ -54,7 +54,7 @@ fn missing_configuration_file_is_not_a_dealbreaker_in_bare_repo() -> crate::Resu
 fn bare_repo_with_index_file_looks_still_looks_like_bare() -> crate::Result {
     let repo = repo_path()?.join("bare-with-index.git");
     let kind = gix_discover::is_git(&repo)?;
-    assert_eq!(kind, gix_discover::repository::Kind::Bare);
+    assert_eq!(kind, gix_discover::repository::Kind::PossiblyBare);
     Ok(())
 }
 
@@ -63,7 +63,7 @@ fn bare_repo_with_index_file_looks_still_looks_like_bare_if_it_was_renamed() -> 
     for repo_name in ["bare-with-index-bare", "bare-with-index-no-config-bare"] {
         let repo = repo_path()?.join(repo_name);
         let kind = gix_discover::is_git(&repo)?;
-        assert_eq!(kind, gix_discover::repository::Kind::Bare);
+        assert_eq!(kind, gix_discover::repository::Kind::PossiblyBare);
     }
     Ok(())
 }
@@ -82,6 +82,27 @@ fn missing_configuration_file_is_not_a_dealbreaker_in_nonbare_repo() -> crate::R
         let repo = repo_path()?.join(name);
         let kind = gix_discover::is_git(&repo)?;
         assert_eq!(kind, gix_discover::repository::Kind::WorkTree { linked_git_dir: None });
+    }
+    Ok(())
+}
+
+#[test]
+fn split_worktree_using_configuration() -> crate::Result {
+    for name in [
+        "repo-with-worktree-in-config",
+        "repo-with-worktree-in-config-unborn",
+        "repo-with-worktree-in-config-unborn-no-worktreedir",
+        "repo-with-worktree-in-config-unborn-empty-worktreedir",
+        "repo-with-worktree-in-config-unborn-worktreedir-missing-value",
+    ] {
+        let repo = repo_path()?.join(name);
+        let kind = gix_discover::is_git(&repo)?;
+        assert_eq!(
+            kind,
+            gix_discover::repository::Kind::PossiblyBare,
+            "{name}: we think these are bare as we don't read the configuration in this case - \
+            a shortcoming to favor performance which still comes out correct in `gix`"
+        );
     }
     Ok(())
 }
