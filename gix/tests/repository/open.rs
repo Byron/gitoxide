@@ -74,7 +74,7 @@ fn non_bare_split_worktree_invalid_worktree_path_empty() -> crate::Result {
     )
     .unwrap_err();
     assert!(
-            matches!(err, gix::open::Error::Config(gix::config::Error::PathInterpolation(_))),
+            matches!(err, gix::open::Error::Config(gix::config::Error::PathInterpolation{..})),
             "DEVIATION: could not read path at core.worktree as empty is always invalid, git tries to use an empty path, even though it's better to reject it"
         );
     Ok(())

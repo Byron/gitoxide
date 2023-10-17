@@ -237,9 +237,13 @@ impl ThreadSafeRepository {
                 .resolved
                 .path_filter("core", None, Core::WORKTREE.name, &mut filter_config_section)
             {
+                let wt_clone = wt.clone();
                 let wt_path = wt
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
-                    .map_err(config::Error::PathInterpolation)?;
+                    .map_err(|err| config::Error::PathInterpolation {
+                        path: wt_clone.value.into_owned(),
+                        source: err,
+                    })?;
                 worktree_dir = gix_path::normalize(git_dir.join(wt_path).into(), current_dir).map(Cow::into_owned);
                 #[allow(unused_variables)]
                 if let Some(worktree_path) = worktree_dir.as_deref().filter(|wtd| !wtd.is_dir()) {
