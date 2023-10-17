@@ -70,3 +70,25 @@ git init non-bare-without-index
   git commit -m "init"
   rm .git/index
 )
+
+git --git-dir=repo-with-worktree-in-config-unborn-no-worktreedir --work-tree=does-not-exist-yet init
+worktree=repo-with-worktree-in-config-unborn-worktree
+git --git-dir=repo-with-worktree-in-config-unborn --work-tree=$worktree init && mkdir $worktree
+
+repo=repo-with-worktree-in-config-unborn-empty-worktreedir
+git --git-dir=$repo --work-tree="." init
+touch $repo/index
+git -C $repo config core.worktree ''
+
+repo=repo-with-worktree-in-config-unborn-worktreedir-missing-value
+git --git-dir=$repo init
+touch $repo/index
+echo "    worktree" >> $repo/config
+
+worktree=repo-with-worktree-in-config-worktree
+git --git-dir=repo-with-worktree-in-config --work-tree=$worktree init
+mkdir $worktree && touch $worktree/file
+(cd repo-with-worktree-in-config
+  git add file
+  git commit -m "make sure na index exists"
+)

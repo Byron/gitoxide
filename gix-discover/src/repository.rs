@@ -78,7 +78,7 @@ mod path {
                         Path::WorkTree(work_dir)
                     }
                 },
-                Kind::Bare => Path::Repository(dir),
+                Kind::PossiblyBare => Path::Repository(dir),
             }
             .into()
         }
@@ -89,7 +89,7 @@ mod path {
                     linked_git_dir: Some(git_dir.to_owned()),
                 },
                 Path::WorkTree(_) => Kind::WorkTree { linked_git_dir: None },
-                Path::Repository(_) => Kind::Bare,
+                Path::Repository(_) => Kind::PossiblyBare,
             }
         }
 
@@ -110,7 +110,11 @@ pub enum Kind {
     /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
     ///
     /// Note that this is merely a guess at this point as we didn't read the configuration yet.
-    Bare,
+    ///
+    /// Also note that due to optimizing for performance and *just* making an educated *guess in some situations*,
+    /// we may consider a non-bare repository bare if it it doesn't have an index yet due to be freshly initialized.
+    /// The caller is has to handle this, typically by reading the configuration.
+    PossiblyBare,
     /// A `git` repository along with checked out files in a work tree.
     WorkTree {
         /// If set, this is the git dir associated with this _linked_ worktree.
@@ -135,6 +139,6 @@ pub enum Kind {
 impl Kind {
     /// Returns true if this is a bare repository, one without a work tree.
     pub fn is_bare(&self) -> bool {
-        matches!(self, Kind::Bare)
+        matches!(self, Kind::PossiblyBare)
     }
 }

@@ -1,4 +1,5 @@
 use crate::util::named_subrepo_opts;
+use std::error::Error;
 
 #[test]
 fn bare_repo_with_index() -> crate::Result {
@@ -23,6 +24,59 @@ fn none_bare_repo_without_index() -> crate::Result {
     )?;
     assert!(!repo.is_bare(), "worktree isn't dependent on an index file");
     assert!(repo.worktree().is_some());
+    Ok(())
+}
+
+#[test]
+fn non_bare_split_worktree() -> crate::Result {
+    for (name, worktree_exists) in [
+        ("repo-with-worktree-in-config-unborn-no-worktreedir", false),
+        ("repo-with-worktree-in-config-unborn", true),
+        ("repo-with-worktree-in-config", true),
+    ] {
+        let repo = named_subrepo_opts("make_worktree_repo.sh", name, gix::open::Options::isolated())?;
+        assert!(repo.git_dir().is_dir());
+        assert!(
+            !repo.is_bare(),
+            "worktree is actually configured, and it's non-bare by configuration"
+        );
+        assert_eq!(
+            repo.work_dir().expect("worktree is configured").is_dir(),
+            worktree_exists
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn non_bare_split_worktree_invalid_worktree_path_boolean() -> crate::Result {
+    let err = named_subrepo_opts(
+        "make_worktree_repo.sh",
+        "repo-with-worktree-in-config-unborn-worktreedir-missing-value",
+        gix::open::Options::isolated().strict_config(true),
+    )
+    .unwrap_err();
+    assert_eq!(
+        err.source().expect("present").to_string(),
+        "The key \"core.worktree\" (possibly from GIT_WORK_TREE) was invalid",
+        "in strict mode, we fail just like git does"
+    );
+    Ok(())
+}
+
+#[test]
+fn non_bare_split_worktree_invalid_worktree_path_empty() -> crate::Result {
+    // "repo-with-worktree-in-config-unborn-worktreedir-missing-value",
+    let err = named_subrepo_opts(
+        "make_worktree_repo.sh",
+        "repo-with-worktree-in-config-unborn-empty-worktreedir",
+        gix::open::Options::isolated(),
+    )
+    .unwrap_err();
+    assert!(
+            matches!(err, gix::open::Error::Config(gix::config::Error::PathInterpolation{..})),
+            "DEVIATION: could not read path at core.worktree as empty is always invalid, git tries to use an empty path, even though it's better to reject it"
+        );
     Ok(())
 }
 

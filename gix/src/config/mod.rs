@@ -91,8 +91,11 @@ pub enum Error {
     ResolveIncludes(#[from] gix_config::file::includes::Error),
     #[error(transparent)]
     FromEnv(#[from] gix_config::file::init::from_env::Error),
-    #[error(transparent)]
-    PathInterpolation(#[from] gix_config::path::interpolate::Error),
+    #[error("The path {path:?} at the 'core.worktree' configuration could not be interpolated")]
+    PathInterpolation {
+        path: BString,
+        source: gix_config::path::interpolate::Error,
+    },
     #[error("{source:?} configuration overrides at open or init time could not be applied.")]
     ConfigOverrides {
         #[source]

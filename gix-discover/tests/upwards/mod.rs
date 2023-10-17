@@ -17,7 +17,7 @@ fn from_bare_git_dir() -> crate::Result {
     let dir = repo_path()?.join("bare.git");
     let (path, trust) = gix_discover::upwards(&dir)?;
     assert_eq!(path.as_ref(), dir, "the bare .git dir is directly returned");
-    assert_eq!(path.kind(), Kind::Bare);
+    assert_eq!(path.kind(), Kind::PossiblyBare);
     assert_eq!(trust, expected_trust());
     Ok(())
 }
@@ -27,7 +27,7 @@ fn from_bare_with_index() -> crate::Result {
     let dir = repo_path()?.join("bare-with-index.git");
     let (path, trust) = gix_discover::upwards(&dir)?;
     assert_eq!(path.as_ref(), dir, "the bare .git dir is directly returned");
-    assert_eq!(path.kind(), Kind::Bare);
+    assert_eq!(path.kind(), Kind::PossiblyBare);
     assert_eq!(trust, expected_trust());
     Ok(())
 }
@@ -48,7 +48,7 @@ fn from_bare_git_dir_without_config_file() -> crate::Result {
         let dir = repo_path()?.join(name);
         let (path, trust) = gix_discover::upwards(&dir)?;
         assert_eq!(path.as_ref(), dir, "the bare .git dir is directly returned");
-        assert_eq!(path.kind(), Kind::Bare);
+        assert_eq!(path.kind(), Kind::PossiblyBare);
         assert_eq!(trust, expected_trust());
     }
     Ok(())
@@ -64,7 +64,7 @@ fn from_inside_bare_git_dir() -> crate::Result {
         git_dir,
         "the bare .git dir is found while traversing upwards"
     );
-    assert_eq!(path.kind(), Kind::Bare);
+    assert_eq!(path.kind(), Kind::PossiblyBare);
     assert_eq!(trust, expected_trust());
     Ok(())
 }

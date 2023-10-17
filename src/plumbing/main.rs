@@ -72,6 +72,7 @@ pub fn main() -> Result<()> {
     let object_hash = args.object_hash;
     let config = args.config;
     let repository = args.repository;
+    let repository_path = repository.clone();
     enum Mode {
         Strict,
         StrictWithGitInstallConfig,
@@ -449,6 +450,15 @@ pub fn main() -> Result<()> {
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
+            free::Subcommands::Discover => prepare_and_run(
+                "discover",
+                trace,
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| core::discover(&repository_path, out),
+            ),
             free::Subcommands::CommitGraph(cmd) => match cmd {
                 free::commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
                     "commitgraph-verify",

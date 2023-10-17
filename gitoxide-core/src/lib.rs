@@ -79,5 +79,8 @@ pub mod pack;
 pub mod query;
 pub mod repository;
 
+mod discover;
+pub use discover::discover;
+
 #[cfg(all(feature = "async-client", feature = "blocking-client"))]
 compile_error!("Cannot set both 'blocking-client' and 'async-client' features as they are mutually exclusive");

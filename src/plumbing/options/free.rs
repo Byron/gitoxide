@@ -14,6 +14,8 @@ pub enum Subcommands {
     Pack(pack::Subcommands),
     /// Subcommands for interacting with a worktree index, typically at .git/index
     Index(index::Platform),
+    /// Show information about repository discovery and when opening a repository at the current path.
+    Discover,
 }
 
 ///

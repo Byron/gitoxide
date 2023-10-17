@@ -237,13 +237,27 @@ impl ThreadSafeRepository {
                 .resolved
                 .path_filter("core", None, Core::WORKTREE.name, &mut filter_config_section)
             {
+                let wt_clone = wt.clone();
                 let wt_path = wt
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
-                    .map_err(config::Error::PathInterpolation)?;
-                worktree_dir = {
-                    gix_path::normalize(git_dir.join(wt_path).into(), current_dir)
-                        .and_then(|wt| wt.as_ref().is_dir().then(|| wt.into_owned()))
+                    .map_err(|err| config::Error::PathInterpolation {
+                        path: wt_clone.value.into_owned(),
+                        source: err,
+                    })?;
+                worktree_dir = gix_path::normalize(git_dir.join(wt_path).into(), current_dir).map(Cow::into_owned);
+                #[allow(unused_variables)]
+                if let Some(worktree_path) = worktree_dir.as_deref().filter(|wtd| !wtd.is_dir()) {
+                    gix_trace::warn!("The configured worktree path '{}' is not a directory or doesn't exist - `core.worktree` may be misleading", worktree_path.display());
                 }
+            } else if !config.lenient_config
+                && config
+                    .resolved
+                    .boolean_filter("core", None, Core::WORKTREE.name, &mut filter_config_section)
+                    .is_some()
+            {
+                return Err(Error::from(config::Error::ConfigTypedString(
+                    config::key::GenericErrorWithValue::from(&Core::WORKTREE),
+                )));
             }
         }
 

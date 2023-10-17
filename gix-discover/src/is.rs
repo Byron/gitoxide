@@ -24,19 +24,34 @@ fn bare_by_config(git_dir_candidate: &Path) -> std::io::Result<Option<bool>> {
 mod config {
     use bstr::{BStr, ByteSlice};
 
+    /// Note that we intentionally turn repositories that have a worktree configuration into bare repos,
+    /// as we don't actually parse the worktree from the config file and expect the caller to do the right
+    /// think when seemingly seeing bare repository.
+    /// The reason we do this is to not incorrectly pretend this is a worktree.
     pub(crate) fn parse_bare(buf: &[u8]) -> Option<bool> {
-        buf.lines().find_map(|line| {
-            let line = line.trim().strip_prefix(b"bare")?;
-            match line.first() {
-                None => Some(true),
-                Some(c) if *c == b'=' => parse_bool(line.get(1..)?.trim_start().as_bstr()),
-                Some(c) if c.is_ascii_whitespace() => match line.split_once_str(b"=") {
-                    Some((_left, right)) => parse_bool(right.trim_start().as_bstr()),
-                    None => Some(true),
-                },
-                Some(_other_char_) => None,
+        let mut is_bare = None;
+        let mut has_worktree_configuration = false;
+        for line in buf.lines() {
+            if is_bare.is_none() {
+                if let Some(line) = line.trim().strip_prefix(b"bare") {
+                    is_bare = match line.first() {
+                        None => Some(true),
+                        Some(c) if *c == b'=' => parse_bool(line.get(1..)?.trim_start().as_bstr()),
+                        Some(c) if c.is_ascii_whitespace() => match line.split_once_str(b"=") {
+                            Some((_left, right)) => parse_bool(right.trim_start().as_bstr()),
+                            None => Some(true),
+                        },
+                        Some(_other_char_) => None,
+                    };
+                    continue;
+                }
             }
-        })
+            if line.trim().strip_prefix(b"worktree").is_some() {
+                has_worktree_configuration = true;
+                break;
+            }
+        }
+        is_bare.map(|bare| bare || has_worktree_configuration)
     }
 
     fn parse_bool(value: &BStr) -> Option<bool> {
@@ -233,7 +248,7 @@ pub(crate) fn git_with_metadata(
                 Cow::Borrowed(git_dir)
             };
             if bare(conformed_git_dir.as_ref()) || conformed_git_dir.extension() == Some(OsStr::new("git")) {
-                crate::repository::Kind::Bare
+                crate::repository::Kind::PossiblyBare
             } else if submodule_git_dir(conformed_git_dir.as_ref()) {
                 crate::repository::Kind::SubmoduleGitDir
             } else if conformed_git_dir.file_name() == Some(OsStr::new(DOT_GIT_DIR))
@@ -246,7 +261,7 @@ pub(crate) fn git_with_metadata(
             {
                 crate::repository::Kind::WorkTree { linked_git_dir: None }
             } else {
-                crate::repository::Kind::Bare
+                crate::repository::Kind::PossiblyBare
             }
         }
     })

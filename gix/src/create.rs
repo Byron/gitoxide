@@ -230,7 +230,7 @@ pub fn into(
     Ok(gix_discover::repository::Path::from_dot_git_dir(
         dot_git,
         if bare {
-            gix_discover::repository::Kind::Bare
+            gix_discover::repository::Kind::PossiblyBare
         } else {
             gix_discover::repository::Kind::WorkTree { linked_git_dir: None }
         },
