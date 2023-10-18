@@ -28,6 +28,7 @@ async fn handshake_v1_and_request() -> crate::Result {
         "/foo.git",
         Some(("example.org", None)),
         git::ConnectMode::Daemon,
+        false,
     );
     assert!(
         c.connection_persists_across_multiple_requests(),
@@ -86,7 +87,7 @@ async fn handshake_v1_and_request() -> crate::Result {
     );
     drop(res);
 
-    let writer = c.request(client::WriteMode::Binary, client::MessageKind::Flush)?;
+    let writer = c.request(client::WriteMode::Binary, client::MessageKind::Flush, false)?;
     let nak_line = writer
         .into_read()
         .await?
@@ -99,6 +100,7 @@ async fn handshake_v1_and_request() -> crate::Result {
     let mut writer = c.request(
         client::WriteMode::OneLfTerminatedLinePerWriteCall,
         client::MessageKind::Text(b"done"),
+        false,
     )?;
 
     writer.write_all(b"hello").await?;
@@ -158,9 +160,10 @@ async fn push_v1_simulated() -> crate::Result {
         "/foo.git",
         Some(("example.org", None)),
         git::ConnectMode::Process,
+        false,
     );
 
-    let mut writer = c.request(client::WriteMode::Binary, client::MessageKind::Flush)?;
+    let mut writer = c.request(client::WriteMode::Binary, client::MessageKind::Flush, false)?;
     let expected = fixture_bytes("v1/push.request");
     writer.write_all(b"7c09ba0c4c3680af369bda4fc8e3c58d3fccdc76 32690d87d3943c7c0dda81246d0cde344ca7e633 refs/heads/main\0 report-status-v2 side-band-64k object-format=sha1 agent=git/2.37.1.(Apple.Git-137.1)").await?;
     writer.write_message(client::MessageKind::Flush).await?;
@@ -223,6 +226,7 @@ async fn handshake_v1_process_mode() -> crate::Result {
         "/foo.git",
         Some(("example.org", None)),
         git::ConnectMode::Process,
+        false,
     );
     c.handshake(Service::UploadPack, &[]).await?;
 
@@ -245,6 +249,7 @@ async fn handshake_v2_downgrade_to_v1() -> crate::Result {
         "/bar.git",
         Some(("example.org", None)),
         git::ConnectMode::Daemon,
+        false,
     );
     let res = c.handshake(Service::UploadPack, &[]).await?;
     assert_eq!(res.actual_protocol, Protocol::V1);
@@ -291,6 +296,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
         "/bar.git",
         Some(("example.org", None)),
         git::ConnectMode::Daemon,
+        false,
     );
     assert!(
         c.connection_persists_across_multiple_requests(),
@@ -337,6 +343,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
                 .iter()
                 .map(|s| s.as_bytes().as_bstr().to_owned()),
             ),
+            false,
         )
         .await?;
 
@@ -375,6 +382,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
                 .iter()
                 .map(|s| s.as_bytes().as_bstr().to_owned()),
             ),
+            false,
         )
         .await?;
 

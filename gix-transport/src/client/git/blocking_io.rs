@@ -17,12 +17,14 @@ where
         &mut self,
         write_mode: client::WriteMode,
         on_into_read: client::MessageKind,
+        trace: bool,
     ) -> Result<client::RequestWriter<'_>, client::Error> {
         Ok(client::RequestWriter::new_from_bufread(
             &mut self.writer,
             Box::new(self.line_provider.as_read_without_sidebands()),
             write_mode,
             on_into_read,
+            trace,
         ))
     }
 
@@ -90,6 +92,7 @@ where
     /// and the transfer of the repository at `repository_path`.
     ///
     /// `virtual_host` along with a port to which to connect to, while `mode` determines the kind of endpoint to connect to.
+    /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
     pub fn new(
         read: R,
         write: W,
@@ -97,10 +100,11 @@ where
         repository_path: impl Into<BString>,
         virtual_host: Option<(impl Into<String>, Option<u16>)>,
         mode: git::ConnectMode,
+        trace: bool,
     ) -> Self {
         git::Connection {
             writer: write,
-            line_provider: gix_packetline::StreamingPeekableIter::new(read, &[PacketLineRef::Flush]),
+            line_provider: gix_packetline::StreamingPeekableIter::new(read, &[PacketLineRef::Flush], trace),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,
@@ -113,6 +117,7 @@ where
         writer: W,
         desired_version: Protocol,
         repository_path: impl Into<BString>,
+        trace: bool,
     ) -> Self {
         Self::new(
             reader,
@@ -121,6 +126,7 @@ where
             repository_path,
             None::<(&str, _)>,
             git::ConnectMode::Process,
+            trace,
         )
     }
 }
@@ -166,11 +172,13 @@ pub mod connect {
     /// Connect to a git daemon running on `host` and optionally `port` and a repository at `path`.
     ///
     /// Use `desired_version` to specify a preferred protocol to use, knowing that it can be downgraded by a server not supporting it.
+    /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
     pub fn connect(
         host: &str,
         path: BString,
         desired_version: crate::Protocol,
         port: Option<u16>,
+        trace: bool,
     ) -> Result<git::Connection<TcpStream, TcpStream>, Error> {
         let read = TcpStream::connect_timeout(
             &(host, port.unwrap_or(9418))
@@ -192,6 +200,7 @@ pub mod connect {
             path,
             Some(vhost),
             git::ConnectMode::Daemon,
+            trace,
         ))
     }
 }

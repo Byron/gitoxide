@@ -22,6 +22,7 @@ where
     AuthFn: FnMut(credentials::helper::Action) -> credentials::protocol::Result,
     T: client::Transport,
 {
+    let _span = gix_features::trace::detail!("gix_protocol::handshake()", service = ?service, extra_parameters = ?extra_parameters);
     let (server_protocol_version, refs, capabilities) = {
         progress.init(None, progress::steps());
         progress.set_name("handshake".into());

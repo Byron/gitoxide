@@ -80,12 +80,12 @@ mod tests {
     /// We want to declare items containing pointers of `StreamingPeekableIter` `Send` as well, so it must be `Send` itself.
     #[test]
     fn streaming_peekable_iter_is_send() {
-        receiver(StreamingPeekableIter::new(Vec::<u8>::new(), &[]));
+        receiver(StreamingPeekableIter::new(Vec::<u8>::new(), &[], false));
     }
 
     #[test]
     fn state_is_send() {
-        let mut s = StreamingPeekableIter::new(Vec::<u8>::new(), &[]);
+        let mut s = StreamingPeekableIter::new(Vec::<u8>::new(), &[], false);
         receiver(State::Idle { parent: Some(&mut s) });
     }
 }

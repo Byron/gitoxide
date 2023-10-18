@@ -20,12 +20,14 @@ where
         &mut self,
         write_mode: client::WriteMode,
         on_into_read: client::MessageKind,
+        trace: bool,
     ) -> Result<client::RequestWriter<'_>, client::Error> {
         Ok(client::RequestWriter::new_from_bufread(
             &mut self.writer,
             Box::new(self.line_provider.as_read_without_sidebands()),
             write_mode,
             on_into_read,
+            trace,
         ))
     }
     fn to_url(&self) -> Cow<'_, BStr> {
@@ -95,6 +97,7 @@ where
     /// and the transfer of the repository at `repository_path`.
     ///
     /// `virtual_host` along with a port to which to connect to, while `mode` determines the kind of endpoint to connect to.
+    /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
     pub fn new(
         read: R,
         write: W,
@@ -102,10 +105,11 @@ where
         repository_path: impl Into<BString>,
         virtual_host: Option<(impl Into<String>, Option<u16>)>,
         mode: git::ConnectMode,
+        trace: bool,
     ) -> Self {
         git::Connection {
             writer: write,
-            line_provider: gix_packetline::StreamingPeekableIter::new(read, &[PacketLineRef::Flush]),
+            line_provider: gix_packetline::StreamingPeekableIter::new(read, &[PacketLineRef::Flush], trace),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,
@@ -126,11 +130,13 @@ mod async_net {
     impl git::Connection<TcpStream, TcpStream> {
         /// Create a new TCP connection using the `git` protocol of `desired_version`, and make a connection to `host`
         /// at `port` for accessing the repository at `path` on the server side.
+        /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
         pub async fn new_tcp(
             host: &str,
             port: Option<u16>,
             path: bstr::BString,
             desired_version: crate::Protocol,
+            trace: bool,
         ) -> Result<git::Connection<TcpStream, TcpStream>, Error> {
             let read = async_std::io::timeout(
                 Duration::from_secs(5),
@@ -145,6 +151,7 @@ mod async_net {
                 path,
                 None::<(String, _)>,
                 git::ConnectMode::Daemon,
+                trace,
             ))
         }
     }

@@ -116,6 +116,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
 mod blocking_io {
     use std::{io, io::BufRead, path::PathBuf};
 
+    use gix::config::tree::Key;
     use gix::{
         bstr::BString,
         protocol,
@@ -180,6 +181,12 @@ mod blocking_io {
             progress,
             protocol::FetchConnection::TerminateOnSuccessfulCompletion,
             gix::env::agent(),
+            std::env::var_os(
+                gix::config::tree::Gitoxide::TRACE_PACKET
+                    .environment_override()
+                    .expect("set"),
+            )
+            .is_some(),
         )?;
         Ok(())
     }
@@ -196,6 +203,7 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
+    use gix::config::tree::Key;
     use gix::{
         bstr::{BString, ByteSlice},
         odb::pack,
@@ -264,6 +272,12 @@ mod async_io {
                 progress,
                 protocol::FetchConnection::TerminateOnSuccessfulCompletion,
                 gix::env::agent(),
+                std::env::var_os(
+                    gix::config::tree::Gitoxide::TRACE_PACKET
+                        .environment_override()
+                        .expect("set"),
+                )
+                .is_some(),
             ))
         })
         .await?;

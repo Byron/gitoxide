@@ -93,11 +93,13 @@ pub mod connect {
 ///
 /// The `desired_version` is the preferred protocol version when establishing the connection, but note that it can be
 /// downgraded by servers not supporting it.
+/// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
 #[allow(clippy::result_large_err)]
 pub fn connect(
     url: gix_url::Url,
     desired_version: Protocol,
     options: connect::Options,
+    trace: bool,
 ) -> Result<blocking_io::file::SpawnProcessOnDemand, Error> {
     if url.scheme != gix_url::Scheme::Ssh || url.host().is_none() {
         return Err(Error::UnsupportedScheme(url));
@@ -134,6 +136,7 @@ pub fn connect(
         kind,
         options.disallow_shell,
         desired_version,
+        trace,
     ))
 }
 

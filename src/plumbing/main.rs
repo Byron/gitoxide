@@ -31,6 +31,7 @@ pub mod async_util {
 
     pub fn prepare(
         verbose: bool,
+        trace: bool,
         name: &str,
         range: impl Into<Option<ProgressRange>>,
     ) -> (
@@ -41,7 +42,7 @@ pub mod async_util {
         shared::init_env_logger();
 
         if verbose {
-            let progress = shared::progress_tree();
+            let progress = shared::progress_tree(trace);
             let sub_progress = progress.add_child(name);
             let ui_handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
             (Some(ui_handle), Some(sub_progress).into())
@@ -82,8 +83,15 @@ pub fn main() -> Result<()> {
 
     let repository = {
         let config = config.clone();
-        move |mode: Mode| -> Result<gix::Repository> {
+        move |mut mode: Mode| -> Result<gix::Repository> {
             let mut mapping: gix::sec::trust::Mapping<gix::open::Options> = Default::default();
+            if !config.is_empty() {
+                mode = match mode {
+                    Mode::Lenient => Mode::Strict,
+                    Mode::LenientWithGitInstallConfig => Mode::StrictWithGitInstallConfig,
+                    _ => mode,
+                };
+            }
             let strict_toggle = matches!(mode, Mode::Strict | Mode::StrictWithGitInstallConfig) || args.strict;
             mapping.full = mapping.full.strict_config(strict_toggle);
             mapping.reduced = mapping.reduced.strict_config(strict_toggle);
@@ -416,6 +424,7 @@ pub fn main() -> Result<()> {
                     {
                         let (_handle, progress) = async_util::prepare(
                             auto_verbose,
+                            trace,
                             "remote-refs",
                             Some(core::repository::remote::refs::PROGRESS_RANGE),
                         );
@@ -626,7 +635,7 @@ pub fn main() -> Result<()> {
                     refs_directory,
                 } => {
                     let (_handle, progress) =
-                        async_util::prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
+                        async_util::prepare(verbose, trace, "pack-receive", core::pack::receive::PROGRESS_RANGE);
                     let fut = core::pack::receive(
                         protocol,
                         &url,

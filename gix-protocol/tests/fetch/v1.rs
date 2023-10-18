@@ -26,6 +26,7 @@ async fn clone() -> crate::Result {
             progress::Discard,
             FetchConnection::TerminateOnSuccessfulCompletion,
             "agent",
+            false,
         )
         .await?;
         assert_eq!(dlg.pack_bytes, 876, "{fixture}: It be able to read pack bytes");
@@ -49,6 +50,7 @@ async fn clone_empty_with_capabilities() -> crate::Result {
         progress::Discard,
         FetchConnection::TerminateOnSuccessfulCompletion,
         "agent",
+        false,
     )
     .await?;
     assert_eq!(dlg.pack_bytes, 0, "there is no pack");
@@ -72,6 +74,7 @@ async fn ls_remote() -> crate::Result {
         progress::Discard,
         FetchConnection::AllowReuse,
         "agent",
+        false,
     )
     .await?;
 
@@ -115,6 +118,7 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
         progress::Discard,
         FetchConnection::AllowReuse,
         "agent",
+        false,
     )
     .await
     .expect("V1 is OK for this transport");

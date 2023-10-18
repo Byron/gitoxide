@@ -40,6 +40,8 @@ pub(crate) mod connect {
         #[cfg(feature = "blocking-client")]
         /// Options to use if the scheme of the URL is `ssh`.
         pub ssh: crate::client::ssh::connect::Options,
+        /// If `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
+        pub trace: bool,
     }
 
     /// The error used in [`connect()`][crate::connect()].

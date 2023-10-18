@@ -36,6 +36,7 @@ pub(crate) mod function {
                         url.port,
                         path,
                         options.version,
+                        options.trace,
                     )
                     .await
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,

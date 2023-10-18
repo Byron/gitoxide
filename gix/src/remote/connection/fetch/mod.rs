@@ -281,12 +281,13 @@ where
                 //       connection in an async context.
                 gix_protocol::futures_lite::future::block_on(gix_protocol::indicate_end_of_interaction(
                     &mut con.transport,
+                    con.trace,
                 ))
                 .ok();
             }
             #[cfg(not(feature = "async-network-client"))]
             {
-                gix_protocol::indicate_end_of_interaction(&mut con.transport).ok();
+                gix_protocol::indicate_end_of_interaction(&mut con.transport, con.trace).ok();
             }
         }
     }
