@@ -44,12 +44,30 @@ where
         delimiters: &[PacketLineRef<'static>],
         fail_on_err_lines: bool,
         buf_resize: bool,
+        trace: bool,
     ) -> ExhaustiveOutcome<'a> {
         (
             false,
             None,
             Some(match Self::read_line_inner(reader, buf).await {
                 Ok(Ok(line)) => {
+                    if trace {
+                        match line {
+                            #[allow(unused_variables)]
+                            PacketLineRef::Data(d) => {
+                                gix_trace::trace!("<< {}", d.as_bstr().trim().as_bstr());
+                            }
+                            PacketLineRef::Flush => {
+                                gix_trace::trace!("<< FLUSH");
+                            }
+                            PacketLineRef::Delimiter => {
+                                gix_trace::trace!("<< DELIM");
+                            }
+                            PacketLineRef::ResponseEnd => {
+                                gix_trace::trace!("<< RESPONSE_END");
+                            }
+                        }
+                    }
                     if delimiters.contains(&line) {
                         let stopped_at = delimiters.iter().find(|l| **l == line).copied();
                         buf.clear();
@@ -111,6 +129,7 @@ where
                 self.delimiters,
                 self.fail_on_err_lines,
                 false,
+                self.trace,
             )
             .await;
             self.is_done = is_done;
@@ -134,6 +153,7 @@ where
                 self.delimiters,
                 self.fail_on_err_lines,
                 true,
+                self.trace,
             )
             .await;
             self.is_done = is_done;

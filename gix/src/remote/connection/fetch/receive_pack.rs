@@ -104,7 +104,7 @@ where
 
         gix_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
         let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
-        let mut arguments = gix_protocol::fetch::Arguments::new(protocol_version, fetch_features);
+        let mut arguments = gix_protocol::fetch::Arguments::new(protocol_version, fetch_features, con.trace);
         if matches!(con.remote.fetch_tags, crate::remote::fetch::Tags::Included) {
             if !arguments.can_use_include_tag() {
                 return Err(Error::MissingServerFeature {
@@ -158,7 +158,9 @@ where
         let mut previous_response = None::<gix_protocol::fetch::Response>;
         let (mut write_pack_bundle, negotiate) = match &action {
             negotiate::Action::NoChange | negotiate::Action::SkipToRefUpdate => {
-                gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
+                gix_protocol::indicate_end_of_interaction(&mut con.transport, con.trace)
+                    .await
+                    .ok();
                 (None, None)
             }
             negotiate::Action::MustNegotiate {
@@ -209,7 +211,9 @@ where
                             is_done
                         }
                         Err(err) => {
-                            gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
+                            gix_protocol::indicate_end_of_interaction(&mut con.transport, con.trace)
+                                .await
+                                .ok();
                             return Err(err.into());
                         }
                     };
@@ -287,7 +291,9 @@ where
                 drop(reader);
 
                 if matches!(protocol_version, gix_protocol::transport::Protocol::V2) {
-                    gix_protocol::indicate_end_of_interaction(&mut con.transport).await.ok();
+                    gix_protocol::indicate_end_of_interaction(&mut con.transport, con.trace)
+                        .await
+                        .ok();
                 }
 
                 if let Some(shallow_lock) = shallow_lock {

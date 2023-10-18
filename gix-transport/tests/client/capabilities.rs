@@ -55,7 +55,7 @@ async fn from_lines_with_version_detection_v0() -> crate::Result {
     let mut buf = Vec::<u8>::new();
     gix_packetline::encode::flush_to_write(&mut buf).await?;
     let mut stream =
-        gix_packetline::StreamingPeekableIter::new(buf.as_slice(), &[gix_packetline::PacketLineRef::Flush]);
+        gix_packetline::StreamingPeekableIter::new(buf.as_slice(), &[gix_packetline::PacketLineRef::Flush], false);
     let caps = Capabilities::from_lines_with_version_detection(&mut stream)
         .await
         .expect("we can parse V0 as very special case, useful for testing stateful connections in other crates")

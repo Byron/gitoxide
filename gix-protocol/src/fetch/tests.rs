@@ -6,11 +6,11 @@ mod arguments {
     use crate::fetch;
 
     fn arguments_v1(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
-        fetch::Arguments::new(Protocol::V1, features.into_iter().map(|n| (n, None)).collect())
+        fetch::Arguments::new(Protocol::V1, features.into_iter().map(|n| (n, None)).collect(), false)
     }
 
     fn arguments_v2(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
-        fetch::Arguments::new(Protocol::V2, features.into_iter().map(|n| (n, None)).collect())
+        fetch::Arguments::new(Protocol::V2, features.into_iter().map(|n| (n, None)).collect(), false)
     }
 
     struct Transport<T> {
@@ -40,8 +40,9 @@ mod arguments {
                 &mut self,
                 write_mode: WriteMode,
                 on_into_read: MessageKind,
+                trace: bool,
             ) -> Result<RequestWriter<'_>, Error> {
-                self.inner.request(write_mode, on_into_read)
+                self.inner.request(write_mode, on_into_read, trace)
             }
 
             fn to_url(&self) -> Cow<'_, BStr> {
@@ -97,8 +98,9 @@ mod arguments {
                 &mut self,
                 write_mode: WriteMode,
                 on_into_read: MessageKind,
+                trace: bool,
             ) -> Result<RequestWriter<'_>, Error> {
-                self.inner.request(write_mode, on_into_read)
+                self.inner.request(write_mode, on_into_read, trace)
             }
 
             fn to_url(&self) -> Cow<'_, BStr> {
@@ -145,6 +147,7 @@ mod arguments {
                 b"does/not/matter".as_bstr().to_owned(),
                 None::<(&str, _)>,
                 gix_transport::client::git::ConnectMode::Process, // avoid header to be sent
+                false,
             ),
             stateful,
         }

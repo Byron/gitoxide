@@ -280,6 +280,7 @@ pub fn transport<W: futures_io::AsyncWrite + Unpin>(
         b"does/not/matter".as_bstr().to_owned(),
         None::<(&str, _)>,
         mode,
+        false,
     )
 }
 
@@ -298,6 +299,7 @@ pub fn transport<W: std::io::Write>(
         b"does/not/matter".as_bstr().to_owned(),
         None::<(&str, _)>,
         mode,
+        false,
     )
 }
 

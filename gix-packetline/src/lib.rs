@@ -91,6 +91,8 @@ pub struct StreamingPeekableIter<T> {
     delimiters: &'static [PacketLineRef<'static>],
     is_done: bool,
     stopped_at: Option<PacketLineRef<'static>>,
+    #[cfg_attr(all(not(feature = "async-io"), not(feature = "blocking-io")), allow(dead_code))]
+    trace: bool,
 }
 
 /// Utilities to help decoding packet lines

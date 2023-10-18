@@ -54,6 +54,7 @@ pub(crate) mod function {
     /// Invoke an ls-refs V2 command on `transport`, which requires a prior handshake that yielded
     /// server `capabilities`. `prepare_ls_refs(capabilities, arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.
     /// Note that `prepare_ls_refs()` is expected to add the `(agent, Some(name))` to the list of `features`.
+    /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
     #[maybe_async]
     pub async fn ls_refs(
         mut transport: impl Transport,
@@ -64,7 +65,9 @@ pub(crate) mod function {
             &mut Vec<(&str, Option<Cow<'static, str>>)>,
         ) -> std::io::Result<Action>,
         progress: &mut impl Progress,
+        trace: bool,
     ) -> Result<Vec<Ref>, Error> {
+        let _span = gix_features::trace::detail!("gix_protocol::ls_refs()", capabilities = ?capabilities);
         let ls_refs = Command::LsRefs;
         let mut ls_features = ls_refs.default_features(gix_transport::Protocol::V2, capabilities);
         let mut ls_args = ls_refs.initial_arguments(&ls_features);
@@ -96,12 +99,13 @@ pub(crate) mod function {
                         } else {
                             Some(ls_args.into_iter())
                         },
+                        trace,
                     )
                     .await?;
                 from_v2_refs(&mut remote_refs).await?
             }
             Err(err) => {
-                indicate_end_of_interaction(transport).await?;
+                indicate_end_of_interaction(transport, trace).await?;
                 return Err(err.into());
             }
         };

@@ -23,6 +23,8 @@ pub struct Arguments {
     features_for_first_want: Option<Vec<String>>,
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
     version: gix_transport::Protocol,
+
+    trace: bool,
 }
 
 impl Arguments {
@@ -194,8 +196,9 @@ impl Arguments {
     }
     /// Create a new instance to help setting up arguments to send to the server as part of a `fetch` operation
     /// for which `features` are the available and configured features to use.
+    /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
-    pub fn new(version: gix_transport::Protocol, features: Vec<crate::command::Feature>) -> Self {
+    pub fn new(version: gix_transport::Protocol, features: Vec<crate::command::Feature>, trace: bool) -> Self {
         use crate::Command;
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
@@ -242,6 +245,7 @@ impl Arguments {
             ref_in_want,
             deepen_since,
             features_for_first_want,
+            trace,
         }
     }
 }

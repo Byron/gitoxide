@@ -43,7 +43,8 @@ pub use error::Error;
 
 impl<T> StreamingPeekableIter<T> {
     /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
-    pub fn new(read: T, delimiters: &'static [PacketLineRef<'static>]) -> Self {
+    /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
+    pub fn new(read: T, delimiters: &'static [PacketLineRef<'static>], trace: bool) -> Self {
         StreamingPeekableIter {
             read,
             #[cfg(any(feature = "blocking-io", feature = "async-io"))]
@@ -53,6 +54,7 @@ impl<T> StreamingPeekableIter<T> {
             fail_on_err_lines: false,
             is_done: false,
             stopped_at: None,
+            trace,
         }
     }
 

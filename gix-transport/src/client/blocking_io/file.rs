@@ -47,6 +47,7 @@ pub struct SpawnProcessOnDemand {
     ssh_disallow_shell: bool,
     connection: Option<git::Connection<Box<dyn std::io::Read + Send>, process::ChildStdin>>,
     child: Option<process::Child>,
+    trace: bool,
 }
 
 impl SpawnProcessOnDemand {
@@ -57,6 +58,7 @@ impl SpawnProcessOnDemand {
         ssh_kind: ssh::ProgramKind,
         ssh_disallow_shell: bool,
         version: Protocol,
+        trace: bool,
     ) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
             url,
@@ -67,9 +69,10 @@ impl SpawnProcessOnDemand {
             child: None,
             connection: None,
             desired_version: version,
+            trace,
         }
     }
-    fn new_local(path: BString, version: Protocol) -> SpawnProcessOnDemand {
+    fn new_local(path: BString, version: Protocol, trace: bool) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
             url: gix_url::Url::from_parts(gix_url::Scheme::File, None, None, None, None, path.clone(), true)
                 .expect("valid url"),
@@ -82,6 +85,7 @@ impl SpawnProcessOnDemand {
             child: None,
             connection: None,
             desired_version: version,
+            trace,
         }
     }
 }
@@ -101,11 +105,12 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
         &mut self,
         write_mode: WriteMode,
         on_into_read: MessageKind,
+        trace: bool,
     ) -> Result<RequestWriter<'_>, client::Error> {
         self.connection
             .as_mut()
             .expect("handshake() to have been called first")
-            .request(write_mode, on_into_read)
+            .request(write_mode, on_into_read, trace)
     }
 
     fn to_url(&self) -> Cow<'_, BStr> {
@@ -248,6 +253,7 @@ impl client::Transport for SpawnProcessOnDemand {
             child.stdin.take().expect("stdin configured"),
             self.desired_version,
             self.path.clone(),
+            self.trace,
         ));
         self.child = Some(child);
         self.connection
@@ -258,13 +264,15 @@ impl client::Transport for SpawnProcessOnDemand {
 }
 
 /// Connect to a locally readable repository at `path` using the given `desired_version`.
+/// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
 ///
 /// This will spawn a `git` process locally.
 pub fn connect(
     path: impl Into<BString>,
     desired_version: Protocol,
+    trace: bool,
 ) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
-    Ok(SpawnProcessOnDemand::new_local(path.into(), desired_version))
+    Ok(SpawnProcessOnDemand::new_local(path.into(), desired_version, trace))
 }
 
 #[cfg(test)]
@@ -284,7 +292,7 @@ mod tests {
                     ("user@host.xy:~/repo", "~/repo"),
                 ] {
                     let url = gix_url::parse((*url).into()).expect("valid url");
-                    let cmd = connect(url, Protocol::V1, Default::default()).expect("parse success");
+                    let cmd = connect(url, Protocol::V1, Default::default(), false).expect("parse success");
                     assert_eq!(cmd.path, expected, "the path will be substituted by the remote shell");
                 }
             }
