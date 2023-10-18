@@ -202,12 +202,14 @@ pub struct Transport<H: Http> {
     service: Option<Service>,
     line_provider: Option<gix_packetline::StreamingPeekableIter<H::ResponseBody>>,
     identity: Option<gix_sec::identity::Account>,
+    trace: bool,
 }
 
 impl<H: Http> Transport<H> {
     /// Create a new instance with `http` as implementation to communicate to `url` using the given `desired_version`.
     /// Note that we will always fallback to other versions as supported by the server.
-    pub fn new_http(http: H, url: gix_url::Url, desired_version: Protocol) -> Self {
+    /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
+    pub fn new_http(http: H, url: gix_url::Url, desired_version: Protocol, trace: bool) -> Self {
         let identity = url
             .user()
             .zip(url.password())
@@ -224,6 +226,7 @@ impl<H: Http> Transport<H> {
             http,
             line_provider: None,
             identity,
+            trace,
         }
     }
 }
@@ -238,10 +241,11 @@ impl<H: Http> Transport<H> {
 #[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
 impl Transport<Impl> {
     /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
+    /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
     ///
     /// Note that the actual implementation depends on feature toggles.
-    pub fn new(url: gix_url::Url, desired_version: Protocol) -> Self {
-        Self::new_http(Impl::default(), url, desired_version)
+    pub fn new(url: gix_url::Url, desired_version: Protocol, trace: bool) -> Self {
+        Self::new_http(Impl::default(), url, desired_version, trace)
     }
 }
 
@@ -300,6 +304,7 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
         &mut self,
         write_mode: client::WriteMode,
         on_into_read: MessageKind,
+        trace: bool,
     ) -> Result<RequestWriter<'_>, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
@@ -341,6 +346,7 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
             }),
             write_mode,
             on_into_read,
+            trace,
         ))
     }
 
@@ -394,9 +400,9 @@ impl<H: Http> client::Transport for Transport<H> {
                 .get(url.as_ref(), &self.url, static_headers.iter().chain(&dynamic_headers))?;
         <Transport<H>>::check_content_type(service, "advertisement", headers)?;
 
-        let line_reader = self
-            .line_provider
-            .get_or_insert_with(|| gix_packetline::StreamingPeekableIter::new(body, &[PacketLineRef::Flush]));
+        let line_reader = self.line_provider.get_or_insert_with(|| {
+            gix_packetline::StreamingPeekableIter::new(body, &[PacketLineRef::Flush], self.trace)
+        });
 
         // the service announcement is only sent sometimes depending on the exact server/protocol version/used protocol (http?)
         // eat the announcement when its there to avoid errors later (and check that the correct service was announced).
@@ -505,15 +511,17 @@ impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H,
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol, with `http` as implementation.
+/// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
 #[cfg(all(feature = "http-client", not(feature = "http-client-curl")))]
-pub fn connect_http<H: Http>(http: H, url: gix_url::Url, desired_version: Protocol) -> Transport<H> {
-    Transport::new_http(http, url, desired_version)
+pub fn connect_http<H: Http>(http: H, url: gix_url::Url, desired_version: Protocol, trace: bool) -> Transport<H> {
+    Transport::new_http(http, url, desired_version, trace)
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
+/// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
 #[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
-pub fn connect(url: gix_url::Url, desired_version: Protocol) -> Transport<Impl> {
-    Transport::new(url, desired_version)
+pub fn connect(url: gix_url::Url, desired_version: Protocol, trace: bool) -> Transport<Impl> {
+    Transport::new(url, desired_version, trace)
 }
 
 ///

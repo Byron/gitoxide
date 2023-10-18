@@ -95,7 +95,7 @@ where
     #[gix_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, progress: impl Progress, options: Options) -> Result<fetch::RefMap, Error> {
         let res = self.ref_map_inner(progress, options).await;
-        gix_protocol::indicate_end_of_interaction(&mut self.transport)
+        gix_protocol::indicate_end_of_interaction(&mut self.transport, self.trace)
             .await
             .ok();
         res
@@ -112,6 +112,7 @@ where
             mut extra_refspecs,
         }: Options,
     ) -> Result<fetch::RefMap, Error> {
+        let _span = gix_trace::coarse!("remote::Connection::ref_map()");
         let null = gix_hash::ObjectId::null(gix_hash::Kind::Sha1); // OK to hardcode Sha1, it's not supposed to match, ever.
 
         if let Some(tag_spec) = self.remote.fetch_tags.to_refspec().map(|spec| spec.to_owned()) {
@@ -186,6 +187,7 @@ where
         refspecs: &[gix_refspec::RefSpec],
         mut progress: impl Progress,
     ) -> Result<HandshakeWithRefs, Error> {
+        let _span = gix_trace::coarse!("remote::Connection::fetch_refs()");
         let mut credentials_storage;
         let url = self.transport.to_url();
         let authenticate = match self.authenticate.as_mut() {
@@ -241,6 +243,7 @@ where
                         Ok(gix_protocol::ls_refs::Action::Continue)
                     },
                     &mut progress,
+                    self.trace,
                 )
                 .await?
             }

@@ -105,7 +105,7 @@ pub fn serve_and_connect(
         &server.addr.port(),
         path
     );
-    let client = gix_transport::client::http::connect(url_str.as_str().try_into()?, version);
+    let client = gix_transport::client::http::connect(url_str.as_str().try_into()?, version, false);
     assert_eq!(url_str, client.to_url().as_ref());
     Ok((server, client))
 }

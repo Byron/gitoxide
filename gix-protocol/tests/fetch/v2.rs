@@ -26,6 +26,7 @@ async fn clone_abort_prep() -> crate::Result {
         progress::Discard,
         FetchConnection::TerminateOnSuccessfulCompletion,
         "agent",
+        false,
     )
     .await
     .expect_err("fetch aborted");
@@ -72,6 +73,7 @@ async fn ls_remote() -> crate::Result {
         progress::Discard,
         FetchConnection::AllowReuse,
         "agent",
+        false,
     )
     .await?;
 
@@ -127,6 +129,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         progress::Discard,
         FetchConnection::AllowReuse,
         "agent",
+        false,
     )
     .await
     .expect_err("ls-refs preparation is aborted");
@@ -168,6 +171,7 @@ async fn ref_in_want() -> crate::Result {
         progress::Discard,
         FetchConnection::TerminateOnSuccessfulCompletion,
         "agent",
+        false,
     )
     .await?;
 

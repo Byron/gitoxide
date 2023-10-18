@@ -76,6 +76,7 @@ impl Client {
         let mut input = gix_packetline::StreamingPeekableIter::new(
             process.stdout.take().expect("configured stdout when spawning"),
             &[gix_packetline::PacketLineRef::Flush],
+            false, /* packet tracing */
         );
         let mut read = input.as_read();
         let mut buf = String::new();

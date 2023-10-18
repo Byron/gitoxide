@@ -3,7 +3,7 @@ use crate::fetch::Cursor;
 fn mock_reader(path: &str) -> gix_packetline::StreamingPeekableIter<Cursor> {
     use crate::fixture_bytes;
     let buf = fixture_bytes(path);
-    gix_packetline::StreamingPeekableIter::new(Cursor::new(buf), &[gix_packetline::PacketLineRef::Flush])
+    gix_packetline::StreamingPeekableIter::new(Cursor::new(buf), &[gix_packetline::PacketLineRef::Flush], false)
 }
 
 fn id(hex: &str) -> gix_hash::ObjectId {
@@ -149,7 +149,11 @@ mod v1 {
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn all() -> crate::Result {
             let (caps, _) = Capabilities::from_bytes(&b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack filter side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0"[..])?;
-            let mut args = fetch::Arguments::new(Protocol::V1, Command::Fetch.default_features(Protocol::V1, &caps));
+            let mut args = fetch::Arguments::new(
+                Protocol::V1,
+                Command::Fetch.default_features(Protocol::V1, &caps),
+                false,
+            );
             assert!(
                 args.is_stateless(true /* transport is stateless */),
                 "V1 is stateless if the transport is connection oriented"
@@ -378,7 +382,11 @@ mod v2 {
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn all() -> crate::Result {
             let (caps, _) = Capabilities::from_bytes(&b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack filter side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0"[..])?;
-            let mut args = fetch::Arguments::new(Protocol::V2, Command::Fetch.default_features(Protocol::V1, &caps));
+            let mut args = fetch::Arguments::new(
+                Protocol::V2,
+                Command::Fetch.default_features(Protocol::V1, &caps),
+                false,
+            );
             assert!(args.can_use_shallow());
             assert!(args.can_use_deepen());
             assert!(args.can_use_deepen_not());

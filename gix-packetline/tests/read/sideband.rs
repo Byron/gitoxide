@@ -38,7 +38,7 @@ mod util {
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn read_pack_with_progress_extraction() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output");
-    let mut rd = gix_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush]);
+    let mut rd = gix_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush], false);
 
     // Read without sideband decoding
     let mut out = Vec::new();
@@ -103,7 +103,7 @@ async fn read_pack_with_progress_extraction() -> crate::Result {
 async fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output-no-binary");
 
-    let mut rd = gix_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush]);
+    let mut rd = gix_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush], false);
 
     let mut out = String::new();
     let mut r = rd.as_read();
@@ -149,7 +149,7 @@ async fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Resu
 async fn readline_reads_one_packet_line_at_a_time() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output-no-binary");
 
-    let mut rd = gix_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush]);
+    let mut rd = gix_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush], false);
 
     let mut r = rd.as_read();
     let line = r.read_data_line().await.unwrap()??.as_bstr().unwrap();
@@ -194,7 +194,7 @@ async fn readline_reads_one_packet_line_at_a_time() -> crate::Result {
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
     let input = b"0009ERR e";
-    let mut rd = gix_packetline::StreamingPeekableIter::new(&input[..], &[]);
+    let mut rd = gix_packetline::StreamingPeekableIter::new(&input[..], &[], false);
     let mut reader = rd.as_read();
     let res = reader.peek_data_line().await;
     assert_eq!(res.expect("one line")??, b"ERR e");
@@ -218,7 +218,7 @@ async fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
     let input = b"0009hello0000";
-    let mut rd = gix_packetline::StreamingPeekableIter::new(&input[..], &[PacketLineRef::Flush]);
+    let mut rd = gix_packetline::StreamingPeekableIter::new(&input[..], &[PacketLineRef::Flush], false);
     let mut reader = rd.as_read();
     let res = reader.peek_data_line().await;
     assert_eq!(res.expect("one line")??, b"hello");
@@ -238,7 +238,7 @@ async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn handling_of_err_lines() {
     let input = b"0009ERR e0009ERR x0000";
-    let mut rd = gix_packetline::StreamingPeekableIter::new(&input[..], &[]);
+    let mut rd = gix_packetline::StreamingPeekableIter::new(&input[..], &[], false);
     rd.fail_on_err_lines(true);
     let mut buf = [0u8; 2];
     let mut reader = rd.as_read();

@@ -4,6 +4,7 @@ use std::{borrow::Cow, ffi::OsString};
 use gix_sec::Permission;
 
 use super::{interpolate_context, util, Error, StageOne};
+use crate::config::tree::Gitoxide;
 use crate::{
     bstr::BString,
     config,
@@ -336,6 +337,15 @@ fn apply_environment_overrides(
                     (env(key), key.name)
                 },
             ][..],
+        ),
+        (
+            "gitoxide",
+            None,
+            git_prefix,
+            &[{
+                let key = &Gitoxide::TRACE_PACKET;
+                (env(key), key.name)
+            }],
         ),
         (
             "gitoxide",

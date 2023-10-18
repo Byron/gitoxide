@@ -54,6 +54,17 @@ impl Cache {
         ("agent", Some(gix_protocol::agent(agent).into()))
     }
 
+    /// Return `true` if packet-tracing is enabled. Lenient and defaults to `false`.
+    #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
+    pub(crate) fn trace_packet(&self) -> bool {
+        use crate::config::tree::Section;
+        use config::tree::Gitoxide;
+        self.resolved
+            .boolean(Gitoxide.name(), None, Gitoxide::TRACE_PACKET.name())
+            .and_then(Result::ok)
+            .unwrap_or_default()
+    }
+
     pub(crate) fn personas(&self) -> &identity::Personas {
         self.personas
             .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved))

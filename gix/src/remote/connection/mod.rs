@@ -17,6 +17,7 @@ pub struct Connection<'a, 'repo, T> {
     pub(crate) authenticate: Option<AuthenticateFn<'a>>,
     pub(crate) transport_options: Option<Box<dyn std::any::Any>>,
     pub(crate) transport: T,
+    pub(crate) trace: bool,
 }
 
 mod access;
