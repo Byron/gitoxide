@@ -31,6 +31,7 @@ pub mod async_util {
 
     pub fn prepare(
         verbose: bool,
+        trace: bool,
         name: &str,
         range: impl Into<Option<ProgressRange>>,
     ) -> (
@@ -41,7 +42,7 @@ pub mod async_util {
         shared::init_env_logger();
 
         if verbose {
-            let progress = shared::progress_tree();
+            let progress = shared::progress_tree(trace);
             let sub_progress = progress.add_child(name);
             let ui_handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
             (Some(ui_handle), Some(sub_progress).into())
@@ -416,6 +417,7 @@ pub fn main() -> Result<()> {
                     {
                         let (_handle, progress) = async_util::prepare(
                             auto_verbose,
+                            trace,
                             "remote-refs",
                             Some(core::repository::remote::refs::PROGRESS_RANGE),
                         );
@@ -626,7 +628,7 @@ pub fn main() -> Result<()> {
                     refs_directory,
                 } => {
                     let (_handle, progress) =
-                        async_util::prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
+                        async_util::prepare(verbose, trace, "pack-receive", core::pack::receive::PROGRESS_RANGE);
                     let fut = core::pack::receive(
                         protocol,
                         &url,

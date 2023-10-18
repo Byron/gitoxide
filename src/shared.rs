@@ -20,9 +20,9 @@ pub fn init_env_logger() {
 }
 
 #[cfg(feature = "prodash-render-line")]
-pub fn progress_tree() -> std::sync::Arc<prodash::tree::Root> {
+pub fn progress_tree(trace: bool) -> std::sync::Arc<prodash::tree::Root> {
     prodash::tree::root::Options {
-        message_buffer_capacity: 200,
+        message_buffer_capacity: if trace { 10_000 } else { 200 },
         ..Default::default()
     }
     .into()
@@ -55,7 +55,7 @@ pub mod pretty {
     #[cfg(feature = "small")]
     pub fn prepare_and_run<T>(
         name: &str,
-        _trace: bool,
+        trace: bool,
         verbose: bool,
         progress: bool,
         #[cfg_attr(not(feature = "prodash-render-tui"), allow(unused_variables))] progress_keep_open: bool,
@@ -77,7 +77,7 @@ pub mod pretty {
                 run(progress::DoOrDiscard::from(None), &mut stdout_lock, &mut stderr_lock)
             }
             (true, false) => {
-                let progress = crate::shared::progress_tree();
+                let progress = crate::shared::progress_tree(trace);
                 let sub_progress = progress.add_child(name);
 
                 use crate::shared::{self, STANDARD_RANGE};
@@ -157,7 +157,7 @@ pub mod pretty {
             }
             (true, false) => {
                 use crate::shared::{self, STANDARD_RANGE};
-                let progress = shared::progress_tree();
+                let progress = shared::progress_tree(trace);
                 let sub_progress = progress.add_child(name);
                 init_tracing(trace, false, &progress)?;
 
