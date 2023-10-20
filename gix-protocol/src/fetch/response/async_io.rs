@@ -37,10 +37,16 @@ impl Response {
     /// and if `true` we will keep parsing until we get a pack as the client already signalled to the server that it's done.
     /// This way of doing things allows us to exploit knowledge about more recent versions of the protocol, which keeps code easier
     /// and more localized without having to support all the cruft that there is.
+    ///
+    /// `wants_to_negotiate` should be `false` for clones which is when we don't have sent any haves. The reason for this flag to exist
+    /// is to predict how to parse V1 output only, and neither `client_expects_pack` nor `wants_to_negotiate` are relevant for V2.
+    /// This ugliness is in place to avoid having to resort to an [an even more complex ugliness](https://github.com/git/git/blob/9e49351c3060e1fa6e0d2de64505b7becf157f28/fetch-pack.c#L583-L594)
+    /// that `git` has to use to predict how many acks are supposed to be read. We also genuinely hope that this covers it all….
     pub async fn from_line_reader(
         version: Protocol,
         reader: &mut (impl client::ExtendedBufRead + Unpin),
         client_expects_pack: bool,
+        wants_to_negotiate: bool,
     ) -> Result<Response, response::Error> {
         match version {
             Protocol::V0 | Protocol::V1 => {
@@ -89,7 +95,10 @@ impl Response {
                     );
                     // When the server sends ready, we know there is going to be a pack so no need to stop early.
                     saw_ready |= matches!(acks.last(), Some(Acknowledgement::Ready));
-                    if let Some(Acknowledgement::Nak) = acks.last().filter(|_| !client_expects_pack && !saw_ready) {
+                    if let Some(Acknowledgement::Nak) = acks.last().filter(|_| !client_expects_pack || !saw_ready) {
+                        if !wants_to_negotiate {
+                            continue;
+                        }
                         break 'lines false;
                     }
                 };
