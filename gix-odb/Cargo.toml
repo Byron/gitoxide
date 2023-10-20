@@ -6,7 +6,7 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 description = "Implements various git object databases"
 edition = "2021"
-include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
+include = ["src/**/*", "LICENSE-*"]
 rust-version = "1.65"
 autotests = false
 

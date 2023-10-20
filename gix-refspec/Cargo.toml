@@ -6,7 +6,7 @@ license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project for parsing and representing refspecs"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
-include = ["src/**/*", "LICENSE-*", "CHANGELOG.md", "README.md"]
+include = ["src/**/*", "LICENSE-*", "README.md"]
 rust-version = "1.65"
 
 [lib]

@@ -7,6 +7,7 @@ description = "A crate of the gitoxide project dealing git submodules"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 rust-version = "1.65"
+include = ["src/**/*", "LICENSE-*"]
 
 [lib]
 doctest = false

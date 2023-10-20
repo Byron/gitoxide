@@ -7,6 +7,7 @@ description = "A crate of the gitoxide project handling internal git command exe
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 rust-version = "1.65"
+include = ["src/lib.rs", "LICENSE-*"]
 
 [lib]
 doctest = false

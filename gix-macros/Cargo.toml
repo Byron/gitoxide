@@ -10,7 +10,7 @@ authors = [
 ]
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
-include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
+include = ["src/**/*", "LICENSE-*"]
 rust-version = "1.65"
 
 [lib]
