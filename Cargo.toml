@@ -7,7 +7,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 version = "0.31.1"
 default-run = "gix"
-include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
+include = ["src/**/*", "LICENSE-*", "README.md"]
 resolver = "2"
 
 [[bin]]
