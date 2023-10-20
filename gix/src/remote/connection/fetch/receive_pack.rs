@@ -221,8 +221,13 @@ where
                     if sideband_all {
                         setup_remote_progress(progress, &mut reader, should_interrupt);
                     }
-                    let response =
-                        gix_protocol::fetch::Response::from_line_reader(protocol_version, &mut reader, is_done).await?;
+                    let response = gix_protocol::fetch::Response::from_line_reader(
+                        protocol_version,
+                        &mut reader,
+                        is_done,
+                        !is_done,
+                    )
+                    .await?;
                     let has_pack = response.has_pack();
                     previous_response = Some(response);
                     if has_pack {

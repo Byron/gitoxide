@@ -44,6 +44,10 @@ pub enum FetchConnection {
 /// * If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
 ///
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
+///
+/// # WARNING - Do not use!
+///
+/// As it will hang when having multiple negotiation rounds.
 #[allow(clippy::result_large_err)]
 #[maybe_async]
 // TODO: remove this without losing test coverage - we have the same but better in `gix` and it's
@@ -134,7 +138,8 @@ where
         let response = Response::from_line_reader(
             protocol_version,
             &mut reader,
-            true, /* hack, telling us we don't want this delegate approach anymore */
+            true,  /* hack, telling us we don't want this delegate approach anymore */
+            false, /* just as much of a hack which causes us to expect a pack immediately */
         )
         .await?;
         previous_response = if response.has_pack() {
