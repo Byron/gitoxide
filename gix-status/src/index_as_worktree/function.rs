@@ -25,9 +25,11 @@ use crate::{
 /// `submodule` which can take a look at submodules in detail to produce status information (BASE version if its conflicting).
 /// `options` are used to configure the operation.
 ///
-/// Note that `index` may require changes to be up-to-date with the working tree and avoid expensive computations by updating respective entries
-/// with stat information from the worktree, and its timestamp is adjusted to the current time for which it will be considered fresh
-/// as long as it is included which depends on `pathspec`. All this is delegated to the caller.
+/// Note that `index` may require changes to be up-to-date with the working tree and avoid expensive computations by updating
+/// respective entries with stat information from the worktree, and its timestamp is adjusted to the current time for which it
+/// will be considered fresh. All changes that would be applied to the index are delegated to the caller, which receives these
+/// as [`EntryStatus`].
+/// The `pathspec` is used to determine which index entries to check for status in the first place.
 ///
 /// `should_interrupt` can be used to stop all processing.
 /// `filter` is used to convert worktree files back to their internal git representation. For this to be correct,

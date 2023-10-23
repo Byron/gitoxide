@@ -2284,7 +2284,6 @@ dependencies = [
  "gix-index 0.26.0",
  "gix-object 0.38.0",
  "gix-path 0.10.0",
- "gix-pathspec",
  "gix-worktree 0.27.0",
  "thiserror",
 ]
