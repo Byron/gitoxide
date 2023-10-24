@@ -348,7 +348,7 @@ impl<'index> State<'_, 'index> {
             Err(err) => return Err(Error::Io(err)),
         };
         self.symlink_metadata_calls.fetch_add(1, Ordering::Relaxed);
-        let metadata = match worktree_path.symlink_metadata() {
+        let metadata = match gix_index::fs::Metadata::from_path_no_follow(worktree_path) {
             Ok(metadata) if metadata.is_dir() => {
                 // index entries are normally only for files/symlinks
                 // if a file turned into a directory it was removed

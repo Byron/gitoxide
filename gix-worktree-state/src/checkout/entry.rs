@@ -161,7 +161,7 @@ where
                 file.close()?;
             }
 
-            entry.stat = Stat::from_fs(&std::fs::symlink_metadata(dest)?)?;
+            entry.stat = Stat::from_fs(&gix_index::fs::Metadata::from_path_no_follow(dest)?)?;
             obj.data.len()
         }
         gix_index::entry::Mode::DIR => {
@@ -285,7 +285,7 @@ pub(crate) fn finalize_entry(
     }
     // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
     //       revisit this once there is a bug to fix.
-    entry.stat = Stat::from_fs(&file.metadata()?)?;
+    entry.stat = Stat::from_fs(&gix_index::fs::Metadata::from_file(&file)?)?;
     file.close()?;
     Ok(())
 }
