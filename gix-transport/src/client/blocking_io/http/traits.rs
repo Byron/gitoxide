@@ -4,7 +4,7 @@ use crate::client::WriteMode;
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("Could initialize the http client")]
+    #[error("Could not initialize the http client")]
     InitHttpClient {
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
