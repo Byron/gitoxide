@@ -76,11 +76,11 @@ impl Stat {
     }
 
     /// Creates stat information from the result of `symlink_metadata`.
-    pub fn from_fs(fstat: &std::fs::Metadata) -> Result<Stat, SystemTimeError> {
-        let mtime = fstat.modified().unwrap_or(std::time::UNIX_EPOCH);
-        let ctime = fstat.created().unwrap_or(std::time::UNIX_EPOCH);
+    pub fn from_fs(stat: &crate::fs::Metadata) -> Result<Stat, SystemTimeError> {
+        let mtime = stat.modified().unwrap_or(std::time::UNIX_EPOCH);
+        let ctime = stat.created().unwrap_or(std::time::UNIX_EPOCH);
 
-        #[cfg(not(unix))]
+        #[cfg(windows)]
         let res = Stat {
             mtime: mtime.try_into()?,
             ctime: ctime.try_into()?,
@@ -89,11 +89,10 @@ impl Stat {
             uid: 0,
             gid: 0,
             // truncation to 32 bits is on purpose (git does the same).
-            size: fstat.len() as u32,
+            size: stat.len() as u32,
         };
-        #[cfg(unix)]
+        #[cfg(not(windows))]
         let res = {
-            use std::os::unix::fs::MetadataExt;
             Stat {
                 mtime: mtime.try_into().unwrap_or_default(),
                 ctime: ctime.try_into().unwrap_or_default(),
@@ -101,12 +100,12 @@ impl Stat {
                 // that's what the linux syscalls returns
                 // just rust upcasts to 64 bits for some reason?
                 // numbers this large are impractical anyway (that's a lot of hard-drives).
-                dev: fstat.dev() as u32,
-                ino: fstat.ino() as u32,
-                uid: fstat.uid(),
-                gid: fstat.gid(),
+                dev: stat.dev() as u32,
+                ino: stat.ino() as u32,
+                uid: stat.uid(),
+                gid: stat.gid(),
                 // truncation to 32 bits is on purpose (git does the same).
-                size: fstat.len() as u32,
+                size: stat.len() as u32,
             }
         };
 
