@@ -125,7 +125,10 @@ blocking-http-transport-curl-rustls = ["blocking-http-transport-curl", "dep:curl
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport avaialble.
 blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
-blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
+blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls" ]
+## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
+## This also makes use of `trust-dns` to avoid `getaddrinfo`, but note it comes with its own problems.
+blocking-http-transport-reqwest-rust-tls-trust-dns = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `native-tls` crate.
 blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/default-tls" ]
 
