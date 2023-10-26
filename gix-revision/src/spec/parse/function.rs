@@ -422,7 +422,7 @@ where
                 if n < 0 {
                     if name.is_empty() {
                         delegate
-                            .nth_checked_out_branch(n.abs().try_into().expect("non-negative isize fits usize"))
+                            .nth_checked_out_branch(n.unsigned_abs())
                             .ok_or(Error::Delegate)?;
                     } else {
                         return Err(Error::RefnameNeedsPositiveReflogEntries { nav: nav.into() });
