@@ -11,6 +11,13 @@ fn braces_must_be_closed() {
 }
 
 #[test]
+#[cfg_attr(target_pointer_width = "32", ignore = "Only works this way on 64 bit systems")]
+fn fuzzed() {
+    let rec = parse("@{-9223372036854775808}");
+    assert_eq!(rec.nth_checked_out_branch, [Some(9223372036854775808), None]);
+}
+
+#[test]
 fn reflog_by_entry_for_current_branch() {
     for (spec, expected_entry) in [("@{0}", 0), ("@{42}", 42), ("@{00100}", 100)] {
         let rec = parse(spec);

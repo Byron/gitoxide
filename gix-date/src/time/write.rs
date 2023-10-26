@@ -23,8 +23,8 @@ impl Time {
 
         const ZERO: &[u8; 1] = b"0";
 
-        const SECONDS_PER_HOUR: i32 = 60 * 60;
-        let offset = self.offset.abs();
+        const SECONDS_PER_HOUR: u32 = 60 * 60;
+        let offset = self.offset.unsigned_abs();
         let hours = offset / SECONDS_PER_HOUR;
         assert!(hours < 25, "offset is more than a day: {hours}");
         let minutes = (offset - (hours * SECONDS_PER_HOUR)) / 60;
