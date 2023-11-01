@@ -1,15 +1,8 @@
 use gix_object::TreeRefIter;
 
 use super::{change, Action, Change, Platform};
-use crate::{
-    bstr::BStr,
-    ext::ObjectIdExt,
-    object::tree::{
-        diff,
-        diff::{rewrites, tracked},
-    },
-    Repository, Tree,
-};
+use crate::diff::rewrites::tracker;
+use crate::{bstr::BStr, diff::rewrites, ext::ObjectIdExt, object::tree::diff, Repository, Tree};
 
 /// The error return by methods on the [diff platform][Platform].
 #[derive(Debug, thiserror::Error)]
@@ -19,12 +12,10 @@ pub enum Error {
     Diff(#[from] gix_diff::tree::changes::Error),
     #[error("The user-provided callback failed")]
     ForEach(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
-    #[error("Could not find blob for similarity checking")]
-    FindExistingBlob(#[from] crate::object::find::existing::Error),
     #[error("Could not configure diff algorithm prior to checking similarity")]
     ConfigureDiffAlgorithm(#[from] crate::config::diff::algorithm::Error),
-    #[error("Could not traverse tree to obtain possible sources for copies")]
-    TraverseTreeForExhaustiveCopyDetection(#[from] gix_traverse::tree::breadthfirst::Error),
+    #[error("Failure during rename tracking")]
+    RenameTracking(#[from] tracker::emit::Error),
 }
 
 ///
@@ -49,12 +40,14 @@ impl<'a, 'old> Platform<'a, 'old> {
         E: std::error::Error + Sync + Send + 'static,
     {
         let repo = self.lhs.repo;
+        let diff_algo = repo.config.diff_algorithm()?;
         let mut delegate = Delegate {
             src_tree: self.lhs,
             other_repo: other.repo,
             recorder: gix_diff::tree::Recorder::default().track_location(self.tracking),
             visit: for_each,
-            tracked: self.rewrites.map(|r| tracked::State::new(r, self.tracking)),
+            location: self.tracking,
+            tracked: self.rewrites.map(|r| rewrites::Tracker::new(r, diff_algo)),
             err: None,
         };
         match gix_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
@@ -87,7 +80,8 @@ struct Delegate<'a, 'old, 'new, VisitFn, E> {
     other_repo: &'new Repository,
     recorder: gix_diff::tree::Recorder,
     visit: VisitFn,
-    tracked: Option<tracked::State>,
+    tracked: Option<rewrites::Tracker<gix_diff::tree::visit::Change>>,
+    location: Option<gix_diff::tree::recorder::Location>,
     err: Option<E>,
 }
 
@@ -151,14 +145,14 @@ where
                         location: dest.location,
                         event: diff::change::Event::Rewrite {
                             source_location: source.location,
-                            source_entry_mode: source.mode,
+                            source_entry_mode: source.entry_mode,
                             source_id: source.id.attach(self.src_tree.repo),
                             entry_mode: mode,
                             id: oid.to_owned().attach(self.other_repo),
                             diff: source.diff,
                             copy: match source.kind {
-                                tracked::visit::Kind::RenameTarget => false,
-                                tracked::visit::Kind::CopyDestination => true,
+                                tracker::visit::SourceKind::Rename => false,
+                                tracker::visit::SourceKind::Copy => true,
                             },
                         },
                     };
@@ -180,7 +174,12 @@ where
                     &mut self.err,
                 ),
             },
-            self.src_tree,
+            &self.src_tree.repo.objects,
+            |push| {
+                self.src_tree
+                    .traverse()
+                    .breadthfirst(&mut tree_to_changes::Delegate::new(push, self.location))
+            },
         )?;
         Ok(Some(outcome))
     }
@@ -230,6 +229,71 @@ where
                 self.other_repo,
                 &mut self.err,
             ),
+        }
+    }
+}
+
+mod tree_to_changes {
+    use gix_diff::tree::visit::Change;
+    use gix_object::tree::EntryRef;
+
+    use crate::bstr::BStr;
+
+    pub struct Delegate<'a> {
+        push: &'a mut dyn FnMut(Change, &BStr),
+        recorder: gix_traverse::tree::Recorder,
+    }
+
+    impl<'a> Delegate<'a> {
+        pub fn new(
+            push: &'a mut dyn FnMut(Change, &BStr),
+            location: Option<gix_diff::tree::recorder::Location>,
+        ) -> Self {
+            let location = location.map(|t| match t {
+                gix_diff::tree::recorder::Location::FileName => gix_traverse::tree::recorder::Location::FileName,
+                gix_diff::tree::recorder::Location::Path => gix_traverse::tree::recorder::Location::Path,
+            });
+            Self {
+                push,
+                recorder: gix_traverse::tree::Recorder::default().track_location(location),
+            }
+        }
+    }
+
+    impl gix_traverse::tree::Visit for Delegate<'_> {
+        fn pop_front_tracked_path_and_set_current(&mut self) {
+            self.recorder.pop_front_tracked_path_and_set_current()
+        }
+
+        fn push_back_tracked_path_component(&mut self, component: &BStr) {
+            self.recorder.push_back_tracked_path_component(component)
+        }
+
+        fn push_path_component(&mut self, component: &BStr) {
+            self.recorder.push_path_component(component)
+        }
+
+        fn pop_path_component(&mut self) {
+            self.recorder.pop_path_component();
+        }
+
+        fn visit_tree(&mut self, _entry: &EntryRef<'_>) -> gix_traverse::tree::visit::Action {
+            gix_traverse::tree::visit::Action::Continue
+        }
+
+        fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> gix_traverse::tree::visit::Action {
+            if entry.mode.is_blob() {
+                (self.push)(
+                    Change::Modification {
+                        previous_entry_mode: entry.mode,
+                        previous_oid: gix_hash::ObjectId::null(entry.oid.kind()),
+                        entry_mode: entry.mode,
+                        oid: entry.oid.to_owned(),
+                    },
+                    self.recorder.path(),
+                );
+            }
+            gix_traverse::tree::visit::Action::Continue
         }
     }
 }

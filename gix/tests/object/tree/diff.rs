@@ -104,11 +104,12 @@ fn tree_named(repo: &gix::Repository, rev_spec: impl AsRef<str>) -> gix::Tree {
 mod track_rewrites {
     use std::convert::Infallible;
 
-    use gix::object::tree::diff::{
-        change::{DiffLineStats, Event},
+    use gix::diff::blob::DiffLineStats;
+    use gix::diff::{
         rewrites::{Copies, CopySource},
         Rewrites,
     };
+    use gix::object::tree::diff::change::Event;
     use gix_ref::bstr::BStr;
 
     use crate::{
@@ -484,7 +485,7 @@ mod track_rewrites {
             .track_rewrites(
                 Rewrites {
                     copies: Some(Copies {
-                        source: CopySource::FromSetOfModifiedFilesAndSourceTree,
+                        source: CopySource::FromSetOfModifiedFilesAndAllSources,
                         ..Default::default()
                     }),
                     ..Default::default()
@@ -555,7 +556,7 @@ mod track_rewrites {
             .track_rewrites(
                 Rewrites {
                     copies: Some(Copies {
-                        source: CopySource::FromSetOfModifiedFilesAndSourceTree,
+                        source: CopySource::FromSetOfModifiedFilesAndAllSources,
                         ..Default::default()
                     }),
                     limit: 2, // similarity checks can't be made that way
