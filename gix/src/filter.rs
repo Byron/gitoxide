@@ -2,7 +2,7 @@
 use std::borrow::Cow;
 
 pub use gix_filter as plumbing;
-use gix_odb::{Find, FindExt};
+use gix_object::{Find, FindExt};
 
 use crate::{
     bstr::BStr,
@@ -150,7 +150,7 @@ impl<'repo> Pipeline<'repo> {
             &mut |_, attrs| {
                 entry.matching_attributes(attrs);
             },
-            &mut |buf| -> Result<_, gix_odb::find::Error> {
+            &mut |buf| -> Result<_, gix_object::find::Error> {
                 let entry = match index.entry_by_path(gix_path::into_bstr(rela_path).as_ref()) {
                     None => return Ok(None),
                     Some(entry) => entry,

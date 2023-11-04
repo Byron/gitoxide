@@ -7,7 +7,7 @@ use std::{
     path::PathBuf,
 };
 
-use gix_odb::FindExt;
+use gix_object::FindExt;
 pub use gix_submodule::*;
 
 use crate::{bstr::BStr, repository::IndexPersistedOrInMemory, Repository, Submodule};

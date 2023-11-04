@@ -3,7 +3,8 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use gix_odb::{store::RefreshMode, FindExt};
+use gix_object::FindExt;
+use gix_odb::store::RefreshMode;
 use gix_protocol::{
     fetch::Arguments,
     transport::{client::Transport, packetline::read::ProgressAction},

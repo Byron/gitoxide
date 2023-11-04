@@ -12,8 +12,8 @@ mod from_tree {
     };
 
     use gix_attributes::glob::pattern::Case;
+    use gix_object::FindExt;
     use gix_object::{bstr::ByteSlice, tree::EntryMode};
-    use gix_odb::FindExt;
     use gix_testtools::once_cell::sync::Lazy;
     use gix_worktree::stack::state::attributes::Source;
 

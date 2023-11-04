@@ -9,7 +9,7 @@ use std::{
 
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
-use gix_odb::FindExt;
+use gix_object::FindExt;
 use gix_testtools::tempfile::TempDir;
 use gix_worktree_state::checkout::Collision;
 use once_cell::sync::Lazy;
@@ -504,7 +504,7 @@ fn checkout_index_in_tmp_dir_opts(
             if allow_return_object(oid) {
                 odb.find_blob(oid, buf)
             } else {
-                Err(gix_odb::find::existing_object::Error::NotFound { oid: oid.to_owned() })
+                Err(gix_object::find::existing_object::Error::NotFound { oid: oid.to_owned() })
             }
         },
         &progress::Discard,

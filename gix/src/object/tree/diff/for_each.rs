@@ -1,5 +1,5 @@
+use gix_object::FindExt;
 use gix_object::TreeRefIter;
-use gix_odb::FindExt;
 
 use super::{change, Action, Change, Platform};
 use crate::{

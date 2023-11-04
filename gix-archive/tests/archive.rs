@@ -9,7 +9,7 @@ mod from_tree {
     use gix_archive::Format;
     use gix_attributes::glob::pattern::Case;
     use gix_object::tree::EntryMode;
-    use gix_odb::FindExt;
+    use gix_object::FindExt;
     use gix_testtools::bstr::ByteSlice;
     use gix_worktree::stack::state::attributes::Source;
 

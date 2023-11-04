@@ -1,6 +1,6 @@
 //! Pathspec plumbing and abstractions
 use gix_macros::momo;
-use gix_odb::FindExt;
+use gix_object::FindExt;
 pub use gix_pathspec::*;
 
 use crate::{bstr::BStr, AttributeStack, Pathspec, PathspecDetached, Repository};

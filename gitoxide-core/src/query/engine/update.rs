@@ -9,8 +9,8 @@ use gix::{
     bstr::{BStr, BString, ByteSlice},
     features::progress,
     object::tree::diff::rewrites::CopySource,
-    odb::FindExt,
     parallel::{InOrderIter, SequenceId},
+    prelude::FindExt,
     prelude::ObjectIdExt,
     Count, Progress,
 };

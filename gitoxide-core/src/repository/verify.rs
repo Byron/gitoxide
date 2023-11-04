@@ -44,7 +44,7 @@ pub fn integrity(
         index.verify_integrity()?;
         index.verify_entries()?;
         index.verify_extensions(true, {
-            use gix::odb::FindExt;
+            use gix::prelude::FindExt;
             let objects = repo.objects;
             move |oid, buf: &mut Vec<u8>| objects.find_tree_iter(oid, buf).ok()
         })?;

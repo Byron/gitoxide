@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, path::PathBuf};
 
-use gix_odb::Find;
+use gix_object::Find;
 use gix_ref::{file::ReferenceExt, Reference};
 use gix_testtools::Creation;
 

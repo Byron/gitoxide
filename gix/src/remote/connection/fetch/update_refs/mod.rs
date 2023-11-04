@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
-use gix_odb::{Find, FindExt};
+use gix_object::{Exists, Find, FindExt};
 use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target, TargetRef,
@@ -96,8 +96,8 @@ pub(crate) fn update(
     ) {
         // `None` only if unborn.
         let remote_id = remote.as_id();
-        if matches!(dry_run, fetch::DryRun::No) && !remote_id.map_or(true, |id| repo.objects.contains(id)) {
-            if let Some(remote_id) = remote_id.filter(|id| !repo.objects.contains(id)) {
+        if matches!(dry_run, fetch::DryRun::No) && !remote_id.map_or(true, |id| repo.objects.exists(id)) {
+            if let Some(remote_id) = remote_id.filter(|id| !repo.objects.exists(id)) {
                 let update = if is_implicit_tag {
                     Mode::ImplicitTagNotSentByRemote.into()
                 } else {

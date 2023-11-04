@@ -1,6 +1,6 @@
 use std::{borrow::Cow, convert::TryInto, io::Write};
 
-use gix_odb::Find;
+use gix_object::Find;
 use gix_ref::{
     transaction::{LogChange, RefLog},
     FullNameRef,

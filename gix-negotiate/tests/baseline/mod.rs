@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use gix_negotiate::Algorithm;
 use gix_object::{bstr, bstr::ByteSlice};
-use gix_odb::{Find, FindExt};
+use gix_object::{Find, FindExt};
 use gix_ref::{file::ReferenceExt, store::WriteReflog};
 
 #[test]

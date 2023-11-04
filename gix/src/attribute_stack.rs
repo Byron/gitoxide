@@ -1,7 +1,7 @@
 use crate::bstr::BStr;
 use crate::types::AttributeStack;
 use crate::Repository;
-use gix_odb::FindExt;
+use gix_object::FindExt;
 use std::ops::{Deref, DerefMut};
 
 /// Lifecycle

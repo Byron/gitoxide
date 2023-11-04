@@ -1,4 +1,4 @@
-use gix_odb::FindExt;
+use gix_object::FindExt;
 
 use crate::{config::cache::util::ApplyLeniencyDefault, repository::IndexPersistedOrInMemory, worktree};
 

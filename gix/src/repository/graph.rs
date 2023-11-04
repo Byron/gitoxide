@@ -1,4 +1,4 @@
-use gix_odb::Find;
+use gix_object::Find;
 
 impl crate::Repository {
     /// Create a graph data-structure capable of accelerating graph traversals and storing state of type `T` with each commit

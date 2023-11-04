@@ -3,7 +3,8 @@ use std::{convert::TryInto, ops::DerefMut};
 
 use gix_hash::ObjectId;
 use gix_macros::momo;
-use gix_odb::{Find, FindExt, Header, HeaderExt, Write};
+use gix_object::{Exists, Find, FindExt};
+use gix_odb::{Header, HeaderExt, Write};
 use gix_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
@@ -70,7 +71,7 @@ impl crate::Repository {
         if id == ObjectId::empty_tree(self.object_hash()) {
             true
         } else {
-            self.objects.contains(id)
+            self.objects.exists(id)
         }
     }
 
@@ -140,7 +141,7 @@ impl crate::Repository {
 
     fn write_object_inner(&self, buf: &[u8], kind: gix_object::Kind) -> Result<Id<'_>, object::write::Error> {
         let oid = gix_object::compute_hash(self.object_hash(), kind, buf);
-        if self.objects.contains(&oid) {
+        if self.objects.exists(&oid) {
             return Ok(oid.attach(self));
         }
 
@@ -158,7 +159,7 @@ impl crate::Repository {
     pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
         let bytes = bytes.as_ref();
         let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, bytes);
-        if self.objects.contains(&oid) {
+        if self.objects.exists(&oid) {
             return Ok(oid.attach(self));
         }
         self.objects
@@ -185,7 +186,7 @@ impl crate::Repository {
 
     fn write_blob_stream_inner(&self, buf: &[u8]) -> Result<Id<'_>, object::write::Error> {
         let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, buf);
-        if self.objects.contains(&oid) {
+        if self.objects.exists(&oid) {
             return Ok(oid.attach(self));
         }
 

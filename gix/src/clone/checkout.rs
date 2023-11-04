@@ -4,7 +4,7 @@ use crate::{clone::PrepareCheckout, Repository};
 pub mod main_worktree {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
-    use gix_odb::FindExt;
+    use gix_object::FindExt;
 
     use crate::{clone::PrepareCheckout, Progress, Repository};
 
@@ -26,7 +26,7 @@ pub mod main_worktree {
         #[error(transparent)]
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
-        IndexCheckout(#[from] gix_worktree_state::checkout::Error<gix_odb::find::existing_object::Error>),
+        IndexCheckout(#[from] gix_worktree_state::checkout::Error<gix_object::find::existing_object::Error>),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
         #[error("The HEAD reference could not be located")]

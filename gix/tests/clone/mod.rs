@@ -326,7 +326,7 @@ mod blocking_io {
         match out.status {
             gix::remote::fetch::Status::Change { update_refs, .. } => {
                 for edit in &update_refs.edits {
-                    use gix_odb::Find;
+                    use gix_object::Exists;
                     match edit.change.new_value().expect("always set/no deletion") {
                         TargetRef::Symbolic(referent) => {
                             assert!(
@@ -335,7 +335,7 @@ mod blocking_io {
                             )
                         }
                         TargetRef::Peeled(id) => {
-                            assert!(repo.objects.contains(id), "part of the fetched pack");
+                            assert!(repo.objects.exists(id), "part of the fetched pack");
                         }
                     }
                     let r = repo

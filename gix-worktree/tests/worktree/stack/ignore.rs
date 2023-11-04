@@ -1,5 +1,5 @@
 use bstr::{BStr, ByteSlice};
-use gix_odb::FindExt;
+use gix_object::FindExt;
 use gix_worktree::{stack::state::ignore::Source, Stack};
 
 use crate::hex_to_id;

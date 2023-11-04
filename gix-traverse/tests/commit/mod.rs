@@ -346,7 +346,7 @@ mod ancestor {
 
     /// Some dates adjusted to be a year apart, but still 'c1' and 'c2' with the same date.
     mod adjusted_dates {
-        use gix_odb::FindExt;
+        use gix_object::FindExt;
         use gix_traverse::commit::{ancestors, Ancestors, Parents, Sorting};
 
         use crate::{commit::ancestor::TraversalAssertion, hex_to_id};

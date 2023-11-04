@@ -1,7 +1,7 @@
 use std::{borrow::Cow, path::PathBuf};
 
 use gix_object::bstr::ByteSlice;
-use gix_odb::Find;
+use gix_object::Find;
 use gix_revision::{
     describe,
     describe::{Error, Outcome},

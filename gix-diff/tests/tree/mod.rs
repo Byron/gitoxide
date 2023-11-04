@@ -142,14 +142,14 @@ mod changes {
 
             let head = head_of(db);
             commit::Ancestors::new(Some(head), commit::ancestors::State::default(), |oid, buf| {
-                use gix_odb::FindExt;
+                use gix_object::FindExt;
                 db.find_commit_iter(oid, buf)
             })
             .collect::<Result<Vec<_>, _>>()
             .expect("valid iteration")
             .into_iter()
             .map(|c| {
-                use gix_odb::FindExt;
+                use gix_object::FindExt;
                 (
                     db.find_commit(&c.id, &mut buf)
                         .unwrap()

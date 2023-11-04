@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use gix_hash::ObjectId;
 use gix_lock::acquire::Fail;
 use gix_object::bstr::{BString, ByteSlice};
-use gix_odb::Find;
+use gix_object::Find;
 use gix_ref::{
     file::{
         transaction::{self, PackedRefs},

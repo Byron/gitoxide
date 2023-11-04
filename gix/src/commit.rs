@@ -28,7 +28,7 @@ pub mod describe {
 
     use gix_hash::ObjectId;
     use gix_hashtable::HashMap;
-    use gix_odb::Find;
+    use gix_object::Find;
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
 

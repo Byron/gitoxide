@@ -1,5 +1,5 @@
 use gix_hash::ObjectId;
-use gix_odb::FindExt;
+use gix_object::FindExt;
 
 use crate::{ext::ObjectIdExt, revision, Repository};
 
