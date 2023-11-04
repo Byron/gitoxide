@@ -241,13 +241,10 @@ fn traversals() -> crate::Result {
         .copied()
         {
             let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
-            let mut commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
-                let db = db.clone();
-                move |oid, buf| db.find_commit_iter(oid, buf).map(|t| t.0)
-            })
-            .map(Result::unwrap)
-            .map(|c| c.id)
-            .collect::<Vec<_>>();
+            let mut commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), db.clone())
+                .map(Result::unwrap)
+                .map(|c| c.id)
+                .collect::<Vec<_>>();
             if let Some(take) = take {
                 commits.resize(take, gix_hash::Kind::Sha1.null());
             }
@@ -392,7 +389,7 @@ fn write_and_verify(
             Some(tmp_dir.path()),
             &mut progress::Discard,
             &should_interrupt,
-            Some(Box::new(move |oid, buf| db.find(&oid, buf).ok().map(|t| t.0))),
+            Some(&db),
             pack::bundle::write::Options::default(),
         )?
         .data_path
