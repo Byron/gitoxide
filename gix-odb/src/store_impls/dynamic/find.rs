@@ -347,7 +347,7 @@ where
         id: &gix_hash::oid,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut dyn DecodeEntry,
-    ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, gix_pack::find::Error> {
+    ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, gix_object::find::Error> {
         let mut snapshot = self.snapshot.borrow_mut();
         let mut inflate = self.inflate.borrow_mut();
         self.try_find_cached_inner(id, buffer, &mut inflate, pack_cache, &mut snapshot, None)
