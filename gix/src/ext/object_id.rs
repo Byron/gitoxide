@@ -8,10 +8,9 @@ pub type AncestorsIter<Find> = Ancestors<Find, fn(&gix_hash::oid) -> bool, ances
 /// An extension trait to add functionality to [`ObjectId`]s.
 pub trait ObjectIdExt: Sealed {
     /// Create an iterator over the ancestry of the commits reachable from this id, which must be a commit.
-    fn ancestors<Find, E>(self, find: Find) -> AncestorsIter<Find>
+    fn ancestors<Find>(self, find: Find) -> AncestorsIter<Find>
     where
-        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::CommitRefIter<'a>, E>,
-        E: std::error::Error + Send + Sync + 'static;
+        Find: gix_object::Find;
 
     /// Infuse this object id `repo` access.
     fn attach(self, repo: &crate::Repository) -> crate::Id<'_>;
@@ -20,10 +19,9 @@ pub trait ObjectIdExt: Sealed {
 impl Sealed for ObjectId {}
 
 impl ObjectIdExt for ObjectId {
-    fn ancestors<Find, E>(self, find: Find) -> AncestorsIter<Find>
+    fn ancestors<Find>(self, find: Find) -> AncestorsIter<Find>
     where
-        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::CommitRefIter<'a>, E>,
-        E: std::error::Error + Send + Sync + 'static,
+        Find: gix_object::Find,
     {
         Ancestors::new(Some(self), ancestors::State::default(), find)
     }

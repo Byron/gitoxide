@@ -396,7 +396,7 @@ fn receive_pack_blocking<W: io::Write>(
         directory.take().as_deref(),
         &mut progress,
         &ctx.should_interrupt,
-        None,
+        None::<gix::objs::find::Never>,
         options,
     )
     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;

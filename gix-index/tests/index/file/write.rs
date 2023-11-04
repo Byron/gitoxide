@@ -1,5 +1,5 @@
 use filetime::FileTime;
-use gix_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
+use gix_index::{entry, extension, write, write::Options, State, Version};
 
 use crate::index::Fixture::*;
 
@@ -228,7 +228,7 @@ fn compare_states_against_baseline(
 
 fn compare_states(actual: &State, actual_version: Version, expected: &State, options: Options, fixture: &str) {
     actual.verify_entries().expect("valid");
-    actual.verify_extensions(false, no_find).expect("valid");
+    actual.verify_extensions(false, gix::objs::find::Never).expect("valid");
 
     assert_eq!(
         actual.version(),

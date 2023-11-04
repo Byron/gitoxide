@@ -16,7 +16,7 @@ pub enum Error {
     #[error("We were unable to figure out what objects the server should send after {rounds} round(s)")]
     NegotiationFailed { rounds: usize },
     #[error(transparent)]
-    LookupCommitInGraph(#[from] gix_revwalk::graph::lookup::commit::Error),
+    LookupCommitInGraph(#[from] gix_revwalk::graph::try_lookup_or_insert_default::Error),
     #[error(transparent)]
     InitRefsIterator(#[from] crate::reference::iter::init::Error),
     #[error(transparent)]

@@ -2,7 +2,6 @@
 use std::path::Path;
 
 use gix_macros::momo;
-use gix_odb::pack::Find;
 use gix_ref::file::ReferenceExt;
 
 /// A platform to create iterators over references.
@@ -96,15 +95,10 @@ impl<'r> Iterator for Iter<'r> {
             res.map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                 .and_then(|mut r| {
                     if self.peel {
-                        let handle = &self.repo;
-                        r.peel_to_id_in_place(&handle.refs, &mut |oid, buf| {
-                            handle
-                                .objects
-                                .try_find(oid.as_ref(), buf)
-                                .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
-                        })
-                        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
-                        .map(|_| r)
+                        let repo = &self.repo;
+                        r.peel_to_id_in_place(&repo.refs, &repo.objects)
+                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                            .map(|_| r)
                     } else {
                         Ok(r)
                     }

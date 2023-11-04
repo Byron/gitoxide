@@ -13,8 +13,8 @@ mod from_tree {
 
     use gix_attributes::glob::pattern::Case;
     use gix_hash::oid;
+    use gix_object::Data;
     use gix_object::{bstr::ByteSlice, tree::EntryMode};
-    use gix_object::{Data, FindExt};
     use gix_testtools::once_cell::sync::Lazy;
     use gix_worktree::stack::state::attributes::Source;
 
@@ -68,7 +68,7 @@ mod from_tree {
             mutating_pipeline(true),
             move |rela_path, mode, attrs| {
                 cache
-                    .at_entry(rela_path, mode.is_tree().into(), |id, buf| odb.find_blob(id, buf))
+                    .at_entry(rela_path, mode.is_tree().into(), &odb)
                     .map(|entry| entry.matching_attributes(attrs))
                     .map(|_| ())
             },
@@ -226,7 +226,7 @@ mod from_tree {
             mutating_pipeline(false),
             move |rela_path, mode, attrs| {
                 cache
-                    .at_entry(rela_path, mode.is_tree().into(), |id, buf| odb.find_blob(id, buf))
+                    .at_entry(rela_path, mode.is_tree().into(), &odb)
                     .map(|entry| entry.matching_attributes(attrs))
                     .map(|_| ())
             },

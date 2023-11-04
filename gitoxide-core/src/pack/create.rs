@@ -2,13 +2,7 @@ use std::{ffi::OsStr, io, path::Path, str::FromStr, time::Instant};
 
 use anyhow::anyhow;
 use gix::{
-    hash,
-    hash::ObjectId,
-    interrupt,
-    objs::bstr::ByteVec,
-    odb::{pack, pack::FindExt},
-    parallel::InOrderIter,
-    prelude::Finalize,
+    hash, hash::ObjectId, interrupt, objs::bstr::ByteVec, odb::pack, parallel::InOrderIter, prelude::Finalize,
     progress, traverse, Count, NestedProgress, Progress,
 };
 
@@ -136,12 +130,9 @@ where
                 .collect::<Result<Vec<_>, _>>()?;
             let handle = repo.objects.into_shared_arc().to_cache_arc();
             let iter = Box::new(
-                traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
-                    let handle = handle.clone();
-                    move |oid, buf| handle.find_commit_iter(oid, buf).map(|t| t.0)
-                })
-                .map(|res| res.map_err(|err| Box::new(err) as Box<_>).map(|c| c.id))
-                .inspect(move |_| progress.inc()),
+                traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), handle.clone())
+                    .map(|res| res.map_err(|err| Box::new(err) as Box<_>).map(|c| c.id))
+                    .inspect(move |_| progress.inc()),
             );
             (handle, iter)
         }

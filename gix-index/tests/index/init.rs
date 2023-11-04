@@ -1,5 +1,4 @@
-use gix::prelude::FindExt;
-use gix_index::{verify::extensions::no_find, State};
+use gix_index::State;
 use gix_testtools::scripted_fixture_read_only_standalone;
 
 #[test]
@@ -18,7 +17,7 @@ fn from_tree() -> crate::Result {
         let tree_id = repo.head_commit()?.tree_id()?;
 
         let expected_state = repo.index()?;
-        let actual_state = State::from_tree(&tree_id, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
+        let actual_state = State::from_tree(&tree_id, &repo.objects)?;
 
         compare_states(&actual_state, &expected_state, fixture)
     }
@@ -35,7 +34,7 @@ fn new() {
 
 fn compare_states(actual: &State, expected: &State, fixture: &str) {
     actual.verify_entries().expect("valid");
-    actual.verify_extensions(false, no_find).expect("valid");
+    actual.verify_extensions(false, gix::objs::find::Never).expect("valid");
 
     assert_eq!(
         actual.entries().len(),

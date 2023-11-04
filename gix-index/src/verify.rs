@@ -25,11 +25,6 @@ pub mod entries {
 pub mod extensions {
     use crate::extension;
 
-    /// An implementation of a `find` function that never finds or returns any object, a no-op.
-    pub fn no_find<'a>(_: &gix_hash::oid, _: &'a mut Vec<u8>) -> Option<gix_object::TreeRefIter<'a>> {
-        None
-    }
-
     /// The error returned by [`State::verify_extensions()`][crate::State::verify_extensions()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]

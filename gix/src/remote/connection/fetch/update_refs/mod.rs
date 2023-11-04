@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
-use gix_object::{Exists, Find, FindExt};
+use gix_object::{Exists, Find};
 use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target, TargetRef,
@@ -159,7 +159,7 @@ pub(crate) fn update(
                                                 }).and_then(|local_commit_time|
                                                 remote_id
                                                     .to_owned()
-                                                    .ancestors(|id, buf| repo.objects.find_commit_iter(id, buf))
+                                                    .ancestors(&repo.objects)
                                                     .sorting(
                                                         gix_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
                                                             seconds: local_commit_time
