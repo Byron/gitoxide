@@ -18,19 +18,13 @@ pub struct Statistics {
     pub pop_directory: usize,
 }
 
-pub(crate) type FindFn<'a> = dyn for<'b> FnMut(
-        &gix_hash::oid,
-        &'b mut Vec<u8>,
-    ) -> Result<gix_object::BlobRef<'b>, Box<dyn std::error::Error + Send + Sync>>
-    + 'a;
-
 pub(crate) struct StackDelegate<'a, 'find> {
     pub state: &'a mut State,
     pub buf: &'a mut Vec<u8>,
     #[cfg_attr(not(feature = "attributes"), allow(dead_code))]
     pub is_dir: bool,
     pub id_mappings: &'a Vec<PathIdMapping>,
-    pub find: &'find mut FindFn<'find>,
+    pub objects: &'find dyn gix_object::Find,
     pub case: gix_glob::pattern::Case,
     pub statistics: &'a mut super::Statistics,
 }
@@ -63,7 +57,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                     rela_dir,
                     self.buf,
                     self.id_mappings,
-                    self.find,
+                    self.objects,
                     &mut self.statistics.attributes,
                 )?;
             }
@@ -75,7 +69,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                     rela_dir,
                     self.buf,
                     self.id_mappings,
-                    &mut self.find,
+                    self.objects,
                     &mut self.statistics.attributes,
                 )?;
                 ignore.push_directory(
@@ -84,7 +78,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                     rela_dir,
                     self.buf,
                     self.id_mappings,
-                    &mut self.find,
+                    self.objects,
                     self.case,
                     &mut self.statistics.ignore,
                 )?
@@ -95,7 +89,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                 rela_dir,
                 self.buf,
                 self.id_mappings,
-                &mut self.find,
+                self.objects,
                 self.case,
                 &mut self.statistics.ignore,
             )?,

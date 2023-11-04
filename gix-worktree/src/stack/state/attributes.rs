@@ -2,8 +2,8 @@ use std::path::{Path, PathBuf};
 
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
+use gix_object::FindExt;
 
-use crate::stack::delegate::FindFn;
 use crate::{
     stack::state::{AttributeMatchGroup, Attributes},
     PathIdMapping, Stack,
@@ -95,7 +95,7 @@ impl Attributes {
         rela_dir: &BStr,
         buf: &mut Vec<u8>,
         id_mappings: &[PathIdMapping],
-        find: &mut FindFn<'_>,
+        objects: &dyn gix_object::Find,
         stats: &mut Statistics,
     ) -> std::io::Result<()> {
         let attr_path_relative =
@@ -109,7 +109,8 @@ impl Attributes {
         match self.source {
             Source::IdMapping | Source::IdMappingThenWorktree => {
                 if let Ok(idx) = attr_file_in_index {
-                    let blob = find(&id_mappings[idx].1, buf)
+                    let blob = objects
+                        .find_blob(&id_mappings[idx].1, buf)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                     let attr_path = gix_path::from_bstring(attr_path_relative.into_owned());
                     self.stack.add_patterns_buffer(
@@ -147,7 +148,8 @@ impl Attributes {
                 stats.pattern_files += usize::from(added);
                 stats.tried_pattern_files += 1;
                 if let Some(idx) = attr_file_in_index.ok().filter(|_| !added) {
-                    let blob = find(&id_mappings[idx].1, buf)
+                    let blob = objects
+                        .find_blob(&id_mappings[idx].1, buf)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                     let attr_path = gix_path::from_bstring(attr_path_relative.into_owned());
                     self.stack.add_patterns_buffer(

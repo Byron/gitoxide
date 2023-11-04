@@ -13,8 +13,10 @@ use crate::{protocol, Entry, Stream};
 pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
-    #[error("Could not find a blob or tree for archival")]
-    Find(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error("Could not find a tree's leaf, typically a blob")]
+    Find(#[from] gix_object::find::existing::Error),
+    #[error("Could not find a tree to traverse")]
+    FindTree(#[from] gix_object::find::existing_iter::Error),
     #[error("Could not query attributes for path \"{path}\"")]
     Attributes {
         path: BString,

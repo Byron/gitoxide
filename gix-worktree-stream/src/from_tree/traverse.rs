@@ -3,15 +3,15 @@ use std::{collections::VecDeque, io::Write};
 use gix_filter::{driver::apply::MaybeDelayed, pipeline::convert::ToWorktreeOutcome};
 use gix_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
-    tree,
+    tree, FindExt,
 };
 use gix_traverse::tree::{visit::Action, Visit};
 
 use crate::{entry::Error, protocol, SharedErrorSlot};
 
-pub struct Delegate<'a, AttributesFn, FindFn>
+pub struct Delegate<'a, AttributesFn, Find>
 where
-    FindFn: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::Data<'b>, Error> + 'static,
+    Find: gix_object::Find,
 {
     pub(crate) out: &'a mut gix_features::io::pipe::Writer,
     pub(crate) err: SharedErrorSlot,
@@ -20,13 +20,13 @@ where
     pub(crate) pipeline: gix_filter::Pipeline,
     pub(crate) attrs: gix_attributes::search::Outcome,
     pub(crate) fetch_attributes: AttributesFn,
-    pub(crate) find: FindFn,
+    pub(crate) objects: Find,
     pub(crate) buf: Vec<u8>,
 }
 
-impl<AttributesFn, FindFn> Delegate<'_, AttributesFn, FindFn>
+impl<AttributesFn, Find> Delegate<'_, AttributesFn, Find>
 where
-    FindFn: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::Data<'b>, Error> + 'static,
+    Find: gix_object::Find,
     AttributesFn:
         FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), Error> + 'static,
 {
@@ -62,7 +62,7 @@ where
         if self.ignore_state().is_set() {
             return Ok(Action::Continue);
         }
-        (self.find)(entry.oid, &mut self.buf)?;
+        self.objects.find(entry.oid, &mut self.buf)?;
 
         self.pipeline.driver_context_mut().blob = Some(entry.oid.into());
         let converted = self.pipeline.convert_to_worktree(
@@ -99,9 +99,9 @@ where
     }
 }
 
-impl<AttributesFn, FindFn> Visit for Delegate<'_, AttributesFn, FindFn>
+impl<AttributesFn, Find> Visit for Delegate<'_, AttributesFn, Find>
 where
-    FindFn: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::Data<'a>, Error> + 'static,
+    Find: gix_object::Find,
     AttributesFn:
         FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), Error> + 'static,
 {
