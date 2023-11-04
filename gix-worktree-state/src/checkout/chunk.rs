@@ -4,29 +4,22 @@ use std::{
 };
 
 use bstr::{BStr, BString};
-use gix_hash::oid;
 use gix_worktree::Stack;
 
 use crate::{checkout, checkout::entry};
 
 mod reduce {
-    use std::marker::PhantomData;
-
     use crate::checkout;
 
-    pub struct Reduce<'entry, E> {
+    pub struct Reduce<'entry> {
         pub aggregate: super::Outcome<'entry>,
-        pub marker: PhantomData<E>,
     }
 
-    impl<'entry, E> gix_features::parallel::Reduce for Reduce<'entry, E>
-    where
-        E: std::error::Error + Send + Sync + 'static,
-    {
-        type Input = Result<super::Outcome<'entry>, checkout::Error<E>>;
+    impl<'entry> gix_features::parallel::Reduce for Reduce<'entry> {
+        type Input = Result<super::Outcome<'entry>, checkout::Error>;
         type FeedProduce = ();
         type Output = super::Outcome<'entry>;
-        type Error = checkout::Error<E>;
+        type Error = checkout::Error;
 
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
             let item = item?;
@@ -78,7 +71,7 @@ pub struct Outcome<'a> {
 
 #[derive(Clone)]
 pub struct Context<Find: Clone> {
-    pub find: Find,
+    pub objects: Find,
     pub path_cache: Stack,
     pub filters: gix_filter::Pipeline,
     pub buf: Vec<u8>,
@@ -106,16 +99,15 @@ impl From<&checkout::Options> for Options {
     }
 }
 
-pub fn process<'entry, Find, E>(
+pub fn process<'entry, Find>(
     entries_with_paths: impl Iterator<Item = (&'entry mut gix_index::Entry, &'entry BStr)>,
     files: &AtomicUsize,
     bytes: &AtomicUsize,
     delayed_filter_results: &mut Vec<DelayedFilteredStream<'entry>>,
     ctx: &mut Context<Find>,
-) -> Result<Outcome<'entry>, checkout::Error<E>>
+) -> Result<Outcome<'entry>, checkout::Error>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Clone,
-    E: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find + Clone,
 {
     let mut delayed_symlinks = Vec::new();
     let mut collisions = Vec::new();
@@ -162,16 +154,15 @@ where
     })
 }
 
-pub fn process_delayed_filter_results<Find, E>(
+pub fn process_delayed_filter_results<Find>(
     mut delayed_filter_results: Vec<DelayedFilteredStream<'_>>,
     files: &AtomicUsize,
     bytes: &AtomicUsize,
     out: &mut Outcome<'_>,
     ctx: &mut Context<Find>,
-) -> Result<(), checkout::Error<E>>
+) -> Result<(), checkout::Error>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Clone,
-    E: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find + Clone,
 {
     let Options {
         destination_is_initially_empty,
@@ -288,7 +279,7 @@ where
     }
 }
 
-pub fn checkout_entry_handle_result<'entry, Find, E>(
+pub fn checkout_entry_handle_result<'entry, Find>(
     entry: &'entry mut gix_index::Entry,
     entry_path: &'entry BStr,
     errors: &mut Vec<checkout::ErrorRecord>,
@@ -296,22 +287,21 @@ pub fn checkout_entry_handle_result<'entry, Find, E>(
     files: &AtomicUsize,
     bytes: &AtomicUsize,
     Context {
-        find,
+        objects,
         path_cache,
         filters,
         buf,
         options,
     }: &mut Context<Find>,
-) -> Result<entry::Outcome<'entry>, checkout::Error<E>>
+) -> Result<entry::Outcome<'entry>, checkout::Error>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Clone,
-    E: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find + Clone,
 {
     let res = entry::checkout(
         entry,
         entry_path,
         entry::Context {
-            find,
+            objects,
             path_cache,
             filters,
             buf,

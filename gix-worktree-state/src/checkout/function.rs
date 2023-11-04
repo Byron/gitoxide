@@ -1,12 +1,11 @@
 use std::sync::atomic::AtomicBool;
 
 use gix_features::{interrupt, parallel::in_parallel_with_finalize};
-use gix_hash::oid;
 use gix_worktree::{stack, Stack};
 
 use crate::checkout::chunk;
 
-/// Checkout the entire `index` into `dir`, and resolve objects found in index entries with `find` to write their content to their
+/// Checkout the entire `index` into `dir`, and resolve objects found in index entries with `objects` to write their content to their
 /// respective path in `dir`.
 /// Use `files` to count each fully checked out file, and count the amount written `bytes`. If `should_interrupt` is `true`, the
 /// operation will abort.
@@ -17,39 +16,37 @@ use crate::checkout::chunk;
 /// Note that interruption still produce an `Ok(…)` value, so the caller should look at `should_interrupt` to communicate the outcome.
 ///
 #[allow(clippy::too_many_arguments)]
-pub fn checkout<Find, E>(
+pub fn checkout<Find>(
     index: &mut gix_index::State,
     dir: impl Into<std::path::PathBuf>,
-    find: Find,
+    objects: Find,
     files: &dyn gix_features::progress::Count,
     bytes: &dyn gix_features::progress::Count,
     should_interrupt: &AtomicBool,
     options: crate::checkout::Options,
-) -> Result<crate::checkout::Outcome, crate::checkout::Error<E>>
+) -> Result<crate::checkout::Outcome, crate::checkout::Error>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Send + Clone,
-    E: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find + Send + Clone,
 {
     let paths = index.take_path_backing();
-    let res = checkout_inner(index, &paths, dir, find, files, bytes, should_interrupt, options);
+    let res = checkout_inner(index, &paths, dir, objects, files, bytes, should_interrupt, options);
     index.return_path_backing(paths);
     res
 }
 
 #[allow(clippy::too_many_arguments)]
-fn checkout_inner<Find, E>(
+fn checkout_inner<Find>(
     index: &mut gix_index::State,
     paths: &gix_index::PathStorage,
     dir: impl Into<std::path::PathBuf>,
-    find: Find,
+    objects: Find,
     files: &dyn gix_features::progress::Count,
     bytes: &dyn gix_features::progress::Count,
     should_interrupt: &AtomicBool,
     mut options: crate::checkout::Options,
-) -> Result<crate::checkout::Outcome, crate::checkout::Error<E>>
+) -> Result<crate::checkout::Outcome, crate::checkout::Error>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E> + Send + Clone,
-    E: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find + Send + Clone,
 {
     let num_files = files.counter();
     let num_bytes = bytes.counter();
@@ -72,7 +69,7 @@ where
             paths,
         ),
         filters: options.filters,
-        find,
+        objects,
     };
 
     let chunk::Outcome {
@@ -123,7 +120,6 @@ where
             },
             chunk::Reduce {
                 aggregate: Default::default(),
-                marker: Default::default(),
             },
         )?
     };
