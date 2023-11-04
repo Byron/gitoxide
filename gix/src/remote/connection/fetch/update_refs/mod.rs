@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
-use gix_object::{Exists, Find};
+use gix_object::Exists;
 use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target, TargetRef,
@@ -325,11 +325,7 @@ pub(crate) fn update(
                 .packed_refs(
                     match write_packed_refs {
                         fetch::WritePackedRefs::Only => {
-                            gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box::new(|oid, buf| {
-                                repo.objects
-                                    .try_find(&oid, buf)
-                                    .map(|obj| obj.map(|obj| obj.kind))
-                            }))},
+                            gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box::new(&repo.objects))},
                         fetch::WritePackedRefs::Never => gix_ref::file::transaction::PackedRefs::DeletionsOnly
                     }
                 )

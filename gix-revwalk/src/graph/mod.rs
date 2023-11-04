@@ -262,9 +262,8 @@ impl<'find, T> Graph<'find, T> {
 
     /// Lookup `id` and return a handle to it, or fail if it doesn't exist or is no commit.
     pub fn lookup(&mut self, id: &gix_hash::oid) -> Result<LazyCommit<'_>, gix_object::find::existing_iter::Error> {
-        Ok(self
-            .try_lookup(id)?
-            .ok_or(gix_object::find::existing_iter::Error::NotFound { oid: id.to_owned() })?)
+        self.try_lookup(id)?
+            .ok_or(gix_object::find::existing_iter::Error::NotFound { oid: id.to_owned() })
     }
 }
 

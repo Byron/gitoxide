@@ -247,7 +247,7 @@ mod expand {
                                         let objects = CountingObjects::new(db);
                                         gix_diff::tree::Changes::from(Some(parent_tree))
                                             .needed_to_obtain(
-                                                current_tree_iter.clone(),
+                                                current_tree_iter,
                                                 &mut tree_diff_state,
                                                 &objects,
                                                 &mut changes_delegate,

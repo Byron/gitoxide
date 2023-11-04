@@ -61,7 +61,7 @@ mod changes {
             gix_diff::tree::Changes::from(lhs_tree).needed_to_obtain(
                 rhs_tree,
                 gix_diff::tree::State::default(),
-                &db,
+                db,
                 &mut recorder,
             )?;
             Ok(recorder.records)
@@ -104,7 +104,7 @@ mod changes {
             gix_diff::tree::Changes::from(previous_tree).needed_to_obtain(
                 current_tree,
                 &mut gix_diff::tree::State::default(),
-                &db,
+                db,
                 &mut recorder,
             )?;
             Ok(recorder.records)

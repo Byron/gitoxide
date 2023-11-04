@@ -68,8 +68,8 @@ impl<'repo> Reference<'repo> {
     ///
     /// This is useful to learn where this reference is ultimately pointing to.
     pub fn peel_to_id_in_place(&mut self) -> Result<Id<'repo>, peel::Error> {
-        let oid = self.inner.peel_to_id_in_place(&&self.repo.refs, &self.repo.objects)?;
-        Ok(Id::from_id(oid, &self.repo))
+        let oid = self.inner.peel_to_id_in_place(&self.repo.refs, &self.repo.objects)?;
+        Ok(Id::from_id(oid, self.repo))
     }
 
     /// Similar to [`peel_to_id_in_place()`][Reference::peel_to_id_in_place()], but consumes this instance.

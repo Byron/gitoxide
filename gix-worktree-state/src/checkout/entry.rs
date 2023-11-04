@@ -86,7 +86,7 @@ where
 
     let object_size = match entry.mode {
         gix_index::entry::Mode::FILE | gix_index::entry::Mode::FILE_EXECUTABLE => {
-            let obj = (&*objects)
+            let obj = (*objects)
                 .find_blob(&entry.id, buf)
                 .map_err(|err| crate::checkout::Error::Find {
                     err,
@@ -140,7 +140,7 @@ where
             num_bytes
         }
         gix_index::entry::Mode::SYMLINK => {
-            let obj = (&*objects)
+            let obj = (*objects)
                 .find_blob(&entry.id, buf)
                 .map_err(|err| crate::checkout::Error::Find {
                     err,
