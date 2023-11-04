@@ -6,6 +6,7 @@ use bstr::BStr;
 use filetime::FileTime;
 use gix_features::parallel::{in_parallel_if, Reduce};
 use gix_filter::pipeline::convert::ToGitOutcome;
+use gix_object::FindExt;
 
 use crate::index_as_worktree::traits::read_data::Stream;
 use crate::index_as_worktree::{Conflict, EntryStatus};
@@ -31,6 +32,7 @@ use crate::{
 /// `should_interrupt` can be used to stop all processing.
 /// `filter` is used to convert worktree files back to their internal git representation. For this to be correct,
 /// [`Options::attributes`] must be configured as well.
+/// `objects` is used to access the version of an object in the object database for direct comparison.
 ///
 /// **It's important to note that the `index` should have its [timestamp updated](gix_index::State::set_timestamp()) with a timestamp
 /// from just before making this call *if* [entries were updated](Outcome::entries_to_update)**
@@ -45,13 +47,13 @@ use crate::{
 /// Thus some care has to be taken to do the right thing when letting the index match the worktree by evaluating the changes observed
 /// by the `collector`.
 #[allow(clippy::too_many_arguments)]
-pub fn index_as_worktree<'index, T, U, Find, E1, E2>(
+pub fn index_as_worktree<'index, T, U, Find, E>(
     index: &'index gix_index::State,
     worktree: &Path,
     collector: &mut impl VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>,
     compare: impl CompareBlobs<Output = T> + Send + Clone,
-    submodule: impl SubmoduleStatus<Output = U, Error = E2> + Send + Clone,
-    find: Find,
+    submodule: impl SubmoduleStatus<Output = U, Error = E> + Send + Clone,
+    objects: Find,
     progress: &mut dyn gix_features::progress::Progress,
     pathspec: impl Pathspec + Send + Clone,
     filter: gix_filter::Pipeline,
@@ -61,9 +63,8 @@ pub fn index_as_worktree<'index, T, U, Find, E1, E2>(
 where
     T: Send,
     U: Send,
-    E1: std::error::Error + Send + Sync + 'static,
-    E2: std::error::Error + Send + Sync + 'static,
-    Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E1> + Send + Clone,
+    E: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find + Send + Clone,
 {
     // the order is absolutely critical here we use the old timestamp to detect racy index entries
     // (modified at or after the last index update) during the index update we then set those
@@ -135,7 +136,7 @@ where
                 },
                 compare,
                 submodule,
-                find,
+                objects,
                 pathspec,
             )
         }
@@ -151,7 +152,7 @@ where
         ),
         thread_limit,
         new_state,
-        |(entry_offset, chunk_entries), (state, blobdiff, submdule, find, pathspec)| {
+        |(entry_offset, chunk_entries), (state, blobdiff, submdule, objects, pathspec)| {
             let all_entries = index.entries();
             let mut out = Vec::new();
             let mut idx = 0;
@@ -181,7 +182,7 @@ where
                     pathspec,
                     blobdiff,
                     submdule,
-                    find,
+                    objects,
                     &mut idx,
                 );
                 idx += 1;
@@ -244,21 +245,20 @@ type StatusResult<'index, T, U> = Result<(&'index gix_index::Entry, usize, &'ind
 
 impl<'index> State<'_, 'index> {
     #[allow(clippy::too_many_arguments)]
-    fn process<T, U, Find, E1, E2>(
+    fn process<T, U, Find, E>(
         &mut self,
         entries: &'index [gix_index::Entry],
         entry: &'index gix_index::Entry,
         entry_index: usize,
         pathspec: &mut impl Pathspec,
         diff: &mut impl CompareBlobs<Output = T>,
-        submodule: &mut impl SubmoduleStatus<Output = U, Error = E2>,
-        find: &mut Find,
+        submodule: &mut impl SubmoduleStatus<Output = U, Error = E>,
+        objects: &Find,
         outer_entry_index: &mut usize,
     ) -> Option<StatusResult<'index, T, U>>
     where
-        E1: std::error::Error + Send + Sync + 'static,
-        E2: std::error::Error + Send + Sync + 'static,
-        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E1>,
+        E: std::error::Error + Send + Sync + 'static,
+        Find: gix_object::Find,
     {
         if entry.flags.intersects(
             gix_index::entry::Flags::UPTODATE
@@ -282,7 +282,7 @@ impl<'index> State<'_, 'index> {
                 }),
             )
         } else {
-            self.compute_status(entry, path, diff, submodule, find)
+            self.compute_status(entry, path, diff, submodule, objects)
         };
         match status {
             Ok(None) => None,
@@ -330,18 +330,17 @@ impl<'index> State<'_, 'index> {
     /// which is a constant.
     ///
     /// Adapted from [here](https://github.com/Byron/gitoxide/pull/805#discussion_r1164676777).
-    fn compute_status<T, U, Find, E1, E2>(
+    fn compute_status<T, U, Find, E>(
         &mut self,
         entry: &gix_index::Entry,
         rela_path: &BStr,
         diff: &mut impl CompareBlobs<Output = T>,
-        submodule: &mut impl SubmoduleStatus<Output = U, Error = E2>,
-        find: &mut Find,
+        submodule: &mut impl SubmoduleStatus<Output = U, Error = E>,
+        objects: &Find,
     ) -> Result<Option<EntryStatus<T, U>>, Error>
     where
-        E1: std::error::Error + Send + Sync + 'static,
-        E2: std::error::Error + Send + Sync + 'static,
-        Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E1>,
+        E: std::error::Error + Send + Sync + 'static,
+        Find: gix_object::Find,
     {
         let worktree_path = match self.path_stack.verified_path(gix_path::from_bstr(rela_path).as_ref()) {
             Ok(path) => path,
@@ -423,7 +422,7 @@ impl<'index> State<'_, 'index> {
             attr_stack: &mut self.attr_stack,
             options: self.options,
             id: &entry.id,
-            find,
+            objects,
             worktree_reads: self.worktree_reads,
             worktree_bytes: self.worktree_bytes,
             odb_reads: self.odb_reads,
@@ -478,10 +477,9 @@ impl<'index, T, U, C: VisitEntry<'index, ContentChange = T, SubmoduleStatus = U>
     }
 }
 
-struct ReadDataImpl<'a, Find, E>
+struct ReadDataImpl<'a, Find>
 where
-    E: std::error::Error + Send + Sync + 'static,
-    Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
+    Find: gix_object::Find,
 {
     buf: &'a mut Vec<u8>,
     path: &'a Path,
@@ -492,29 +490,26 @@ where
     attr_stack: &'a mut gix_worktree::Stack,
     options: &'a Options,
     id: &'a gix_hash::oid,
-    find: Find,
+    objects: Find,
     worktree_bytes: &'a AtomicU64,
     worktree_reads: &'a AtomicUsize,
     odb_bytes: &'a AtomicU64,
     odb_reads: &'a AtomicUsize,
 }
 
-impl<'a, Find, E> traits::ReadData<'a> for ReadDataImpl<'a, Find, E>
+impl<'a, Find> traits::ReadData<'a> for ReadDataImpl<'a, Find>
 where
-    E: std::error::Error + Send + Sync + 'static,
-    Find: for<'b> FnMut(&gix_hash::oid, &'b mut Vec<u8>) -> Result<gix_object::BlobRef<'b>, E>,
+    Find: gix_object::Find,
 {
-    fn read_blob(mut self) -> Result<&'a [u8], Error> {
-        (self.find)(self.id, self.buf)
-            .map(|b| {
-                self.odb_reads.fetch_add(1, Ordering::Relaxed);
-                self.odb_bytes.fetch_add(b.data.len() as u64, Ordering::Relaxed);
-                b.data
-            })
-            .map_err(move |err| Error::Find(Box::new(err)))
+    fn read_blob(self) -> Result<&'a [u8], Error> {
+        Ok(self.objects.find_blob(self.id, self.buf).map(|b| {
+            self.odb_reads.fetch_add(1, Ordering::Relaxed);
+            self.odb_bytes.fetch_add(b.data.len() as u64, Ordering::Relaxed);
+            b.data
+        })?)
     }
 
-    fn stream_worktree_file(mut self) -> Result<Stream<'a>, Error> {
+    fn stream_worktree_file(self) -> Result<Stream<'a>, Error> {
         self.buf.clear();
         // symlinks are only stored as actual symlinks if the FS supports it otherwise they are just
         // normal files with their content equal to the linked path (so can be read normally)
@@ -534,7 +529,7 @@ where
             }
         } else {
             self.buf.clear();
-            let platform = self.attr_stack.at_entry(self.rela_path, Some(false), &mut self.find)?;
+            let platform = self.attr_stack.at_entry(self.rela_path, Some(false), &self.objects)?;
             let file = std::fs::File::open(self.path)?;
             let out = self
                 .filter
@@ -544,11 +539,7 @@ where
                     &mut |_path, attrs| {
                         platform.matching_attributes(attrs);
                     },
-                    &mut |buf| {
-                        (self.find)(self.id, buf)
-                            .map(|_| Some(()))
-                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
-                    },
+                    &mut |buf| Ok(self.objects.find_blob(self.id, buf).map(|_| Some(()))?),
                 )
                 .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
             let len = match out {
