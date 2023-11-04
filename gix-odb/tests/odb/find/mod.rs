@@ -6,7 +6,7 @@ fn db() -> gix_odb::Handle {
 
 use crate::hex_to_id;
 
-fn can_find(db: impl gix_odb::Find, hex_id: &str) {
+fn can_find(db: impl gix_object::Find, hex_id: &str) {
     let mut buf = vec![];
     assert!(db
         .try_find(&hex_to_id(hex_id), &mut buf)

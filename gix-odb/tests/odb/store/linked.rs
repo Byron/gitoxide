@@ -55,7 +55,7 @@ mod locate {
 
 mod init {
     use gix_hash::ObjectId;
-    use gix_odb::Find;
+    use gix_object::Exists;
 
     use crate::odb::{alternate::alternate, db};
 
@@ -64,7 +64,7 @@ mod init {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let (object_path, _linked_object_path) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
         let db = gix_odb::at(object_path.clone())?;
-        db.contains(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
+        db.exists(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
 
         assert_eq!(db.store_ref().metrics().loose_dbs, 2);
         assert_eq!(db.iter()?.count(), 0, "the test locations are actually empty");
@@ -76,7 +76,7 @@ mod init {
     fn a_db_without_alternates() -> crate::Result {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let db = gix_odb::at(tmp.path())?;
-        db.contains(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
+        db.exists(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
         assert_eq!(db.store_ref().metrics().loose_dbs, 1);
         assert_eq!(db.store_ref().path(), tmp.path());
         Ok(())
@@ -85,7 +85,7 @@ mod init {
     #[test]
     fn has_packs() {
         let db = db();
-        db.contains(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
+        db.exists(&ObjectId::null(gix_hash::Kind::Sha1)); // trigger load
         assert_eq!(db.store_ref().metrics().known_packs, 3);
     }
 }
