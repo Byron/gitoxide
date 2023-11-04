@@ -30,8 +30,11 @@ mod blob;
 ///
 pub mod data;
 
+///
+pub mod find;
+
 mod traits;
-pub use traits::WriteTo;
+pub use traits::{Exists, Find, FindExt, WriteTo};
 
 pub mod encode;
 pub(crate) mod parse;
