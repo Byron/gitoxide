@@ -27,7 +27,7 @@
 /// everything related to commit traversal in our own hashmap.
 pub struct Graph<'find, T> {
     /// A way to resolve a commit from the object database.
-    find: Box<graph::FindFn<'find>>,
+    find: Box<dyn gix_object::Find + 'find>,
     /// A way to speedup commit access, essentially a multi-file commit database.
     cache: Option<gix_commitgraph::Graph>,
     /// The set of cached commits that we have seen once, along with data associated with them.
