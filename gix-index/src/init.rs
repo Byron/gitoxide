@@ -41,7 +41,7 @@ mod from_tree {
         {
             let _span = gix_features::trace::coarse!("gix_index::State::from_tree()");
             let mut buf = Vec::new();
-            let root = find(tree, &mut buf).ok_or(breadthfirst::Error::NotFound { oid: tree.into() })?;
+            let root = find(tree, &mut buf).ok_or(breadthfirst::Error::Find { oid: tree.into() })?;
 
             let mut delegate = CollectEntries::new();
             breadthfirst(root, breadthfirst::State::default(), &mut find, &mut delegate)?;

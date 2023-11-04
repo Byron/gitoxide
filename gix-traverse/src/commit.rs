@@ -1,8 +1,9 @@
+use gix_object::FindExt;
 use smallvec::SmallVec;
 
 /// An iterator over the ancestors one or more starting commits
 pub struct Ancestors<Find, Predicate, StateMut> {
-    find: Find,
+    objects: Find,
     cache: Option<gix_commitgraph::Graph>,
     predicate: Predicate,
     state: StateMut,
@@ -95,7 +96,7 @@ pub mod ancestors {
     use gix_date::SecondsSinceUnixEpoch;
     use gix_hash::{oid, ObjectId};
     use gix_hashtable::HashSet;
-    use gix_object::CommitRefIter;
+    use gix_object::{CommitRefIter, FindExt};
     use smallvec::SmallVec;
 
     use crate::commit::{collect_parents, Ancestors, Either, Info, ParentIds, Parents, Sorting};
@@ -104,11 +105,8 @@ pub mod ancestors {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
-        #[error("The commit {oid} could not be found")]
-        FindExisting {
-            oid: ObjectId,
-            source: Box<dyn std::error::Error + Send + Sync + 'static>,
-        },
+        #[error(transparent)]
+        Find(#[from] gix_object::find::existing_iter::Error),
         #[error(transparent)]
         ObjectDecode(#[from] gix_object::decode::Error),
     }
@@ -147,11 +145,10 @@ pub mod ancestors {
     }
 
     /// Builder
-    impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
+        Find: gix_object::Find,
         StateMut: BorrowMut<State>,
-        E: std::error::Error + Send + Sync + 'static,
     {
         /// Set the sorting method, either topological or by author date
         pub fn sorting(mut self, sorting: Sorting) -> Result<Self, Error> {
@@ -164,11 +161,7 @@ pub mod ancestors {
                     let cutoff_time = self.sorting.cutoff_time();
                     let state = self.state.borrow_mut();
                     for commit_id in state.next.drain(..) {
-                        let commit_iter =
-                            (self.find)(&commit_id, &mut state.buf).map_err(|err| Error::FindExisting {
-                                oid: commit_id,
-                                source: err.into(),
-                            })?;
+                        let commit_iter = self.objects.find_commit_iter(&commit_id, &mut state.buf)?;
                         let time = commit_iter.committer()?.time.seconds;
                         match cutoff_time {
                             Some(cutoff_time) if time >= cutoff_time => {
@@ -214,11 +207,10 @@ pub mod ancestors {
     }
 
     /// Initialization
-    impl<Find, StateMut, E> Ancestors<Find, fn(&oid) -> bool, StateMut>
+    impl<Find, StateMut> Ancestors<Find, fn(&oid) -> bool, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
+        Find: gix_object::Find,
         StateMut: BorrowMut<State>,
-        E: std::error::Error + Send + Sync + 'static,
     {
         /// Create a new instance.
         ///
@@ -236,12 +228,11 @@ pub mod ancestors {
     }
 
     /// Initialization
-    impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
+        Find: gix_object::Find,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
-        E: std::error::Error + Send + Sync + 'static,
     {
         /// Create a new instance with commit filtering enabled.
         ///
@@ -274,7 +265,7 @@ pub mod ancestors {
                 }
             }
             Self {
-                find,
+                objects: find,
                 cache: None,
                 predicate,
                 state,
@@ -299,12 +290,11 @@ pub mod ancestors {
         }
     }
 
-    impl<Find, Predicate, StateMut, E> Iterator for Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut> Iterator for Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
+        Find: gix_object::Find,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
-        E: std::error::Error + Send + Sync + 'static,
     {
         type Item = Result<Info, Error>;
 
@@ -334,12 +324,11 @@ pub mod ancestors {
     }
 
     /// Utilities
-    impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
+        Find: gix_object::Find,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
-        E: std::error::Error + Send + Sync + 'static,
     {
         fn next_by_commit_date(
             &mut self,
@@ -349,7 +338,7 @@ pub mod ancestors {
 
             let (commit_time, oid) = state.queue.pop()?;
             let mut parents: ParentIds = Default::default();
-            match super::find(self.cache.as_ref(), &mut self.find, &oid, &mut state.buf) {
+            match super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
                 Ok(Either::CachedCommit(commit)) => {
                     if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
                         // drop corrupt caches and try again with ODB
@@ -380,7 +369,7 @@ pub mod ancestors {
                                     continue;
                                 }
 
-                                let parent = (self.find)(id.as_ref(), &mut state.parents_buf).ok();
+                                let parent = self.objects.find_commit_iter(id.as_ref(), &mut state.parents_buf).ok();
                                 let parent_commit_time = parent
                                     .and_then(|parent| parent.committer().ok().map(|committer| committer.time.seconds))
                                     .unwrap_or_default();
@@ -395,12 +384,7 @@ pub mod ancestors {
                         }
                     }
                 }
-                Err(err) => {
-                    return Some(Err(Error::FindExisting {
-                        oid,
-                        source: err.into(),
-                    }))
-                }
+                Err(err) => return Some(Err(err.into())),
             }
             Some(Ok(Info {
                 id: oid,
@@ -411,18 +395,17 @@ pub mod ancestors {
     }
 
     /// Utilities
-    impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
+        Find: gix_object::Find,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
-        E: std::error::Error + Send + Sync + 'static,
     {
         fn next_by_topology(&mut self) -> Option<Result<Info, Error>> {
             let state = self.state.borrow_mut();
             let oid = state.next.pop_front()?;
             let mut parents: ParentIds = Default::default();
-            match super::find(self.cache.as_ref(), &mut self.find, &oid, &mut state.buf) {
+            match super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
                 Ok(Either::CachedCommit(commit)) => {
                     if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
                         // drop corrupt caches and try again with ODB
@@ -460,12 +443,7 @@ pub mod ancestors {
                         }
                     }
                 }
-                Err(err) => {
-                    return Some(Err(Error::FindExisting {
-                        oid,
-                        source: err.into(),
-                    }))
-                }
+                Err(err) => return Some(Err(err.into())),
             }
             Some(Ok(Info {
                 id: oid,
@@ -503,18 +481,17 @@ fn collect_parents(
     true
 }
 
-fn find<'cache, 'buf, Find, E>(
+fn find<'cache, 'buf, Find>(
     cache: Option<&'cache gix_commitgraph::Graph>,
-    mut find: Find,
+    objects: Find,
     id: &gix_hash::oid,
     buf: &'buf mut Vec<u8>,
-) -> Result<Either<'buf, 'cache>, E>
+) -> Result<Either<'buf, 'cache>, gix_object::find::existing_iter::Error>
 where
-    Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::CommitRefIter<'a>, E>,
-    E: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find,
 {
     match cache.and_then(|cache| cache.commit_by_id(id).map(Either::CachedCommit)) {
         Some(c) => Ok(c),
-        None => find(id, buf).map(Either::CommitRefIter),
+        None => objects.find_commit_iter(id, buf).map(Either::CommitRefIter),
     }
 }

@@ -24,7 +24,7 @@ fn breadth_first_full_path() -> crate::Result<()> {
         db.find_tree_iter(&commit.tree_id().expect("a tree is available in a commit"), &mut buf2)?
             .0,
         tree::breadthfirst::State::default(),
-        |oid, buf| db.find_tree_iter(oid, buf).ok().map(|t| t.0),
+        &db,
         &mut recorder,
     )?;
 
@@ -111,7 +111,7 @@ fn breadth_first_filename_only() -> crate::Result<()> {
         db.find_tree_iter(&commit.tree_id().expect("a tree is available in a commit"), &mut buf2)?
             .0,
         tree::breadthfirst::State::default(),
-        |oid, buf| db.find_tree_iter(oid, buf).ok().map(|t| t.0),
+        &db,
         &mut recorder,
     )?;
 
@@ -138,7 +138,7 @@ fn breadth_first_no_location() -> crate::Result<()> {
         db.find_tree_iter(&commit.tree_id().expect("a tree is available in a commit"), &mut buf2)?
             .0,
         tree::breadthfirst::State::default(),
-        |oid, buf| db.find_tree_iter(oid, buf).ok().map(|t| t.0),
+        &db,
         &mut recorder,
     )?;
 
