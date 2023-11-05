@@ -21,10 +21,6 @@ pub use types::{Options, Outcome};
 
 use crate::bundle::write::types::SharedTempFile;
 
-type ThinPackLookupFn = Box<dyn for<'a> FnMut(gix_hash::ObjectId, &'a mut Vec<u8>) -> Option<gix_object::Data<'a>>>;
-type ThinPackLookupFnSend =
-    Box<dyn for<'a> FnMut(gix_hash::ObjectId, &'a mut Vec<u8>) -> Option<gix_object::Data<'a>> + Send + 'static>;
-
 /// The progress ids used in [`write_to_directory()`][crate::Bundle::write_to_directory()].
 ///
 /// Use this information to selectively extract the progress of interest in case the parent application has custom visualization.
@@ -54,7 +50,7 @@ impl crate::Bundle {
     ///
     /// * `progress` provides detailed progress information which can be discarded with [`gix_features::progress::Discard`].
     /// * `should_interrupt` is checked regularly and when true, the whole operation will stop.
-    /// * `thin_pack_base_object_lookup_fn` If set, we expect to see a thin-pack with objects that reference their base object by object id which is
+    /// * `thin_pack_base_object_lookup` If set, we expect to see a thin-pack with objects that reference their base object by object id which is
     /// expected to exist in the object database the bundle is contained within.
     /// `options` further configure how the task is performed.
     ///
@@ -68,7 +64,7 @@ impl crate::Bundle {
         directory: Option<&Path>,
         progress: &mut dyn DynNestedProgress,
         should_interrupt: &AtomicBool,
-        thin_pack_base_object_lookup_fn: Option<ThinPackLookupFn>,
+        thin_pack_base_object_lookup: Option<impl gix_object::Find>,
         options: Options,
     ) -> Result<Outcome, Error> {
         let _span = gix_features::trace::coarse!("gix_pack::Bundle::write_to_directory()");
@@ -90,8 +86,8 @@ impl crate::Bundle {
         let (pack_entries_iter, pack_version): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>>>,
             _,
-        ) = match thin_pack_base_object_lookup_fn {
-            Some(thin_pack_lookup_fn) => {
+        ) = match thin_pack_base_object_lookup {
+            Some(thin_pack_lookup) => {
                 let pack = interrupt::Read {
                     inner: pack,
                     should_interrupt,
@@ -104,7 +100,7 @@ impl crate::Bundle {
                         data::input::EntryDataMode::KeepAndCrc32,
                         object_hash,
                     )?,
-                    thin_pack_lookup_fn,
+                    thin_pack_lookup,
                 );
                 let pack_version = pack_entries_iter.inner.version();
                 let pack_entries_iter = data::input::EntriesToBytesIter::new(
@@ -178,7 +174,7 @@ impl crate::Bundle {
         directory: Option<impl AsRef<Path>>,
         progress: &mut dyn DynNestedProgress,
         should_interrupt: &'static AtomicBool,
-        thin_pack_base_object_lookup_fn: Option<ThinPackLookupFnSend>,
+        thin_pack_base_object_lookup: Option<impl gix_object::Find + Send + 'static>,
         options: Options,
     ) -> Result<Outcome, Error> {
         let _span = gix_features::trace::coarse!("gix_pack::Bundle::write_to_directory_eagerly()");
@@ -198,8 +194,8 @@ impl crate::Bundle {
         let (pack_entries_iter, pack_version): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>> + Send + 'static>,
             _,
-        ) = match thin_pack_base_object_lookup_fn {
-            Some(thin_pack_lookup_fn) => {
+        ) = match thin_pack_base_object_lookup {
+            Some(thin_pack_lookup) => {
                 let pack = interrupt::Read {
                     inner: pack,
                     should_interrupt,
@@ -212,7 +208,7 @@ impl crate::Bundle {
                         data::input::EntryDataMode::KeepAndCrc32,
                         object_hash,
                     )?,
-                    thin_pack_lookup_fn,
+                    thin_pack_lookup,
                 );
                 let pack_kind = pack_entries_iter.inner.version();
                 (Box::new(pack_entries_iter), pack_kind)

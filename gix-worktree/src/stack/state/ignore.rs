@@ -2,8 +2,8 @@ use std::path::Path;
 
 use bstr::{BStr, ByteSlice};
 use gix_glob::pattern::Case;
+use gix_object::FindExt;
 
-use crate::stack::delegate::FindFn;
 use crate::{
     stack::state::{Ignore, IgnoreMatchGroup},
     PathIdMapping,
@@ -164,7 +164,7 @@ impl Ignore {
         rela_dir: &BStr,
         buf: &mut Vec<u8>,
         id_mappings: &[PathIdMapping],
-        find: &mut FindFn<'_>,
+        objects: &dyn gix_object::Find,
         case: Case,
         stats: &mut Statistics,
     ) -> std::io::Result<()> {
@@ -177,7 +177,8 @@ impl Ignore {
             Source::IdMapping => {
                 match ignore_file_in_index {
                     Ok(idx) => {
-                        let ignore_blob = find(&id_mappings[idx].1, buf)
+                        let ignore_blob = objects
+                            .find_blob(&id_mappings[idx].1, buf)
                             .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                         let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
                         self.stack
@@ -204,7 +205,8 @@ impl Ignore {
                 if !added {
                     match ignore_file_in_index {
                         Ok(idx) => {
-                            let ignore_blob = find(&id_mappings[idx].1, buf)
+                            let ignore_blob = objects
+                                .find_blob(&id_mappings[idx].1, buf)
                                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                             let ignore_path = gix_path::from_bstring(ignore_path_relative.into_owned());
                             self.stack

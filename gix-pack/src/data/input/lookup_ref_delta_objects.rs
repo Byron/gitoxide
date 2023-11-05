@@ -5,10 +5,10 @@ use gix_hash::ObjectId;
 use crate::data::{entry::Header, input};
 
 /// An iterator to resolve thin packs on the fly.
-pub struct LookupRefDeltaObjectsIter<I, LFn> {
+pub struct LookupRefDeltaObjectsIter<I, Find> {
     /// The inner iterator whose entries we will resolve.
     pub inner: I,
-    lookup: LFn,
+    lookup: Find,
     /// The cached delta to provide next time we are called, it's the delta to go with the base we just resolved in its place.
     next_delta: Option<input::Entry>,
     /// Fuse to stop iteration after first missing object.
@@ -21,14 +21,14 @@ pub struct LookupRefDeltaObjectsIter<I, LFn> {
     buf: Vec<u8>,
 }
 
-impl<I, LFn> LookupRefDeltaObjectsIter<I, LFn>
+impl<I, Find> LookupRefDeltaObjectsIter<I, Find>
 where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
-    LFn: for<'a> FnMut(ObjectId, &'a mut Vec<u8>) -> Option<gix_object::Data<'a>>,
+    Find: gix_object::Find,
 {
     /// Create a new instance wrapping `iter` and using `lookup` as function to retrieve objects that will serve as bases
     /// for ref deltas seen while traversing `iter`.
-    pub fn new(iter: I, lookup: LFn) -> Self {
+    pub fn new(iter: I, lookup: Find) -> Self {
         LookupRefDeltaObjectsIter {
             inner: iter,
             lookup,
@@ -75,10 +75,10 @@ where
     }
 }
 
-impl<I, LFn> Iterator for LookupRefDeltaObjectsIter<I, LFn>
+impl<I, Find> Iterator for LookupRefDeltaObjectsIter<I, Find>
 where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
-    LFn: for<'a> FnMut(ObjectId, &'a mut Vec<u8>) -> Option<gix_object::Data<'a>>,
+    Find: gix_object::Find,
 {
     type Item = Result<input::Entry, input::Error>;
 
@@ -94,7 +94,7 @@ where
                 Header::RefDelta { base_id } => {
                     match self.inserted_entry_length_at_offset.iter().rfind(|e| e.oid == base_id) {
                         None => {
-                            let base_entry = match (self.lookup)(base_id, &mut self.buf) {
+                            let base_entry = match self.lookup.try_find(&base_id, &mut self.buf).ok()? {
                                 Some(obj) => {
                                     let current_pack_offset = entry.pack_offset;
                                     let mut entry = match input::Entry::from_data_obj(&obj, 0) {

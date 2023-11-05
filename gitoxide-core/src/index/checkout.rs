@@ -4,7 +4,8 @@ use std::{
 };
 
 use anyhow::bail;
-use gix::{odb::FindExt, worktree::state::checkout, NestedProgress, Progress};
+use gix::objs::find::Error;
+use gix::{worktree::state::checkout, NestedProgress, Progress};
 
 use crate::{
     index,
@@ -89,20 +90,9 @@ pub fn checkout_exclusive(
         Some(repo) => gix::worktree::state::checkout(
             &mut index,
             dest_directory,
-            {
-                let objects = repo.objects.into_arc()?;
-                move |oid, buf| {
-                    objects.find_blob(oid, buf).ok();
-                    if empty_files {
-                        // We always want to query the ODB here…
-                        objects.find_blob(oid, buf)?;
-                        buf.clear();
-                        // …but write nothing
-                        Ok(gix::objs::BlobRef { data: buf })
-                    } else {
-                        objects.find_blob(oid, buf)
-                    }
-                }
+            EmptyOrDb {
+                empty_files,
+                db: repo.objects.into_arc()?,
             },
             &files,
             &bytes,
@@ -112,10 +102,7 @@ pub fn checkout_exclusive(
         None => gix::worktree::state::checkout(
             &mut index,
             dest_directory,
-            |_, buf| {
-                buf.clear();
-                Ok(gix::objs::BlobRef { data: buf })
-            },
+            Empty,
             &files,
             &bytes,
             should_interrupt,
@@ -183,4 +170,42 @@ pub fn checkout_exclusive(
         );
     }
     Ok(())
+}
+
+#[derive(Clone)]
+struct EmptyOrDb<Find> {
+    empty_files: bool,
+    db: Find,
+}
+
+impl<Find> gix::objs::Find for EmptyOrDb<Find>
+where
+    Find: gix::objs::Find,
+{
+    fn try_find<'a>(&self, id: &gix::oid, buf: &'a mut Vec<u8>) -> Result<Option<gix::objs::Data<'a>>, Error> {
+        if self.empty_files {
+            // We always want to query the ODB here…
+            let Some(kind) = self.db.try_find(id, buf)?.map(|d| d.kind) else {
+                return Ok(None);
+            };
+            buf.clear();
+            // …but write nothing
+            Ok(Some(gix::objs::Data { kind, data: buf }))
+        } else {
+            self.db.try_find(id, buf)
+        }
+    }
+}
+
+#[derive(Clone)]
+struct Empty;
+
+impl gix::objs::Find for Empty {
+    fn try_find<'a>(&self, _id: &gix::oid, buffer: &'a mut Vec<u8>) -> Result<Option<gix::objs::Data<'a>>, Error> {
+        buffer.clear();
+        Ok(Some(gix::objs::Data {
+            kind: gix::object::Kind::Blob,
+            data: buffer,
+        }))
+    }
 }

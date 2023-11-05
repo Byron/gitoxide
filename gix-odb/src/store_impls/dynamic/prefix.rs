@@ -1,9 +1,7 @@
 use std::{collections::HashSet, ops::Deref};
 
-use crate::{
-    store::{load_index, Handle},
-    Find,
-};
+use crate::store::{load_index, Handle};
+use gix_object::Exists;
 
 ///
 pub mod lookup {
@@ -107,7 +105,7 @@ where
     ) -> Result<Option<gix_hash::Prefix>, disambiguate::Error> {
         let max_hex_len = candidate.id().kind().len_in_hex();
         if candidate.hex_len() == max_hex_len {
-            return Ok(self.contains(candidate.id()).then(|| candidate.to_prefix()));
+            return Ok(self.exists(candidate.id()).then(|| candidate.to_prefix()));
         }
 
         while candidate.hex_len() != max_hex_len {

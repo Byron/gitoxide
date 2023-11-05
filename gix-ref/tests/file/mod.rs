@@ -31,6 +31,20 @@ fn store_writable(name: &str) -> crate::Result<(gix_testtools::tempfile::TempDir
     ))
 }
 
+struct EmptyCommit;
+impl gix_object::Find for EmptyCommit {
+    fn try_find<'a>(
+        &self,
+        _id: &gix_hash::oid,
+        _buffer: &'a mut Vec<u8>,
+    ) -> Result<Option<gix_object::Data<'a>>, gix_object::find::Error> {
+        Ok(Some(gix_object::Data {
+            kind: gix_object::Kind::Commit,
+            data: &[],
+        }))
+    }
+}
+
 mod log;
 mod reference;
 mod store;

@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
 use gix_negotiate::Algorithm;
+use gix_object::FindExt;
 use gix_object::{bstr, bstr::ByteSlice};
-use gix_odb::{Find, FindExt};
 use gix_ref::{file::ReferenceExt, store::WriteReflog};
 
 #[test]
@@ -35,10 +35,7 @@ fn run() -> crate::Result {
                     .iter()
                     .filter_map(|name| {
                         refs.try_find(*name).expect("one tag per commit").map(|mut r| {
-                            r.peel_to_id_in_place(&refs, &mut |id, buf| {
-                                store.try_find(&id, buf).map(|d| d.map(|d| (d.kind, d.data)))
-                            })
-                            .expect("works");
+                            r.peel_to_id_in_place(&refs, &store).expect("works");
                             r.target.into_id()
                         })
                     })
@@ -59,14 +56,7 @@ fn run() -> crate::Result {
                 let cache = use_cache
                     .then(|| gix_commitgraph::at(store.store_ref().path().join("info")).ok())
                     .flatten();
-                let mut graph = gix_revwalk::Graph::new(
-                    |id, buf| {
-                        store
-                            .try_find(id, buf)
-                            .map(|r| r.and_then(gix_object::Data::try_into_commit_iter))
-                    },
-                    cache,
-                );
+                let mut graph = gix_revwalk::Graph::new(&store, cache);
                 let mut negotiator = algo.into_negotiator();
                 if debug {
                     eprintln!("ALGO {algo_name} CASE {case}");

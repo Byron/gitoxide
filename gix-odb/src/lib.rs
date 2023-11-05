@@ -74,7 +74,7 @@ pub mod find;
 /// An object database equivalent to `/dev/null`, dropping all objects stored into it.
 mod traits;
 
-pub use traits::{Find, FindExt, Header, HeaderExt, Write};
+pub use traits::{Header, HeaderExt, Write};
 
 ///
 pub mod write {

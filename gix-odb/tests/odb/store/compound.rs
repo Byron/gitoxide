@@ -3,7 +3,7 @@
 //! tests o the general store itself, so they can possibly be removed at some point.
 
 mod locate {
-    use gix_odb::Find;
+    use gix_object::Find;
 
     use crate::{hex_to_id, odb::db};
 

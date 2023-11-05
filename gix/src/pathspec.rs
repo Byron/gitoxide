@@ -1,6 +1,5 @@
 //! Pathspec plumbing and abstractions
 use gix_macros::momo;
-use gix_odb::FindExt;
 pub use gix_pathspec::*;
 
 use crate::{bstr::BStr, AttributeStack, Pathspec, PathspecDetached, Repository};
@@ -122,9 +121,7 @@ impl<'repo> Pathspec<'repo> {
                 let stack = self.stack.as_mut().expect("initialized in advance");
                 stack
                     .set_case(case)
-                    .at_entry(relative_path, Some(is_dir), |id, buf| {
-                        self.repo.objects.find_blob(id, buf)
-                    })
+                    .at_entry(relative_path, Some(is_dir), &self.repo.objects)
                     .map_or(false, |platform| platform.matching_attributes(out))
             },
         )
@@ -180,7 +177,7 @@ impl PathspecDetached {
                 let stack = self.stack.as_mut().expect("initialized in advance");
                 stack
                     .set_case(case)
-                    .at_entry(relative_path, Some(is_dir), |id, buf| self.odb.find_blob(id, buf))
+                    .at_entry(relative_path, Some(is_dir), &self.odb)
                     .map_or(false, |platform| platform.matching_attributes(out))
             },
         )

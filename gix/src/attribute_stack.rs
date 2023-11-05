@@ -1,7 +1,6 @@
 use crate::bstr::BStr;
 use crate::types::AttributeStack;
 use crate::Repository;
-use gix_odb::FindExt;
 use std::ops::{Deref, DerefMut};
 
 /// Lifecycle
@@ -46,8 +45,7 @@ impl<'repo> AttributeStack<'repo> {
         relative: impl AsRef<std::path::Path>,
         is_dir: Option<bool>,
     ) -> std::io::Result<gix_worktree::stack::Platform<'_>> {
-        self.inner
-            .at_path(relative, is_dir, |id, buf| self.repo.objects.find_blob(id, buf))
+        self.inner.at_path(relative, is_dir, &self.repo.objects)
     }
 
     /// Obtain a platform for lookups from a repo-`relative` path, typically obtained from an index entry. `is_dir` should reflect
@@ -63,7 +61,6 @@ impl<'repo> AttributeStack<'repo> {
         relative: impl Into<&'r BStr>,
         is_dir: Option<bool>,
     ) -> std::io::Result<gix_worktree::stack::Platform<'_>> {
-        self.inner
-            .at_entry(relative, is_dir, |id, buf| self.repo.objects.find_blob(id, buf))
+        self.inner.at_entry(relative, is_dir, &self.repo.objects)
     }
 }

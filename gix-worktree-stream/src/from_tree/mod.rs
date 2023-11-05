@@ -1,10 +1,11 @@
 use std::io::Write;
 
 use gix_object::bstr::BStr;
+use gix_object::FindExt;
 
 use crate::{entry, entry::Error, protocol, AdditionalEntry, SharedErrorSlot, Stream};
 
-/// Use `find` to traverse `tree` and fetch the contained blobs to return as [`Stream`], which makes them queryable
+/// Use `objects` to traverse `tree` and fetch the contained blobs to return as [`Stream`], which makes them queryable
 /// on demand with support for streaming each entry.
 ///
 /// `pipeline` is used to convert blobs to their worktree representation, and `attributes` is used to read
@@ -32,18 +33,17 @@ use crate::{entry, entry::Error, protocol, AdditionalEntry, SharedErrorSlot, Str
 /// ### Limitations
 ///
 /// * `export-subst` is not support, as it requires the entire formatting engine of `git log`.
-pub fn from_tree<Find, E1, E2>(
+pub fn from_tree<Find, E>(
     tree: gix_hash::ObjectId,
-    find: Find,
+    objects: Find,
     pipeline: gix_filter::Pipeline,
-    attributes: impl FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), E2>
+    attributes: impl FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), E>
         + Send
         + 'static,
 ) -> Stream
 where
-    Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::Data<'a>, E1> + Clone + Send + 'static,
-    E1: std::error::Error + Send + Sync + 'static,
-    E2: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find + Clone + Send + 'static,
+    E: std::error::Error + Send + Sync + 'static,
 {
     let (stream, mut write, additional_entries) = Stream::new();
     std::thread::spawn({
@@ -51,7 +51,7 @@ where
         move || {
             if let Err(err) = run(
                 tree,
-                find,
+                objects,
                 pipeline,
                 attributes,
                 &mut write,
@@ -76,11 +76,11 @@ where
     stream
 }
 
-fn run<Find, E1, E2>(
+fn run<Find, E>(
     tree: gix_hash::ObjectId,
-    mut find: Find,
+    objects: Find,
     mut pipeline: gix_filter::Pipeline,
-    mut attributes: impl FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), E2>
+    mut attributes: impl FnMut(&BStr, gix_object::tree::EntryMode, &mut gix_attributes::search::Outcome) -> Result<(), E>
         + Send
         + 'static,
     out: &mut gix_features::io::pipe::Writer,
@@ -88,16 +88,14 @@ fn run<Find, E1, E2>(
     additional_entries: std::sync::mpsc::Receiver<AdditionalEntry>,
 ) -> Result<(), Error>
 where
-    Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Result<gix_object::Data<'a>, E1> + Clone + Send + 'static,
-    E1: std::error::Error + Send + Sync + 'static,
-    E2: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find + Clone,
+    E: std::error::Error + Send + Sync + 'static,
 {
     let mut buf = Vec::new();
-    let obj = find(tree.as_ref(), &mut buf).map_err(|err| Error::Find(Box::new(err)))?;
+    let tree_iter = objects.find_tree_iter(tree.as_ref(), &mut buf)?;
     if pipeline.driver_context_mut().treeish.is_none() {
         pipeline.driver_context_mut().treeish = Some(tree);
     }
-    let tree = gix_object::TreeRefIter::from_bytes(obj.data);
 
     let mut attrs = gix_attributes::search::Outcome::default();
     attrs.initialize_with_selection(&Default::default(), Some("export-ignore"));
@@ -106,10 +104,7 @@ where
         err,
         pipeline,
         attrs,
-        find: {
-            let mut find = find.clone();
-            move |a: &gix_hash::oid, b: &mut Vec<u8>| find(a, b).map_err(|err| Error::Find(Box::new(err)))
-        },
+        objects: objects.clone(),
         fetch_attributes: move |a: &BStr, b: gix_object::tree::EntryMode, c: &mut gix_attributes::search::Outcome| {
             attributes(a, b, c).map_err(|err| Error::Attributes {
                 source: Box::new(err),
@@ -121,13 +116,9 @@ where
         buf: Vec::with_capacity(1024),
     };
     gix_traverse::tree::breadthfirst(
-        tree,
+        tree_iter,
         gix_traverse::tree::breadthfirst::State::default(),
-        |id, buf| {
-            find(id, buf)
-                .map(|obj| gix_object::TreeRefIter::from_bytes(obj.data))
-                .ok()
-        },
+        &objects,
         &mut dlg,
     )?;
 

@@ -25,11 +25,6 @@ pub mod entries {
 pub mod extensions {
     use crate::extension;
 
-    /// An implementation of a `find` function that never finds or returns any object, a no-op.
-    pub fn no_find<'a>(_: &gix_hash::oid, _: &'a mut Vec<u8>) -> Option<gix_object::TreeRefIter<'a>> {
-        None
-    }
-
     /// The error returned by [`State::verify_extensions()`][crate::State::verify_extensions()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -61,12 +56,9 @@ impl State {
         Ok(())
     }
 
-    /// Note: `find` cannot be `Option<F>` as we can't call it with a closure then due to the indirection through `Some`.
-    pub fn verify_extensions<F>(&self, use_find: bool, find: F) -> Result<(), extensions::Error>
-    where
-        F: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<gix_object::TreeRefIter<'a>>,
-    {
-        self.tree().map(|t| t.verify(use_find, find)).transpose()?;
+    /// Note: `objects` cannot be `Option<F>` as we can't call it with a closure then due to the indirection through `Some`.
+    pub fn verify_extensions(&self, use_find: bool, objects: impl gix_object::Find) -> Result<(), extensions::Error> {
+        self.tree().map(|t| t.verify(use_find, objects)).transpose()?;
         // TODO: verify links by running the whole set of tests on the index
         //       - do that once we load it as well, or maybe that's lazy loaded? Too many questions for now.
         Ok(())

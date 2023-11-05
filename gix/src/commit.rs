@@ -28,7 +28,6 @@ pub mod describe {
 
     use gix_hash::ObjectId;
     use gix_hashtable::HashMap;
-    use gix_odb::Find;
 
     use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
 
@@ -199,12 +198,7 @@ pub mod describe {
         pub fn try_resolve(&self) -> Result<Option<Resolution<'repo>>, Error> {
             // TODO: dirty suffix with respective dirty-detection
             let mut graph = gix_revwalk::Graph::new(
-                |id, buf| {
-                    self.repo
-                        .objects
-                        .try_find(id, buf)
-                        .map(|r| r.and_then(gix_object::Data::try_into_commit_iter))
-                },
+                &self.repo.objects,
                 gix_commitgraph::Graph::from_info_dir(self.repo.objects.store_ref().path().join("info").as_ref()).ok(),
             );
             let outcome = gix_revision::describe(

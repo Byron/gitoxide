@@ -9,7 +9,6 @@ mod from_tree {
     use gix_archive::Format;
     use gix_attributes::glob::pattern::Case;
     use gix_object::tree::EntryMode;
-    use gix_odb::FindExt;
     use gix_testtools::bstr::ByteSlice;
     use gix_worktree::stack::state::attributes::Source;
 
@@ -230,14 +229,11 @@ mod from_tree {
         let (dir, head_tree, odb, mut cache) = basic()?;
         let mut stream = gix_worktree_stream::from_tree(
             head_tree,
-            {
-                let odb = odb.clone();
-                move |id, buf| odb.find(id, buf)
-            },
+            odb.clone(),
             noop_pipeline(),
             move |rela_path, mode, attrs| {
                 cache
-                    .at_entry(rela_path, mode.is_tree().into(), |id, buf| odb.find_blob(id, buf))
+                    .at_entry(rela_path, mode.is_tree().into(), &odb)
                     .map(|entry| entry.matching_attributes(attrs))
                     .map(|_| ())
             },

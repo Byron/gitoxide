@@ -2,7 +2,7 @@ use std::{fmt::Formatter, io::Write};
 
 use crate::{
     file,
-    store_impl::{file::transaction::FindObjectFn, packed, packed::Edit},
+    store_impl::{packed, packed::Edit},
     transaction::{Change, RefEdit},
     Target,
 };
@@ -44,10 +44,11 @@ impl packed::Transaction {
 /// Lifecycle
 impl packed::Transaction {
     /// Prepare the transaction by checking all edits for applicability.
+    /// Use `objects` to access objects for the purpose of peeling them - this is only used if packed-refs are involved.
     pub fn prepare(
         mut self,
         edits: &mut dyn Iterator<Item = RefEdit>,
-        find: &mut FindObjectFn<'_>,
+        objects: &dyn gix_object::Find,
     ) -> Result<Self, prepare::Error> {
         assert!(self.edits.is_none(), "BUG: cannot call prepare(…) more than once");
         let buffer = &self.buffer;
@@ -76,7 +77,7 @@ impl packed::Transaction {
             {
                 let mut next_id = new;
                 edit.peeled = loop {
-                    let kind = find(next_id, &mut buf)?;
+                    let kind = objects.try_find(&next_id, &mut buf)?.map(|d| d.kind);
                     match kind {
                         Some(gix_object::Kind::Tag) => {
                             next_id = gix_object::TagRefIter::from_bytes(&buf).target_id().map_err(|_| {

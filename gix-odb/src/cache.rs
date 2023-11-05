@@ -150,16 +150,21 @@ mod impls {
         }
     }
 
-    impl<S> crate::Find for Cache<S>
+    impl<S> gix_object::Find for Cache<S>
     where
         S: gix_pack::Find,
     {
-        fn contains(&self, id: &oid) -> bool {
-            self.inner.contains(id)
-        }
-
-        fn try_find<'a>(&self, id: &oid, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, crate::find::Error> {
+        fn try_find<'a>(&self, id: &oid, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, gix_object::find::Error> {
             gix_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
+        }
+    }
+
+    impl<S> gix_object::Exists for Cache<S>
+    where
+        S: gix_pack::Find,
+    {
+        fn exists(&self, id: &oid) -> bool {
+            self.inner.contains(id)
         }
     }
 
@@ -167,7 +172,7 @@ mod impls {
     where
         S: crate::Header,
     {
-        fn try_header(&self, id: &oid) -> Result<Option<Header>, crate::find::Error> {
+        fn try_header(&self, id: &oid) -> Result<Option<Header>, gix_object::find::Error> {
             self.inner.try_header(id)
         }
     }
@@ -184,7 +189,7 @@ mod impls {
             &self,
             id: &oid,
             buffer: &'a mut Vec<u8>,
-        ) -> Result<Option<(Data<'a>, Option<Location>)>, crate::find::Error> {
+        ) -> Result<Option<(Data<'a>, Option<Location>)>, gix_object::find::Error> {
             match self.pack_cache.as_ref().map(RefCell::borrow_mut) {
                 Some(mut pack_cache) => self.try_find_cached(id, buffer, pack_cache.deref_mut()),
                 None => self.try_find_cached(id, buffer, &mut gix_pack::cache::Never),
@@ -196,7 +201,7 @@ mod impls {
             id: &oid,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut dyn gix_pack::cache::DecodeEntry,
-        ) -> Result<Option<(Data<'a>, Option<gix_pack::data::entry::Location>)>, crate::find::Error> {
+        ) -> Result<Option<(Data<'a>, Option<gix_pack::data::entry::Location>)>, gix_object::find::Error> {
             if let Some(mut obj_cache) = self.object_cache.as_ref().map(RefCell::borrow_mut) {
                 if let Some(kind) = obj_cache.get(&id.as_ref().to_owned(), buffer) {
                     return Ok(Some((Data::new(kind, buffer), None)));

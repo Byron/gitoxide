@@ -1,5 +1,4 @@
 use bstr::{BStr, ByteSlice};
-use gix_odb::FindExt;
 use gix_worktree::{stack::state::ignore::Source, Stack};
 
 use crate::hex_to_id;
@@ -51,16 +50,22 @@ fn exclude_by_dir_is_handled_just_like_git() {
     let expectations = IgnoreExpectations {
         lines: baseline.lines(),
     };
+    struct FindError;
+    impl gix_object::Find for FindError {
+        fn try_find<'a>(
+            &self,
+            _id: &gix_hash::oid,
+            _buffer: &'a mut Vec<u8>,
+        ) -> Result<Option<gix_object::Data<'a>>, gix_object::find::Error> {
+            Err(std::io::Error::new(std::io::ErrorKind::Other, "unreachable").into())
+        }
+    }
     for (relative_entry, source_and_line) in expectations {
         let (source, line, expected_pattern) = source_and_line.expect("every value is matched");
         let relative_path = gix_path::from_byte_slice(relative_entry);
         let is_dir = dir.join(relative_path).metadata().ok().map(|m| m.is_dir());
 
-        let platform = cache
-            .at_entry(relative_entry, is_dir, |_oid, _buf| {
-                Err(std::io::Error::new(std::io::ErrorKind::Other, "unreachable"))
-            })
-            .unwrap();
+        let platform = cache.at_entry(relative_entry, is_dir, FindError).unwrap();
         let match_ = platform.matching_exclude_pattern().expect("match all values");
         let _is_excluded = platform.is_excluded();
         assert_eq!(
@@ -119,7 +124,7 @@ fn check_against_baseline() -> crate::Result {
         let relative_path = gix_path::from_byte_slice(relative_entry);
         let is_dir = worktree_dir.join(relative_path).metadata().ok().map(|m| m.is_dir());
 
-        let platform = cache.at_entry(relative_entry, is_dir, |oid, buf| odb.find_blob(oid, buf))?;
+        let platform = cache.at_entry(relative_entry, is_dir, &odb)?;
 
         let match_ = platform.matching_exclude_pattern();
         let is_excluded = platform.is_excluded();

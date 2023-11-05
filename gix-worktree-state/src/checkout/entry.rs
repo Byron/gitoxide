@@ -6,13 +6,13 @@ use std::{
 
 use bstr::BStr;
 use gix_filter::{driver::apply::MaybeDelayed, pipeline::convert::ToWorktreeOutcome};
-use gix_hash::oid;
 use gix_index::{entry::Stat, Entry};
+use gix_object::FindExt;
 use gix_worktree::Stack;
 use io_close::Close;
 
 pub struct Context<'a, Find> {
-    pub find: &'a mut Find,
+    pub objects: &'a mut Find,
     pub path_cache: &'a mut Stack,
     pub filters: &'a mut gix_filter::Pipeline,
     pub buf: &'a mut Vec<u8>,
@@ -53,11 +53,11 @@ impl Outcome<'_> {
 }
 
 #[cfg_attr(not(unix), allow(unused_variables))]
-pub fn checkout<'entry, Find, E>(
+pub fn checkout<'entry, Find>(
     entry: &'entry mut Entry,
     entry_path: &'entry BStr,
     Context {
-        find,
+        objects,
         filters,
         path_cache,
         buf,
@@ -73,25 +73,25 @@ pub fn checkout<'entry, Find, E>(
         filter_process_delay,
         ..
     }: crate::checkout::chunk::Options,
-) -> Result<Outcome<'entry>, crate::checkout::Error<E>>
+) -> Result<Outcome<'entry>, crate::checkout::Error>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
-    E: std::error::Error + Send + Sync + 'static,
+    Find: gix_object::Find,
 {
     let dest_relative = gix_path::try_from_bstr(entry_path).map_err(|_| crate::checkout::Error::IllformedUtf8 {
         path: entry_path.to_owned(),
     })?;
     let is_dir = Some(entry.mode == gix_index::entry::Mode::COMMIT || entry.mode == gix_index::entry::Mode::DIR);
-    let path_cache = path_cache.at_path(dest_relative, is_dir, &mut *find)?;
+    let path_cache = path_cache.at_path(dest_relative, is_dir, &*objects)?;
     let dest = path_cache.path();
 
     let object_size = match entry.mode {
         gix_index::entry::Mode::FILE | gix_index::entry::Mode::FILE_EXECUTABLE => {
-            let obj = find(&entry.id, buf).map_err(|err| crate::checkout::Error::Find {
-                err,
-                oid: entry.id,
-                path: dest.to_path_buf(),
-            })?;
+            let obj = (*objects)
+                .find_blob(&entry.id, buf)
+                .map_err(|err| crate::checkout::Error::Find {
+                    err,
+                    path: dest.to_path_buf(),
+                })?;
 
             let filtered = filters.convert_to_worktree(
                 obj.data,
@@ -140,11 +140,12 @@ where
             num_bytes
         }
         gix_index::entry::Mode::SYMLINK => {
-            let obj = find(&entry.id, buf).map_err(|err| crate::checkout::Error::Find {
-                err,
-                oid: entry.id,
-                path: dest.to_path_buf(),
-            })?;
+            let obj = (*objects)
+                .find_blob(&entry.id, buf)
+                .map_err(|err| crate::checkout::Error::Find {
+                    err,
+                    path: dest.to_path_buf(),
+                })?;
             let symlink_destination = gix_path::try_from_byte_slice(obj.data)
                 .map_err(|_| crate::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
 
@@ -269,14 +270,11 @@ pub(crate) fn open_file(
 
 /// Close `file` and store its stats in `entry`, possibly setting `file` executable depending on `set_executable_after_creation`.
 #[cfg_attr(windows, allow(unused_variables))]
-pub(crate) fn finalize_entry<E>(
+pub(crate) fn finalize_entry(
     entry: &mut gix_index::Entry,
     file: std::fs::File,
     set_executable_after_creation: Option<&Path>,
-) -> Result<(), crate::checkout::Error<E>>
-where
-    E: std::error::Error + Send + Sync + 'static,
-{
+) -> Result<(), crate::checkout::Error> {
     // For possibly existing, overwritten files, we must change the file mode explicitly.
     #[cfg(unix)]
     if let Some(path) = set_executable_after_creation {

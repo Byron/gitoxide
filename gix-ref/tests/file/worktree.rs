@@ -1,6 +1,5 @@
 use std::{cmp::Ordering, path::PathBuf};
 
-use gix_odb::Find;
 use gix_ref::{file::ReferenceExt, Reference};
 use gix_testtools::Creation;
 
@@ -61,13 +60,7 @@ fn into_peel(
     store: &gix_ref::file::Store,
     odb: gix_odb::Handle,
 ) -> impl Fn(gix_ref::Reference) -> gix_hash::ObjectId + '_ {
-    move |mut r: gix_ref::Reference| {
-        r.peel_to_id_in_place(store, &mut |id, buf| {
-            let data = odb.try_find(&id, buf)?;
-            Ok(data.map(|d| (d.kind, d.data)))
-        })
-        .unwrap()
-    }
+    move |mut r: gix_ref::Reference| r.peel_to_id_in_place(store, &odb).unwrap()
 }
 
 enum Mode {
@@ -205,6 +198,7 @@ mod writable {
         FullName, FullNameRef, Target,
     };
 
+    use crate::file::EmptyCommit;
     use crate::{
         file::{
             transaction::prepare_and_commit::committer,
@@ -232,9 +226,7 @@ mod writable {
             let (store, _odb, _tmp) = main_store(packed, Mode::Write)?;
             let mut t = store.transaction();
             if packed {
-                t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
-                    Ok(Some(gix_object::Kind::Commit))
-                })));
+                t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(EmptyCommit)));
             }
 
             let edits = t
@@ -514,9 +506,7 @@ mod writable {
 
             let mut t = store.transaction();
             if packed {
-                t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
-                    Ok(Some(gix_object::Kind::Commit))
-                })));
+                t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(EmptyCommit)));
             }
 
             let edits = t

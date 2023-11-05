@@ -77,7 +77,8 @@ pub(crate) mod error {
 pub use error::Error;
 use gix_features::zlib;
 
-use crate::{store::types::PackId, Find};
+use crate::store::types::PackId;
+use gix_object::{Exists, Find};
 
 impl<S> super::Handle<S>
 where
@@ -346,7 +347,7 @@ where
         id: &gix_hash::oid,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut dyn DecodeEntry,
-    ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, gix_pack::find::Error> {
+    ) -> Result<Option<(gix_object::Data<'a>, Option<gix_pack::data::entry::Location>)>, gix_object::find::Error> {
         let mut snapshot = self.snapshot.borrow_mut();
         let mut inflate = self.inflate.borrow_mut();
         self.try_find_cached_inner(id, buffer, &mut inflate, pack_cache, &mut snapshot, None)
@@ -503,15 +504,21 @@ where
     S: Deref<Target = super::Store> + Clone,
     Self: gix_pack::Find,
 {
-    fn contains(&self, id: &gix_hash::oid) -> bool {
-        gix_pack::Find::contains(self, id)
-    }
-
     fn try_find<'a>(
         &self,
         id: &gix_hash::oid,
         buffer: &'a mut Vec<u8>,
-    ) -> Result<Option<gix_object::Data<'a>>, crate::find::Error> {
+    ) -> Result<Option<gix_object::Data<'a>>, gix_object::find::Error> {
         gix_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
+    }
+}
+
+impl<S> Exists for super::Handle<S>
+where
+    S: Deref<Target = super::Store> + Clone,
+    Self: gix_pack::Find,
+{
+    fn exists(&self, id: &gix_hash::oid) -> bool {
+        gix_pack::Find::contains(self, id)
     }
 }

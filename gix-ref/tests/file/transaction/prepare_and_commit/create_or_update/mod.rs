@@ -3,7 +3,6 @@ use std::convert::TryInto;
 use gix_hash::ObjectId;
 use gix_lock::acquire::Fail;
 use gix_object::bstr::{BString, ByteSlice};
-use gix_odb::Find;
 use gix_ref::{
     file::{
         transaction::{self, PackedRefs},
@@ -14,6 +13,7 @@ use gix_ref::{
     Target,
 };
 
+use crate::file::EmptyCommit;
 use crate::{
     file::{
         store_with_packed_refs, store_writable,
@@ -713,7 +713,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
     let edits = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
-            Box::new(move |oid, buf| odb.try_find(&oid, buf).map(|obj| obj.map(|obj| obj.kind))),
+            Box::new(odb),
         ))
         .prepare(
             store
@@ -782,9 +782,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
 
     let edits = store
         .transaction()
-        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
-            Ok(Some(gix_object::Kind::Commit))
-        })))
+        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(EmptyCommit)))
         .prepare(edits, Fail::Immediately, Fail::Immediately)?
         .commit(committer().to_ref())?;
     assert_eq!(

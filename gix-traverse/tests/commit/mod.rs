@@ -1,6 +1,5 @@
 mod ancestor {
     use gix_hash::{oid, ObjectId};
-    use gix_odb::pack::FindExt;
     use gix_traverse::commit;
 
     use crate::hex_to_id;
@@ -68,7 +67,7 @@ mod ancestor {
                 let oids = commit::Ancestors::filtered(
                     tips.clone(),
                     commit::ancestors::State::default(),
-                    |oid, buf| store.find_commit_iter(oid, buf).map(|t| t.0),
+                    &store,
                     predicate.clone(),
                 )
                 .sorting(self.sorting)?
@@ -86,14 +85,12 @@ mod ancestor {
             let (store, tips, expected) = self.setup()?;
 
             for use_commitgraph in [false, true] {
-                let oids = commit::Ancestors::new(tips.clone(), commit::ancestors::State::default(), |oid, buf| {
-                    store.find_commit_iter(oid, buf).map(|t| t.0)
-                })
-                .sorting(self.sorting)?
-                .parents(self.mode)
-                .commit_graph(self.setup_commitgraph(store.store_ref(), use_commitgraph))
-                .map(|res| res.map(|info| info.id))
-                .collect::<Result<Vec<_>, _>>()?;
+                let oids = commit::Ancestors::new(tips.clone(), commit::ancestors::State::default(), &store)
+                    .sorting(self.sorting)?
+                    .parents(self.mode)
+                    .commit_graph(self.setup_commitgraph(store.store_ref(), use_commitgraph))
+                    .map(|res| res.map(|info| info.id))
+                    .collect::<Result<Vec<_>, _>>()?;
                 assert_eq!(oids, expected);
             }
             Ok(())
@@ -346,7 +343,6 @@ mod ancestor {
 
     /// Some dates adjusted to be a year apart, but still 'c1' and 'c2' with the same date.
     mod adjusted_dates {
-        use gix_odb::FindExt;
         use gix_traverse::commit::{ancestors, Ancestors, Parents, Sorting};
 
         use crate::{commit::ancestor::TraversalAssertion, hex_to_id};
@@ -403,7 +399,7 @@ mod ancestor {
             let iter = Ancestors::new(
                 Some(hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7" /* c2 */)),
                 ancestors::State::default(),
-                move |oid, buf| store.find_commit_iter(oid, buf),
+                &store,
             )
             .sorting(Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
                 seconds: 978393600, // =2001-01-02 00:00:00 +0000

@@ -2,7 +2,6 @@ use crate::OutputFormat;
 use anyhow::{bail, Context};
 use gix::bstr::{BStr, BString};
 use gix::index::Entry;
-use gix::prelude::FindExt;
 use gix::Progress;
 use gix_status::index_as_worktree::traits::FastEq;
 use gix_status::index_as_worktree::{Change, Conflict, EntryStatus};
@@ -80,10 +79,7 @@ pub fn show(
         &mut printer,
         FastEq,
         Submodule,
-        {
-            let odb = repo.objects.clone().into_arc()?;
-            move |id, buf| odb.find_blob(id, buf)
-        },
+        repo.objects.clone().into_arc()?,
         &mut progress,
         pathspec.detach()?,
         repo.filter_pipeline(Some(gix::hash::ObjectId::empty_tree(repo.object_hash())))?

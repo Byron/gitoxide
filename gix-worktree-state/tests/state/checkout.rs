@@ -9,7 +9,7 @@ use std::{
 
 use gix_features::progress;
 use gix_object::bstr::ByteSlice;
-use gix_odb::FindExt;
+use gix_object::Data;
 use gix_testtools::tempfile::TempDir;
 use gix_worktree_state::checkout::Collision;
 use once_cell::sync::Lazy;
@@ -487,7 +487,7 @@ fn checkout_index_in_tmp_dir(
 fn checkout_index_in_tmp_dir_opts(
     opts: gix_worktree_state::checkout::Options,
     name: &str,
-    mut allow_return_object: impl FnMut(&gix_hash::oid) -> bool + Send + Clone,
+    allow_return_object: impl FnMut(&gix_hash::oid) -> bool + Send + Clone,
     prep_dest: impl Fn(&Path) -> std::io::Result<()>,
 ) -> crate::Result<(PathBuf, TempDir, gix_index::File, gix_worktree_state::checkout::Outcome)> {
     let source_tree = fixture_path(name);
@@ -497,16 +497,38 @@ fn checkout_index_in_tmp_dir_opts(
     let destination = gix_testtools::tempfile::tempdir_in(std::env::current_dir()?)?;
     prep_dest(destination.path()).expect("preparation must succeed");
 
+    #[derive(Clone)]
+    struct MaybeFind<Allow: Clone, Find: Clone> {
+        allow: std::cell::RefCell<Allow>,
+        objects: Find,
+    }
+
+    impl<Allow, Find> gix_object::Find for MaybeFind<Allow, Find>
+    where
+        Allow: FnMut(&gix_hash::oid) -> bool + Send + Clone,
+        Find: gix_object::Find + Send + Clone,
+    {
+        fn try_find<'a>(
+            &self,
+            id: &gix_hash::oid,
+            buf: &'a mut Vec<u8>,
+        ) -> Result<Option<Data<'a>>, gix_object::find::Error> {
+            if (self.allow.borrow_mut())(id) {
+                self.objects.try_find(id, buf)
+            } else {
+                Ok(None)
+            }
+        }
+    }
+
+    let db = MaybeFind {
+        allow: allow_return_object.into(),
+        objects: odb,
+    };
     let outcome = gix_worktree_state::checkout(
         &mut index,
         destination.path(),
-        move |oid, buf| {
-            if allow_return_object(oid) {
-                odb.find_blob(oid, buf)
-            } else {
-                Err(gix_odb::find::existing_object::Error::NotFound { oid: oid.to_owned() })
-            }
-        },
+        db,
         &progress::Discard,
         &progress::Discard,
         &AtomicBool::default(),

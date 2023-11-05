@@ -1,7 +1,6 @@
 use std::{borrow::Cow, path::PathBuf};
 
 use gix_object::bstr::ByteSlice;
-use gix_odb::Find;
 use gix_revision::{
     describe,
     describe::{Error, Outcome},
@@ -23,14 +22,7 @@ fn run_test(
         let cache = use_commitgraph
             .then(|| gix_commitgraph::Graph::from_info_dir(&store.store_ref().path().join("info")).ok())
             .flatten();
-        let mut graph = gix_revision::Graph::new(
-            |id, buf| {
-                store
-                    .try_find(id, buf)
-                    .map(|r| r.and_then(gix_object::Data::try_into_commit_iter))
-            },
-            cache,
-        );
+        let mut graph = gix_revision::Graph::new(&store, cache);
         run_assertions(
             gix_revision::describe(&commit_id, &mut graph, options(commit_id)),
             commit_id,

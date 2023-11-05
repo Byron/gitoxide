@@ -7,7 +7,6 @@ use std::{
     path::PathBuf,
 };
 
-use gix_odb::FindExt;
 pub use gix_submodule::*;
 
 use crate::{bstr::BStr, repository::IndexPersistedOrInMemory, Repository, Submodule};
@@ -147,9 +146,7 @@ impl<'repo> Submodule<'repo> {
             &mut |relative_path, case, is_dir, out| {
                 attributes
                     .set_case(case)
-                    .at_entry(relative_path, Some(is_dir), |id, buf| {
-                        self.state.repo.objects.find_blob(id, buf)
-                    })
+                    .at_entry(relative_path, Some(is_dir), &self.state.repo.objects)
                     .map_or(false, |platform| platform.matching_attributes(out))
             }
         })?;

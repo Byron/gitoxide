@@ -204,7 +204,7 @@ pub(crate) mod function {
                                         stats.objects_copied_from_pack += 1;
                                         entry
                                     }
-                                    None => match db.try_find(&count.id, buf).map_err(Error::FindExisting)? {
+                                    None => match db.try_find(&count.id, buf).map_err(Error::Find)? {
                                         Some((obj, _location)) => {
                                             stats.decoded_and_recompressed_objects += 1;
                                             output::Entry::from_data(count, &obj)
@@ -216,7 +216,7 @@ pub(crate) mod function {
                                     },
                                 }
                             }
-                            None => match db.try_find(&count.id, buf).map_err(Error::FindExisting)? {
+                            None => match db.try_find(&count.id, buf).map_err(Error::Find)? {
                                 Some((obj, _location)) => {
                                     stats.decoded_and_recompressed_objects += 1;
                                     output::Entry::from_data(count, &obj)
@@ -397,7 +397,7 @@ mod types {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        FindExisting(crate::find::Error),
+        Find(gix_object::find::Error),
         #[error(transparent)]
         NewEntry(#[from] entry::Error),
     }

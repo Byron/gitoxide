@@ -95,7 +95,7 @@ pub fn from_pack(
                 directory,
                 &mut progress,
                 ctx.should_interrupt,
-                None,
+                None::<gix::objs::find::Never>,
                 options,
             )
         }
@@ -105,7 +105,7 @@ pub fn from_pack(
             directory,
             &mut progress,
             ctx.should_interrupt,
-            None,
+            None::<gix::objs::find::Never>,
             options,
         ),
     }

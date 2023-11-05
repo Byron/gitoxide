@@ -144,4 +144,4 @@ pub trait Negotiator {
 }
 
 /// An error that happened during any of the methods on a [`Negotiator`].
-pub type Error = gix_revwalk::graph::lookup::commit::Error;
+pub type Error = gix_revwalk::graph::try_lookup_or_insert_default::Error;

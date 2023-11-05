@@ -5,14 +5,47 @@ use smallvec::SmallVec;
 
 use crate::Graph;
 
-/// A mapping between an object id and arbitrary data, and produced when calling [`Graph::detach`].
+/// A mapping between an object id and arbitrary data, and produced when calling [`Graph::detach()`].
 pub type IdMap<T> = gix_hashtable::HashMap<gix_hash::ObjectId, T>;
 
 ///
 pub mod commit;
 
-mod errors;
-pub use errors::{insert_parents, lookup};
+mod errors {
+    ///
+    pub mod insert_parents {
+        use crate::graph::commit::iter_parents;
+
+        /// The error returned by [`insert_parents()`](crate::Graph::insert_parents()).
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            Lookup(#[from] gix_object::find::existing_iter::Error),
+            #[error("A commit could not be decoded during traversal")]
+            Decode(#[from] gix_object::decode::Error),
+            #[error(transparent)]
+            Parent(#[from] iter_parents::Error),
+        }
+    }
+
+    ///
+    pub mod try_lookup_or_insert_default {
+        use crate::graph::commit::to_owned;
+
+        /// The error returned by [`try_lookup_or_insert_default()`](crate::Graph::try_lookup_or_insert_default()).
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            Lookup(#[from] gix_object::find::existing_iter::Error),
+            #[error(transparent)]
+            ToOwned(#[from] to_owned::Error),
+        }
+    }
+}
+pub use errors::{insert_parents, try_lookup_or_insert_default};
+
 use gix_date::SecondsSinceUnixEpoch;
 
 /// The generation away from the HEAD of graph, useful to limit algorithms by topological depth as well.
@@ -36,7 +69,7 @@ impl<'find, T: Default> Graph<'find, T> {
         &mut self,
         id: gix_hash::ObjectId,
         update_data: impl FnOnce(&mut T),
-    ) -> Result<Option<LazyCommit<'_>>, lookup::Error> {
+    ) -> Result<Option<LazyCommit<'_>>, try_lookup_or_insert_default::Error> {
         self.try_lookup_or_insert_default(id, T::default, update_data)
     }
 }
@@ -85,9 +118,7 @@ impl<'find, T> Graph<'find, T> {
             let parent_id = parent_id?;
             match self.map.entry(parent_id) {
                 gix_hashtable::hash_map::Entry::Vacant(entry) => {
-                    let parent = match try_lookup(&parent_id, &mut self.find, self.cache.as_ref(), &mut self.parent_buf)
-                        .map_err(|err| insert_parents::Error::Lookup(lookup::existing::Error::Find(err)))?
-                    {
+                    let parent = match try_lookup(&parent_id, &*self.find, self.cache.as_ref(), &mut self.parent_buf)? {
                         Some(p) => p,
                         None => continue, // skip missing objects, this is due to shallow clones for instance.
                     };
@@ -114,7 +145,7 @@ impl<'find, T> Graph<'find, T> {
 
 /// Initialization
 impl<'find, T> Graph<'find, T> {
-    /// Create a new instance with `find` to retrieve commits and optionally `cache` to accelerate commit access.
+    /// Create a new instance with `objects` to retrieve commits and optionally `cache` to accelerate commit access.
     ///
     /// ### Performance
     ///
@@ -122,18 +153,9 @@ impl<'find, T> Graph<'find, T> {
     /// most recently used commits.
     /// Furthermore, **none-existing commits should not trigger the pack-db to be refreshed.** Otherwise, performance may be sub-optimal
     /// in shallow repositories as running into non-existing commits will trigger a refresh of the `packs` directory.
-    pub fn new<Find>(find: Find, cache: impl Into<Option<gix_commitgraph::Graph>>) -> Self
-    where
-        Find: for<'a> FnMut(
-                &gix_hash::oid,
-                &'a mut Vec<u8>,
-            ) -> Result<
-                Option<gix_object::CommitRefIter<'a>>,
-                Box<dyn std::error::Error + Send + Sync + 'static>,
-            > + 'find,
-    {
+    pub fn new(objects: impl gix_object::Find + 'find, cache: impl Into<Option<gix_commitgraph::Graph>>) -> Self {
         Graph {
-            find: Box::new(find),
+            find: Box::new(objects),
             cache: cache.into(),
             map: gix_hashtable::HashMap::default(),
             buf: Vec::new(),
@@ -154,10 +176,10 @@ impl<'find, T> Graph<'find, Commit<T>> {
         id: gix_hash::ObjectId,
         new_data: impl FnOnce() -> T,
         update_data: impl FnOnce(&mut T),
-    ) -> Result<Option<&mut Commit<T>>, lookup::commit::Error> {
+    ) -> Result<Option<&mut Commit<T>>, try_lookup_or_insert_default::Error> {
         match self.map.entry(id) {
             gix_hashtable::hash_map::Entry::Vacant(entry) => {
-                let res = try_lookup(&id, &mut self.find, self.cache.as_ref(), &mut self.buf)?;
+                let res = try_lookup(&id, &*self.find, self.cache.as_ref(), &mut self.buf)?;
                 let commit = match res {
                     None => return Ok(None),
                     Some(commit) => commit,
@@ -176,8 +198,8 @@ impl<'find, T> Graph<'find, Commit<T>> {
 
 /// commit access
 impl<'find, T: Default> Graph<'find, Commit<T>> {
-    /// Lookup `id` without failing if the commit doesn't exist, and assure that `id` is inserted into our set
-    /// with a commit and default data assigned.
+    /// Lookup `id` without failing if the commit doesn't exist or `id` isn't a commit,
+    /// and assure that `id` is inserted into our set with a commit and default data assigned.
     /// `update_data(data)` gets run either on existing or on new data.
     ///
     /// Note that none of the data updates happen if `id` didn't exist.
@@ -188,14 +210,15 @@ impl<'find, T: Default> Graph<'find, Commit<T>> {
         &mut self,
         id: gix_hash::ObjectId,
         update_data: impl FnOnce(&mut T),
-    ) -> Result<Option<&mut Commit<T>>, lookup::commit::Error> {
+    ) -> Result<Option<&mut Commit<T>>, try_lookup_or_insert_default::Error> {
         self.try_lookup_or_insert_commit_default(id, T::default, update_data)
     }
 }
 
 /// Lazy commit access
 impl<'find, T> Graph<'find, T> {
-    /// Lookup `id` without failing if the commit doesn't exist, and assure that `id` is inserted into our set
+    /// Lookup `id` without failing if the commit doesn't exist or `id` isn't a commit,
+    /// and assure that `id` is inserted into our set
     /// with a `default` value assigned to it.
     /// `update_data(data)` gets run either on existing or no new data.
     /// Return the commit when done.
@@ -209,8 +232,8 @@ impl<'find, T> Graph<'find, T> {
         id: gix_hash::ObjectId,
         default: impl FnOnce() -> T,
         update_data: impl FnOnce(&mut T),
-    ) -> Result<Option<LazyCommit<'_>>, lookup::Error> {
-        let res = try_lookup(&id, &mut self.find, self.cache.as_ref(), &mut self.buf)?;
+    ) -> Result<Option<LazyCommit<'_>>, try_lookup_or_insert_default::Error> {
+        let res = try_lookup(&id, &*self.find, self.cache.as_ref(), &mut self.buf)?;
         Ok(res.map(|commit| {
             match self.map.entry(id) {
                 gix_hashtable::hash_map::Entry::Vacant(entry) => {
@@ -226,25 +249,30 @@ impl<'find, T> Graph<'find, T> {
         }))
     }
 
-    /// Try to lookup `id` and return a handle to it for accessing its data, but don't fail if the commit doesn't exist.
+    /// Try to lookup `id` and return a handle to it for accessing its data, but don't fail if the commit doesn't exist
+    /// or isn't a commit.
     ///
     /// It's possible that commits don't exist if the repository is shallow.
-    pub fn try_lookup(&mut self, id: &gix_hash::oid) -> Result<Option<LazyCommit<'_>>, lookup::Error> {
-        try_lookup(id, &mut self.find, self.cache.as_ref(), &mut self.buf)
+    pub fn try_lookup(
+        &mut self,
+        id: &gix_hash::oid,
+    ) -> Result<Option<LazyCommit<'_>>, gix_object::find::existing_iter::Error> {
+        try_lookup(id, &*self.find, self.cache.as_ref(), &mut self.buf)
     }
 
-    /// Lookup `id` and return a handle to it, or fail if it doesn't exist.
-    pub fn lookup(&mut self, id: &gix_hash::oid) -> Result<LazyCommit<'_>, lookup::existing::Error> {
-        self.try_lookup(id)?.ok_or(lookup::existing::Error::Missing)
+    /// Lookup `id` and return a handle to it, or fail if it doesn't exist or is no commit.
+    pub fn lookup(&mut self, id: &gix_hash::oid) -> Result<LazyCommit<'_>, gix_object::find::existing_iter::Error> {
+        self.try_lookup(id)?
+            .ok_or(gix_object::find::existing_iter::Error::NotFound { oid: id.to_owned() })
     }
 }
 
 fn try_lookup<'graph>(
     id: &gix_hash::oid,
-    find: &mut Box<FindFn<'_>>,
+    objects: &dyn gix_object::Find,
     cache: Option<&'graph gix_commitgraph::Graph>,
     buf: &'graph mut Vec<u8>,
-) -> Result<Option<LazyCommit<'graph>>, lookup::Error> {
+) -> Result<Option<LazyCommit<'graph>>, gix_object::find::existing_iter::Error> {
     if let Some(cache) = cache {
         if let Some(pos) = cache.lookup(id) {
             return Ok(Some(LazyCommit {
@@ -253,12 +281,17 @@ fn try_lookup<'graph>(
         }
     }
     #[allow(clippy::manual_map)]
-    Ok(match find(id, buf)? {
-        Some(_) => Some(LazyCommit {
-            backing: Either::Left(buf),
-        }),
-        None => None,
-    })
+    Ok(
+        match objects
+            .try_find(id, buf)
+            .map_err(gix_object::find::existing_iter::Error::Find)?
+        {
+            Some(data) => data.kind.is_commit().then_some(LazyCommit {
+                backing: Either::Left(buf),
+            }),
+            None => None,
+        },
+    )
 }
 
 impl<'a, 'find, T> Index<&'a gix_hash::oid> for Graph<'find, T> {
@@ -315,13 +348,6 @@ where
 pub struct LazyCommit<'graph> {
     backing: Either<&'graph [u8], (&'graph gix_commitgraph::Graph, gix_commitgraph::Position)>,
 }
-
-pub(crate) type FindFn<'find> = dyn for<'a> FnMut(
-        &gix_hash::oid,
-        &'a mut Vec<u8>,
-    )
-        -> Result<Option<gix_object::CommitRefIter<'a>>, Box<dyn std::error::Error + Send + Sync + 'static>>
-    + 'find;
 
 enum Either<T, U> {
     Left(T),

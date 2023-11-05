@@ -4,7 +4,7 @@ mod from_tree {
     use bstr::{BStr, BString, ByteSlice, ByteVec};
     use gix_object::{
         tree::{self, EntryMode},
-        TreeRefIter,
+        FindExt,
     };
     use gix_traverse::tree::{breadthfirst, visit::Action, Visit};
 
@@ -32,19 +32,18 @@ mod from_tree {
             }
         }
         /// Create an index [`State`] by traversing `tree` recursively, accessing sub-trees
-        /// with `find`.
+        /// with `objects`.
         ///
         /// **No extension data is currently produced**.
-        pub fn from_tree<Find>(tree: &gix_hash::oid, mut find: Find) -> Result<Self, breadthfirst::Error>
+        pub fn from_tree<Find>(tree: &gix_hash::oid, objects: Find) -> Result<Self, breadthfirst::Error>
         where
-            Find: for<'a> FnMut(&gix_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
+            Find: gix_object::Find,
         {
             let _span = gix_features::trace::coarse!("gix_index::State::from_tree()");
             let mut buf = Vec::new();
-            let root = find(tree, &mut buf).ok_or(breadthfirst::Error::NotFound { oid: tree.into() })?;
-
+            let root = objects.find_tree_iter(tree, &mut buf)?;
             let mut delegate = CollectEntries::new();
-            breadthfirst(root, breadthfirst::State::default(), &mut find, &mut delegate)?;
+            breadthfirst(root, breadthfirst::State::default(), &objects, &mut delegate)?;
 
             let CollectEntries {
                 mut entries,

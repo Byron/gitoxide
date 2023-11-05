@@ -1,7 +1,7 @@
 use std::{borrow::BorrowMut, collections::VecDeque};
 
-use gix_hash::{oid, ObjectId};
 use gix_object::tree::EntryRef;
+use gix_object::FindExt;
 
 use crate::{
     tree,
@@ -12,11 +12,8 @@ use crate::{
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("The object {oid} referenced by the tree or the tree itself was not found in the database")]
-    FindExisting {
-        oid: ObjectId,
-        source: Box<dyn std::error::Error + Send + Sync + 'static>,
-    },
+    #[error(transparent)]
+    Find(#[from] gix_object::find::existing_iter::Error),
     #[error("The delegate cancelled the operation")]
     Cancelled,
     #[error(transparent)]
@@ -24,12 +21,12 @@ pub enum Error {
 }
 
 impl<'a> tree::Changes<'a> {
-    /// Calculate the changes that would need to be applied to `self` to get `other`.
+    /// Calculate the changes that would need to be applied to `self` to get `other` using `objects` to obtain objects as needed for traversal.
     ///
     /// * The `state` maybe owned or mutably borrowed to allow reuses allocated data structures through multiple runs.
     /// * `locate` is a function `f(object_id, &mut buffer) -> Option<TreeIter>` to return a `TreeIter` for the given object id backing
     ///   its data in the given buffer. Returning `None` is unexpected as these trees are obtained during iteration, and in a typical
-    ///   database errors are not expected either which is why the error case is omitted. To allow proper error reporting, [`Error::FindExisting`]
+    ///   database errors are not expected either which is why the error case is omitted. To allow proper error reporting, [`Error::Find`]
     ///   should be converted into a more telling error.
     /// * `delegate` will receive the computed changes, see the [`Visit`][`tree::Visit`] trait for more information on what to expect.
     ///
@@ -47,16 +44,14 @@ impl<'a> tree::Changes<'a> {
     ///
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/gix-object/src/mutable/tree.rs#L52-L55
-    pub fn needed_to_obtain<FindFn, R, StateMut, E>(
+    pub fn needed_to_obtain<R, StateMut>(
         mut self,
         other: gix_object::TreeRefIter<'_>,
         mut state: StateMut,
-        mut find: FindFn,
+        objects: impl gix_object::Find,
         delegate: &mut R,
     ) -> Result<(), Error>
     where
-        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<gix_object::TreeRefIter<'b>, E>,
-        E: std::error::Error + Send + Sync + 'static,
         R: tree::Visit,
         StateMut: BorrowMut<tree::State>,
     {
@@ -77,28 +72,16 @@ impl<'a> tree::Changes<'a> {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            rhs_entries = peekable(find(&rhs, &mut state.buf2).map_err(|err| Error::FindExisting {
-                                oid: rhs,
-                                source: err.into(),
-                            })?);
+                            rhs_entries = peekable(objects.find_tree_iter(&rhs, &mut state.buf2)?);
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(find(&lhs, &mut state.buf1).map_err(|err| Error::FindExisting {
-                                oid: lhs,
-                                source: err.into(),
-                            })?);
-                            rhs_entries = peekable(find(&rhs, &mut state.buf2).map_err(|err| Error::FindExisting {
-                                oid: rhs,
-                                source: err.into(),
-                            })?);
+                            lhs_entries = peekable(objects.find_tree_iter(&lhs, &mut state.buf1)?);
+                            rhs_entries = peekable(objects.find_tree_iter(&rhs, &mut state.buf2)?);
                         }
                         Some((Some(lhs), None)) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(find(&lhs, &mut state.buf1).map_err(|err| Error::FindExisting {
-                                oid: lhs,
-                                source: err.into(),
-                            })?);
+                            lhs_entries = peekable(objects.find_tree_iter(&lhs, &mut state.buf1)?);
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),

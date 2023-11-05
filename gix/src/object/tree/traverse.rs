@@ -1,5 +1,3 @@
-use gix_odb::FindExt;
-
 use crate::Tree;
 
 /// Traversal
@@ -52,11 +50,6 @@ impl<'a, 'repo> Platform<'a, 'repo> {
     {
         let root = gix_object::TreeRefIter::from_bytes(&self.root.data);
         let state = gix_traverse::tree::breadthfirst::State::default();
-        gix_traverse::tree::breadthfirst(
-            root,
-            state,
-            |oid, buf| self.root.repo.objects.find_tree_iter(oid, buf).ok(),
-            delegate,
-        )
+        gix_traverse::tree::breadthfirst(root, state, &self.root.repo.objects, delegate)
     }
 }

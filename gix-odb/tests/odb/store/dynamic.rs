@@ -1,7 +1,8 @@
 use std::process::Command;
 
 use gix_hash::ObjectId;
-use gix_odb::{store, store::iter::Ordering, Find, FindExt, Header, Write};
+use gix_object::{Exists, FindExt};
+use gix_odb::{store, store::iter::Ordering, Header, Write};
 use gix_testtools::fixture_path_standalone;
 
 use crate::{hex_to_id, odb::db};
@@ -64,7 +65,7 @@ fn multi_index_access() -> crate::Result {
         let mut buf = Vec::new();
         for oid in handle.iter()?.with_ordering(order) {
             let oid = oid?;
-            assert!(handle.contains(&oid));
+            assert!(handle.exists(&oid));
             let obj = handle.find(&oid, &mut buf)?;
             let hdr = handle.try_header(&oid)?.expect("exists");
             assert_eq!(hdr.kind(), obj.kind);
@@ -92,7 +93,7 @@ fn multi_index_access() -> crate::Result {
     );
 
     let non_existing_to_trigger_refresh = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    handle.contains(&non_existing_to_trigger_refresh);
+    handle.exists(&non_existing_to_trigger_refresh);
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -115,7 +116,7 @@ fn multi_index_access() -> crate::Result {
         handle.store_ref().path().join("pack/multi-pack-index"),
         filetime::FileTime::now(),
     )?;
-    handle.contains(&non_existing_to_trigger_refresh);
+    handle.exists(&non_existing_to_trigger_refresh);
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -181,7 +182,7 @@ fn multi_index_keep_open() -> crate::Result {
         handle.store_ref().path().join("pack/multi-pack-index"),
         filetime::FileTime::now(),
     )?;
-    gix_odb::Find::contains(&handle, &non_existing_to_trigger_refresh);
+    gix_object::Exists::exists(&handle, &non_existing_to_trigger_refresh);
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -324,7 +325,7 @@ fn object_replacement() -> crate::Result {
 fn contains() {
     let handle = db();
 
-    assert!(handle.contains(&hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"))); // loose object
+    assert!(handle.exists(&hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"))); // loose object
     assert_eq!(
         handle.store_ref().metrics(),
         gix_odb::store::Metrics {
@@ -343,7 +344,7 @@ fn contains() {
     );
 
     // pack c043, the biggest one
-    assert!(handle.contains(&hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5")));
+    assert!(handle.exists(&hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5")));
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -366,7 +367,7 @@ fn contains() {
     // The new handle should make no difference.
     #[allow(clippy::redundant_clone)]
     let mut new_handle = handle.clone();
-    assert!(new_handle.contains(&hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
+    assert!(new_handle.exists(&hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
     assert_eq!(
         new_handle.store_ref().metrics(),
         gix_odb::store::Metrics {
@@ -384,7 +385,7 @@ fn contains() {
         "when asking for an object in the smallest pack, all in between packs are also loaded."
     );
 
-    assert!(!new_handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!new_handle.exists(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.store_ref().metrics(),
         gix_odb::store::Metrics {
@@ -403,7 +404,7 @@ fn contains() {
     );
 
     new_handle.refresh_never();
-    assert!(!new_handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!new_handle.exists(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.store_ref().metrics(),
         gix_odb::store::Metrics {
@@ -430,7 +431,7 @@ fn lookup() {
 
     fn can_locate(db: &gix_odb::Handle, hex_id: &str) {
         let id = hex_to_id(hex_id);
-        assert!(db.contains(&id));
+        assert!(db.exists(&id));
 
         let mut buf = Vec::new();
         let obj = db.find(&id, &mut buf).expect("exists");
@@ -486,7 +487,7 @@ fn lookup() {
         handle.refresh_mode(),
         store::RefreshMode::AfterAllIndicesLoaded
     ));
-    assert!(!handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!handle.exists(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
 
     all_loaded.num_refreshes += 1;
     assert_eq!(
@@ -497,7 +498,7 @@ fn lookup() {
 
     handle.refresh_never();
     let previous_refresh_count = all_loaded.num_refreshes;
-    assert!(!handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!handle.exists(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         handle.store_ref().metrics().num_refreshes,
         previous_refresh_count,
@@ -733,7 +734,7 @@ mod lookup_prefix {
 #[test]
 fn missing_objects_triggers_everything_is_loaded() {
     let handle = db();
-    assert!(!handle.contains(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert!(!handle.exists(&hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -787,7 +788,7 @@ fn iterate_over_a_bunch_of_loose_and_packed_objects() -> crate::Result {
         );
         assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
         for id in db.iter()? {
-            assert!(db.contains(&id?), "each object exists");
+            assert!(db.exists(&id?), "each object exists");
         }
     }
     Ok(())

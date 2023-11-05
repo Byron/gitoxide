@@ -43,11 +43,7 @@ pub fn integrity(
     if let Some(index) = repo.worktree().map(|wt| wt.index()).transpose()? {
         index.verify_integrity()?;
         index.verify_entries()?;
-        index.verify_extensions(true, {
-            use gix::odb::FindExt;
-            let objects = repo.objects;
-            move |oid, buf: &mut Vec<u8>| objects.find_tree_iter(oid, buf).ok()
-        })?;
+        index.verify_extensions(true, repo.objects)?;
         progress.info(format!("Index at '{}' OK", index.path().display()));
     }
     match output_statistics {

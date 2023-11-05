@@ -1,5 +1,3 @@
-use gix_odb::Find;
-
 impl crate::Repository {
     /// Create a graph data-structure capable of accelerating graph traversals and storing state of type `T` with each commit
     /// it encountered.
@@ -16,11 +14,7 @@ impl crate::Repository {
     /// of the commit walk.
     pub fn revision_graph<T>(&self) -> gix_revwalk::Graph<'_, T> {
         gix_revwalk::Graph::new(
-            |id, buf| {
-                self.objects
-                    .try_find(id, buf)
-                    .map(|r| r.and_then(gix_object::Data::try_into_commit_iter))
-            },
+            &self.objects,
             self.config
                 .may_use_commit_graph()
                 .unwrap_or(true)

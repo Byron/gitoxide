@@ -84,7 +84,7 @@ pub enum Error {
     #[error(transparent)]
     CommitDecode(gix_object::decode::Error),
     #[error(transparent)]
-    FindExisting(#[from] crate::find::existing::Error),
+    FindExisting(#[from] gix_object::find::existing::Error),
     #[error(transparent)]
     InputIteration(Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]

@@ -1,5 +1,5 @@
 mod repo_with_small_packs {
-    use gix_odb::Find;
+    use gix_object::Find;
 
     use crate::odb::{db_small_packs, hex_to_id};
 

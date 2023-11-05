@@ -3,11 +3,6 @@ use std::path::Path;
 use gix_testtools::tempfile::{tempdir, TempDir};
 use gix_worktree::{stack, Stack};
 
-#[allow(clippy::ptr_arg)]
-fn panic_on_find<'buf>(_oid: &gix_hash::oid, _buf: &'buf mut Vec<u8>) -> std::io::Result<gix_object::BlobRef<'buf>> {
-    unreachable!("find should not be called")
-}
-
 #[test]
 fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() -> crate::Result {
     let dir = tempdir()?;
@@ -20,7 +15,7 @@ fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() -> crate
     );
     assert_eq!(cache.statistics().delegate.num_mkdir_calls, 0);
 
-    let path = cache.at_path("hello", Some(false), panic_on_find)?.path();
+    let path = cache.at_path("hello", Some(false), gix_object::find::Never)?.path();
     assert!(!path.parent().unwrap().exists(), "prefix itself is never created");
     assert_eq!(cache.statistics().delegate.num_mkdir_calls, 0);
     Ok(())
@@ -38,7 +33,7 @@ fn directory_paths_are_created_in_full() {
         ("link", None),
     ] {
         let path = cache
-            .at_path(Path::new("dir").join(name), *is_dir, panic_on_find)
+            .at_path(Path::new("dir").join(name), *is_dir, gix_object::find::Never)
             .unwrap()
             .path();
         assert!(path.parent().unwrap().is_dir(), "dir exists");
@@ -52,7 +47,7 @@ fn existing_directories_are_fine() -> crate::Result {
     let (mut cache, tmp) = new_cache();
     std::fs::create_dir(tmp.path().join("dir"))?;
 
-    let path = cache.at_path("dir/file", Some(false), panic_on_find)?.path();
+    let path = cache.at_path("dir/file", Some(false), gix_object::find::Never)?.path();
     assert!(path.parent().unwrap().is_dir(), "directory is still present");
     assert!(!path.exists(), "it won't create the file");
     assert_eq!(cache.statistics().delegate.num_mkdir_calls, 1);
@@ -77,7 +72,7 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
         let relative_path = format!("{dirname}/file");
         assert_eq!(
             cache
-                .at_path(&relative_path, Some(false), panic_on_find)
+                .at_path(&relative_path, Some(false), gix_object::find::Never)
                 .unwrap_err()
                 .kind(),
             std::io::ErrorKind::AlreadyExists
@@ -97,7 +92,9 @@ fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::R
             *unlink_on_collision = true;
         }
         let relative_path = format!("{dirname}/file");
-        let path = cache.at_path(&relative_path, Some(false), panic_on_find)?.path();
+        let path = cache
+            .at_path(&relative_path, Some(false), gix_object::find::Never)?
+            .path();
         assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
         assert!(!path.exists());
     }

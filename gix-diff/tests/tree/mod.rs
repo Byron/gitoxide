@@ -61,11 +61,7 @@ mod changes {
             gix_diff::tree::Changes::from(lhs_tree).needed_to_obtain(
                 rhs_tree,
                 gix_diff::tree::State::default(),
-                |oid, buf| {
-                    use gix_odb::pack::FindExt;
-                    db.find(oid, buf)
-                        .map(|obj| obj.0.try_into_tree_iter().expect("only called for trees"))
-                },
+                db,
                 &mut recorder,
             )?;
             Ok(recorder.records)
@@ -108,11 +104,7 @@ mod changes {
             gix_diff::tree::Changes::from(previous_tree).needed_to_obtain(
                 current_tree,
                 &mut gix_diff::tree::State::default(),
-                |oid, buf| {
-                    use gix_odb::pack::FindExt;
-                    db.find(oid, buf)
-                        .map(|(obj, _)| obj.try_into_tree_iter().expect("only called for trees"))
-                },
+                db,
                 &mut recorder,
             )?;
             Ok(recorder.records)
@@ -141,27 +133,24 @@ mod changes {
             let mut buf = Vec::new();
 
             let head = head_of(db);
-            commit::Ancestors::new(Some(head), commit::ancestors::State::default(), |oid, buf| {
-                use gix_odb::FindExt;
-                db.find_commit_iter(oid, buf)
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .expect("valid iteration")
-            .into_iter()
-            .map(|c| {
-                use gix_odb::FindExt;
-                (
-                    db.find_commit(&c.id, &mut buf)
-                        .unwrap()
-                        .message
-                        .trim()
-                        .to_str_lossy()
-                        .into_owned(),
-                    c.id,
-                )
-            })
-            .rev()
-            .collect()
+            commit::Ancestors::new(Some(head), commit::ancestors::State::default(), &db)
+                .collect::<Result<Vec<_>, _>>()
+                .expect("valid iteration")
+                .into_iter()
+                .map(|c| {
+                    use gix_object::FindExt;
+                    (
+                        db.find_commit(&c.id, &mut buf)
+                            .unwrap()
+                            .message
+                            .trim()
+                            .to_str_lossy()
+                            .into_owned(),
+                        c.id,
+                    )
+                })
+                .rev()
+                .collect()
         }
 
         #[test]

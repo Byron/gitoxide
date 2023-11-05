@@ -4,8 +4,6 @@ use crate::{clone::PrepareCheckout, Repository};
 pub mod main_worktree {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
-    use gix_odb::FindExt;
-
     use crate::{clone::PrepareCheckout, Progress, Repository};
 
     /// The error returned by [`PrepareCheckout::main_worktree()`].
@@ -26,7 +24,7 @@ pub mod main_worktree {
         #[error(transparent)]
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
-        IndexCheckout(#[from] gix_worktree_state::checkout::Error<gix_odb::find::existing_object::Error>),
+        IndexCheckout(#[from] gix_worktree_state::checkout::Error),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
         #[error("The HEAD reference could not be located")]
@@ -96,11 +94,10 @@ pub mod main_worktree {
                     ))
                 }
             };
-            let index = gix_index::State::from_tree(&root_tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())
-                .map_err(|err| Error::IndexFromTree {
-                    id: root_tree,
-                    source: err,
-                })?;
+            let index = gix_index::State::from_tree(&root_tree, &repo.objects).map_err(|err| Error::IndexFromTree {
+                id: root_tree,
+                source: err,
+            })?;
             let mut index = gix_index::File::from_state(index, repo.index_path());
 
             let mut opts = repo
@@ -118,10 +115,7 @@ pub mod main_worktree {
             let outcome = gix_worktree_state::checkout(
                 &mut index,
                 workdir,
-                {
-                    let objects = repo.objects.clone().into_arc()?;
-                    move |oid, buf| objects.find_blob(oid, buf)
-                },
+                repo.objects.clone().into_arc()?,
                 &files,
                 &bytes,
                 should_interrupt,

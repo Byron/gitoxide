@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::{
     convert::Infallible,
     sync::atomic::{AtomicUsize, Ordering},
@@ -5,11 +6,11 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
+use gix::objs::find::Error;
 use gix::{
     bstr::{BStr, BString, ByteSlice},
     features::progress,
     object::tree::diff::rewrites::CopySource,
-    odb::FindExt,
     parallel::{InOrderIter, SequenceId},
     prelude::ObjectIdExt,
     Count, Progress,
@@ -150,13 +151,18 @@ pub fn update(
             });
             r
         };
+
+        #[derive(Clone)]
         struct Task {
             commit: gix::hash::ObjectId,
             parent_commit: Option<gix::hash::ObjectId>,
             compute_stats: bool,
         }
+
+        type Packet = (SequenceId, Vec<Task>);
+
         let (tx_tree_ids, stat_threads) = {
-            let (tx, rx) = crossbeam_channel::unbounded::<(SequenceId, Vec<Task>)>();
+            let (tx, rx) = crossbeam_channel::unbounded::<Packet>();
             let stat_workers = (0..threads)
                 .map(|_| {
                     scope.spawn({
@@ -304,46 +310,94 @@ pub fn update(
         };
         drop(tx_stats);
 
-        const CHUNK_SIZE: usize = 50;
-        let mut chunk = Vec::with_capacity(CHUNK_SIZE);
-        let mut chunk_id: SequenceId = 0;
-        let commit_iter = gix::interrupt::Iter::new(
-            commit_id.ancestors(|oid, buf| -> Result<_, gix::object::find::existing::Error> {
-                let obj = repo.objects.find(oid, buf)?;
-                traverse_progress.inc();
-                if known_commits.binary_search(&oid.to_owned()).is_err() {
+        #[derive(Clone)]
+        struct Db<'a, Find: Clone> {
+            inner: &'a Find,
+            progress: &'a dyn gix::progress::Count,
+            chunk: std::cell::RefCell<Vec<Task>>,
+            chunk_id: std::cell::RefCell<SequenceId>,
+            chunk_size: usize,
+            tx: crossbeam_channel::Sender<Packet>,
+            known_commits: &'a [gix::ObjectId],
+        }
+
+        impl<'a, Find> Db<'a, Find>
+        where
+            Find: gix::prelude::Find + Clone,
+        {
+            fn new(
+                inner: &'a Find,
+                progress: &'a dyn gix::progress::Count,
+                chunk_size: usize,
+                tx: crossbeam_channel::Sender<Packet>,
+                known_commits: &'a [gix::ObjectId],
+            ) -> Self {
+                Self {
+                    inner,
+                    progress,
+                    known_commits,
+                    tx,
+                    chunk_size,
+                    chunk_id: 0.into(),
+                    chunk: RefCell::new(Vec::with_capacity(chunk_size)),
+                }
+            }
+
+            fn send_last_chunk(self) {
+                self.tx.send((self.chunk_id.into_inner(), self.chunk.into_inner())).ok();
+            }
+        }
+
+        impl<'a, Find> gix::prelude::Find for Db<'a, Find>
+        where
+            Find: gix::prelude::Find + Clone,
+        {
+            fn try_find<'b>(&self, id: &gix::oid, buf: &'b mut Vec<u8>) -> Result<Option<gix::objs::Data<'b>>, Error> {
+                let obj = self.inner.try_find(id, buf)?;
+                let Some(obj) = obj else { return Ok(None) };
+                if !obj.kind.is_commit() {
+                    return Ok(None);
+                }
+
+                self.progress.inc();
+                if self.known_commits.binary_search(&id.to_owned()).is_err() {
                     let res = {
                         let mut parents = gix::objs::CommitRefIter::from_bytes(obj.data).parent_ids();
-                        let res = parents.next().map(|first_parent| (Some(first_parent), oid.to_owned()));
+                        let res = parents.next().map(|first_parent| (Some(first_parent), id.to_owned()));
                         match parents.next() {
                             Some(_) => None,
                             None => res,
                         }
                     };
                     if let Some((first_parent, commit)) = res {
-                        chunk.push(Task {
+                        self.chunk.borrow_mut().push(Task {
                             parent_commit: first_parent,
                             commit,
                             compute_stats: true,
                         });
                     } else {
-                        chunk.push(Task {
+                        self.chunk.borrow_mut().push(Task {
                             parent_commit: None,
-                            commit: oid.to_owned(),
+                            commit: id.to_owned(),
                             compute_stats: false,
                         });
                     }
-                    if chunk.len() == CHUNK_SIZE {
-                        tx_tree_ids
-                            .send((chunk_id, std::mem::replace(&mut chunk, Vec::with_capacity(CHUNK_SIZE))))
+                    if self.chunk.borrow().len() == self.chunk_size {
+                        self.tx
+                            .send((
+                                *self.chunk_id.borrow(),
+                                std::mem::replace(&mut self.chunk.borrow_mut(), Vec::with_capacity(self.chunk_size)),
+                            ))
                             .ok();
-                        chunk_id += 1;
+                        *self.chunk_id.borrow_mut() += 1;
                     }
                 }
-                Ok(gix::objs::CommitRefIter::from_bytes(obj.data))
-            }),
-            || anyhow!("Cancelled by user"),
-        );
+                Ok(Some(obj))
+            }
+        }
+
+        let db = Db::new(&repo.objects, &traverse_progress, 50, tx_tree_ids, &known_commits);
+        let commit_iter = gix::interrupt::Iter::new(commit_id.ancestors(&db), || anyhow!("Cancelled by user"));
         let mut commits = Vec::new();
         for c in commit_iter {
             match c?.map(|c| c.id) {
@@ -354,15 +408,14 @@ pub fn update(
                         break;
                     }
                 }
-                Err(gix::traverse::commit::ancestors::Error::FindExisting { .. }) => {
+                Err(gix::traverse::commit::ancestors::Error::Find { .. }) => {
                     writeln!(err, "shallow repository - commit history is truncated").ok();
                     break;
                 }
                 Err(err) => return Err(err.into()),
             };
         }
-        tx_tree_ids.send((chunk_id, chunk)).ok();
-        drop(tx_tree_ids);
+        db.send_last_chunk();
         let saw_new_commits = !commits.is_empty();
         if saw_new_commits {
             traverse_progress.show_throughput(start);

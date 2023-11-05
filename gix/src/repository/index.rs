@@ -1,5 +1,3 @@
-use gix_odb::FindExt;
-
 use crate::{config::cache::util::ApplyLeniencyDefault, repository::IndexPersistedOrInMemory, worktree};
 
 /// Index access
@@ -113,7 +111,7 @@ impl crate::Repository {
         tree: &gix_hash::oid,
     ) -> Result<gix_index::File, gix_traverse::tree::breadthfirst::Error> {
         Ok(gix_index::File::from_state(
-            gix_index::State::from_tree(tree, |oid, buf| self.objects.find_tree_iter(oid, buf).ok())?,
+            gix_index::State::from_tree(tree, &self.objects)?,
             self.git_dir().join("index"),
         ))
     }

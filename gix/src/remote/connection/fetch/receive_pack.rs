@@ -3,7 +3,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use gix_odb::{store::RefreshMode, FindExt};
+use gix_odb::store::RefreshMode;
 use gix_protocol::{
     fetch::Arguments,
     transport::{client::Transport, packetline::read::ProgressAction},
@@ -277,7 +277,7 @@ where
                         should_interrupt,
                         Some(Box::new({
                             let repo = repo.clone();
-                            move |oid, buf| repo.objects.find(&oid, buf).ok()
+                            repo.objects
                         })),
                         options,
                     )?;

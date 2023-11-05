@@ -1,6 +1,5 @@
 use std::{borrow::Cow, convert::TryInto, io::Write};
 
-use gix_odb::Find;
 use gix_ref::{
     transaction::{LogChange, RefLog},
     FullNameRef,
@@ -107,7 +106,7 @@ pub fn update_head(
             repo.refs
                 .transaction()
                 .packed_refs(gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
-                    Box::new(|oid, buf| repo.objects.try_find(&oid, buf).map(|obj| obj.map(|obj| obj.kind))),
+                    Box::new(&repo.objects),
                 ))
                 .prepare(
                     {

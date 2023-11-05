@@ -71,18 +71,17 @@ pub struct Options {
 /// The error returned by the [checkout()][crate::checkout()] function.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
-pub enum Error<E: std::error::Error + Send + Sync + 'static> {
+pub enum Error {
     #[error("Could not convert path to UTF8: {}", .path)]
     IllformedUtf8 { path: BString },
     #[error("The clock was off when reading file related metadata after updating a file on disk")]
     Time(#[from] std::time::SystemTimeError),
     #[error("IO error while writing blob or reading file metadata or changing filetype")]
     Io(#[from] std::io::Error),
-    #[error("object {} for checkout at {} could not be retrieved from object database", .oid.to_hex(), .path.display())]
+    #[error("object for checkout at {} could not be retrieved from object database", .path.display())]
     Find {
         #[source]
-        err: E,
-        oid: gix_hash::ObjectId,
+        err: gix_object::find::existing_object::Error,
         path: std::path::PathBuf,
     },
     #[error(transparent)]

@@ -170,7 +170,7 @@ mod write_to_directory {
             directory,
             &mut progress::Discard,
             &SHOULD_INTERRUPT,
-            None,
+            None::<gix_object::find::Never>,
             pack::bundle::write::Options {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,

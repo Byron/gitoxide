@@ -114,10 +114,11 @@ pub fn objects_unthreaded(
 }
 
 mod expand {
+    use std::cell::RefCell;
     use std::sync::atomic::{AtomicBool, Ordering};
 
     use gix_hash::{oid, ObjectId};
-    use gix_object::{CommitRefIter, TagRefIter};
+    use gix_object::{CommitRefIter, Data, TagRefIter};
 
     use super::{
         tree,
@@ -206,24 +207,15 @@ mod expand {
 
                                 let objects_ref = if parent_commit_ids.is_empty() {
                                     traverse_delegate.clear();
+                                    let objects = ExpandedCountingObjects::new(db, out, objects);
                                     gix_traverse::tree::breadthfirst(
                                         current_tree_iter,
                                         &mut tree_traversal_state,
-                                        |oid, buf| {
-                                            stats.decoded_objects += 1;
-                                            match db.find(oid, buf).ok() {
-                                                Some((obj, location)) => {
-                                                    objects.fetch_add(1, Ordering::Relaxed);
-                                                    stats.expanded_objects += 1;
-                                                    out.push(output::Count::from_data(oid, location));
-                                                    obj.try_into_tree_iter()
-                                                }
-                                                None => None,
-                                            }
-                                        },
+                                        &objects,
                                         &mut traverse_delegate,
                                     )
                                     .map_err(Error::TreeTraverse)?;
+                                    out = objects.dissolve(stats);
                                     &traverse_delegate.non_trees
                                 } else {
                                     for commit_id in &parent_commit_ids {
@@ -252,17 +244,16 @@ mod expand {
                                         };
 
                                         changes_delegate.clear();
+                                        let objects = CountingObjects::new(db);
                                         gix_diff::tree::Changes::from(Some(parent_tree))
                                             .needed_to_obtain(
-                                                current_tree_iter.clone(),
+                                                current_tree_iter,
                                                 &mut tree_diff_state,
-                                                |oid, buf| {
-                                                    stats.decoded_objects += 1;
-                                                    db.find_tree_iter(oid, buf).map(|t| t.0)
-                                                },
+                                                &objects,
                                                 &mut changes_delegate,
                                             )
                                             .map_err(Error::TreeChanges)?;
+                                        stats.decoded_objects += objects.into_count();
                                     }
                                     &changes_delegate.objects
                                 };
@@ -283,24 +274,17 @@ mod expand {
                         match obj.0.kind {
                             Tree => {
                                 traverse_delegate.clear();
-                                gix_traverse::tree::breadthfirst(
-                                    gix_object::TreeRefIter::from_bytes(obj.0.data),
-                                    &mut tree_traversal_state,
-                                    |oid, buf| {
-                                        stats.decoded_objects += 1;
-                                        match db.find(oid, buf).ok() {
-                                            Some((obj, location)) => {
-                                                objects.fetch_add(1, Ordering::Relaxed);
-                                                stats.expanded_objects += 1;
-                                                out.push(output::Count::from_data(oid, location));
-                                                obj.try_into_tree_iter()
-                                            }
-                                            None => None,
-                                        }
-                                    },
-                                    &mut traverse_delegate,
-                                )
-                                .map_err(Error::TreeTraverse)?;
+                                {
+                                    let objects = ExpandedCountingObjects::new(db, out, objects);
+                                    gix_traverse::tree::breadthfirst(
+                                        gix_object::TreeRefIter::from_bytes(obj.0.data),
+                                        &mut tree_traversal_state,
+                                        &objects,
+                                        &mut traverse_delegate,
+                                    )
+                                    .map_err(Error::TreeTraverse)?;
+                                    out = objects.dissolve(stats);
+                                }
                                 for id in &traverse_delegate.non_trees {
                                     out.push(id_to_count(db, buf1, id, objects, stats, allow_pack_lookups));
                                 }
@@ -372,6 +356,78 @@ mod expand {
             } else {
                 PackLocation::NotLookedUp
             },
+        }
+    }
+
+    struct CountingObjects<'a> {
+        decoded_objects: std::cell::RefCell<usize>,
+        objects: &'a dyn crate::Find,
+    }
+
+    impl<'a> CountingObjects<'a> {
+        fn new(objects: &'a dyn crate::Find) -> Self {
+            Self {
+                decoded_objects: Default::default(),
+                objects,
+            }
+        }
+
+        fn into_count(self) -> usize {
+            self.decoded_objects.into_inner()
+        }
+    }
+
+    impl gix_object::Find for CountingObjects<'_> {
+        fn try_find<'a>(&self, id: &oid, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, gix_object::find::Error> {
+            let res = Ok(self.objects.try_find(id, buffer)?.map(|t| t.0));
+            *self.decoded_objects.borrow_mut() += 1;
+            res
+        }
+    }
+
+    struct ExpandedCountingObjects<'a> {
+        decoded_objects: std::cell::RefCell<usize>,
+        expanded_objects: std::cell::RefCell<usize>,
+        out: std::cell::RefCell<Vec<output::Count>>,
+        objects_count: &'a gix_features::progress::AtomicStep,
+        objects: &'a dyn crate::Find,
+    }
+
+    impl<'a> ExpandedCountingObjects<'a> {
+        fn new(
+            objects: &'a dyn crate::Find,
+            out: Vec<output::Count>,
+            objects_count: &'a gix_features::progress::AtomicStep,
+        ) -> Self {
+            Self {
+                decoded_objects: Default::default(),
+                expanded_objects: Default::default(),
+                out: RefCell::new(out),
+                objects_count,
+                objects,
+            }
+        }
+
+        fn dissolve(self, stats: &mut Outcome) -> Vec<output::Count> {
+            stats.decoded_objects += self.decoded_objects.into_inner();
+            stats.expanded_objects += self.expanded_objects.into_inner();
+            self.out.into_inner()
+        }
+    }
+
+    impl gix_object::Find for ExpandedCountingObjects<'_> {
+        fn try_find<'a>(&self, id: &oid, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, gix_object::find::Error> {
+            let maybe_obj = self.objects.try_find(id, buffer)?;
+            *self.decoded_objects.borrow_mut() += 1;
+            match maybe_obj {
+                None => Ok(None),
+                Some((obj, location)) => {
+                    self.objects_count.fetch_add(1, Ordering::Relaxed);
+                    *self.expanded_objects.borrow_mut() += 1;
+                    self.out.borrow_mut().push(output::Count::from_data(id, location));
+                    Ok(Some(obj))
+                }
+            }
         }
     }
 }

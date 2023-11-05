@@ -1,6 +1,5 @@
 use std::borrow::BorrowMut;
 
-use gix_hash::oid;
 use gix_object::TreeRefIter;
 use gix_traverse::tree::breadthfirst;
 
@@ -16,11 +15,11 @@ pub trait TreeIterExt: Sealed {
     fn traverse<StateMut, Find, V>(
         &self,
         state: StateMut,
-        find: Find,
+        objects: Find,
         delegate: &mut V,
     ) -> Result<(), breadthfirst::Error>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
+        Find: gix_object::Find,
         StateMut: BorrowMut<breadthfirst::State>,
         V: gix_traverse::tree::Visit;
 }
@@ -31,15 +30,15 @@ impl<'d> TreeIterExt for TreeRefIter<'d> {
     fn traverse<StateMut, Find, V>(
         &self,
         state: StateMut,
-        find: Find,
+        objects: Find,
         delegate: &mut V,
     ) -> Result<(), breadthfirst::Error>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
+        Find: gix_object::Find,
         StateMut: BorrowMut<breadthfirst::State>,
         V: gix_traverse::tree::Visit,
     {
-        breadthfirst(self.clone(), state, find, delegate)
+        breadthfirst(*self, state, objects, delegate)
     }
 }
 

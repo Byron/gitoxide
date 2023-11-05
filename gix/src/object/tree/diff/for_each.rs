@@ -1,5 +1,4 @@
 use gix_object::TreeRefIter;
-use gix_odb::FindExt;
 
 use super::{change, Action, Change, Platform};
 use crate::{
@@ -61,7 +60,7 @@ impl<'a, 'old> Platform<'a, 'old> {
         match gix_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
             TreeRefIter::from_bytes(&other.data),
             &mut self.state,
-            |oid, buf| repo.objects.find_tree_iter(oid, buf),
+            &repo.objects,
             &mut delegate,
         ) {
             Ok(()) => {

@@ -2,7 +2,6 @@
 use std::path::{Path, PathBuf};
 
 use bstr::{BStr, ByteSlice};
-use gix_hash::oid;
 
 use super::Stack;
 use crate::PathIdMapping;
@@ -106,18 +105,17 @@ impl Stack {
     /// symlinks are in that path.
     /// Unless `is_dir` is known with `Some(…)`, then `relative` points to a directory itself in which case the entire resulting
     /// path is created as directory. If it's not known it is assumed to be a file.
-    /// `find` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()], with mappnigs
+    /// `objects` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()], with mappnigs
     ///
     /// Provide access to cached information for that `relative` path via the returned platform.
-    pub fn at_path<Find, E>(
+    pub fn at_path<Find>(
         &mut self,
         relative: impl AsRef<Path>,
         is_dir: Option<bool>,
-        mut find: Find,
+        objects: Find,
     ) -> std::io::Result<Platform<'_>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
-        E: std::error::Error + Send + Sync + 'static,
+        Find: gix_object::Find,
     {
         self.statistics.platforms += 1;
         let mut delegate = StackDelegate {
@@ -125,7 +123,7 @@ impl Stack {
             buf: &mut self.buf,
             is_dir: is_dir.unwrap_or(false),
             id_mappings: &self.id_mappings,
-            find: &mut |oid, buf| Ok(find(oid, buf).map_err(Box::new)?),
+            objects: &objects,
             case: self.case,
             statistics: &mut self.statistics,
         };
@@ -136,7 +134,7 @@ impl Stack {
 
     /// Obtain a platform for lookups from a repo-`relative` path, typically obtained from an index entry. `is_dir` should reflect
     /// whether it's a directory or not, or left at `None` if unknown.
-    /// `find` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()].
+    /// `objects` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()].
     /// All effects are similar to [`at_path()`][Self::at_path()].
     ///
     /// If `relative` ends with `/` and `is_dir` is `None`, it is automatically assumed to be a directory.
@@ -144,15 +142,14 @@ impl Stack {
     /// ### Panics
     ///
     /// on illformed UTF8 in `relative`
-    pub fn at_entry<'r, Find, E>(
+    pub fn at_entry<'r, Find>(
         &mut self,
         relative: impl Into<&'r BStr>,
         is_dir: Option<bool>,
-        find: Find,
+        objects: Find,
     ) -> std::io::Result<Platform<'_>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<gix_object::BlobRef<'a>, E>,
-        E: std::error::Error + Send + Sync + 'static,
+        Find: gix_object::Find,
     {
         let relative = relative.into();
         let relative_path = gix_path::from_bstr(relative);
@@ -160,7 +157,7 @@ impl Stack {
         self.at_path(
             relative_path,
             is_dir.or_else(|| relative.ends_with_str("/").then_some(true)),
-            find,
+            objects,
         )
     }
 }

@@ -12,34 +12,45 @@ mod from_tree {
     };
 
     use gix_attributes::glob::pattern::Case;
+    use gix_hash::oid;
+    use gix_object::Data;
     use gix_object::{bstr::ByteSlice, tree::EntryMode};
-    use gix_odb::FindExt;
     use gix_testtools::once_cell::sync::Lazy;
     use gix_worktree::stack::state::attributes::Source;
 
     use crate::hex_to_id;
 
+    #[derive(Clone)]
+    struct FailObjectRetrieval;
+
+    impl gix_object::Find for FailObjectRetrieval {
+        fn try_find<'a>(
+            &self,
+            _id: &oid,
+            _buffer: &'a mut Vec<u8>,
+        ) -> Result<Option<Data<'a>>, gix_object::find::Error> {
+            Err(Box::new(Error::new(ErrorKind::Other, "object retrieval failed")))
+        }
+    }
+
     #[test]
     fn can_receive_err_if_root_is_not_found() {
         let mut stream = gix_worktree_stream::from_tree(
             gix_hash::Kind::Sha1.null(),
-            |_, _| Err(Error::new(ErrorKind::Other, "object retrieval failed")),
+            FailObjectRetrieval,
             mutating_pipeline(false),
             |_, _, _| -> Result<_, Infallible> { unreachable!("must not be called") },
         );
         let err = stream.next_entry().unwrap_err();
-        assert_eq!(err.to_string(), "Could not find a blob or tree for archival");
+        assert_eq!(err.to_string(), "Could not find a tree to traverse");
     }
 
     #[test]
     fn can_receive_err_if_attribute_not_found() -> gix_testtools::Result {
         let (_dir, head_tree, odb, _cache) = basic()?;
-        let mut stream = gix_worktree_stream::from_tree(
-            head_tree,
-            move |id, buf| odb.find(id, buf),
-            mutating_pipeline(false),
-            |_, _, _| Err(Error::new(ErrorKind::Other, "attribute retrieval failed")),
-        );
+        let mut stream = gix_worktree_stream::from_tree(head_tree, odb, mutating_pipeline(false), |_, _, _| {
+            Err(Error::new(ErrorKind::Other, "attribute retrieval failed"))
+        });
         let err = stream.next_entry().unwrap_err();
         assert_eq!(
             err.to_string(),
@@ -53,14 +64,11 @@ mod from_tree {
         let (dir, head_tree, odb, mut cache) = basic()?;
         let mut stream = gix_worktree_stream::from_tree(
             head_tree,
-            {
-                let odb = odb.clone();
-                move |id, buf| odb.find(id, buf)
-            },
+            odb.clone(),
             mutating_pipeline(true),
             move |rela_path, mode, attrs| {
                 cache
-                    .at_entry(rela_path, mode.is_tree().into(), |id, buf| odb.find_blob(id, buf))
+                    .at_entry(rela_path, mode.is_tree().into(), &odb)
                     .map(|entry| entry.matching_attributes(attrs))
                     .map(|_| ())
             },
@@ -214,14 +222,11 @@ mod from_tree {
         let (_dir, head_tree, odb, mut cache) = basic()?;
         let mut stream = gix_worktree_stream::from_tree(
             head_tree,
-            {
-                let odb = odb.clone();
-                move |id, buf| odb.find(id, buf)
-            },
+            odb.clone(),
             mutating_pipeline(false),
             move |rela_path, mode, attrs| {
                 cache
-                    .at_entry(rela_path, mode.is_tree().into(), |id, buf| odb.find_blob(id, buf))
+                    .at_entry(rela_path, mode.is_tree().into(), &odb)
                     .map(|entry| entry.matching_attributes(attrs))
                     .map(|_| ())
             },

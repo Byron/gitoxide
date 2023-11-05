@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
-use gix_odb::{Find, FindExt};
+use gix_object::Exists;
 use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target, TargetRef,
@@ -96,8 +96,8 @@ pub(crate) fn update(
     ) {
         // `None` only if unborn.
         let remote_id = remote.as_id();
-        if matches!(dry_run, fetch::DryRun::No) && !remote_id.map_or(true, |id| repo.objects.contains(id)) {
-            if let Some(remote_id) = remote_id.filter(|id| !repo.objects.contains(id)) {
+        if matches!(dry_run, fetch::DryRun::No) && !remote_id.map_or(true, |id| repo.objects.exists(id)) {
+            if let Some(remote_id) = remote_id.filter(|id| !repo.objects.exists(id)) {
                 let update = if is_implicit_tag {
                     Mode::ImplicitTagNotSentByRemote.into()
                 } else {
@@ -159,7 +159,7 @@ pub(crate) fn update(
                                                 }).and_then(|local_commit_time|
                                                 remote_id
                                                     .to_owned()
-                                                    .ancestors(|id, buf| repo.objects.find_commit_iter(id, buf))
+                                                    .ancestors(&repo.objects)
                                                     .sorting(
                                                         gix_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
                                                             seconds: local_commit_time
@@ -325,11 +325,7 @@ pub(crate) fn update(
                 .packed_refs(
                     match write_packed_refs {
                         fetch::WritePackedRefs::Only => {
-                            gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box::new(|oid, buf| {
-                                repo.objects
-                                    .try_find(&oid, buf)
-                                    .map(|obj| obj.map(|obj| obj.kind))
-                            }))},
+                            gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box::new(&repo.objects))},
                         fetch::WritePackedRefs::Never => gix_ref::file::transaction::PackedRefs::DeletionsOnly
                     }
                 )

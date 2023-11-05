@@ -30,8 +30,11 @@ mod blob;
 ///
 pub mod data;
 
+///
+pub mod find;
+
 mod traits;
-pub use traits::WriteTo;
+pub use traits::{Exists, Find, FindExt, WriteTo};
 
 pub mod encode;
 pub(crate) mod parse;
@@ -50,7 +53,7 @@ pub enum Kind {
     Tag,
 }
 /// A chunk of any [`data`][BlobRef::data].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobRef<'a> {
     /// The bytes themselves.
@@ -222,7 +225,7 @@ pub struct TreeRef<'a> {
 }
 
 /// A directory snapshot containing files (blobs), directories (trees) and submodules (commits), lazily evaluated.
-#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct TreeRefIter<'a> {
     /// The directories and files contained in this tree.
     data: &'a [u8],
@@ -246,7 +249,7 @@ impl Tree {
 }
 
 /// A borrowed object using a slice as backing buffer, or in other words a bytes buffer that knows the kind of object it represents.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Data<'a> {
     /// kind of object
     pub kind: Kind,

@@ -338,12 +338,10 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     self.packed_transaction = Some(match &mut self.packed_refs {
                         PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(f)
                         | PackedRefs::DeletionsAndNonSymbolicUpdates(f) => {
-                            transaction.prepare(&mut edits_for_packed_transaction.into_iter(), f)?
+                            transaction.prepare(&mut edits_for_packed_transaction.into_iter(), &**f)?
                         }
                         PackedRefs::DeletionsOnly => transaction
-                            .prepare(&mut edits_for_packed_transaction.into_iter(), &mut |_, _| {
-                                unreachable!("BUG: deletions never trigger object lookups")
-                            })?,
+                            .prepare(&mut edits_for_packed_transaction.into_iter(), &gix_object::find::Never)?,
                     });
                 }
             }
