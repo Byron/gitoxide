@@ -14,6 +14,10 @@ body:
       description: Describe what should happen.
   - type: textarea
     attributes:
+      label: Git behavior
+      description: Describe what Git does under similar circumstances.
+  - type: textarea
+    attributes:
       label: Steps to reproduce 🕹
       description: Describe how we can reproduce the behaviour.
       placeholder: |
