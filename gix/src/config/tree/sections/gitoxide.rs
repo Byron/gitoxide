@@ -14,6 +14,8 @@ impl Gitoxide {
     pub const COMMIT: Commit = Commit;
     /// The `gitoxide.committer` section.
     pub const COMMITTER: Committer = Committer;
+    /// The `gitoxide.credentials` section.
+    pub const CREDENTIALS: Credentials = Credentials;
     /// The `gitoxide.http` section.
     pub const HTTP: Http = Http;
     /// The `gitoxide.https` section.
@@ -427,6 +429,30 @@ mod subsections {
         }
     }
 
+    /// The `credentials` sub-section.
+    #[derive(Copy, Clone, Default)]
+    pub struct Credentials;
+    impl Credentials {
+        /// The `gitoxide.credentials.terminalPrompt` key.
+        pub const TERMINAL_PROMPT: keys::Boolean = keys::Boolean::new_boolean("terminalPrompt", &Gitoxide::CREDENTIALS)
+            .with_note("This is a custom addition to provide an alternative to the respective environment variable.")
+            .with_environment_override("GIT_TERMINAL_PROMPT");
+    }
+
+    impl Section for Credentials {
+        fn name(&self) -> &str {
+            "credentials"
+        }
+
+        fn keys(&self) -> &[&dyn Key] {
+            &[&Self::TERMINAL_PROMPT]
+        }
+
+        fn parent(&self) -> Option<&dyn Section> {
+            Some(&Tree::GITOXIDE)
+        }
+    }
+
     /// The `commit` sub-section.
     #[derive(Copy, Clone, Default)]
     pub struct Commit;
@@ -454,7 +480,7 @@ mod subsections {
         }
     }
 }
-pub use subsections::{Allow, Author, Commit, Committer, Core, Http, Https, Objects, Pathspec, Ssh, User};
+pub use subsections::{Allow, Author, Commit, Committer, Core, Credentials, Http, Https, Objects, Pathspec, Ssh, User};
 
 pub mod validate {
     use std::error::Error;

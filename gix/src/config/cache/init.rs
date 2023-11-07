@@ -387,6 +387,15 @@ fn apply_environment_overrides(
         ),
         (
             "gitoxide",
+            Some(Cow::Borrowed("credentials".into())),
+            git_prefix,
+            &[{
+                let key = &gitoxide::Credentials::TERMINAL_PROMPT;
+                (env(key), key.name)
+            }],
+        ),
+        (
+            "gitoxide",
             Some(Cow::Borrowed("committer".into())),
             identity,
             &[

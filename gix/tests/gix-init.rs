@@ -48,6 +48,7 @@ mod with_overrides {
             .set("GIT_GLOB_PATHSPECS", "pathspecs-glob")
             .set("GIT_NOGLOB_PATHSPECS", "pathspecs-noglob")
             .set("GIT_ICASE_PATHSPECS", "pathspecs-icase")
+            .set("GIT_TERMINAL_PROMPT", "42")
             .set("GIT_SHALLOW_FILE", "shallow-file-env");
         let mut opts = gix::open::Options::isolated()
             .cli_overrides([
@@ -234,6 +235,7 @@ mod with_overrides {
             ("gitoxide.pathspec.glob", "pathspecs-glob"),
             ("gitoxide.pathspec.noglob", "pathspecs-noglob"),
             ("gitoxide.pathspec.literal", "pathspecs-literal"),
+            ("gitoxide.credentials.terminalPrompt", "42"),
         ] {
             assert_eq!(
                 config

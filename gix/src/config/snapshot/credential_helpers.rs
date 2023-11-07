@@ -3,6 +3,7 @@ use std::{borrow::Cow, convert::TryFrom};
 pub use error::Error;
 
 use crate::config::cache::util::IgnoreEmptyPath;
+use crate::config::tree::gitoxide::Credentials;
 use crate::{
     bstr::{ByteSlice, ByteVec},
     config::{
@@ -144,9 +145,12 @@ impl Snapshot<'_> {
                 .transpose()
                 .ignore_empty()?
                 .map(|c| Cow::Owned(c.into_owned())),
-            ..Default::default()
+            mode: self
+                .boolean(Credentials::TERMINAL_PROMPT.logical_name().as_str())
+                .and_then(|val| (!val).then_some(gix_prompt::Mode::Disable))
+                .unwrap_or_default(),
         }
-        .apply_environment(allow_git_env, allow_ssh_env, allow_git_env);
+        .apply_environment(allow_git_env, allow_ssh_env, false /* terminal prompt */);
         Ok((
             gix_credentials::helper::Cascade {
                 programs,
