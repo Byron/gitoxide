@@ -595,6 +595,16 @@ pub mod commitgraph {
 }
 
 pub mod revision {
+    pub mod resolve {
+        #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+        pub enum TreeMode {
+            /// Show the raw bytes - only useful for piping into files for use with tooling.
+            Raw,
+            /// Display a tree in human-readable form.
+            #[default]
+            Pretty,
+        }
+    }
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "rev", visible_alias = "r")]
     pub enum Subcommands {
@@ -625,6 +635,8 @@ pub mod revision {
             /// Show the first resulting object similar to how `git cat-file` would, but don't show the resolved spec.
             #[clap(short = 'c', long, conflicts_with = "explain")]
             cat_file: bool,
+            #[clap(short = 't', long)]
+            tree_mode: Option<resolve::TreeMode>,
             /// rev-specs like `@`, `@~1` or `HEAD^2`.
             #[clap(required = true)]
             specs: Vec<std::ffi::OsString>,

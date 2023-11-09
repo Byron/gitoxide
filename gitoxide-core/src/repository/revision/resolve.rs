@@ -4,6 +4,12 @@ pub struct Options {
     pub format: OutputFormat,
     pub explain: bool,
     pub cat_file: bool,
+    pub tree_mode: TreeMode,
+}
+
+pub enum TreeMode {
+    Raw,
+    Pretty,
 }
 
 pub(crate) mod function {
@@ -13,6 +19,7 @@ pub(crate) mod function {
     use gix::revision::Spec;
 
     use super::Options;
+    use crate::repository::revision::resolve::TreeMode;
     use crate::{repository::revision, OutputFormat};
 
     pub fn resolve(
@@ -23,6 +30,7 @@ pub(crate) mod function {
             format,
             explain,
             cat_file,
+            tree_mode,
         }: Options,
     ) -> anyhow::Result<()> {
         repo.object_cache_size_if_unset(1024 * 1024);
@@ -36,7 +44,7 @@ pub(crate) mod function {
                     let spec = gix::path::os_str_into_bstr(&spec)?;
                     let spec = repo.rev_parse(spec)?;
                     if cat_file {
-                        return display_object(spec, out);
+                        return display_object(spec, tree_mode, out);
                     }
                     writeln!(out, "{spec}", spec = spec.detach())?;
                 }
@@ -63,11 +71,11 @@ pub(crate) mod function {
         Ok(())
     }
 
-    fn display_object(spec: Spec<'_>, mut out: impl std::io::Write) -> anyhow::Result<()> {
+    fn display_object(spec: Spec<'_>, tree_mode: TreeMode, mut out: impl std::io::Write) -> anyhow::Result<()> {
         let id = spec.single().context("rev-spec must resolve to a single object")?;
         let object = id.object()?;
         match object.kind {
-            gix::object::Kind::Tree => {
+            gix::object::Kind::Tree if matches!(tree_mode, TreeMode::Pretty) => {
                 for entry in object.into_tree().iter() {
                     writeln!(out, "{}", entry?)?;
                 }
