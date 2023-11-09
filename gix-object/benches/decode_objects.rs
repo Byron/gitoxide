@@ -19,10 +19,10 @@ fn parse_tag(c: &mut Criterion) {
 }
 
 fn parse_tree(c: &mut Criterion) {
-    c.bench_function("TreeRef(sig)", |b| {
+    c.bench_function("TreeRef()", |b| {
         b.iter(|| black_box(gix_object::TreeRef::from_bytes(TREE)).unwrap())
     });
-    c.bench_function("TreeRefIter(sig)", |b| {
+    c.bench_function("TreeRefIter()", |b| {
         b.iter(|| black_box(gix_object::TreeRefIter::from_bytes(TREE).count()))
     });
 }
