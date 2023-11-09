@@ -56,7 +56,7 @@ mod iter {
 }
 
 mod from_bytes {
-    use gix_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRef};
+    use gix_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRef, TreeRefIter};
 
     use crate::{fixture_name, hex_to_id};
 
@@ -108,24 +108,46 @@ mod from_bytes {
     }
 
     #[test]
-    fn maybe_special() -> crate::Result {
+    fn invalid() {
+        let fixture = fixture_name("tree", "definitely-special.tree");
+        let partial_tree = &fixture[..fixture.len() / 2];
         assert_eq!(
-            TreeRef::from_bytes(&fixture_name("tree", "maybe-special.tree"))?
-                .entries
-                .len(),
-            160
+            TreeRef::from_bytes(partial_tree).unwrap_err().to_string(),
+            if cfg!(feature = "verbose-object-parsing-errors") {
+                ""
+            } else {
+                "object parsing failed"
+            }
         );
-        Ok(())
+        assert_eq!(
+            TreeRefIter::from_bytes(partial_tree).take_while(Result::is_ok).count(),
+            9,
+            "we can decode about half of it before failing"
+        );
     }
 
     #[test]
-    fn definitely_special() -> crate::Result {
-        assert_eq!(
-            TreeRef::from_bytes(&fixture_name("tree", "definitely-special.tree"))?
-                .entries
-                .len(),
-            19
-        );
+    fn special_trees() -> crate::Result {
+        for (name, expected_entry_count) in [
+            ("maybe-special", 160),
+            ("definitely-special", 19),
+            ("special-1", 5),
+            ("special-2", 18),
+            ("special-3", 5),
+            ("special-4", 18),
+        ] {
+            let fixture = fixture_name("tree", &format!("{name}.tree"));
+            assert_eq!(
+                TreeRef::from_bytes(&fixture)?.entries.len(),
+                expected_entry_count,
+                "{name}"
+            );
+            assert_eq!(
+                TreeRefIter::from_bytes(&fixture).map(Result::unwrap).count(),
+                expected_entry_count,
+                "{name}"
+            );
+        }
         Ok(())
     }
 }

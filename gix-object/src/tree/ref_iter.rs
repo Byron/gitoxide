@@ -67,11 +67,11 @@ impl<'a> Iterator for TreeRefIter<'a> {
                 Some(Ok(entry))
             }
             None => {
+                let failing = self.data;
                 self.data = &[];
-                let empty = &[] as &[u8];
                 #[allow(clippy::unit_arg)]
                 Some(Err(crate::decode::Error::with_err(
-                    winnow::error::ErrMode::from_error_kind(&empty, winnow::error::ErrorKind::Verify),
+                    winnow::error::ErrMode::from_error_kind(&failing, winnow::error::ErrorKind::Verify),
                 )))
             }
         }
@@ -116,17 +116,9 @@ mod decode {
     use std::convert::TryFrom;
 
     use bstr::ByteSlice;
-    use winnow::{
-        combinator::{eof, repeat, terminated},
-        error::ParserError,
-        prelude::*,
-        stream::AsChar,
-        token::{take, take_while},
-    };
+    use winnow::{error::ParserError, prelude::*};
 
-    use crate::{parse::SPACE, tree, tree::EntryRef, TreeRef};
-
-    const NULL: &[u8] = b"\0";
+    use crate::{tree, tree::EntryRef, TreeRef};
 
     pub fn fast_entry(i: &[u8]) -> Option<(&[u8], EntryRef<'_>)> {
         let mut mode = 0u32;
@@ -157,24 +149,20 @@ mod decode {
         ))
     }
 
-    pub fn entry<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<EntryRef<'a>, E> {
-        (
-            terminated(take_while(5..=6, AsChar::is_dec_digit), SPACE)
-                .verify_map(|mode| tree::EntryMode::try_from(mode).ok()),
-            terminated(take_while(1.., |b| b != NULL[0]), NULL),
-            take(20u8), // TODO(SHA256): make this compatible with other hash lengths
-        )
-            .map(|(mode, filename, oid): (_, &[u8], _)| EntryRef {
-                mode,
-                filename: filename.as_bstr(),
-                oid: gix_hash::oid::try_from_bytes(oid).expect("we counted exactly 20 bytes"),
-            })
-            .parse_next(i)
-    }
-
     pub fn tree<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<TreeRef<'a>, E> {
-        terminated(repeat(0.., entry), eof)
-            .map(|entries| TreeRef { entries })
-            .parse_next(i)
+        let mut out = Vec::new();
+        let mut i = &**i;
+        while !i.is_empty() {
+            let Some((rest, entry)) = fast_entry(i) else {
+                #[allow(clippy::unit_arg)]
+                return Err(winnow::error::ErrMode::from_error_kind(
+                    &i,
+                    winnow::error::ErrorKind::Verify,
+                ));
+            };
+            i = rest;
+            out.push(entry);
+        }
+        Ok(TreeRef { entries: out })
     }
 }

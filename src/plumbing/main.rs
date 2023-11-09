@@ -925,6 +925,7 @@ pub fn main() -> Result<()> {
                 specs,
                 explain,
                 cat_file,
+                tree_mode,
             } => prepare_and_run(
                 "revision-parse",
                 trace,
@@ -941,6 +942,12 @@ pub fn main() -> Result<()> {
                             format,
                             explain,
                             cat_file,
+                            tree_mode: match tree_mode.unwrap_or_default() {
+                                revision::resolve::TreeMode::Raw => core::repository::revision::resolve::TreeMode::Raw,
+                                revision::resolve::TreeMode::Pretty => {
+                                    core::repository::revision::resolve::TreeMode::Pretty
+                                }
+                            },
                         },
                     )
                 },
