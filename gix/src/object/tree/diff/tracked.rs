@@ -413,14 +413,78 @@ mod diff {
         type Out = usize;
 
         fn process_change(&mut self, before: Range<u32>, _after: Range<u32>) {
-            self.removed_bytes = self.input.before[before.start as usize..before.end as usize]
+            self.removed_bytes += self.input.before[before.start as usize..before.end as usize]
                 .iter()
                 .map(|token| self.input.interner[*token].len())
-                .sum();
+                .sum::<usize>();
         }
 
         fn finish(self) -> Self::Out {
             self.removed_bytes
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        fn removed_bytes(before: &[u8], after: &[u8]) -> usize {
+            let input = gix_diff::blob::intern::InternedInput::new(before, after);
+            gix_diff::blob::diff(
+                gix_diff::blob::Algorithm::Myers,
+                &input,
+                super::Statistics {
+                    removed_bytes: 0,
+                    input: &input,
+                },
+            )
+        }
+
+        #[test]
+        fn counts_removed_bytes_correctly() {
+            assert_eq!(1, removed_bytes(b"a", b""));
+            assert_eq!(0, removed_bytes(b"", b"a"));
+
+            // need the inputs to have more than one "hunk"
+            // of differences to stress the fact that
+            // process_change is called multiple times
+            let before = b"
+a
+a
+a
+b
+b
+b
+b
+a
+a
+a
+a
+a
+b
+b
+a
+a
+a
+a
+a
+";
+            // it's `before`, with the "b" lines removed
+            let after = b"
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+            ";
+
+            assert_eq!(6, removed_bytes(before, after));
         }
     }
 }
