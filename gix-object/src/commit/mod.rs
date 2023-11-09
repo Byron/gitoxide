@@ -1,6 +1,7 @@
 use std::ops::Range;
 
 use bstr::{BStr, BString, ByteSlice};
+use winnow::prelude::*;
 
 use crate::{Commit, CommitRef, TagRef};
 
@@ -60,7 +61,9 @@ mod write;
 impl<'a> CommitRef<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
     pub fn from_bytes(mut data: &'a [u8]) -> Result<CommitRef<'a>, crate::decode::Error> {
-        decode::commit(&mut data).map_err(crate::decode::Error::with_err)
+        decode::commit
+            .parse_next(&mut data)
+            .map_err(crate::decode::Error::with_err)
     }
 }
 

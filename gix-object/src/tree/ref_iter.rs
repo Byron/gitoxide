@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 
 use bstr::BStr;
 use winnow::error::ParserError;
+use winnow::prelude::*;
 
 use crate::{tree, tree::EntryRef, TreeRef, TreeRefIter};
 
@@ -15,7 +16,9 @@ impl<'a> TreeRefIter<'a> {
 impl<'a> TreeRef<'a> {
     /// Deserialize a Tree from `data`.
     pub fn from_bytes(mut data: &'a [u8]) -> Result<TreeRef<'a>, crate::decode::Error> {
-        decode::tree(&mut data).map_err(crate::decode::Error::with_err)
+        decode::tree
+            .parse_next(&mut data)
+            .map_err(crate::decode::Error::with_err)
     }
 
     /// Find an entry named `name` knowing if the entry is a directory or not, using a binary search.
