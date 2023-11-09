@@ -1,6 +1,4 @@
-use std::ops::Deref;
-
-use gix_fsck::ConnectivityCheck;
+use gix_fsck::Connectivity;
 use gix_hash::ObjectId;
 use gix_hashtable::HashMap;
 use gix_object::Kind;
@@ -15,21 +13,20 @@ fn check_missing<'a>(repo_name: &str, commits: impl IntoIterator<Item = &'a Obje
             .join(repo_name)
             .join(".git")
             .join("objects");
-        let mut db = gix_odb::at(fixture_path).expect("odb handle");
+        let mut db = gix_odb::at(fixture_path).expect("valid odb");
         db.refresh_never();
         db
     };
 
     let mut missing: HashMap<ObjectId, Kind> = HashMap::default();
-    let callback = |oid: &ObjectId, kind: Kind| {
+    let record_missing_and_assert_no_duplicate = |oid: &ObjectId, kind: Kind| {
         missing.try_insert(*oid, kind).expect("no duplicate oid");
     };
 
-    let mut check = ConnectivityCheck::new(&db, callback);
+    let mut check = Connectivity::new(db, record_missing_and_assert_no_duplicate);
     for commit in commits.into_iter() {
-        check.check_commit(commit);
+        check.check_commit(commit).expect("commit is present")
     }
-
     missing
 }
 
@@ -38,22 +35,19 @@ fn hex_to_ids<'a>(hex_ids: impl IntoIterator<Item = &'a str>) -> Vec<ObjectId> {
 }
 
 fn hex_to_objects<'a>(hex_ids: impl IntoIterator<Item = &'a str>, kind: Kind) -> HashMap<ObjectId, Kind> {
-    hex_to_ids(hex_ids)
-        .into_iter()
-        .map(|id| (id, kind))
-        .collect::<HashMap<_, _>>()
+    hex_to_ids(hex_ids).into_iter().map(|id| (id, kind)).collect()
 }
 
 // Get a `&Vec<ObjectID` for each commit in the test fixture repository
-fn all_commits<'a>() -> &'a Vec<ObjectId> {
+fn all_commits() -> &'static [ObjectId] {
     static ALL_COMMITS: Lazy<Vec<ObjectId>> = Lazy::new(|| {
-        hex_to_ids(vec![
+        hex_to_ids([
             "5d18db2e2aabadf7b914435ef34f2faf8b4546dd",
             "3a3dfaa55a515f3fb3a25751107bbb523af6a1b0",
             "734c926856a328d1168ffd7088532e0d1ad19bbe",
         ])
     });
-    ALL_COMMITS.deref()
+    &ALL_COMMITS
 }
 
 #[test]
@@ -65,7 +59,7 @@ fn no_missing() {
 #[test]
 fn missing_blobs() {
     // The "blobless" repo is cloned with `--filter=blob:none`, and is missing one blob
-    let expected = hex_to_objects(vec!["c18147dc648481eeb65dc5e66628429a64843327"], Kind::Blob);
+    let expected = hex_to_objects(["c18147dc648481eeb65dc5e66628429a64843327"], Kind::Blob);
     assert_eq!(check_missing("blobless", all_commits()), expected);
 }
 
@@ -74,7 +68,7 @@ fn missing_trees() {
     // The "treeless" repo is cloned with `--filter=tree:0`, and is missing two trees
     // NOTE: This repo is also missing a blob, but we have no way of knowing that, as the tree referencing it is missing
     let expected = hex_to_objects(
-        vec![
+        [
             "9561cfbae43c5e2accdfcd423378588dd10d827f",
             "fc264b3b6875a46e9031483aeb9994a1b897ffd3",
         ],

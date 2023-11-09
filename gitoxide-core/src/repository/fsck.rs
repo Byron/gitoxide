@@ -1,10 +1,11 @@
-use std::io::{BufWriter, Write};
-
 use anyhow::Context;
 use gix::{objs::Kind, ObjectId};
 
-pub fn connectivity(mut repo: gix::Repository, spec: Option<String>, out: impl std::io::Write) -> anyhow::Result<()> {
-    let mut out = BufWriter::with_capacity(64 * 1024, out);
+pub fn connectivity(
+    mut repo: gix::Repository,
+    spec: Option<String>,
+    mut out: impl std::io::Write,
+) -> anyhow::Result<()> {
     let spec = spec.unwrap_or("HEAD".into());
 
     repo.object_cache_size_if_unset(4 * 1024 * 1024);
@@ -22,19 +23,18 @@ pub fn connectivity(mut repo: gix::Repository, spec: Option<String>, out: impl s
         .ancestors()
         .all()?;
 
-    let missing_cb = |oid: &ObjectId, kind: Kind| {
+    let on_missing = |oid: &ObjectId, kind: Kind| {
         writeln!(out, "{oid}: {kind}").expect("failed to write output");
     };
-    let mut conn = gix_fsck::ConnectivityCheck::new(&repo.objects, missing_cb);
 
+    let mut check = gix_fsck::Connectivity::new(&repo.objects, on_missing);
     // Walk all commits, checking each one for connectivity
     for commit in commits {
         let commit = commit?;
-        conn.check_commit(&commit.id);
-        for parent in commit.parent_ids {
-            conn.check_commit(&parent);
-        }
+        check.check_commit(&commit.id);
+        // Note that we leave parent-iteration to the commits iterator, as it will
+        // correctly handle shallow repositories which are expected to have the commits
+        // along the shallow boundary missing.
     }
-
     Ok(())
 }

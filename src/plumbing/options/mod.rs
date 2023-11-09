@@ -87,7 +87,7 @@ pub enum Subcommands {
     /// Interact with the object database.
     #[clap(subcommand)]
     Odb(odb::Subcommands),
-    /// Perform integrity checks on the repository.
+    /// Perform (some) integrity checks on the repository.
     #[clap(subcommand)]
     Fsck(fsck::Subcommands),
     /// Interact with tree objects.
@@ -495,7 +495,7 @@ pub mod odb {
 pub mod fsck {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
-        /// Perform a connectivity check on the repository.
+        /// Perform a (partial) connectivity check on the repository.
         Connectivity {
             /// A revspec to start the connectivity check from.
             spec: Option<String>,

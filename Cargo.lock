@@ -1652,7 +1652,7 @@ dependencies = [
 
 [[package]]
 name = "gix-fsck"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "gix-hash 0.13.1",
  "gix-hashtable 0.4.0",

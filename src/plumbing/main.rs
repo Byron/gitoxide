@@ -1076,7 +1076,7 @@ pub fn main() -> Result<()> {
             fsck::Subcommands::Connectivity { spec } => prepare_and_run(
                 "fsck-connectivity",
                 trace,
-                verbose,
+                auto_verbose,
                 progress,
                 progress_keep_open,
                 None,
