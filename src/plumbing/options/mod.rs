@@ -87,6 +87,9 @@ pub enum Subcommands {
     /// Interact with the object database.
     #[clap(subcommand)]
     Odb(odb::Subcommands),
+    /// Perform integrity checks on the repository.
+    #[clap(subcommand)]
+    Fsck(fsck::Subcommands),
     /// Interact with tree objects.
     #[clap(subcommand)]
     Tree(tree::Subcommands),
@@ -486,6 +489,17 @@ pub mod odb {
         /// Count and obtain information on all, possibly duplicate, objects in the database.
         #[clap(visible_alias = "statistics")]
         Stats,
+    }
+}
+
+pub mod fsck {
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Perform a connectivity check on the repository.
+        Connectivity {
+            /// A revspec to start the connectivity check from.
+            spec: Option<String>,
+        },
     }
 }
 

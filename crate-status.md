@@ -775,6 +775,19 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * [x] validate submodule names
 * [x] [validate][tagname-validation] tag names
 
+### gix-fsck
+* [x] validate connectivity when provided a specific commit as a starting point
+* [ ] validate connectivity of all `refs` in the index
+* [ ] progress reporting and interruptability
+* [ ] identify objects that exist but are not reference by any reference nodes (e.g. `refs` or a provided commit)
+* [ ] add support for various options
+    * [ ] write dangling objects to the `.git/log-found` directory structure
+    * [ ] `strict` mode, to check for tree objects with `g+w` permissions
+    * [ ] consider reflog entries as reference nodes/heads
+    * [ ] when reporting reachable objects, include _how_ they are reachable
+        * [ ] which reference node(s) made them reachable
+        * [ ] parent commit(s)
+
 ### gix-ref
 * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2] but should work for loose refs as well.
 * **Stores**

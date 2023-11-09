@@ -140,6 +140,7 @@ is usable to some extent.
   * [gix-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tui)
   * [gix-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tix)
   * [gix-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bundle)
+  * [gix-fsck](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fsck)
   
 ### Stress Testing
   * [x] Verify huge packs
