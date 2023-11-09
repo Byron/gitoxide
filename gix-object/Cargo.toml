@@ -25,7 +25,7 @@ serde = ["dep:serde", "bstr/serde", "smallvec/serde", "gix-hash/serde", "gix-act
 ## details information about the error location will be collected.
 ## Use it in applications which expect broken or invalid objects or for debugging purposes. Incorrectly formatted objects aren't at all
 ## common otherwise.
-verbose-object-parsing-errors = []
+verbose-object-parsing-errors = ["winnow/std"]
 
 [dependencies]
 gix-features = { version = "^0.36.0", path = "../gix-features", features = ["rustsha1", "progress"] }

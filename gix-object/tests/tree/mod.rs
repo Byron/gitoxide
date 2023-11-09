@@ -108,6 +108,25 @@ mod from_bytes {
     }
 
     #[test]
+    fn invalid() {
+        let fixture = fixture_name("tree", "definitely-special.tree");
+        let partial_tree = &fixture[..fixture.len() / 2];
+        assert_eq!(
+            TreeRef::from_bytes(partial_tree).unwrap_err().to_string(),
+            if cfg!(feature = "verbose-object-parsing-errors") {
+                ""
+            } else {
+                "object parsing failed"
+            }
+        );
+        assert_eq!(
+            TreeRefIter::from_bytes(partial_tree).take_while(Result::is_ok).count(),
+            9,
+            "we can decode about half of it before failing"
+        );
+    }
+
+    #[test]
     fn special_trees() -> crate::Result {
         for (name, expected_entry_count) in [
             ("maybe-special", 160),

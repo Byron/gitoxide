@@ -1,5 +1,6 @@
+use crate::fixture_name;
 use gix_date::time::Sign;
-use gix_object::{bstr::ByteSlice, Kind, TagRef};
+use gix_object::{bstr::ByteSlice, Kind, TagRef, TagRefIter};
 
 mod method {
     use gix_object::TagRef;
@@ -113,6 +114,25 @@ KLMHist5yj0sw1E4hDTyQa0=
         );
         Ok(())
     }
+}
+
+#[test]
+fn invalid() {
+    let fixture = fixture_name("tag", "whitespace.txt");
+    let partial_tag = &fixture[..fixture.len() / 2];
+    assert_eq!(
+        TagRef::from_bytes(partial_tag).unwrap_err().to_string(),
+        if cfg!(feature = "verbose-object-parsing-errors") {
+            ""
+        } else {
+            "object parsing failed"
+        }
+    );
+    assert_eq!(
+        TagRefIter::from_bytes(partial_tag).take_while(Result::is_ok).count(),
+        4,
+        "we can decode some fields before failing"
+    );
 }
 
 mod from_bytes {

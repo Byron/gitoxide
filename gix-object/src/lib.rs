@@ -290,6 +290,12 @@ pub mod decode {
                 self.inner.fmt(f)
             }
         }
+
+        impl std::error::Error for Error {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+                self.inner.cause().map(|v| v as &(dyn std::error::Error + 'static))
+            }
+        }
     }
 
     ///
@@ -318,14 +324,15 @@ pub mod decode {
         }
 
         impl std::fmt::Display for Error {
-            fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                Ok(())
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("object parsing failed")
             }
         }
+
+        impl std::error::Error for Error {}
     }
     pub(crate) use _decode::empty_error;
     pub use _decode::{Error, ParseError};
-    impl std::error::Error for Error {}
 
     /// Returned by [`loose_header()`]
     #[derive(Debug, thiserror::Error)]

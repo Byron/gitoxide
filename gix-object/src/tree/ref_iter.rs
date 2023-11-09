@@ -67,11 +67,11 @@ impl<'a> Iterator for TreeRefIter<'a> {
                 Some(Ok(entry))
             }
             None => {
+                let failing = self.data;
                 self.data = &[];
-                let empty = &[] as &[u8];
                 #[allow(clippy::unit_arg)]
                 Some(Err(crate::decode::Error::with_err(
-                    winnow::error::ErrMode::from_error_kind(&empty, winnow::error::ErrorKind::Verify),
+                    winnow::error::ErrMode::from_error_kind(&failing, winnow::error::ErrorKind::Verify),
                 )))
             }
         }
