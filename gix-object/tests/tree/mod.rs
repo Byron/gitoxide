@@ -135,6 +135,7 @@ mod from_bytes {
             ("special-2", 18),
             ("special-3", 5),
             ("special-4", 18),
+            ("special-5", 17),
         ] {
             let fixture = fixture_name("tree", &format!("{name}.tree"));
             assert_eq!(

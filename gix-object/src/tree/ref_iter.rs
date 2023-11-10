@@ -101,12 +101,15 @@ impl TryFrom<u32> for tree::EntryMode {
     fn try_from(mode: u32) -> Result<Self, Self::Error> {
         Ok(match mode {
             0o40000 => tree::EntryMode::Tree,
-            0o100644 => tree::EntryMode::Blob,
-            0o100755 => tree::EntryMode::BlobExecutable,
             0o120000 => tree::EntryMode::Link,
             0o160000 => tree::EntryMode::Commit,
-            0o100664 => tree::EntryMode::Blob, // rare and found in the linux kernel
-            0o100640 => tree::EntryMode::Blob, // rare and found in the Rust repo
+            blob_mode if blob_mode & 0o100000 == 0o100000 => {
+                if blob_mode & 0o000100 == 0o000100 {
+                    tree::EntryMode::BlobExecutable
+                } else {
+                    tree::EntryMode::Blob
+                }
+            }
             _ => return Err(mode),
         })
     }
