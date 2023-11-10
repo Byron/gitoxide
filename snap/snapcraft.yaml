@@ -22,7 +22,7 @@ apps:
   gitoxide:
     command: bin/gix
     environment:
-      PATH: $SNAP/usr/bin:$SNAP/usr/local/bin/:$PATH:$SNAP/bin/:$PATH    
+      PATH: $SNAP/bin/:$PATH    
     plugs:
       - network
       - home
@@ -35,7 +35,7 @@ parts:
     after: [cargo]
     
     override-build: |
-      cargo install --git https://github.com/Byron/gitoxide  gitoxide
+      CARGO_TARGET_DIR=$SNAPCRAFT_PART_INSTALL/bin cargo install --git https://github.com/Byron/gitoxide gitoxide
     
     override-pull: |
       snapcraftctl pull
