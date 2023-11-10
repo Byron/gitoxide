@@ -13,14 +13,14 @@ description: |
 
 license: Apache-2.0
 
-base: core22
+base: core20
 grade: stable
 confinement: strict
 compression: lzo
 
 apps:
   gitoxide:
-    command: usr/bin/gitoxide
+    command: bin/gitoxide
     plugs:
       - network
       - home
@@ -29,18 +29,15 @@ parts:
   gitoxide:
     source: https://github.com/Byron/gitoxide
     source-type: git
-    plugin: cmake
-    cmake-parameters:
-      - -DCMAKE_INSTALL_PREFIX=/usr
+    plugin: rust
     after: [cargo]
+    
+    override-build: |
+      cargo install --git https://github.com/Byron/gitoxide  gitoxide
     
     override-pull: |
       snapcraftctl pull
       snapcraftctl set-version "$(git describe --tags | sed 's/^v//')"
-
-    build-packages:
-      - rustc
-      - cargo
       
   cargo:
     source: https://github.com/rust-lang/cargo
