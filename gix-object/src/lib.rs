@@ -291,7 +291,12 @@ pub mod decode {
 
         impl std::fmt::Display for Error {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                self.inner.fmt(f)
+                write!(f, "object parsing failed at `{}`", bstr::BStr::new(&self.remaining))?;
+                if self.inner.context().next().is_some() {
+                    writeln!(f)?;
+                    self.inner.fmt(f)?;
+                }
+                Ok(())
             }
         }
 
