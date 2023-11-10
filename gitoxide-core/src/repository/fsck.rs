@@ -1,11 +1,7 @@
 use anyhow::Context;
 use gix::{objs::Kind, ObjectId};
 
-pub fn connectivity(
-    mut repo: gix::Repository,
-    spec: Option<String>,
-    mut out: impl std::io::Write,
-) -> anyhow::Result<()> {
+pub fn function(mut repo: gix::Repository, spec: Option<String>, mut out: impl std::io::Write) -> anyhow::Result<()> {
     let spec = spec.unwrap_or("HEAD".into());
 
     repo.object_cache_size_if_unset(4 * 1024 * 1024);
@@ -31,7 +27,7 @@ pub fn connectivity(
     // Walk all commits, checking each one for connectivity
     for commit in commits {
         let commit = commit?;
-        check.check_commit(&commit.id);
+        check.check_commit(&commit.id)?;
         // Note that we leave parent-iteration to the commits iterator, as it will
         // correctly handle shallow repositories which are expected to have the commits
         // along the shallow boundary missing.
