@@ -4,8 +4,7 @@
 use gix_hash::ObjectId;
 use gix_hashtable::HashSet;
 use gix_object::{tree::EntryMode, Exists, FindExt, Kind};
-use std::cell::RefCell;
-use std::ops::{Deref, DerefMut};
+use std::collections::VecDeque;
 
 /// Perform a connectivity check.
 pub struct Connectivity<T, F>
@@ -18,9 +17,9 @@ where
     /// Closure to invoke when a missing object is encountered
     missing_cb: F,
     /// Set of Object IDs already (or about to be) scanned during the check
-    oid_set: HashSet,
-    /// A free-list of buffers for recursive tree decoding.
-    free_list: FreeList,
+    seen: HashSet,
+    /// A buffer to keep a single object at a time.
+    buf: Vec<u8>,
 }
 
 impl<T, F> Connectivity<T, F>
@@ -33,8 +32,8 @@ where
         Connectivity {
             db,
             missing_cb,
-            oid_set: HashSet::default(),
-            free_list: Default::default(),
+            seen: HashSet::default(),
+            buf: Default::default(),
         }
     }
 
@@ -49,64 +48,52 @@ where
     ///     - TODO: consider how to handle a missing commit (invoke `missing_cb`, or possibly return a Result?)
     pub fn check_commit(&mut self, oid: &ObjectId) -> Result<(), gix_object::find::existing_object::Error> {
         // Attempt to insert the commit ID in the set, and if already present, return immediately
-        if !self.oid_set.insert(*oid) {
+        if !self.seen.insert(*oid) {
             return Ok(());
         }
         // Obtain the commit's tree ID
         let tree_id = {
-            let mut buf = self.free_list.buf();
-            let commit = self.db.find_commit(oid, &mut buf)?;
+            let commit = self.db.find_commit(oid, &mut self.buf)?;
             commit.tree()
         };
 
-        if self.oid_set.insert(tree_id) {
-            check_tree(
-                &tree_id,
-                &self.db,
-                &mut self.free_list,
-                &mut self.missing_cb,
-                &mut self.oid_set,
-            );
+        let mut tree_ids = VecDeque::from_iter(Some(tree_id));
+        while let Some(tree_id) = tree_ids.pop_front() {
+            if self.seen.insert(tree_id) {
+                self.check_tree(&tree_id, &mut tree_ids);
+            }
         }
 
         Ok(())
     }
-}
 
-#[derive(Default)]
-struct FreeList(RefCell<Vec<Vec<u8>>>);
+    /// Blobs are checked right away, trees are stored in `tree_ids` for the parent to iterate them, and only
+    /// if they have not been `seen` yet.
+    fn check_tree(&mut self, oid: &ObjectId, tree_ids: &mut VecDeque<ObjectId>) {
+        let Ok(tree) = self.db.find_tree(oid, &mut self.buf) else {
+            (self.missing_cb)(oid, Kind::Tree);
+            return;
+        };
 
-impl FreeList {
-    fn buf(&self) -> ReturnToFreeListOnDrop<'_> {
-        let buf = self.0.borrow_mut().pop().unwrap_or_default();
-        ReturnToFreeListOnDrop { buf, list: &self.0 }
-    }
-}
-
-struct ReturnToFreeListOnDrop<'a> {
-    list: &'a RefCell<Vec<Vec<u8>>>,
-    buf: Vec<u8>,
-}
-
-impl Drop for ReturnToFreeListOnDrop<'_> {
-    fn drop(&mut self) {
-        if !self.buf.is_empty() {
-            self.list.borrow_mut().push(std::mem::take(&mut self.buf));
+        for entry_ref in tree.entries.iter() {
+            match entry_ref.mode {
+                EntryMode::Tree => {
+                    let tree_id = entry_ref.oid.to_owned();
+                    if self.seen.insert(tree_id) {
+                        tree_ids.push_back(tree_id);
+                    }
+                }
+                EntryMode::Blob | EntryMode::BlobExecutable | EntryMode::Link => {
+                    let blob_id = entry_ref.oid.to_owned();
+                    if self.seen.insert(blob_id) {
+                        check_blob(&self.db, &blob_id, &mut self.missing_cb);
+                    }
+                }
+                EntryMode::Commit => {
+                    // Skip submodules as it's not in this repository!
+                }
+            }
         }
-    }
-}
-
-impl Deref for ReturnToFreeListOnDrop<'_> {
-    type Target = Vec<u8>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.buf
-    }
-}
-
-impl DerefMut for ReturnToFreeListOnDrop<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.buf
     }
 }
 
@@ -114,48 +101,7 @@ fn check_blob<F>(db: impl Exists, oid: &ObjectId, mut missing_cb: F)
 where
     F: FnMut(&ObjectId, Kind),
 {
-    // Check if the blob is missing from the ODB
     if !db.exists(oid) {
-        // Blob is missing, so invoke `missing_cb`
         missing_cb(oid, Kind::Blob);
-    }
-}
-
-fn check_tree<F>(
-    oid: &ObjectId,
-    db: &(impl FindExt + Exists),
-    list: &FreeList,
-    missing_cb: &mut F,
-    oid_set: &mut HashSet,
-) where
-    F: FnMut(&ObjectId, Kind),
-{
-    let mut buf = list.buf();
-    let Ok(tree) = db.find_tree(oid, &mut buf) else {
-        missing_cb(oid, Kind::Tree);
-        return;
-    };
-
-    // Build up a set of trees and a set of blobs
-    // For each entry in the tree
-    for entry_ref in tree.entries.iter() {
-        match entry_ref.mode {
-            EntryMode::Tree => {
-                let tree_id = entry_ref.oid.to_owned();
-                if oid_set.insert(tree_id) {
-                    check_tree(&tree_id, &*db, list, &mut *missing_cb, oid_set);
-                }
-            }
-            EntryMode::Blob | EntryMode::BlobExecutable | EntryMode::Link => {
-                let blob_id = entry_ref.oid.to_owned();
-                if oid_set.insert(blob_id) {
-                    check_blob(&*db, &blob_id, &mut *missing_cb);
-                }
-            }
-            EntryMode::Commit => {
-                // This implies a submodule (OID is the commit hash of the submodule)
-                // Skip it as it's not in this repository!
-            }
-        }
     }
 }
