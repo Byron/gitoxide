@@ -61,8 +61,10 @@ impl<'a> TagRefIter<'a> {
     #[inline]
     fn next_inner(mut i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
         let input = &mut i;
-        let token = Self::next_inner_(input, state).map_err(crate::decode::Error::with_err)?;
-        Ok((input, token))
+        match Self::next_inner_(input, state) {
+            Ok(token) => Ok((*input, token)),
+            Err(err) => Err(crate::decode::Error::with_err(err, input)),
+        }
     }
 
     fn next_inner_(

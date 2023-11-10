@@ -267,6 +267,7 @@ pub mod decode {
         pub(crate) fn empty_error() -> Error {
             Error {
                 inner: winnow::error::ContextError::new(),
+                remaining: Default::default(),
             }
         }
 
@@ -275,12 +276,15 @@ pub mod decode {
         pub struct Error {
             /// The actual error
             pub inner: ParseError,
+            /// Where the error occurred
+            pub remaining: Vec<u8>,
         }
 
         impl Error {
-            pub(crate) fn with_err(err: winnow::error::ErrMode<ParseError>) -> Self {
+            pub(crate) fn with_err(err: winnow::error::ErrMode<ParseError>, remaining: &[u8]) -> Self {
                 Self {
                     inner: err.into_inner().expect("we don't have streaming parsers"),
+                    remaining: remaining.to_owned(),
                 }
             }
         }
@@ -316,7 +320,7 @@ pub mod decode {
         }
 
         impl Error {
-            pub(crate) fn with_err(err: winnow::error::ErrMode<ParseError>) -> Self {
+            pub(crate) fn with_err(err: winnow::error::ErrMode<ParseError>, _remaining: &[u8]) -> Self {
                 Self {
                     inner: err.into_inner().expect("we don't have streaming parsers"),
                 }
