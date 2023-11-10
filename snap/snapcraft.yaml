@@ -10,6 +10,8 @@ description: |
     offered by the gix crate.
     gitoxide aspires to be a production-grade server implementation and the ein binary aspires to
     become the default way to interact with git repositories. 
+    
+    To run from your terminal, type: gix
 
 license: Apache-2.0
 
@@ -22,7 +24,7 @@ apps:
   gitoxide:
     command: bin/gix
     environment:
-      PATH: $SNAP/bin/:$PATH    
+      PATH: $SNAP/bin/:$PATH       
     plugs:
       - network
       - home
@@ -36,7 +38,7 @@ parts:
 
     override-pull: |
       snapcraftctl pull
-      snapcraftctl set-version "$(git describe --tags | sed 's/^v//')"
+      snapcraftctl set-version "$(git describe --tags | sed 's/^v//' | cut -d "-" -f3)"
     
     build-packages:
       - cmake
