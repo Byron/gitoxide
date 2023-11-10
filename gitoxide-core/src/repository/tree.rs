@@ -89,7 +89,6 @@ mod entries {
         }
 
         fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
-            use gix::objs::tree::EntryMode::*;
             let size = self
                 .repo
                 .and_then(|repo| repo.find_object(entry.oid).map(|o| o.data.len()).ok());
@@ -100,7 +99,8 @@ mod entries {
                 self.stats.num_bytes += size as u64;
             }
 
-            match entry.mode {
+            use gix::object::tree::EntryKind::*;
+            match entry.mode.kind() {
                 Commit => self.stats.num_submodules += 1,
                 Blob => self.stats.num_blobs += 1,
                 BlobExecutable => self.stats.num_blobs_exec += 1,
@@ -184,11 +184,11 @@ fn format_entry(
     filename: &gix::bstr::BStr,
     size: Option<usize>,
 ) -> std::io::Result<()> {
-    use gix::objs::tree::EntryMode::*;
+    use gix::objs::tree::EntryKind::*;
     writeln!(
         out,
         "{} {}{} {}",
-        match entry.mode {
+        match entry.mode.kind() {
             Tree => "TREE",
             Blob => "BLOB",
             BlobExecutable => " EXE",

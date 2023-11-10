@@ -181,7 +181,7 @@ impl<'repo> Submodule<'repo> {
             .head_commit()?
             .tree()?
             .peel_to_entry_by_path(gix_path::from_bstr(path.as_ref()))?
-            .and_then(|entry| (entry.mode() == gix_object::tree::EntryMode::Commit).then_some(entry.inner.oid)))
+            .and_then(|entry| (entry.mode().is_commit()).then_some(entry.inner.oid)))
     }
 
     /// Return the path at which the repository of the submodule should be located.

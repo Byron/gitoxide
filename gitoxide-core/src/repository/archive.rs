@@ -40,7 +40,7 @@ pub fn stream(
     for (path, content) in files {
         stream.add_entry(gix::worktree::stream::AdditionalEntry {
             id: gix::hash::Kind::Sha1.null(),
-            mode: gix::object::tree::EntryMode::Blob,
+            mode: gix::object::tree::EntryKind::Blob.into(),
             relative_path: path.into(),
             source: gix::worktree::stream::entry::Source::Memory(content.into()),
         });
