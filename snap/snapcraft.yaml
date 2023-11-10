@@ -20,7 +20,9 @@ compression: lzo
 
 apps:
   gitoxide:
-    command: bin/gitoxide
+    command: usr/local/bin/gitoxide
+    environment:
+      PATH: $SNAP/usr/bin:$SNAP/usr/local/bin/:$PATH:$SNAP/bin/:$PATH    
     plugs:
       - network
       - home
