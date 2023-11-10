@@ -33,10 +33,7 @@ parts:
     source-type: git
     plugin: rust
     after: [cargo]
-    
-    override-build: |
-      CARGO_TARGET_DIR=$SNAPCRAFT_PART_INSTALL/bin cargo install --git https://github.com/Byron/gitoxide gitoxide
-    
+
     override-pull: |
       snapcraftctl pull
       snapcraftctl set-version "$(git describe --tags | sed 's/^v//')"
