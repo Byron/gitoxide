@@ -20,7 +20,7 @@ compression: lzo
 
 apps:
   gitoxide:
-    command: gitoxide
+    command: usr/bin/gitoxide
     plugs:
       - network
       - home
@@ -29,7 +29,9 @@ parts:
   gitoxide:
     source: https://github.com/Byron/gitoxide
     source-type: git
-    plugin: rust
+    plugin: cmake
+    cmake-parameters:
+      - -DCMAKE_INSTALL_PREFIX=/usr
     
     override-pull: |
       snapcraftctl pull
