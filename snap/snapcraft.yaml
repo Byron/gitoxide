@@ -13,7 +13,7 @@ description: |
 
 license: Apache-2.0
 
-base: core20
+base: core22
 grade: stable
 confinement: strict
 compression: lzo
@@ -32,7 +32,27 @@ parts:
     plugin: cmake
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
+    after: [cargo]
     
     override-pull: |
       snapcraftctl pull
-      snapcraftctl set-version "$(git describe --tags | sed 's/^v//' | cut -d "-" -f1)"
+      snapcraftctl set-version "$(git describe --tags | sed 's/^v//')"
+
+    build-packages:
+      - rustc
+      - cargo
+      
+  cargo:
+    source: https://github.com/rust-lang/cargo
+    source-type: git
+    plugin: rust
+    
+    override-pull: |
+      snapcraftctl pull
+      snapcraftctl set-version "$(git describe --tags | sed 's/^v//' | cut -d "-" -f2)"
+
+    build-packages:
+      - cargo
+      - rustc
+      - pkg-config
+      - librust-openssl-sys-dev      
