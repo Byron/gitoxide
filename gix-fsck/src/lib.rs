@@ -3,7 +3,8 @@
 
 use gix_hash::ObjectId;
 use gix_hashtable::HashSet;
-use gix_object::{tree::EntryMode, Exists, FindExt, Kind};
+use gix_object::tree::EntryKind;
+use gix_object::{Exists, FindExt, Kind};
 use std::collections::VecDeque;
 
 /// Perform a connectivity check.
@@ -76,20 +77,20 @@ where
         };
 
         for entry_ref in tree.entries.iter() {
-            match entry_ref.mode {
-                EntryMode::Tree => {
+            match entry_ref.mode.kind() {
+                EntryKind::Tree => {
                     let tree_id = entry_ref.oid.to_owned();
                     if self.seen.insert(tree_id) {
                         tree_ids.push_back(tree_id);
                     }
                 }
-                EntryMode::Blob | EntryMode::BlobExecutable | EntryMode::Link => {
+                EntryKind::Blob | EntryKind::BlobExecutable | EntryKind::Link => {
                     let blob_id = entry_ref.oid.to_owned();
                     if self.seen.insert(blob_id) {
                         check_blob(&self.db, &blob_id, &mut self.missing_cb);
                     }
                 }
-                EntryMode::Commit => {
+                EntryKind::Commit => {
                     // Skip submodules as it's not in this repository!
                 }
             }

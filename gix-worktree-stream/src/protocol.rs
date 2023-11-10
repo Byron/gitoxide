@@ -96,7 +96,7 @@ fn byte_to_hash(b: u8) -> gix_hash::Kind {
 }
 
 fn byte_to_mode(b: u8) -> gix_object::tree::EntryMode {
-    use gix_object::tree::EntryMode::*;
+    use gix_object::tree::EntryKind::*;
     match b {
         0 => Tree,
         1 => Blob,
@@ -105,6 +105,7 @@ fn byte_to_mode(b: u8) -> gix_object::tree::EntryMode {
         4 => Commit,
         _ => unreachable!("BUG: we control the protocol"),
     }
+    .into()
 }
 
 fn hash_to_byte(h: gix_hash::Kind) -> u8 {
@@ -114,8 +115,8 @@ fn hash_to_byte(h: gix_hash::Kind) -> u8 {
 }
 
 fn mode_to_byte(m: gix_object::tree::EntryMode) -> u8 {
-    use gix_object::tree::EntryMode::*;
-    match m {
+    use gix_object::tree::EntryKind::*;
+    match m.kind() {
         Tree => 0,
         Blob => 1,
         BlobExecutable => 2,

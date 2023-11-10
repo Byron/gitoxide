@@ -26,10 +26,11 @@ impl<'a> TreeRef<'a> {
 
         let search = EntryRef {
             mode: if is_dir {
-                tree::EntryMode::Tree
+                tree::EntryKind::Tree
             } else {
-                tree::EntryMode::Blob
-            },
+                tree::EntryKind::Blob
+            }
+            .into(),
             filename: name,
             oid: &NULL_HASH,
         };
@@ -82,17 +83,24 @@ impl<'a> TryFrom<&'a [u8]> for tree::EntryMode {
     type Error = &'a [u8];
 
     fn try_from(mode: &'a [u8]) -> Result<Self, Self::Error> {
-        Ok(match mode {
-            b"40000" => tree::EntryMode::Tree,
-            b"100644" => tree::EntryMode::Blob,
-            b"100755" => tree::EntryMode::BlobExecutable,
-            b"120000" => tree::EntryMode::Link,
-            b"160000" => tree::EntryMode::Commit,
-            b"100664" => tree::EntryMode::Blob, // rare and found in the linux kernel
-            b"100640" => tree::EntryMode::Blob, // rare and found in the Rust repo
-            _ => return Err(mode),
-        })
+        mode_from_decimal(mode)
+            .map(|(mode, _rest)| tree::EntryMode(mode as u16))
+            .ok_or(mode)
     }
+}
+
+fn mode_from_decimal(i: &[u8]) -> Option<(u32, &[u8])> {
+    let mut mode = 0u32;
+    let mut spacer_pos = 1;
+    for b in i.iter().take_while(|b| **b != b' ') {
+        if *b < b'0' || *b > b'7' {
+            return None;
+        }
+        mode = (mode << 3) + (b - b'0') as u32;
+        spacer_pos += 1;
+    }
+    let (_, i) = i.split_at(spacer_pos);
+    Some((mode, i))
 }
 
 impl TryFrom<u32> for tree::EntryMode {
@@ -100,13 +108,8 @@ impl TryFrom<u32> for tree::EntryMode {
 
     fn try_from(mode: u32) -> Result<Self, Self::Error> {
         Ok(match mode {
-            0o40000 => tree::EntryMode::Tree,
-            0o100644 => tree::EntryMode::Blob,
-            0o100755 => tree::EntryMode::BlobExecutable,
-            0o120000 => tree::EntryMode::Link,
-            0o160000 => tree::EntryMode::Commit,
-            0o100664 => tree::EntryMode::Blob, // rare and found in the linux kernel
-            0o100640 => tree::EntryMode::Blob, // rare and found in the Rust repo
+            0o40000 | 0o120000 | 0o160000 => tree::EntryMode(mode as u16),
+            blob_mode if blob_mode & 0o100000 == 0o100000 => tree::EntryMode(mode as u16),
             _ => return Err(mode),
         })
     }
@@ -118,19 +121,11 @@ mod decode {
     use bstr::ByteSlice;
     use winnow::{error::ParserError, prelude::*};
 
+    use crate::tree::ref_iter::mode_from_decimal;
     use crate::{tree, tree::EntryRef, TreeRef};
 
     pub fn fast_entry(i: &[u8]) -> Option<(&[u8], EntryRef<'_>)> {
-        let mut mode = 0u32;
-        let mut spacer_pos = 1;
-        for b in i.iter().take_while(|b| **b != b' ') {
-            if *b < b'0' || *b > b'7' {
-                return None;
-            }
-            mode = (mode << 3) + (b - b'0') as u32;
-            spacer_pos += 1;
-        }
-        let (_, i) = i.split_at(spacer_pos);
+        let (mode, i) = mode_from_decimal(i)?;
         let mode = tree::EntryMode::try_from(mode).ok()?;
         let (filename, i) = i.split_at(i.find_byte(0)?);
         let i = &i[1..];

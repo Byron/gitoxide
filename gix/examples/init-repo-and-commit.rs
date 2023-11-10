@@ -30,7 +30,7 @@ fn main() -> anyhow::Result<()> {
 
         let blob_id = repo.write_blob("hello world")?.into();
         let entry = tree::Entry {
-            mode: tree::EntryMode::Blob,
+            mode: tree::EntryKind::Blob.into(),
             oid: blob_id,
             filename: "hello.txt".into(),
         };

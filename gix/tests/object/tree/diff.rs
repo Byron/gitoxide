@@ -4,7 +4,8 @@ use gix::{
     bstr::BString,
     object::{blob::diff::line::Change, tree::diff::change::Event},
 };
-use gix_object::{bstr::ByteSlice, tree::EntryMode};
+use gix_object::bstr::ByteSlice;
+use gix_object::tree::EntryKind;
 
 use crate::named_repo;
 
@@ -23,8 +24,8 @@ fn changes_against_tree_modified() -> crate::Result {
                     entry_mode,
                     id,
                 } => {
-                    assert_eq!(previous_entry_mode, EntryMode::Blob);
-                    assert_eq!(entry_mode, EntryMode::Blob);
+                    assert_eq!(previous_entry_mode.kind(), EntryKind::Blob);
+                    assert_eq!(entry_mode.kind(), EntryKind::Blob);
                     assert_eq!(previous_id.object().unwrap().data.as_bstr(), "a\n");
                     assert_eq!(id.object().unwrap().data.as_bstr(), "a\na1\n");
                 }

@@ -2,10 +2,8 @@ mod from_tree {
     use std::collections::VecDeque;
 
     use bstr::{BStr, BString, ByteSlice, ByteVec};
-    use gix_object::{
-        tree::{self, EntryMode},
-        FindExt,
-    };
+    use gix_object::tree::EntryKind;
+    use gix_object::{tree, FindExt};
     use gix_traverse::tree::{breadthfirst, visit::Action, Visit};
 
     use crate::{
@@ -95,12 +93,12 @@ mod from_tree {
         }
 
         pub fn add_entry(&mut self, entry: &tree::EntryRef<'_>) {
-            let mode = match entry.mode {
-                EntryMode::Tree => unreachable!("visit_non_tree() called us"),
-                EntryMode::Blob => Mode::FILE,
-                EntryMode::BlobExecutable => Mode::FILE_EXECUTABLE,
-                EntryMode::Link => Mode::SYMLINK,
-                EntryMode::Commit => Mode::COMMIT,
+            let mode = match entry.mode.kind() {
+                EntryKind::Tree => unreachable!("visit_non_tree() called us"),
+                EntryKind::Blob => Mode::FILE,
+                EntryKind::BlobExecutable => Mode::FILE_EXECUTABLE,
+                EntryKind::Link => Mode::SYMLINK,
+                EntryKind::Commit => Mode::COMMIT,
             };
 
             let path_start = self.path_backing.len();

@@ -31,7 +31,7 @@ impl State {
 pub(crate) mod impl_ {
     use std::borrow::BorrowMut;
 
-    use gix_object::{tree::EntryMode, FindExt, TreeRefIter};
+    use gix_object::{FindExt, TreeRefIter};
 
     use super::{Error, State};
     use crate::tree::Visit;
@@ -65,28 +65,25 @@ pub(crate) mod impl_ {
         loop {
             for entry in tree {
                 let entry = entry?;
-                match entry.mode {
-                    EntryMode::Tree => {
-                        use crate::tree::visit::Action::*;
-                        delegate.push_path_component(entry.filename);
-                        let action = delegate.visit_tree(&entry);
-                        match action {
-                            Skip => {}
-                            Continue => {
-                                delegate.pop_path_component();
-                                delegate.push_back_tracked_path_component(entry.filename);
-                                state.next.push_back(entry.oid.to_owned())
-                            }
-                            Cancel => {
-                                return Err(Error::Cancelled);
-                            }
+                if entry.mode.is_tree() {
+                    use crate::tree::visit::Action::*;
+                    delegate.push_path_component(entry.filename);
+                    let action = delegate.visit_tree(&entry);
+                    match action {
+                        Skip => {}
+                        Continue => {
+                            delegate.pop_path_component();
+                            delegate.push_back_tracked_path_component(entry.filename);
+                            state.next.push_back(entry.oid.to_owned())
                         }
-                    }
-                    _non_tree => {
-                        delegate.push_path_component(entry.filename);
-                        if delegate.visit_nontree(&entry).cancelled() {
+                        Cancel => {
                             return Err(Error::Cancelled);
                         }
+                    }
+                } else {
+                    delegate.push_path_component(entry.filename);
+                    if delegate.visit_nontree(&entry).cancelled() {
+                        return Err(Error::Cancelled);
                     }
                 }
                 delegate.pop_path_component();

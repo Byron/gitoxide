@@ -69,10 +69,7 @@ impl Tree {
             if let Some(buf) = object_buf.as_mut() {
                 let tree_entries = objects.find_tree_iter(&parent_id, buf)?;
                 let mut num_entries = 0;
-                for entry in tree_entries
-                    .filter_map(Result::ok)
-                    .filter(|e| e.mode == gix_object::tree::EntryMode::Tree)
-                {
+                for entry in tree_entries.filter_map(Result::ok).filter(|e| e.mode.is_tree()) {
                     children
                         .binary_search_by(|e| e.name.as_bstr().cmp(entry.filename))
                         .map_err(|_| Error::MissingTreeDirectory {

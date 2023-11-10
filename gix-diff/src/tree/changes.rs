@@ -250,9 +250,8 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
-    use gix_object::tree::EntryMode::*;
-    match (lhs.mode, rhs.mode) {
-        (Tree, Tree) => {
+    match (lhs.mode.is_tree(), rhs.mode.is_tree()) {
+        (true, true) => {
             delegate.push_back_tracked_path_component(lhs.filename);
             if lhs.oid != rhs.oid
                 && delegate
@@ -268,7 +267,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             }
             queue.push_back((Some(lhs.oid.to_owned()), Some(rhs.oid.to_owned())));
         }
-        (_, Tree) => {
+        (_, true) => {
             delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
@@ -290,7 +289,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             };
             queue.push_back((None, Some(rhs.oid.to_owned())));
         }
-        (Tree, _) => {
+        (true, _) => {
             delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
@@ -312,9 +311,9 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             };
             queue.push_back((Some(lhs.oid.to_owned()), None));
         }
-        (lhs_non_tree, rhs_non_tree) => {
+        (false, false) => {
             delegate.push_path_component(lhs.filename);
-            debug_assert!(lhs_non_tree.is_no_tree() && rhs_non_tree.is_no_tree());
+            debug_assert!(lhs.mode.is_no_tree() && lhs.mode.is_no_tree());
             if lhs.oid != rhs.oid
                 && delegate
                     .visit(Change::Modification {
@@ -342,7 +341,7 @@ fn peekable<I: Iterator>(iter: I) -> IteratorType<I> {
 mod tests {
     use std::cmp::Ordering;
 
-    use gix_object::tree::EntryMode;
+    use gix_object::tree::EntryKind;
 
     use super::*;
 
@@ -351,12 +350,12 @@ mod tests {
         let null = gix_hash::ObjectId::null(gix_hash::Kind::Sha1);
         let actual = compare(
             &EntryRef {
-                mode: EntryMode::Blob,
+                mode: EntryKind::Blob.into(),
                 filename: "plumbing-cli.rs".into(),
                 oid: &null,
             },
             &EntryRef {
-                mode: EntryMode::Tree,
+                mode: EntryKind::Tree.into(),
                 filename: "plumbing".into(),
                 oid: &null,
             },
@@ -364,12 +363,12 @@ mod tests {
         assert_eq!(actual, Ordering::Less);
         let actual = compare(
             &EntryRef {
-                mode: EntryMode::Tree,
+                mode: EntryKind::Tree.into(),
                 filename: "plumbing-cli.rs".into(),
                 oid: &null,
             },
             &EntryRef {
-                mode: EntryMode::Blob,
+                mode: EntryKind::Blob.into(),
                 filename: "plumbing".into(),
                 oid: &null,
             },

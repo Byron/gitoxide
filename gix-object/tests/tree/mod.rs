@@ -25,27 +25,27 @@ mod iter {
             TreeRefIter::from_bytes(&fixture_name("tree", "everything.tree")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 EntryRef {
-                    mode: tree::EntryMode::BlobExecutable,
+                    mode: tree::EntryKind::BlobExecutable.into(),
                     filename: b"exe".as_bstr(),
                     oid: &hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
                 },
                 EntryRef {
-                    mode: tree::EntryMode::Blob,
+                    mode: tree::EntryKind::Blob.into(),
                     filename: b"file".as_bstr(),
                     oid: &hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
                 },
                 EntryRef {
-                    mode: tree::EntryMode::Commit,
+                    mode: tree::EntryKind::Commit.into(),
                     filename: b"grit-submodule".as_bstr(),
                     oid: &hex_to_id("b2d1b5d684bdfda5f922b466cc13d4ce2d635cf8")
                 },
                 EntryRef {
-                    mode: tree::EntryMode::Tree,
+                    mode: tree::EntryKind::Tree.into(),
                     filename: b"subdir".as_bstr(),
                     oid: &hex_to_id("4d5fcadc293a348e88f777dc0920f11e7d71441c")
                 },
                 EntryRef {
-                    mode: tree::EntryMode::Link,
+                    mode: tree::EntryKind::Link.into(),
                     filename: b"symlink".as_bstr(),
                     oid: &hex_to_id("1a010b1c0f081b2e8901d55307a15c29ff30af0e")
                 }
@@ -77,27 +77,27 @@ mod from_bytes {
             TreeRef {
                 entries: vec![
                     EntryRef {
-                        mode: tree::EntryMode::BlobExecutable,
+                        mode: tree::EntryKind::BlobExecutable.into(),
                         filename: b"exe".as_bstr(),
                         oid: &hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
                     },
                     EntryRef {
-                        mode: tree::EntryMode::Blob,
+                        mode: tree::EntryKind::Blob.into(),
                         filename: b"file".as_bstr(),
                         oid: &hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
                     },
                     EntryRef {
-                        mode: tree::EntryMode::Commit,
+                        mode: tree::EntryKind::Commit.into(),
                         filename: b"grit-submodule".as_bstr(),
                         oid: &hex_to_id("b2d1b5d684bdfda5f922b466cc13d4ce2d635cf8")
                     },
                     EntryRef {
-                        mode: tree::EntryMode::Tree,
+                        mode: tree::EntryKind::Tree.into(),
                         filename: b"subdir".as_bstr(),
                         oid: &hex_to_id("4d5fcadc293a348e88f777dc0920f11e7d71441c")
                     },
                     EntryRef {
-                        mode: tree::EntryMode::Link,
+                        mode: tree::EntryKind::Link.into(),
                         filename: b"symlink".as_bstr(),
                         oid: &hex_to_id("1a010b1c0f081b2e8901d55307a15c29ff30af0e")
                     }
@@ -135,6 +135,7 @@ mod from_bytes {
             ("special-2", 18),
             ("special-3", 5),
             ("special-4", 18),
+            ("special-5", 17),
         ] {
             let fixture = fixture_name("tree", &format!("{name}.tree"));
             assert_eq!(
@@ -198,7 +199,7 @@ mod entries {
 }
 
 mod entry_mode {
-    use gix_object::tree::EntryMode;
+    use gix_object::tree::{EntryKind, EntryMode};
 
     #[test]
     fn size_in_bytes() {
@@ -207,5 +208,30 @@ mod entry_mode {
             2,
             "it should not change without notice"
         );
+    }
+
+    #[test]
+    fn as_bytes() {
+        let mut buf = Default::default();
+        for (mode, expected) in [
+            (EntryMode::from(EntryKind::Tree), EntryKind::Tree.as_octal_str()),
+            (EntryKind::Blob.into(), EntryKind::Blob.as_octal_str()),
+            (
+                EntryKind::BlobExecutable.into(),
+                EntryKind::BlobExecutable.as_octal_str(),
+            ),
+            (EntryKind::Link.into(), EntryKind::Link.as_octal_str()),
+            (EntryKind::Commit.into(), EntryKind::Commit.as_octal_str()),
+            (
+                EntryMode::try_from(b"100744 ".as_ref()).expect("valid"),
+                "100744".into(),
+            ),
+            (
+                EntryMode::try_from(b"100644 ".as_ref()).expect("valid"),
+                "100644".into(),
+            ),
+        ] {
+            assert_eq!(mode.as_bytes(&mut buf), expected)
+        }
     }
 }

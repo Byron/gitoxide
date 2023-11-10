@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use gix_diff::tree::visit::Change;
-use gix_object::tree::EntryMode;
+use gix_object::tree::{EntryKind, EntryMode};
 
 use crate::{
     bstr::BStr,
@@ -29,9 +29,9 @@ impl Item {
         backing[self.location.clone()].as_ref()
     }
     fn entry_mode_compatible(&self, mode: EntryMode) -> bool {
-        use EntryMode::*;
+        use EntryKind::*;
         matches!(
-            (mode, self.change.entry_mode()),
+            (mode.kind(), self.change.entry_mode().kind()),
             (Blob | BlobExecutable, Blob | BlobExecutable) | (Link, Link)
         )
     }
@@ -331,7 +331,7 @@ fn find_match<'a>(
     stats: &mut Outcome,
 ) -> Result<Option<SourceTuple<'a>>, crate::object::tree::diff::for_each::Error> {
     let (item_id, item_mode) = item.change.oid_and_entry_mode();
-    if needs_exact_match(percentage) || item_mode == gix_object::tree::EntryMode::Link {
+    if needs_exact_match(percentage) || item_mode.is_link() {
         let first_idx = items.partition_point(|a| a.change.oid() < item_id);
         let range = match items.get(first_idx..).map(|items| {
             let end = items
