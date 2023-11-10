@@ -281,6 +281,7 @@ members = [
     "gix-archive",
     "gix-worktree-stream",
     "gix-revwalk",
+    "gix-fsck",
 
     "tests/tools",
 

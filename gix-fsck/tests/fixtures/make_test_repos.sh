@@ -1,0 +1,32 @@
+#!/bin/bash
+set -x
+set -euo pipefail
+
+# We override the global config with our own local one (see below)
+export GIT_CONFIG_GLOBAL="$PWD/.gitconfig"
+
+# We need to be able to do partial clones, so enable it
+# - needs to be present in the persistent gitconfig, as a clone with `--no-local`
+git config --global uploadpack.allowFilter true
+
+# First build out a base repository
+git init base
+(
+    cd base
+
+    echo "blob 1" > blob-1
+    git add -A
+    git commit -m "commit 1"
+    echo "blob-2" > blob-2
+    git add -A
+    git commit -m "commit 2"
+    git rm blob-1
+    git add -A
+    git commit -m "commit 3"
+)
+
+# Blobless clone
+git clone --no-local --no-hardlinks --filter=blob:none ./base blobless
+
+# Treeless (and blobless) clone
+git clone --no-local --no-hardlinks --filter=tree:0 ./base treeless

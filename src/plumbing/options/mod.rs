@@ -87,6 +87,8 @@ pub enum Subcommands {
     /// Interact with the object database.
     #[clap(subcommand)]
     Odb(odb::Subcommands),
+    /// Check for missing objects.
+    Fsck(fsck::Platform),
     /// Interact with tree objects.
     #[clap(subcommand)]
     Tree(tree::Subcommands),
@@ -486,6 +488,14 @@ pub mod odb {
         /// Count and obtain information on all, possibly duplicate, objects in the database.
         #[clap(visible_alias = "statistics")]
         Stats,
+    }
+}
+
+pub mod fsck {
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// A revspec to start the connectivity check from.
+        pub spec: Option<String>,
     }
 }
 

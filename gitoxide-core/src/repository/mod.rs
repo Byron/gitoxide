@@ -35,6 +35,8 @@ pub use clone::function::clone;
 pub use fetch::function::fetch;
 
 pub mod commitgraph;
+mod fsck;
+pub use fsck::function as fsck;
 pub mod index;
 pub mod mailmap;
 pub mod odb;

@@ -15,8 +15,8 @@ use gix::bstr::{io::BufReadExt, BString};
 
 use crate::plumbing::{
     options::{
-        attributes, commit, commitgraph, config, credential, exclude, free, index, mailmap, odb, revision, tree, Args,
-        Subcommands,
+        attributes, commit, commitgraph, config, credential, exclude, free, fsck, index, mailmap, odb, revision, tree,
+        Args, Subcommands,
     },
     show_progress,
 };
@@ -1079,6 +1079,15 @@ pub fn main() -> Result<()> {
                 move |_progress, out, err| core::repository::odb::info(repository(Mode::Strict)?, format, out, err),
             ),
         },
+        Subcommands::Fsck(fsck::Platform { spec }) => prepare_and_run(
+            "fsck",
+            trace,
+            auto_verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |_progress, out, _err| core::repository::fsck(repository(Mode::Strict)?, spec, out),
+        ),
         Subcommands::Mailmap(cmd) => match cmd {
             mailmap::Subcommands::Entries => prepare_and_run(
                 "mailmap-entries",

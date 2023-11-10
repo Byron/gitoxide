@@ -1190,6 +1190,7 @@ dependencies = [
  "futures-lite",
  "gix",
  "gix-archive",
+ "gix-fsck",
  "gix-pack",
  "gix-status",
  "gix-transport",
@@ -1647,6 +1648,17 @@ version = "0.8.0"
 dependencies = [
  "gix-features 0.36.0",
  "tempfile",
+]
+
+[[package]]
+name = "gix-fsck"
+version = "0.1.0"
+dependencies = [
+ "gix-hash 0.13.1",
+ "gix-hashtable 0.4.0",
+ "gix-object 0.38.0",
+ "gix-odb",
+ "gix-testtools",
 ]
 
 [[package]]

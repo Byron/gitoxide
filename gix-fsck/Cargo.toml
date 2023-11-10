@@ -1,0 +1,22 @@
+[package]
+name = "gix-fsck"
+version = "0.1.0"
+repository = "https://github.com/Byron/gitoxide"
+authors = ["Cameron Esfahani <cesfahani@gmail.com>", "Sebastian Thiel <sebastian.thiel@icloud.com>"]
+license = "MIT OR Apache-2.0"
+description = "Verifies the connectivity and validity of objects in the database"
+edition = "2021"
+include = ["src/**/*", "LICENSE-*"]
+rust-version = "1.65"
+
+[lib]
+doctest = false
+
+[dependencies]
+gix-hash = { version = "^0.13.1", path = "../gix-hash" }
+gix-hashtable = { version = "^0.4.0", path = "../gix-hashtable" }
+gix-object = { version = "^0.38.0", path = "../gix-object" }
+
+[dev-dependencies]
+gix-odb = { path = "../gix-odb" }
+gix-testtools = { path = "../tests/tools"}

@@ -775,6 +775,23 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * [x] validate submodule names
 * [x] [validate][tagname-validation] tag names
 
+### gix-fsck
+* [x] validate connectivity and find missing objects starting from…
+    - [x] commits
+    - [ ] tags
+    - [ ] tree-cache in the `index` or any entry within
+* [ ] validate object hashes during connectivity traversal
+* [ ] progress reporting and interruptability
+* [ ] skipList to exclude objects which are known to be broken
+* [ ] validate blob hashes (connectivity check
+* [ ] identify objects that exist but are not reachable (i.e. what remains after a full graph traversal from all valid starting points)
+* [ ] write dangling objects to the `.git/log-found` directory structure
+* [ ] `strict` mode, to check for tree objects with `g+w` permissions
+* [ ] consider reflog entries from `ref` starting points
+* [ ] when reporting reachable objects, provide the path through which they are reachable, i.e. ref-log@{3} -> commit -> tree -> path-in-tree
+* [ ] limit search to ODB without alternates (default is equivalent to `git fsck --full` due to ODB implementation)
+* [ ] all individual [checks available in `git fsck`](https://git-scm.com/docs/git-fsck#_fsck_messages) (*too many to print here*)
+
 ### gix-ref
 * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2] but should work for loose refs as well.
 * **Stores**
