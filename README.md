@@ -2,6 +2,8 @@
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 <img src="etc/msrv-badge.svg">
 
+[![gitoxide](https://snapcraft.io/gitoxide/badge.svg)](https://snapcraft.io/gitoxide)
+
 `gitoxide` is an implementation of `git` written in Rust for developing future-proof applications which strive for correctness and
 performance while providing a pleasant and unsurprising developer experience. 
 
@@ -173,6 +175,20 @@ on your needs, for _Linux_, _MacOS_ and _Windows_.
 For Arch Linux you can download `gitoxide` from `community` repository:
 ```
 pacman -S gitoxide
+```
+
+### Install the snap:
+
+For latest builds, based on most recent commits to `main` branch, use the `edge` channel.
+
+```
+sudo snap install gitoxide
+```
+To run it from your terminal, type: `gitoxide`
+
+Set a snap alias for it to match the command syntax:
+```
+sudo snap alias gitoxide gix
 ```
 
 ### From Source via Cargo
