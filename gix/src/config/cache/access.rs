@@ -93,13 +93,9 @@ impl Cache {
     }
 
     #[cfg(feature = "blob-diff")]
-    pub(crate) fn diff_renames(
-        &self,
-    ) -> Result<Option<crate::object::tree::diff::Rewrites>, crate::object::tree::diff::rewrites::Error> {
+    pub(crate) fn diff_renames(&self) -> Result<Option<crate::diff::Rewrites>, crate::diff::new_rewrites::Error> {
         self.diff_renames
-            .get_or_try_init(|| {
-                crate::object::tree::diff::Rewrites::try_from_config(&self.resolved, self.lenient_config)
-            })
+            .get_or_try_init(|| crate::diff::new_rewrites(&self.resolved, self.lenient_config))
             .copied()
     }
 

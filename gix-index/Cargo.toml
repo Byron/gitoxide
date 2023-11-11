@@ -41,6 +41,10 @@ bitflags = "2"
 
 document-features = { version = "0.2.0", optional = true }
 
+[target.'cfg(not(windows))'.dependencies]
+rustix = { version = "0.38.20", default-features = false, features = ["std", "fs"] }
+libc = { version = "0.2.149" }
+
 [package.metadata.docs.rs]
 features = ["document-features", "serde"]
 rustdoc-args = ["--cfg", "docsrs"]

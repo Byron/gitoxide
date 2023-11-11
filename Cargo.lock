@@ -1519,6 +1519,7 @@ dependencies = [
 name = "gix-diff"
 version = "0.37.0"
 dependencies = [
+ "bstr",
  "document-features",
  "getrandom",
  "gix-hash 0.13.1",
@@ -1795,7 +1796,9 @@ dependencies = [
  "gix-object 0.38.0",
  "gix-traverse 0.34.0",
  "itoa",
+ "libc",
  "memmap2 0.7.1",
+ "rustix 0.38.20",
  "serde",
  "smallvec",
  "thiserror",
@@ -2082,7 +2085,7 @@ dependencies = [
  "gix-config-value",
  "gix-testtools",
  "parking_lot",
- "rustix 0.38.19",
+ "rustix 0.38.20",
  "serial_test",
  "thiserror",
 ]
@@ -2282,7 +2285,6 @@ dependencies = [
  "gix-index 0.26.0",
  "gix-object 0.38.0",
  "gix-path 0.10.0",
- "gix-pathspec",
  "gix-worktree 0.27.0",
  "thiserror",
 ]
@@ -2933,7 +2935,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb0889898416213fab133e1d33a0e5858a48177452750691bde3666d0fdbaf8b"
 dependencies = [
  "hermit-abi",
- "rustix 0.38.19",
+ "rustix 0.38.20",
  "windows-sys",
 ]
 
@@ -3859,9 +3861,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.38.19"
+version = "0.38.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "745ecfa778e66b2b63c88a61cb36e0eea109e803b0b86bf9879fbc77c70e86ed"
+checksum = "67ce50cb2e16c2903e30d1cbccfd8387a74b9d4c938b6a4c5ec6cc7556f7a8a0"
 dependencies = [
  "bitflags 2.4.0",
  "errno",
@@ -4289,7 +4291,7 @@ dependencies = [
  "cfg-if",
  "fastrand 2.0.1",
  "redox_syscall",
- "rustix 0.38.19",
+ "rustix 0.38.20",
  "windows-sys",
 ]
 

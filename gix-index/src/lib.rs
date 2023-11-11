@@ -33,6 +33,8 @@ pub mod verify;
 ///
 pub mod write;
 
+pub mod fs;
+
 /// All known versions of a git index file.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

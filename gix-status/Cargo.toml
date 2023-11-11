@@ -20,11 +20,9 @@ gix-hash = { version = "^0.13.1", path = "../gix-hash" }
 gix-object = { version = "^0.38.0", path = "../gix-object" }
 gix-path = { version = "^0.10.0", path = "../gix-path" }
 gix-features = { version = "^0.36.0", path = "../gix-features" }
-gix-pathspec = { version = "^0.4.0", path = "../gix-pathspec" }
 gix-filter = { version = "^0.6.0", path = "../gix-filter" }
 gix-worktree = { version = "^0.27.0", path = "../gix-worktree", default-features = false, features = ["attributes"] }
 
 thiserror = "1.0.26"
 filetime = "0.2.15"
 bstr = { version = "1.3.0", default-features = false }
-
