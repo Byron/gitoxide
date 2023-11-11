@@ -106,6 +106,7 @@ impl Program {
                 Stdio::null()
             })
             .stderr(if self.stderr { Stdio::inherit() } else { Stdio::null() });
+        gix_trace::debug!(cmd = ?cmd, "launching credential helper");
         let mut child = cmd.spawn()?;
         let stdin = child.stdin.take().expect("stdin to be configured");
         let stdout = child.stdout.take();

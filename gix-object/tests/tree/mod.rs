@@ -111,14 +111,12 @@ mod from_bytes {
     fn invalid() {
         let fixture = fixture_name("tree", "definitely-special.tree");
         let partial_tree = &fixture[..fixture.len() / 2];
-        assert_eq!(
-            TreeRef::from_bytes(partial_tree).unwrap_err().to_string(),
-            if cfg!(feature = "verbose-object-parsing-errors") {
-                ""
-            } else {
-                "object parsing failed"
-            }
-        );
+        let err = TreeRef::from_bytes(partial_tree).unwrap_err().to_string();
+        if cfg!(feature = "verbose-object-parsing-errors") {
+            assert!(err.starts_with("object parsing failed at `100644"), "{err}");
+        } else {
+            assert_eq!(err, "object parsing failed");
+        }
         assert_eq!(
             TreeRefIter::from_bytes(partial_tree).take_while(Result::is_ok).count(),
             9,

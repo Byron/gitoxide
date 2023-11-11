@@ -1402,6 +1402,7 @@ version = "0.2.10"
 dependencies = [
  "bstr",
  "gix-testtools",
+ "gix-trace 0.1.3",
 ]
 
 [[package]]
@@ -1481,6 +1482,7 @@ dependencies = [
  "gix-prompt",
  "gix-sec 0.10.0",
  "gix-testtools",
+ "gix-trace 0.1.3",
  "gix-url",
  "serde",
  "thiserror",

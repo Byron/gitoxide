@@ -93,7 +93,9 @@ mod prepare {
     impl Prepare {
         /// Spawn the command as configured.
         pub fn spawn(self) -> std::io::Result<std::process::Child> {
-            Command::from(self).spawn()
+            let mut cmd = Command::from(self);
+            gix_trace::debug!(cmd = ?cmd);
+            cmd.spawn()
         }
     }
 

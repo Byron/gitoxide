@@ -176,6 +176,12 @@ fast-sha1 = [ "gix-features/fast-sha1" ]
 #!
 #! The catch-all of feature toggles.
 
+## When parsing objects by default errors will only be available on the granularity of success or failure, and with the above flag enabled
+## details information about the error location will be collected.
+## Use it in applications which expect broken or invalid objects or for debugging purposes.
+## Incorrectly formatted objects aren't very common otherwise.
+verbose-object-parsing-errors = ["gix-object/verbose-object-parsing-errors"]
+
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = [   "dep:serde",
     "gix-pack/serde",

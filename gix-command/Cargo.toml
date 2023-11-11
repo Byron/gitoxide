@@ -13,6 +13,8 @@ include = ["src/lib.rs", "LICENSE-*"]
 doctest = false
 
 [dependencies]
+gix-trace = { version = "^0.1.3", path = "../gix-trace" }
+
 bstr = { version = "1.5.0", default-features = false, features = ["std"] }
 
 [dev-dependencies]

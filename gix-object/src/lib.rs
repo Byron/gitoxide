@@ -267,6 +267,7 @@ pub mod decode {
         pub(crate) fn empty_error() -> Error {
             Error {
                 inner: winnow::error::ContextError::new(),
+                remaining: Default::default(),
             }
         }
 
@@ -275,19 +276,27 @@ pub mod decode {
         pub struct Error {
             /// The actual error
             pub inner: ParseError,
+            /// Where the error occurred
+            pub remaining: Vec<u8>,
         }
 
         impl Error {
-            pub(crate) fn with_err(err: winnow::error::ErrMode<ParseError>) -> Self {
+            pub(crate) fn with_err(err: winnow::error::ErrMode<ParseError>, remaining: &[u8]) -> Self {
                 Self {
                     inner: err.into_inner().expect("we don't have streaming parsers"),
+                    remaining: remaining.to_owned(),
                 }
             }
         }
 
         impl std::fmt::Display for Error {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                self.inner.fmt(f)
+                write!(f, "object parsing failed at `{}`", bstr::BStr::new(&self.remaining))?;
+                if self.inner.context().next().is_some() {
+                    writeln!(f)?;
+                    self.inner.fmt(f)?;
+                }
+                Ok(())
             }
         }
 
@@ -316,7 +325,7 @@ pub mod decode {
         }
 
         impl Error {
-            pub(crate) fn with_err(err: winnow::error::ErrMode<ParseError>) -> Self {
+            pub(crate) fn with_err(err: winnow::error::ErrMode<ParseError>, _remaining: &[u8]) -> Self {
                 Self {
                     inner: err.into_inner().expect("we don't have streaming parsers"),
                 }

@@ -59,58 +59,59 @@ fn missing_field() -> crate::decode::Error {
 
 impl<'a> TagRefIter<'a> {
     #[inline]
-    fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
-        Self::next_inner_(i, state).map_err(crate::decode::Error::with_err)
+    fn next_inner(mut i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
+        let input = &mut i;
+        match Self::next_inner_(input, state) {
+            Ok(token) => Ok((*input, token)),
+            Err(err) => Err(crate::decode::Error::with_err(err, input)),
+        }
     }
 
     fn next_inner_(
-        mut i: &'a [u8],
+        input: &mut &'a [u8],
         state: &mut State,
-    ) -> Result<(&'a [u8], Token<'a>), winnow::error::ErrMode<crate::decode::ParseError>> {
+    ) -> Result<Token<'a>, winnow::error::ErrMode<crate::decode::ParseError>> {
         use State::*;
         Ok(match state {
             Target => {
                 let target = (|i: &mut _| parse::header_field(i, b"object", parse::hex_hash))
                     .context(StrContext::Expected("object <40 lowercase hex char>".into()))
-                    .parse_next(&mut i)?;
+                    .parse_next(input)?;
                 *state = TargetKind;
-                (
-                    i,
-                    Token::Target {
-                        id: ObjectId::from_hex(target).expect("parsing validation"),
-                    },
-                )
+                Token::Target {
+                    id: ObjectId::from_hex(target).expect("parsing validation"),
+                }
             }
             TargetKind => {
                 let kind = (|i: &mut _| parse::header_field(i, b"type", take_while(1.., AsChar::is_alpha)))
                     .context(StrContext::Expected("type <object kind>".into()))
-                    .parse_next(&mut i)?;
+                    .parse_next(input)?;
                 let kind = Kind::from_bytes(kind)
-                    .map_err(|_| winnow::error::ErrMode::from_error_kind(&i, winnow::error::ErrorKind::Verify))?;
+                    .map_err(|_| winnow::error::ErrMode::from_error_kind(input, winnow::error::ErrorKind::Verify))?;
                 *state = Name;
-                (i, Token::TargetKind(kind))
+                Token::TargetKind(kind)
             }
             Name => {
                 let tag_version = (|i: &mut _| parse::header_field(i, b"tag", take_while(1.., |b| b != NL[0])))
                     .context(StrContext::Expected("tag <version>".into()))
-                    .parse_next(&mut i)?;
+                    .parse_next(input)?;
                 *state = Tagger;
-                (i, Token::Name(tag_version.as_bstr()))
+                Token::Name(tag_version.as_bstr())
             }
             Tagger => {
                 let signature = opt(|i: &mut _| parse::header_field(i, b"tagger", parse::signature))
                     .context(StrContext::Expected("tagger <signature>".into()))
-                    .parse_next(&mut i)?;
+                    .parse_next(input)?;
                 *state = Message;
-                (i, Token::Tagger(signature))
+                Token::Tagger(signature)
             }
             Message => {
-                let (message, pgp_signature) = terminated(decode::message, eof).parse_next(&mut i)?;
+                let (message, pgp_signature) = terminated(decode::message, eof).parse_next(input)?;
                 debug_assert!(
-                    i.is_empty(),
+                    input.is_empty(),
                     "we should have consumed all data - otherwise iter may go forever"
                 );
-                return Ok((i, Token::Body { message, pgp_signature }));
+                Token::Body { message, pgp_signature }
             }
         })
     }
