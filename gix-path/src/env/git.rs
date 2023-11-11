@@ -22,6 +22,7 @@ pub(crate) fn install_config_path() -> Option<&'static BStr> {
         cmd.args(["config", "-l", "--show-origin"])
             .stdin(Stdio::null())
             .stderr(Stdio::null());
+        gix_trace::debug!(cmd = ?cmd, "invoking git for installation config path");
         first_file_from_config_with_origin(cmd.output().ok()?.stdout.as_slice().into()).map(ToOwned::to_owned)
     });
     PATH.as_ref().map(AsRef::as_ref)
