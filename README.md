@@ -188,7 +188,8 @@ To run it from your terminal, type: `gitoxide`
 
 Set a snap alias for it to match the command syntax:
 ```
-sudo snap alias gitoxide gix
+sudo snap alias gitoxide.gix gix
+sudo snap alias gitoxide.ein ein
 ```
 
 ### From Source via Cargo
