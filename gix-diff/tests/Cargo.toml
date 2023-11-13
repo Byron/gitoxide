@@ -17,7 +17,11 @@ path = "diff.rs"
 [dev-dependencies]
 gix-diff = { path = ".." }
 gix-hash = { path = "../../gix-hash" }
+gix-fs = { path = "../../gix-fs" }
+gix-worktree = { path = "../../gix-worktree" }
 gix-object = { path = "../../gix-object" }
 gix-odb = { path = "../../gix-odb" }
+gix-filter = { path = "../../gix-filter" }
 gix-traverse = { path = "../../gix-traverse" }
 gix-testtools = { path = "../../tests/tools" }
+shell-words = "1"
