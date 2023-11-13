@@ -22,8 +22,7 @@ pub mod configuration {
 ///
 pub mod to_git {
     /// A function that fills `buf` `fn(&mut buf)` with the data stored in the index of the file that should be converted.
-    pub type IndexObjectFn<'a> =
-        dyn FnMut(&mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> + 'a;
+    pub type IndexObjectFn<'a> = dyn FnMut(&mut Vec<u8>) -> Result<Option<()>, gix_object::find::Error> + 'a;
 
     /// The error returned by [Pipeline::convert_to_git()][super::Pipeline::convert_to_git()].
     #[derive(Debug, thiserror::Error)]
