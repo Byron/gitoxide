@@ -12,7 +12,10 @@ description: |
     become the default way to interact with git repositories. 
     
     To run from your terminal, type: gitoxide
-    Set an alias for it using the following command: sudo snap alias gitoxide gix
+    
+    Set aliases for `gix` and `ein` using the following commands: 
+    sudo snap alias gitoxide gix
+    sudo snap alias gitoxide.ein ein
     
 license: Apache-2.0
 
