@@ -261,7 +261,6 @@ mod from_tree {
 
     fn mutating_pipeline(driver: bool) -> gix_filter::Pipeline {
         gix_filter::Pipeline::new(
-            &Default::default(),
             Default::default(),
             gix_filter::pipeline::Options {
                 drivers: if driver { vec![driver_with_process()] } else { vec![] },
