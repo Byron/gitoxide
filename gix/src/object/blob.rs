@@ -23,7 +23,7 @@ pub mod diff {
         pub type Error = gix_diff::blob::platform::set_resource::Error;
     }
 
-    impl<'a, 'new> Platform<'a> {
+    impl<'a> Platform<'a> {
         /// Produce a platform for performing various diffs after obtaining the data from a single `tree_change`.
         pub fn from_tree_change(
             tree_change: &crate::object::tree::diff::Change<'_, '_, '_>,

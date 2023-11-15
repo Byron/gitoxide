@@ -421,6 +421,7 @@ mod track_rewrites {
                 insertions: 1,
                 before: 11,
                 after: 12,
+                similarity: 0.8888889
             }),
             "by similarity there is a diff"
         );
@@ -530,6 +531,7 @@ mod track_rewrites {
                 insertions: 3,
                 before: 12,
                 after: 15,
+                similarity: 0.75
             }),
             "by similarity there is a diff"
         );
@@ -590,12 +592,12 @@ mod track_rewrites {
 
         let out = out.rewrites.expect("tracking enabled");
         assert_eq!(stat, None, "similarity can't run");
-        assert_eq!(out.num_similarity_checks, 3);
+        assert_eq!(out.num_similarity_checks, 0);
         assert_eq!(
             out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit, 0,
             "no limit configured"
         );
-        assert_eq!(out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit, 57);
+        assert_eq!(out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit, 19);
 
         Ok(())
     }
@@ -646,7 +648,7 @@ mod track_rewrites {
         let out = out.rewrites.expect("tracking enabled");
         assert_eq!(out.num_similarity_checks, 0);
         assert_eq!(out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit, 0);
-        assert_eq!(out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit, 3);
+        assert_eq!(out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit, 2);
 
         Ok(())
     }

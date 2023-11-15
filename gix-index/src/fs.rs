@@ -5,7 +5,7 @@
 
 // it's allowed for good measure, in case there are systems that use different types for that.
 use std::path::Path;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 /// A structure to partially mirror [`std::fs::Metadata`].
 #[cfg(not(windows))]
@@ -161,6 +161,7 @@ impl Metadata {
     }
 }
 
+#[cfg(not(windows))]
 fn system_time_from_secs_nanos(secs: u64, nanos: u32) -> SystemTime {
-    std::time::UNIX_EPOCH + Duration::new(secs, nanos)
+    std::time::UNIX_EPOCH + std::time::Duration::new(secs, nanos)
 }

@@ -501,16 +501,8 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned { note: Some("currently we are likely to expose passwords in errors or in other places, and it's better to by default not do that") }
     },
     Record {
-        config: "diff.*.textconv",
-        usage: Planned { note: None }
-    },
-    Record {
         config: "diff.*.cachetextconv",
-        usage: Planned { note: None }
-    },
-    Record {
-        config: "diff.*.command",
-        usage: Planned { note: None }
+        usage: NotPlanned {reason: "It seems to slow to do that, and persisting results to save a relatively cheap computation doesn't seem right"}
     },
 ];
 
