@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::cache::delta::Item;
 
-pub struct ItemSliceSend<'a, T>
+pub(crate) struct ItemSliceSend<'a, T>
 where
     T: Send,
 {
@@ -41,7 +41,7 @@ where
 unsafe impl<T> Send for ItemSliceSend<'_, T> where T: Send {}
 
 /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
-pub struct Node<'a, T: Send> {
+pub(crate) struct Node<'a, T: Send> {
     pub item: &'a mut Item<T>,
     pub child_items: ItemSliceSend<'a, Item<T>>,
 }
