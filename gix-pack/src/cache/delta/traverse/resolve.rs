@@ -17,13 +17,13 @@ use crate::{
     data::EntryRange,
 };
 
-pub(crate) struct State<F, MBFN, T: Send> {
+pub(crate) struct State<'items, F, MBFN, T: Send> {
     pub delta_bytes: Vec<u8>,
     pub fully_resolved_delta_bytes: Vec<u8>,
     pub progress: Box<dyn Progress>,
     pub resolve: F,
     pub modify_base: MBFN,
-    pub child_items: ItemSliceSend<Item<T>>,
+    pub child_items: ItemSliceSend<'items, Item<T>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -38,7 +38,7 @@ pub(crate) fn deltas<T, F, MBFN, E, R>(
         resolve,
         modify_base,
         child_items,
-    }: &mut State<F, MBFN, T>,
+    }: &mut State<'_, F, MBFN, T>,
     resolve_data: &R,
     hash_len: usize,
     threads_left: &AtomicIsize,

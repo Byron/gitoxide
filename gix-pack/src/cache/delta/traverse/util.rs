@@ -1,37 +1,49 @@
+use std::marker::PhantomData;
+
 use crate::cache::delta::Item;
 
-pub struct ItemSliceSend<T>(*mut T)
-where
-    T: Send;
-
-impl<T> ItemSliceSend<T>
+pub struct ItemSliceSend<'a, T>
 where
     T: Send,
 {
-    pub fn new(items: &mut [T]) -> Self {
-        ItemSliceSend(items.as_mut_ptr())
+    items: *mut T,
+    phantom: PhantomData<&'a T>,
+}
+
+impl<'a, T> ItemSliceSend<'a, T>
+where
+    T: Send,
+{
+    pub fn new(items: &'a mut [T]) -> Self {
+        ItemSliceSend {
+            items: items.as_mut_ptr(),
+            phantom: PhantomData,
+        }
     }
 }
 
 /// SAFETY: This would be unsafe if this would ever be abused, but it's used internally and only in a way that assure that the pointers
 ///         don't violate aliasing rules.
-impl<T> Clone for ItemSliceSend<T>
+impl<T> Clone for ItemSliceSend<'_, T>
 where
     T: Send,
 {
     fn clone(&self) -> Self {
-        ItemSliceSend(self.0)
+        ItemSliceSend {
+            items: self.items,
+            phantom: self.phantom,
+        }
     }
 }
 
 // SAFETY: T is `Send`, and we only ever access one T at a time. And, ptrs need that assurance, I wonder if it's always right.
 #[allow(unsafe_code)]
-unsafe impl<T> Send for ItemSliceSend<T> where T: Send {}
+unsafe impl<T> Send for ItemSliceSend<'_, T> where T: Send {}
 
 /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
 pub struct Node<'a, T: Send> {
     pub item: &'a mut Item<T>,
-    pub child_items: ItemSliceSend<Item<T>>,
+    pub child_items: ItemSliceSend<'a, Item<T>>,
 }
 
 impl<'a, T: Send> Node<'a, T> {
@@ -66,7 +78,7 @@ impl<'a, T: Send> Node<'a, T> {
             // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
             #[allow(unsafe_code)]
             Node {
-                item: unsafe { &mut *children.0.add(index as usize) },
+                item: unsafe { &mut *children.items.add(index as usize) },
                 child_items: children.clone(),
             }
         })
