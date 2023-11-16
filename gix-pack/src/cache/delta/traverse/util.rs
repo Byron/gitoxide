@@ -1,6 +1,6 @@
 use crate::cache::delta::Item;
 
-pub struct ItemSliceSend<T>(*mut [T])
+pub struct ItemSliceSend<T>(*mut T)
 where
     T: Send;
 
@@ -9,7 +9,7 @@ where
     T: Send,
 {
     pub fn new(items: &mut [T]) -> Self {
-        ItemSliceSend(std::ptr::slice_from_raw_parts_mut(items.as_mut_ptr(), items.len()))
+        ItemSliceSend(items.as_mut_ptr())
     }
 }
 
@@ -66,7 +66,7 @@ impl<'a, T: Send> Node<'a, T> {
             // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
             #[allow(unsafe_code)]
             Node {
-                item: &mut unsafe { &mut *children.0 }[index as usize],
+                item: unsafe { &mut *children.0.add(index as usize) },
                 child_items: children.clone(),
             }
         })
