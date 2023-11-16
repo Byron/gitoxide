@@ -81,7 +81,7 @@ impl Link {
             .expect("split index file in .git folder")
             .join(format!("sharedindex.{}", self.shared_index_checksum));
         let mut shared_index = crate::File::at(
-            &shared_index_path,
+            shared_index_path,
             object_hash,
             skip_hash,
             crate::decode::Options {

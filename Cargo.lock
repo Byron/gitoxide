@@ -1401,8 +1401,10 @@ name = "gix-command"
 version = "0.2.10"
 dependencies = [
  "bstr",
+ "gix-path 0.10.0",
  "gix-testtools",
  "gix-trace 0.1.3",
+ "shell-words",
 ]
 
 [[package]]
@@ -1485,7 +1487,6 @@ dependencies = [
  "gix-trace 0.1.3",
  "gix-url",
  "serde",
- "shell-words",
  "thiserror",
 ]
 

@@ -15,10 +15,23 @@ mod prepare {
         let cmd = std::process::Command::from(gix_command::prepare(""));
         assert_eq!(format!("{cmd:?}"), "\"\"");
     }
+
     #[test]
     fn single_and_multiple_arguments() {
         let cmd = std::process::Command::from(gix_command::prepare("ls").arg("first").args(["second", "third"]));
         assert_eq!(format!("{cmd:?}"), quoted(&["ls", "first", "second", "third"]));
+    }
+
+    #[test]
+    fn multiple_arguments_in_one_line_with_auto_split() {
+        let cmd = std::process::Command::from(
+            gix_command::prepare("echo first second third").with_shell_allow_argument_splitting(),
+        );
+        assert_eq!(
+            format!("{cmd:?}"),
+            quoted(&["echo", "first", "second", "third"]),
+            "we split by hand which works unless one tries to rely on shell-builtins (which we can't detect)"
+        );
     }
 
     #[test]
@@ -36,7 +49,11 @@ mod prepare {
         let cmd = std::process::Command::from(gix_command::prepare("ls first second third").with_shell());
         assert_eq!(
             format!("{cmd:?}"),
-            quoted(&[SH, "-c", "ls first second third", "--"]),
+            if cfg!(windows) {
+                quoted(&["ls", "first", "second", "third"])
+            } else {
+                quoted(&[SH, "-c", "ls first second third", "--"])
+            },
             "with shell, this works as it performs word splitting"
         );
     }
@@ -46,8 +63,34 @@ mod prepare {
         let cmd = std::process::Command::from(gix_command::prepare("ls --foo \"a b\"").arg("additional").with_shell());
         assert_eq!(
             format!("{cmd:?}"),
-            format!("\"{SH}\" \"-c\" \"ls --foo \\\"a b\\\" \\\"$@\\\"\" \"--\" \"additional\""),
+            if cfg!(windows) {
+                quoted(&["ls", "--foo", "a b", "additional"])
+            } else {
+                format!(r#""{SH}" "-c" "ls --foo \"a b\" \"$@\"" "--" "additional""#)
+            },
             "with shell, this works as it performs word splitting"
+        );
+    }
+
+    #[test]
+    fn single_and_complex_arguments_with_auto_split() {
+        let cmd =
+            std::process::Command::from(gix_command::prepare("ls --foo=\"a b\"").with_shell_allow_argument_splitting());
+        assert_eq!(
+            format!("{cmd:?}"),
+            format!(r#""ls" "--foo=a b""#),
+            "splitting can also handle quotes"
+        );
+    }
+
+    #[test]
+    fn single_and_complex_arguments_will_not_auto_split_on_special_characters() {
+        let cmd =
+            std::process::Command::from(gix_command::prepare("ls --foo=~/path").with_shell_allow_argument_splitting());
+        assert_eq!(
+            format!("{cmd:?}"),
+            format!(r#""{SH}" "-c" "ls --foo=~/path" "--""#),
+            "splitting can also handle quotes"
         );
     }
 
@@ -56,7 +99,7 @@ mod prepare {
         let cmd = std::process::Command::from(gix_command::prepare("~/bin/exe --foo \"a b\"").with_shell());
         assert_eq!(
             format!("{cmd:?}"),
-            format!("\"{SH}\" \"-c\" \"~/bin/exe --foo \\\"a b\\\"\" \"--\""),
+            format!(r#""{SH}" "-c" "~/bin/exe --foo \"a b\"" "--""#),
             "this always needs a shell as we need tilde expansion"
         );
     }

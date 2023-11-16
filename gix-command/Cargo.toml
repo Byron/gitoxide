@@ -14,8 +14,10 @@ doctest = false
 
 [dependencies]
 gix-trace = { version = "^0.1.3", path = "../gix-trace" }
+gix-path = { version = "^0.10.0", path = "../gix-path" }
 
 bstr = { version = "1.5.0", default-features = false, features = ["std"] }
+shell-words = "1.0"
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
