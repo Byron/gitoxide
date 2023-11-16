@@ -73,7 +73,11 @@ fn path_with_args_that_definitely_need_shell() {
     assert!(matches!(&prog.kind, Kind::ExternalPath{path_and_args} if path_and_args == input));
     assert_eq!(
         format!("{:?}", prog.to_command(&helper::Action::Store("egal".into()))),
-        format!(r#""{SH}" "-c" "/abs/name --arg --bar=\"a b\" \"$@\"" "--" "store""#)
+        if cfg!(windows) {
+            r#""/abs/name" "--arg" "--bar=a b" "store""#.to_owned()
+        } else {
+            format!(r#""{SH}" "-c" "/abs/name --arg --bar=\"a b\" \"$@\"" "--" "store""#)
+        }
     );
 }
 
@@ -96,7 +100,11 @@ fn path_with_simple_args() {
     assert!(matches!(&prog.kind, Kind::ExternalPath{path_and_args} if path_and_args == input));
     assert_eq!(
         format!("{:?}", prog.to_command(&helper::Action::Store("egal".into()))),
-        format!(r#""{SH}" "-c" "/abs/name a b \"$@\"" "--" "store""#),
-        "a shell is used as well because there are arguments, and we don't do splitting ourselves. On windows, this can be a problem."
+        if cfg!(windows) {
+            r#""/abs/name" "a" "b" "store""#.to_owned()
+        } else {
+            format!(r#""{SH}" "-c" "/abs/name a b \"$@\"" "--" "store""#)
+        },
+        "a shell is used as there are arguments, and it's generally more flexible, but on windows we split ourselves"
     );
 }

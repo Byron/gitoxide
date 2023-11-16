@@ -49,7 +49,7 @@ pub fn from_list(
     let object_hash = gix::hash::Kind::Sha1;
 
     let mut index = gix::index::State::new(object_hash);
-    for path in std::io::BufReader::new(std::fs::File::open(&entries_file)?).lines() {
+    for path in std::io::BufReader::new(std::fs::File::open(entries_file)?).lines() {
         let path: PathBuf = path?.into();
         if !path.is_relative() {
             bail!("Input paths need to be relative, but {path:?} is not.")

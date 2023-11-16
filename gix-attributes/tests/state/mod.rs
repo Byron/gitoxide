@@ -15,6 +15,7 @@ mod value {
 }
 
 #[test]
+#[allow(invalid_from_utf8)]
 fn from_value() {
     assert!(std::str::from_utf8(ILLFORMED_UTF8).is_err());
     assert!(

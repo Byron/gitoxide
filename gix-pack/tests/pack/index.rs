@@ -19,7 +19,7 @@ mod version {
         #[test]
         fn lookup() -> Result<(), Box<dyn std::error::Error>> {
             let object_hash = gix_hash::Kind::Sha1;
-            let file = index::File::at(&fixture_path(INDEX_V1), object_hash)?;
+            let file = index::File::at(fixture_path(INDEX_V1), object_hash)?;
             for (id, desired_index, assertion) in &[
                 (&b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..], Some(0), "first"),
                 (b"f7f791d96b9a34ef0f08db4b007c5309b9adc3d6", Some(65), "close to last"),
@@ -63,7 +63,7 @@ mod version {
         #[test]
         fn lookup() -> Result<(), Box<dyn std::error::Error>> {
             let object_hash = gix_hash::Kind::Sha1;
-            let file = index::File::at(&fixture_path(INDEX_V2), object_hash)?;
+            let file = index::File::at(fixture_path(INDEX_V2), object_hash)?;
             for (id, expected, assertion_message, hex_len) in [
                 (&b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..], Some(0), "first", 4),
                 (b"e800b9c207e17f9b11e321cc1fba5dfe08af4222", Some(29), "last", 40),

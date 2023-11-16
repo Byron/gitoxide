@@ -80,24 +80,10 @@ impl Program {
                 args.insert_str(0, "credential-");
                 args.insert_str(0, " ");
                 args.insert_str(0, git_program);
-                let split_args = if args.find_byteset(b"\\|&;<>()$`\n*?[#~%").is_none() {
-                    args.to_str()
-                        .ok()
-                        .and_then(|args| shell_words::split(args).ok().map(Vec::into_iter))
-                } else {
-                    None
-                };
-                match split_args {
-                    Some(mut args) => {
-                        let mut cmd = Command::new(args.next().expect("non-empty input"));
-                        cmd.args(args).arg(action.as_arg(true));
-                        cmd
-                    }
-                    None => gix_command::prepare(gix_path::from_bstr(args.as_ref()).into_owned())
-                        .arg(action.as_arg(true))
-                        .with_shell()
-                        .into(),
-                }
+                gix_command::prepare(gix_path::from_bstr(args.as_ref()).into_owned())
+                    .arg(action.as_arg(true))
+                    .with_shell_allow_argument_splitting()
+                    .into()
             }
             Kind::ExternalShellScript(for_shell)
             | Kind::ExternalPath {
