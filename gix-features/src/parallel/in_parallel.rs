@@ -229,11 +229,12 @@ where
                 .expect("valid name");
 
             let input_len = input.len();
-            struct Input<I>(*mut [I])
+            struct Input<I>(*mut I)
             where
                 I: Send;
 
-            // SAFETY: I is Send + Sync, so is a *mut [I]
+            // SAFETY: I is Send, and we only use the pointer for creating new
+            // pointers (within the input slice) from the threads.
             #[allow(unsafe_code)]
             unsafe impl<I> Send for Input<I> where I: Send {}
 
@@ -245,7 +246,7 @@ where
                             let new_thread_state = new_thread_state.clone();
                             let state_to_rval = state_to_rval.clone();
                             let mut consume = consume.clone();
-                            let input = Input(input as *mut [I]);
+                            let input = Input(input.as_mut_ptr());
                             move || {
                                 let _ = &input;
                                 threads_left.fetch_sub(1, Ordering::SeqCst);
@@ -264,7 +265,7 @@ where
                                         let item = {
                                             #[allow(unsafe_code)]
                                             unsafe {
-                                                &mut (&mut *input.0)[input_index]
+                                                &mut *input.0.add(input_index)
                                             }
                                         };
                                         if let Err(err) = consume(item, &mut state, threads_left, stop_everything) {
