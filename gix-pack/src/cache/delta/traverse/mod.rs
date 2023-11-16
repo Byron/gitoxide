@@ -130,7 +130,6 @@ where
         };
         size_progress.init(None, progress::bytes());
         let size_counter = size_progress.counter();
-        let child_items = self.child_items.as_mut_slice();
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 
         let start = std::time::Instant::now();
@@ -138,10 +137,7 @@ where
             &mut self.root_items,
             thread_limit,
             {
-                let child_items = ItemSliceSend(std::ptr::slice_from_raw_parts_mut(
-                    child_items.as_mut_ptr(),
-                    child_items.len(),
-                ));
+                let child_items = ItemSliceSend::new(&mut self.child_items);
                 {
                     let object_progress = object_progress.clone();
                     move |thread_index| {

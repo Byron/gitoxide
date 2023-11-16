@@ -1,8 +1,17 @@
 use crate::cache::delta::Item;
 
-pub struct ItemSliceSend<T>(pub *mut [T])
+pub struct ItemSliceSend<T>(*mut [T])
 where
     T: Send;
+
+impl<T> ItemSliceSend<T>
+where
+    T: Send,
+{
+    pub fn new(items: &mut [T]) -> Self {
+        ItemSliceSend(std::ptr::slice_from_raw_parts_mut(items.as_mut_ptr(), items.len()))
+    }
+}
 
 /// SAFETY: This would be unsafe if this would ever be abused, but it's used internally and only in a way that assure that the pointers
 ///         don't violate aliasing rules.
