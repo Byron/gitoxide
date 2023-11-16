@@ -138,7 +138,8 @@ where
         }
     }
 
-    /// Peek the next packet line without consuming it.
+    /// Peek the next packet line without consuming it. Returns `None` if a stop-packet or an error
+    /// was encountered.
     ///
     /// Multiple calls to peek will return the same packet line, if there is one.
     pub async fn peek_line(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, decode::Error>>> {

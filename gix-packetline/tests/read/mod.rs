@@ -73,6 +73,28 @@ pub mod streaming_peek_iter {
     }
 
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+    async fn peek_eof_is_none() -> crate::Result {
+        let mut rd =
+            gix_packetline::StreamingPeekableIter::new(&b"0005a0009ERR e0000"[..], &[PacketLineRef::Flush], false);
+        rd.fail_on_err_lines(false);
+        let res = rd.peek_line().await;
+        assert_eq!(res.expect("line")??, PacketLineRef::Data(b"a"));
+        rd.read_line().await;
+        let res = rd.peek_line().await;
+        assert_eq!(
+            res.expect("line")??,
+            PacketLineRef::Data(b"ERR e"),
+            "we read the ERR but it's not interpreted as such"
+        );
+        rd.read_line().await;
+
+        let res = rd.peek_line().await;
+        assert!(res.is_none(), "we peek into the flush packet, which is EOF");
+        assert_eq!(rd.stopped_at(), Some(PacketLineRef::Flush));
+        Ok(())
+    }
+
+    #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn peek_non_data() -> crate::Result {
         let mut rd =
             gix_packetline::StreamingPeekableIter::new(&b"000000010002"[..], &[PacketLineRef::ResponseEnd], false);
