@@ -1633,6 +1633,7 @@ dependencies = [
  "gix-quote 0.4.7",
  "gix-testtools",
  "gix-trace 0.1.3",
+ "gix-utils 0.1.5",
  "gix-worktree 0.27.0",
  "once_cell",
  "smallvec",

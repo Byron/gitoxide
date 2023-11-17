@@ -43,7 +43,7 @@ pub struct Pipeline {
     /// State needed to keep running filter processes.
     processes: driver::State,
     /// A utility to handle multiple buffers to keep results of various filters.
-    bufs: pipeline::util::Buffers,
+    bufs: gix_utils::Buffers,
 }
 
 /// A declaration of a driver program.

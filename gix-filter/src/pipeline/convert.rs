@@ -190,7 +190,7 @@ impl Pipeline {
             self.options.eol_config,
         )?;
 
-        let mut bufs = self.bufs.with_src(src);
+        let mut bufs = self.bufs.use_foreign_src(src);
         let (src, dest) = bufs.src_and_dest();
         if apply_ident_filter && ident::apply(src, self.options.object_hash, dest) {
             bufs.swap();

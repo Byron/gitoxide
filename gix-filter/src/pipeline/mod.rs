@@ -114,6 +114,3 @@ impl Pipeline {
 pub mod convert;
 
 pub(crate) mod util;
-
-#[cfg(test)]
-mod tests;
