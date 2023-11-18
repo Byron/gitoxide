@@ -65,7 +65,7 @@ fn exclude_by_dir_is_handled_just_like_git() {
         let relative_path = gix_path::from_byte_slice(relative_entry);
         let is_dir = dir.join(relative_path).metadata().ok().map(|m| m.is_dir());
 
-        let platform = cache.at_entry(relative_entry, is_dir, FindError).unwrap();
+        let platform = cache.at_entry(relative_entry, is_dir, &FindError).unwrap();
         let match_ = platform.matching_exclude_pattern().expect("match all values");
         let _is_excluded = platform.is_excluded();
         assert_eq!(

@@ -108,22 +108,19 @@ impl Stack {
     /// `objects` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()], with mappnigs
     ///
     /// Provide access to cached information for that `relative` path via the returned platform.
-    pub fn at_path<Find>(
+    pub fn at_path(
         &mut self,
         relative: impl AsRef<Path>,
         is_dir: Option<bool>,
-        objects: Find,
-    ) -> std::io::Result<Platform<'_>>
-    where
-        Find: gix_object::Find,
-    {
+        objects: &dyn gix_object::Find,
+    ) -> std::io::Result<Platform<'_>> {
         self.statistics.platforms += 1;
         let mut delegate = StackDelegate {
             state: &mut self.state,
             buf: &mut self.buf,
             is_dir: is_dir.unwrap_or(false),
             id_mappings: &self.id_mappings,
-            objects: &objects,
+            objects,
             case: self.case,
             statistics: &mut self.statistics,
         };
@@ -142,15 +139,12 @@ impl Stack {
     /// ### Panics
     ///
     /// on illformed UTF8 in `relative`
-    pub fn at_entry<'r, Find>(
+    pub fn at_entry<'r>(
         &mut self,
         relative: impl Into<&'r BStr>,
         is_dir: Option<bool>,
-        objects: Find,
-    ) -> std::io::Result<Platform<'_>>
-    where
-        Find: gix_object::Find,
-    {
+        objects: &dyn gix_object::Find,
+    ) -> std::io::Result<Platform<'_>> {
         let relative = relative.into();
         let relative_path = gix_path::from_bstr(relative);
 
