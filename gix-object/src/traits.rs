@@ -71,6 +71,17 @@ mod find {
         ) -> Result<Option<crate::Data<'a>>, find::Error>;
     }
 
+    /// Find the header of an object in the object store.
+    pub trait Header {
+        /// Find the header of the object matching `id` in the database.
+        ///
+        /// Returns `Some` header if it was present, or the error that occurred during lookup.
+        fn try_header(&self, id: &gix_hash::oid) -> Result<Option<crate::Header>, find::Error>;
+    }
+
+    /// A combination of [`Find`] and [`Header`] traits to help with `dyn` trait objects.
+    pub trait FindObjectOrHeader: Find + Header {}
+
     mod _impls {
         use std::{ops::Deref, rc::Rc, sync::Arc};
 
@@ -86,12 +97,23 @@ mod find {
             }
         }
 
+        impl<T> crate::FindObjectOrHeader for T where T: crate::Find + crate::FindHeader {}
+
         impl<T> crate::Find for &T
         where
             T: crate::Find,
         {
             fn try_find<'a>(&self, id: &oid, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, crate::find::Error> {
                 (*self).try_find(id, buffer)
+            }
+        }
+
+        impl<T> crate::FindHeader for &T
+        where
+            T: crate::FindHeader,
+        {
+            fn try_header(&self, id: &gix_hash::oid) -> Result<Option<crate::Header>, crate::find::Error> {
+                (*self).try_header(id)
             }
         }
 
@@ -122,12 +144,30 @@ mod find {
             }
         }
 
+        impl<T> crate::FindHeader for Rc<T>
+        where
+            T: crate::FindHeader,
+        {
+            fn try_header(&self, id: &gix_hash::oid) -> Result<Option<crate::Header>, crate::find::Error> {
+                self.deref().try_header(id)
+            }
+        }
+
         impl<T> crate::Find for Box<T>
         where
             T: crate::Find,
         {
             fn try_find<'a>(&self, id: &oid, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, crate::find::Error> {
                 self.deref().try_find(id, buffer)
+            }
+        }
+
+        impl<T> crate::FindHeader for Box<T>
+        where
+            T: crate::FindHeader,
+        {
+            fn try_header(&self, id: &gix_hash::oid) -> Result<Option<crate::Header>, crate::find::Error> {
+                self.deref().try_header(id)
             }
         }
 
@@ -146,6 +186,15 @@ mod find {
         {
             fn try_find<'a>(&self, id: &oid, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, crate::find::Error> {
                 self.deref().try_find(id, buffer)
+            }
+        }
+
+        impl<T> crate::FindHeader for Arc<T>
+        where
+            T: crate::FindHeader,
+        {
+            fn try_header(&self, id: &gix_hash::oid) -> Result<Option<crate::Header>, crate::find::Error> {
+                self.deref().try_header(id)
             }
         }
     }
@@ -215,8 +264,18 @@ mod find {
         }
 
         /// An extension trait with convenience functions.
+        pub trait HeaderExt: super::Header {
+            /// Like [`try_header(…)`](super::Header::try_header()), but flattens the `Result<Option<_>>` into a single `Result` making a non-existing header an error.
+            fn header(&self, id: &gix_hash::oid) -> Result<crate::Header, find::existing::Error> {
+                self.try_header(id)
+                    .map_err(find::existing::Error::Find)?
+                    .ok_or_else(|| find::existing::Error::NotFound { oid: id.to_owned() })
+            }
+        }
+
+        /// An extension trait with convenience functions.
         pub trait FindExt: super::Find {
-            /// Like [`try_find(…)`][super::Find::try_find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
+            /// Like [`try_find(…)`](super::Find::try_find()), but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
             fn find<'a>(
                 &self,
                 id: &gix_hash::oid,
@@ -238,6 +297,6 @@ mod find {
 
         impl<T: super::Find + ?Sized> FindExt for T {}
     }
-    pub use ext::FindExt;
+    pub use ext::{FindExt, HeaderExt};
 }
 pub use find::*;
