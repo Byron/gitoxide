@@ -66,4 +66,3 @@ gix-testtools = { path = "../tests/tools"}
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features", "pack-cache-lru-dynamic", "object-cache-dynamic", "serde"]
-rustdoc-args = ["--cfg", "docsrs"]

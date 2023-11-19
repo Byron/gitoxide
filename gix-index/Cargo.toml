@@ -47,4 +47,3 @@ libc = { version = "0.2.149" }
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde"]
-rustdoc-args = ["--cfg", "docsrs"]

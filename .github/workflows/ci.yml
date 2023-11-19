@@ -172,7 +172,7 @@ jobs:
           # Let's not fail CI for this, it will fail locally often enough, and a crate a little bigger
           # than allows is no problem either if it comes to that.
           just check-size || true
-
+  
   cargo-deny:
     runs-on: ubuntu-latest
     strategy:

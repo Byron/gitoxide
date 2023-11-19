@@ -302,4 +302,3 @@ prodash = { version = "26.2.2", default-features = false }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]
-rustdoc-args = ["--cfg", "docsrs"]
