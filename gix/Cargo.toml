@@ -301,4 +301,3 @@ async-std = { version = "1.12.0", features = ["attributes"] }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max-performance", "blocking-network-client", "blocking-http-transport-curl", "serde"]
-rustdoc-args = ["--cfg", "docsrs"]

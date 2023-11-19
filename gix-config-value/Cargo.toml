@@ -32,4 +32,3 @@ libc = "0.2"
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
-rustdoc-args = ["--cfg", "docsrs"]

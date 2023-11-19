@@ -95,4 +95,3 @@ blocking = "1.0.2"
 
 [package.metadata.docs.rs]
 features = ["http-client-curl", "document-features", "serde"]
-rustdoc-args = ["--cfg", "docsrs"]

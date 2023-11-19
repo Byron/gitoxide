@@ -31,4 +31,3 @@ gix-features = { path = "../gix-features", features = ["rustsha1"] }
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
-rustdoc-args = ["--cfg", "docsrs"]

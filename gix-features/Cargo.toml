@@ -159,4 +159,3 @@ sha1 = { version = "0.10.0", optional = true, features = ["asm"] }
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
-rustdoc-args = ["--cfg", "docsrs"]

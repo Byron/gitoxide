@@ -53,4 +53,3 @@ gix-filter = { path = "../gix-filter"}
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
-rustdoc-args = ["--cfg", "docsrs"]

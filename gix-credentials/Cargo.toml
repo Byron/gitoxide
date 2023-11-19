@@ -40,4 +40,3 @@ gix-sec = { path = "../gix-sec" }
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
-rustdoc-args = ["--cfg", "docsrs"]
