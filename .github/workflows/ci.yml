@@ -173,29 +173,6 @@ jobs:
           # than allows is no problem either if it comes to that.
           just check-size || true
   
-  lint-nightly:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly
-          components: clippy,rustfmt
-      - uses: extractions/setup-just@v1
-      - name: Run cargo check -Zcheck-cfg
-        if: '!cancelled()'
-        run: cargo check -Zcheck-cfg
-      - name: Run cargo clippy
-        if: '!cancelled()'
-        run: just clippy -D warnings
-      - name: Run cargo doc
-        if: '!cancelled()'
-        run: just doc
-      - name: Run cargo fmt
-        if: '!cancelled()'
-        run: cargo fmt --all -- --check
-
   cargo-deny:
     runs-on: ubuntu-latest
     strategy:
