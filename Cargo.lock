@@ -1652,6 +1652,7 @@ name = "gix-fs"
 version = "0.8.0"
 dependencies = [
  "gix-features 0.36.0",
+ "serde",
  "tempfile",
 ]
 
