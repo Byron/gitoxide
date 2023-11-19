@@ -1,8 +1,8 @@
 //! Algorithms for diffing various git object types and for generating patches, highly optimized for performance.
 //! ## Feature Flags
 #![cfg_attr(
-all(doc, feature = "document-features"),
-doc = ::document_features::document_features!()
+    all(doc, feature = "document-features"),
+    doc = ::document_features::document_features!()
 )]
 #![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms)]
