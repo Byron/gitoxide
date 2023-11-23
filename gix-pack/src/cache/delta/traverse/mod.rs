@@ -9,7 +9,7 @@ use gix_features::{
 };
 
 use crate::{
-    cache::delta::{traverse::util::ItemSliceSend, Item, Tree},
+    cache::delta::{traverse::util::ItemSliceSync, Item, Tree},
     data::EntryRange,
 };
 
@@ -133,25 +133,23 @@ where
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 
         let start = std::time::Instant::now();
+        let child_items = ItemSliceSync::new(&mut self.child_items);
+        let child_items = &child_items;
         in_parallel_with_slice(
             &mut self.root_items,
             thread_limit,
             {
-                let child_items = ItemSliceSend::new(&mut self.child_items);
                 {
                     let object_progress = object_progress.clone();
-                    move |thread_index| {
-                        let _ = &child_items;
-                        resolve::State {
-                            delta_bytes: Vec::<u8>::with_capacity(4096),
-                            fully_resolved_delta_bytes: Vec::<u8>::with_capacity(4096),
-                            progress: Box::new(
-                                threading::lock(&object_progress).add_child(format!("thread {thread_index}")),
-                            ),
-                            resolve: resolve.clone(),
-                            modify_base: inspect_object.clone(),
-                            child_items: child_items.clone(),
-                        }
+                    move |thread_index| resolve::State {
+                        delta_bytes: Vec::<u8>::with_capacity(4096),
+                        fully_resolved_delta_bytes: Vec::<u8>::with_capacity(4096),
+                        progress: Box::new(
+                            threading::lock(&object_progress).add_child(format!("thread {thread_index}")),
+                        ),
+                        resolve: resolve.clone(),
+                        modify_base: inspect_object.clone(),
+                        child_items,
                     }
                 }
             },

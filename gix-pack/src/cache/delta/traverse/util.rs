@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-pub(crate) struct ItemSliceSend<'a, T>
+pub(crate) struct ItemSliceSync<'a, T>
 where
     T: Send,
 {
@@ -8,12 +8,12 @@ where
     phantom: PhantomData<&'a T>,
 }
 
-impl<'a, T> ItemSliceSend<'a, T>
+impl<'a, T> ItemSliceSync<'a, T>
 where
     T: Send,
 {
     pub fn new(items: &'a mut [T]) -> Self {
-        ItemSliceSend {
+        ItemSliceSync {
             items: items.as_mut_ptr(),
             phantom: PhantomData,
         }
@@ -27,20 +27,10 @@ where
     }
 }
 
-/// SAFETY: This would be unsafe if this would ever be abused, but it's used internally and only in a way that assure that the pointers
-///         don't violate aliasing rules.
-impl<T> Clone for ItemSliceSend<'_, T>
-where
-    T: Send,
-{
-    fn clone(&self) -> Self {
-        ItemSliceSend {
-            items: self.items,
-            phantom: self.phantom,
-        }
-    }
-}
-
-// SAFETY: T is `Send`, and we only ever access one T at a time. And, ptrs need that assurance, I wonder if it's always right.
+// SAFETY: T is `Send`, and we only use the pointer for creating new pointers.
 #[allow(unsafe_code)]
-unsafe impl<T> Send for ItemSliceSend<'_, T> where T: Send {}
+unsafe impl<T> Send for ItemSliceSync<'_, T> where T: Send {}
+// SAFETY: T is `Send`, and as long as the user follows the contract of
+// `get_mut()`, we only ever access one T at a time.
+#[allow(unsafe_code)]
+unsafe impl<T> Sync for ItemSliceSync<'_, T> where T: Send {}

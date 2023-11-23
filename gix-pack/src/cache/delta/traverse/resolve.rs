@@ -7,7 +7,7 @@ use gix_features::{progress::Progress, threading, zlib};
 
 use crate::{
     cache::delta::{
-        traverse::{util::ItemSliceSend, Context, Error},
+        traverse::{util::ItemSliceSync, Context, Error},
         Item,
     },
     data,
@@ -17,7 +17,7 @@ use crate::{
 /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
 struct Node<'a, T: Send> {
     item: &'a mut Item<T>,
-    child_items: ItemSliceSend<'a, Item<T>>,
+    child_items: &'a ItemSliceSync<'a, Item<T>>,
 }
 
 impl<'a, T: Send> Node<'a, T> {
@@ -51,7 +51,7 @@ impl<'a, T: Send> Node<'a, T> {
         #[allow(unsafe_code)]
         self.item.children.iter().map(move |&index| Node {
             item: unsafe { children.get_mut(index as usize) },
-            child_items: children.clone(),
+            child_items: children,
         })
     }
 }
@@ -62,7 +62,7 @@ pub(crate) struct State<'items, F, MBFN, T: Send> {
     pub progress: Box<dyn Progress>,
     pub resolve: F,
     pub modify_base: MBFN,
-    pub child_items: ItemSliceSend<'items, Item<T>>,
+    pub child_items: &'items ItemSliceSync<'items, Item<T>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -106,13 +106,7 @@ where
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed
     let root_level = 0;
-    let mut nodes: Vec<_> = vec![(
-        root_level,
-        Node {
-            item,
-            child_items: child_items.clone(),
-        },
-    )];
+    let mut nodes: Vec<_> = vec![(root_level, Node { item, child_items })];
     while let Some((level, mut base)) = nodes.pop() {
         if should_interrupt.load(Ordering::Relaxed) {
             return Err(Error::Interrupted);
