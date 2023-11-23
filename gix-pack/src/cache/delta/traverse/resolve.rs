@@ -30,7 +30,7 @@ pub(crate) struct State<'items, F, MBFN, T: Send> {
 pub(crate) fn deltas<T, F, MBFN, E, R>(
     objects: gix_features::progress::StepShared,
     size: gix_features::progress::StepShared,
-    node: &mut Item<T>,
+    item: &mut Item<T>,
     State {
         delta_bytes,
         fully_resolved_delta_bytes,
@@ -70,7 +70,7 @@ where
     let mut nodes: Vec<_> = vec![(
         root_level,
         Node {
-            item: node,
+            item,
             child_items: child_items.clone(),
         },
     )];
