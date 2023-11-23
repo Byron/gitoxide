@@ -20,6 +20,13 @@ where
             phantom: PhantomData,
         }
     }
+
+    /// SAFETY: The index must point into the slice and must not be reused concurrently.
+    #[allow(unsafe_code)]
+    pub unsafe fn get_mut(&self, index: usize) -> &'a mut T {
+        // SAFETY: The children array is alive by the 'a lifetime.
+        unsafe { &mut *self.items.add(index) }
+    }
 }
 
 /// SAFETY: This would be unsafe if this would ever be abused, but it's used internally and only in a way that assure that the pointers
@@ -72,15 +79,12 @@ impl<'a, T: Send> Node<'a, T> {
     /// Children are `Node`s referring to pack entries whose base object is this pack entry.
     pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> + 'a {
         let children = self.child_items;
-        self.item.children.iter().map(move |&index| {
-            // SAFETY: The children array is alive by the 'a lifetime.
-            // SAFETY: The index is a valid index into the children array.
-            // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
-            #[allow(unsafe_code)]
-            Node {
-                item: unsafe { &mut *children.items.add(index as usize) },
-                child_items: children.clone(),
-            }
+        // SAFETY: The index is a valid index into the children array.
+        // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
+        #[allow(unsafe_code)]
+        self.item.children.iter().map(move |&index| Node {
+            item: unsafe { children.get_mut(index as usize) },
+            child_items: children.clone(),
         })
     }
 }
