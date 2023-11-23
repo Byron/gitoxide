@@ -14,45 +14,57 @@ use crate::{
     data::EntryRange,
 };
 
-/// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
-struct Node<'a, T: Send> {
-    item: &'a mut Item<T>,
-    child_items: &'a ItemSliceSync<'a, Item<T>>,
-}
+mod node {
+    use crate::cache::delta::{traverse::util::ItemSliceSync, Item};
 
-impl<'a, T: Send> Node<'a, T> {
-    /// Returns the offset into the pack at which the `Node`s data is located.
-    pub fn offset(&self) -> u64 {
-        self.item.offset
+    /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
+    pub(crate) struct Node<'a, T: Send> {
+        item: &'a mut Item<T>,
+        child_items: &'a ItemSliceSync<'a, Item<T>>,
     }
 
-    /// Returns the slice into the data pack at which the pack entry is located.
-    pub fn entry_slice(&self) -> crate::data::EntryRange {
-        self.item.offset..self.item.next_offset
-    }
-
-    /// Returns the node data associated with this node.
-    pub fn data(&mut self) -> &mut T {
-        &mut self.item.data
-    }
-
-    /// Returns true if this node has children, e.g. is not a leaf in the tree.
-    pub fn has_children(&self) -> bool {
-        !self.item.children.is_empty()
-    }
-
-    /// Transform this `Node` into an iterator over its children.
-    ///
-    /// Children are `Node`s referring to pack entries whose base object is this pack entry.
-    pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> + 'a {
-        let children = self.child_items;
-        // SAFETY: The index is a valid index into the children array.
-        // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
+    impl<'a, T: Send> Node<'a, T> {
+        /// SAFETY: The child_items must be unique among between users of the `ItemSliceSync`.
         #[allow(unsafe_code)]
-        self.item.children.iter().map(move |&index| Node {
-            item: unsafe { children.get_mut(index as usize) },
-            child_items: children,
-        })
+        pub(crate) unsafe fn new(item: &'a mut Item<T>, child_items: &'a ItemSliceSync<'a, Item<T>>) -> Self {
+            Node { item, child_items }
+        }
+    }
+
+    impl<'a, T: Send> Node<'a, T> {
+        /// Returns the offset into the pack at which the `Node`s data is located.
+        pub fn offset(&self) -> u64 {
+            self.item.offset
+        }
+
+        /// Returns the slice into the data pack at which the pack entry is located.
+        pub fn entry_slice(&self) -> crate::data::EntryRange {
+            self.item.offset..self.item.next_offset
+        }
+
+        /// Returns the node data associated with this node.
+        pub fn data(&mut self) -> &mut T {
+            &mut self.item.data
+        }
+
+        /// Returns true if this node has children, e.g. is not a leaf in the tree.
+        pub fn has_children(&self) -> bool {
+            !self.item.children.is_empty()
+        }
+
+        /// Transform this `Node` into an iterator over its children.
+        ///
+        /// Children are `Node`s referring to pack entries whose base object is this pack entry.
+        pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> + 'a {
+            let children = self.child_items;
+            // SAFETY: The index is a valid index into the children array.
+            // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
+            #[allow(unsafe_code)]
+            self.item.children.iter().map(move |&index| Node {
+                item: unsafe { children.get_mut(index as usize) },
+                child_items: children,
+            })
+        }
     }
 }
 
@@ -106,7 +118,10 @@ where
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed
     let root_level = 0;
-    let mut nodes: Vec<_> = vec![(root_level, Node { item, child_items })];
+    // SAFETY: The child items are unique
+    #[allow(unsafe_code)]
+    let root_node = unsafe { node::Node::new(item, child_items) };
+    let mut nodes: Vec<_> = vec![(root_level, root_node)];
     while let Some((level, mut base)) = nodes.pop() {
         if should_interrupt.load(Ordering::Relaxed) {
             return Err(Error::Interrupted);
@@ -225,7 +240,7 @@ fn deltas_mt<T, F, MBFN, E, R>(
     objects: gix_features::progress::StepShared,
     size: gix_features::progress::StepShared,
     progress: &dyn Progress,
-    nodes: Vec<(u16, Node<'_, T>)>,
+    nodes: Vec<(u16, node::Node<'_, T>)>,
     resolve: F,
     resolve_data: &R,
     modify_base: MBFN,
