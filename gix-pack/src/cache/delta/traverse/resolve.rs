@@ -15,9 +15,9 @@ use crate::{
 };
 
 /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
-pub(crate) struct Node<'a, T: Send> {
-    pub item: &'a mut Item<T>,
-    pub child_items: ItemSliceSend<'a, Item<T>>,
+struct Node<'a, T: Send> {
+    item: &'a mut Item<T>,
+    child_items: ItemSliceSend<'a, Item<T>>,
 }
 
 impl<'a, T: Send> Node<'a, T> {
@@ -225,7 +225,7 @@ where
 ///    system. Since this thread will take a controlling function, we may spawn one more than that. In threaded mode, we will finish
 ///    all remaining work.
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn deltas_mt<T, F, MBFN, E, R>(
+fn deltas_mt<T, F, MBFN, E, R>(
     mut threads_to_create: isize,
     decompressed_bytes_by_pack_offset: BTreeMap<u64, (data::Entry, u64, Vec<u8>)>,
     objects: gix_features::progress::StepShared,
