@@ -1,4 +1,4 @@
-use gix::config::tree::{Branch, Core, Key};
+use gix::config::tree::{gitoxide, Branch, Core, Key};
 
 use crate::named_repo;
 
@@ -89,6 +89,27 @@ fn values_are_set_in_memory_only() {
         "values are not written back automatically nor are they shared between clones"
     );
     assert_eq!(repo_clone.config_snapshot().string(key_subsection), None);
+}
+
+#[test]
+fn set_value_in_subsection() {
+    let mut repo = named_repo("make_config_repo.sh").unwrap();
+    {
+        let mut config = repo.config_snapshot_mut();
+        config
+            .set_value(&gitoxide::Credentials::TERMINAL_PROMPT, "yes")
+            .unwrap();
+        // TODO: this should probably be symmetric then and take a key. Figure out how non-keyed access would then be possible.
+        //       Maybe there could be different SnapshotMut types? Maybe there could be a prefix for methods for better separation?
+        //       Maybe a sub-type?
+        assert_eq!(
+            config
+                .string_by_key(&*gitoxide::Credentials::TERMINAL_PROMPT.logical_name())
+                .expect("just set")
+                .as_ref(),
+            "yes"
+        );
+    }
 }
 
 #[test]
