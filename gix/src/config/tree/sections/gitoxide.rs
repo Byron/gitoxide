@@ -74,6 +74,20 @@ mod subsections {
     #[derive(Copy, Clone, Default)]
     pub struct Core;
 
+    /// The `gitoxide.allow.protocolFromUser` key.
+    pub type RefsNamespace = keys::Any<super::validate::RefsNamespace>;
+
+    impl RefsNamespace {
+        /// Derive the negotiation algorithm identified by `name`, case-sensitively.
+        pub fn try_into_refs_namespace(
+            &'static self,
+            name: std::borrow::Cow<'_, crate::bstr::BStr>,
+        ) -> Result<gix_ref::Namespace, crate::config::refs_namespace::Error> {
+            gix_ref::namespace::expand(name.as_ref())
+                .map_err(|err| crate::config::key::Error::from_value(self, name.into_owned()).with_source(err))
+        }
+    }
+
     impl Core {
         /// The `gitoxide.core.defaultPackCacheMemoryLimit` key.
         pub const DEFAULT_PACK_CACHE_MEMORY_LIMIT: keys::UnsignedInteger =
@@ -100,6 +114,11 @@ mod subsections {
         /// It controls whether or not long running filter driver processes can use the 'delay' capability.
         pub const FILTER_PROCESS_DELAY: keys::Boolean =
             keys::Boolean::new_boolean("filterProcessDelay", &Gitoxide::CORE);
+
+        /// The `gitoxide.core.refsNamespace` key.
+        pub const REFS_NAMESPACE: RefsNamespace =
+            keys::Any::new_with_validate("refsNamespace", &Gitoxide::CORE, super::validate::RefsNamespace)
+                .with_environment_override("GIT_NAMESPACE");
     }
 
     impl Section for Core {
@@ -114,6 +133,7 @@ mod subsections {
                 &Self::USE_STDEV,
                 &Self::SHALLOW_FILE,
                 &Self::FILTER_PROCESS_DELAY,
+                &Self::REFS_NAMESPACE,
             ]
         }
 
@@ -493,6 +513,14 @@ pub mod validate {
             if value != "1" {
                 return Err("GIT_PROTOCOL_FROM_USER is either unset or as the value '1'".into());
             }
+            Ok(())
+        }
+    }
+
+    pub struct RefsNamespace;
+    impl Validate for RefsNamespace {
+        fn validate(&self, value: &BStr) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+            super::Core::REFS_NAMESPACE.try_into_refs_namespace(value.into())?;
             Ok(())
         }
     }

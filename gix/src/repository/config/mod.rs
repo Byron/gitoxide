@@ -83,6 +83,18 @@ impl crate::Repository {
     /// hooks or filters.
     #[cfg(feature = "attributes")]
     pub fn command_context(&self) -> Result<gix_command::Context, config::command_context::Error> {
+        use crate::config::cache::util::ApplyLeniency;
+        use crate::config::tree::gitoxide;
+        use crate::config::tree::Key;
+
+        let boolean = |key: &dyn Key| {
+            self.config
+                .resolved
+                .boolean("gitoxide", Some("pathspec".into()), key.name())
+                .transpose()
+                .with_leniency(self.config.lenient_config)
+        };
+
         Ok(gix_command::Context {
             git_dir: self.git_dir().to_owned().into(),
             worktree_dir: self.work_dir().map(ToOwned::to_owned),
@@ -92,10 +104,10 @@ impl crate::Repository {
                 self.filter_config_section(),
             )?
             .map(|enabled| !enabled),
-            ref_namespace: None,
-            literal_pathspecs: None,
-            glob_pathspecs: None,
-            icase_pathspecs: None,
+            ref_namespace: self.refs.namespace.as_ref().map(|ns| ns.as_bstr().to_owned()),
+            literal_pathspecs: boolean(&gitoxide::Pathspec::LITERAL)?,
+            glob_pathspecs: boolean(&gitoxide::Pathspec::GLOB)?.or(boolean(&gitoxide::Pathspec::NOGLOB)?),
+            icase_pathspecs: boolean(&gitoxide::Pathspec::ICASE)?,
         })
     }
 

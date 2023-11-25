@@ -49,7 +49,8 @@ mod with_overrides {
             .set("GIT_NOGLOB_PATHSPECS", "pathspecs-noglob")
             .set("GIT_ICASE_PATHSPECS", "pathspecs-icase")
             .set("GIT_TERMINAL_PROMPT", "42")
-            .set("GIT_SHALLOW_FILE", "shallow-file-env");
+            .set("GIT_SHALLOW_FILE", "shallow-file-env")
+            .set("GIT_NAMESPACE", "namespace-env");
         let mut opts = gix::open::Options::isolated()
             .cli_overrides([
                 "http.userAgent=agent-from-cli",
@@ -62,6 +63,7 @@ mod with_overrides {
                 "gitoxide.ssh.commandWithoutShellFallback=ssh-command-fallback-cli",
                 "gitoxide.http.proxyAuthMethod=proxy-auth-method-cli",
                 "gitoxide.core.shallowFile=shallow-file-cli",
+                "gitoxide.core.refsNamespace=namespace-cli",
             ])
             .config_overrides([
                 "http.userAgent=agent-from-api",
@@ -74,6 +76,7 @@ mod with_overrides {
                 "gitoxide.ssh.commandWithoutShellFallback=ssh-command-fallback-api",
                 "gitoxide.http.proxyAuthMethod=proxy-auth-method-api",
                 "gitoxide.core.shallowFile=shallow-file-api",
+                "gitoxide.core.refsNamespace=namespace-api",
             ]);
         opts.permissions.env.git_prefix = Permission::Allow;
         opts.permissions.env.http_transport = Permission::Allow;
@@ -94,6 +97,16 @@ mod with_overrides {
                 cow_bstr("shallow-file-cli"),
                 cow_bstr("shallow-file-api"),
                 cow_bstr("shallow-file-env")
+            ]
+        );
+        assert_eq!(
+            config
+                .strings_by_key("gitoxide.core.refsNamespace")
+                .expect("at least one value"),
+            [
+                cow_bstr("namespace-cli"),
+                cow_bstr("namespace-api"),
+                cow_bstr("namespace-env")
             ]
         );
         assert_eq!(
