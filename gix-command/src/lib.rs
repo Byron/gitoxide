@@ -2,12 +2,16 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+use bstr::BString;
 use std::ffi::OsString;
+use std::path::PathBuf;
 
 /// A structure to keep settings to use when invoking a command via [`spawn()`][Prepare::spawn()], after creating it with [`prepare()`].
 pub struct Prepare {
     /// The command to invoke (either with or without shell depending on `use_shell`.
     pub command: OsString,
+    /// Additional information to be passed to the spawned command.
+    pub context: Option<Context>,
     /// The way standard input is configured.
     pub stdin: std::process::Stdio,
     /// The way standard output is configured.
@@ -35,6 +39,37 @@ pub struct Prepare {
     pub allow_manual_arg_splitting: bool,
 }
 
+/// Additional information that is relevant to spawned processes, which typically receive
+/// a wealth of contextual information when spawned from `git`.
+///
+/// See [the git source code](https://github.com/git/git/blob/cfb8a6e9a93adbe81efca66e6110c9b4d2e57169/git.c#L191)
+/// for details.
+#[derive(Debug, Default, Clone)]
+pub struct Context {
+    /// The `.git` directory that contains the repository.
+    ///
+    /// If set, it will be used to set the the `GIT_DIR` environment variable.
+    pub git_dir: Option<PathBuf>,
+    /// Set the `GIT_WORK_TREE` environment variable with the given path.
+    pub worktree_dir: Option<PathBuf>,
+    /// If `true`, set `GIT_NO_REPLACE_OBJECTS` to `1`, which turns off object replacements, or `0` otherwise.
+    /// If `None`, the variable won't be set.
+    pub no_replace_objects: Option<bool>,
+    /// Set the `GIT_NAMESPACE` variable with the given value, effectively namespacing all
+    /// operations on references.
+    pub ref_namespace: Option<BString>,
+    /// If `true`, set `GIT_LITERAL_PATHSPECS` to `1`, which makes globs literal and prefixes as well, or `0` otherwise.
+    /// If `None`, the variable won't be set.
+    pub literal_pathspecs: Option<bool>,
+    /// If `true`, set `GIT_GLOB_PATHSPECS` to `1`, which lets wildcards not match the `/` character, and equals the `:(glob)` prefix.
+    /// If `false`, set `GIT_NOGLOB_PATHSPECS` to `1` which lets globs match only themselves.
+    /// If `None`, the variable won't be set.
+    pub glob_pathspecs: Option<bool>,
+    /// If `true`, set `GIT_ICASE_PATHSPECS` to `1`, to let patterns match case-insensitively, or `0` otherwise.
+    /// If `None`, the variable won't be set.
+    pub icase_pathspecs: Option<bool>,
+}
+
 mod prepare {
     use std::{
         ffi::OsString,
@@ -43,7 +78,7 @@ mod prepare {
 
     use bstr::ByteSlice;
 
-    use crate::Prepare;
+    use crate::{Context, Prepare};
 
     /// Builder
     impl Prepare {
@@ -64,6 +99,15 @@ mod prepare {
         /// is some time after [`with_shell()`][Prepare::with_shell()] was called.
         pub fn without_shell(mut self) -> Self {
             self.use_shell = false;
+            self
+        }
+
+        /// Set additional `ctx` to be used when spawning the process.
+        ///
+        /// Note that this is a must for most kind of commands that `git` usually spawns,
+        /// as at least they need to know the correct `git` repository to function.
+        pub fn with_context(mut self, ctx: Context) -> Self {
+            self.context = Some(ctx);
             self
         }
 
@@ -164,6 +208,36 @@ mod prepare {
                 .stderr(prep.stderr)
                 .envs(prep.env)
                 .args(prep.args);
+            if let Some(ctx) = prep.context {
+                if let Some(git_dir) = ctx.git_dir {
+                    cmd.env("GIT_DIR", &git_dir);
+                }
+                if let Some(worktree_dir) = ctx.worktree_dir {
+                    cmd.env("GIT_WORK_TREE", worktree_dir);
+                }
+                if let Some(value) = ctx.no_replace_objects {
+                    cmd.env("GIT_NO_REPLACE_OBJECTS", usize::from(value).to_string());
+                }
+                if let Some(namespace) = ctx.ref_namespace {
+                    cmd.env("GIT_NAMESPACE", gix_path::from_bstring(namespace));
+                }
+                if let Some(value) = ctx.literal_pathspecs {
+                    cmd.env("GIT_LITERAL_PATHSPECS", usize::from(value).to_string());
+                }
+                if let Some(value) = ctx.glob_pathspecs {
+                    cmd.env(
+                        if value {
+                            "GIT_GLOB_PATHSPECS"
+                        } else {
+                            "GIT_NOGLOB_PATHSPECS"
+                        },
+                        "1",
+                    );
+                }
+                if let Some(value) = ctx.icase_pathspecs {
+                    cmd.env("GIT_ICASE_PATHSPECS", usize::from(value).to_string());
+                }
+            }
             cmd
         }
     }
@@ -176,9 +250,16 @@ mod prepare {
 /// - `stdin` is null to prevent blocking unexpectedly on consumption of stdin
 /// - `stdout` is captured for consumption by the caller
 /// - `stderr` is inherited to allow the command to provide context to the user
+///
+/// ### Warning
+///
+/// When using this method, be sure that the invoked program doesn't rely on the current working dir and/or
+/// environment variables to know its context. If so, call instead [`Prepare::with_context()`] to provide
+/// additional information.
 pub fn prepare(cmd: impl Into<OsString>) -> Prepare {
     Prepare {
         command: cmd.into(),
+        context: None,
         stdin: std::process::Stdio::null(),
         stdout: std::process::Stdio::piped(),
         stderr: std::process::Stdio::inherit(),
