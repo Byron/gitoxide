@@ -35,7 +35,7 @@ winnow = { version = "0.5.14", features = ["simd"] }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
 # packed refs
-memmap2 = "0.7.0"
+memmap2 = "0.9.0"
 
 document-features = { version = "0.2.1", optional = true }
 
