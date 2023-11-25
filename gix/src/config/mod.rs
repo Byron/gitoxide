@@ -152,6 +152,25 @@ pub mod checkout_options {
         Attributes(#[from] super::attribute_stack::Error),
         #[error(transparent)]
         FilterPipelineOptions(#[from] crate::filter::pipeline::options::Error),
+        #[error(transparent)]
+        CommandContext(#[from] crate::config::command_context::Error),
+    }
+}
+
+///
+#[cfg(feature = "attributes")]
+pub mod command_context {
+    use crate::config;
+
+    /// The error produced when collecting all information relevant to spawned commands,
+    /// obtained via [Repository::command_context()](crate::Repository::command_context()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        PathSpec(#[from] gix_pathspec::defaults::from_environment::Error),
+        #[error(transparent)]
+        Boolean(#[from] config::boolean::Error),
     }
 }
 
@@ -543,4 +562,23 @@ pub(crate) struct Cache {
     attributes: crate::open::permissions::Attributes,
     environment: crate::open::permissions::Environment,
     // TODO: make core.precomposeUnicode available as well.
+}
+
+/// Utillities shared privately across the crate, for lack of a better place.
+pub(crate) mod shared {
+    use crate::config;
+    use crate::config::cache::util::ApplyLeniency;
+    use crate::config::tree::Core;
+
+    pub fn is_replace_refs_enabled(
+        config: &gix_config::File<'static>,
+        lenient: bool,
+        mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
+    ) -> Result<Option<bool>, config::boolean::Error> {
+        config
+            .boolean_filter_by_key("core.useReplaceRefs", &mut filter_config_section)
+            .map(|b| Core::USE_REPLACE_REFS.enrich_error(b))
+            .transpose()
+            .with_leniency(lenient)
+    }
 }

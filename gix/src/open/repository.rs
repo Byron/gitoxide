@@ -8,7 +8,7 @@ use super::{Error, Options};
 use crate::{
     config,
     config::{
-        cache::{interpolate_context, util::ApplyLeniency},
+        cache::interpolate_context,
         tree::{gitoxide, Core, Key, Safe},
     },
     open::Permissions,
@@ -324,11 +324,7 @@ fn replacement_objects_refs_prefix(
     lenient: bool,
     mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
 ) -> Result<Option<PathBuf>, Error> {
-    let is_disabled = config
-        .boolean_filter_by_key("core.useReplaceRefs", &mut filter_config_section)
-        .map(|b| Core::USE_REPLACE_REFS.enrich_error(b))
-        .transpose()
-        .with_leniency(lenient)
+    let is_disabled = config::shared::is_replace_refs_enabled(config, lenient, filter_config_section)
         .map_err(config::Error::ConfigBoolean)?
         .unwrap_or(true);
 

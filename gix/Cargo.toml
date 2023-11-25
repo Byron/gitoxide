@@ -81,7 +81,7 @@ worktree-mutation = ["attributes", "dep:gix-worktree-state"]
 excludes = ["dep:gix-ignore", "dep:gix-worktree", "index"]
 
 ## Query attributes and excludes. Enables access to pathspecs, worktree checkouts, filter-pipelines and submodules.
-attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes"]
+attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes", "dep:gix-command"]
 
 ## Add support for mailmaps, as way of determining the final name of commmiters and authors.
 mailmap = ["dep:gix-mailmap"]
@@ -254,6 +254,7 @@ gix-commitgraph = { version = "^0.22.0", path = "../gix-commitgraph" }
 gix-pathspec = { version = "^0.4.0", path = "../gix-pathspec", optional = true }
 gix-submodule = { version = "^0.5.0", path = "../gix-submodule", optional = true }
 gix-status = { version = "^0.2.0", path = "../gix-status", optional = true }
+gix-command = { version = "^0.2.10", path = "../gix-command", optional = true }
 
 gix-worktree-stream = { version = "^0.6.0", path = "../gix-worktree-stream", optional = true }
 gix-archive = { version = "^0.6.0", path = "../gix-archive", default-features = false, optional = true }

@@ -79,6 +79,26 @@ impl crate::Repository {
         Ok(opts)
     }
 
+    /// Return the context to be passed to any spawned program that is supposed to interact with the repository, like
+    /// hooks or filters.
+    #[cfg(feature = "attributes")]
+    pub fn command_context(&self) -> Result<gix_command::Context, config::command_context::Error> {
+        Ok(gix_command::Context {
+            git_dir: self.git_dir().to_owned().into(),
+            worktree_dir: self.work_dir().map(ToOwned::to_owned),
+            no_replace_objects: config::shared::is_replace_refs_enabled(
+                &self.config.resolved,
+                self.config.lenient_config,
+                self.filter_config_section(),
+            )?
+            .map(|enabled| !enabled),
+            ref_namespace: None,
+            literal_pathspecs: None,
+            glob_pathspecs: None,
+            icase_pathspecs: None,
+        })
+    }
+
     /// The kind of object hash the repository is configured to use.
     pub fn object_hash(&self) -> gix_hash::Kind {
         self.config.object_hash
