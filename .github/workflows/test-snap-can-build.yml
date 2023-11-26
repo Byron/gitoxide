@@ -9,7 +9,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        node-version: [16.x] # Are you are missing this specification?
+        
     steps:
       - uses: actions/checkout@v2
 
