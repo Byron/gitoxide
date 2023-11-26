@@ -12,7 +12,8 @@ pub enum Kind {
     /// A custom credentials helper, as identified just by the name with optional arguments
     ExternalName {
         /// The name like `foo` along with optional args, like `foo --arg --bar="a b"`, with arguments using `sh` shell quoting rules.
-        /// The program executed will be `git-credential-foo` if `name_and_args` starts with `foo`.
+        /// The program executed will be `git-credential-foo [args]` if `name_and_args` starts with `foo [args]`.
+        /// Note that a shell is only used if it's needed.
         name_and_args: BString,
     },
     /// A custom credentials helper, as identified just by the absolute path to the program and optional arguments. The program is executed through a shell.
@@ -53,7 +54,6 @@ impl Program {
                 if gix_path::is_absolute(path) {
                     Kind::ExternalPath { path_and_args: input }
                 } else {
-                    input.insert_str(0, "git credential-");
                     Kind::ExternalName { name_and_args: input }
                 }
             };
@@ -64,6 +64,43 @@ impl Program {
             }
         }
         from_custom_definition_inner(input.into())
+    }
+
+    /// Convert the program into the respective command, suitable to invoke `action`.
+    pub fn to_command(&self, action: &helper::Action) -> std::process::Command {
+        let git_program = cfg!(windows).then(|| "git.exe").unwrap_or("git");
+        let mut cmd = match &self.kind {
+            Kind::Builtin => {
+                let mut cmd = Command::new(git_program);
+                cmd.arg("credential").arg(action.as_arg(false));
+                cmd
+            }
+            Kind::ExternalName { name_and_args } => {
+                let mut args = name_and_args.clone();
+                args.insert_str(0, "credential-");
+                args.insert_str(0, " ");
+                args.insert_str(0, git_program);
+                gix_command::prepare(gix_path::from_bstr(args.as_ref()).into_owned())
+                    .arg(action.as_arg(true))
+                    .with_shell_allow_argument_splitting()
+                    .into()
+            }
+            Kind::ExternalShellScript(for_shell)
+            | Kind::ExternalPath {
+                path_and_args: for_shell,
+            } => gix_command::prepare(gix_path::from_bstr(for_shell.as_bstr()).as_ref())
+                .with_shell()
+                .arg(action.as_arg(true))
+                .into(),
+        };
+        cmd.stdin(Stdio::piped())
+            .stdout(if action.expects_output() {
+                Stdio::piped()
+            } else {
+                Stdio::null()
+            })
+            .stderr(if self.stderr { Stdio::inherit() } else { Stdio::null() });
+        cmd
     }
 }
 
@@ -82,30 +119,8 @@ impl Program {
         action: &helper::Action,
     ) -> std::io::Result<(std::process::ChildStdin, Option<std::process::ChildStdout>)> {
         assert!(self.child.is_none(), "BUG: must not call `start()` twice");
-        let mut cmd = match &self.kind {
-            Kind::Builtin => {
-                let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
-                cmd.arg("credential").arg(action.as_arg(false));
-                cmd
-            }
-            Kind::ExternalShellScript(for_shell)
-            | Kind::ExternalName {
-                name_and_args: for_shell,
-            }
-            | Kind::ExternalPath {
-                path_and_args: for_shell,
-            } => gix_command::prepare(gix_path::from_bstr(for_shell.as_bstr()).as_ref())
-                .with_shell()
-                .arg(action.as_arg(true))
-                .into(),
-        };
-        cmd.stdin(Stdio::piped())
-            .stdout(if action.expects_output() {
-                Stdio::piped()
-            } else {
-                Stdio::null()
-            })
-            .stderr(if self.stderr { Stdio::inherit() } else { Stdio::null() });
+        let mut cmd = self.to_command(action);
+        gix_trace::debug!(cmd = ?cmd, "launching credential helper");
         let mut child = cmd.spawn()?;
         let stdin = child.stdin.take().expect("stdin to be configured");
         let stdout = child.stdout.take();

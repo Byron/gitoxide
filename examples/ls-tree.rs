@@ -1,12 +1,7 @@
 use std::io::{stdout, Write};
 
 use clap::Parser;
-use gix::{
-    bstr::BString,
-    objs::tree::{EntryMode, EntryMode::Tree},
-    traverse::tree::Recorder,
-    ObjectId,
-};
+use gix::{bstr::BString, objs::tree::EntryMode, traverse::tree::Recorder, ObjectId};
 
 fn main() {
     let args = Args::parse_from(gix::env::args_os());
@@ -43,14 +38,14 @@ fn run(args: Args) -> anyhow::Result<()> {
         recorder
             .records
             .into_iter()
-            .filter(|entry| args.tree_recursing || args.tree_only || entry.mode != Tree)
-            .filter(|entry| !args.tree_only || (entry.mode == Tree))
+            .filter(|entry| args.tree_recursing || args.tree_only || entry.mode.is_no_tree())
+            .filter(|entry| !args.tree_only || (entry.mode.is_tree()))
             .map(|entry| Entry::new(entry.mode, entry.oid, entry.filepath))
             .collect::<Vec<_>>()
     } else {
         tree.iter()
             .filter_map(|res| res.ok().map(|entry| entry.inner)) // dropping errors silently
-            .filter(|entry| !args.tree_only || (entry.mode == Tree))
+            .filter(|entry| !args.tree_only || (entry.mode.is_tree()))
             .map(|entry| Entry::new(entry.mode, entry.oid.to_owned(), entry.filename.to_owned()))
             .collect::<Vec<_>>()
     };
@@ -60,8 +55,8 @@ fn run(args: Args) -> anyhow::Result<()> {
         writeln!(
             out,
             "{:06o} {:4} {}    {}",
-            entry.kind as u16,
-            entry.kind.as_str(),
+            *entry.mode,
+            entry.mode.as_str(),
             entry.hash,
             entry.path
         )?;
@@ -71,13 +66,13 @@ fn run(args: Args) -> anyhow::Result<()> {
 }
 
 struct Entry {
-    kind: EntryMode,
+    mode: EntryMode,
     hash: ObjectId,
     path: BString,
 }
 
 impl Entry {
-    fn new(kind: EntryMode, hash: ObjectId, path: BString) -> Self {
-        Self { kind, hash, path }
+    fn new(mode: EntryMode, hash: ObjectId, path: BString) -> Self {
+        Self { mode, hash, path }
     }
 }

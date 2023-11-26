@@ -281,10 +281,19 @@ where
                         })),
                         options,
                     )?;
+                    // Assure the final flush packet is consumed.
+                    #[cfg(feature = "async-network-client")]
+                    let has_read_to_end = { rd.get_ref().stopped_at().is_some() };
+                    #[cfg(not(feature = "async-network-client"))]
+                    let has_read_to_end = { rd.stopped_at().is_some() };
+                    if !has_read_to_end {
+                        std::io::copy(&mut rd, &mut std::io::sink()).unwrap();
+                    }
                     #[cfg(feature = "async-network-client")]
                     {
                         reader = rd.into_inner();
                     }
+
                     #[cfg(not(feature = "async-network-client"))]
                     {
                         reader = rd;

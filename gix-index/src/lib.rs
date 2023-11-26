@@ -1,9 +1,9 @@
 //! ## Feature Flags
 #![cfg_attr(
-    feature = "document-features",
-    cfg_attr(doc, doc = ::document_features::document_features!())
+    all(doc, feature = "document-features"),
+    doc = ::document_features::document_features!()
 )]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 
 use std::{ops::Range, path::PathBuf};
@@ -32,6 +32,8 @@ pub mod verify;
 
 ///
 pub mod write;
+
+pub mod fs;
 
 /// All known versions of a git index file.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]

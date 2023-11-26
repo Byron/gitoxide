@@ -216,7 +216,7 @@ impl client::Transport for SpawnProcessOnDemand {
         };
         cmd.stdin = Stdio::piped();
         cmd.stdout = Stdio::piped();
-        if self.path.first() == Some(&b'-') {
+        if self.path.trim().first() == Some(&b'-') {
             return Err(client::Error::AmbiguousPath {
                 path: self.path.clone(),
             });

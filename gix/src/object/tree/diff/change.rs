@@ -1,17 +1,5 @@
+use crate::diff::blob::DiffLineStats;
 use crate::{bstr::BStr, Id};
-
-/// Information about the diff performed to detect similarity of a [Rewrite][Event::Rewrite].
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-pub struct DiffLineStats {
-    /// The amount of lines to remove from the source to get to the destination.
-    pub removals: u32,
-    /// The amount of lines to add to the source to get to the destination.
-    pub insertions: u32,
-    /// The amount of lines of the previous state, in the source.
-    pub before: u32,
-    /// The amount of lines of the new state, in the destination.
-    pub after: u32,
-}
 
 /// An event emitted when finding differences between two trees.
 #[derive(Debug, Clone, Copy)]

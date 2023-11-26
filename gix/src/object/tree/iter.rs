@@ -51,7 +51,7 @@ impl<'repo, 'a> std::fmt::Display for EntryRef<'repo, 'a> {
         write!(
             f,
             "{:06o} {:>6} {}\t{}",
-            self.mode() as u32,
+            *self.mode(),
             self.mode().as_str(),
             self.id().shorten_or_id(),
             self.filename()

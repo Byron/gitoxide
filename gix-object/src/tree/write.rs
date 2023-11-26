@@ -35,8 +35,9 @@ impl crate::WriteTo for Tree {
             &self.entries,
             "entries for serialization must be sorted by filename"
         );
+        let mut buf = Default::default();
         for Entry { mode, filename, oid } in &self.entries {
-            out.write_all(mode.as_bytes())?;
+            out.write_all(mode.as_bytes(&mut buf))?;
             out.write_all(SPACE)?;
 
             if filename.find_byte(b'\n').is_some() {
@@ -58,10 +59,11 @@ impl crate::WriteTo for Tree {
     }
 
     fn size(&self) -> u64 {
+        let mut buf = Default::default();
         self.entries
             .iter()
             .map(|Entry { mode, filename, oid }| {
-                (mode.as_bytes().len() + 1 + filename.len() + 1 + oid.as_bytes().len()) as u64
+                (mode.as_bytes(&mut buf).len() + 1 + filename.len() + 1 + oid.as_bytes().len()) as u64
             })
             .sum()
     }
@@ -80,8 +82,9 @@ impl<'a> crate::WriteTo for TreeRef<'a> {
             &self.entries,
             "entries for serialization must be sorted by filename"
         );
+        let mut buf = Default::default();
         for EntryRef { mode, filename, oid } in &self.entries {
-            out.write_all(mode.as_bytes())?;
+            out.write_all(mode.as_bytes(&mut buf))?;
             out.write_all(SPACE)?;
 
             if filename.find_byte(b'\n').is_some() {
@@ -103,10 +106,11 @@ impl<'a> crate::WriteTo for TreeRef<'a> {
     }
 
     fn size(&self) -> u64 {
+        let mut buf = Default::default();
         self.entries
             .iter()
             .map(|EntryRef { mode, filename, oid }| {
-                (mode.as_bytes().len() + 1 + filename.len() + 1 + oid.as_bytes().len()) as u64
+                (mode.as_bytes(&mut buf).len() + 1 + filename.len() + 1 + oid.as_bytes().len()) as u64
             })
             .sum()
     }

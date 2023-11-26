@@ -32,5 +32,4 @@ gix-fs = { path = "../gix-fs" }
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
 features = ["document-features"]

@@ -13,8 +13,9 @@ mod from_tree {
 
     use gix_attributes::glob::pattern::Case;
     use gix_hash::oid;
+    use gix_object::bstr::ByteSlice;
+    use gix_object::tree::EntryKind;
     use gix_object::Data;
-    use gix_object::{bstr::ByteSlice, tree::EntryMode};
     use gix_testtools::once_cell::sync::Lazy;
     use gix_worktree::stack::state::attributes::Source;
 
@@ -89,7 +90,7 @@ mod from_tree {
         let mut stream = gix_worktree_stream::Stream::from_read(tee_read);
 
         while let Some(mut entry) = stream.next_entry().expect("entry retrieval does not fail") {
-            paths_and_modes.push((entry.relative_path().to_owned(), entry.mode, entry.id));
+            paths_and_modes.push((entry.relative_path().to_owned(), entry.mode.kind(), entry.id));
             let mut buf = Vec::new();
             entry.read_to_end(&mut buf).expect("stream can always be read");
             if !buf.is_empty() && entry.mode.is_blob() {
@@ -112,31 +113,31 @@ mod from_tree {
         }
 
         let expected_exe_mode = if cfg!(windows) {
-            EntryMode::Blob
+            EntryKind::Blob
         } else {
-            EntryMode::BlobExecutable
+            EntryKind::BlobExecutable
         };
         let expected_link_mode = if cfg!(windows) {
-            EntryMode::Blob
+            EntryKind::Blob
         } else {
-            EntryMode::Link
+            EntryKind::Link
         };
         assert_eq!(
             paths_and_modes,
             &[
                 (
                     ".gitattributes".into(),
-                    EntryMode::Blob,
+                    EntryKind::Blob,
                     hex_to_id("45c160c35c17ad264b96431cceb9793160396e99")
                 ),
                 (
                     "a".into(),
-                    EntryMode::Blob,
+                    EntryKind::Blob,
                     hex_to_id("45b983be36b73c0788dc9cbcb76cbb80fc7bb057")
                 ),
                 (
                     "bigfile".into(),
-                    EntryMode::Blob,
+                    EntryKind::Blob,
                     hex_to_id("4995fde49ed64e043977e22539f66a0d372dd129")
                 ),
                 (
@@ -150,12 +151,12 @@ mod from_tree {
                 ),
                 (
                     "dir/.gitattributes".into(),
-                    EntryMode::Blob,
+                    EntryKind::Blob,
                     hex_to_id("81b9a375276405703e05be6cecf0fc1c8b8eed64")
                 ),
                 (
                     "dir/b".into(),
-                    EntryMode::Blob,
+                    EntryKind::Blob,
                     hex_to_id("ab4a98190cf776b43cb0fe57cef231fb93fd07e6")
                 ),
                 (
@@ -165,17 +166,17 @@ mod from_tree {
                 ),
                 (
                     "dir/subdir/streamed".into(),
-                    EntryMode::Blob,
+                    EntryKind::Blob,
                     hex_to_id("08991f58f4de5d85b61c0f87f3ac053c79d0e739")
                 ),
                 (
                     "extra-file".into(),
-                    EntryMode::Blob,
+                    EntryKind::Blob,
                     hex_to_id("0000000000000000000000000000000000000000")
                 ),
                 (
                     "extra-bigfile".into(),
-                    EntryMode::Blob,
+                    EntryKind::Blob,
                     hex_to_id("0000000000000000000000000000000000000000")
                 ),
                 (
@@ -185,7 +186,7 @@ mod from_tree {
                 ),
                 (
                     "extra-dir-empty".into(),
-                    EntryMode::Tree,
+                    EntryKind::Tree,
                     hex_to_id("0000000000000000000000000000000000000000")
                 ),
                 (
@@ -206,7 +207,7 @@ mod from_tree {
         let mut copied_paths_and_modes = Vec::new();
         let mut buf = Vec::new();
         while let Some(mut entry) = copied_stream.next_entry().expect("entry retrieval does not fail") {
-            copied_paths_and_modes.push((entry.relative_path().to_owned(), entry.mode, entry.id));
+            copied_paths_and_modes.push((entry.relative_path().to_owned(), entry.mode.kind(), entry.id));
             buf.clear();
             entry.read_to_end(&mut buf).expect("stream can always be read");
         }

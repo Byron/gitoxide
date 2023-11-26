@@ -107,7 +107,7 @@ pub fn connect(
     let ssh_cmd = options.ssh_command();
     let mut kind = options.kind.unwrap_or_else(|| ProgramKind::from(ssh_cmd));
     if options.kind.is_none() && kind == ProgramKind::Simple {
-        kind = if std::process::Command::from(
+        let mut cmd = std::process::Command::from(
             gix_command::prepare(ssh_cmd)
                 .stderr(Stdio::null())
                 .stdout(Stdio::null())
@@ -117,11 +117,9 @@ pub fn connect(
                 .arg(url.host_argument_safe().ok_or_else(|| Error::AmbiguousHostName {
                     host: url.host().expect("set in ssh urls").into(),
                 })?),
-        )
-        .status()
-        .ok()
-        .map_or(false, |status| status.success())
-        {
+        );
+        gix_features::trace::debug!(cmd = ?cmd, "invoking `ssh` for feature check");
+        kind = if cmd.status().ok().map_or(false, |status| status.success()) {
             ProgramKind::Ssh
         } else {
             ProgramKind::Simple

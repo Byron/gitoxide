@@ -74,12 +74,10 @@ pub fn system_prefix() -> Option<&'static Path> {
                 }
             }
 
-            let path = std::process::Command::new("git.exe")
-                .arg("--exec-path")
-                .stderr(std::process::Stdio::null())
-                .output()
-                .ok()?
-                .stdout;
+            let mut cmd = std::process::Command::new("git.exe");
+            cmd.arg("--exec-path").stderr(std::process::Stdio::null());
+            gix_trace::debug!(cmd = ?cmd, "invoking git to get system prefix/exec path");
+            let path = cmd.output().ok()?.stdout;
             let path = BString::new(path)
                 .trim_with(|b| b.is_ascii_whitespace())
                 .to_path()

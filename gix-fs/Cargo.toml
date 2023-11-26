@@ -12,8 +12,13 @@ include = ["src/**/*", "LICENSE-*"]
 [lib]
 doctest = false
 
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde = ["dep:serde"]
+
 [dependencies]
 gix-features = { version = "^0.36.0", path = "../gix-features" }
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"] }
 
 [dev-dependencies]
 tempfile = "3.5.0"

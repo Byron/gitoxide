@@ -71,8 +71,7 @@ mod traverse {
     #[test]
     #[parallel]
     fn complex_graphs_can_be_iterated_despite_multiple_shallow_boundaries() -> crate::Result {
-        let base =
-            gix_path::realpath(&gix_testtools::scripted_fixture_read_only("make_remote_repos.sh")?.join("base"))?;
+        let base = gix_path::realpath(gix_testtools::scripted_fixture_read_only("make_remote_repos.sh")?.join("base"))?;
         let shallow_base = gix_testtools::scripted_fixture_read_only_with_args(
             "make_complex_shallow_repo.sh",
             Some(base.to_string_lossy()),

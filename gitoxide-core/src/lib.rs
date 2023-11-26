@@ -22,10 +22,10 @@
 //!
 //! ## Feature Flags
 #![cfg_attr(
-    feature = "document-features",
-    cfg_attr(doc, doc = ::document_features::document_features!())
+    all(doc, feature = "document-features"),
+    doc = ::document_features::document_features!()
 )]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![cfg_attr(feature = "async-client", allow(unused))]
 #![deny(rust_2018_idioms)]
 #![forbid(unsafe_code)]

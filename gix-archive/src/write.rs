@@ -169,23 +169,19 @@ fn append_zip_entry<W: std::io::Write + std::io::Seek>(
         .compression_level(compression_level)
         .large_file(entry.bytes_remaining().map_or(true, |len| len > u32::MAX as usize))
         .last_modified_time(mtime)
-        .unix_permissions(if matches!(entry.mode, gix_object::tree::EntryMode::BlobExecutable) {
-            0o755
-        } else {
-            0o644
-        });
+        .unix_permissions(if entry.mode.is_executable() { 0o755 } else { 0o644 });
     let path = add_prefix(entry.relative_path(), tree_prefix).into_owned();
-    match entry.mode {
-        gix_object::tree::EntryMode::Blob | gix_object::tree::EntryMode::BlobExecutable => {
+    match entry.mode.kind() {
+        gix_object::tree::EntryKind::Blob | gix_object::tree::EntryKind::BlobExecutable => {
             ar.start_file(path.to_string(), file_opts)
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
             std::io::copy(&mut entry, ar)?;
         }
-        gix_object::tree::EntryMode::Tree | gix_object::tree::EntryMode::Commit => {
+        gix_object::tree::EntryKind::Tree | gix_object::tree::EntryKind::Commit => {
             ar.add_directory(path.to_string(), file_opts)
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
         }
-        gix_object::tree::EntryMode::Link => {
+        gix_object::tree::EntryKind::Link => {
             use bstr::ByteSlice;
             std::io::copy(&mut entry, buf)?;
             ar.add_symlink(path.to_string(), buf.as_bstr().to_string(), file_opts)
@@ -206,18 +202,14 @@ fn append_tar_entry<W: std::io::Write>(
     let mut header = tar::Header::new_gnu();
     header.set_mtime(mtime_seconds_since_epoch as u64);
     header.set_entry_type(tar_entry_type(entry.mode));
-    header.set_mode(if matches!(entry.mode, gix_object::tree::EntryMode::BlobExecutable) {
-        0o755
-    } else {
-        0o644
-    });
+    header.set_mode(if entry.mode.is_executable() { 0o755 } else { 0o644 });
     buf.clear();
     std::io::copy(&mut entry, buf)?;
 
     let path = gix_path::from_bstr(add_prefix(entry.relative_path(), opts.tree_prefix.as_ref()));
     header.set_size(buf.len() as u64);
 
-    if entry.mode == gix_object::tree::EntryMode::Link {
+    if entry.mode.is_link() {
         use bstr::ByteSlice;
         let target = gix_path::from_bstr(buf.as_bstr());
         header.set_entry_type(tar::EntryType::Symlink);
@@ -231,13 +223,13 @@ fn append_tar_entry<W: std::io::Write>(
 
 #[cfg(any(feature = "tar", feature = "tar_gz"))]
 fn tar_entry_type(mode: gix_object::tree::EntryMode) -> tar::EntryType {
-    use gix_object::tree::EntryMode;
+    use gix_object::tree::EntryKind;
     use tar::EntryType;
-    match mode {
-        EntryMode::Tree | EntryMode::Commit => EntryType::Directory,
-        EntryMode::Blob => EntryType::Regular,
-        EntryMode::BlobExecutable => EntryType::Regular,
-        EntryMode::Link => EntryType::Link,
+    match mode.kind() {
+        EntryKind::Tree | EntryKind::Commit => EntryType::Directory,
+        EntryKind::Blob => EntryType::Regular,
+        EntryKind::BlobExecutable => EntryType::Regular,
+        EntryKind::Link => EntryType::Link,
     }
 }
 

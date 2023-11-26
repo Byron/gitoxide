@@ -9,8 +9,8 @@ use anyhow::{anyhow, bail};
 use gix::objs::find::Error;
 use gix::{
     bstr::{BStr, BString, ByteSlice},
+    diff::rewrites::CopySource,
     features::progress,
-    object::tree::diff::rewrites::CopySource,
     parallel::{InOrderIter, SequenceId},
     prelude::ObjectIdExt,
     Count, Progress,
@@ -139,11 +139,10 @@ pub fn update(
         });
 
         let rewrites = {
-            let mut r =
-                gix::object::tree::diff::Rewrites::try_from_config(&repo.config_snapshot(), true)?.unwrap_or_default();
-            r.copies = Some(gix::object::tree::diff::rewrites::Copies {
+            let mut r = gix::diff::new_rewrites(&repo.config_snapshot(), true)?.unwrap_or_default();
+            r.copies = Some(gix::diff::rewrites::Copies {
                 source: if find_copies_harder {
-                    CopySource::FromSetOfModifiedFilesAndSourceTree
+                    CopySource::FromSetOfModifiedFilesAndAllSources
                 } else {
                     CopySource::FromSetOfModifiedFiles
                 },

@@ -4,7 +4,8 @@ use gix::{
     bstr::BString,
     object::{blob::diff::line::Change, tree::diff::change::Event},
 };
-use gix_object::{bstr::ByteSlice, tree::EntryMode};
+use gix_object::bstr::ByteSlice;
+use gix_object::tree::EntryKind;
 
 use crate::named_repo;
 
@@ -23,8 +24,8 @@ fn changes_against_tree_modified() -> crate::Result {
                     entry_mode,
                     id,
                 } => {
-                    assert_eq!(previous_entry_mode, EntryMode::Blob);
-                    assert_eq!(entry_mode, EntryMode::Blob);
+                    assert_eq!(previous_entry_mode.kind(), EntryKind::Blob);
+                    assert_eq!(entry_mode.kind(), EntryKind::Blob);
                     assert_eq!(previous_id.object().unwrap().data.as_bstr(), "a\n");
                     assert_eq!(id.object().unwrap().data.as_bstr(), "a\na1\n");
                 }
@@ -103,11 +104,12 @@ fn tree_named(repo: &gix::Repository, rev_spec: impl AsRef<str>) -> gix::Tree {
 mod track_rewrites {
     use std::convert::Infallible;
 
-    use gix::object::tree::diff::{
-        change::{DiffLineStats, Event},
+    use gix::diff::blob::DiffLineStats;
+    use gix::diff::{
         rewrites::{Copies, CopySource},
         Rewrites,
     };
+    use gix::object::tree::diff::change::Event;
     use gix_ref::bstr::BStr;
 
     use crate::{
@@ -483,7 +485,7 @@ mod track_rewrites {
             .track_rewrites(
                 Rewrites {
                     copies: Some(Copies {
-                        source: CopySource::FromSetOfModifiedFilesAndSourceTree,
+                        source: CopySource::FromSetOfModifiedFilesAndAllSources,
                         ..Default::default()
                     }),
                     ..Default::default()
@@ -554,7 +556,7 @@ mod track_rewrites {
             .track_rewrites(
                 Rewrites {
                     copies: Some(Copies {
-                        source: CopySource::FromSetOfModifiedFilesAndSourceTree,
+                        source: CopySource::FromSetOfModifiedFilesAndAllSources,
                         ..Default::default()
                     }),
                     limit: 2, // similarity checks can't be made that way

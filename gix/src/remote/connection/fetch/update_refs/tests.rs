@@ -191,7 +191,7 @@ mod update {
 
     #[test]
     fn checked_out_branches_in_worktrees_are_rejected_with_additional_information() -> Result {
-        let root = gix_path::realpath(&gix_testtools::scripted_fixture_read_only_with_args(
+        let root = gix_path::realpath(gix_testtools::scripted_fixture_read_only_with_args(
             "make_fetch_repos.sh",
             [base_repo_path()],
         )?)?;

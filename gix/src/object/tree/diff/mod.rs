@@ -1,5 +1,6 @@
 use gix_diff::tree::recorder::Location;
 
+use crate::diff::Rewrites;
 use crate::{bstr::BStr, Tree};
 
 /// Returned by the `for_each` function to control flow.
@@ -39,7 +40,7 @@ impl<'repo> Tree<'repo> {
     /// try to access blobs to compute a similarity metric. Thus, it's more compatible to turn rewrite tracking off
     /// using [`Platform::track_rewrites()`].
     #[allow(clippy::result_large_err)]
-    pub fn changes<'a>(&'a self) -> Result<Platform<'a, 'repo>, rewrites::Error> {
+    pub fn changes<'a>(&'a self) -> Result<Platform<'a, 'repo>, crate::diff::new_rewrites::Error> {
         Ok(Platform {
             state: Default::default(),
             lhs: self,
@@ -57,34 +58,6 @@ pub struct Platform<'a, 'repo> {
     tracking: Option<Location>,
     rewrites: Option<Rewrites>,
 }
-
-/// A structure to capture how to perform rename and copy tracking
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Rewrites {
-    /// If `Some(…)`, do also find copies. `None` is the default which does not try to detect copies at all.
-    ///
-    /// Note that this is an even more expensive operation than detecting renames as files.
-    pub copies: Option<rewrites::Copies>,
-    /// The percentage of similarity needed for files to be considered renamed, defaulting to `Some(0.5)`.
-    /// This field is similar to `git diff -M50%`.
-    ///
-    /// If `None`, files are only considered equal if their content matches 100%.
-    /// Note that values greater than 1.0 have no different effect than 1.0.
-    pub percentage: Option<f32>,
-    /// The amount of files to consider for fuzzy rename or copy tracking. Defaults to 1000, meaning that only 1000*1000
-    /// combinations can be tested for fuzzy matches, i.e. the ones that try to find matches by comparing similarity.
-    /// If 0, there is no limit.
-    ///
-    /// If the limit would not be enough to test the entire set of combinations, the algorithm will trade in precision and not
-    /// run the fuzzy version of identity tests at all. That way results are never partial.
-    pub limit: usize,
-}
-
-///
-pub mod rewrites;
-
-/// types to actually perform rename tracking.
-pub(crate) mod tracked;
 
 /// Configuration
 impl<'a, 'repo> Platform<'a, 'repo> {

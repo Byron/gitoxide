@@ -224,7 +224,8 @@ mod lookup_prefix {
 }
 
 mod find {
-    use gix_object::{bstr::ByteSlice, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
+    use gix_object::tree::EntryKind;
+    use gix_object::{bstr::ByteSlice, BlobRef, CommitRef, Kind, TagRef, TreeRef};
     use gix_odb::loose;
 
     use crate::{
@@ -368,14 +369,14 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         let expected = TreeRef {
             entries: vec![
                 gix_object::tree::EntryRef {
-                    mode: EntryMode::Tree,
+                    mode: EntryKind::Tree.into(),
                     filename: b"dir".as_bstr(),
                     oid: as_id(&[
                         150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34, 88, 27, 17, 176,
                     ]),
                 },
                 gix_object::tree::EntryRef {
-                    mode: EntryMode::Blob,
+                    mode: EntryKind::Blob.into(),
                     filename: b"file.txt".as_bstr(),
                     oid: as_id(&[
                         55, 212, 230, 197, 196, 139, 160, 210, 69, 22, 76, 78, 16, 213, 244, 17, 64, 202, 185, 128,

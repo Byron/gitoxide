@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 
 use gix_features::progress::{DynNestedProgress, Progress};
-use gix_object::{bstr::ByteSlice, WriteTo};
+use gix_object::WriteTo;
 
 use crate::index;
 
@@ -235,7 +235,7 @@ impl index::File {
         object_kind: gix_object::Kind,
         buf: &[u8],
         index_entry: &index::Entry,
-        progress: &dyn gix_features::progress::Progress,
+        _progress: &dyn gix_features::progress::Progress,
     ) -> Result<(), integrity::Error> {
         if let Mode::HashCrc32Decode | Mode::HashCrc32DecodeEncode = verify_mode {
             use gix_object::Kind::*;
@@ -252,21 +252,12 @@ impl index::File {
                         encode_buf.clear();
                         object.write_to(&mut *encode_buf)?;
                         if encode_buf.as_slice() != buf {
-                            let mut should_return_error = true;
-                            if let Tree = object_kind {
-                                if buf.as_bstr().find(b"100664").is_some() || buf.as_bstr().find(b"100640").is_some() {
-                                    progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664|100640' with '100644'", index_entry.oid));
-                                    should_return_error = false
-                                }
-                            }
-                            if should_return_error {
-                                return Err(integrity::Error::ObjectEncodeMismatch {
-                                    kind: object_kind,
-                                    id: index_entry.oid,
-                                    expected: buf.into(),
-                                    actual: encode_buf.clone().into(),
-                                });
-                            }
+                            return Err(integrity::Error::ObjectEncodeMismatch {
+                                kind: object_kind,
+                                id: index_entry.oid,
+                                expected: buf.into(),
+                                actual: encode_buf.clone().into(),
+                            });
                         }
                     }
                 }

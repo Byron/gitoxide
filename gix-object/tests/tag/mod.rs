@@ -123,7 +123,7 @@ fn invalid() {
     assert_eq!(
         TagRef::from_bytes(partial_tag).unwrap_err().to_string(),
         if cfg!(feature = "verbose-object-parsing-errors") {
-            ""
+            "object parsing failed at `tagger Sebasti`"
         } else {
             "object parsing failed"
         }

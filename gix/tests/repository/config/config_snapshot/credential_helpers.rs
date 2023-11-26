@@ -81,10 +81,7 @@ mod baseline {
             .programs
             .iter()
             .map(|p| match &p.kind {
-                gix_credentials::program::Kind::ExternalName { name_and_args } => name_and_args
-                    .strip_prefix(b"git credential-")
-                    .expect("resolved name")
-                    .into(),
+                gix_credentials::program::Kind::ExternalName { name_and_args } => name_and_args.to_owned(),
                 _ => panic!("need name helper"),
             })
             .collect();

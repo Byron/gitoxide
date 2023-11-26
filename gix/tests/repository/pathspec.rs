@@ -31,9 +31,9 @@ fn defaults_are_taken_from_repo_config() -> crate::Result {
         .expect("match")
         .is_excluded());
 
-    assert_eq!(
+    assert!(
         pathspec.is_included("HI", Some(false)),
-        repo.filesystem_options()?.ignore_case
+        "icase is enabled, so filesystem doesn't matter"
     );
     Ok(())
 }

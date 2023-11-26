@@ -20,6 +20,19 @@ pub struct Prepare {
     pub env: Vec<(OsString, OsString)>,
     /// If `true`, we will use `sh` to execute the `command`.
     pub use_shell: bool,
+    /// If `true` (default `true` on windows and `false` everywhere else)
+    /// we will see if it's safe to manually invoke `command` after splitting
+    /// its arguments as a shell would do.
+    /// Note that outside of windows, it's generally not advisable as this
+    /// removes support for literal shell scripts with shell-builtins.
+    ///
+    /// This mimics the behaviour we see with `git` on windows, which also
+    /// won't invoke the shell there at all.
+    ///
+    /// Only effective if `use_shell` is `true` as well, as the shell will
+    /// be used as a fallback if it's not possible to split arguments as
+    /// the command-line contains 'scripting'.
+    pub allow_manual_arg_splitting: bool,
 }
 
 mod prepare {
@@ -34,7 +47,8 @@ mod prepare {
 
     /// Builder
     impl Prepare {
-        /// If called, the command will not be executed directly, but with `sh`.
+        /// If called, the command will not be executed directly, but with `sh`, but ony if the
+        /// command passed to [`prepare`](super::prepare()) requires this.
         ///
         /// This also allows to pass shell scripts as command, or use commands that contain arguments which are subsequently
         /// parsed by `sh`.
@@ -51,6 +65,14 @@ mod prepare {
         pub fn without_shell(mut self) -> Self {
             self.use_shell = false;
             self
+        }
+
+        /// Use a shell, but try to split arguments by hand if this be safely done without a shell.
+        ///
+        /// If that's not the case, use a shell instead.
+        pub fn with_shell_allow_argument_splitting(mut self) -> Self {
+            self.allow_manual_arg_splitting = true;
+            self.with_shell()
         }
 
         /// Configure the process to use `stdio` for _stdin.
@@ -93,21 +115,47 @@ mod prepare {
     impl Prepare {
         /// Spawn the command as configured.
         pub fn spawn(self) -> std::io::Result<std::process::Child> {
-            Command::from(self).spawn()
+            let mut cmd = Command::from(self);
+            gix_trace::debug!(cmd = ?cmd);
+            cmd.spawn()
         }
     }
 
     impl From<Prepare> for Command {
         fn from(mut prep: Prepare) -> Command {
             let mut cmd = if prep.use_shell {
-                let mut cmd = Command::new(if cfg!(windows) { "sh" } else { "/bin/sh" });
-                cmd.arg("-c");
-                if !prep.args.is_empty() {
-                    prep.command.push(" \"$@\"")
+                let split_args = prep
+                    .allow_manual_arg_splitting
+                    .then(|| {
+                        if gix_path::into_bstr(std::borrow::Cow::Borrowed(prep.command.as_ref()))
+                            .find_byteset(b"\\|&;<>()$`\n*?[#~%")
+                            .is_none()
+                        {
+                            prep.command
+                                .to_str()
+                                .and_then(|args| shell_words::split(args).ok().map(Vec::into_iter))
+                        } else {
+                            None
+                        }
+                    })
+                    .flatten();
+                match split_args {
+                    Some(mut args) => {
+                        let mut cmd = Command::new(args.next().expect("non-empty input"));
+                        cmd.args(args);
+                        cmd
+                    }
+                    None => {
+                        let mut cmd = Command::new(if cfg!(windows) { "sh" } else { "/bin/sh" });
+                        cmd.arg("-c");
+                        if !prep.args.is_empty() {
+                            prep.command.push(" \"$@\"")
+                        }
+                        cmd.arg(prep.command);
+                        cmd.arg("--");
+                        cmd
+                    }
                 }
-                cmd.arg(prep.command);
-                cmd.arg("--");
-                cmd
             } else {
                 Command::new(prep.command)
             };
@@ -137,5 +185,6 @@ pub fn prepare(cmd: impl Into<OsString>) -> Prepare {
         args: Vec::new(),
         env: Vec::new(),
         use_shell: false,
+        allow_manual_arg_splitting: cfg!(windows),
     }
 }

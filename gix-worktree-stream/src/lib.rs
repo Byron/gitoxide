@@ -138,23 +138,24 @@ impl Stream {
             let content = gix_path::into_bstr(content).into_owned();
             AdditionalEntry {
                 id,
-                mode: gix_object::tree::EntryMode::Link,
+                mode: gix_object::tree::EntryKind::Link.into(),
                 relative_path,
                 source: entry::Source::Memory(content.into()),
             }
         } else if meta.is_dir() {
             AdditionalEntry {
                 id,
-                mode: gix_object::tree::EntryMode::Tree,
+                mode: gix_object::tree::EntryKind::Tree.into(),
                 relative_path,
                 source: entry::Source::Null,
             }
         } else {
             let mode = if gix_fs::is_executable(&meta) {
-                gix_object::tree::EntryMode::BlobExecutable
+                gix_object::tree::EntryKind::BlobExecutable
             } else {
-                gix_object::tree::EntryMode::Blob
-            };
+                gix_object::tree::EntryKind::Blob
+            }
+            .into();
             AdditionalEntry {
                 id,
                 mode,

@@ -9,10 +9,10 @@
 //! Eventually, git will merge these files together as the number of files grows.
 //! ## Feature Flags
 #![cfg_attr(
-    feature = "document-features",
-    cfg_attr(doc, doc = ::document_features::document_features!())
+    all(doc, feature = "document-features"),
+    doc = ::document_features::document_features!()
 )]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 use std::path::Path;

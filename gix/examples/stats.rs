@@ -119,8 +119,8 @@ mod visit {
         }
 
         fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
-            use gix::objs::tree::EntryMode::*;
-            match entry.mode {
+            use gix::objs::tree::EntryKind::*;
+            match entry.mode.kind() {
                 Commit => self.num_submodules += 1,
                 Blob => {
                     self.count_bytes(entry.oid);
