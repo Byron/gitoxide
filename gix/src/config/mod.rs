@@ -76,6 +76,8 @@ pub enum Error {
     ConfigUnsigned(#[from] unsigned_integer::Error),
     #[error(transparent)]
     ConfigTypedString(#[from] key::GenericErrorWithValue),
+    #[error(transparent)]
+    RefsNamespace(#[from] refs_namespace::Error),
     #[error("Cannot handle objects formatted as {:?}", .name)]
     UnsupportedObjectFormat { name: BString },
     #[error(transparent)]
@@ -152,6 +154,25 @@ pub mod checkout_options {
         Attributes(#[from] super::attribute_stack::Error),
         #[error(transparent)]
         FilterPipelineOptions(#[from] crate::filter::pipeline::options::Error),
+        #[error(transparent)]
+        CommandContext(#[from] crate::config::command_context::Error),
+    }
+}
+
+///
+#[cfg(feature = "attributes")]
+pub mod command_context {
+    use crate::config;
+
+    /// The error produced when collecting all information relevant to spawned commands,
+    /// obtained via [Repository::command_context()](crate::Repository::command_context()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Boolean(#[from] config::boolean::Error),
+        #[error(transparent)]
+        ParseBool(#[from] gix_config::value::Error),
     }
 }
 
@@ -412,6 +433,12 @@ pub mod refspec {
 }
 
 ///
+pub mod refs_namespace {
+    /// The error produced when failing to parse a refspec from the configuration.
+    pub type Error = super::key::Error<gix_validate::reference::name::Error, 'v', 'i'>;
+}
+
+///
 pub mod ssl_version {
     /// The error produced when failing to parse a refspec from the configuration.
     pub type Error = super::key::Error<std::convert::Infallible, 's', 'i'>;
@@ -507,6 +534,8 @@ pub(crate) struct Cache {
     pub use_multi_pack_index: bool,
     /// The representation of `core.logallrefupdates`, or `None` if the variable wasn't set.
     pub reflog: Option<gix_ref::store::WriteReflog>,
+    /// The representation of `gitoxide.core.refsNamespace`, or `None` if the variable wasn't set.
+    pub refs_namespace: Option<gix_ref::Namespace>,
     /// The configured user agent for presentation to servers.
     pub(crate) user_agent: OnceCell<String>,
     /// identities for later use, lazy initialization.
@@ -543,4 +572,23 @@ pub(crate) struct Cache {
     attributes: crate::open::permissions::Attributes,
     environment: crate::open::permissions::Environment,
     // TODO: make core.precomposeUnicode available as well.
+}
+
+/// Utillities shared privately across the crate, for lack of a better place.
+pub(crate) mod shared {
+    use crate::config;
+    use crate::config::cache::util::ApplyLeniency;
+    use crate::config::tree::Core;
+
+    pub fn is_replace_refs_enabled(
+        config: &gix_config::File<'static>,
+        lenient: bool,
+        mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
+    ) -> Result<Option<bool>, config::boolean::Error> {
+        config
+            .boolean_filter_by_key("core.useReplaceRefs", &mut filter_config_section)
+            .map(|b| Core::USE_REPLACE_REFS.enrich_error(b))
+            .transpose()
+            .with_leniency(lenient)
+    }
 }

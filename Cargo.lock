@@ -1223,6 +1223,7 @@ dependencies = [
  "gix-actor 0.28.0",
  "gix-archive",
  "gix-attributes 0.20.0",
+ "gix-command",
  "gix-commitgraph",
  "gix-config",
  "gix-credentials",

@@ -52,18 +52,22 @@ const ATTRS: [&str; 6] = ["crlf", "ident", "filter", "eol", "text", "working-tre
 
 /// Lifecycle
 impl Pipeline {
-    /// Create a new pipeline with configured `drivers` (which should be considered safe to invoke) as well as a way to initialize
-    /// our attributes with `collection`.
+    /// Create a new pipeline with configured `drivers` (which should be considered safe to invoke) with `context` as well as
+    /// a way to initialize our attributes with `collection`.
     /// `eol_config` serves as fallback to understand how to convert line endings if no line-ending attributes are present.
     /// `crlf_roundtrip_check` corresponds to the git-configuration of `core.safecrlf`.
     /// `object_hash` is relevant for the `ident` filter.
-    pub fn new(collection: &gix_attributes::search::MetadataCollection, options: Options) -> Self {
+    pub fn new(
+        collection: &gix_attributes::search::MetadataCollection,
+        context: gix_command::Context,
+        options: Options,
+    ) -> Self {
         let mut attrs = gix_attributes::search::Outcome::default();
         attrs.initialize_with_selection(collection, ATTRS);
         Pipeline {
             attrs,
             context: Context::default(),
-            processes: driver::State::default(),
+            processes: driver::State::new(context),
             options,
             bufs: Default::default(),
         }
@@ -80,7 +84,7 @@ impl Pipeline {
 impl Default for Pipeline {
     fn default() -> Self {
         let collection = Default::default();
-        Pipeline::new(&collection, Default::default())
+        Pipeline::new(&collection, Default::default(), Default::default())
     }
 }
 

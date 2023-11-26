@@ -185,8 +185,8 @@ impl Client {
         self.send_command_and_meta(command, meta)?;
         while let Some(data) = self.out.read_line() {
             let line = data??;
-            if let Some(line) = line.as_bstr() {
-                inspect_line(line);
+            if let Some(line) = line.as_text() {
+                inspect_line(line.as_bstr());
             }
         }
         self.out.reset_with(&[gix_packetline::PacketLineRef::Flush]);

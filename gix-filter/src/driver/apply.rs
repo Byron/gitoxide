@@ -63,6 +63,7 @@ pub struct Context<'a, 'b> {
     pub blob: Option<gix_hash::ObjectId>,
 }
 
+/// Apply operations to filter programs.
 impl State {
     /// Apply `operation` of `driver` to the bytes read from `src` and return a reader to immediately consume the output
     /// produced by the filter. `rela_path` is the repo-relative path of the entry to handle.

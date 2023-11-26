@@ -59,6 +59,7 @@ fn pipeline(
     let (drivers, encodings_with_roundtrip_check, crlf_roundtrip_check, eol_config) = init();
     let pipe = gix_filter::Pipeline::new(
         cache.attributes_collection(),
+        Default::default(),
         gix_filter::pipeline::Options {
             drivers,
             eol_config,

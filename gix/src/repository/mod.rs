@@ -124,6 +124,8 @@ pub mod worktree_stream {
         AttributesCache(#[from] crate::config::attribute_stack::Error),
         #[error(transparent)]
         FilterPipeline(#[from] crate::filter::pipeline::options::Error),
+        #[error(transparent)]
+        CommandContext(#[from] crate::config::command_context::Error),
         #[error("Needed {id} to be a tree to turn into a workspace stream, got {actual}")]
         NotATree {
             id: gix_hash::ObjectId,

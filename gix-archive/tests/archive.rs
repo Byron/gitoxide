@@ -303,6 +303,6 @@ mod from_tree {
     }
 
     fn noop_pipeline() -> gix_filter::Pipeline {
-        gix_filter::Pipeline::new(&Default::default(), Default::default())
+        gix_filter::Pipeline::new(&Default::default(), Default::default(), Default::default())
     }
 }

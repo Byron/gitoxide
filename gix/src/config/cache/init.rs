@@ -144,6 +144,7 @@ impl Cache {
 
         use util::config_bool;
         let reflog = util::query_refupdates(&config, lenient_config)?;
+        let refs_namespace = util::query_refs_namespace(&config, lenient_config)?;
         let ignore_case = config_bool(&config, &Core::IGNORE_CASE, "core.ignoreCase", false, lenient_config)?;
         let use_multi_pack_index = config_bool(
             &config,
@@ -167,6 +168,7 @@ impl Cache {
             pack_cache_bytes,
             object_cache_bytes,
             reflog,
+            refs_namespace,
             is_bare,
             ignore_case,
             hex_len,
@@ -223,10 +225,12 @@ impl Cache {
             self.object_kind_hint = object_kind_hint;
         }
         let reflog = util::query_refupdates(config, self.lenient_config)?;
+        let refs_namespace = util::query_refs_namespace(config, self.lenient_config)?;
 
         self.hex_len = hex_len;
         self.ignore_case = ignore_case;
         self.reflog = reflog;
+        self.refs_namespace = refs_namespace;
 
         self.user_agent = Default::default();
         self.personas = Default::default();
@@ -299,6 +303,7 @@ impl crate::Repository {
 
     fn apply_changed_values(&mut self) {
         self.refs.write_reflog = util::reflog_or_default(self.config.reflog, self.work_dir().is_some());
+        self.refs.namespace = self.config.refs_namespace.clone();
     }
 }
 
@@ -413,10 +418,16 @@ fn apply_environment_overrides(
             "gitoxide",
             Some(Cow::Borrowed("core".into())),
             git_prefix,
-            &[{
-                let key = &gitoxide::Core::SHALLOW_FILE;
-                (env(key), key.name)
-            }],
+            &[
+                {
+                    let key = &gitoxide::Core::SHALLOW_FILE;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Core::REFS_NAMESPACE;
+                    (env(key), key.name)
+                },
+            ],
         ),
         (
             "gitoxide",
