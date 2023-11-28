@@ -351,7 +351,7 @@ impl Platform {
         mode: gix_object::tree::EntryKind,
         rela_path: &BStr,
         kind: ResourceKind,
-        objects: &impl gix_object::FindObjectOrHeader, // TODO: make this `dyn` once https://github.com/rust-lang/rust/issues/65991 is stable
+        objects: &impl gix_object::FindObjectOrHeader, // TODO: make this `dyn` once https://github.com/rust-lang/rust/issues/65991 is stable, then also make tracker.rs `objects` dyn
     ) -> Result<(), set_resource::Error> {
         let res = self.set_resource_inner(id, mode, rela_path, kind, objects);
         if res.is_err() {

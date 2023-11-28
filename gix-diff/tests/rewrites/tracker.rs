@@ -564,7 +564,7 @@ mod util {
     pub fn assert_emit_with_objects(
         tracker: &mut rewrites::Tracker<Change>,
         cb: impl FnMut(Destination<'_, Change>, Option<Source<'_>>) -> Action,
-        objects: impl gix_object::Find,
+        objects: impl gix_object::FindObjectOrHeader,
     ) -> rewrites::Outcome {
         assert_emit_with_objects_and_sources(tracker, cb, objects, None)
     }
@@ -572,15 +572,15 @@ mod util {
     pub fn assert_emit_with_objects_and_sources<'a>(
         tracker: &mut rewrites::Tracker<Change>,
         cb: impl FnMut(Destination<'_, Change>, Option<Source<'_>>) -> Action,
-        objects: impl gix_object::Find,
+        objects: impl gix_object::FindObjectOrHeader,
         sources: impl IntoIterator<Item = (Change, &'a str)>,
     ) -> rewrites::Outcome {
         let mut sources: Vec<_> = sources.into_iter().collect();
         tracker
             .emit(
                 cb,
+                &mut new_platform_no_worktree(),
                 &objects,
-                &mut gix_filter::Pipeline::new(Default::default(), Default::default()),
                 |cb| -> Result<(), std::io::Error> {
                     let sources = std::mem::take(&mut sources);
                     if sources.is_empty() {
@@ -596,6 +596,34 @@ mod util {
     }
 
     pub fn new_tracker(rewrites: Rewrites) -> rewrites::Tracker<Change> {
-        rewrites::Tracker::new(rewrites, gix_diff::blob::Algorithm::Myers)
+        rewrites::Tracker::new(rewrites)
+    }
+
+    fn new_platform_no_worktree() -> gix_diff::blob::Platform {
+        let root = gix_testtools::scripted_fixture_read_only_standalone("make_blob_repo.sh").expect("valid fixture");
+        let attributes = gix_worktree::Stack::new(
+            root,
+            gix_worktree::stack::State::AttributesStack(gix_worktree::stack::state::Attributes::new(
+                Default::default(),
+                None,
+                gix_worktree::stack::state::attributes::Source::IdMapping,
+                Default::default(),
+            )),
+            gix_worktree::glob::pattern::Case::Sensitive,
+            Vec::new(),
+            Vec::new(),
+        );
+        let filter = gix_diff::blob::Pipeline::new(
+            Default::default(),
+            gix_filter::Pipeline::default(),
+            Vec::new(),
+            Default::default(),
+        );
+        gix_diff::blob::Platform::new(
+            Default::default(),
+            filter,
+            gix_diff::blob::pipeline::Mode::ToGit,
+            attributes,
+        )
     }
 }
