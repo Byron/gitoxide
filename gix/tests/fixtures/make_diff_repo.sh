@@ -3,6 +3,24 @@ set -eu -o pipefail
 
 git init -q
 
+cat <<EOF >>.git/config
+
+[diff "binary-true"]
+  binary = true
+[diff "binary-false"]
+  binary = false
+[diff ""]
+  command = "empty is ignored"
+[diff]
+  command = "this is also ignored as sub-section name is missing"
+  algorithm = histogram
+[diff "all-but-binary"]
+  command = command
+  textconv = textconv
+  algorithm = histogram
+  binary = auto
+EOF
+
 git checkout -b main
 mkdir dir
 touch a b dir/c d

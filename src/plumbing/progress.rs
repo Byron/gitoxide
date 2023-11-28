@@ -125,10 +125,6 @@ static GIT_CONFIG: &[Record] = &[
         usage: NotPlanned { reason: "seems like a niche feature, but can be implemented if there is demand" }
     },
     Record {
-        config: "core.bigFileThreshold",
-        usage: Planned { note: Some("unfortunately we can't stream packed files yet, even if not delta-compressed, but respecting the threshold for other operations is definitely a must") }
-    },
-    Record {
         config: "core.compression",
         usage: Planned { note: Some("Allow to remove similar hardcoded value - passing it through will be some effort") },
     },
