@@ -10,6 +10,9 @@ impl Http {
         .with_deviation(
             "accepts the new 'default' value which means to use the curl default just like the empty string does",
         );
+    /// The `http.sslVerify` key.
+    pub const SSL_VERIFY: keys::Boolean = keys::Boolean::new_boolean("sslVerify", &config::Tree::HTTP)
+        .with_deviation("Only supported when using curl as https backend");
     /// The `http.proxy` key.
     pub const PROXY: keys::String =
         keys::String::new_string("proxy", &config::Tree::HTTP).with_deviation("fails on strings with illformed UTF-8");

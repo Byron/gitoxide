@@ -164,3 +164,8 @@ mkdir not-a-repo-with-files;
 (cd not-a-repo-with-files
   touch this that
 )
+
+git init no-ssl-verify
+(cd no-ssl-verify
+  git config http.sslVerify false
+)
