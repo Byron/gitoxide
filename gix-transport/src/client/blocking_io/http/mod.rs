@@ -179,6 +179,10 @@ pub struct Options {
     pub ssl_ca_info: Option<PathBuf>,
     /// The SSL version or version range to use, or `None` to let the TLS backend determine which versions are acceptable.
     pub ssl_version: Option<SslVersionRangeInclusive>,
+    /// Controls whether to perform SSL identity verification or not. Turning this off is not recommended and can lead to
+    /// various security risks. An example where this may be needed is when an internal git server uses a self-signed
+    /// certificate and the user accepts the associated security risks.
+    pub ssl_verify: bool,
     /// The HTTP version to enforce. If unset, it is implementation defined.
     pub http_version: Option<HttpVersion>,
     /// Backend specific options, if available.
