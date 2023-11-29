@@ -405,6 +405,17 @@ impl crate::Repository {
                         }
                     }
 
+                    {
+                        let key = "http.sslVerify";
+                        opts.ssl_verify = config
+                            .boolean_filter_by_key(key, &mut trusted_only)
+                            .map(|value| config::tree::Http::SSL_VERIFY.enrich_error(value))
+                            .transpose()
+                            .with_leniency(lenient)
+                            .map_err(config::transport::http::Error::from)?
+                            .unwrap_or(true);
+                    }
+
                     #[cfg(feature = "blocking-http-transport-curl")]
                     {
                         let key = "http.schannelCheckRevoke";

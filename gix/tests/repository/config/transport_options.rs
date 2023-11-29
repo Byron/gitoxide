@@ -55,6 +55,7 @@ mod http {
             verbose,
             ssl_ca_info,
             ssl_version,
+            ssl_verify,
             http_version,
             backend,
         } = http_options(&repo, None, "https://example.com/does/not/matter");
@@ -106,6 +107,9 @@ mod http {
                 max: version
             })
         );
+
+        assert!(ssl_verify, "SSL verification is enabled by default if not configured");
+
         assert_eq!(http_version, Some(HttpVersion::V1_1));
     }
 
@@ -313,5 +317,14 @@ mod http {
         let opts = http_options(&repo, None, "https://example.com/does/not/matter");
         assert_eq!(opts.proxy.as_deref(), Some("http://localhost:9090"));
         assert_eq!(opts.follow_redirects, FollowRedirects::Initial);
+    }
+
+    #[test]
+    fn no_ssl_verify() {
+        let repo = repo("no-ssl-verify");
+
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
+
+        assert!(!opts.ssl_verify);
     }
 }
