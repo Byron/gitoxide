@@ -24,6 +24,7 @@ pub enum Error {
     },
 }
 
+/// Lifecycle
 impl State {
     /// Obtain a process as defined in `driver` suitable for a given `operation. `rela_path` may be used to substitute the current
     /// file for use in the invoked `SingleFile` process.
@@ -40,7 +41,7 @@ impl State {
                 let client = match self.running.remove(process) {
                     Some(c) => c,
                     None => {
-                        let (child, cmd) = spawn_driver(process.clone())?;
+                        let (child, cmd) = spawn_driver(process.clone(), &self.context)?;
                         process::Client::handshake(child, "git-filter", &[2], &["clean", "smudge", "delay"]).map_err(
                             |err| Error::ProcessHandshake {
                                 source: err,
@@ -79,20 +80,25 @@ impl State {
                     None => return Ok(None),
                 };
 
-                let (child, command) = spawn_driver(cmd)?;
+                let (child, command) = spawn_driver(cmd, &self.context)?;
                 Ok(Some(Process::SingleFile { child, command }))
             }
         }
     }
 }
 
-fn spawn_driver(cmd: BString) -> Result<(std::process::Child, std::process::Command), Error> {
+fn spawn_driver(
+    cmd: BString,
+    context: &gix_command::Context,
+) -> Result<(std::process::Child, std::process::Command), Error> {
     let mut cmd: std::process::Command = gix_command::prepare(gix_path::from_bstr(cmd).into_owned())
         .with_shell()
+        .with_context(context.clone())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .into();
+    gix_trace::debug!(cmd = ?cmd, "launching filter driver");
     let child = match cmd.spawn() {
         Ok(child) => child,
         Err(err) => {

@@ -45,6 +45,7 @@ pub mod fetch {
     }
 }
 
+/// Operations related to delayed filtering.
 impl State {
     /// Return a list of delayed paths for `process` that can then be obtained with [`fetch_delayed()`][Self::fetch_delayed()].
     ///

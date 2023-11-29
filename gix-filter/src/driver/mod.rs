@@ -70,12 +70,27 @@ pub struct State {
     /// Note that these processes are expected to shut-down once their stdin/stdout are dropped, so nothing else
     /// needs to be done to clean them up after drop.
     running: HashMap<BString, process::Client>,
+
+    /// The context to pass to spawned filter programs.
+    pub context: gix_command::Context,
+}
+
+/// Initialization
+impl State {
+    /// Create a new instance using `context` to inform launched processes about their environment.
+    pub fn new(context: gix_command::Context) -> Self {
+        Self {
+            running: Default::default(),
+            context,
+        }
+    }
 }
 
 impl Clone for State {
     fn clone(&self) -> Self {
         State {
             running: Default::default(),
+            context: self.context.clone(),
         }
     }
 }

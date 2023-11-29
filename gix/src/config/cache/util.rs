@@ -55,6 +55,18 @@ pub(crate) fn query_refupdates(
         .map_err(Into::into)
 }
 
+pub(crate) fn query_refs_namespace(
+    config: &gix_config::File<'static>,
+    lenient_config: bool,
+) -> Result<Option<gix_ref::Namespace>, config::refs_namespace::Error> {
+    let key = "gitoxide.core.refsNamespace";
+    config
+        .string_by_key(key)
+        .map(|ns| gitoxide::Core::REFS_NAMESPACE.try_into_refs_namespace(ns))
+        .transpose()
+        .with_leniency(lenient_config)
+}
+
 pub(crate) fn reflog_or_default(
     config_reflog: Option<gix_ref::store::WriteReflog>,
     has_worktree: bool,

@@ -7,15 +7,66 @@ use gix_features::{progress::Progress, threading, zlib};
 
 use crate::{
     cache::delta::{
-        traverse::{
-            util::{ItemSliceSend, Node},
-            Context, Error,
-        },
+        traverse::{util::ItemSliceSync, Context, Error},
         Item,
     },
     data,
     data::EntryRange,
 };
+
+mod node {
+    use crate::cache::delta::{traverse::util::ItemSliceSync, Item};
+
+    /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
+    pub(crate) struct Node<'a, T: Send> {
+        item: &'a mut Item<T>,
+        child_items: &'a ItemSliceSync<'a, Item<T>>,
+    }
+
+    impl<'a, T: Send> Node<'a, T> {
+        /// SAFETY: The child_items must be unique among between users of the `ItemSliceSync`.
+        #[allow(unsafe_code)]
+        pub(crate) unsafe fn new(item: &'a mut Item<T>, child_items: &'a ItemSliceSync<'a, Item<T>>) -> Self {
+            Node { item, child_items }
+        }
+    }
+
+    impl<'a, T: Send> Node<'a, T> {
+        /// Returns the offset into the pack at which the `Node`s data is located.
+        pub fn offset(&self) -> u64 {
+            self.item.offset
+        }
+
+        /// Returns the slice into the data pack at which the pack entry is located.
+        pub fn entry_slice(&self) -> crate::data::EntryRange {
+            self.item.offset..self.item.next_offset
+        }
+
+        /// Returns the node data associated with this node.
+        pub fn data(&mut self) -> &mut T {
+            &mut self.item.data
+        }
+
+        /// Returns true if this node has children, e.g. is not a leaf in the tree.
+        pub fn has_children(&self) -> bool {
+            !self.item.children.is_empty()
+        }
+
+        /// Transform this `Node` into an iterator over its children.
+        ///
+        /// Children are `Node`s referring to pack entries whose base object is this pack entry.
+        pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> + 'a {
+            let children = self.child_items;
+            // SAFETY: The index is a valid index into the children array.
+            // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
+            #[allow(unsafe_code)]
+            self.item.children.iter().map(move |&index| Node {
+                item: unsafe { children.get_mut(index as usize) },
+                child_items: children,
+            })
+        }
+    }
+}
 
 pub(crate) struct State<'items, F, MBFN, T: Send> {
     pub delta_bytes: Vec<u8>,
@@ -23,14 +74,14 @@ pub(crate) struct State<'items, F, MBFN, T: Send> {
     pub progress: Box<dyn Progress>,
     pub resolve: F,
     pub modify_base: MBFN,
-    pub child_items: ItemSliceSend<'items, Item<T>>,
+    pub child_items: &'items ItemSliceSync<'items, Item<T>>,
 }
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn deltas<T, F, MBFN, E, R>(
     objects: gix_features::progress::StepShared,
     size: gix_features::progress::StepShared,
-    node: &mut Item<T>,
+    item: &mut Item<T>,
     State {
         delta_bytes,
         fully_resolved_delta_bytes,
@@ -67,13 +118,10 @@ where
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed
     let root_level = 0;
-    let mut nodes: Vec<_> = vec![(
-        root_level,
-        Node {
-            item: node,
-            child_items: child_items.clone(),
-        },
-    )];
+    // SAFETY: The child items are unique
+    #[allow(unsafe_code)]
+    let root_node = unsafe { node::Node::new(item, child_items) };
+    let mut nodes: Vec<_> = vec![(root_level, root_node)];
     while let Some((level, mut base)) = nodes.pop() {
         if should_interrupt.load(Ordering::Relaxed) {
             return Err(Error::Interrupted);
@@ -186,13 +234,13 @@ where
 ///    system. Since this thread will take a controlling function, we may spawn one more than that. In threaded mode, we will finish
 ///    all remaining work.
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn deltas_mt<T, F, MBFN, E, R>(
+fn deltas_mt<T, F, MBFN, E, R>(
     mut threads_to_create: isize,
     decompressed_bytes_by_pack_offset: BTreeMap<u64, (data::Entry, u64, Vec<u8>)>,
     objects: gix_features::progress::StepShared,
     size: gix_features::progress::StepShared,
     progress: &dyn Progress,
-    nodes: Vec<(u16, Node<'_, T>)>,
+    nodes: Vec<(u16, node::Node<'_, T>)>,
     resolve: F,
     resolve_data: &R,
     modify_base: MBFN,

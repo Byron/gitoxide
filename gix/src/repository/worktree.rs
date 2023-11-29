@@ -79,8 +79,11 @@ impl crate::Repository {
         let mut cache = self
             .attributes_only(&index, gix_worktree::stack::state::attributes::Source::IdMapping)?
             .detach();
-        let pipeline =
-            gix_filter::Pipeline::new(cache.attributes_collection(), crate::filter::Pipeline::options(self)?);
+        let pipeline = gix_filter::Pipeline::new(
+            cache.attributes_collection(),
+            self.command_context()?,
+            crate::filter::Pipeline::options(self)?,
+        );
         let objects = self.objects.clone().into_arc().expect("TBD error handling");
         let stream = gix_worktree_stream::from_tree(
             id,
