@@ -11,11 +11,7 @@ description: |
     gitoxide aspires to be a production-grade server implementation and the ein binary aspires to
     become the default way to interact with git repositories. 
     
-    To run from your terminal, type: gitoxide
-    
-    Set aliases for `gix` and `ein` using the following commands: 
-    sudo snap alias gitoxide gix
-    sudo snap alias gitoxide.ein ein
+    To run it from your terminal, type: `gix` or `ein` to access either binary in the `gitoxide` suite
     
 license: Apache-2.0
 

@@ -184,13 +184,7 @@ For latest builds, based on most recent commits to `main` branch, use the `edge`
 ```
 sudo snap install gitoxide
 ```
-To run it from your terminal, type: `gitoxide`
-
-Set a snap alias for it to match the command syntax:
-```
-sudo snap alias gitoxide gix
-sudo snap alias gitoxide.ein ein
-```
+To run it from your terminal, type: `gix` or `ein` to access either binary in the `gitoxide` suite
 
 ### From Source via Cargo
 
