@@ -54,6 +54,7 @@ impl Section for Gitoxide {
             &Self::CORE,
             &Self::COMMIT,
             &Self::COMMITTER,
+            &Self::CREDENTIALS,
             &Self::HTTP,
             &Self::HTTPS,
             &Self::OBJECTS,
