@@ -19,6 +19,7 @@ mod with_overrides {
             .set("GIT_HTTP_LOW_SPEED_LIMIT", "1")
             .set("GIT_HTTP_LOW_SPEED_TIME", "1")
             .set("GIT_HTTP_PROXY_AUTHMETHOD", "proxy-auth-method-env")
+            .set("GIT_SSL_NO_VERIFY", "true")
             .set("GIT_CURL_VERBOSE", "true")
             .set("https_proxy", "https-lower-override")
             .set("HTTPS_PROXY", "https-upper")
@@ -231,6 +232,7 @@ mod with_overrides {
             ]
         );
         for (key, expected) in [
+            ("gitoxide.http.sslNoVerify", "true"),
             ("gitoxide.http.verbose", "true"),
             ("gitoxide.allow.protocolFromUser", "file-allowed"),
             ("core.useReplaceRefs", "no-replace"),
