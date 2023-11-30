@@ -407,13 +407,31 @@ impl crate::Repository {
 
                     {
                         let key = "http.sslVerify";
-                        opts.ssl_verify = config
+                        let ssl_verify = config
                             .boolean_filter_by_key(key, &mut trusted_only)
                             .map(|value| config::tree::Http::SSL_VERIFY.enrich_error(value))
                             .transpose()
                             .with_leniency(lenient)
                             .map_err(config::transport::http::Error::from)?
                             .unwrap_or(true);
+
+                        let ssl_no_verify = config
+                            .boolean_filter(
+                                "gitoxide",
+                                Some("http".into()),
+                                gitoxide::Http::SSL_NO_VERIFY.name,
+                                &mut trusted_only,
+                            )
+                            .and_then(Result::ok)
+                            .unwrap_or_default();
+
+                        // ssl_no_verify take prority here because it is based on environment variable
+                        // and we try to match git behavior.
+                        if ssl_no_verify {
+                            opts.ssl_verify = false;
+                        } else {
+                            opts.ssl_verify = ssl_verify;
+                        }
                     }
 
                     #[cfg(feature = "blocking-http-transport-curl")]
