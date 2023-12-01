@@ -164,3 +164,14 @@ mkdir not-a-repo-with-files;
 (cd not-a-repo-with-files
   touch this that
 )
+
+git init ssl-verify-disabled
+(cd ssl-verify-disabled
+  git config http.sslVerify false
+)
+
+git init ssl-no-verify-enabled
+(cd ssl-no-verify-enabled
+  git config http.sslVerify true
+  git config gitoxide.http.sslNoVerify true
+)

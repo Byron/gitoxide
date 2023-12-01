@@ -180,6 +180,14 @@ mod subsections {
             http::SslVersion::new_ssl_version("sslVersionMax", &Gitoxide::HTTP).with_note(
                 "entirely new to set the upper bound for the allowed ssl version range. Overwrites the max bound of `http.sslVersion` if set. Min and Max must be set to become effective.",
             );
+        /// The `gitoxide.http.sslNoVerify` key.
+        ///
+        /// If set, disable SSL verification. Using this is discouraged as it can lead to
+        /// various security risks. An example where this may be needed is when an internal
+        /// git server uses a self-signed certificate and the user accepts the associated security risks.
+        pub const SSL_NO_VERIFY: keys::Boolean = keys::Boolean::new_boolean("sslNoVerify", &Gitoxide::HTTP)
+            .with_environment_override("GIT_SSL_NO_VERIFY")
+            .with_note("used to disable SSL verification. When this is enabled it takes priority over http.sslVerify");
         /// The `gitoxide.http.proxyAuthMethod` key.
         pub const PROXY_AUTH_METHOD: http::ProxyAuthMethod =
             http::ProxyAuthMethod::new_proxy_auth_method("proxyAuthMethod", &Gitoxide::HTTP)
@@ -200,6 +208,7 @@ mod subsections {
                 &Self::CONNECT_TIMEOUT,
                 &Self::SSL_VERSION_MIN,
                 &Self::SSL_VERSION_MAX,
+                &Self::SSL_NO_VERIFY,
                 &Self::PROXY_AUTH_METHOD,
             ]
         }

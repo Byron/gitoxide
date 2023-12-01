@@ -409,10 +409,6 @@ static GIT_CONFIG: &[Record] = &[
         usage: NotPlanned { reason: "on demand" }
     },
     Record {
-        config: "http.sslVerify",
-        usage: NotPlanned { reason: "on demand" }
-    },
-    Record {
         config: "http.sslCert",
         usage: NotPlanned { reason: "on demand" }
     },

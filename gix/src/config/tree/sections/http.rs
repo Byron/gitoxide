@@ -10,6 +10,9 @@ impl Http {
         .with_deviation(
             "accepts the new 'default' value which means to use the curl default just like the empty string does",
         );
+    /// The `http.sslVerify` key.
+    pub const SSL_VERIFY: keys::Boolean = keys::Boolean::new_boolean("sslVerify", &config::Tree::HTTP)
+        .with_note("also see the `gitoxide.http.sslNoVerify` key");
     /// The `http.proxy` key.
     pub const PROXY: keys::String =
         keys::String::new_string("proxy", &config::Tree::HTTP).with_deviation("fails on strings with illformed UTF-8");
@@ -58,6 +61,7 @@ impl Section for Http {
     fn keys(&self) -> &[&dyn Key] {
         &[
             &Self::SSL_VERSION,
+            &Self::SSL_VERIFY,
             &Self::PROXY,
             &Self::PROXY_AUTH_METHOD,
             &Self::VERSION,
