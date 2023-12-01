@@ -186,8 +186,7 @@ mod subsections {
         /// git server uses a self-signed certificate and the user accepts the associated security risks.
         pub const SSL_NO_VERIFY: keys::Boolean = keys::Boolean::new_boolean("sslNoVerify", &Gitoxide::HTTP)
             .with_environment_override("GIT_SSL_NO_VERIFY")
-            .with_deviation("Only supported when using curl as https backend")
-            .with_note("Used to disable SSL verification. When this is enabled it takes prority over http.sslVerify.");
+            .with_note("used to disable SSL verification. When this is enabled it takes priority over http.sslVerify");
         /// The `gitoxide.http.proxyAuthMethod` key.
         pub const PROXY_AUTH_METHOD: http::ProxyAuthMethod =
             http::ProxyAuthMethod::new_proxy_auth_method("proxyAuthMethod", &Gitoxide::HTTP)

@@ -109,7 +109,6 @@ mod http {
         );
 
         assert!(ssl_verify, "SSL verification is enabled by default if not configured");
-
         assert_eq!(http_version, Some(HttpVersion::V1_1));
     }
 
@@ -320,11 +319,21 @@ mod http {
     }
 
     #[test]
-    fn no_ssl_verify() {
-        let repo = repo("no-ssl-verify");
+    fn ssl_verify_disabled() {
+        let repo = repo("ssl-verify-disabled");
 
         let opts = http_options(&repo, None, "https://example.com/does/not/matter");
-
         assert!(!opts.ssl_verify);
+    }
+
+    #[test]
+    fn ssl_no_verify_takes_precedence() {
+        let repo = repo("ssl-no-verify-enabled");
+
+        let opts = http_options(&repo, None, "https://example.com/does/not/matter");
+        assert!(
+            !opts.ssl_verify,
+            "even with `http.sslVerify` enabled, `gitoxide.http.sslNoVerify` takes precedence`"
+        );
     }
 }

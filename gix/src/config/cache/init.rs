@@ -385,14 +385,19 @@ fn apply_environment_overrides(
                     (env(key), key.name)
                 },
                 {
-                    let key = &gitoxide::Http::SSL_NO_VERIFY;
-                    (env(key), key.name)
-                },
-                {
                     let key = &gitoxide::Http::PROXY_AUTH_METHOD;
                     (env(key), key.name)
                 },
             ],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("http".into())),
+            git_prefix,
+            &[{
+                let key = &gitoxide::Http::SSL_NO_VERIFY;
+                (env(key), key.name)
+            }],
         ),
         (
             "gitoxide",
