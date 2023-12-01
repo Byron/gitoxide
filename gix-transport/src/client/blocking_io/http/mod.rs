@@ -120,7 +120,7 @@ pub mod options {
 
 /// Options to configure http requests.
 // TODO: testing most of these fields requires a lot of effort, unless special flags to introspect ongoing requests are added.
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Options {
     /// Headers to be added to every request.
     /// They are applied unconditionally and are expected to be valid as they occur in an HTTP request, like `header: value`, without newlines.
@@ -187,6 +187,29 @@ pub struct Options {
     pub http_version: Option<HttpVersion>,
     /// Backend specific options, if available.
     pub backend: Option<Arc<Mutex<dyn Any + Send + Sync + 'static>>>,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            extra_headers: vec![],
+            follow_redirects: Default::default(),
+            low_speed_limit_bytes_per_second: 0,
+            low_speed_time_seconds: 0,
+            proxy: None,
+            no_proxy: None,
+            proxy_auth_method: Default::default(),
+            proxy_authenticate: None,
+            user_agent: None,
+            connect_timeout: None,
+            verbose: false,
+            ssl_ca_info: None,
+            ssl_version: None,
+            ssl_verify: true,
+            http_version: None,
+            backend: None,
+        }
+    }
 }
 
 /// The actual http client implementation, using curl

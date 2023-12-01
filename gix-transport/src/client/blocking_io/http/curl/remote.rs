@@ -196,6 +196,7 @@ pub fn new() -> (
             }
 
             handle.ssl_verify_peer(ssl_verify)?;
+            handle.ssl_verify_host(ssl_verify)?;
 
             if let Some(http_version) = http_version {
                 let version = match http_version {
