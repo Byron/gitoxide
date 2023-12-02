@@ -956,7 +956,7 @@ checksum = "d4029edd3e734da6fe05b6cd7bd2960760a616bd2ddd0d59a0124746d6272af0"
 dependencies = [
  "cfg-if",
  "libc",
- "redox_syscall",
+ "redox_syscall 0.3.5",
  "windows-sys",
 ]
 
@@ -1525,8 +1525,15 @@ dependencies = [
  "bstr",
  "document-features",
  "getrandom",
+ "gix-command",
+ "gix-filter",
+ "gix-fs 0.8.0",
  "gix-hash 0.13.1",
  "gix-object 0.38.0",
+ "gix-path 0.10.0",
+ "gix-tempfile 11.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-trace 0.1.3",
+ "gix-worktree 0.27.0",
  "imara-diff",
  "serde",
  "thiserror",
@@ -1537,11 +1544,15 @@ name = "gix-diff-tests"
 version = "0.0.0"
 dependencies = [
  "gix-diff",
+ "gix-filter",
+ "gix-fs 0.8.0",
  "gix-hash 0.13.1",
  "gix-object 0.38.0",
  "gix-odb",
  "gix-testtools",
  "gix-traverse 0.34.0",
+ "gix-worktree 0.27.0",
+ "shell-words",
 ]
 
 [[package]]
@@ -1615,6 +1626,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-features"
+version = "0.36.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51f4365ba17c4f218d7fd9ec102b8d2d3cb0ca200a835e81151ace7778aec827"
+dependencies = [
+ "gix-hash 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-trace 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc",
+]
+
+[[package]]
 name = "gix-fetchhead"
 version = "0.0.0"
 
@@ -1633,6 +1655,7 @@ dependencies = [
  "gix-quote 0.4.7",
  "gix-testtools",
  "gix-trace 0.1.3",
+ "gix-utils 0.1.5",
  "gix-worktree 0.27.0",
  "once_cell",
  "smallvec",
@@ -1655,6 +1678,15 @@ dependencies = [
  "gix-features 0.36.0",
  "serde",
  "tempfile",
+]
+
+[[package]]
+name = "gix-fs"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cd171c0cae97cd0dc57e7b4601cb1ebf596450e263ef3c02be9107272c877bd"
+dependencies = [
+ "gix-features 0.36.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1712,6 +1744,16 @@ dependencies = [
  "gix-features 0.36.0",
  "gix-testtools",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-hash"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1884c7b41ea0875217c1be9ce91322f90bde433e91d374d0e1276073a51ccc60"
+dependencies = [
+ "faster-hex",
  "thiserror",
 ]
 
@@ -1802,7 +1844,7 @@ dependencies = [
  "itoa",
  "libc",
  "memmap2 0.9.0",
- "rustix 0.38.20",
+ "rustix 0.38.21",
  "serde",
  "smallvec",
  "thiserror",
@@ -2089,7 +2131,7 @@ dependencies = [
  "gix-config-value",
  "gix-testtools",
  "parking_lot",
- "rustix 0.38.20",
+ "rustix 0.38.21",
  "serial_test",
  "thiserror",
 ]
@@ -2349,6 +2391,20 @@ dependencies = [
  "parking_lot",
  "signal-hook",
  "signal-hook-registry",
+ "tempfile",
+]
+
+[[package]]
+name = "gix-tempfile"
+version = "11.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05cc2205cf10d99f70b96e04e16c55d4c7cf33efc151df1f793e29fd12a931f8"
+dependencies = [
+ "dashmap",
+ "gix-fs 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc",
+ "once_cell",
+ "parking_lot",
  "tempfile",
 ]
 
@@ -2939,7 +2995,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb0889898416213fab133e1d33a0e5858a48177452750691bde3666d0fdbaf8b"
 dependencies = [
  "hermit-abi",
- "rustix 0.38.20",
+ "rustix 0.38.21",
  "windows-sys",
 ]
 
@@ -3466,7 +3522,7 @@ checksum = "93f00c865fe7cabf650081affecd3871070f26767e7b2070a3ffae14c654b447"
 dependencies = [
  "cfg-if",
  "libc",
- "redox_syscall",
+ "redox_syscall 0.3.5",
  "smallvec",
  "windows-targets 0.48.5",
 ]
@@ -3718,6 +3774,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "redox_syscall"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4722d768eff46b75989dd134e5c353f0d6296e5aaa3132e776cbdb56be7731aa"
+dependencies = [
+ "bitflags 1.3.2",
+]
+
+[[package]]
 name = "regex"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3865,9 +3930,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.38.20"
+version = "0.38.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67ce50cb2e16c2903e30d1cbccfd8387a74b9d4c938b6a4c5ec6cc7556f7a8a0"
+checksum = "2b426b0506e5d50a7d8dafcf2e81471400deb602392c7dd110815afb4eaf02a3"
 dependencies = [
  "bitflags 2.4.0",
  "errno",
@@ -4294,14 +4359,14 @@ dependencies = [
 
 [[package]]
 name = "tempfile"
-version = "3.8.0"
+version = "3.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb94d2f3cc536af71caac6b6fcebf65860b347e7ce0cc9ebe8f70d3e521054ef"
+checksum = "7ef1adac450ad7f4b3c28589471ade84f25f731a7a0fe30d71dfa9f60fd808e5"
 dependencies = [
  "cfg-if",
  "fastrand 2.0.1",
- "redox_syscall",
- "rustix 0.38.20",
+ "redox_syscall 0.4.1",
+ "rustix 0.38.21",
  "windows-sys",
 ]
 

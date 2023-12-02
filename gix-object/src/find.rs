@@ -66,6 +66,12 @@ pub mod existing_iter {
 #[derive(Debug, Copy, Clone)]
 pub struct Never;
 
+impl super::FindHeader for Never {
+    fn try_header(&self, _id: &gix_hash::oid) -> Result<Option<crate::Header>, Error> {
+        Ok(None)
+    }
+}
+
 impl super::Find for Never {
     fn try_find<'a>(&self, _id: &gix_hash::oid, _buffer: &'a mut Vec<u8>) -> Result<Option<crate::Data<'a>>, Error> {
         Ok(None)

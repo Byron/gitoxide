@@ -13,3 +13,9 @@ mod to_hex_with_len {
         );
     }
 }
+
+#[test]
+fn is_null() {
+    assert!(gix_hash::Kind::Sha1.null().is_null());
+    assert!(gix_hash::Kind::Sha1.null().as_ref().is_null());
+}

@@ -8,7 +8,6 @@ use std::{
 
 use gix::bstr::BStr;
 use itertools::Itertools;
-use smallvec::SmallVec;
 
 use crate::hours::{
     util::{add_lines, remove_lines},
@@ -92,25 +91,16 @@ pub fn spawn_tree_delta_threads<'scope>(
                 move || -> Result<_, anyhow::Error> {
                     let mut out = Vec::new();
                     let (commits, changes, lines_count) = stats_counters;
-                    let mut attributes = line_stats
+                    let mut cache = line_stats
                         .then(|| -> anyhow::Result<_> {
-                            repo.index_or_load_from_head().map_err(Into::into).and_then(|index| {
-                                repo.attributes(
-                                    &index,
-                                    gix::worktree::stack::state::attributes::Source::IdMapping,
-                                    gix::worktree::stack::state::ignore::Source::IdMapping,
-                                    None,
-                                )
-                                .map_err(Into::into)
-                                .map(|attrs| {
-                                    let matches = attrs.selected_attribute_matches(["binary", "text"]);
-                                    (attrs, matches)
-                                })
-                            })
+                            Ok(repo.diff_resource_cache(gix::diff::blob::pipeline::Mode::ToGit, Default::default())?)
                         })
                         .transpose()?;
                     for chunk in rx {
                         for (commit_idx, parent_commit, commit) in chunk {
+                            if let Some(cache) = cache.as_mut() {
+                                cache.clear_resource_cache();
+                            }
                             commits.fetch_add(1, Ordering::Relaxed);
                             if gix::interrupt::is_triggered() {
                                 return Ok(out);
@@ -155,47 +145,34 @@ pub fn spawn_tree_delta_threads<'scope>(
                                             previous_entry_mode,
                                             id,
                                             previous_id,
-                                        } => {
-                                            match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
-                                                (false, false) => {}
-                                                (false, true) => {
-                                                    files.added += 1;
-                                                    add_lines(line_stats, &lines_count, &mut lines, id);
-                                                }
-                                                (true, false) => {
-                                                    files.removed += 1;
-                                                    remove_lines(line_stats, &lines_count, &mut lines, previous_id);
-                                                }
-                                                (true, true) => {
-                                                    files.modified += 1;
-                                                    if let Some((attrs, matches)) = attributes.as_mut() {
-                                                        let entry = attrs.at_entry(change.location, Some(false))?;
-                                                        let is_text_file = if entry.matching_attributes(matches) {
-                                                            let attrs: SmallVec<[_; 2]> =
-                                                                matches.iter_selected().collect();
-                                                            let binary = &attrs[0];
-                                                            let text = &attrs[1];
-                                                            !binary.assignment.state.is_set()
-                                                                && !text.assignment.state.is_unset()
-                                                        } else {
-                                                            // In the absence of binary or text markers, we assume it's text.
-                                                            true
-                                                        };
-
-                                                        if let Some(Ok(diff)) =
-                                                            is_text_file.then(|| change.event.diff()).flatten()
-                                                        {
-                                                            let mut nl = 0;
-                                                            let counts = diff.line_counts();
-                                                            nl += counts.insertions as usize + counts.removals as usize;
-                                                            lines.added += counts.insertions as usize;
-                                                            lines.removed += counts.removals as usize;
-                                                            lines_count.fetch_add(nl, Ordering::Relaxed);
-                                                        }
+                                        } => match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
+                                            (false, false) => {}
+                                            (false, true) => {
+                                                files.added += 1;
+                                                add_lines(line_stats, &lines_count, &mut lines, id);
+                                            }
+                                            (true, false) => {
+                                                files.removed += 1;
+                                                remove_lines(line_stats, &lines_count, &mut lines, previous_id);
+                                            }
+                                            (true, true) => {
+                                                files.modified += 1;
+                                                if let Some(cache) = cache.as_mut() {
+                                                    let mut diff = change.diff(cache).map_err(|err| {
+                                                        std::io::Error::new(std::io::ErrorKind::Other, err)
+                                                    })?;
+                                                    let mut nl = 0;
+                                                    if let Some(counts) = diff.line_counts().map_err(|err| {
+                                                        std::io::Error::new(std::io::ErrorKind::Other, err)
+                                                    })? {
+                                                        nl += counts.insertions as usize + counts.removals as usize;
+                                                        lines.added += counts.insertions as usize;
+                                                        lines.removed += counts.removals as usize;
+                                                        lines_count.fetch_add(nl, Ordering::Relaxed);
                                                     }
                                                 }
                                             }
-                                        }
+                                        },
                                     }
                                     Ok::<_, std::io::Error>(Default::default())
                                 })?;

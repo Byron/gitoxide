@@ -113,11 +113,7 @@ impl<'repo> Pipeline<'repo> {
     /// Create a new instance by extracting all necessary information and configuration from a `repo` along with `cache` for accessing
     /// attributes. The `index` is used for some filters which may access it under very specific circumstances.
     pub fn new(repo: &'repo Repository, cache: gix_worktree::Stack) -> Result<Self, pipeline::options::Error> {
-        let pipeline = gix_filter::Pipeline::new(
-            cache.attributes_collection(),
-            repo.command_context()?,
-            Self::options(repo)?,
-        );
+        let pipeline = gix_filter::Pipeline::new(repo.command_context()?, Self::options(repo)?);
         Ok(Pipeline {
             inner: pipeline,
             cache,

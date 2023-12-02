@@ -205,7 +205,7 @@ jobs:
         name: crates without feature toggles
       - run: set +x; for feature in progress fs-walkdir-parallel parallel io-pipe crc32 zlib zlib-rust-backend fast-sha1 rustsha1 cache-efficiency-debug; do (cd gix-features && cargo build --features $feature --target ${{ matrix.target }}); done
         name: features of gix-features
-      - run: set +x; for name in gix-diff gix-pack; do (cd $name && cargo build --features wasm --target ${{ matrix.target }}); done
+      - run: set +x; for name in gix-pack; do (cd $name && cargo build --features wasm --target ${{ matrix.target }}); done
         name: crates with 'wasm' feature
       - run: cd gix-pack && cargo build --all-features --target ${{ matrix.target }}
         name: gix-pack with all features (including wasm)

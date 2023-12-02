@@ -51,7 +51,8 @@ mod with_overrides {
             .set("GIT_ICASE_PATHSPECS", "pathspecs-icase")
             .set("GIT_TERMINAL_PROMPT", "42")
             .set("GIT_SHALLOW_FILE", "shallow-file-env")
-            .set("GIT_NAMESPACE", "namespace-env");
+            .set("GIT_NAMESPACE", "namespace-env")
+            .set("GIT_EXTERNAL_DIFF", "external-diff-env");
         let mut opts = gix::open::Options::isolated()
             .cli_overrides([
                 "http.userAgent=agent-from-cli",
@@ -236,6 +237,8 @@ mod with_overrides {
             ("gitoxide.http.verbose", "true"),
             ("gitoxide.allow.protocolFromUser", "file-allowed"),
             ("core.useReplaceRefs", "no-replace"),
+            #[cfg(feature = "blob-diff")]
+            ("diff.external", "external-diff-env"),
             ("gitoxide.objects.replaceRefBase", "refs/replace-mine"),
             ("gitoxide.committer.nameFallback", "committer name"),
             ("gitoxide.committer.emailFallback", "committer email"),

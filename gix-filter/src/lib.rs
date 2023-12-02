@@ -10,6 +10,9 @@
 //! or not to apply such a filter.
 #![deny(rust_2018_idioms, missing_docs, unsafe_code)]
 
+/// The `gix-attributes` crate whose types are mentioned in the public API of [Pipeline::convert_to_worktree()].
+pub use gix_attributes as attributes;
+
 use bstr::BString;
 /// A forwarding of the `encoding_rs` crate for its types and convenience.
 pub use encoding_rs as encoding;
@@ -43,7 +46,7 @@ pub struct Pipeline {
     /// State needed to keep running filter processes.
     processes: driver::State,
     /// A utility to handle multiple buffers to keep results of various filters.
-    bufs: pipeline::util::Buffers,
+    bufs: gix_utils::Buffers,
 }
 
 /// A declaration of a driver program.

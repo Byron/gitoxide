@@ -8,6 +8,9 @@ impl Core {
     pub const ABBREV: Abbrev = Abbrev::new_with_validate("abbrev", &config::Tree::CORE, validate::Abbrev);
     /// The `core.bare` key.
     pub const BARE: keys::Boolean = keys::Boolean::new_boolean("bare", &config::Tree::CORE);
+    /// The `core.bigFileThreshold` key.
+    pub const BIG_FILE_THRESHOLD: keys::UnsignedInteger =
+        keys::UnsignedInteger::new_unsigned_integer("bigFileThreshold", &config::Tree::CORE);
     /// The `core.checkStat` key.
     pub const CHECK_STAT: CheckStat =
         CheckStat::new_with_validate("checkStat", &config::Tree::CORE, validate::CheckStat);
@@ -95,6 +98,7 @@ impl Section for Core {
         &[
             &Self::ABBREV,
             &Self::BARE,
+            &Self::BIG_FILE_THRESHOLD,
             &Self::CHECK_STAT,
             &Self::DELTA_BASE_CACHE_LIMIT,
             &Self::DISAMBIGUATE,

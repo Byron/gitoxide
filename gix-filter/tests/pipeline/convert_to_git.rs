@@ -53,7 +53,7 @@ fn all_stages_mean_streaming_is_impossible() -> gix_testtools::Result {
         Path::new("any.txt"),
         &mut |path, attrs| {
             cache
-                .at_entry(path, Some(false), gix_object::find::Never)
+                .at_entry(path, Some(false), &gix_object::find::Never)
                 .expect("cannot fail")
                 .matching_attributes(attrs);
         },
@@ -82,7 +82,7 @@ fn only_driver_means_streaming_is_possible() -> gix_testtools::Result {
         Path::new("subdir/doesnot/matter/any.txt"),
         &mut |path, attrs| {
             cache
-                .at_entry(path, Some(false), gix_object::find::Never)
+                .at_entry(path, Some(false), &gix_object::find::Never)
                 .expect("cannot fail")
                 .matching_attributes(attrs);
         },
@@ -112,7 +112,7 @@ fn no_filter_means_reader_is_returned_unchanged() -> gix_testtools::Result {
         Path::new("other.txt"),
         &mut |path, attrs| {
             cache
-                .at_entry(path, Some(false), gix_object::find::Never)
+                .at_entry(path, Some(false), &gix_object::find::Never)
                 .expect("cannot fail")
                 .matching_attributes(attrs);
         },

@@ -13,7 +13,7 @@ impl<S> super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    fn try_header_inner<'b>(
+    pub(crate) fn try_header_inner<'b>(
         &'b self,
         mut id: &'b gix_hash::oid,
         inflate: &mut zlib::Inflate,

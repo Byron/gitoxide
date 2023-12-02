@@ -177,6 +177,15 @@ mod impls {
         }
     }
 
+    impl<S> gix_object::FindHeader for Cache<S>
+    where
+        S: gix_object::FindHeader,
+    {
+        fn try_header(&self, id: &oid) -> Result<Option<gix_object::Header>, gix_object::find::Error> {
+            self.inner.try_header(id)
+        }
+    }
+
     impl<S> gix_pack::Find for Cache<S>
     where
         S: gix_pack::Find,

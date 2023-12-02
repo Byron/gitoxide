@@ -95,7 +95,7 @@ revparse-regex = ["regex", "revision"]
 
 ## Make it possible to diff blobs line by line. Note that this feature is integral for implementing tree-diffs as well due to the handling of rename-tracking,
 ## which relies on line-by-line diffs in some cases.
-blob-diff = ["gix-diff/blob"]
+blob-diff = ["gix-diff/blob", "attributes"]
 
 ## Make it possible to turn a tree into a stream of bytes, which can be decoded to entries and turned into various other formats.
 worktree-stream = ["gix-worktree-stream", "attributes"]

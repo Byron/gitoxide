@@ -34,6 +34,7 @@ impl gix_fs::stack::Delegate for Delegate {
         Ok(())
     }
 
+    #[cfg_attr(windows, allow(unused_variables))]
     fn push(&mut self, is_last_component: bool, stack: &Stack) -> std::io::Result<()> {
         #[cfg(windows)]
         {

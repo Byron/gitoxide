@@ -293,16 +293,29 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
 Check out the [performance discussion][gix-diff-performance] as well.
 
 * **tree**
-  * [x] changes needed to obtain _other tree_
+    * [x] changes needed to obtain _other tree_
 * **patches**    
-  * There are various ways to generate a patch from two blobs.
-  * [ ] any
+    * There are various ways to generate a patch from two blobs.
+    * [ ] text
+    * [ ] binary
 * **lines**
-  * [x] Simple line-by-line diffs powered by the `imara-diff` crate.
-* diffing, merging, working with hunks of data
-* find differences between various states, i.e. index, working tree, commit-tree
+    * [x] Simple line-by-line diffs powered by the `imara-diff` crate.
+* **generic rename tracker to find renames and copies**
+    * [x] find by exact match
+    * [x] find by similarity check
+    * [ ] heuristics to find best candidate
+    * [ ] find by basename to help detecting simple moves
+* **blob**
+    * [x] a choice of to-worktree, to-git and to-worktree-if-needed conversions
+    * [x] `textconv` filters
+    * [x] special handling of files beyond the big-file threshold.
+    * [x] detection of binary files by looking at header (first 8k bytes)
+    * [x] caching of diff-able data
+    * [x] prepare invocation of external diff program
+        - [ ] pass meta-info
+* [ ] working with hunks of data
 * [x] API documentation
-  * [ ] Examples
+    * [ ] Examples
     
 [gix-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
 

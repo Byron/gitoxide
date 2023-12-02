@@ -52,18 +52,13 @@ const ATTRS: [&str; 6] = ["crlf", "ident", "filter", "eol", "text", "working-tre
 
 /// Lifecycle
 impl Pipeline {
-    /// Create a new pipeline with configured `drivers` (which should be considered safe to invoke) with `context` as well as
-    /// a way to initialize our attributes with `collection`.
+    /// Create a new pipeline with configured `drivers` (which should be considered safe to invoke), which are passed `context`.
     /// `eol_config` serves as fallback to understand how to convert line endings if no line-ending attributes are present.
     /// `crlf_roundtrip_check` corresponds to the git-configuration of `core.safecrlf`.
     /// `object_hash` is relevant for the `ident` filter.
-    pub fn new(
-        collection: &gix_attributes::search::MetadataCollection,
-        context: gix_command::Context,
-        options: Options,
-    ) -> Self {
+    pub fn new(context: gix_command::Context, options: Options) -> Self {
         let mut attrs = gix_attributes::search::Outcome::default();
-        attrs.initialize_with_selection(collection, ATTRS);
+        attrs.initialize_with_selection(&Default::default(), ATTRS);
         Pipeline {
             attrs,
             context: Context::default(),
@@ -83,8 +78,7 @@ impl Pipeline {
 
 impl Default for Pipeline {
     fn default() -> Self {
-        let collection = Default::default();
-        Pipeline::new(&collection, Default::default(), Default::default())
+        Pipeline::new(Default::default(), Default::default())
     }
 }
 
@@ -108,12 +102,14 @@ impl Pipeline {
     pub fn options_mut(&mut self) -> &mut Options {
         &mut self.options
     }
+
+    /// Return our double-buffers for re-use by the caller.
+    pub fn buffers_mut(&mut self) -> &mut gix_utils::Buffers {
+        &mut self.bufs
+    }
 }
 
 ///
 pub mod convert;
 
 pub(crate) mod util;
-
-#[cfg(test)]
-mod tests;

@@ -11,54 +11,6 @@ use crate::{
     Driver,
 };
 
-/// A utility to do buffer-swapping with.
-#[derive(Default, Clone)]
-pub(crate) struct Buffers {
-    pub src: Vec<u8>,
-    pub dest: Vec<u8>,
-}
-
-/// A utility to do buffer-swapping with.
-pub(crate) struct BuffersWithSource<'src, 'bufs> {
-    pub ro_src: Option<&'src [u8]>,
-    pub src: &'bufs mut Vec<u8>,
-    pub dest: &'bufs mut Vec<u8>,
-}
-
-impl Buffers {
-    pub fn with_src<'a, 'src>(&'a mut self, src: &'src [u8]) -> BuffersWithSource<'src, 'a> {
-        self.clear();
-        BuffersWithSource {
-            ro_src: Some(src),
-            src: &mut self.src,
-            dest: &mut self.dest,
-        }
-    }
-    pub fn clear(&mut self) {
-        self.src.clear();
-        self.dest.clear();
-    }
-
-    pub fn swap(&mut self) {
-        std::mem::swap(&mut self.src, &mut self.dest);
-    }
-}
-
-impl BuffersWithSource<'_, '_> {
-    /// Must be called after every change (i.e. when it's known that `dest` was written.
-    pub fn swap(&mut self) {
-        self.ro_src.take();
-        std::mem::swap(&mut self.src, &mut self.dest);
-        self.dest.clear();
-    }
-    pub fn src_and_dest(&mut self) -> (&[u8], &mut Vec<u8>) {
-        match self.ro_src {
-            Some(src) => (src, &mut self.dest),
-            None => (self.src, &mut self.dest),
-        }
-    }
-}
-
 pub(crate) struct Configuration<'a> {
     pub(crate) driver: Option<&'a Driver>,
     /// What attributes say about CRLF handling.

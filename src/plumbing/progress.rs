@@ -125,10 +125,6 @@ static GIT_CONFIG: &[Record] = &[
         usage: NotPlanned { reason: "seems like a niche feature, but can be implemented if there is demand" }
     },
     Record {
-        config: "core.bigFileThreshold",
-        usage: Planned { note: Some("unfortunately we can't stream packed files yet, even if not delta-compressed, but respecting the threshold for other operations is definitely a must") }
-    },
-    Record {
         config: "core.compression",
         usage: Planned { note: Some("Allow to remove similar hardcoded value - passing it through will be some effort") },
     },
@@ -501,16 +497,8 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned { note: Some("currently we are likely to expose passwords in errors or in other places, and it's better to by default not do that") }
     },
     Record {
-        config: "diff.*.textconv",
-        usage: Planned { note: None }
-    },
-    Record {
         config: "diff.*.cachetextconv",
-        usage: Planned { note: None }
-    },
-    Record {
-        config: "diff.*.command",
-        usage: Planned { note: None }
+        usage: NotPlanned {reason: "It seems to slow to do that, and persisting results to save a relatively cheap computation doesn't seem right"}
     },
 ];
 

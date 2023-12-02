@@ -34,7 +34,7 @@ pub mod data;
 pub mod find;
 
 mod traits;
-pub use traits::{Exists, Find, FindExt, WriteTo};
+pub use traits::{Exists, Find, FindExt, FindObjectOrHeader, Header as FindHeader, HeaderExt, WriteTo};
 
 pub mod encode;
 pub(crate) mod parse;
@@ -255,6 +255,15 @@ pub struct Data<'a> {
     pub kind: Kind,
     /// decoded, decompressed data, owned by a backing store.
     pub data: &'a [u8],
+}
+
+/// Information about an object, which includes its kind and the amount of bytes it would have when obtained.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub struct Header {
+    /// The kind of object.
+    pub kind: Kind,
+    /// The object's size in bytes, or the size of the buffer when it's retrieved in full.
+    pub size: u64,
 }
 
 ///

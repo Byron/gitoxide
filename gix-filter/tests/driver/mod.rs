@@ -138,17 +138,18 @@ pub(crate) mod apply {
     fn a_crashing_process_can_restart_it() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
         let driver = driver_with_process();
+        let err = match state.apply(
+            &driver,
+            &mut std::io::empty(),
+            Operation::Smudge,
+            context_from_path("fail"),
+        ) {
+            Ok(_) => panic!("expecting an error as invalid context was passed"),
+            Err(err) => err,
+        };
         assert!(
-            matches!(
-                state.apply(
-                    &driver,
-                    &mut std::io::empty(),
-                    Operation::Smudge,
-                    context_from_path("fail")
-                ),
-                Err(gix_filter::driver::apply::Error::ProcessInvoke { .. })
-            ),
-            "cannot invoke if failure is requested"
+            matches!(err, gix_filter::driver::apply::Error::ProcessInvoke { .. }),
+            "{err:?}: cannot invoke if failure is requested"
         );
 
         let mut filtered = state
