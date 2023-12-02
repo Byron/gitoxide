@@ -104,12 +104,15 @@ mod utils {
     /// `repo` is used to obtain the needed configuration values, and `index` is used to potentially read `.gitattributes`
     /// files from which may affect the diff operation.
     /// `mode` determines how the diffable files will look like, and also how fast, in average, these conversions are.
+    /// `attribute_source` controls where `.gitattributes` will be read from, and it's typically adjusted based on the
+    /// `roots` - if there are no worktree roots, `.gitattributes` are also not usually read from worktrees.
     /// `roots` provide information about where to get diffable data from, so source and destination can either be sourced from
     /// a worktree, or from the object database, or both.
     pub fn resource_cache(
         repo: &Repository,
         index: &gix_index::State,
         mode: gix_diff::blob::pipeline::Mode,
+        attribute_source: gix_worktree::stack::state::attributes::Source,
         roots: gix_diff::blob::pipeline::WorktreeRoots,
     ) -> Result<gix_diff::blob::Platform, resource_cache::Error> {
         let diff_algo = repo.config.diff_algorithm()?;
@@ -129,9 +132,7 @@ mod utils {
                 // TODO(perf): this could benefit from not having to build an intermediate index,
                 //             and traverse the a tree directly.
                 index,
-                // This is an optimization, as we avoid reading files from the working tree, which also
-                // might not match the index at all depending on what the user passed.
-                gix_worktree::stack::state::attributes::Source::IdMapping,
+                attribute_source,
             )?
             .inner,
         );

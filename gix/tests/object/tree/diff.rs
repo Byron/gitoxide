@@ -2,7 +2,7 @@ use std::convert::Infallible;
 
 use gix::{
     bstr::BString,
-    object::{blob::diff::line::Change, tree::diff::change::Event},
+    object::{blob::diff::lines::Change, tree::diff::change::Event},
 };
 use gix_object::bstr::ByteSlice;
 use gix_object::tree::EntryKind;
@@ -14,6 +14,7 @@ fn changes_against_tree_modified() -> crate::Result {
     let repo = named_repo("make_diff_repo.sh")?;
     let from = tree_named(&repo, "@^{/c3-modification}~1");
     let to = tree_named(&repo, ":/c3-modification");
+    let mut cache = repo.diff_resource_cache(gix_diff::blob::pipeline::Mode::ToGit, Default::default())?;
     from.changes()?
         .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
             assert_eq!(change.location, "", "without configuration the location field is empty");
@@ -34,14 +35,14 @@ fn changes_against_tree_modified() -> crate::Result {
                 }
             };
 
-            let diff = change.event.diff().expect("changed file").expect("objects available");
-            let count = diff.line_counts();
+            let mut diff = change.diff(&mut cache).expect("objects available");
+            let count = diff.line_counts().expect("no diff error").expect("no binary blobs");
             assert_eq!(count.insertions, 1);
             assert_eq!(count.removals, 0);
             diff.lines(|hunk| {
                 match hunk {
                     Change::Deletion { .. } => unreachable!("there was no deletion"),
-                    Change::Addition { lines } => assert_eq!(lines, vec!["a1".as_bytes().as_bstr()]),
+                    Change::Addition { lines } => assert_eq!(lines, vec!["a1\n".as_bytes().as_bstr()]),
                     Change::Modification { .. } => unreachable!("there was no modification"),
                 };
                 Ok::<_, Infallible>(())

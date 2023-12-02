@@ -8,6 +8,7 @@ fn resource_cache() -> crate::Result {
         &repo,
         &*repo.index()?,
         gix::diff::blob::pipeline::Mode::ToWorktreeAndBinaryToText,
+        gix_worktree::stack::state::attributes::Source::IdMapping,
         Default::default(),
     )?;
     assert_eq!(

@@ -2,7 +2,7 @@ use crate::{filter, repository::IndexPersistedOrInMemory, Id, Repository};
 
 ///
 pub mod pipeline {
-    /// The error returned by [Repository::filter_pipeline()][super::Repository::filter_pipeline()].
+    /// The error returned by [Repository::filter_pipeline()](super::Repository::filter_pipeline()).
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -24,7 +24,7 @@ pub mod pipeline {
 impl Repository {
     /// Configure a pipeline for converting byte buffers to the worktree representation, and byte streams to the git-internal
     /// representation. Also return the index that was used when initializing the pipeline as it may be useful when calling
-    /// [convert_to_git()][filter::Pipeline::convert_to_git()].
+    /// [convert_to_git()](filter::Pipeline::convert_to_git()).
     /// Bare repositories will either use `HEAD^{tree}` for accessing all relevant worktree files or the given `tree_if_bare`.
     ///
     /// Note that this is considered a primitive as it operates on data directly and will not have permanent effects.

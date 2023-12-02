@@ -13,11 +13,9 @@ pub enum Error {
     #[error("The user-provided callback failed")]
     ForEach(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]
-    ResourceCache(#[from] crate::diff::resource_cache::Error),
+    ResourceCache(#[from] crate::repository::diff::resource_cache::Error),
     #[error("Failure during rename tracking")]
     RenameTracking(#[from] tracker::emit::Error),
-    #[error("Index for use in attribute stack could not be loaded")]
-    OpenIndex(#[from] crate::repository::index_or_load_from_head::Error),
 }
 
 ///
@@ -180,15 +178,7 @@ where
         let diff_cache = match diff_cache {
             Some(cache) => cache,
             None => {
-                storage = crate::diff::resource_cache(
-                    repo,
-                    // NOTE: we could easily load the index at the source or destination tree,
-                    // but even that isn't perfectly correct as there is only one, used for both sides.
-                    // This is how `git` does it (or at least so it seems).
-                    &*repo.index_or_load_from_head()?,
-                    gix_diff::blob::pipeline::Mode::ToGit,
-                    Default::default(),
-                )?;
+                storage = repo.diff_resource_cache(gix_diff::blob::pipeline::Mode::ToGit, Default::default())?;
                 &mut storage
             }
         };
