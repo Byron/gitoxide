@@ -1,8 +1,9 @@
+use gix_features::zlib;
+
 use crate::{
     data,
     data::{delta, file::decode::Error, File},
 };
-use gix_features::zlib;
 
 /// A return value of a resolve function, which given an [`ObjectId`][gix_hash::ObjectId] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]

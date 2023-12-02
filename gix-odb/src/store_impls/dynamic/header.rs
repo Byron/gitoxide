@@ -1,6 +1,6 @@
-use gix_features::zlib;
 use std::ops::Deref;
 
+use gix_features::zlib;
 use gix_hash::oid;
 
 use super::find::Error;

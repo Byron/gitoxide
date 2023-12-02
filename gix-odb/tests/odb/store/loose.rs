@@ -224,8 +224,7 @@ mod lookup_prefix {
 }
 
 mod find {
-    use gix_object::tree::EntryKind;
-    use gix_object::{bstr::ByteSlice, BlobRef, CommitRef, Kind, TagRef, TreeRef};
+    use gix_object::{bstr::ByteSlice, tree::EntryKind, BlobRef, CommitRef, Kind, TagRef, TreeRef};
     use gix_odb::loose;
 
     use crate::{

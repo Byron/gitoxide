@@ -1,7 +1,6 @@
-use crate::config::tree::SubSectionRequirement;
 use crate::{
     config,
-    config::tree::{keys, Diff, Key, Section},
+    config::tree::{keys, Diff, Key, Section, SubSectionRequirement},
 };
 
 impl Diff {

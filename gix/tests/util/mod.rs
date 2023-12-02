@@ -1,7 +1,6 @@
 #![allow(clippy::result_large_err)]
 use gix::{open, Repository, ThreadSafeRepository};
 use gix_testtools::tempfile;
-
 pub use gix_testtools::Result;
 
 /// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.

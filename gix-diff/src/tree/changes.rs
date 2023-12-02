@@ -1,7 +1,6 @@
 use std::{borrow::BorrowMut, collections::VecDeque};
 
-use gix_object::tree::EntryRef;
-use gix_object::FindExt;
+use gix_object::{tree::EntryRef, FindExt};
 
 use crate::{
     tree,

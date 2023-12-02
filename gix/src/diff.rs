@@ -19,12 +19,13 @@ pub mod rename {
 ///
 #[cfg(feature = "blob-diff")]
 mod utils {
-    use crate::config::cache::util::ApplyLeniency;
-    use crate::config::tree::Diff;
-    use crate::diff::rename::Tracking;
-    use crate::Repository;
-    use gix_diff::rewrites::Copies;
-    use gix_diff::Rewrites;
+    use gix_diff::{rewrites::Copies, Rewrites};
+
+    use crate::{
+        config::{cache::util::ApplyLeniency, tree::Diff},
+        diff::rename::Tracking,
+        Repository,
+    };
 
     ///
     pub mod new_rewrites {

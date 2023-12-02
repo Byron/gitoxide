@@ -1,8 +1,9 @@
 ///
 pub mod set_target_id {
-    use crate::{bstr::BString, Reference};
     use gix_macros::momo;
     use gix_ref::{transaction::PreviousValue, Target};
+
+    use crate::{bstr::BString, Reference};
 
     mod error {
         use gix_ref::FullName;

@@ -149,8 +149,10 @@ struct Baseline<'a> {
 }
 
 mod baseline {
-    use std::borrow::Cow;
-    use std::path::{Path, PathBuf};
+    use std::{
+        borrow::Cow,
+        path::{Path, PathBuf},
+    };
 
     use gix::bstr::{BString, ByteSlice};
     use gix_object::bstr::BStr;

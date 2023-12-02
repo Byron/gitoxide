@@ -83,9 +83,10 @@ impl crate::Repository {
     /// hooks or filters.
     #[cfg(feature = "attributes")]
     pub fn command_context(&self) -> Result<gix_command::Context, config::command_context::Error> {
-        use crate::config::cache::util::ApplyLeniency;
-        use crate::config::tree::gitoxide;
-        use crate::config::tree::Key;
+        use crate::config::{
+            cache::util::ApplyLeniency,
+            tree::{gitoxide, Key},
+        };
 
         let boolean = |key: &dyn Key| {
             self.config

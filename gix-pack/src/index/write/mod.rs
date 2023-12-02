@@ -1,8 +1,7 @@
 use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 
 pub use error::Error;
-use gix_features::progress::prodash::DynNestedProgress;
-use gix_features::progress::{self, Count, Progress};
+use gix_features::progress::{self, prodash::DynNestedProgress, Count, Progress};
 
 use crate::cache::delta::{traverse, Tree};
 

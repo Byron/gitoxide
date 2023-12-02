@@ -34,14 +34,14 @@ pub(crate) fn fanout(iter: &mut dyn ExactSizeIterator<Item = u8>) -> [u32; 256] 
 
 #[cfg(feature = "streaming-input")]
 mod function {
+    use std::io;
+
     use gix_features::{
         hash,
         progress::{self, DynNestedProgress},
     };
-    use std::io;
 
     use super::{fanout, HIGH_BIT, LARGE_OFFSET_THRESHOLD};
-
     use crate::index::V2_SIGNATURE;
 
     struct Count<W> {

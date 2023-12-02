@@ -2,8 +2,7 @@ mod from_tree {
     use std::collections::VecDeque;
 
     use bstr::{BStr, BString, ByteSlice, ByteVec};
-    use gix_object::tree::EntryKind;
-    use gix_object::{tree, FindExt};
+    use gix_object::{tree, tree::EntryKind, FindExt};
     use gix_traverse::tree::{breadthfirst, visit::Action, Visit};
 
     use crate::{

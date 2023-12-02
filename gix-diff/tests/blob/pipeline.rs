@@ -1,13 +1,15 @@
 pub(crate) mod convert_to_diffable {
 
-    use crate::util::ObjectDb;
-    use gix_diff::blob::pipeline::Options;
-    use gix_diff::blob::{pipeline, pipeline::WorktreeRoots, ResourceKind};
-    use gix_filter::eol;
-    use gix_filter::eol::AutoCrlf;
-    use gix_object::bstr::ByteSlice;
-    use gix_object::tree::EntryKind;
+    use gix_diff::blob::{
+        pipeline,
+        pipeline::{Options, WorktreeRoots},
+        ResourceKind,
+    };
+    use gix_filter::{eol, eol::AutoCrlf};
+    use gix_object::{bstr::ByteSlice, tree::EntryKind};
     use gix_worktree::stack::state::attributes;
+
+    use crate::util::ObjectDb;
 
     #[test]
     fn simple() -> crate::Result {

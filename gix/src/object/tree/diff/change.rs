@@ -1,5 +1,4 @@
-use crate::diff::blob::DiffLineStats;
-use crate::{bstr::BStr, Id};
+use crate::{bstr::BStr, diff::blob::DiffLineStats, Id};
 
 /// An event emitted when finding differences between two trees.
 #[derive(Debug, Clone, Copy)]

@@ -4,8 +4,7 @@
 #![allow(clippy::unnecessary_cast)]
 
 // it's allowed for good measure, in case there are systems that use different types for that.
-use std::path::Path;
-use std::time::SystemTime;
+use std::{path::Path, time::SystemTime};
 
 /// A structure to partially mirror [`std::fs::Metadata`].
 #[cfg(not(windows))]

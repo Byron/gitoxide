@@ -3,12 +3,14 @@ use crate::{Blob, ObjectDetached};
 ///
 #[cfg(feature = "blob-diff")]
 pub mod diff {
-    use gix_diff::blob::platform::prepare_diff::Operation;
-    use gix_diff::blob::ResourceKind;
     use std::ops::Range;
 
-    use crate::object::tree::diff::change::Event;
-    use crate::{bstr::ByteSlice, object::blob::diff::lines::Change};
+    use gix_diff::blob::{platform::prepare_diff::Operation, ResourceKind};
+
+    use crate::{
+        bstr::ByteSlice,
+        object::{blob::diff::lines::Change, tree::diff::change::Event},
+    };
 
     /// A platform to keep temporary information to perform line diffs on modified blobs.
     ///

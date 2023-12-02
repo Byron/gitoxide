@@ -1,7 +1,6 @@
-use crate::bstr::BStr;
-use crate::types::AttributeStack;
-use crate::Repository;
 use std::ops::{Deref, DerefMut};
+
+use crate::{bstr::BStr, types::AttributeStack, Repository};
 
 /// Lifecycle
 impl<'repo> AttributeStack<'repo> {

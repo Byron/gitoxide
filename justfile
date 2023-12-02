@@ -233,9 +233,9 @@ audit:
 
 # run tests with `cargo nextest` (all unit-tests, no doc-tests, faster)
 nextest *FLAGS="--all":
-    cargo nextest run {{FLAGS}}
+    cargo nextest run {{ FLAGS }}
 
-summarize EXPRESSION="all()": (nextest "--all --run-ignored all --no-fail-fast --status-level none --final-status-level none -E '" EXPRESSION "'") 
+summarize EXPRESSION="all()": (nextest "--all --run-ignored all --no-fail-fast --status-level none --final-status-level none -E '" EXPRESSION "'")
 
 # run nightly rustfmt for its extra features, but check that it won't upset stable rustfmt
 fmt:

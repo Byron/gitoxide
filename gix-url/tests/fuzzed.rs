@@ -1,6 +1,6 @@
+use std::{path::Path, time::Duration};
+
 use bstr::ByteSlice;
-use std::path::Path;
-use std::time::Duration;
 
 #[test]
 #[cfg_attr(debug_assertions, ignore = "fails due to integer overflow")]

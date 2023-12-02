@@ -1,17 +1,16 @@
-use std::cell::RefCell;
 use std::{
+    cell::RefCell,
     convert::Infallible,
     sync::atomic::{AtomicUsize, Ordering},
     time::Instant,
 };
 
 use anyhow::{anyhow, bail};
-use gix::diff::blob::platform::prepare_diff::Operation;
-use gix::objs::find::Error;
 use gix::{
     bstr::{BStr, BString, ByteSlice},
-    diff::rewrites::CopySource,
+    diff::{blob::platform::prepare_diff::Operation, rewrites::CopySource},
     features::progress,
+    objs::find::Error,
     parallel::{InOrderIter, SequenceId},
     prelude::ObjectIdExt,
     Count, Progress,

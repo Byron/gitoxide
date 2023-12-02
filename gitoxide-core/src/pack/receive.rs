@@ -116,9 +116,9 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
 mod blocking_io {
     use std::{io, io::BufRead, path::PathBuf};
 
-    use gix::config::tree::Key;
     use gix::{
         bstr::BString,
+        config::tree::Key,
         protocol,
         protocol::{fetch::Response, handshake::Ref},
         NestedProgress,
@@ -194,8 +194,7 @@ mod blocking_io {
 
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::receive;
-use gix::protocol::ls_refs;
-use gix::NestedProgress;
+use gix::{protocol::ls_refs, NestedProgress};
 
 #[cfg(feature = "async-client")]
 mod async_io {
@@ -203,9 +202,9 @@ mod async_io {
 
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
-    use gix::config::tree::Key;
     use gix::{
         bstr::{BString, ByteSlice},
+        config::tree::Key,
         odb::pack,
         protocol,
         protocol::{fetch::Response, handshake::Ref},

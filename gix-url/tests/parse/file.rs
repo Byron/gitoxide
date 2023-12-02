@@ -126,8 +126,9 @@ fn url_from_relative_path_with_colon_in_name() -> crate::Result {
 
 #[cfg(windows)]
 mod windows {
-    use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
     use gix_url::Scheme;
+
+    use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
 
     #[test]
     fn reproduce_1063() -> crate::Result {
@@ -182,8 +183,9 @@ mod windows {
 
 #[cfg(not(windows))]
 mod unix {
-    use crate::parse::{assert_url_roundtrip, url, url_alternate};
     use gix_url::Scheme;
+
+    use crate::parse::{assert_url_roundtrip, url, url_alternate};
 
     #[test]
     fn url_from_absolute_path() -> crate::Result {

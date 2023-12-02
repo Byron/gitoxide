@@ -114,8 +114,10 @@ pub fn objects_unthreaded(
 }
 
 mod expand {
-    use std::cell::RefCell;
-    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::{
+        cell::RefCell,
+        sync::atomic::{AtomicBool, Ordering},
+    };
 
     use gix_hash::{oid, ObjectId};
     use gix_object::{CommitRefIter, Data, TagRefIter};

@@ -13,13 +13,13 @@ use gix_ref::{
     Target,
 };
 
-use crate::file::EmptyCommit;
 use crate::{
     file::{
         store_with_packed_refs, store_writable,
         transaction::prepare_and_commit::{
             committer, create_at, create_symbolic_at, delete_at, empty_store, log_line, reflog_lines,
         },
+        EmptyCommit,
     },
     hex_to_id,
 };

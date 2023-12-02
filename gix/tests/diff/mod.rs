@@ -1,5 +1,6 @@
-use crate::util::named_repo;
 use gix_diff::blob::{Algorithm, Driver};
+
+use crate::util::named_repo;
 
 #[test]
 fn resource_cache() -> crate::Result {

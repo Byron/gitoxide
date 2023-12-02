@@ -11,8 +11,7 @@ pub struct Options {
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
-    use std::borrow::Cow;
-    use std::ffi::OsStr;
+    use std::{borrow::Cow, ffi::OsStr};
 
     use anyhow::{bail, Context};
     use gix::{bstr::BString, remote::fetch::Status, NestedProgress};

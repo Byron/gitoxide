@@ -1,5 +1,4 @@
-use std::borrow::Cow;
-use std::io;
+use std::{borrow::Cow, io};
 
 use anyhow::{anyhow, bail};
 use gix::bstr::BStr;

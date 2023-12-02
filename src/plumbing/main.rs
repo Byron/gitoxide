@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::{anyhow, Context, Result};
 use clap::{CommandFactory, Parser};
+use gitoxide::shared::pretty::prepare_and_run;
 use gitoxide_core as core;
 use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
 use gix::bstr::{io::BufReadExt, BString};
@@ -20,7 +21,6 @@ use crate::plumbing::{
     },
     show_progress,
 };
-use gitoxide::shared::pretty::prepare_and_run;
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {

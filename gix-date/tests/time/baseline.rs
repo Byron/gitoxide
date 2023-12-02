@@ -4,9 +4,8 @@ use gix_date::{
     time::{format, Format},
     SecondsSinceUnixEpoch,
 };
-use once_cell::sync::Lazy;
-
 use gix_testtools::Result;
+use once_cell::sync::Lazy;
 
 struct Sample {
     format_name: Option<String>,

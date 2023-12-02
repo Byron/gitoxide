@@ -8,8 +8,7 @@ use std::{
 };
 
 use gix_features::progress;
-use gix_object::bstr::ByteSlice;
-use gix_object::Data;
+use gix_object::{bstr::ByteSlice, Data};
 use gix_testtools::tempfile::TempDir;
 use gix_worktree_state::checkout::Collision;
 use once_cell::sync::Lazy;

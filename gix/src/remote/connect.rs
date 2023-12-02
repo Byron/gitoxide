@@ -1,7 +1,8 @@
 #![allow(clippy::result_large_err)]
 
-use gix_protocol::transport::client::Transport;
 use std::borrow::Cow;
+
+use gix_protocol::transport::client::Transport;
 
 use crate::{remote::Connection, Remote};
 

@@ -6,13 +6,14 @@
 //! - the set used for copy-detection is probably smaller by default.
 use std::ops::Range;
 
+use bstr::BStr;
 use gix_object::tree::{EntryKind, EntryMode};
 
-use crate::blob::platform::prepare_diff::Operation;
-use crate::blob::{DiffLineStats, ResourceKind};
-use crate::rewrites::{CopySource, Outcome};
-use crate::{rewrites::Tracker, Rewrites};
-use bstr::BStr;
+use crate::{
+    blob::{platform::prepare_diff::Operation, DiffLineStats, ResourceKind},
+    rewrites::{CopySource, Outcome, Tracker},
+    Rewrites,
+};
 
 /// The kind of a change.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq)]
@@ -75,9 +76,10 @@ impl<T: Change> Item<T> {
 
 /// A module with types used in the user-callback in [Tracker::emit()](crate::rewrites::Tracker::emit()).
 pub mod visit {
-    use crate::blob::DiffLineStats;
     use bstr::BStr;
     use gix_object::tree::EntryMode;
+
+    use crate::blob::DiffLineStats;
 
     /// The source of a rewrite, rename or copy.
     #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -566,8 +568,7 @@ mod diff {
 #[cfg(test)]
 mod estimate_involved_items {
     use super::estimate_involved_items;
-    use crate::rewrites::tracker::visit::SourceKind;
-    use crate::rewrites::tracker::ChangeKind;
+    use crate::rewrites::tracker::{visit::SourceKind, ChangeKind};
 
     #[test]
     fn renames_count_unemitted_as_sources_and_destinations() {

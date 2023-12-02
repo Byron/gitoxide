@@ -1,12 +1,22 @@
-use crate::hex_to_id;
-use crate::rewrites::{Change, NULL_ID};
-use gix_diff::blob::DiffLineStats;
-use gix_diff::rewrites::tracker::visit::{Source, SourceKind};
-use gix_diff::rewrites::tracker::ChangeKind;
-use gix_diff::rewrites::{Copies, CopySource};
-use gix_diff::tree::visit::Action;
-use gix_diff::{rewrites, Rewrites};
+use gix_diff::{
+    blob::DiffLineStats,
+    rewrites,
+    rewrites::{
+        tracker::{
+            visit::{Source, SourceKind},
+            ChangeKind,
+        },
+        Copies, CopySource,
+    },
+    tree::visit::Action,
+    Rewrites,
+};
 use gix_object::tree::EntryKind;
+
+use crate::{
+    hex_to_id,
+    rewrites::{Change, NULL_ID},
+};
 
 #[test]
 fn rename_by_id() -> crate::Result {
@@ -532,11 +542,14 @@ fn add_only() -> crate::Result {
 }
 
 mod util {
-    use crate::rewrites::Change;
-    use crate::util::ObjectDb;
-    use gix_diff::rewrites::tracker::visit::{Destination, Source};
-    use gix_diff::tree::visit::Action;
-    use gix_diff::{rewrites, Rewrites};
+    use gix_diff::{
+        rewrites,
+        rewrites::tracker::visit::{Destination, Source},
+        tree::visit::Action,
+        Rewrites,
+    };
+
+    use crate::{rewrites::Change, util::ObjectDb};
 
     /// Add `blobs` `(change, location, data)` to tracker that will all be retained. Note that the `id` of the respective change will be adjusted to match.
     pub fn add_retained_blobs<'a>(

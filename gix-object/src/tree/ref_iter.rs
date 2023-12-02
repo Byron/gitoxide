@@ -1,8 +1,7 @@
 use std::convert::TryFrom;
 
 use bstr::BStr;
-use winnow::error::ParserError;
-use winnow::prelude::*;
+use winnow::{error::ParserError, prelude::*};
 
 use crate::{tree, tree::EntryRef, TreeRef, TreeRefIter};
 
@@ -127,8 +126,11 @@ mod decode {
     use bstr::ByteSlice;
     use winnow::{error::ParserError, prelude::*};
 
-    use crate::tree::ref_iter::mode_from_decimal;
-    use crate::{tree, tree::EntryRef, TreeRef};
+    use crate::{
+        tree,
+        tree::{ref_iter::mode_from_decimal, EntryRef},
+        TreeRef,
+    };
 
     pub fn fast_entry(i: &[u8]) -> Option<(&[u8], EntryRef<'_>)> {
         let (mode, i) = mode_from_decimal(i)?;

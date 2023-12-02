@@ -1,8 +1,9 @@
+use std::{io::Write, process::Stdio};
+
+use bstr::{BStr, BString, ByteSlice};
+
 use super::Algorithm;
 use crate::blob::{pipeline, Pipeline, Platform, ResourceKind};
-use bstr::{BStr, BString, ByteSlice};
-use std::io::Write;
-use std::process::Stdio;
 
 /// A key to uniquely identify either a location in the worktree, or in the object database.
 #[derive(Clone)]
@@ -90,8 +91,10 @@ pub struct Resource<'a> {
 
 ///
 pub mod resource {
-    use crate::blob::pipeline;
-    use crate::blob::platform::{CacheKey, CacheValue, Resource};
+    use crate::blob::{
+        pipeline,
+        platform::{CacheKey, CacheValue, Resource},
+    };
 
     impl<'a> Resource<'a> {
         pub(crate) fn new(key: &'a CacheKey, value: &'a CacheValue) -> Self {
@@ -148,8 +151,9 @@ pub mod resource {
 
 ///
 pub mod set_resource {
-    use crate::blob::{pipeline, ResourceKind};
     use bstr::BString;
+
+    use crate::blob::{pipeline, ResourceKind};
 
     /// The error returned by [Platform::set_resource](super::Platform::set_resource).
     #[derive(Debug, thiserror::Error)]
@@ -176,8 +180,9 @@ pub mod set_resource {
 
 ///
 pub mod prepare_diff {
-    use crate::blob::platform::Resource;
     use bstr::BStr;
+
+    use crate::blob::platform::Resource;
 
     /// The kind of operation that was performed during the [`diff`](super::Platform::prepare_diff()) operation.
     #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -241,8 +246,9 @@ pub mod prepare_diff {
 
 ///
 pub mod prepare_diff_command {
-    use bstr::BString;
     use std::ops::{Deref, DerefMut};
+
+    use bstr::BString;
 
     /// The error returned by [Platform::prepare_diff_command()](super::Platform::prepare_diff_command()).
     #[derive(Debug, thiserror::Error)]

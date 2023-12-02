@@ -9,10 +9,10 @@ mod rewrites;
 mod tree;
 
 mod util {
-    use gix_hash::oid;
-    use gix_object::bstr::BString;
-    use gix_object::find::Error;
     use std::collections::HashMap;
+
+    use gix_hash::oid;
+    use gix_object::{bstr::BString, find::Error};
 
     #[derive(Default)]
     pub struct ObjectDb {

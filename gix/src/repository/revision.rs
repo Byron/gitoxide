@@ -1,5 +1,6 @@
-use crate::{bstr::BStr, revision, Id};
 use gix_macros::momo;
+
+use crate::{bstr::BStr, revision, Id};
 
 /// Methods for resolving revisions by spec or working with the commit graph.
 impl crate::Repository {

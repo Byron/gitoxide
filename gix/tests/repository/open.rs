@@ -1,5 +1,6 @@
-use crate::util::named_subrepo_opts;
 use std::error::Error;
+
+use crate::util::named_subrepo_opts;
 
 #[test]
 fn bare_repo_with_index() -> crate::Result {

@@ -1,10 +1,9 @@
 //! For using text diffs, please have a look at the [`imara-diff` documentation](https://docs.rs/imara-diff),
 //! maintained by [Pascal Kuthe](https://github.com/pascalkuthe).
-pub use imara_diff::*;
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use bstr::BString;
+pub use imara_diff::*;
 
 ///
 pub mod pipeline;

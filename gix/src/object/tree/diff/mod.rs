@@ -1,7 +1,6 @@
 use gix_diff::tree::recorder::Location;
 
-use crate::diff::Rewrites;
-use crate::{bstr::BStr, Tree};
+use crate::{bstr::BStr, diff::Rewrites, Tree};
 
 /// Returned by the `for_each` function to control flow.
 #[derive(Default, Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]

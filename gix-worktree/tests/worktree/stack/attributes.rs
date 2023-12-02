@@ -1,7 +1,8 @@
-use crate::worktree::stack::probe_case;
 use bstr::ByteSlice;
 use gix_attributes::search::Outcome;
 use gix_worktree::stack::state;
+
+use crate::worktree::stack::probe_case;
 
 #[test]
 fn baseline() -> crate::Result {

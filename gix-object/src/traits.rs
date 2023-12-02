@@ -85,8 +85,9 @@ mod find {
     mod _impls {
         use std::{ops::Deref, rc::Rc, sync::Arc};
 
-        use crate::Data;
         use gix_hash::oid;
+
+        use crate::Data;
 
         impl<T> crate::Exists for &T
         where
@@ -200,9 +201,9 @@ mod find {
     }
 
     mod ext {
-        use crate::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
-
-        use crate::find;
+        use crate::{
+            find, BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter,
+        };
 
         macro_rules! make_obj_lookup {
             ($method:ident, $object_variant:path, $object_kind:path, $object_type:ty) => {

@@ -1,7 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use gix_features::parallel;
-use gix_features::progress::DynNestedProgress;
+use gix_features::{parallel, progress::DynNestedProgress};
 
 use super::Error;
 use crate::{

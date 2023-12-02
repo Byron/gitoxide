@@ -7,8 +7,7 @@ mod changes {
             recorder::{Change::*, Location},
         };
         use gix_hash::{oid, ObjectId};
-        use gix_object::tree::EntryKind;
-        use gix_object::{bstr::ByteSlice, TreeRefIter};
+        use gix_object::{bstr::ByteSlice, tree::EntryKind, TreeRefIter};
         use gix_odb::pack::Find;
 
         use crate::hex_to_id;

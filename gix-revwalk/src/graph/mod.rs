@@ -45,7 +45,6 @@ mod errors {
     }
 }
 pub use errors::{insert_parents, try_lookup_or_insert_default};
-
 use gix_date::SecondsSinceUnixEpoch;
 
 /// The generation away from the HEAD of graph, useful to limit algorithms by topological depth as well.

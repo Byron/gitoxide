@@ -2,12 +2,11 @@ use std::{borrow::Cow, convert::TryFrom};
 
 pub use error::Error;
 
-use crate::config::cache::util::IgnoreEmptyPath;
-use crate::config::tree::gitoxide::Credentials;
 use crate::{
     bstr::{ByteSlice, ByteVec},
     config::{
-        tree::{credential, Core, Credential, Key},
+        cache::util::IgnoreEmptyPath,
+        tree::{credential, gitoxide::Credentials, Core, Credential, Key},
         Snapshot,
     },
 };

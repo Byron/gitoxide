@@ -606,9 +606,10 @@ pub(crate) struct Cache {
 
 /// Utillities shared privately across the crate, for lack of a better place.
 pub(crate) mod shared {
-    use crate::config;
-    use crate::config::cache::util::ApplyLeniency;
-    use crate::config::tree::Core;
+    use crate::{
+        config,
+        config::{cache::util::ApplyLeniency, tree::Core},
+    };
 
     pub fn is_replace_refs_enabled(
         config: &gix_config::File<'static>,

@@ -2,8 +2,7 @@ use std::convert::TryFrom;
 
 use bstr::ByteSlice;
 use winnow::{
-    combinator::opt,
-    combinator::{preceded, terminated},
+    combinator::{opt, preceded, terminated},
     prelude::*,
     token::{tag, take_till0, take_till1},
 };

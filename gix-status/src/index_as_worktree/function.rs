@@ -1,6 +1,9 @@
-use std::slice::Chunks;
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::{io, path::Path};
+use std::{
+    io,
+    path::Path,
+    slice::Chunks,
+    sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
+};
 
 use bstr::BStr;
 use filetime::FileTime;
@@ -8,14 +11,12 @@ use gix_features::parallel::{in_parallel_if, Reduce};
 use gix_filter::pipeline::convert::ToGitOutcome;
 use gix_object::FindExt;
 
-use crate::index_as_worktree::traits::read_data::Stream;
-use crate::index_as_worktree::{Conflict, EntryStatus};
 use crate::{
     index_as_worktree::{
         traits,
-        traits::{CompareBlobs, SubmoduleStatus},
+        traits::{read_data::Stream, CompareBlobs, SubmoduleStatus},
         types::{Error, Options},
-        Change, Outcome, VisitEntry,
+        Change, Conflict, EntryStatus, Outcome, VisitEntry,
     },
     Pathspec, SymlinkCheck,
 };

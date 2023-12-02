@@ -150,9 +150,12 @@ mod fetch {
     #[test]
     #[cfg(feature = "credentials")]
     fn algorithm() -> crate::Result {
+        use gix::{
+            config::tree::{Fetch, Key},
+            remote::fetch::negotiate::Algorithm,
+        };
+
         use crate::config::tree::bcow;
-        use gix::config::tree::{Fetch, Key};
-        use gix::remote::fetch::negotiate::Algorithm;
 
         for (actual, expected) in [
             ("noop", Algorithm::Noop),
@@ -179,8 +182,10 @@ mod fetch {
     #[test]
     #[cfg(feature = "attributes")]
     fn recurse_submodule() -> crate::Result {
-        use gix::bstr::ByteSlice;
-        use gix::config::tree::{Fetch, Key};
+        use gix::{
+            bstr::ByteSlice,
+            config::tree::{Fetch, Key},
+        };
 
         for (actual, expected) in [
             ("true", gix_submodule::config::FetchRecurse::Always),

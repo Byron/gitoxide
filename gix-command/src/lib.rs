@@ -2,9 +2,9 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+use std::{ffi::OsString, path::PathBuf};
+
 use bstr::BString;
-use std::ffi::OsString;
-use std::path::PathBuf;
 
 /// A structure to keep settings to use when invoking a command via [`spawn()`][Prepare::spawn()], after creating it with [`prepare()`].
 pub struct Prepare {

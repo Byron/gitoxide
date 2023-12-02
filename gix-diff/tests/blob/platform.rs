@@ -1,12 +1,15 @@
-use crate::blob::pipeline::convert_to_diffable::default_options;
-use crate::hex_to_id;
-use crate::util::ObjectDb;
-use gix_diff::blob::platform::prepare_diff;
-use gix_diff::blob::platform::prepare_diff::Operation;
-use gix_diff::blob::{pipeline, platform, Algorithm, Platform, ResourceKind};
-use gix_object::bstr::{BString, ByteSlice};
-use gix_object::tree::EntryKind;
+use gix_diff::blob::{
+    pipeline, platform,
+    platform::{prepare_diff, prepare_diff::Operation},
+    Algorithm, Platform, ResourceKind,
+};
+use gix_object::{
+    bstr::{BString, ByteSlice},
+    tree::EntryKind,
+};
 use gix_worktree::stack::state::attributes;
+
+use crate::{blob::pipeline::convert_to_diffable::default_options, hex_to_id, util::ObjectDb};
 
 #[test]
 fn resources_of_worktree_and_odb_and_check_link() -> crate::Result {

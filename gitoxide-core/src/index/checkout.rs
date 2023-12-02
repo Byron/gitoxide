@@ -4,8 +4,7 @@ use std::{
 };
 
 use anyhow::bail;
-use gix::objs::find::Error;
-use gix::{worktree::state::checkout, NestedProgress, Progress};
+use gix::{objs::find::Error, worktree::state::checkout, NestedProgress, Progress};
 
 use crate::{
     index,

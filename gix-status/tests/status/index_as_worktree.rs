@@ -1,6 +1,5 @@
-use std::sync::atomic::AtomicBool;
 use std::sync::{
-    atomic::{AtomicUsize, Ordering},
+    atomic::{AtomicBool, AtomicUsize, Ordering},
     Arc,
 };
 
@@ -8,13 +7,11 @@ use bstr::BStr;
 use filetime::{set_file_mtime, FileTime};
 use gix_index as index;
 use gix_index::Entry;
-use gix_status::index_as_worktree::traits::SubmoduleStatus;
-use gix_status::index_as_worktree::{Conflict, EntryStatus as WorktreeEntryStatus, Outcome, Record};
 use gix_status::{
     index_as_worktree,
     index_as_worktree::{
-        traits::{CompareBlobs, FastEq, ReadData},
-        Change as WorktreeChange, Options, Recorder,
+        traits::{CompareBlobs, FastEq, ReadData, SubmoduleStatus},
+        Change as WorktreeChange, Conflict, EntryStatus as WorktreeEntryStatus, Options, Outcome, Record, Recorder,
     },
 };
 

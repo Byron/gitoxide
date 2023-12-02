@@ -20,8 +20,7 @@ use crate::{
 impl Cache {
     #[cfg(feature = "blob-diff")]
     pub(crate) fn diff_algorithm(&self) -> Result<gix_diff::blob::Algorithm, config::diff::algorithm::Error> {
-        use crate::config::cache::util::ApplyLeniencyDefault;
-        use crate::config::diff::algorithm::Error;
+        use crate::config::{cache::util::ApplyLeniencyDefault, diff::algorithm::Error};
         self.diff_algorithm
             .get_or_try_init(|| {
                 let name = self
@@ -148,8 +147,9 @@ impl Cache {
     /// Return `true` if packet-tracing is enabled. Lenient and defaults to `false`.
     #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
     pub(crate) fn trace_packet(&self) -> bool {
-        use crate::config::tree::Section;
         use config::tree::Gitoxide;
+
+        use crate::config::tree::Section;
         self.resolved
             .boolean(Gitoxide.name(), None, Gitoxide::TRACE_PACKET.name())
             .and_then(Result::ok)

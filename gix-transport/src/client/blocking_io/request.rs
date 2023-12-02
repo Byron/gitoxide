@@ -1,5 +1,4 @@
-use std::io;
-use std::io::Write;
+use std::{io, io::Write};
 
 use crate::client::{ExtendedBufRead, MessageKind, WriteMode};
 

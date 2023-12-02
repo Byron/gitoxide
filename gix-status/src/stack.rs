@@ -1,6 +1,8 @@
-use crate::SymlinkCheck;
-use gix_fs::Stack;
 use std::path::{Path, PathBuf};
+
+use gix_fs::Stack;
+
+use crate::SymlinkCheck;
 
 impl SymlinkCheck {
     /// Create a new stack that starts operating at `root`.

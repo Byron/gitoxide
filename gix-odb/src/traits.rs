@@ -1,7 +1,8 @@
-use crate::find;
 use std::io;
 
 use gix_object::WriteTo;
+
+use crate::find;
 
 /// Describe the capability to write git objects into an object store.
 pub trait Write {

@@ -4,8 +4,7 @@ use gix_config::{
     file::{includes, init, init::from_env},
     File,
 };
-use gix_testtools::tempfile::tempdir;
-use gix_testtools::Env;
+use gix_testtools::{tempfile::tempdir, Env};
 use serial_test::serial;
 
 use crate::file::init::from_paths::escape_backslashes;

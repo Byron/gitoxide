@@ -1,8 +1,13 @@
 use gix_object::TreeRefIter;
 
 use super::{change, Action, Change, Platform};
-use crate::diff::rewrites::tracker;
-use crate::{bstr::BStr, diff::rewrites, ext::ObjectIdExt, object::tree::diff, Repository, Tree};
+use crate::{
+    bstr::BStr,
+    diff::{rewrites, rewrites::tracker},
+    ext::ObjectIdExt,
+    object::tree::diff,
+    Repository, Tree,
+};
 
 /// The error return by methods on the [diff platform][Platform].
 #[derive(Debug, thiserror::Error)]

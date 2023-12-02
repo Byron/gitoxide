@@ -43,11 +43,10 @@ pub type IndexObjectFn<'a> =
 pub(crate) mod function {
     use bstr::ByteSlice;
 
-    use crate::eol::convert_to_git::IndexObjectFn;
     use crate::{
         clear_and_set_capacity,
         eol::{
-            convert_to_git::{Error, Options, RoundTripCheck},
+            convert_to_git::{Error, IndexObjectFn, Options, RoundTripCheck},
             AttributesDigest, Stats,
         },
     };

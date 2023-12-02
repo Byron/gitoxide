@@ -4,9 +4,8 @@ use std::borrow::Cow;
 use gix_features::threading::OwnShared;
 use gix_macros::momo;
 
-use crate::bstr::ByteSlice;
 use crate::{
-    bstr::{BStr, BString},
+    bstr::{BStr, BString, ByteSlice},
     config::{CommitAutoRollback, Snapshot, SnapshotMut},
 };
 

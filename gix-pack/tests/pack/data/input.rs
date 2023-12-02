@@ -1,9 +1,9 @@
 mod lookup_ref_delta_objects {
-    use gix_hash::{oid, ObjectId};
-    use gix_object::find::Error;
-    use gix_object::Data;
-    use gix_pack::data::{entry::Header, input, input::LookupRefDeltaObjectsIter};
     use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use gix_hash::{oid, ObjectId};
+    use gix_object::{find::Error, Data};
+    use gix_pack::data::{entry::Header, input, input::LookupRefDeltaObjectsIter};
 
     use crate::pack::hex_to_id;
 

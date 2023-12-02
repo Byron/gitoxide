@@ -11,7 +11,6 @@
 /// Re-export for use in public API.
 #[cfg(feature = "blob")]
 pub use gix_command as command;
-
 /// Re-export for use in public API.
 #[cfg(feature = "blob")]
 pub use gix_object as object;

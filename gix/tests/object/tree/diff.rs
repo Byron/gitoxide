@@ -4,8 +4,7 @@ use gix::{
     bstr::BString,
     object::{blob::diff::lines::Change, tree::diff::change::Event},
 };
-use gix_object::bstr::ByteSlice;
-use gix_object::tree::EntryKind;
+use gix_object::{bstr::ByteSlice, tree::EntryKind};
 
 use crate::named_repo;
 
@@ -105,12 +104,14 @@ fn tree_named(repo: &gix::Repository, rev_spec: impl AsRef<str>) -> gix::Tree {
 mod track_rewrites {
     use std::convert::Infallible;
 
-    use gix::diff::blob::DiffLineStats;
-    use gix::diff::{
-        rewrites::{Copies, CopySource},
-        Rewrites,
+    use gix::{
+        diff::{
+            blob::DiffLineStats,
+            rewrites::{Copies, CopySource},
+            Rewrites,
+        },
+        object::tree::diff::change::Event,
     };
-    use gix::object::tree::diff::change::Event;
     use gix_ref::bstr::BStr;
 
     use crate::{

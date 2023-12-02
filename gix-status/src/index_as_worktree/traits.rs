@@ -1,10 +1,11 @@
-use crate::index_as_worktree::Error;
+use std::{io::Read, sync::atomic::AtomicBool};
+
 use bstr::BStr;
 use gix_hash::ObjectId;
 use gix_index as index;
 use index::Entry;
-use std::io::Read;
-use std::sync::atomic::AtomicBool;
+
+use crate::index_as_worktree::Error;
 
 /// Compares the content of two blobs in some way.
 pub trait CompareBlobs {
@@ -50,8 +51,9 @@ pub trait ReadData<'a> {
 
 ///
 pub mod read_data {
-    use gix_filter::pipeline::convert::ToGitOutcome;
     use std::sync::atomic::{AtomicU64, Ordering};
+
+    use gix_filter::pipeline::convert::ToGitOutcome;
 
     /// A stream with worktree file data.
     pub struct Stream<'a> {

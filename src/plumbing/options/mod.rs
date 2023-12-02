@@ -658,9 +658,8 @@ pub mod revision {
 }
 
 pub mod attributes {
-    use gix::bstr::BString;
-
     use gitoxide::shared::CheckPathSpec;
+    use gix::bstr::BString;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -689,9 +688,8 @@ pub mod attributes {
 pub mod exclude {
     use std::ffi::OsString;
 
-    use gix::bstr::BString;
-
     use gitoxide::shared::CheckPathSpec;
+    use gix::bstr::BString;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -720,9 +718,8 @@ pub mod exclude {
 pub mod index {
     use std::path::PathBuf;
 
-    use gix::bstr::BString;
-
     use gitoxide::shared::CheckPathSpec;
+    use gix::bstr::BString;
 
     pub mod entries {
         #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]

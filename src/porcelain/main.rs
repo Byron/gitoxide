@@ -5,10 +5,10 @@ use std::sync::{
 
 use anyhow::Result;
 use clap::Parser;
+use gitoxide::shared::pretty::prepare_and_run;
 use gitoxide_core as core;
 
 use crate::porcelain::options::{Args, Subcommands};
-use gitoxide::shared::pretty::prepare_and_run;
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse_from(gix::env::args_os());

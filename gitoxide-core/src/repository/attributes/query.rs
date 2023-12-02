@@ -8,8 +8,7 @@ pub struct Options {
 }
 
 pub(crate) mod function {
-    use std::borrow::Cow;
-    use std::{io, path::Path};
+    use std::{borrow::Cow, io, path::Path};
 
     use anyhow::{anyhow, bail};
     use gix::bstr::BStr;

@@ -150,9 +150,9 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use gix_features::progress::NestedProgress;
     use std::io;
 
+    use gix_features::progress::NestedProgress;
     use gix_protocol::{fetch, fetch::Response, handshake, handshake::Ref};
 
     use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};

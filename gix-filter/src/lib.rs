@@ -10,12 +10,11 @@
 //! or not to apply such a filter.
 #![deny(rust_2018_idioms, missing_docs, unsafe_code)]
 
-/// The `gix-attributes` crate whose types are mentioned in the public API of [Pipeline::convert_to_worktree()].
-pub use gix_attributes as attributes;
-
 use bstr::BString;
 /// A forwarding of the `encoding_rs` crate for its types and convenience.
 pub use encoding_rs as encoding;
+/// The `gix-attributes` crate whose types are mentioned in the public API of [Pipeline::convert_to_worktree()].
+pub use gix_attributes as attributes;
 
 /// a filter to replace `$Id$` with a git-hash of the buffer.
 pub mod ident;

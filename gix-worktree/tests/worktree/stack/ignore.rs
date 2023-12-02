@@ -1,8 +1,7 @@
 use bstr::{BStr, ByteSlice};
 use gix_worktree::{stack::state::ignore::Source, Stack};
 
-use crate::hex_to_id;
-use crate::worktree::stack::probe_case;
+use crate::{hex_to_id, worktree::stack::probe_case};
 
 struct IgnoreExpectations<'a> {
     lines: bstr::Lines<'a>,

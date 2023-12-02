@@ -19,8 +19,10 @@ pub(crate) mod function {
     use gix::revision::Spec;
 
     use super::Options;
-    use crate::repository::revision::resolve::TreeMode;
-    use crate::{repository::revision, OutputFormat};
+    use crate::{
+        repository::{revision, revision::resolve::TreeMode},
+        OutputFormat,
+    };
 
     pub fn resolve(
         mut repo: gix::Repository,

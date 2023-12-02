@@ -2,8 +2,7 @@ use crate::{remote, util::restricted};
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
-    use std::borrow::Cow;
-    use std::sync::atomic::AtomicBool;
+    use std::{borrow::Cow, sync::atomic::AtomicBool};
 
     use gix::{
         bstr::BString,

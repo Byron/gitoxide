@@ -1,5 +1,4 @@
-use std::cmp::Ordering;
-use std::ops::Range;
+use std::{cmp::Ordering, ops::Range};
 
 use bstr::{BStr, ByteSlice, ByteVec};
 use filetime::FileTime;

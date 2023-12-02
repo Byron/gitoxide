@@ -1,11 +1,17 @@
-use crate::blob::{Driver, Pipeline, ResourceKind};
+use std::{
+    io::{Read, Write},
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+};
+
 use bstr::{BStr, ByteSlice};
-use gix_filter::driver::apply::{Delay, MaybeDelayed};
-use gix_filter::pipeline::convert::{ToGitOutcome, ToWorktreeOutcome};
+use gix_filter::{
+    driver::apply::{Delay, MaybeDelayed},
+    pipeline::convert::{ToGitOutcome, ToWorktreeOutcome},
+};
 use gix_object::tree::EntryKind;
-use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+
+use crate::blob::{Driver, Pipeline, ResourceKind};
 
 /// A way to access roots for different kinds of resources that are possibly located and accessible in a worktree.
 #[derive(Clone, Debug, Default)]
