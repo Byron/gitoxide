@@ -530,6 +530,16 @@ fn apply_environment_overrides(
                 (env(key), key.name)
             }],
         ),
+        #[cfg(feature = "blob-diff")]
+        (
+            "diff",
+            None,
+            git_prefix,
+            &[{
+                let key = &config::tree::Diff::EXTERNAL;
+                (env(key), key.name)
+            }],
+        ),
     ] {
         let mut section = env_override
             .new_section(section_name, subsection_name)

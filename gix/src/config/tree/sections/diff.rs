@@ -32,6 +32,10 @@ impl Diff {
     /// The `diff.<driver>.binary` key.
     pub const DRIVER_BINARY: Binary = Binary::new_with_validate("binary", &config::Tree::DIFF, validate::Binary)
         .with_subsection_requirement(Some(SubSectionRequirement::Parameter("driver")));
+
+    /// The `diff.external` key.
+    pub const EXTERNAL: keys::Program =
+        keys::Program::new_program("external", &config::Tree::DIFF).with_environment_override("GIT_EXTERNAL_DIFF");
 }
 
 impl Section for Diff {
@@ -48,6 +52,7 @@ impl Section for Diff {
             &Self::DRIVER_TEXTCONV,
             &Self::DRIVER_ALGORITHM,
             &Self::DRIVER_BINARY,
+            &Self::EXTERNAL,
         ]
     }
 }
