@@ -284,7 +284,7 @@ If what you have seen so far sparked your interest to contribute, then let us sa
 > ❗️Note❗️: For cloning, `gix-lfs` needs to be locally installed or the checkout will fail. `git lfs install` must have been called once, followed
   by `git lfs pull` to replace the `lfs`-pointer files.
 
-We recommend running `make tests check-size` during the development process to assure CI is green before pushing.
+We recommend running `just test check-size` during the development process to assure CI is green before pushing.
 
 A backlog for work ready to be picked up is [available in the Project's Kanban board][project-board], which contains instructions on how 
 to pick a task. If it's empty or you have other questions, feel free to [start a discussion][discussions] or reach out to @Byron [privately][keybase].

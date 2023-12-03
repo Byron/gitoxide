@@ -10,7 +10,7 @@
      - …if collaboration on a feature and prior feedback is desired
    - **feel free to use the [project-board] to organize your issues, PRs or cards**
 - **`main` must never be broken or show warnings**
-   - An easy way to achieve this is to run `make tests check-size` before pushing or `make tests check-size && git push`.
+   - An easy way to achieve this is to run `just test check-size` before pushing or `just check-size && git push`.
    - If you're unsure about remembering to do this, we suggest using a pre-commit git hook.
 - **if `main` breaks on CI** _which can happen nonetheless_…
     - …and you _do know_ the cause, please fix it immediately. If necessary by reverting the offending commit until a more durable fix is possible.
