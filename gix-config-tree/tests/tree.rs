@@ -181,8 +181,8 @@ mod fetch {
     #[test]
     #[cfg(feature = "attributes")]
     fn recurse_submodule() -> crate::Result {
-        use gix::bstr::ByteSlice;
-        use crate::{Fetch, Key};
+        use bstr::ByteSlice;
+        use gix_config_tree::{Fetch, Key};
 
         for (actual, expected) in [
             ("true", gix_submodule::config::FetchRecurse::Always),

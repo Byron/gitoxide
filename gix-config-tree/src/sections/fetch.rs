@@ -60,14 +60,14 @@ mod algorithm {
     }
 
     #[cfg(feature = "attributes")]
-    impl crate::config::sections::fetch::RecurseSubmodules {
+    impl crate::sections::fetch::RecurseSubmodules {
         /// Obtain the way submodules should be updated.
         pub fn try_into_recurse_submodules(
             &'static self,
             value: Result<bool, gix_config::value::Error>,
-        ) -> Result<gix_submodule::config::FetchRecurse, crate::config::key::GenericErrorWithValue> {
+        ) -> Result<gix_submodule::config::FetchRecurse, crate::key::GenericErrorWithValue> {
             gix_submodule::config::FetchRecurse::new(value)
-                .map_err(|err| crate::config::key::GenericErrorWithValue::from_value(self, err))
+                .map_err(|err| crate::key::GenericErrorWithValue::from_value(self, err))
         }
     }
 }
@@ -93,7 +93,7 @@ mod validate {
             #[cfg(feature = "attributes")]
             {
                 let boolean = gix_config::Boolean::try_from(value).map(|b| b.0);
-                crate::config::Fetch::RECURSE_SUBMODULES.try_into_recurse_submodules(boolean)?;
+                crate::Fetch::RECURSE_SUBMODULES.try_into_recurse_submodules(boolean)?;
             }
             Ok(())
         }

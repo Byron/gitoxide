@@ -16,16 +16,28 @@ rust-version = "1.65"
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 # serde = ["dep:serde", "bstr/serde", "gix-sec/serde", "gix-ref/serde", "gix-glob/serde", "gix-config-value/serde"]
 
+# async-network-client
+attributes = ["dep:gix-attributes", "dep:gix-filter", "dep:gix-submodule"]
+# blob-diff = ["gix-diff/blob", "attributes"]
+# blocking-http-transport-curl
+# blocking-http-transport-reqwest
+# blocking-network-client
+# credentials = ["dep:gix-credentials", "dep:gix-prompt", "dep:gix-negotiate"]
+# revision = ["gix-revision/describe", "index"]
+
 [dependencies]
+gix-attributes = { version = "^0.20.0", path = "../gix-attributes", optional = true }
 gix-config = { version = "^0.31.0", path = "../gix-config" }
 gix-config-value = { version = "^0.14.0", path = "../gix-config-value" }
 gix-date = { version = "^0.8.0", path = "../gix-date" }
 gix-features = { version = "^0.36.0", path = "../gix-features"}
+gix-filter = { version = "^0.6.0", path = "../gix-filter", optional = true }
 gix-hash = { version = "^0.13.1", path = "../gix-hash" }
 gix-lock = { version = "^11.0.0", path = "../gix-lock" }
 gix-pack = { version = "^0.44.0", path = "../gix-pack", default-features = false }
 gix-ref = { version = "^0.38.0", path = "../gix-ref" }
 gix-refspec = { version = "^0.19.0", path = "../gix-refspec" }
+gix-submodule = { version = "^0.5.0", path = "../gix-submodule", optional = true }
 gix-url = { version = "^0.25.1", path = "../gix-url" }
 gix-validate = { version = "^0.8.0", path = "../gix-validate" }
 

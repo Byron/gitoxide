@@ -6,8 +6,7 @@ impl Core {
     /// The `core.bare` key.
     pub const BARE: keys::Boolean = keys::Boolean::new_boolean("bare", &Tree::CORE);
     /// The `core.checkStat` key.
-    pub const CHECK_STAT: CheckStat =
-        CheckStat::new_with_validate("checkStat", &Tree::CORE, validate::CheckStat);
+    pub const CHECK_STAT: CheckStat = CheckStat::new_with_validate("checkStat", &Tree::CORE, validate::CheckStat);
     /// The `core.deltaBaseCacheLimit` key.
     pub const DELTA_BASE_CACHE_LIMIT: keys::UnsignedInteger =
         keys::UnsignedInteger::new_unsigned_integer("deltaBaseCacheLimit", &Tree::CORE)
@@ -58,11 +57,11 @@ impl Core {
         keys::Executable::new_executable("attributesFile", &Tree::CORE)
             .with_deviation("for checkout - it's already queried but needs building of attributes group, and of course support during checkout");
     /// The `core.sshCommand` key.
-    pub const SSH_COMMAND: keys::Executable = keys::Executable::new_executable("sshCommand", &Tree::CORE)
-        .with_environment_override("GIT_SSH_COMMAND");
+    pub const SSH_COMMAND: keys::Executable =
+        keys::Executable::new_executable("sshCommand", &Tree::CORE).with_environment_override("GIT_SSH_COMMAND");
     /// The `core.useReplaceRefs` key.
-    pub const USE_REPLACE_REFS: keys::Boolean = keys::Boolean::new_boolean("useReplaceRefs", &Tree::CORE)
-        .with_environment_override("GIT_NO_REPLACE_OBJECTS");
+    pub const USE_REPLACE_REFS: keys::Boolean =
+        keys::Boolean::new_boolean("useReplaceRefs", &Tree::CORE).with_environment_override("GIT_NO_REPLACE_OBJECTS");
     /// The `core.commitGraph` key.
     pub const COMMIT_GRAPH: keys::Boolean = keys::Boolean::new_boolean("commitGraph", &Tree::CORE);
     /// The `core.safecrlf` key.
@@ -154,13 +153,9 @@ mod filter {
     pub type CheckRoundTripEncoding = keys::Any<validate::CheckRoundTripEncoding>;
 
     mod check_round_trip_encoding {
+        use crate::{sections::core::CheckRoundTripEncoding, Key};
+        use bstr::{BStr, ByteSlice};
         use std::borrow::Cow;
-
-        use crate::{
-            bstr::{BStr, ByteSlice},
-            config,
-            config::{core::CheckRoundTripEncoding, Key},
-        };
 
         impl CheckRoundTripEncoding {
             /// Convert `value` into a list of encodings, which are either space or coma separated. Fail if an encoding is unknown.
@@ -168,7 +163,7 @@ mod filter {
             pub fn try_into_encodings(
                 &'static self,
                 value: Option<Cow<'_, BStr>>,
-            ) -> Result<Vec<&'static gix_filter::encoding::Encoding>, config::encoding::Error> {
+            ) -> Result<Vec<&'static gix_filter::encoding::Encoding>, crate::encoding::Error> {
                 Ok(match value {
                     None => vec![gix_filter::encoding::SHIFT_JIS],
                     Some(value) => {
@@ -180,7 +175,7 @@ mod filter {
                         {
                             out.push(
                                 gix_filter::encoding::Encoding::for_label(encoding.trim()).ok_or_else(|| {
-                                    config::encoding::Error {
+                                    crate::encoding::Error {
                                         key: self.logical_name().into(),
                                         value: value.as_ref().to_owned(),
                                         encoding: encoding.into(),
@@ -196,13 +191,9 @@ mod filter {
     }
 
     mod eol {
+        use crate::sections::core::Eol;
+        use bstr::{BStr, ByteSlice};
         use std::borrow::Cow;
-
-        use crate::{
-            bstr::{BStr, ByteSlice},
-            config,
-            config::core::Eol,
-        };
 
         impl Eol {
             /// Convert `value` into the default end-of-line mode.
@@ -213,12 +204,12 @@ mod filter {
             pub fn try_into_eol(
                 &'static self,
                 value: Cow<'_, BStr>,
-            ) -> Result<gix_filter::eol::Mode, config::key::GenericErrorWithValue> {
+            ) -> Result<gix_filter::eol::Mode, crate::key::GenericErrorWithValue> {
                 Ok(match value.to_str_lossy().as_ref() {
                     "lf" => gix_filter::eol::Mode::Lf,
                     "crlf" => gix_filter::eol::Mode::CrLf,
                     "native" => gix_filter::eol::Mode::default(),
-                    _ => return Err(config::key::GenericErrorWithValue::from_value(self, value.into_owned())),
+                    _ => return Err(crate::key::GenericErrorWithValue::from_value(self, value.into_owned())),
                 })
             }
         }
@@ -227,21 +218,21 @@ mod filter {
     mod safecrlf {
         use std::borrow::Cow;
 
+        use crate::sections::core::SafeCrlf;
+        use bstr::BStr;
         use gix_filter::pipeline::CrlfRoundTripCheck;
-
-        use crate::{bstr::BStr, config, config::core::SafeCrlf};
 
         impl SafeCrlf {
             /// Convert `value` into the safe-crlf enumeration, if possible.
             pub fn try_into_safecrlf(
                 &'static self,
                 value: Cow<'_, BStr>,
-            ) -> Result<CrlfRoundTripCheck, config::key::GenericErrorWithValue> {
+            ) -> Result<CrlfRoundTripCheck, crate::key::GenericErrorWithValue> {
                 if value.as_ref() == "warn" {
                     return Ok(CrlfRoundTripCheck::Warn);
                 }
                 let value = gix_config::Boolean::try_from(value.as_ref()).map_err(|err| {
-                    config::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
+                    crate::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
                 })?;
                 Ok(if value.into() {
                     CrlfRoundTripCheck::Fail
@@ -255,21 +246,21 @@ mod filter {
     mod autocrlf {
         use std::borrow::Cow;
 
+        use crate::sections::core::AutoCrlf;
+        use bstr::BStr;
         use gix_filter::eol;
-
-        use crate::{bstr::BStr, config, config::core::AutoCrlf};
 
         impl AutoCrlf {
             /// Convert `value` into the safe-crlf enumeration, if possible.
             pub fn try_into_autocrlf(
                 &'static self,
                 value: Cow<'_, BStr>,
-            ) -> Result<eol::AutoCrlf, config::key::GenericErrorWithValue> {
+            ) -> Result<eol::AutoCrlf, crate::key::GenericErrorWithValue> {
                 if value.as_ref() == "input" {
                     return Ok(eol::AutoCrlf::Input);
                 }
                 let value = gix_config::Boolean::try_from(value.as_ref()).map_err(|err| {
-                    config::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
+                    crate::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
                 })?;
                 Ok(if value.into() {
                     eol::AutoCrlf::Enabled
@@ -342,9 +333,9 @@ mod log_all_ref_updates {
 }
 
 mod check_stat {
-    use std::borrow::Cow;
-    use bstr::{BStr, ByteSlice};
     use crate::sections::core::CheckStat;
+    use bstr::{BStr, ByteSlice};
+    use std::borrow::Cow;
 
     impl CheckStat {
         /// Returns true if the full set of stat entries should be checked, and it's just as lenient as git.
@@ -364,9 +355,9 @@ mod check_stat {
 }
 
 mod abbrev {
-    use std::borrow::Cow;
-    use bstr::{BStr, ByteSlice};
     use crate::{abbrev::Error, sections::core::Abbrev};
+    use bstr::{BStr, ByteSlice};
+    use std::borrow::Cow;
 
     impl Abbrev {
         /// Convert the given `hex_len_str` into the amount of characters that a short hash should have.
@@ -414,8 +405,8 @@ mod abbrev {
 }
 
 mod validate {
-    use bstr::BStr;
     use crate::keys;
+    use bstr::BStr;
 
     pub struct LockTimeout;
     impl keys::Validate for LockTimeout {
