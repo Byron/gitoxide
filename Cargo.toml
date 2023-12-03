@@ -227,6 +227,7 @@ members = [
     "gix-ref",
     "gix-command",
     "gix-config",
+    "gix-config-tree",
     "gix-config-value",
     "gix-discover",
     "gix-features",
