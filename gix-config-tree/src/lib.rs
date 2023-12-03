@@ -95,7 +95,7 @@ pub use sections::{
     Protocol, Remote, Safe, Ssh, Url, User,
 };
 #[cfg(feature = "blob-diff")]
-pub use sections::{diff, Diff};
+pub use sections::Diff;
 
 /// Generic value implementations for static instantiation.
 pub mod keys;
@@ -227,6 +227,41 @@ pub mod key {
 
     /// A generic key error which will also contain a value.
     pub type GenericErrorWithValue<E = gix_config_value::Error> = Error<E, 'v', 'i'>;
+}
+
+// TODO Copied from gix/src/config/mod.rs
+///
+pub mod diff {
+    ///
+    pub mod algorithm {
+        use bstr::BString;
+
+        /// The error produced when obtaining `diff.algorithm`.
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("Unknown diff algorithm named '{name}'")]
+            Unknown { name: BString },
+            #[error("The '{name}' algorithm is not yet implemented")]
+            Unimplemented { name: BString },
+        }
+    }
+
+    pub mod renames {
+        // TODO Copied from gix/src/diff.rs
+        /// Determine how to do rename tracking.
+        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+        pub enum Tracking {
+            /// Do not track renames at all, the fastest option.
+            Disabled,
+            /// Track renames.
+            Renames,
+            /// Track renames and copies.
+            ///
+            /// This is the most expensive option.
+            RenamesAndCopies,
+        }
+    }
 }
 
 ///

@@ -1470,6 +1470,7 @@ dependencies = [
  "gix-config",
  "gix-config-value",
  "gix-date 0.8.0",
+ "gix-diff",
  "gix-features 0.36.0",
  "gix-filter",
  "gix-hash 0.13.1",

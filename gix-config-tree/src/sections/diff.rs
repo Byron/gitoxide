@@ -1,22 +1,19 @@
-use crate::{
-    config,
-    config::{keys, Diff, Key, Section},
-};
+use crate::{keys, Diff, Key, Section};
 
 impl Diff {
     /// The `diff.algorithm` key.
-    pub const ALGORITHM: Algorithm = Algorithm::new_with_validate("algorithm", &config::Tree::DIFF, validate::Algorithm)
+    pub const ALGORITHM: Algorithm = Algorithm::new_with_validate("algorithm", &crate::Tree::DIFF, validate::Algorithm)
                                         .with_deviation("'patience' diff is not implemented and can default to 'histogram' if lenient config is used, and defaults to histogram if unset for fastest and best results");
     /// The `diff.renameLimit` key.
     pub const RENAME_LIMIT: keys::UnsignedInteger = keys::UnsignedInteger::new_unsigned_integer(
         "renameLimit",
-        &config::Tree::DIFF,
+        &crate::Tree::DIFF,
     )
     .with_note(
         "The limit is actually squared, so 1000 stands for up to 1 million diffs if fuzzy rename tracking is enabled",
     );
     /// The `diff.renames` key.
-    pub const RENAMES: Renames = Renames::new_renames("renames", &config::Tree::DIFF);
+    pub const RENAMES: Renames = Renames::new_renames("renames", &crate::Tree::DIFF);
 }
 
 impl Section for Diff {
@@ -38,11 +35,8 @@ pub type Renames = keys::Any<validate::Renames>;
 mod algorithm {
     use std::borrow::Cow;
 
-    use crate::{
-        bstr::BStr,
-        config,
-        config::{diff::algorithm::Error, sections::diff::Algorithm},
-    };
+    use crate::{sections::diff::Algorithm, diff::algorithm::Error};
+    use bstr::BStr;
 
     impl Algorithm {
         /// Derive the diff algorithm identified by `name`, case-insensitively.
@@ -54,7 +48,7 @@ mod algorithm {
             } else if name.eq_ignore_ascii_case(b"histogram") {
                 gix_diff::blob::Algorithm::Histogram
             } else if name.eq_ignore_ascii_case(b"patience") {
-                return Err(config::diff::algorithm::Error::Unimplemented {
+                return Err(Error::Unimplemented {
                     name: name.into_owned(),
                 });
             } else {
@@ -68,14 +62,8 @@ mod algorithm {
 }
 
 mod renames {
-    use crate::{
-        bstr::ByteSlice,
-        config::{
-            key::GenericError,
-            {keys, sections::diff::Renames, Section},
-        },
-        diff::rename::Tracking,
-    };
+    use crate::{sections::diff::Renames, diff::renames::Tracking, key::GenericError, keys, Section};
+    use bstr::ByteSlice;
 
     impl Renames {
         /// Create a new instance.
@@ -104,10 +92,8 @@ mod renames {
 }
 
 mod validate {
-    use crate::{
-        bstr::BStr,
-        config::{keys, Diff},
-    };
+    use crate::{keys, Diff};
+    use bstr::BStr;
 
     pub struct Algorithm;
     impl keys::Validate for Algorithm {

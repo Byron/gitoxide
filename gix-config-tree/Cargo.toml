@@ -18,7 +18,7 @@ rust-version = "1.65"
 
 # async-network-client
 attributes = ["dep:gix-attributes", "dep:gix-filter", "dep:gix-submodule"]
-# blob-diff = ["gix-diff/blob", "attributes"]
+blob-diff = ["gix-diff/blob"]
 # blocking-http-transport-curl
 # blocking-http-transport-reqwest
 # blocking-network-client
@@ -30,6 +30,7 @@ gix-attributes = { version = "^0.20.0", path = "../gix-attributes", optional = t
 gix-config = { version = "^0.31.0", path = "../gix-config" }
 gix-config-value = { version = "^0.14.0", path = "../gix-config-value" }
 gix-date = { version = "^0.8.0", path = "../gix-date" }
+gix-diff = { version = "^0.37.0", path = "../gix-diff", default-features = false }
 gix-features = { version = "^0.36.0", path = "../gix-features"}
 gix-filter = { version = "^0.6.0", path = "../gix-filter", optional = true }
 gix-hash = { version = "^0.13.1", path = "../gix-hash" }

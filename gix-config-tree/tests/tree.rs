@@ -210,9 +210,9 @@ mod fetch {
 
 #[cfg(feature = "blob-diff")]
 mod diff {
-    use gix::{
-        config::tree::{Diff, Key},
-        diff::rename::Tracking,
+    use gix_config_tree::{
+        Diff, Key,
+        diff::renames::Tracking,
     };
     use gix_diff::blob::Algorithm;
 
