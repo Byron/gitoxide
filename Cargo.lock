@@ -1475,6 +1475,7 @@ dependencies = [
  "gix-filter",
  "gix-hash 0.13.1",
  "gix-lock 11.0.0",
+ "gix-negotiate",
  "gix-pack",
  "gix-ref 0.38.0",
  "gix-refspec",

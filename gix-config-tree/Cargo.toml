@@ -22,7 +22,7 @@ blob-diff = ["gix-diff/blob"]
 # blocking-http-transport-curl
 # blocking-http-transport-reqwest
 # blocking-network-client
-# credentials = ["dep:gix-credentials", "dep:gix-prompt", "dep:gix-negotiate"]
+credentials = ["dep:gix-negotiate"]
 # revision = ["gix-revision/describe", "index"]
 
 [dependencies]
@@ -35,6 +35,7 @@ gix-features = { version = "^0.36.0", path = "../gix-features"}
 gix-filter = { version = "^0.6.0", path = "../gix-filter", optional = true }
 gix-hash = { version = "^0.13.1", path = "../gix-hash" }
 gix-lock = { version = "^11.0.0", path = "../gix-lock" }
+gix-negotiate = { version = "^0.9.0", path = "../gix-negotiate", optional = true }
 gix-pack = { version = "^0.44.0", path = "../gix-pack", default-features = false }
 gix-ref = { version = "^0.38.0", path = "../gix-ref" }
 gix-refspec = { version = "^0.19.0", path = "../gix-refspec" }

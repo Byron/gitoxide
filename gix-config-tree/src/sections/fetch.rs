@@ -36,21 +36,21 @@ pub type RecurseSubmodules = keys::Any<validate::RecurseSubmodules>;
 
 mod algorithm {
     #[cfg(feature = "credentials")]
-    impl crate::config::sections::fetch::NegotiationAlgorithm {
+    impl crate::sections::fetch::NegotiationAlgorithm {
         /// Derive the negotiation algorithm identified by `name`, case-sensitively.
         pub fn try_into_negotiation_algorithm(
             &'static self,
-            name: std::borrow::Cow<'_, crate::bstr::BStr>,
-        ) -> Result<crate::remote::fetch::negotiate::Algorithm, crate::config::key::GenericErrorWithValue> {
-            use crate::bstr::ByteSlice;
-            use crate::remote::fetch::negotiate::Algorithm;
+            name: std::borrow::Cow<'_, bstr::BStr>,
+        ) -> Result<gix_negotiate::Algorithm, crate::key::GenericErrorWithValue> {
+            use bstr::ByteSlice;
+            use gix_negotiate::Algorithm;
 
             Ok(match name.as_ref().as_bytes() {
                 b"noop" => Algorithm::Noop,
                 b"consecutive" | b"default" => Algorithm::Consecutive,
                 b"skipping" => Algorithm::Skipping,
                 _ => {
-                    return Err(crate::config::key::GenericErrorWithValue::from_value(
+                    return Err(crate::key::GenericErrorWithValue::from_value(
                         self,
                         name.into_owned(),
                     ))
@@ -81,7 +81,7 @@ mod validate {
         #[cfg_attr(not(feature = "credentials"), allow(unused_variables))]
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             #[cfg(feature = "credentials")]
-            crate::config::Fetch::NEGOTIATION_ALGORITHM.try_into_negotiation_algorithm(value.into())?;
+            crate::Fetch::NEGOTIATION_ALGORITHM.try_into_negotiation_algorithm(value.into())?;
             Ok(())
         }
     }

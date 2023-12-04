@@ -153,8 +153,8 @@ mod fetch {
     #[cfg(feature = "credentials")]
     fn algorithm() -> crate::Result {
         use super::bcow;
-        use crate::{Fetch, Key};
-        use gix::remote::fetch::negotiate::Algorithm;
+        use gix_config_tree::{Fetch, Key};
+        use gix_negotiate::Algorithm;
 
         for (actual, expected) in [
             ("noop", Algorithm::Noop),
