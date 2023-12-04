@@ -23,7 +23,7 @@ blob-diff = ["gix-diff/blob"]
 # blocking-http-transport-reqwest
 # blocking-network-client
 credentials = ["dep:gix-negotiate"]
-# revision = ["gix-revision/describe", "index"]
+revision = []
 
 [dependencies]
 gix-attributes = { version = "^0.20.0", path = "../gix-attributes", optional = true }

@@ -264,6 +264,27 @@ pub mod diff {
     }
 }
 
+pub mod disambiguate {
+    // TODO Copied from gix/src/revision/spec/parse/types.rs
+    /// A hint to know which object kind to prefer if multiple objects match a prefix.
+    ///
+    /// This disambiguation mechanism is applied only if there is no disambiguation hints in the spec itself.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    pub enum ObjectKindHint {
+        /// Pick objects that are commits themselves.
+        Commit,
+        /// Pick objects that can be peeled into a commit, i.e. commits themselves or tags which are peeled until a commit is found.
+        Committish,
+        /// Pick objects that are trees themselves.
+        Tree,
+        /// Pick objects that can be peeled into a tree, i.e. trees themselves or tags which are peeled until a tree is found or commits
+        /// whose tree is chosen.
+        Treeish,
+        /// Pick objects that are blobs.
+        Blob,
+    }
+}
+
 ///
 pub mod encoding {
     use bstr::BString;

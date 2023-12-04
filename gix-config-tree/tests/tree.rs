@@ -316,7 +316,7 @@ mod core {
     #[test]
     #[cfg(feature = "revision")]
     fn disambiguate() -> crate::Result {
-        use gix::revision::spec::parse::ObjectKindHint;
+        use gix_config_tree::disambiguate::ObjectKindHint;
         for (value, expected) in [
             ("none", None),
             ("commit", Some(ObjectKindHint::Commit)),

@@ -277,20 +277,15 @@ pub use filter::*;
 #[cfg(feature = "revision")]
 mod disambiguate {
     use std::borrow::Cow;
-
-    use crate::{
-        bstr::{BStr, ByteSlice},
-        config,
-        config::core::Disambiguate,
-        revision::spec::parse::ObjectKindHint,
-    };
+    use bstr::{BStr, ByteSlice};
+    use crate::{disambiguate::ObjectKindHint, sections::core::Disambiguate};
 
     impl Disambiguate {
         /// Convert a disambiguation marker into the respective enum.
         pub fn try_into_object_kind_hint(
             &'static self,
             value: Cow<'_, BStr>,
-        ) -> Result<Option<ObjectKindHint>, config::key::GenericErrorWithValue> {
+        ) -> Result<Option<ObjectKindHint>, crate::key::GenericErrorWithValue> {
             let hint = match value.as_ref().as_bytes() {
                 b"none" => return Ok(None),
                 b"commit" => ObjectKindHint::Commit,
@@ -298,7 +293,7 @@ mod disambiguate {
                 b"tree" => ObjectKindHint::Tree,
                 b"treeish" => ObjectKindHint::Treeish,
                 b"blob" => ObjectKindHint::Blob,
-                _ => return Err(config::key::GenericErrorWithValue::from_value(self, value.into_owned())),
+                _ => return Err(crate::key::GenericErrorWithValue::from_value(self, value.into_owned())),
             };
             Ok(Some(hint))
         }
