@@ -107,7 +107,7 @@ mod key_impls {
         feature = "blocking-http-transport-reqwest",
         feature = "blocking-http-transport-curl"
     ))]
-    impl crate::config::http::FollowRedirects {
+    impl crate::sections::http::FollowRedirects {
         /// Convert `value` into the redirect specification, or query the same value as `boolean`
         /// for additional possible input values.
         ///
@@ -115,17 +115,18 @@ mod key_impls {
         /// empty booleans correctly, that is those without a value separator.
         pub fn try_into_follow_redirects(
             &'static self,
-            value: std::borrow::Cow<'_, crate::bstr::BStr>,
+            value: std::borrow::Cow<'_, bstr::BStr>,
             boolean: impl FnOnce() -> Result<Option<bool>, gix_config::value::Error>,
         ) -> Result<
-            crate::protocol::transport::client::http::options::FollowRedirects,
-            crate::config::key::GenericErrorWithValue,
+            gix_transport::client::http::options::FollowRedirects,
+            crate::key::GenericErrorWithValue,
         > {
-            use crate::{bstr::ByteSlice, protocol::transport::client::http::options::FollowRedirects};
+            use bstr::ByteSlice;
+            use gix_transport::client::http::options::FollowRedirects;
             Ok(if value.as_ref().as_bytes() == b"initial" {
                 FollowRedirects::Initial
             } else if let Some(value) = boolean().map_err(|err| {
-                crate::config::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
+                crate::key::GenericErrorWithValue::from_value(self, value.into_owned()).with_source(err)
             })? {
                 if value {
                     FollowRedirects::All
@@ -163,19 +164,19 @@ mod key_impls {
     impl super::Version {
         pub fn try_into_http_version(
             &'static self,
-            value: std::borrow::Cow<'_, crate::bstr::BStr>,
+            value: std::borrow::Cow<'_, bstr::BStr>,
         ) -> Result<
-            gix_protocol::transport::client::http::options::HttpVersion,
-            crate::config::key::GenericErrorWithValue,
+            gix_transport::client::http::options::HttpVersion,
+            crate::key::GenericErrorWithValue,
         > {
-            use gix_protocol::transport::client::http::options::HttpVersion;
+            use gix_transport::client::http::options::HttpVersion;
 
-            use crate::bstr::ByteSlice;
+            use bstr::ByteSlice;
             Ok(match value.as_ref().as_bytes() {
                 b"HTTP/1.1" => HttpVersion::V1_1,
                 b"HTTP/2" => HttpVersion::V2,
                 _ => {
-                    return Err(crate::config::key::GenericErrorWithValue::from_value(
+                    return Err(crate::key::GenericErrorWithValue::from_value(
                         self,
                         value.into_owned(),
                     ))
@@ -191,14 +192,14 @@ mod key_impls {
     impl ProxyAuthMethod {
         pub fn try_into_proxy_auth_method(
             &'static self,
-            value: std::borrow::Cow<'_, crate::bstr::BStr>,
+            value: std::borrow::Cow<'_, bstr::BStr>,
         ) -> Result<
-            gix_protocol::transport::client::http::options::ProxyAuthMethod,
-            crate::config::key::GenericErrorWithValue,
+            gix_transport::client::http::options::ProxyAuthMethod,
+            crate::key::GenericErrorWithValue,
         > {
-            use gix_protocol::transport::client::http::options::ProxyAuthMethod;
+            use gix_transport::client::http::options::ProxyAuthMethod;
 
-            use crate::bstr::ByteSlice;
+            use bstr::ByteSlice;
             Ok(match value.as_ref().as_bytes() {
                 b"anyauth" => ProxyAuthMethod::AnyAuth,
                 b"basic" => ProxyAuthMethod::Basic,
@@ -206,7 +207,7 @@ mod key_impls {
                 b"negotiate" => ProxyAuthMethod::Negotiate,
                 b"ntlm" => ProxyAuthMethod::Ntlm,
                 _ => {
-                    return Err(crate::config::key::GenericErrorWithValue::from_value(
+                    return Err(crate::key::GenericErrorWithValue::from_value(
                         self,
                         value.into_owned(),
                     ))
@@ -222,12 +223,12 @@ mod key_impls {
     impl SslVersion {
         pub fn try_into_ssl_version(
             &'static self,
-            value: std::borrow::Cow<'_, crate::bstr::BStr>,
-        ) -> Result<gix_protocol::transport::client::http::options::SslVersion, crate::config::ssl_version::Error>
+            value: std::borrow::Cow<'_, bstr::BStr>,
+        ) -> Result<gix_transport::client::http::options::SslVersion, crate::ssl_version::Error>
         {
-            use gix_protocol::transport::client::http::options::SslVersion::*;
+            use gix_transport::client::http::options::SslVersion::*;
 
-            use crate::bstr::ByteSlice;
+            use bstr::ByteSlice;
             Ok(match value.as_ref().as_bytes() {
                 b"default" | b"" => Default,
                 b"tlsv1" => TlsV1,
@@ -237,7 +238,7 @@ mod key_impls {
                 b"tlsv1.1" => TlsV1_1,
                 b"tlsv1.2" => TlsV1_2,
                 b"tlsv1.3" => TlsV1_3,
-                _ => return Err(crate::config::ssl_version::Error::from_value(self, value.into_owned())),
+                _ => return Err(crate::ssl_version::Error::from_value(self, value.into_owned())),
             })
         }
     }

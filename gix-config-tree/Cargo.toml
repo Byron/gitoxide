@@ -16,12 +16,12 @@ rust-version = "1.65"
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 # serde = ["dep:serde", "bstr/serde", "gix-sec/serde", "gix-ref/serde", "gix-glob/serde", "gix-config-value/serde"]
 
-# async-network-client
+async-network-client = ["gix-transport/async-client"]
 attributes = ["dep:gix-attributes", "dep:gix-filter", "dep:gix-submodule"]
 blob-diff = ["gix-diff/blob"]
-# blocking-http-transport-curl
-# blocking-http-transport-reqwest
-# blocking-network-client
+blocking-http-transport-curl = ["gix-transport/http-client"]
+blocking-http-transport-reqwest = ["gix-transport/http-client"]
+blocking-network-client = ["gix-transport/blocking-client"]
 credentials = ["dep:gix-negotiate"]
 revision = []
 
@@ -37,6 +37,7 @@ gix-hash = { version = "^0.13.1", path = "../gix-hash" }
 gix-lock = { version = "^11.0.0", path = "../gix-lock" }
 gix-negotiate = { version = "^0.9.0", path = "../gix-negotiate", optional = true }
 gix-pack = { version = "^0.44.0", path = "../gix-pack", default-features = false }
+gix-transport = { version = "^0.38.0", path = "../gix-transport", optional = true }
 gix-ref = { version = "^0.38.0", path = "../gix-ref" }
 gix-refspec = { version = "^0.19.0", path = "../gix-refspec" }
 gix-submodule = { version = "^0.5.0", path = "../gix-submodule", optional = true }

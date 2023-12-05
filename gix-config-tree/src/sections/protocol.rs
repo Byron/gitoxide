@@ -10,6 +10,48 @@ impl Protocol {
     pub const NAME_PARAMETER: NameParameter = NameParameter;
 }
 
+// TODO Copied from gix/src/remote/url/scheme_permission.rs
+pub mod scheme_permission {
+    use std::borrow::Cow;
+
+    use bstr::{BStr, BString, ByteSlice};
+
+    // All allowed values of the `protocol.allow` key.
+    #[derive(Debug, Clone, Copy, Eq, PartialEq)]
+    pub enum Allow {
+        /// Allow use this protocol.
+        Always,
+        /// Forbid using this protocol
+        Never,
+        /// Only supported if the `GIT_PROTOCOL_FROM_USER` is unset or is set to `1`.
+        User,
+    }
+
+    impl Allow {
+        /// Return true if we represent something like 'allow == true'.
+        pub fn to_bool(self, user_allowed: Option<bool>) -> bool {
+            match self {
+                Allow::Always => true,
+                Allow::Never => false,
+                Allow::User => user_allowed.unwrap_or(true),
+            }
+        }
+    }
+
+    impl<'a> TryFrom<Cow<'a, BStr>> for Allow {
+        type Error = BString;
+
+        fn try_from(v: Cow<'a, BStr>) -> Result<Self, Self::Error> {
+            Ok(match v.as_ref().as_bytes() {
+                b"never" => Allow::Never,
+                b"always" => Allow::Always,
+                b"user" => Allow::User,
+                unknown => return Err(unknown.into()),
+            })
+        }
+    }
+}
+
 /// The `protocol.allow` key type.
 pub type Allow = keys::Any<validate::Allow>;
 
@@ -20,7 +62,7 @@ pub type Version = keys::Any<validate::Version>;
 mod allow {
     use std::borrow::Cow;
     use bstr::BStr;
-    use crate::{protocol::Allow, remote::url::scheme_permission};
+    use crate::sections::protocol::{Allow, scheme_permission};
 
     impl Allow {
         /// Convert `value` into its respective `Allow` variant, possibly informing about the `scheme` we are looking at in the error.
@@ -28,8 +70,8 @@ mod allow {
             &'static self,
             value: Cow<'_, BStr>,
             scheme: Option<&str>,
-        ) -> Result<scheme_permission::Allow, config::protocol::allow::Error> {
-            scheme_permission::Allow::try_from(value).map_err(|value| config::protocol::allow::Error {
+        ) -> Result<scheme_permission::Allow, crate::protocol::allow::Error> {
+            scheme_permission::Allow::try_from(value).map_err(|value| crate::protocol::allow::Error {
                 value,
                 scheme: scheme.map(ToOwned::to_owned),
             })
@@ -79,25 +121,25 @@ mod key_impls {
         #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
         pub fn try_into_protocol_version(
             &'static self,
-            value: Option<Result<i64, gix_config::value::Error>>,
-        ) -> Result<gix_protocol::transport::Protocol, crate::config::key::GenericErrorWithValue> {
+            value: Option<Result<i64, gix_config_value::Error>>,
+        ) -> Result<gix_transport::Protocol, crate::key::GenericErrorWithValue> {
             let value = match value {
-                None => return Ok(gix_protocol::transport::Protocol::V2),
+                None => return Ok(gix_transport::Protocol::V2),
                 Some(v) => v,
             };
             Ok(match value {
-                Ok(0) => gix_protocol::transport::Protocol::V0,
-                Ok(1) => gix_protocol::transport::Protocol::V1,
-                Ok(2) => gix_protocol::transport::Protocol::V2,
+                Ok(0) => gix_transport::Protocol::V0,
+                Ok(1) => gix_transport::Protocol::V1,
+                Ok(2) => gix_transport::Protocol::V2,
                 Ok(other) => {
-                    return Err(crate::config::key::GenericErrorWithValue::from_value(
+                    return Err(crate::key::GenericErrorWithValue::from_value(
                         self,
                         other.to_string().into(),
                     ))
                 }
                 Err(err) => {
                     return Err(
-                        crate::config::key::GenericErrorWithValue::from_value(self, "unknown".into()).with_source(err),
+                        crate::key::GenericErrorWithValue::from_value(self, "unknown".into()).with_source(err),
                     )
                 }
             })

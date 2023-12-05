@@ -123,8 +123,8 @@ mod ssh {
     #[test]
     #[cfg(feature = "blocking-network-client")]
     fn variant() -> crate::Result {
-        use crate::Ssh;
-        use gix_protocol::transport::client::ssh::ProgramKind;
+        use gix_config_tree::Ssh;
+        use gix_transport::client::ssh::ProgramKind;
 
         use super::bcow;
         for (actual, expected) in [
@@ -642,7 +642,7 @@ mod protocol {
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     #[test]
     fn allow() -> crate::Result {
-        use gix::{config::tree::protocol, remote::url::scheme_permission::Allow};
+        use gix_config_tree::{sections::protocol, sections::protocol::scheme_permission::Allow};
 
         use super::bcow;
 
@@ -686,10 +686,10 @@ mod protocol {
         #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
         {
             for (valid, expected) in [
-                (None, gix_protocol::transport::Protocol::V2),
-                (Some(0), gix_protocol::transport::Protocol::V0),
-                (Some(1), gix_protocol::transport::Protocol::V1),
-                (Some(2), gix_protocol::transport::Protocol::V2),
+                (None, gix_transport::Protocol::V2),
+                (Some(0), gix_transport::Protocol::V0),
+                (Some(1), gix_transport::Protocol::V1),
+                (Some(2), gix_transport::Protocol::V2),
             ] {
                 assert_eq!(
                     Protocol::VERSION
@@ -804,8 +804,8 @@ mod gitoxide {
 mod http {
     use std::borrow::Cow;
 
-    use gix::config::tree::{Http, Key};
-    use gix_object::bstr::ByteSlice;
+    use bstr::ByteSlice;
+    use gix_config_tree::{Http, Key};
 
     use super::bcow;
 

@@ -14,17 +14,18 @@ pub type Variant = keys::Any<validate::Variant>;
 mod variant {
     use std::borrow::Cow;
 
-    use crate::{bstr::BStr, config, config::ssh::Variant};
+    use bstr::BStr;
+    use crate::sections::ssh::Variant;
 
     impl Variant {
         pub fn try_into_variant(
             &'static self,
             value: Cow<'_, BStr>,
-        ) -> Result<Option<gix_protocol::transport::client::ssh::ProgramKind>, config::key::GenericErrorWithValue>
+        ) -> Result<Option<gix_transport::client::ssh::ProgramKind>, crate::key::GenericErrorWithValue>
         {
-            use gix_protocol::transport::client::ssh::ProgramKind;
+            use gix_transport::client::ssh::ProgramKind;
 
-            use crate::bstr::ByteSlice;
+            use bstr::ByteSlice;
             Ok(Some(match value.as_ref().as_bytes() {
                 b"auto" => return Ok(None),
                 b"ssh" => ProgramKind::Ssh,
@@ -32,7 +33,7 @@ mod variant {
                 b"putty" => ProgramKind::Putty,
                 b"tortoiseplink" => ProgramKind::TortoisePlink,
                 b"simple" => ProgramKind::Simple,
-                _ => return Err(config::key::GenericErrorWithValue::from_value(self, value.into_owned())),
+                _ => return Err(crate::key::GenericErrorWithValue::from_value(self, value.into_owned())),
             }))
         }
     }
