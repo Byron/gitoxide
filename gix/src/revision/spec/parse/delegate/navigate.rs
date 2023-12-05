@@ -121,7 +121,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                 let lookup_path = |obj: &ObjectId| {
                     let tree_id = peel(repo, obj, gix_object::Kind::Tree)?;
                     if path.is_empty() {
-                        return Ok(tree_id);
+                        return Ok((tree_id, gix_object::tree::EntryKind::Tree.into()));
                     }
                     let mut tree = repo.find_object(tree_id)?.into_tree();
                     let entry =
@@ -131,11 +131,17 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 object: obj.attach(repo).shorten_or_id(),
                                 tree: tree_id.attach(repo).shorten_or_id(),
                             })?;
-                    Ok(entry.object_id())
+                    Ok((entry.object_id(), entry.mode()))
                 };
                 for obj in objs.iter() {
                     match lookup_path(obj) {
-                        Ok(replace) => replacements.push((*obj, replace)),
+                        Ok((replace, mode)) => {
+                            if !path.is_empty() {
+                                // Technically this is letting the last one win, but so be it.
+                                self.paths[self.idx] = Some((path.to_owned(), mode));
+                            }
+                            replacements.push((*obj, replace))
+                        }
                         Err(err) => errors.push((*obj, err)),
                     }
                 }
@@ -306,6 +312,14 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     self.objs[self.idx]
                         .get_or_insert_with(HashSet::default)
                         .insert(entry.id);
+
+                    self.paths[self.idx] = Some((
+                        path.to_owned(),
+                        entry
+                            .mode
+                            .to_tree_entry_mode()
+                            .unwrap_or(gix_object::tree::EntryKind::Blob.into()),
+                    ));
                     Some(())
                 }
                 None => {

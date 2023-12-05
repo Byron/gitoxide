@@ -21,5 +21,7 @@ fn peel_to_object() {
 #[test]
 fn trailing_colon_is_equivalent_to_peel_to_tree() {
     let repo = &repo("complex_graph").unwrap();
-    assert_eq!(parse_spec("@^{tree}", repo).unwrap(), parse_spec("@:", repo).unwrap());
+    let empty_path = parse_spec("@:", repo).unwrap();
+    assert_eq!(parse_spec("@^{tree}", repo).unwrap(), empty_path);
+    assert_eq!(empty_path.path_and_mode(), None, "empty tree paths are ignored");
 }
