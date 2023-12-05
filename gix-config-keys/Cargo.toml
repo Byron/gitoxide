@@ -1,5 +1,5 @@
 [package]
-name = "gix-config-tree"
+name = "gix-config-keys"
 version = "0.1.0"
 repository = "https://github.com/Byron/gitoxide"
 description = "Tree of sections and keys for type-safe access to git config parameters."

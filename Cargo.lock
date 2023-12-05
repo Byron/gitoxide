@@ -1447,21 +1447,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gix-config-tests"
-version = "0.0.0"
-dependencies = [
- "bstr",
- "gix",
- "gix-config",
- "gix-path 0.10.0",
- "gix-ref 0.38.0",
- "gix-sec 0.10.0",
- "gix-testtools",
- "serial_test",
-]
-
-[[package]]
-name = "gix-config-tree"
+name = "gix-config-keys"
 version = "0.1.0"
 dependencies = [
  "bstr",
@@ -1484,6 +1470,20 @@ dependencies = [
  "gix-url",
  "gix-validate 0.8.0",
  "thiserror",
+]
+
+[[package]]
+name = "gix-config-tests"
+version = "0.0.0"
+dependencies = [
+ "bstr",
+ "gix",
+ "gix-config",
+ "gix-path 0.10.0",
+ "gix-ref 0.38.0",
+ "gix-sec 0.10.0",
+ "gix-testtools",
+ "serial_test",
 ]
 
 [[package]]

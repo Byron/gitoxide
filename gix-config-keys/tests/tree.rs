@@ -11,7 +11,7 @@ fn bcow(input: &str) -> Cow<'_, BStr> {
 mod keys {
     use std::borrow::Cow;
 
-    use gix_config_tree::{Key, Section};
+    use gix_config_keys::{Key, Section};
     use bstr::ByteSlice;
 
     use super::bcow;
@@ -19,20 +19,20 @@ mod keys {
     #[test]
     fn string() -> crate::Result {
         assert_eq!(
-            gix_config_tree::Http::USER_AGENT.try_into_string(bcow("agent"))?,
+            gix_config_keys::Http::USER_AGENT.try_into_string(bcow("agent"))?,
             "agent"
         );
-        assert!(gix_config_tree::Http::USER_AGENT.validate("agent".into()).is_ok());
+        assert!(gix_config_keys::Http::USER_AGENT.validate("agent".into()).is_ok());
 
         let invalid = b"\xF0\x80\x80".as_bstr();
         assert_eq!(
-            gix_config_tree::Http::USER_AGENT
+            gix_config_keys::Http::USER_AGENT
                 .try_into_string(Cow::Borrowed(invalid))
                 .unwrap_err()
                 .to_string(),
             "The utf-8 string at \"http.userAgent=���\" could not be decoded"
         );
-        assert!(gix_config_tree::Http::USER_AGENT.validate(invalid).is_err());
+        assert!(gix_config_keys::Http::USER_AGENT.validate(invalid).is_err());
 
         Ok(())
     }
@@ -40,21 +40,21 @@ mod keys {
     #[test]
     fn any() {
         assert!(
-            !gix_config_tree::Tree.sections().is_empty(),
+            !gix_config_keys::Tree.sections().is_empty(),
             "the root has at least one section"
         );
-        assert_eq!(gix_config_tree::Tree::AUTHOR.name(), "author");
-        assert_eq!(gix_config_tree::Author.keys().len(), 2);
-        assert_eq!(gix_config_tree::Author::NAME.name(), "name");
-        assert_eq!(gix_config_tree::Author::EMAIL.name(), "email");
+        assert_eq!(gix_config_keys::Tree::AUTHOR.name(), "author");
+        assert_eq!(gix_config_keys::Author.keys().len(), 2);
+        assert_eq!(gix_config_keys::Author::NAME.name(), "name");
+        assert_eq!(gix_config_keys::Author::EMAIL.name(), "email");
         assert_eq!(
-            gix_config_tree::Author::NAME
+            gix_config_keys::Author::NAME
                 .validated_assignment("user".into())
                 .unwrap(),
             "author.name=user"
         );
         assert_eq!(
-            gix_config_tree::Author::NAME
+            gix_config_keys::Author::NAME
                 .validated_assignment("user".into())
                 .unwrap(),
             "author.name=user"
@@ -63,10 +63,10 @@ mod keys {
 
     #[test]
     fn remote_name() {
-        assert!(gix_config_tree::Remote::PUSH_DEFAULT
+        assert!(gix_config_keys::Remote::PUSH_DEFAULT
             .validate("origin".into())
             .is_ok());
-        assert!(gix_config_tree::Remote::PUSH_DEFAULT
+        assert!(gix_config_keys::Remote::PUSH_DEFAULT
             .validate("https://github.com/byron/gitoxide".into())
             .is_ok());
     }
@@ -74,14 +74,14 @@ mod keys {
     #[test]
     fn unsigned_integer() {
         for valid in [0, 1, 100_124] {
-            assert!(gix_config_tree::Core::DELTA_BASE_CACHE_LIMIT
+            assert!(gix_config_keys::Core::DELTA_BASE_CACHE_LIMIT
                 .validate(valid.to_string().as_bytes().into())
                 .is_ok());
         }
 
         for invalid in [-1, -100] {
             assert_eq!(
-                gix_config_tree::Core::DELTA_BASE_CACHE_LIMIT
+                gix_config_keys::Core::DELTA_BASE_CACHE_LIMIT
                     .validate(invalid.to_string().as_str().into())
                     .unwrap_err()
                     .to_string(),
@@ -91,7 +91,7 @@ mod keys {
 
         let out_of_bounds = ((i64::MAX as u64) + 1).to_string();
         assert_eq!(
-            gix_config_tree::Core::DELTA_BASE_CACHE_LIMIT
+            gix_config_keys::Core::DELTA_BASE_CACHE_LIMIT
                 .validate(out_of_bounds.as_bytes().into())
                 .unwrap_err()
                 .to_string(),
@@ -101,7 +101,7 @@ mod keys {
 }
 
 mod branch {
-    use gix_config_tree::{Key, sections::{branch, Branch}};
+    use gix_config_keys::{Key, sections::{branch, Branch}};
 
     use super::bcow;
 
@@ -123,7 +123,7 @@ mod ssh {
     #[test]
     #[cfg(feature = "blocking-network-client")]
     fn variant() -> crate::Result {
-        use gix_config_tree::Ssh;
+        use gix_config_keys::Ssh;
         use gix_transport::client::ssh::ProgramKind;
 
         use super::bcow;
@@ -153,7 +153,7 @@ mod fetch {
     #[cfg(feature = "credentials")]
     fn algorithm() -> crate::Result {
         use super::bcow;
-        use gix_config_tree::{Fetch, Key};
+        use gix_config_keys::{Fetch, Key};
         use gix_negotiate::Algorithm;
 
         for (actual, expected) in [
@@ -182,7 +182,7 @@ mod fetch {
     #[cfg(feature = "attributes")]
     fn recurse_submodule() -> crate::Result {
         use bstr::ByteSlice;
-        use gix_config_tree::{Fetch, Key};
+        use gix_config_keys::{Fetch, Key};
 
         for (actual, expected) in [
             ("true", gix_submodule::config::FetchRecurse::Always),
@@ -210,7 +210,7 @@ mod fetch {
 
 #[cfg(feature = "blob-diff")]
 mod diff {
-    use gix_config_tree::{
+    use gix_config_keys::{
         Diff, Key,
         diff::renames::Tracking,
     };
@@ -276,7 +276,7 @@ mod diff {
 mod core {
     use std::time::Duration;
 
-    use gix_config_tree::{Core, Key};
+    use gix_config_keys::{Core, Key};
     use gix_lock::acquire::Fail;
 
     use super::bcow;
@@ -316,7 +316,7 @@ mod core {
     #[test]
     #[cfg(feature = "revision")]
     fn disambiguate() -> crate::Result {
-        use gix_config_tree::disambiguate::ObjectKindHint;
+        use gix_config_keys::disambiguate::ObjectKindHint;
         for (value, expected) in [
             ("none", None),
             ("commit", Some(ObjectKindHint::Commit)),
@@ -535,7 +535,7 @@ mod core {
 }
 
 mod index {
-    use gix_config_tree::{Index, Key};
+    use gix_config_keys::{Index, Key};
 
     use super::bcow;
 
@@ -560,7 +560,7 @@ mod index {
 }
 
 mod extensions {
-    use gix_config_tree::{Extensions, Key};
+    use gix_config_keys::{Extensions, Key};
 
     use super::bcow;
 
@@ -589,7 +589,7 @@ mod extensions {
 }
 
 mod checkout {
-    use gix_config_tree::{Checkout, Key};
+    use gix_config_keys::{Checkout, Key};
 
     fn int(value: i64) -> Result<i64, gix_config::value::Error> {
         Ok(value)
@@ -609,7 +609,7 @@ mod checkout {
 }
 
 mod pack {
-    use gix_config_tree::{Key, Pack};
+    use gix_config_keys::{Key, Pack};
 
     #[test]
     fn index_version() -> crate::Result {
@@ -637,12 +637,12 @@ mod pack {
 }
 
 mod protocol {
-    use gix_config_tree::{Key, Protocol};
+    use gix_config_keys::{Key, Protocol};
 
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     #[test]
     fn allow() -> crate::Result {
-        use gix_config_tree::{sections::protocol, sections::protocol::scheme_permission::Allow};
+        use gix_config_keys::{sections::protocol, sections::protocol::scheme_permission::Allow};
 
         use super::bcow;
 
@@ -714,7 +714,7 @@ mod gitoxide {
     mod http {
         use std::time::Duration;
 
-        use gix_config_tree::{sections::gitoxide, Key};
+        use gix_config_keys::{sections::gitoxide, Key};
 
         #[test]
         fn connect_timeout() -> crate::Result {
@@ -726,7 +726,7 @@ mod gitoxide {
         }
     }
     mod allow {
-        use gix_config_tree::{sections::gitoxide, Key};
+        use gix_config_keys::{sections::gitoxide, Key};
 
         #[test]
         fn protocol_from_user() {
@@ -739,7 +739,7 @@ mod gitoxide {
         }
     }
     mod commit {
-        use gix_config_tree::{sections::gitoxide, Key};
+        use gix_config_keys::{sections::gitoxide, Key};
 
         #[test]
         fn author_and_committer_date() {
@@ -758,7 +758,7 @@ mod gitoxide {
         }
     }
     mod author {
-        use gix_config_tree::{sections::gitoxide, Key};
+        use gix_config_keys::{sections::gitoxide, Key};
 
         #[test]
         fn name_and_email_fallback() {
@@ -777,7 +777,7 @@ mod gitoxide {
         }
     }
     mod committer {
-        use gix_config_tree::{sections::gitoxide, Key};
+        use gix_config_keys::{sections::gitoxide, Key};
 
         #[test]
         fn name_and_email_fallback() {
@@ -805,7 +805,7 @@ mod http {
     use std::borrow::Cow;
 
     use bstr::ByteSlice;
-    use gix_config_tree::{Http, Key};
+    use gix_config_keys::{Http, Key};
 
     use super::bcow;
 
@@ -947,7 +947,7 @@ mod http {
 }
 
 mod remote {
-    use gix_config_tree::{Key, Remote};
+    use gix_config_keys::{Key, Remote};
 
     use super::bcow;
 
