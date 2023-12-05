@@ -94,6 +94,61 @@ pub(crate) mod convert_to_diffable {
     }
 
     #[test]
+    fn binary_below_large_file_threshold() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let mut filter = gix_diff::blob::Pipeline::new(
+            WorktreeRoots {
+                old_root: None,
+                new_root: Some(tmp.path().to_owned()),
+            },
+            gix_filter::Pipeline::default(),
+            vec![],
+            gix_diff::blob::pipeline::Options {
+                large_file_threshold_bytes: 5,
+                ..default_options()
+            },
+        );
+
+        let does_not_matter = gix_hash::Kind::Sha1.null();
+        let mut buf = Vec::new();
+        let a_name = "a";
+        let large_content = "a\0b";
+        std::fs::write(tmp.path().join(a_name), large_content.as_bytes())?;
+        let out = filter.convert_to_diffable(
+            &does_not_matter,
+            EntryKind::BlobExecutable,
+            a_name.into(),
+            ResourceKind::NewOrDestination,
+            &mut |_, _| {},
+            &gix_object::find::Never,
+            pipeline::Mode::default(),
+            &mut buf,
+        )?;
+        assert!(out.driver_index.is_none(), "there was no driver");
+        assert_eq!(out.data, Some(pipeline::Data::Binary { size: 3 }), "detected in buffer");
+        assert_eq!(buf.len(), 0, "it should avoid querying that data in the first place");
+
+        let mut db = ObjectDb::default();
+        let id = db.insert(large_content);
+        let out = filter.convert_to_diffable(
+            &id,
+            EntryKind::Blob,
+            a_name.into(),
+            ResourceKind::OldOrSource,
+            &mut |_, _| {},
+            &db,
+            pipeline::Mode::default(),
+            &mut buf,
+        )?;
+
+        assert!(out.driver_index.is_none(), "there was no driver");
+        assert_eq!(out.data, Some(pipeline::Data::Binary { size: 3 }));
+        assert_eq!(buf.len(), 0, "it should avoid querying that data in the first place");
+
+        Ok(())
+    }
+
+    #[test]
     fn above_large_file_threshold() -> crate::Result {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let mut filter = gix_diff::blob::Pipeline::new(
