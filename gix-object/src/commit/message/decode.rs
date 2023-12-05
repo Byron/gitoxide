@@ -3,7 +3,7 @@ use winnow::{
     error::ParserError,
     prelude::*,
     stream::{Offset, Stream},
-    token::take_till1,
+    token::take_till,
 };
 
 use crate::bstr::{BStr, ByteSlice};
@@ -16,7 +16,7 @@ fn subject_and_body<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<(
     let start_i = *i;
     let start = i.checkpoint();
     while !i.is_empty() {
-        match take_till1::<_, _, E>(|c| c == b'\n' || c == b'\r').parse_next(i) {
+        match take_till::<_, _, E>(1.., |c| c == b'\n' || c == b'\r').parse_next(i) {
             Ok(_) => {
                 let consumed_bytes = i.offset_from(&start);
                 match preceded((newline::<E>, newline::<E>), rest).parse_next(i) {

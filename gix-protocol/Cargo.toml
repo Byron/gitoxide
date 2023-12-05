@@ -49,7 +49,7 @@ gix-credentials = { version = "^0.21.0", path = "../gix-credentials" }
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 bstr = { version = "1.3.0", default-features = false, features = ["std", "unicode"] }
-winnow = { version = "0.5.14", features = ["simd"] }
+winnow = { version = "0.5.24", features = ["simd"] }
 btoi = "0.4.2"
 
 # for async-client

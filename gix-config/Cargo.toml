@@ -24,7 +24,7 @@ gix-sec = { version = "^0.10.0", path = "../gix-sec" }
 gix-ref = { version = "^0.38.0", path = "../gix-ref" }
 gix-glob = { version = "^0.14.0", path = "../gix-glob" }
 
-winnow = { version = "0.5.14", features = ["simd"] }
+winnow = { version = "0.5.24", features = ["simd"] }
 memchr = "2"
 thiserror = "1.0.26"
 unicode-bom = "2.0.2"

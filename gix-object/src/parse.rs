@@ -3,7 +3,7 @@ use winnow::{
     combinator::{preceded, repeat, terminated},
     error::{AddContext, ParserError, StrContext},
     prelude::*,
-    token::{take_till1, take_until0, take_while},
+    token::{take_till, take_until0, take_while},
     Parser,
 };
 
@@ -17,9 +17,9 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParserError<&'a [u8]> + AddCont
     i: &mut &'a [u8],
 ) -> PResult<(&'a [u8], BString), E> {
     (
-        terminated(take_till1(SPACE_OR_NL), SPACE),
+        terminated(take_till(1.., SPACE_OR_NL), SPACE),
         (
-            take_till1(NL),
+            take_till(1.., NL),
             NL,
             repeat(1.., terminated((SPACE, take_until0(NL)), NL)).map(|()| ()),
         )
@@ -52,7 +52,7 @@ pub(crate) fn any_header_field<'a, T, E: ParserError<&'a [u8]>>(
     i: &mut &'a [u8],
     parse_value: impl Parser<&'a [u8], T, E>,
 ) -> PResult<(&'a [u8], T), E> {
-    terminated((terminated(take_till1(SPACE_OR_NL), SPACE), parse_value), NL).parse_next(i)
+    terminated((terminated(take_till(1.., SPACE_OR_NL), SPACE), parse_value), NL).parse_next(i)
 }
 
 fn is_hex_digit_lc(b: u8) -> bool {
