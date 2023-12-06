@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-6295dec2bdd6c3bb35e45db7a486651ebfe50369/> V1 negotiation won't hang anymore
+   The logic previously tried to estimate when a pack can be expected,
+   and when a NAK is the end of a block, or the beginning of a pack.
+   
+   This can be known because a pack (with our settings) needs two things:
+   
+   * the server thinks it's ready
+   * a `done` sent by the client
+   
+   If the server doesn't think it's ready it will send NAK and be done.
+   
+   So the logic should be, for a NAK to stop the read-loop, that the client
+   expects a pack, and the server is ready. If the client is not ready, or
+   the server isn't ready, keep NAK and consider them the end of a round,
+   hence break the loop.
+
+### New Features (BREAKING)
+
+ - <csr-id-c3edef1c0c49accbb037bdf086dade3ed0e5e507/> make it possible to trace incoming and outgoing packetlines.
+   Due to the way this is (and has to be) setup, unfortunately one
+   has to integrate that with two crates, instead of just one.
+   
+   This changes touches multiple crates, most of which receive a single
+   boolean as last argument to indicate whether the tracing should
+   happen in the first place.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-88f8b342ab317696bcab8a0fe75c042e7290a75c/> Remove unsafe transmute of should_interrupt
+   Adds a lifetime to the ExtendedBufRead trait to specify how long the
+   callback provided must live.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 49 calendar days.
+ - 54 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1061](https://github.com/Byron/gitoxide/issues/1061)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1061](https://github.com/Byron/gitoxide/issues/1061)**
+    - V1 negotiation won't hang anymore ([`6295dec`](https://github.com/Byron/gitoxide/commit/6295dec2bdd6c3bb35e45db7a486651ebfe50369))
+ * **Uncategorized**
+    - Merge branch 'remove-unsafe' ([`d2ba97c`](https://github.com/Byron/gitoxide/commit/d2ba97c057de62022d4b8b720750c3a706ac0f9c))
+    - Remove unsafe transmute of should_interrupt ([`88f8b34`](https://github.com/Byron/gitoxide/commit/88f8b342ab317696bcab8a0fe75c042e7290a75c))
+    - Upgrade to `winnow` 0.5.24 ([`abcfb65`](https://github.com/Byron/gitoxide/commit/abcfb659786425ec09eff6b644cd2ad36b7d6bc4))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+    - Merge branch 'fix-v1-negotiation' ([`eb23338`](https://github.com/Byron/gitoxide/commit/eb23338b847af2b26c797e6e903969a569deb0a7))
+    - Merge branch 'trace-packetlines' ([`e7de4c7`](https://github.com/Byron/gitoxide/commit/e7de4c702a223ad9eb19b407391028dcb08d80c4))
+    - Make it possible to trace incoming and outgoing packetlines. ([`c3edef1`](https://github.com/Byron/gitoxide/commit/c3edef1c0c49accbb037bdf086dade3ed0e5e507))
+</details>
+
 ## 0.41.1 (2023-10-13)
 
 ### Bug Fixes
@@ -20,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-transport v0.38.0, gix-protocol v0.41.1, gix v0.55.2, gitoxide-core v0.33.1, gitoxide v0.31.1 ([`1955a57`](https://github.com/Byron/gitoxide/commit/1955a57f003f7d731d04e582e70ea86f15e8e7d9))
     - Prepare changelogs prior to release ([`12b5caf`](https://github.com/Byron/gitoxide/commit/12b5cafc49baf07d00313de468970a2db33ac1f8))
     - Bump `gix-transport` version to prevent it from being picked up. ([`8011c73`](https://github.com/Byron/gitoxide/commit/8011c73ee401bfca03811a249c46a4dd468af1b8))
 </details>

@@ -5,6 +5,219 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-27627248a019d85a904ecd8a57e395f34c1b16a4/> add `gitoxide.core.externalCommandStderr` to allow enabling `stderr` to the enclosing terminal.
+   Previously, this was enabled by default, now it can additionally be disabled by
+   the caller.
+ - <csr-id-6cf73a44cbcd8bdca6a353cfd02d6237b1883b8c/> use `gitoxide.credentials.helperStderr` key to control how stderr is handled with helpers.
+   That way users can configure each repository instance according to their needs,
+   with which includes disabling the `stderr` of credential helpers.
+   
+    Please enter the message for your patch. Lines starting with
+ - <csr-id-77686db3f91e16fa6657dbae2182ec72e88d3fd0/> `revision::Spec::path_and_mode()`
+   Provide additional information about revspecs for use with
+   worktree filters.
+ - <csr-id-6f4bbc31411cd3528cc6dd3db54a333ff861ec95/> add key for `diff.external`.
+   That way it's conceivable that applications correctly run either
+   a configured external diff tool, or one that is configured on a
+   per diff-driver basis, while being allowed to fall back to
+   a built-in implementation as needed.
+ - <csr-id-4aea9b097fb08e504cdfc4a7c3b7511a308dc074/> add the`diff::resource_cache()` low-level utility for rapid in-memory diffing of combinations of resources.
+   We also add the `object::tree::diff::Platform::for_each_to_obtain_tree_with_cache()` to pass a resource-cache
+   for re-use between multiple invocation for significant savings.
+ - <csr-id-dd575cd0e3749ff7f59c1582cec0524ff231667d/> Add config value gitoxide.http.sslNoVerify
+   This value can by overriden by GIT_SSL_NO_VERIFY env variable. We use
+   the value to override http.sslVerify when specifying ssl_verify in
+   transport Options.
+ - <csr-id-c6e83cf69f1a17e9ba3010bcce3a4ddd3305424c/> In gix read http.sslVerify config value and pass it to gix-transport.
+ - <csr-id-8434aab5fb6ce32be2bf3b20e38c28c780bd5db9/> add `gitoxide.core.refsNamespace` key and respect the `GIT_NAMESPACE` environment variable.
+   It's also provided as context value.
+ - <csr-id-0ed0a8936eaf73407721fe0e06da5d345a54956b/> make `verbose-object-parsing-errors` available in `gix`.
+   That way, it's easy to create programs that are geared towards
+   debugging repositories and finding invalid objects with detailed
+   errors.
+ - <csr-id-e95bb9fa3a69bec039ebf932b672496de753fe97/> add the `gitoxide.credentials.terminalPrompt` key to represent the GIT_TERMINAL_PROMPT
+   That way, it's easy to control the usage of terminals without using and environment.
+ - <csr-id-f34f46a3895a157036b099d6663d8953567119e7/> Add `http-client-curl-rustls` (CLI) and `blocking-http-transport-curl-rustls` (lib) features to avoid openssl.
+   That way, we should be able to avoid crashes on certain CI configurations.
+ - <csr-id-117357e7bbfcb1bfe887f85173e88db9436814b1/> add `Head::try_into_peeled_object()` and `Head::peel_to_object_in_place()`
+   This makes it easier to peel to a specific object type, after
+   all tags have been followed, without having to assume an intermediate
+   commit.
+
+### Bug Fixes
+
+ - <csr-id-0b3eb141bee59ffc17c973a8d126efaa52edb9b3/> assure the correct repository is used for checkouts after clone.
+   If this is not the case, it's possible for filters to run in the context of
+   potential parent repositories, which then can have all kinds of issues.
+   
+   In case of `git-lfs`, for instance, it would try to download objects
+   from the wrong repository.
+ - <csr-id-3ff1827a12557a601da22d138beb97e8647d5d6e/> Allow multiple packs to be received one after another.
+   Previously it would be difficult to perform another fetch operation on the
+   same connection as the final flush packet after a pack wouldn't be consumed.
+   
+   This has now been mitigated by consuming it in the one place where knoweldge
+   about this specialty exists.
+ - <csr-id-8d9296ff150a887cb887ee6b6a9c4a9cb550cae0/> don't use `trust-dns` by default when using request.
+   It's reported to have issues under certain condition, please see
+   https://github.com/seanmonstar/reqwest/pull/437 for more.
+   
+   The `blocking-http-transport-reqwest-rust-tls-trust-dns` feature was added
+   to provide the same feature-set as before for those who want `trust-dns`.
+ - <csr-id-6295dec2bdd6c3bb35e45db7a486651ebfe50369/> V1 negotiation won't hang anymore
+   The logic previously tried to estimate when a pack can be expected,
+   and when a NAK is the end of a block, or the beginning of a pack.
+   
+   This can be known because a pack (with our settings) needs two things:
+   
+   * the server thinks it's ready
+   * a `done` sent by the client
+   
+   If the server doesn't think it's ready it will send NAK and be done.
+   
+   So the logic should be, for a NAK to stop the read-loop, that the client
+   expects a pack, and the server is ready. If the client is not ready, or
+   the server isn't ready, keep NAK and consider them the end of a round,
+   hence break the loop.
+ - <csr-id-20f962e5d6a7c19ca097ccd3f06434f6c9501262/> allow to open split worktree repositories
+
+### New Features (BREAKING)
+
+ - <csr-id-4743212269c6fab69f6306fba88ee38b669a7dc3/> `object::blob::diff::Platform` now performs all necessary conversions.
+   Previously it would just offer the git-ODB version of a blob for diffing,
+   while it will now make it possible to apply all necessary conversion steps
+   for you.
+   
+   This also moves `Event::diff()` to `Change::diff()`, adds
+   `Repository::diff_resource_cache()` and refactors nearly everything
+   about the `objects::blob::diff::Platform`.
+ - <csr-id-089c4dc8b7d323637e5f9a9f7446f2a8e9f51ce1/> generalize rename-tracking engine for later use with status.
+   Previously the rename tracking engine was integrated with tree-diffs,
+   but already operates in a stand-alone fashion.
+   Now it's officially generalized which allows it to be tested separately
+   and used when tracking renames for diffs between index and tree, index
+   and index, and index and worktree.
+ - <csr-id-c3edef1c0c49accbb037bdf086dade3ed0e5e507/> make it possible to trace incoming and outgoing packetlines.
+   Due to the way this is (and has to be) setup, unfortunately one
+   has to integrate that with two crates, instead of just one.
+   
+   This changes touches multiple crates, most of which receive a single
+   boolean as last argument to indicate whether the tracing should
+   happen in the first place.
+ - <csr-id-4e6a4e6ef440c72f61513ba82b439b9dca298e73/> improve `head()` peeling API
+   Previously it was partially untested and it was hard to obtain an object of choice.
+   
+   Further breaking changes:
+   
+   * rename `Head::peeled()` to `into_peeled_id()`
+   * rename `Head::into_fully_peeled_id()` to `try_peel_into_id()`
+   * rename `Head::peel_to_id_in_place()` to `Head::try_peel_to_id_in_place()`
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2189cee47f99350b368390eaa2a01961bb77c250/> rename `GITOXIDE_*` environment variables to `GIX_#`
+ - <csr-id-88f8b342ab317696bcab8a0fe75c042e7290a75c/> Remove unsafe transmute of should_interrupt
+   Adds a lifetime to the ExtendedBufRead trait to specify how long the
+   callback provided must live.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 64 commits contributed to the release over the course of 53 calendar days.
+ - 54 days passed between releases.
+ - 23 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 6 unique issues were worked on: [#1061](https://github.com/Byron/gitoxide/issues/1061), [#1076](https://github.com/Byron/gitoxide/issues/1076), [#1090](https://github.com/Byron/gitoxide/issues/1090), [#1125](https://github.com/Byron/gitoxide/issues/1125), [#1129](https://github.com/Byron/gitoxide/issues/1129), [#972](https://github.com/Byron/gitoxide/issues/972)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1061](https://github.com/Byron/gitoxide/issues/1061)**
+    - V1 negotiation won't hang anymore ([`6295dec`](https://github.com/Byron/gitoxide/commit/6295dec2bdd6c3bb35e45db7a486651ebfe50369))
+ * **[#1076](https://github.com/Byron/gitoxide/issues/1076)**
+    - Don't use `trust-dns` by default when using request. ([`8d9296f`](https://github.com/Byron/gitoxide/commit/8d9296ff150a887cb887ee6b6a9c4a9cb550cae0))
+ * **[#1090](https://github.com/Byron/gitoxide/issues/1090)**
+    - Add the `gitoxide.credentials.terminalPrompt` key to represent the GIT_TERMINAL_PROMPT ([`e95bb9f`](https://github.com/Byron/gitoxide/commit/e95bb9fa3a69bec039ebf932b672496de753fe97))
+ * **[#1125](https://github.com/Byron/gitoxide/issues/1125)**
+    - Fix; `SnapshotMut::set_value()` now sets values for keys in subsections as well. ([`d8452a0`](https://github.com/Byron/gitoxide/commit/d8452a074f9f371c09ab3b06ae1870c90cf90475))
+ * **[#1129](https://github.com/Byron/gitoxide/issues/1129)**
+    - Assure the correct repository is used for checkouts after clone. ([`0b3eb14`](https://github.com/Byron/gitoxide/commit/0b3eb141bee59ffc17c973a8d126efaa52edb9b3))
+ * **[#972](https://github.com/Byron/gitoxide/issues/972)**
+    - Allow multiple packs to be received one after another. ([`3ff1827`](https://github.com/Byron/gitoxide/commit/3ff1827a12557a601da22d138beb97e8647d5d6e))
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`8156340`](https://github.com/Byron/gitoxide/commit/8156340724b1b7cb15824f88c75f6ddd7302cff5))
+    - Add `gitoxide.core.externalCommandStderr` to allow enabling `stderr` to the enclosing terminal. ([`2762724`](https://github.com/Byron/gitoxide/commit/27627248a019d85a904ecd8a57e395f34c1b16a4))
+    - Use `gitoxide.credentials.helperStderr` key to control how stderr is handled with helpers. ([`6cf73a4`](https://github.com/Byron/gitoxide/commit/6cf73a44cbcd8bdca6a353cfd02d6237b1883b8c))
+    - Rename `GITOXIDE_*` environment variables to `GIX_#` ([`2189cee`](https://github.com/Byron/gitoxide/commit/2189cee47f99350b368390eaa2a01961bb77c250))
+    - Merge branch 'gix-status' ([`5fdc9df`](https://github.com/Byron/gitoxide/commit/5fdc9df069f3d9a4bd88e4e0ca5d67916e2908c9))
+    - Merge branch 'remove-unsafe' ([`d2ba97c`](https://github.com/Byron/gitoxide/commit/d2ba97c057de62022d4b8b720750c3a706ac0f9c))
+    - Remove unsafe transmute of should_interrupt ([`88f8b34`](https://github.com/Byron/gitoxide/commit/88f8b342ab317696bcab8a0fe75c042e7290a75c))
+    - `revision::Spec::path_and_mode()` ([`77686db`](https://github.com/Byron/gitoxide/commit/77686db3f91e16fa6657dbae2182ec72e88d3fd0))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'gix-status' ([`dfb3f18`](https://github.com/Byron/gitoxide/commit/dfb3f1821428f294f1832543ad0cf2fc883b03fb))
+    - Adapt to changes in `gix-diff` ([`1706e23`](https://github.com/Byron/gitoxide/commit/1706e2394380c35cd98d0e106eb0985ae1912da0))
+    - `object::blob::diff::Platform` now performs all necessary conversions. ([`4743212`](https://github.com/Byron/gitoxide/commit/4743212269c6fab69f6306fba88ee38b669a7dc3))
+    - Add key for `diff.external`. ([`6f4bbc3`](https://github.com/Byron/gitoxide/commit/6f4bbc31411cd3528cc6dd3db54a333ff861ec95))
+    - Add the`diff::resource_cache()` low-level utility for rapid in-memory diffing of combinations of resources. ([`4aea9b0`](https://github.com/Byron/gitoxide/commit/4aea9b097fb08e504cdfc4a7c3b7511a308dc074))
+    - Merge branch 'support_ssl_verify' ([`5ce9784`](https://github.com/Byron/gitoxide/commit/5ce978432231e257ef625fc401895b34f963bf6d))
+    - Refactor ([`ead00e9`](https://github.com/Byron/gitoxide/commit/ead00e9c8864eca804b8ba0dbf6792e28da85ecc))
+    - Add config value gitoxide.http.sslNoVerify ([`dd575cd`](https://github.com/Byron/gitoxide/commit/dd575cd0e3749ff7f59c1582cec0524ff231667d))
+    - In gix read http.sslVerify config value and pass it to gix-transport. ([`c6e83cf`](https://github.com/Byron/gitoxide/commit/c6e83cf69f1a17e9ba3010bcce3a4ddd3305424c))
+    - Merge pull request #1140 from bittrance/fix-pr1127 ([`698caaa`](https://github.com/Byron/gitoxide/commit/698caaa53447c3d87a39749d6bc7526c6acbfe14))
+    - Connect new gitoxide.credentials subsection into section tree. ([`8b8704f`](https://github.com/Byron/gitoxide/commit/8b8704f8cd4382d0955fbf34c8f653b6ec3ff159))
+    - Adapt to changes in `gix-filter` ([`1763862`](https://github.com/Byron/gitoxide/commit/17638628586900d43d730e6ed2a0862d8e408f29))
+    - Merge branch 'improve-filters' ([`f09ea13`](https://github.com/Byron/gitoxide/commit/f09ea13b94a8dad695e4d26533fcd5c739043574))
+    - Add `gitoxide.core.refsNamespace` key and respect the `GIT_NAMESPACE` environment variable. ([`8434aab`](https://github.com/Byron/gitoxide/commit/8434aab5fb6ce32be2bf3b20e38c28c780bd5db9))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Merge branch 'sh-on-windows' ([`2b80d84`](https://github.com/Byron/gitoxide/commit/2b80d8424196088d4ccc36914c87e320e4416ea1))
+    - Remove special handling in favor of allowing shell-avoidance. ([`a0cc80d`](https://github.com/Byron/gitoxide/commit/a0cc80d21e74a43d5770cf08a221ef92f39920bb))
+    - Merge branch 'fix-1103' ([`d75159c`](https://github.com/Byron/gitoxide/commit/d75159c6d49c01c24c97777c718a76261b88e5d3))
+    - Adapt to changes in `gix-credentials` ([`c712850`](https://github.com/Byron/gitoxide/commit/c7128502d2f8a97b5f730920c056bbda7f4509a5))
+    - Merge branch 'gix-status' ([`c87f2cc`](https://github.com/Byron/gitoxide/commit/c87f2cc7a499cbd354c03c40f9923c80845fc56c))
+    - Generalize rename-tracking engine for later use with status. ([`089c4dc`](https://github.com/Byron/gitoxide/commit/089c4dc8b7d323637e5f9a9f7446f2a8e9f51ce1))
+    - Merge branch 'error' ([`c372321`](https://github.com/Byron/gitoxide/commit/c372321dd6ea66a41c135d28c7319ab05a6d0942))
+    - Make `verbose-object-parsing-errors` available in `gix`. ([`0ed0a89`](https://github.com/Byron/gitoxide/commit/0ed0a8936eaf73407721fe0e06da5d345a54956b))
+    - Merge branch 'fix-1096' ([`ff99a18`](https://github.com/Byron/gitoxide/commit/ff99a18e9f9388542a9cbf17d61b413f34b1d533))
+    - Adapt to changes in `gix-object` ([`203d69c`](https://github.com/Byron/gitoxide/commit/203d69c8890acc716bd4f7a7b1b2b91a8c828bde))
+    - Merge branch 'caio/main' ([`7227410`](https://github.com/Byron/gitoxide/commit/72274107fdb8c8faa93a4abbe1382ca3301003c9))
+    - Count removed bytes correctly ([`267b13d`](https://github.com/Byron/gitoxide/commit/267b13d9ebd089d4ffb788e7cb94895914a1fd1d))
+    - Merge branch 'gix-object-find' ([`c8bd660`](https://github.com/Byron/gitoxide/commit/c8bd66065316176dfbbfe7ecaa092a25cad1854b))
+    - Thanks clippy ([`82b01c2`](https://github.com/Byron/gitoxide/commit/82b01c28bbbcd3b8ce346d1977fe7d8587273be6))
+    - Adapt to changes related to usage of `gix-object::Find` trait where necessary ([`5761a4d`](https://github.com/Byron/gitoxide/commit/5761a4daf80e5febe469e32220b71dc3063fb4a6))
+    - Adapt to changes in `gix_object` and `gix_odb`. ([`24e319e`](https://github.com/Byron/gitoxide/commit/24e319e996b4822782521430a2d0e8ce3710f123))
+    - Merge branch 'BloopAI/main' ([`c197cbf`](https://github.com/Byron/gitoxide/commit/c197cbfedf1405ac9b95b4f9d6630b98b1bac89f))
+    - Add feature to allow using rustls without trust-dns ([`ea8cd0e`](https://github.com/Byron/gitoxide/commit/ea8cd0e45793c374cfc6ebbacd09b09ebfbecfe4))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+    - Merge branch 'fix-v1-negotiation' ([`eb23338`](https://github.com/Byron/gitoxide/commit/eb23338b847af2b26c797e6e903969a569deb0a7))
+    - Merge branch 'trace-packetlines' ([`e7de4c7`](https://github.com/Byron/gitoxide/commit/e7de4c702a223ad9eb19b407391028dcb08d80c4))
+    - Make it possible to trace incoming and outgoing packetlines. ([`c3edef1`](https://github.com/Byron/gitoxide/commit/c3edef1c0c49accbb037bdf086dade3ed0e5e507))
+    - Merge branch 'discover-split-worktree' ([`16170d9`](https://github.com/Byron/gitoxide/commit/16170d9c2e4de6a2e639ff99b75e65bbd0e782d7))
+    - Improve the error message around incorrect worktree paths ([`dd57957`](https://github.com/Byron/gitoxide/commit/dd57957b34425ea1a61304222f42ccaa667224bd))
+    - Allow to open split worktree repositories ([`20f962e`](https://github.com/Byron/gitoxide/commit/20f962e5d6a7c19ca097ccd3f06434f6c9501262))
+    - Merge branch 'fuzz' ([`c5a7e66`](https://github.com/Byron/gitoxide/commit/c5a7e66d901868237ef5a4f86534b9878cc397ff))
+    - Add `http-client-curl-rustls` (CLI) and `blocking-http-transport-curl-rustls` (lib) features to avoid openssl. ([`f34f46a`](https://github.com/Byron/gitoxide/commit/f34f46a3895a157036b099d6663d8953567119e7))
+    - Make it easier to see what's happening during negotiation with `tracing enabled` ([`4e48558`](https://github.com/Byron/gitoxide/commit/4e485585ccdc1f98d7627eab9b58729dc526c73c))
+    - Release gix-url v0.25.1 ([`47a1241`](https://github.com/Byron/gitoxide/commit/47a1241484fdb424184ca37f85a8b287d374d2a1))
+    - Merge branch 'head-conversions' ([`c2cf20c`](https://github.com/Byron/gitoxide/commit/c2cf20cd2d685c2c24527729fff35fd0a7903742))
+    - Add `Head::try_into_peeled_object()` and `Head::peel_to_object_in_place()` ([`117357e`](https://github.com/Byron/gitoxide/commit/117357e7bbfcb1bfe887f85173e88db9436814b1))
+    - Improve `head()` peeling API ([`4e6a4e6`](https://github.com/Byron/gitoxide/commit/4e6a4e6ef440c72f61513ba82b439b9dca298e73))
+</details>
+
 ## 0.55.2 (2023-10-13)
 
 ### Bug Fixes
@@ -20,7 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +244,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-transport v0.38.0, gix-protocol v0.41.1, gix v0.55.2, gitoxide-core v0.33.1, gitoxide v0.31.1 ([`1955a57`](https://github.com/Byron/gitoxide/commit/1955a57f003f7d731d04e582e70ea86f15e8e7d9))
     - Prepare changelogs prior to release ([`12b5caf`](https://github.com/Byron/gitoxide/commit/12b5cafc49baf07d00313de468970a2db33ac1f8))
     - Bump `gix-transport` version to prevent it from being picked up. ([`8011c73`](https://github.com/Byron/gitoxide/commit/8011c73ee401bfca03811a249c46a4dd468af1b8))
 </details>
