@@ -81,9 +81,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Set binary name for completions ([`eab22bd`](https://github.com/Byron/gitoxide/commit/eab22bd5d56bf91ee0edfc7156023c159c7f65f9))
 </details>
 
-<csr-unknown>
- add thediff::resource_cache() low-level utility for rapid in-memory diffing of combinations of resources.We also add the object::tree::diff::Platform::for_each_to_obtain_tree_with_cache() to pass a resource-cachefor re-use between multiple invocation for significant savings. In gix read http.sslVerify config value and pass it to gix-transport. add basic connectivity checkImplement a simple connectivity check in a new gix-fsck crate, and addthis to gix via a new fsck subcommand. Currently this isfunctionally equivalent to:git rev-list --objects --quiet --missing=print Allow to print a tree without prettification, using --tree-style raw.This is mainly useful to generate fixtures for the test-suite, and is assuredto not add extra-bytes to the output either. automatically enforce strict mode if -c options are given on the command-line.This should stop most mistakes right away, instead of possibly silentlyignoring them depending on what was hard-coded in the respective sub-command. add gix free discover to inform about repository discovery.It’s mainly to better understand what’s causing certain failuresif a repository can’t be opened, in different modes of operations.<csr-unknown/>
-
 ## 0.31.1 (2023-10-13)
 
 A re-release to deal with breakage in the dependency tree (self-caused).
