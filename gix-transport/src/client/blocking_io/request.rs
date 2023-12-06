@@ -8,7 +8,7 @@ use crate::client::{ExtendedBufRead, MessageKind, WriteMode};
 pub struct RequestWriter<'a> {
     on_into_read: MessageKind,
     writer: gix_packetline::Writer<Box<dyn io::Write + 'a>>,
-    reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
+    reader: Box<dyn ExtendedBufRead<'a> + Unpin + 'a>,
     trace: bool,
 }
 
@@ -35,7 +35,7 @@ impl<'a> RequestWriter<'a> {
     /// If `trace` is true, `gix_trace` will be used on every written message or data.
     pub fn new_from_bufread<W: io::Write + 'a>(
         writer: W,
-        reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
+        reader: Box<dyn ExtendedBufRead<'a> + Unpin + 'a>,
         write_mode: WriteMode,
         on_into_read: MessageKind,
         trace: bool,
@@ -89,7 +89,7 @@ impl<'a> RequestWriter<'a> {
     /// Discard the ability to write and turn this instance into the reader for obtaining the other side's response.
     ///
     /// Doing so will also write the message type this instance was initialized with.
-    pub fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead + Unpin + 'a>> {
+    pub fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead<'a> + Unpin + 'a>> {
         self.write_message(self.on_into_read)?;
         self.writer.inner_mut().flush()?;
         Ok(self.reader)
@@ -105,7 +105,7 @@ impl<'a> RequestWriter<'a> {
     /// It's of utmost importance to drop the request writer before reading the response as these might be inter-dependent, depending on
     /// the underlying transport mechanism. Failure to do so may result in a deadlock depending on how the write and read mechanism
     /// is implemented.
-    pub fn into_parts(self) -> (Box<dyn io::Write + 'a>, Box<dyn ExtendedBufRead + Unpin + 'a>) {
+    pub fn into_parts(self) -> (Box<dyn io::Write + 'a>, Box<dyn ExtendedBufRead<'a> + Unpin + 'a>) {
         (self.writer.into_inner(), self.reader)
     }
 }
