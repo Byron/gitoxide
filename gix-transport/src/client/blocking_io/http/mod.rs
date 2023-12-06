@@ -516,8 +516,8 @@ impl<H: Http, B: ReadlineBufRead + Unpin> ReadlineBufRead for HeadersThenBody<H,
     }
 }
 
-impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H, B> {
-    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
+impl<'a, H: Http, B: ExtendedBufRead<'a> + Unpin> ExtendedBufRead<'a> for HeadersThenBody<H, B> {
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>) {
         self.body.set_progress_handler(handle_progress)
     }
 
