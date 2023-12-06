@@ -467,6 +467,13 @@ mod subsections {
         pub const TERMINAL_PROMPT: keys::Boolean = keys::Boolean::new_boolean("terminalPrompt", &Gitoxide::CREDENTIALS)
             .with_note("This is a custom addition to provide an alternative to the respective environment variable.")
             .with_environment_override("GIT_TERMINAL_PROMPT");
+
+        /// The `gitoxide.credentials.helperStderr` key to control what happens with the credential helpers `stderr`.
+        ///
+        /// If `true`, the default, `stderr` of credential helper programs will be inherited, just like with `git`.
+        /// If `false`, will be suppressed completely.
+        pub const HELPER_STDERR: keys::Boolean = keys::Boolean::new_boolean("helperStderr", &Gitoxide::CREDENTIALS)
+            .with_environment_override("GIX_CREDENTIALS_HELPER_STDERR");
     }
 
     impl Section for Credentials {
@@ -475,7 +482,7 @@ mod subsections {
         }
 
         fn keys(&self) -> &[&dyn Key] {
-            &[&Self::TERMINAL_PROMPT]
+            &[&Self::TERMINAL_PROMPT, &Self::HELPER_STDERR]
         }
 
         fn parent(&self) -> Option<&dyn Section> {
