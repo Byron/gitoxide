@@ -441,6 +441,10 @@ fn apply_environment_overrides(
                     let key = &gitoxide::Core::REFS_NAMESPACE;
                     (env(key), key.name)
                 },
+                {
+                    let key = &gitoxide::Core::EXTERNAL_COMMAND_STDERR;
+                    (env(key), key.name)
+                },
             ],
         ),
         (

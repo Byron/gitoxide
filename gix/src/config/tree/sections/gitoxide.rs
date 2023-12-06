@@ -116,6 +116,15 @@ mod subsections {
         pub const FILTER_PROCESS_DELAY: keys::Boolean =
             keys::Boolean::new_boolean("filterProcessDelay", &Gitoxide::CORE);
 
+        /// The `gitoxide.core.externalCommandStderr` key (default `true`).
+        ///
+        /// If `true`, the default, `stderr` of worktree filter programs, or any other git-context bearing command
+        /// invoked will be inherited.
+        /// If `false`, it will be suppressed completely.
+        pub const EXTERNAL_COMMAND_STDERR: keys::Boolean =
+            keys::Boolean::new_boolean("externalCommandStderr", &Gitoxide::CORE)
+                .with_environment_override("GIX_EXTERNAL_COMMAND_STDERR");
+
         /// The `gitoxide.core.refsNamespace` key.
         pub const REFS_NAMESPACE: RefsNamespace =
             keys::Any::new_with_validate("refsNamespace", &Gitoxide::CORE, super::validate::RefsNamespace)
@@ -134,6 +143,7 @@ mod subsections {
                 &Self::USE_STDEV,
                 &Self::SHALLOW_FILE,
                 &Self::FILTER_PROCESS_DELAY,
+                &Self::EXTERNAL_COMMAND_STDERR,
                 &Self::REFS_NAMESPACE,
             ]
         }
