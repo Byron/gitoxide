@@ -10,7 +10,7 @@ use crate::{
     Protocol,
 };
 /// A function `f(is_error, text)` receiving progress or error information.
-pub type HandleProgress = Box<dyn FnMut(bool, &[u8]) -> ProgressAction>;
+pub type HandleProgress<'a> = Box<dyn FnMut(bool, &[u8]) -> ProgressAction + 'a>;
 
 /// This trait exists to get a version of a `gix_packetline::Provider` without type parameters,
 /// but leave support for reading lines directly without forcing them through `String`.
@@ -37,11 +37,11 @@ pub trait ReadlineBufRead: io::BufRead {
 }
 
 /// Provide even more access to the underlying packet reader.
-pub trait ExtendedBufRead: ReadlineBufRead {
+pub trait ExtendedBufRead<'a>: ReadlineBufRead {
     /// Set the handler to which progress will be delivered.
     ///
     /// Note that this is only possible if packet lines are sent in side band mode.
-    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>);
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>);
     /// Peek the next data packet line. Maybe None if the next line is a packet we stop at, queryable using
     /// [`stopped_at()`][ExtendedBufRead::stopped_at()].
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>>;
@@ -61,8 +61,8 @@ impl<'a, T: ReadlineBufRead + ?Sized + 'a> ReadlineBufRead for Box<T> {
     }
 }
 
-impl<'a, T: ExtendedBufRead + ?Sized + 'a> ExtendedBufRead for Box<T> {
-    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
+impl<'a, T: ExtendedBufRead<'a> + ?Sized + 'a> ExtendedBufRead<'a> for Box<T> {
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>) {
         self.deref_mut().set_progress_handler(handle_progress)
     }
 
@@ -89,7 +89,7 @@ impl<T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'_, T,
     }
 }
 
-impl<'a, T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'a, T, HandleProgress> {
+impl<'a, T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'a, T, HandleProgress<'a>> {
     fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.read_data_line()
     }
@@ -99,8 +99,8 @@ impl<'a, T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'a
     }
 }
 
-impl<'a, T: io::Read> ExtendedBufRead for gix_packetline::read::WithSidebands<'a, T, HandleProgress> {
-    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
+impl<'a, T: io::Read> ExtendedBufRead<'a> for gix_packetline::read::WithSidebands<'a, T, HandleProgress<'a>> {
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>) {
         self.set_progress_handler(handle_progress)
     }
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>> {

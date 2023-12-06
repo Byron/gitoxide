@@ -10,7 +10,7 @@ use crate::fetch::{
 
 async fn parse_v2_section<T>(
     line: &mut String,
-    reader: &mut (impl client::ExtendedBufRead + Unpin),
+    reader: &mut (impl client::ExtendedBufRead<'_> + Unpin),
     res: &mut Vec<T>,
     parse: impl Fn(&str) -> Result<T, response::Error>,
 ) -> Result<bool, response::Error> {
@@ -44,7 +44,7 @@ impl Response {
     /// that `git` has to use to predict how many acks are supposed to be read. We also genuinely hope that this covers it all….
     pub async fn from_line_reader(
         version: Protocol,
-        reader: &mut (impl client::ExtendedBufRead + Unpin),
+        reader: &mut (impl client::ExtendedBufRead<'_> + Unpin),
         client_expects_pack: bool,
         wants_to_negotiate: bool,
     ) -> Result<Response, response::Error> {
