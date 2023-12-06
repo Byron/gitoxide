@@ -1,6 +1,6 @@
 [package]
 name = "gix-packetline-blocking"
-version = "0.16.6"
+version = "0.17.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A duplicate of `gix-packetline` with the `blocking-io` feature pre-selected"
@@ -27,7 +27,7 @@ async-io = []
 serde = ["dep:serde", "bstr/serde"]
 
 [dependencies]
-gix-trace = { version = "^0.1.3", path = "../gix-trace" }
+gix-trace = { version = "^0.1.4", path = "../gix-trace" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 thiserror = "1.0.34"

@@ -13,9 +13,9 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-hash = { version = "^0.13.1", path = "../gix-hash" }
-gix-hashtable = { version = "^0.4.0", path = "../gix-hashtable" }
-gix-object = { version = "^0.38.0", path = "../gix-object" }
+gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hashtable = { version = "^0.4.1", path = "../gix-hashtable" }
+gix-object = { version = "^0.39.0", path = "../gix-object" }
 
 [dev-dependencies]
 gix-odb = { path = "../gix-odb" }

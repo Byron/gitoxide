@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.42.0 (2023-12-06)
 
 ### Bug Fixes
 
@@ -16,14 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    This can be known because a pack (with our settings) needs two things:
    
    * the server thinks it's ready
-   * a `done` sent by the client
-   
-   If the server doesn't think it's ready it will send NAK and be done.
-   
-   So the logic should be, for a NAK to stop the read-loop, that the client
-   expects a pack, and the server is ready. If the client is not ready, or
-   the server isn't ready, keep NAK and consider them the end of a round,
-   hence break the loop.
+* a `done` sent by the client
 
 ### New Features (BREAKING)
 
@@ -45,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 49 calendar days.
+ - 13 commits contributed to the release over the course of 49 calendar days.
  - 54 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1061](https://github.com/Byron/gitoxide/issues/1061)
@@ -59,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1061](https://github.com/Byron/gitoxide/issues/1061)**
     - V1 negotiation won't hang anymore ([`6295dec`](https://github.com/Byron/gitoxide/commit/6295dec2bdd6c3bb35e45db7a486651ebfe50369))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Merge branch 'remove-unsafe' ([`d2ba97c`](https://github.com/Byron/gitoxide/commit/d2ba97c057de62022d4b8b720750c3a706ac0f9c))
     - Remove unsafe transmute of should_interrupt ([`88f8b34`](https://github.com/Byron/gitoxide/commit/88f8b342ab317696bcab8a0fe75c042e7290a75c))
     - Upgrade to `winnow` 0.5.24 ([`abcfb65`](https://github.com/Byron/gitoxide/commit/abcfb659786425ec09eff6b644cd2ad36b7d6bc4))
@@ -71,6 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge branch 'trace-packetlines' ([`e7de4c7`](https://github.com/Byron/gitoxide/commit/e7de4c702a223ad9eb19b407391028dcb08d80c4))
     - Make it possible to trace incoming and outgoing packetlines. ([`c3edef1`](https://github.com/Byron/gitoxide/commit/c3edef1c0c49accbb037bdf086dade3ed0e5e507))
 </details>
+
+<csr-unknown>
+If the server doesn’t think it’s ready it will send NAK and be done.So the logic should be, for a NAK to stop the read-loop, that the clientexpects a pack, and the server is ready. If the client is not ready, orthe server isn’t ready, keep NAK and consider them the end of a round,hence break the loop.<csr-unknown/>
 
 ## 0.41.1 (2023-10-13)
 

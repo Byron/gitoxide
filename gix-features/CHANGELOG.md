@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.36.1 (2023-12-06)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 46 calendar days.
+ - 12 commits contributed to the release over the course of 46 calendar days.
  - 54 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Fix formatting ([`5d8b5f4`](https://github.com/Byron/gitoxide/commit/5d8b5f4e5b3792b310f7a23907a205b5db427420))
     - Merge pull request #1134 from alexanderkjall/gix-features-i386-test-failure ([`a12682d`](https://github.com/Byron/gitoxide/commit/a12682d7a8bd263a18471f4a26d8af67b1cd4c1e))
     - Review feedback, use an 'if cfg' construct instead ([`1d45f05`](https://github.com/Byron/gitoxide/commit/1d45f056263ba9c69612abc81fdd3783f95de4ca))

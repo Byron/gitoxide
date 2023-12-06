@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.56.0 (2023-12-06)
 
 ### New Features
 
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    That way users can configure each repository instance according to their needs,
    with which includes disabling the `stderr` of credential helpers.
    
-    Please enter the message for your patch. Lines starting with
+   Please enter the message for your patch. Lines starting with
  - <csr-id-77686db3f91e16fa6657dbae2182ec72e88d3fd0/> `revision::Spec::path_and_mode()`
    Provide additional information about revspecs for use with
    worktree filters.
@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
+<csr-id-20f962e5d6a7c19ca097ccd3f06434f6c9501262/>
+
  - <csr-id-0b3eb141bee59ffc17c973a8d126efaa52edb9b3/> assure the correct repository is used for checkouts after clone.
    If this is not the case, it's possible for filters to run in the context of
    potential parent repositories, which then can have all kinds of issues.
@@ -75,15 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    This can be known because a pack (with our settings) needs two things:
    
    * the server thinks it's ready
-   * a `done` sent by the client
-   
-   If the server doesn't think it's ready it will send NAK and be done.
-   
-   So the logic should be, for a NAK to stop the read-loop, that the client
-   expects a pack, and the server is ready. If the client is not ready, or
-   the server isn't ready, keep NAK and consider them the end of a round,
-   hence break the loop.
- - <csr-id-20f962e5d6a7c19ca097ccd3f06434f6c9501262/> allow to open split worktree repositories
+* a `done` sent by the client
 
 ### New Features (BREAKING)
 
@@ -114,8 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Further breaking changes:
    
    * rename `Head::peeled()` to `into_peeled_id()`
-   * rename `Head::into_fully_peeled_id()` to `try_peel_into_id()`
-   * rename `Head::peel_to_id_in_place()` to `Head::try_peel_to_id_in_place()`
+* rename `Head::into_fully_peeled_id()` to `try_peel_into_id()`
+* rename `Head::peel_to_id_in_place()` to `Head::try_peel_to_id_in_place()`
 
 ### Bug Fixes (BREAKING)
 
@@ -128,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 64 commits contributed to the release over the course of 53 calendar days.
+ - 65 commits contributed to the release over the course of 53 calendar days.
  - 54 days passed between releases.
  - 23 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#1061](https://github.com/Byron/gitoxide/issues/1061), [#1076](https://github.com/Byron/gitoxide/issues/1076), [#1090](https://github.com/Byron/gitoxide/issues/1090), [#1125](https://github.com/Byron/gitoxide/issues/1125), [#1129](https://github.com/Byron/gitoxide/issues/1129), [#972](https://github.com/Byron/gitoxide/issues/972)
@@ -158,6 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#972](https://github.com/Byron/gitoxide/issues/972)**
     - Allow multiple packs to be received one after another. ([`3ff1827`](https://github.com/Byron/gitoxide/commit/3ff1827a12557a601da22d138beb97e8647d5d6e))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Merge branch 'adjustments-for-cargo' ([`8156340`](https://github.com/Byron/gitoxide/commit/8156340724b1b7cb15824f88c75f6ddd7302cff5))
     - Add `gitoxide.core.externalCommandStderr` to allow enabling `stderr` to the enclosing terminal. ([`2762724`](https://github.com/Byron/gitoxide/commit/27627248a019d85a904ecd8a57e395f34c1b16a4))
     - Use `gitoxide.credentials.helperStderr` key to control how stderr is handled with helpers. ([`6cf73a4`](https://github.com/Byron/gitoxide/commit/6cf73a44cbcd8bdca6a353cfd02d6237b1883b8c))
@@ -217,6 +212,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Add `Head::try_into_peeled_object()` and `Head::peel_to_object_in_place()` ([`117357e`](https://github.com/Byron/gitoxide/commit/117357e7bbfcb1bfe887f85173e88db9436814b1))
     - Improve `head()` peeling API ([`4e6a4e6`](https://github.com/Byron/gitoxide/commit/4e6a4e6ef440c72f61513ba82b439b9dca298e73))
 </details>
+
+<csr-unknown>
+If the server doesn’t think it’s ready it will send NAK and be done.So the logic should be, for a NAK to stop the read-loop, that the clientexpects a pack, and the server is ready. If the client is not ready, orthe server isn’t ready, keep NAK and consider them the end of a round,hence break the loop. allow to open split worktree repositories<csr-unknown/>
 
 ## 0.55.2 (2023-10-13)
 

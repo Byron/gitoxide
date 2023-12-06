@@ -1,6 +1,6 @@
 [package]
 name = "gix-odb"
-version = "0.54.0"
+version = "0.55.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
@@ -18,13 +18,13 @@ doctest = false
 serde= ["dep:serde", "gix-hash/serde", "gix-object/serde", "gix-pack/serde"]
 
 [dependencies]
-gix-features = { version = "^0.36.0", path = "../gix-features", features = ["rustsha1", "walkdir", "zlib", "crc32" ] }
-gix-hash = { version = "^0.13.1", path = "../gix-hash" }
-gix-date = { version = "^0.8.0", path = "../gix-date" }
-gix-path = { version = "^0.10.0", path = "../gix-path" }
-gix-quote = { version = "^0.4.7", path = "../gix-quote" }
-gix-object = { version = "^0.38.0", path = "../gix-object" }
-gix-pack = { version = "^0.44.0", path = "../gix-pack", default-features = false }
+gix-features = { version = "^0.36.1", path = "../gix-features", features = ["rustsha1", "walkdir", "zlib", "crc32" ] }
+gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-date = { version = "^0.8.1", path = "../gix-date" }
+gix-path = { version = "^0.10.1", path = "../gix-path" }
+gix-quote = { version = "^0.4.8", path = "../gix-quote" }
+gix-object = { version = "^0.39.0", path = "../gix-object" }
+gix-pack = { version = "^0.45.0", path = "../gix-pack", default-features = false }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
 tempfile = "3.1.0"

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.0 (2023-12-06)
 
 ### New Features
 
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 46 calendar days.
+ - 15 commits contributed to the release over the course of 46 calendar days.
  - 54 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1103](https://github.com/Byron/gitoxide/issues/1103), [#1129](https://github.com/Byron/gitoxide/issues/1129)
@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1129](https://github.com/Byron/gitoxide/issues/1129)**
     - Add `Context` to provide much more context just like `git` sets it. ([`9d7e28d`](https://github.com/Byron/gitoxide/commit/9d7e28d542b5dbacce28920232b99c454f1eab4e))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Merge branch 'adjustments-for-cargo' ([`8156340`](https://github.com/Byron/gitoxide/commit/8156340724b1b7cb15824f88c75f6ddd7302cff5))
     - Add `Context::stderr` to configure whether or not to supress `stderr`. ([`ceb8826`](https://github.com/Byron/gitoxide/commit/ceb8826f0a5acf8a23a40a6af6d172ee164edb24))
     - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))

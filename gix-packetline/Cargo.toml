@@ -1,6 +1,6 @@
 [package]
 name = "gix-packetline"
-version = "0.16.7"
+version = "0.17.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project implementing the pkt-line serialization format"
@@ -39,7 +39,7 @@ path = "tests/blocking-packetline.rs"
 required-features = ["blocking-io", "maybe-async/is_sync"]
 
 [dependencies]
-gix-trace = { version = "^0.1.3", path = "../gix-trace" }
+gix-trace = { version = "^0.1.4", path = "../gix-trace" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 thiserror = "1.0.34"

@@ -1,6 +1,6 @@
 [package]
 name = "gix-ref"
-version = "0.38.0"
+version = "0.39.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate to handle git references"
@@ -19,14 +19,14 @@ test = true
 serde = ["dep:serde", "gix-hash/serde", "gix-actor/serde", "gix-object/serde"]
 
 [dependencies]
-gix-features = { version = "^0.36.0", path = "../gix-features", features = ["walkdir"]}
-gix-fs = { version = "^0.8.0", path = "../gix-fs" }
-gix-path = { version = "^0.10.0", path = "../gix-path" }
-gix-hash = { version = "^0.13.1", path = "../gix-hash" }
-gix-date = { version = "^0.8.0", path = "../gix-date" }
-gix-object = { version = "^0.38.0", path = "../gix-object" }
-gix-validate = { version = "^0.8.0", path = "../gix-validate" }
-gix-actor = { version = "^0.28.0", path = "../gix-actor" }
+gix-features = { version = "^0.36.1", path = "../gix-features", features = ["walkdir"]}
+gix-fs = { version = "^0.8.1", path = "../gix-fs" }
+gix-path = { version = "^0.10.1", path = "../gix-path" }
+gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-date = { version = "^0.8.1", path = "../gix-date" }
+gix-object = { version = "^0.39.0", path = "../gix-object" }
+gix-validate = { version = "^0.8.1", path = "../gix-validate" }
+gix-actor = { version = "^0.28.1", path = "../gix-actor" }
 gix-lock = { version = "^11.0.0", path = "../gix-lock" }
 gix-tempfile = { version = "^11.0.0", default-features = false, path = "../gix-tempfile" }
 
