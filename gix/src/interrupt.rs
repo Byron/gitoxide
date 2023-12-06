@@ -89,7 +89,10 @@ mod init {
     ///
     /// It will abort the process on second press and won't inform the user about this behaviour either as we are unable to do so without
     /// deadlocking even when trying to write to stderr directly.
-    pub fn init_handler(
+    ///
+    /// SAFETY: `interrupt()` will be called from a signal handler. See `signal_hook::low_level::register()` for details about.
+    #[allow(unsafe_code)]
+    pub unsafe fn init_handler(
         grace_count: usize,
         interrupt: impl Fn() + Send + Sync + Clone + 'static,
     ) -> io::Result<Deregister> {
