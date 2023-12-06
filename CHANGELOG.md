@@ -9,31 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+<csr-id-4aea9b097fb08e504cdfc4a7c3b7511a308dc074/>
+<csr-id-c6e83cf69f1a17e9ba3010bcce3a4ddd3305424c/>
+<csr-id-8f795e8abf706a24fe104500bf15efaa2bc07b15/>
+<csr-id-8dfbb4ba531d86894a59e2b85ec29cd3133c8c4d/>
+<csr-id-f9ae1bc6b514b6bbcda2c672f7b7ccbd999356a0/>
+<csr-id-886289f98003f935d774a40f6db746ae70649936/>
+
  - <csr-id-cf51a4de2d06eb28435ef8e386131710003b6928/> `gix rev parse --format` to provide different versions of the same content.
    This only applies to blobs, but allows to obtain different versions of the same blob
    like:
    
    * what's stored in Git
-   * what would be checked out to the worktree
-   * what would be diffed
- - <csr-id-4aea9b097fb08e504cdfc4a7c3b7511a308dc074/> add the`diff::resource_cache()` low-level utility for rapid in-memory diffing of combinations of resources.
-   We also add the `object::tree::diff::Platform::for_each_to_obtain_tree_with_cache()` to pass a resource-cache
-   for re-use between multiple invocation for significant savings.
- - <csr-id-c6e83cf69f1a17e9ba3010bcce3a4ddd3305424c/> In gix read http.sslVerify config value and pass it to gix-transport.
- - <csr-id-8f795e8abf706a24fe104500bf15efaa2bc07b15/> add basic connectivity check
-   Implement a simple connectivity check in a new `gix-fsck` crate, and add
-   this to `gix` via a new `fsck` subcommand. Currently this is
-   functionally equivalent to:
-   `git rev-list --objects --quiet --missing=print`
- - <csr-id-8dfbb4ba531d86894a59e2b85ec29cd3133c8c4d/> Allow to print a tree without prettification, using `--tree-style raw`.
-   This is mainly useful to generate fixtures for the test-suite, and is assured
-   to not add extra-bytes to the output either.
- - <csr-id-f9ae1bc6b514b6bbcda2c672f7b7ccbd999356a0/> automatically enforce strict mode if `-c` options are given on the command-line.
-   This should stop most mistakes right away, instead of possibly silently
-   ignoring them depending on what was hard-coded in the respective sub-command.
- - <csr-id-886289f98003f935d774a40f6db746ae70649936/> add `gix free discover` to inform about repository discovery.
-   It's mainly to better understand what's causing certain failures
-   if a repository can't be opened, in different modes of operations.
+* what would be checked out to the worktree
+* what would be diffed
 
 ### Bug Fixes
 
@@ -91,6 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Refactor ([`7f2bc08`](https://github.com/Byron/gitoxide/commit/7f2bc08e5713758c6188428221aac518cc6ecf2f))
     - Set binary name for completions ([`eab22bd`](https://github.com/Byron/gitoxide/commit/eab22bd5d56bf91ee0edfc7156023c159c7f65f9))
 </details>
+
+<csr-unknown>
+ add thediff::resource_cache() low-level utility for rapid in-memory diffing of combinations of resources.We also add the object::tree::diff::Platform::for_each_to_obtain_tree_with_cache() to pass a resource-cachefor re-use between multiple invocation for significant savings. In gix read http.sslVerify config value and pass it to gix-transport. add basic connectivity checkImplement a simple connectivity check in a new gix-fsck crate, and addthis to gix via a new fsck subcommand. Currently this isfunctionally equivalent to:git rev-list --objects --quiet --missing=print Allow to print a tree without prettification, using --tree-style raw.This is mainly useful to generate fixtures for the test-suite, and is assuredto not add extra-bytes to the output either. automatically enforce strict mode if -c options are given on the command-line.This should stop most mistakes right away, instead of possibly silentlyignoring them depending on what was hard-coded in the respective sub-command. add gix free discover to inform about repository discovery.It’s mainly to better understand what’s causing certain failuresif a repository can’t be opened, in different modes of operations.<csr-unknown/>
 
 ## 0.31.1 (2023-10-13)
 

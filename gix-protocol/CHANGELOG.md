@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 13 commits contributed to the release over the course of 49 calendar days.
+ - 14 commits contributed to the release over the course of 49 calendar days.
  - 54 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1061](https://github.com/Byron/gitoxide/issues/1061)
@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1061](https://github.com/Byron/gitoxide/issues/1061)**
     - V1 negotiation won't hang anymore ([`6295dec`](https://github.com/Byron/gitoxide/commit/6295dec2bdd6c3bb35e45db7a486651ebfe50369))
  * **Uncategorized**
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
     - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Merge branch 'remove-unsafe' ([`d2ba97c`](https://github.com/Byron/gitoxide/commit/d2ba97c057de62022d4b8b720750c3a706ac0f9c))
     - Remove unsafe transmute of should_interrupt ([`88f8b34`](https://github.com/Byron/gitoxide/commit/88f8b342ab317696bcab8a0fe75c042e7290a75c))
@@ -65,9 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge branch 'trace-packetlines' ([`e7de4c7`](https://github.com/Byron/gitoxide/commit/e7de4c702a223ad9eb19b407391028dcb08d80c4))
     - Make it possible to trace incoming and outgoing packetlines. ([`c3edef1`](https://github.com/Byron/gitoxide/commit/c3edef1c0c49accbb037bdf086dade3ed0e5e507))
 </details>
-
-<csr-unknown>
-If the server doesn’t think it’s ready it will send NAK and be done.So the logic should be, for a NAK to stop the read-loop, that the clientexpects a pack, and the server is ready. If the client is not ready, orthe server isn’t ready, keep NAK and consider them the end of a round,hence break the loop.<csr-unknown/>
 
 ## 0.41.1 (2023-10-13)
 
