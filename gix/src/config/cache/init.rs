@@ -402,10 +402,16 @@ fn apply_environment_overrides(
             "gitoxide",
             Some(Cow::Borrowed("credentials".into())),
             git_prefix,
-            &[{
-                let key = &gitoxide::Credentials::TERMINAL_PROMPT;
-                (env(key), key.name)
-            }],
+            &[
+                {
+                    let key = &gitoxide::Credentials::TERMINAL_PROMPT;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Credentials::HELPER_STDERR;
+                    (env(key), key.name)
+                },
+            ],
         ),
         (
             "gitoxide",
@@ -433,6 +439,10 @@ fn apply_environment_overrides(
                 },
                 {
                     let key = &gitoxide::Core::REFS_NAMESPACE;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Core::EXTERNAL_COMMAND_STDERR;
                     (env(key), key.name)
                 },
             ],

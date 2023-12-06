@@ -262,7 +262,7 @@ fn fixture_bytes_inner(path: impl AsRef<Path>, root: DirectoryRoot) -> Vec<u8> {
 /// In order to speed up CI and even local runs should the cache get purged, the result of each script run
 /// is automatically placed into a compressed _tar_ archive.
 /// If a script result doesn't exist, these will be checked first and extracted if present, which they are by default.
-/// This behaviour can be prohibited by setting the `GITOXIDE_TEST_IGNORE_ARCHIVES` to any value.
+/// This behaviour can be prohibited by setting the `GIX_TEST_IGNORE_ARCHIVES` to any value.
 ///
 /// To speed CI up, one can add these archives to the repository. It's absolutely recommended to use `gix-lfs` for that to
 /// not bloat the repository size.
@@ -631,11 +631,11 @@ fn extract_archive(
     let archive_buf: Vec<u8> = {
         let mut buf = Vec::new();
         let input_archive = std::fs::File::open(archive)?;
-        if std::env::var_os("GITOXIDE_TEST_IGNORE_ARCHIVES").is_some() {
+        if std::env::var_os("GIX_TEST_IGNORE_ARCHIVES").is_some() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 format!(
-                    "Ignoring archive at '{}' as GITOXIDE_TEST_IGNORE_ARCHIVES is set.",
+                    "Ignoring archive at '{}' as GIX_TEST_IGNORE_ARCHIVES is set.",
                     archive.display()
                 ),
             ));

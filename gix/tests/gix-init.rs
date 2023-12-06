@@ -38,8 +38,10 @@ mod with_overrides {
             .set("GIT_AUTHOR_EMAIL", "author email")
             .set("GIT_AUTHOR_DATE", default_date)
             .set("EMAIL", "user email")
-            .set("GITOXIDE_PACK_CACHE_MEMORY", "0")
-            .set("GITOXIDE_OBJECT_CACHE_MEMORY", "5m")
+            .set("GIX_PACK_CACHE_MEMORY", "0")
+            .set("GIX_OBJECT_CACHE_MEMORY", "5m")
+            .set("GIX_CREDENTIALS_HELPER_STDERR", "creds-stderr")
+            .set("GIX_EXTERNAL_COMMAND_STDERR", "filter-stderr")
             .set("GIT_SSL_CAINFO", "./env.pem")
             .set("GIT_SSL_VERSION", "tlsv1.3")
             .set("GIT_SSH_VARIANT", "ssh-variant-env")
@@ -254,6 +256,8 @@ mod with_overrides {
             ("gitoxide.pathspec.noglob", "pathspecs-noglob"),
             ("gitoxide.pathspec.literal", "pathspecs-literal"),
             ("gitoxide.credentials.terminalPrompt", "42"),
+            ("gitoxide.credentials.helperStderr", "creds-stderr"),
+            ("gitoxide.core.externalCommandStderr", "filter-stderr"),
         ] {
             assert_eq!(
                 config
