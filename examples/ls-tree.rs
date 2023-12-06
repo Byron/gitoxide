@@ -12,7 +12,7 @@ fn main() {
 }
 
 #[derive(Debug, clap::Parser)]
-#[clap(name = "ls-tree", about = "git ls-tree example", version = option_env!("GITOXIDE_VERSION"))]
+#[clap(name = "ls-tree", about = "git ls-tree example", version = option_env!("GIX_VERSION"))]
 #[clap(arg_required_else_help = true)]
 struct Args {
     /// Recurse into subtrees

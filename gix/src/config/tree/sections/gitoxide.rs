@@ -410,7 +410,7 @@ mod subsections {
         pub const CACHE_LIMIT: keys::UnsignedInteger =
             keys::UnsignedInteger::new_unsigned_integer("cacheLimit", &Gitoxide::OBJECTS)
                 .with_note("If unset or 0, there is no object cache")
-                .with_environment_override("GITOXIDE_OBJECT_CACHE_MEMORY");
+                .with_environment_override("GIX_OBJECT_CACHE_MEMORY");
         /// The `gitoxide.objects.noReplace` key.
         pub const NO_REPLACE: keys::Boolean = keys::Boolean::new_boolean("noReplace", &Gitoxide::OBJECTS);
         /// The `gitoxide.objects.replaceRefBase` key.

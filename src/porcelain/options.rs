@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
-#[clap(about = "The rusty git", version = option_env!("GITOXIDE_VERSION"))]
+#[clap(about = "The rusty git", version = option_env!("GIX_VERSION"))]
 #[clap(subcommand_required = true)]
 pub struct Args {
     /// Do not display verbose messages and progress information

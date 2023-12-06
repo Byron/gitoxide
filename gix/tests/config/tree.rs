@@ -448,7 +448,7 @@ mod core {
                 .try_into_usize(signed(-1))
                 .unwrap_err()
                 .to_string(),
-            "The value of key \"core.deltaBaseCacheLimit\" (possibly from GITOXIDE_PACK_CACHE_MEMORY) could not be parsed as unsigned integer"
+            "The value of key \"core.deltaBaseCacheLimit\" (possibly from GIX_PACK_CACHE_MEMORY) could not be parsed as unsigned integer"
         );
         assert!(Core::DELTA_BASE_CACHE_LIMIT.validate("-1".into()).is_err());
         Ok(())

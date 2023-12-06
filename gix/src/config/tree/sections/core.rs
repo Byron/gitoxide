@@ -17,7 +17,7 @@ impl Core {
     /// The `core.deltaBaseCacheLimit` key.
     pub const DELTA_BASE_CACHE_LIMIT: keys::UnsignedInteger =
         keys::UnsignedInteger::new_unsigned_integer("deltaBaseCacheLimit", &config::Tree::CORE)
-            .with_environment_override("GITOXIDE_PACK_CACHE_MEMORY")
+            .with_environment_override("GIX_PACK_CACHE_MEMORY")
             .with_note("if unset, we default to a small 64 slot fixed-size cache that holds at most 64 full delta base objects of any size. Set to 0 to deactivate it entirely");
     /// The `core.disambiguate` key.
     pub const DISAMBIGUATE: Disambiguate =

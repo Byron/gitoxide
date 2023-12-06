@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use gix_discover::repository::Kind;
 
 fn expected_trust() -> gix_sec::Trust {
-    if std::env::var_os("GITOXIDE_TEST_EXPECT_REDUCED_TRUST").is_some() {
+    if std::env::var_os("GIX_TEST_EXPECT_REDUCED_TRUST").is_some() {
         gix_sec::Trust::Reduced
     } else {
         gix_sec::Trust::Full

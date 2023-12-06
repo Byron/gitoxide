@@ -20,7 +20,7 @@ fn main() {
 }
 
 #[derive(Debug, clap::Parser)]
-#[clap(name = "log", about = "git log example", version = option_env!("GITOXIDE_VERSION"))]
+#[clap(name = "log", about = "git log example", version = option_env!("GIX_VERSION"))]
 struct Args {
     /// Alternative git directory to use
     #[clap(name = "dir", long = "git-dir")]
