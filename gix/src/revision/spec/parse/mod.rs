@@ -7,6 +7,7 @@ use gix_revision::spec::parse;
 use crate::{bstr::BStr, revision::Spec, Repository};
 
 mod types;
+use crate::bstr::BString;
 pub use types::{Error, ObjectKindHint, Options, RefsHint};
 
 ///
@@ -45,6 +46,9 @@ impl<'repo> Spec<'repo> {
 struct Delegate<'repo> {
     refs: [Option<gix_ref::Reference>; 2],
     objs: [Option<HashSet<ObjectId>>; 2],
+    /// Path specified like `@:<path>` or `:<path>` for later use when looking up specs.
+    /// Note that it terminates spec parsing, so it's either `0` or `1`, never both.
+    paths: [Option<(BString, gix_object::tree::EntryMode)>; 2],
     /// The originally encountered ambiguous objects for potential later use in errors.
     ambiguous_objects: [Option<HashSet<ObjectId>>; 2],
     idx: usize,

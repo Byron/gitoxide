@@ -11,6 +11,12 @@ impl Mode {
         *self == Self::DIR | Self::SYMLINK
     }
 
+    /// Convert this instance to a tree's entry mode, or return `None` if for some
+    /// and unexpected reason the bitflags don't resemble any known entry-mode.
+    pub fn to_tree_entry_mode(&self) -> Option<gix_object::tree::EntryMode> {
+        gix_object::tree::EntryMode::try_from(self.bits()).ok()
+    }
+
     /// Compares this mode to the file system version ([`std::fs::symlink_metadata`])
     /// and returns the change needed to update this mode to match the file.
     ///

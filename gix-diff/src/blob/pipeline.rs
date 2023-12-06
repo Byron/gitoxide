@@ -377,8 +377,11 @@ impl Pipeline {
                         .try_header(id)
                         .map_err(gix_object::find::existing_object::Error::Find)?
                         .ok_or_else(|| gix_object::find::existing_object::Error::NotFound { oid: id.to_owned() })?;
-                    if is_binary.is_none() && self.options.large_file_threshold_bytes > 0 {
-                        is_binary = Some(header.size > self.options.large_file_threshold_bytes);
+                    if is_binary.is_none()
+                        && self.options.large_file_threshold_bytes > 0
+                        && header.size > self.options.large_file_threshold_bytes
+                    {
+                        is_binary = Some(true);
                     };
                     let data = if is_binary == Some(true) {
                         Data::Binary { size: header.size }
@@ -425,7 +428,18 @@ impl Pipeline {
                                 })?;
                             match cmd_and_file {
                                 Some((cmd, mut tmp_file)) => {
-                                    tmp_file.write_all(out).map_err(|err| {
+                                    match res {
+                                        ToWorktreeOutcome::Unchanged(buf) | ToWorktreeOutcome::Buffer(buf) => {
+                                            tmp_file.write_all(buf)
+                                        }
+                                        ToWorktreeOutcome::Process(MaybeDelayed::Immediate(mut stream)) => {
+                                            std::io::copy(&mut stream, &mut tmp_file).map(|_| ())
+                                        }
+                                        ToWorktreeOutcome::Process(MaybeDelayed::Delayed(_)) => {
+                                            unreachable!("we prohibit this")
+                                        }
+                                    }
+                                    .map_err(|err| {
                                         convert_to_diffable::Error::CreateTempfile {
                                             source: err,
                                             rela_path: rela_path.to_owned(),

@@ -926,6 +926,7 @@ pub fn main() -> Result<()> {
                 explain,
                 cat_file,
                 tree_mode,
+                blob_format,
             } => prepare_and_run(
                 "revision-parse",
                 trace,
@@ -942,10 +943,24 @@ pub fn main() -> Result<()> {
                             format,
                             explain,
                             cat_file,
-                            tree_mode: match tree_mode.unwrap_or_default() {
+                            tree_mode: match tree_mode {
                                 revision::resolve::TreeMode::Raw => core::repository::revision::resolve::TreeMode::Raw,
                                 revision::resolve::TreeMode::Pretty => {
                                     core::repository::revision::resolve::TreeMode::Pretty
+                                }
+                            },
+                            blob_format: match blob_format {
+                                revision::resolve::BlobFormat::Git => {
+                                    core::repository::revision::resolve::BlobFormat::Git
+                                }
+                                revision::resolve::BlobFormat::Worktree => {
+                                    core::repository::revision::resolve::BlobFormat::Worktree
+                                }
+                                revision::resolve::BlobFormat::Diff => {
+                                    core::repository::revision::resolve::BlobFormat::Diff
+                                }
+                                revision::resolve::BlobFormat::DiffOrGit => {
+                                    core::repository::revision::resolve::BlobFormat::DiffOrGit
                                 }
                             },
                         },
