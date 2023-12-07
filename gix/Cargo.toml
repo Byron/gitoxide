@@ -223,7 +223,7 @@ gix-date = { version = "^0.8.1", path = "../gix-date" }
 gix-refspec = { version = "^0.20.0", path = "../gix-refspec" }
 gix-filter = { version = "^0.7.0", path = "../gix-filter", optional = true }
 
-gix-config = { version = "^0.32.0", path = "../gix-config" }
+gix-config = { version = "^0.32.1", path = "../gix-config" }
 gix-odb = { version = "^0.55.0", path = "../gix-odb" }
 gix-hash = { version = "^0.13.2", path = "../gix-hash" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
