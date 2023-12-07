@@ -300,6 +300,7 @@ members = [
 [workspace.dependencies]
 prodash = { version = "27.0.0", default-features = false }
 futures-lite = { version = "2.1.0", default-features = false, features = ["std"] }
+faster-hex = { version = "0.9.0" }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]

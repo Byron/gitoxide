@@ -998,6 +998,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "faster-hex"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2a2b11eda1d40935b26cf18f6833c526845ae8c41e58d09af6adeb6f0269183"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "fastrand"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1817,7 +1826,7 @@ name = "gix-hash"
 version = "0.13.2"
 dependencies = [
  "document-features",
- "faster-hex",
+ "faster-hex 0.9.0",
  "gix-features 0.36.1",
  "gix-testtools",
  "serde",
@@ -1830,7 +1839,7 @@ version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99c1e554a87759e672c7d2e37211e761aa390c61ffcd3753a57c51173143f3cb"
 dependencies = [
- "faster-hex",
+ "faster-hex 0.8.1",
  "thiserror",
 ]
 
@@ -2133,7 +2142,7 @@ dependencies = [
  "async-std",
  "bstr",
  "document-features",
- "faster-hex",
+ "faster-hex 0.9.0",
  "futures-io",
  "futures-lite 2.1.0",
  "gix-hash 0.13.2",
@@ -2152,7 +2161,7 @@ version = "0.17.0"
 dependencies = [
  "bstr",
  "document-features",
- "faster-hex",
+ "faster-hex 0.9.0",
  "gix-trace 0.1.4",
  "serde",
  "thiserror",
