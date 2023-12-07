@@ -115,7 +115,7 @@ impl Prefix {
             faster_hex::hex_decode(src, &mut out).map(move |_| out)
         }
         .map_err(|e| match e {
-            faster_hex::Error::InvalidChar => from_hex::Error::Invalid,
+            faster_hex::Error::InvalidChar | faster_hex::Error::Overflow => from_hex::Error::Invalid,
             faster_hex::Error::InvalidLength(_) => panic!("This is already checked"),
         })?;
 

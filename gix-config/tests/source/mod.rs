@@ -13,6 +13,18 @@ fn git_config_no_system() {
         }),
         None
     );
+    assert!(
+        Source::GitInstallation
+            .storage_location(&mut |name| {
+                assert_eq!(
+                    name, "GIT_CONFIG_NOSYSTEM",
+                    "it only checks this var, and if set, nothing else"
+                );
+                Some("false".into())
+            })
+            .is_some(),
+        "it treats the variable as boolean"
+    );
     assert_eq!(
         Source::System.storage_location(&mut |name| {
             assert_eq!(
@@ -23,6 +35,15 @@ fn git_config_no_system() {
         }),
         None
     );
+    assert!(Source::System
+        .storage_location(&mut |name| {
+            match name {
+                "GIT_CONFIG_NOSYSTEM" => Some("false".into()),
+                "GIT_CONFIG_SYSTEM" => None,
+                _ => unreachable!("known set"),
+            }
+        })
+        .is_some(),);
 }
 
 #[test]

@@ -19,7 +19,7 @@ serde= ["dep:serde"]
 
 [dependencies]
 thiserror = "1.0.33"
-faster-hex = "0.8.0"
+faster-hex = { workspace = true }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 
 document-features = { version = "0.2.0", optional = true }
