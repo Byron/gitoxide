@@ -1743,7 +1743,7 @@ dependencies = [
  "gix-trace 0.1.4",
  "gix-utils 0.1.6",
  "gix-worktree 0.28.0",
- "once_cell",
+ "serial_test",
  "smallvec",
  "thiserror",
 ]

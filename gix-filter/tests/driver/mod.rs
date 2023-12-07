@@ -1,32 +1,13 @@
-use std::path::PathBuf;
-
-use once_cell::sync::Lazy;
-
-static DRIVER: Lazy<PathBuf> = Lazy::new(|| {
-    let mut cargo = std::process::Command::new(env!("CARGO"));
-    let res = cargo
-        .args(["build", "--example", "arrow"])
-        .status()
-        .expect("cargo should run fine");
-    assert!(res.success(), "cargo invocation should be successful");
-
-    let path = PathBuf::from(env!("CARGO_TARGET_TMPDIR"))
-        .ancestors()
-        .nth(1)
-        .expect("first parent in target dir")
-        .join("debug")
-        .join("examples")
-        .join(if cfg!(windows) { "arrow.exe" } else { "arrow" });
-    assert!(path.is_file(), "Expecting driver to be located at {path:?}");
-    path
-});
+static DRIVER: &str = concat!(env!("CARGO"), " run --example arrow");
 
 mod baseline {
     use crate::driver::DRIVER;
+    use serial_test::serial;
 
+    #[serial]
     #[test]
     fn our_implementation_used_by_git() -> crate::Result {
-        let mut exe = DRIVER.to_string_lossy().into_owned();
+        let mut exe = DRIVER.to_owned();
         if cfg!(windows) {
             exe = exe.replace('\\', "/");
         }
@@ -85,6 +66,7 @@ pub(crate) mod apply {
         driver::{apply, apply::Delay, Operation},
         Driver,
     };
+    use serial_test::serial;
 
     use crate::driver::{shutdown::extract_client, DRIVER};
 
@@ -95,7 +77,7 @@ pub(crate) mod apply {
     }
 
     pub(crate) fn driver_with_process() -> Driver {
-        let mut exe = DRIVER.to_string_lossy().into_owned();
+        let mut exe = DRIVER.to_owned();
         if cfg!(windows) {
             exe = exe.replace('\\', "/");
         }
@@ -108,6 +90,7 @@ pub(crate) mod apply {
         }
     }
 
+    #[serial]
     #[test]
     fn missing_driver_means_no_filter_is_applied() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
@@ -134,6 +117,7 @@ pub(crate) mod apply {
         Ok(())
     }
 
+    #[serial]
     #[test]
     fn a_crashing_process_can_restart_it() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
@@ -167,6 +151,7 @@ pub(crate) mod apply {
         Ok(())
     }
 
+    #[serial]
     #[test]
     fn process_status_abort_disables_capability() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
@@ -193,6 +178,7 @@ pub(crate) mod apply {
         Ok(())
     }
 
+    #[serial]
     #[test]
     fn process_status_strange_shuts_down_process() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
@@ -218,6 +204,7 @@ pub(crate) mod apply {
         Ok(())
     }
 
+    #[serial]
     #[test]
     fn smudge_and_clean_failure_is_translated_to_observable_error_for_required_drivers() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
@@ -239,6 +226,7 @@ pub(crate) mod apply {
         Ok(())
     }
 
+    #[serial]
     #[test]
     fn smudge_and_clean_failure_means_nothing_if_required_is_false() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
@@ -262,6 +250,7 @@ pub(crate) mod apply {
         Ok(())
     }
 
+    #[serial]
     #[test]
     fn smudge_and_clean_series() -> crate::Result {
         let mut state = gix_filter::driver::State::default();
