@@ -42,6 +42,7 @@ What follows is a high-level list of features and those which are planned:
 * [ ] push
 * [ ] reset
 * [ ] status
+* [x] blob-diff
 * [ ] merge
 * [ ] rebase
 * [ ] commit

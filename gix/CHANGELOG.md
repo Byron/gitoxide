@@ -15,8 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-6cf73a44cbcd8bdca6a353cfd02d6237b1883b8c/> use `gitoxide.credentials.helperStderr` key to control how stderr is handled with helpers.
    That way users can configure each repository instance according to their needs,
    with which includes disabling the `stderr` of credential helpers.
-   
-   Please enter the message for your patch. Lines starting with
  - <csr-id-77686db3f91e16fa6657dbae2182ec72e88d3fd0/> `revision::Spec::path_and_mode()`
    Provide additional information about revspecs for use with
    worktree filters.
