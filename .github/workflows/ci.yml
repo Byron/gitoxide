@@ -89,8 +89,9 @@ jobs:
 
   test-32bit:
     runs-on: ubuntu-latest
-    env:
-      TARGET: i686-unknown-linux-gnu
+    strategy:
+      matrix:
+        target: [ i686-unknown-linux-gnu, armv7-linux-androideabi ]
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
@@ -99,14 +100,16 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          targets: ${{ env.TARGET }}
+          targets: ${{ matrix.target }}
       - uses: taiki-e/install-action@v1
         with:
           tool: cross
+      - name: "check"
+        run: cross check -p gix --target ${{ matrix.target }}
       - name: "Test (unit)"
         # run high-level unit tests that exercise a lot of code while being pure Rust to ease building test binaries.
         # TODO: figure out why `git` doesn't pick up environment configuration so build scripts fail when using `-p gix`.
-        run: cross test -p gix-hashtable --target ${{ env.TARGET }}
+        run: cross test -p gix-hashtable --target ${{ matrix.target }}
 
   installation:
     strategy:
