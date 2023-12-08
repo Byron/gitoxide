@@ -109,6 +109,7 @@ mod blocking_io {
     fn from_shallow_allowed_by_default() -> crate::Result {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let (repo, _change) = gix::prepare_clone_bare(remote::repo("base.shallow").path(), tmp.path())?
+            .with_in_memory_config_overrides(Some("my.marker=1"))
             .fetch_only(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
         assert_eq!(
             repo.shallow_commits()?.expect("present").as_slice(),
@@ -117,6 +118,18 @@ mod blocking_io {
                 hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552"),
                 hex_to_id("dfd0954dabef3b64f458321ef15571cc1a46d552"),
             ]
+        );
+        assert_eq!(
+            repo.config_snapshot().boolean("my.marker"),
+            Some(true),
+            "configuration overrides are set in time"
+        );
+        assert_eq!(
+            gix::open_opts(repo.git_dir(), gix::open::Options::isolated())?
+                .config_snapshot()
+                .boolean("my.marker"),
+            None,
+            "these options are not persisted"
         );
         Ok(())
     }

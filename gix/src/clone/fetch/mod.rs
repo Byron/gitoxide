@@ -79,9 +79,11 @@ impl PrepareFetch {
             .as_mut()
             .expect("user error: multiple calls are allowed only until it succeeds");
 
-        let mut snapshot = repo.config_snapshot_mut();
-        snapshot.append_config(self.api_config_overrides.as_slice(), gix_config::Source::Api)?;
-        snapshot.commit()?;
+        if !self.config_overrides.is_empty() {
+            let mut snapshot = repo.config_snapshot_mut();
+            snapshot.append_config(&self.config_overrides, gix_config::Source::Api)?;
+            snapshot.commit()?;
+        }
 
         let remote_name = match self.remote_name.as_ref() {
             Some(name) => name.to_owned(),

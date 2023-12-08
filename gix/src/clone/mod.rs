@@ -21,7 +21,7 @@ pub struct PrepareFetch {
     /// The name of the remote, which defaults to `origin` if not overridden.
     remote_name: Option<BString>,
     /// Additional config `values` that are applied in-memory before starting the fetch process.
-    api_config_overrides: Vec<BString>,
+    config_overrides: Vec<BString>,
     /// A function to configure a remote prior to fetching a pack.
     configure_remote: Option<ConfigureRemoteFn>,
     /// A function to configure a connection before using it.
@@ -128,7 +128,7 @@ impl PrepareFetch {
             #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
             fetch_options: Default::default(),
             repo: Some(repo),
-            api_config_overrides: Vec::new(),
+            config_overrides: Vec::new(),
             remote_name: None,
             configure_remote: None,
             #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
@@ -146,8 +146,6 @@ pub struct PrepareCheckout {
     /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
     pub(self) repo: Option<crate::Repository>,
 }
-
-mod access;
 
 // This module encapsulates functionality that works with both feature toggles. Can be combined with `fetch`
 // once async and clone are a thing.
@@ -183,6 +181,8 @@ mod access_feat {
 ///
 #[cfg(any(feature = "async-network-client-async-std", feature = "blocking-network-client"))]
 pub mod fetch;
+
+mod access;
 
 ///
 #[cfg(feature = "worktree-mutation")]
