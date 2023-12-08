@@ -20,6 +20,8 @@ pub struct PrepareFetch {
     repo: Option<crate::Repository>,
     /// The name of the remote, which defaults to `origin` if not overridden.
     remote_name: Option<BString>,
+    /// Additional config `values` that are applied in-memory before starting the fetch process.
+    api_config_overrides: Vec<BString>,
     /// A function to configure a remote prior to fetching a pack.
     configure_remote: Option<ConfigureRemoteFn>,
     /// A function to configure a connection before using it.
@@ -126,6 +128,7 @@ impl PrepareFetch {
             #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
             fetch_options: Default::default(),
             repo: Some(repo),
+            api_config_overrides: Vec::new(),
             remote_name: None,
             configure_remote: None,
             #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]

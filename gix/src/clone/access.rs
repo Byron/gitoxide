@@ -34,6 +34,13 @@ impl PrepareFetch {
         self.shallow = shallow;
         self
     }
+
+    /// Apply the given configuration `values` early to allow affecting the repository instantiation phase.
+    /// The configuration is marked with [source API][gix_config::Source::Api].
+    pub fn config_overrides(mut self, values: impl IntoIterator<Item = impl Into<BString>>) -> Self {
+        self.api_config_overrides = values.into_iter().map(Into::into).collect();
+        self
+    }
 }
 
 /// Consumption
