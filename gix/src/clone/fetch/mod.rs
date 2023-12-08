@@ -47,7 +47,8 @@ impl PrepareFetch {
     ///
     /// ### Note for users of `async`
     ///
-    /// Even though
+    /// Even though `async` is technically supported, it will still be blocking in nature as it uses a lot of non-async writes
+    /// and computation under the hood. Thus it should be spawned into a runtime which can handle blocking futures.
     #[gix_protocol::maybe_async::maybe_async]
     pub async fn fetch_only<P>(
         &mut self,
