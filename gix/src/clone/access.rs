@@ -10,7 +10,7 @@ impl PrepareFetch {
     /// _all changes done in `f()` will be persisted_.
     ///
     /// It can also be used to configure additional options, like those for fetching tags. Note that
-    /// [`with_fetch_tags()`][crate::Remote::with_fetch_tags()] should be called here to configure the clone as desired.
+    /// [`with_fetch_tags()`](crate::Remote::with_fetch_tags()) should be called here to configure the clone as desired.
     /// Otherwise a clone is configured to be complete and fetches all tags, not only those reachable from all branches.
     pub fn configure_remote(
         mut self,
@@ -21,7 +21,7 @@ impl PrepareFetch {
     }
 
     /// Set the remote's name to the given value after it was configured using the function provided via
-    /// [`configure_remote()`][Self::configure_remote()].
+    /// [`configure_remote()`](Self::configure_remote()).
     ///
     /// If not set here, it defaults to `origin` or the value of `clone.defaultRemoteName`.
     pub fn with_remote_name(mut self, name: impl Into<BString>) -> Result<Self, crate::remote::name::Error> {
@@ -32,6 +32,14 @@ impl PrepareFetch {
     /// Make this clone a shallow one with the respective choice of shallow-ness.
     pub fn with_shallow(mut self, shallow: crate::remote::fetch::Shallow) -> Self {
         self.shallow = shallow;
+        self
+    }
+
+    /// Apply the given configuration `values` right before readying the actual fetch from the remote.
+    /// The configuration is marked with [source API](gix_config::Source::Api), and will not be written back, it's
+    /// retained only in memory.
+    pub fn with_in_memory_config_overrides(mut self, values: impl IntoIterator<Item = impl Into<BString>>) -> Self {
+        self.config_overrides = values.into_iter().map(Into::into).collect();
         self
     }
 }
