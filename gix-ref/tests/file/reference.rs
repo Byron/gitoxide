@@ -49,8 +49,11 @@ mod reflog {
 mod peel {
     use gix_ref::{file::ReferenceExt, Reference};
 
-    use crate::file::EmptyCommit;
-    use crate::{file, file::store_with_packed_refs, hex_to_id};
+    use crate::{
+        file,
+        file::{store_with_packed_refs, EmptyCommit},
+        hex_to_id,
+    };
 
     #[test]
     fn one_level() -> crate::Result {

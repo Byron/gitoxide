@@ -2,10 +2,9 @@ use std::convert::TryFrom;
 
 use bstr::ByteSlice;
 use winnow::{
-    combinator::opt,
-    combinator::{preceded, terminated},
+    combinator::{opt, preceded, terminated},
     prelude::*,
-    token::{tag, take_till0, take_till1},
+    token::{tag, take_till},
 };
 
 /// The information usually found in remote progress messages as sent by a git server during
@@ -75,7 +74,7 @@ impl<'a> RemoteProgress<'a> {
 }
 
 fn parse_number(i: &mut &[u8]) -> PResult<usize, ()> {
-    take_till0(|c: u8| !c.is_ascii_digit())
+    take_till(0.., |c: u8| !c.is_ascii_digit())
         .try_map(btoi::btoi)
         .parse_next(i)
 }
@@ -83,7 +82,7 @@ fn parse_number(i: &mut &[u8]) -> PResult<usize, ()> {
 fn next_optional_percentage(i: &mut &[u8]) -> PResult<Option<u32>, ()> {
     opt(terminated(
         preceded(
-            take_till0(|c: u8| c.is_ascii_digit()),
+            take_till(0.., |c: u8| c.is_ascii_digit()),
             parse_number.try_map(u32::try_from),
         ),
         tag(b"%"),
@@ -92,11 +91,11 @@ fn next_optional_percentage(i: &mut &[u8]) -> PResult<Option<u32>, ()> {
 }
 
 fn next_optional_number(i: &mut &[u8]) -> PResult<Option<usize>, ()> {
-    opt(preceded(take_till0(|c: u8| c.is_ascii_digit()), parse_number)).parse_next(i)
+    opt(preceded(take_till(0.., |c: u8| c.is_ascii_digit()), parse_number)).parse_next(i)
 }
 
 fn parse_progress<'i>(line: &mut &'i [u8]) -> PResult<RemoteProgress<'i>, ()> {
-    let action = take_till1(|c| c == b':').parse_next(line)?;
+    let action = take_till(1.., |c| c == b':').parse_next(line)?;
     let percent = next_optional_percentage.parse_next(line)?;
     let step = next_optional_number.parse_next(line)?;
     let max = next_optional_number.parse_next(line)?;

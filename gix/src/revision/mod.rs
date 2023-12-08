@@ -22,6 +22,8 @@ pub mod spec;
 #[cfg(feature = "revision")]
 pub struct Spec<'repo> {
     pub(crate) inner: gix_revision::Spec,
+    /// The path we encountered in the revspec, like `@:<path>` or `@..@~1:<path>`.
+    pub(crate) path: Option<(crate::bstr::BString, gix_object::tree::EntryMode)>,
     /// The first name of a reference as seen while parsing a `RevSpec`, for completeness.
     pub(crate) first_ref: Option<gix_ref::Reference>,
     /// The second name of a reference as seen while parsing a `RevSpec`, for completeness.

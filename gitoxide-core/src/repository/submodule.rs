@@ -1,8 +1,7 @@
-use crate::OutputFormat;
 use anyhow::bail;
-use gix::commit::describe::SelectRef;
-use gix::prelude::ObjectIdExt;
-use gix::{Repository, Submodule};
+use gix::{commit::describe::SelectRef, prelude::ObjectIdExt, Repository, Submodule};
+
+use crate::OutputFormat;
 
 pub fn list(repo: Repository, mut out: impl std::io::Write, format: OutputFormat) -> anyhow::Result<()> {
     if format != OutputFormat::Human {

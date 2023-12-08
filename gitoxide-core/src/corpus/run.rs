@@ -1,5 +1,6 @@
-use gix::progress::DynNestedProgress;
 use std::{path::Path, sync::atomic::AtomicBool};
+
+use gix::progress::DynNestedProgress;
 
 use crate::{
     corpus,

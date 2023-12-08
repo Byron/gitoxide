@@ -19,11 +19,13 @@ pub mod rename {
 ///
 #[cfg(feature = "blob-diff")]
 mod utils {
-    use crate::config::cache::util::ApplyLeniency;
-    use crate::config::tree::Diff;
-    use crate::diff::rename::Tracking;
-    use gix_diff::rewrites::Copies;
-    use gix_diff::Rewrites;
+    use gix_diff::{rewrites::Copies, Rewrites};
+
+    use crate::{
+        config::{cache::util::ApplyLeniency, tree::Diff},
+        diff::rename::Tracking,
+        Repository,
+    };
 
     ///
     pub mod new_rewrites {
@@ -35,6 +37,27 @@ mod utils {
             ConfigDiffRenames(#[from] crate::config::key::GenericError),
             #[error(transparent)]
             ConfigDiffRenameLimit(#[from] crate::config::unsigned_integer::Error),
+        }
+    }
+
+    ///
+    pub mod resource_cache {
+        /// The error returned by [`resource_cache()`](super::resource_cache()).
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            DiffAlgorithm(#[from] crate::config::diff::algorithm::Error),
+            #[error(transparent)]
+            WorktreeFilterOptions(#[from] crate::filter::pipeline::options::Error),
+            #[error(transparent)]
+            DiffDrivers(#[from] crate::config::diff::drivers::Error),
+            #[error(transparent)]
+            DiffPipelineOptions(#[from] crate::config::diff::pipeline_options::Error),
+            #[error(transparent)]
+            CommandContext(#[from] crate::config::command_context::Error),
+            #[error(transparent)]
+            AttributeStack(#[from] crate::config::attribute_stack::Error),
         }
     }
 
@@ -75,6 +98,47 @@ mod utils {
         }
         .into())
     }
+
+    /// Return a low-level utility to efficiently prepare a the blob-level diff operation between two resources,
+    /// and cache these diffable versions so that matrix-like MxN diffs are efficient.
+    ///
+    /// `repo` is used to obtain the needed configuration values, and `index` is used to potentially read `.gitattributes`
+    /// files from which may affect the diff operation.
+    /// `mode` determines how the diffable files will look like, and also how fast, in average, these conversions are.
+    /// `attribute_source` controls where `.gitattributes` will be read from, and it's typically adjusted based on the
+    /// `roots` - if there are no worktree roots, `.gitattributes` are also not usually read from worktrees.
+    /// `roots` provide information about where to get diffable data from, so source and destination can either be sourced from
+    /// a worktree, or from the object database, or both.
+    pub fn resource_cache(
+        repo: &Repository,
+        index: &gix_index::State,
+        mode: gix_diff::blob::pipeline::Mode,
+        attribute_source: gix_worktree::stack::state::attributes::Source,
+        roots: gix_diff::blob::pipeline::WorktreeRoots,
+    ) -> Result<gix_diff::blob::Platform, resource_cache::Error> {
+        let diff_algo = repo.config.diff_algorithm()?;
+        let diff_cache = gix_diff::blob::Platform::new(
+            gix_diff::blob::platform::Options {
+                algorithm: Some(diff_algo),
+                skip_internal_diff_if_external_is_configured: false,
+            },
+            gix_diff::blob::Pipeline::new(
+                roots,
+                gix_filter::Pipeline::new(repo.command_context()?, crate::filter::Pipeline::options(repo)?),
+                repo.config.diff_drivers()?,
+                repo.config.diff_pipeline_options()?,
+            ),
+            mode,
+            repo.attributes_only(
+                // TODO(perf): this could benefit from not having to build an intermediate index,
+                //             and traverse the a tree directly.
+                index,
+                attribute_source,
+            )?
+            .inner,
+        );
+        Ok(diff_cache)
+    }
 }
 #[cfg(feature = "blob-diff")]
-pub use utils::new_rewrites;
+pub use utils::{new_rewrites, resource_cache};

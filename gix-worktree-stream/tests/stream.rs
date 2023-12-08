@@ -13,9 +13,7 @@ mod from_tree {
 
     use gix_attributes::glob::pattern::Case;
     use gix_hash::oid;
-    use gix_object::bstr::ByteSlice;
-    use gix_object::tree::EntryKind;
-    use gix_object::Data;
+    use gix_object::{bstr::ByteSlice, tree::EntryKind, Data};
     use gix_testtools::once_cell::sync::Lazy;
     use gix_worktree::stack::state::attributes::Source;
 
@@ -261,7 +259,6 @@ mod from_tree {
 
     fn mutating_pipeline(driver: bool) -> gix_filter::Pipeline {
         gix_filter::Pipeline::new(
-            &Default::default(),
             Default::default(),
             gix_filter::pipeline::Options {
                 drivers: if driver { vec![driver_with_process()] } else { vec![] },

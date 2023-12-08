@@ -20,8 +20,7 @@ use crate::{
 impl Cache {
     #[cfg(feature = "blob-diff")]
     pub(crate) fn diff_algorithm(&self) -> Result<gix_diff::blob::Algorithm, config::diff::algorithm::Error> {
-        use crate::config::cache::util::ApplyLeniencyDefault;
-        use crate::config::diff::algorithm::Error;
+        use crate::config::{cache::util::ApplyLeniencyDefault, diff::algorithm::Error};
         self.diff_algorithm
             .get_or_try_init(|| {
                 let name = self
@@ -37,6 +36,97 @@ impl Cache {
                     .with_lenient_default(self.lenient_config)
             })
             .copied()
+    }
+
+    #[cfg(feature = "blob-diff")]
+    pub(crate) fn diff_drivers(&self) -> Result<Vec<gix_diff::blob::Driver>, config::diff::drivers::Error> {
+        use crate::config::cache::util::ApplyLeniencyDefault;
+        let mut out = Vec::<gix_diff::blob::Driver>::new();
+        for section in self
+            .resolved
+            .sections_by_name("diff")
+            .into_iter()
+            .flatten()
+            .filter(|s| (self.filter_config_section)(s.meta()))
+        {
+            let Some(name) = section.header().subsection_name().filter(|n| !n.is_empty()) else {
+                continue;
+            };
+
+            let driver = match out.iter_mut().find(|d| d.name == name) {
+                Some(existing) => existing,
+                None => {
+                    out.push(gix_diff::blob::Driver {
+                        name: name.into(),
+                        ..Default::default()
+                    });
+                    out.last_mut().expect("just pushed")
+                }
+            };
+
+            if let Some(binary) = section.value_implicit("binary") {
+                driver.is_binary = config::tree::Diff::DRIVER_BINARY
+                    .try_into_binary(binary)
+                    .with_leniency(self.lenient_config)
+                    .map_err(|err| config::diff::drivers::Error {
+                        name: driver.name.clone(),
+                        attribute: "binary",
+                        source: Box::new(err),
+                    })?;
+            }
+            if let Some(command) = section.value(config::tree::Diff::DRIVER_COMMAND.name) {
+                driver.command = command.into_owned().into();
+            }
+            if let Some(textconv) = section.value(config::tree::Diff::DRIVER_TEXTCONV.name) {
+                driver.binary_to_text_command = textconv.into_owned().into();
+            }
+            if let Some(algorithm) = section.value("algorithm") {
+                driver.algorithm = config::tree::Diff::DRIVER_ALGORITHM
+                    .try_into_algorithm(algorithm)
+                    .or_else(|err| match err {
+                        config::diff::algorithm::Error::Unimplemented { .. } if self.lenient_config => {
+                            Ok(gix_diff::blob::Algorithm::Histogram)
+                        }
+                        err => Err(err),
+                    })
+                    .with_lenient_default(self.lenient_config)
+                    .map_err(|err| config::diff::drivers::Error {
+                        name: driver.name.clone(),
+                        attribute: "algorithm",
+                        source: Box::new(err),
+                    })?
+                    .into();
+            }
+        }
+        Ok(out)
+    }
+
+    #[cfg(feature = "blob-diff")]
+    pub(crate) fn diff_pipeline_options(
+        &self,
+    ) -> Result<gix_diff::blob::pipeline::Options, config::diff::pipeline_options::Error> {
+        Ok(gix_diff::blob::pipeline::Options {
+            large_file_threshold_bytes: self.big_file_threshold()?,
+            fs: self.fs_capabilities()?,
+        })
+    }
+
+    #[cfg(feature = "blob-diff")]
+    pub(crate) fn diff_renames(&self) -> Result<Option<crate::diff::Rewrites>, crate::diff::new_rewrites::Error> {
+        self.diff_renames
+            .get_or_try_init(|| crate::diff::new_rewrites(&self.resolved, self.lenient_config))
+            .copied()
+    }
+
+    #[cfg(feature = "blob-diff")]
+    pub(crate) fn big_file_threshold(&self) -> Result<u64, config::unsigned_integer::Error> {
+        Ok(self
+            .resolved
+            .integer_by_key("core.bigFileThreshold")
+            .map(|number| Core::BIG_FILE_THRESHOLD.try_into_u64(number))
+            .transpose()
+            .with_leniency(self.lenient_config)?
+            .unwrap_or(512 * 1024 * 1024))
     }
 
     /// Returns a user agent for use with servers.
@@ -57,8 +147,9 @@ impl Cache {
     /// Return `true` if packet-tracing is enabled. Lenient and defaults to `false`.
     #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
     pub(crate) fn trace_packet(&self) -> bool {
-        use crate::config::tree::Section;
         use config::tree::Gitoxide;
+
+        use crate::config::tree::Section;
         self.resolved
             .boolean(Gitoxide.name(), None, Gitoxide::TRACE_PACKET.name())
             .and_then(Result::ok)
@@ -90,13 +181,6 @@ impl Cache {
                     .enrich_error(res)
                     .with_lenient_default_value(self.lenient_config, DEFAULT)
             })
-    }
-
-    #[cfg(feature = "blob-diff")]
-    pub(crate) fn diff_renames(&self) -> Result<Option<crate::diff::Rewrites>, crate::diff::new_rewrites::Error> {
-        self.diff_renames
-            .get_or_try_init(|| crate::diff::new_rewrites(&self.resolved, self.lenient_config))
-            .copied()
     }
 
     /// Returns (file-timeout, pack-refs timeout)
@@ -196,12 +280,8 @@ impl Cache {
         )?;
         let capabilities = self.fs_capabilities()?;
         let filters = {
-            let collection = Default::default();
-            let mut filters = gix_filter::Pipeline::new(
-                &collection,
-                repo.command_context()?,
-                crate::filter::Pipeline::options(repo)?,
-            );
+            let mut filters =
+                gix_filter::Pipeline::new(repo.command_context()?, crate::filter::Pipeline::options(repo)?);
             if let Ok(mut head) = repo.head() {
                 let ctx = filters.driver_context_mut();
                 ctx.ref_name = head.referent_name().map(|name| name.as_bstr().to_owned());

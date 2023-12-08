@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.45.0 (2023-12-06)
+
+### Changed (BREAKING)
+
+ - <csr-id-d6e720146c633bdc5400425b6097a3f5de93a51b/> Use `gix-object::Find` trait
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 28 commits contributed to the release over the course of 46 calendar days.
+ - 54 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge pull request #1137 from martinvonz/push-mruzqpwzzwmy ([`115c993`](https://github.com/Byron/gitoxide/commit/115c993f7919b4f7edcf04e92bb8293957c028a5))
+    - Give `Node` an unsafe constructor ([`c4807de`](https://github.com/Byron/gitoxide/commit/c4807deffa170062c97e8452f4e20f73fb3a8aff))
+    - Remove `Clone` impl of `ItemSliceSend` and make it `Sync` instead ([`43bca11`](https://github.com/Byron/gitoxide/commit/43bca114ae4de2e84fdcd3c1bdcb736417d0f4e6))
+    - Make delta `Node` private to `resolve.rs` ([`7301ca1`](https://github.com/Byron/gitoxide/commit/7301ca13f89f2c0aafb145aedee4b32481920620))
+    - Move delta `Node` into `resolve.rs` ([`d655ee1`](https://github.com/Byron/gitoxide/commit/d655ee13779c40c28e518056f539e38d1b52ac8c))
+    - Extract a `ItemSliceSend::get_mut()` from `Node::into_child_iter()` ([`d27857d`](https://github.com/Byron/gitoxide/commit/d27857d7a6fb5d4b858e0398f3f1f2b5656e70d0))
+    - Rename an `Item`-typed variable from `node` to `item` ([`d6b8977`](https://github.com/Byron/gitoxide/commit/d6b8977ce1662b75d9b0a82978b387dc7faf3979))
+    - Merge pull request #1131 from alexanderkjall/bump-memmap2-to-0.9 ([`f528ae8`](https://github.com/Byron/gitoxide/commit/f528ae864b9f5f2a88325d89e2596f3b66b706d4))
+    - Upgrade memmap2 from 0.7.1 to 0.9.0 ([`f4c3380`](https://github.com/Byron/gitoxide/commit/f4c338077688d7026feaaf3b95c03a8409c071ba))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Merge branch 'sh-on-windows' ([`2b80d84`](https://github.com/Byron/gitoxide/commit/2b80d8424196088d4ccc36914c87e320e4416ea1))
+    - Remove special handling in favor of allowing shell-avoidance. ([`a0cc80d`](https://github.com/Byron/gitoxide/commit/a0cc80d21e74a43d5770cf08a221ef92f39920bb))
+    - Merge pull request #1116 from martinvonz/push-rlxsnxnlnkmp ([`613f018`](https://github.com/Byron/gitoxide/commit/613f0184cac2b74a3fac80e4cefbc2503d4580cf))
+    - Make ItemSliceSend and Node only crate-visible ([`4f5ab36`](https://github.com/Byron/gitoxide/commit/4f5ab3650250159bc3b5521e79cdc390aeb3f4ae))
+    - Add a phantom lifetime to ItemSliceSend ([`6e5ef3b`](https://github.com/Byron/gitoxide/commit/6e5ef3b2e60be4eb38544362e08b6a787788bfdf))
+    - Fix pointer aliasing in ItemSliceSend ([`17a7c6a`](https://github.com/Byron/gitoxide/commit/17a7c6aa71e007e5110ee0680b871c5be79554bc))
+    - Give ItemSliceSend a constructor and hide its field ([`c684b26`](https://github.com/Byron/gitoxide/commit/c684b269f6ae71f8b469fe127b83a180e879a7f1))
+    - Merge branch 'fix-1096' ([`ff99a18`](https://github.com/Byron/gitoxide/commit/ff99a18e9f9388542a9cbf17d61b413f34b1d533))
+    - Adapt to changes in `gix-object` ([`203d69c`](https://github.com/Byron/gitoxide/commit/203d69c8890acc716bd4f7a7b1b2b91a8c828bde))
+    - Merge branch 'gix-object-find' ([`c8bd660`](https://github.com/Byron/gitoxide/commit/c8bd66065316176dfbbfe7ecaa092a25cad1854b))
+    - Thanks clippy ([`82b01c2`](https://github.com/Byron/gitoxide/commit/82b01c28bbbcd3b8ce346d1977fe7d8587273be6))
+    - Use `gix-object::Find` trait ([`d6e7201`](https://github.com/Byron/gitoxide/commit/d6e720146c633bdc5400425b6097a3f5de93a51b))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+</details>
+
 ## 0.44.0 (2023-10-12)
 
 A maintenance release without user-facing changes.
@@ -13,7 +71,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 13 calendar days.
+ - 5 commits contributed to the release over the course of 13 calendar days.
  - 17 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -31,6 +89,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Thanks clippy ([`345712d`](https://github.com/Byron/gitoxide/commit/345712dcdfddcccc630bbfef2ed4f461b21550d3))
     - Merge branch 'reset' ([`b842691`](https://github.com/Byron/gitoxide/commit/b8426919a491dc3a7df01ee3f258fc0d8a3a327c))

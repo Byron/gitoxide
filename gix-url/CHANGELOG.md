@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.25.2 (2023-12-06)
+
+### Bug Fixes
+
+ - <csr-id-ee47fbab9ff995bc76a4c75185fe8e6e7c1d4ba3/> specify minimum required `url` version of v2.2.0.
+   Note that this is also the minimal required version that is resolved
+   with `cargo +nightly update -Z minimal-versions`, but it's nothing
+   I could validate or reproduce myself just yet.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release over the course of 52 calendar days.
+ - 53 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#1082](https://github.com/Byron/gitoxide/issues/1082), [#1119](https://github.com/Byron/gitoxide/issues/1119)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1082](https://github.com/Byron/gitoxide/issues/1082)**
+    - Add new test-case to reproduce gix-url failure in debug mode only ([`d78f445`](https://github.com/Byron/gitoxide/commit/d78f445449e534bbd858a8db1a16ad837417a78f))
+ * **[#1119](https://github.com/Byron/gitoxide/issues/1119)**
+    - Specify minimum required `url` version of v2.2.0. ([`ee47fba`](https://github.com/Byron/gitoxide/commit/ee47fbab9ff995bc76a4c75185fe8e6e7c1d4ba3))
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'gix-status' ([`dfb3f18`](https://github.com/Byron/gitoxide/commit/dfb3f1821428f294f1832543ad0cf2fc883b03fb))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Add another failing gix-url test-case found by the fuzzer. ([`9158ffc`](https://github.com/Byron/gitoxide/commit/9158ffc24661e316327063705194c1fee3d9984c))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+    - Merge branch 'url-set-password' ([`650461c`](https://github.com/Byron/gitoxide/commit/650461c1430e6e4b3697c5d1dcdaeaa77d5005d7))
+    - Add test for password and user access ([`6b10245`](https://github.com/Byron/gitoxide/commit/6b10245ace7eea1cf09f2bf4a1aed9733f38e2d5))
+    - Allow changing URL password. ([`4ba43ac`](https://github.com/Byron/gitoxide/commit/4ba43ac85355616ff110c243fb2dbfd34b45c289))
+    - Merge branch 'fuzz' ([`c5a7e66`](https://github.com/Byron/gitoxide/commit/c5a7e66d901868237ef5a4f86534b9878cc397ff))
+    - Add a new failure case which doesn't reproduce ([`bc82f8f`](https://github.com/Byron/gitoxide/commit/bc82f8fc4d6a06af94c5bfc0c4d19caa3f1eb805))
+</details>
+
 ## 0.25.1 (2023-10-14)
 
 ### Bug Fixes
@@ -15,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 1 day passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1063](https://github.com/Byron/gitoxide/issues/1063)
@@ -29,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1063](https://github.com/Byron/gitoxide/issues/1063)**
     - Make file:// url parsing with full backslashed path more robust on windows. ([`562b0c9`](https://github.com/Byron/gitoxide/commit/562b0c931db1d22b8e59903cb59afa9a36d5884c))
  * **Uncategorized**
+    - Release gix-url v0.25.1 ([`47a1241`](https://github.com/Byron/gitoxide/commit/47a1241484fdb424184ca37f85a8b287d374d2a1))
     - Merge branch 'head-conversions' ([`c2cf20c`](https://github.com/Byron/gitoxide/commit/c2cf20cd2d685c2c24527729fff35fd0a7903742))
     - Fix yet another fuzzed test-case related to url::parse DoS ([`21729ed`](https://github.com/Byron/gitoxide/commit/21729edb0c12831eb9ea488cc3b66b5e79eacfae))
 </details>

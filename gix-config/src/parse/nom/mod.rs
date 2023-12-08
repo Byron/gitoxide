@@ -6,7 +6,7 @@ use winnow::{
     error::{ErrorKind, InputError as NomError, ParserError as _},
     prelude::*,
     stream::{Offset as _, Stream as _},
-    token::{one_of, take_till0, take_while},
+    token::{one_of, take_till, take_while},
 };
 
 use crate::parse::{error::ParseNode, section, Comment, Error, Event};
@@ -82,7 +82,7 @@ fn newlines_from(input: &[u8], start: winnow::stream::Checkpoint<&[u8]>) -> usiz
 fn comment<'i>(i: &mut &'i [u8]) -> PResult<Comment<'i>, NomError<&'i [u8]>> {
     (
         one_of([';', '#']),
-        take_till0(|c| c == b'\n').map(|text: &[u8]| Cow::Borrowed(text.as_bstr())),
+        take_till(0.., |c| c == b'\n').map(|text: &[u8]| Cow::Borrowed(text.as_bstr())),
     )
         .map(|(tag, text)| Comment { tag, text })
         .parse_next(i)

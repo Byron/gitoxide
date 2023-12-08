@@ -157,6 +157,7 @@ pub fn new() -> (
                     verbose,
                     ssl_ca_info,
                     ssl_version,
+                    ssl_verify,
                     http_version,
                     backend,
                 },
@@ -193,6 +194,9 @@ pub fn new() -> (
                     handle.ssl_min_max_version(to_curl_ssl_version(min), to_curl_ssl_version(max))?;
                 }
             }
+
+            handle.ssl_verify_peer(ssl_verify)?;
+            handle.ssl_verify_host(ssl_verify)?;
 
             if let Some(http_version) = http_version {
                 let version = match http_version {

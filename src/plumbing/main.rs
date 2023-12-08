@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::{anyhow, Context, Result};
 use clap::{CommandFactory, Parser};
+use gitoxide::shared::pretty::prepare_and_run;
 use gitoxide_core as core;
 use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
 use gix::bstr::{io::BufReadExt, BString};
@@ -20,7 +21,6 @@ use crate::plumbing::{
     },
     show_progress,
 };
-use gitoxide::shared::pretty::prepare_and_run;
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {
@@ -136,10 +136,14 @@ pub fn main() -> Result<()> {
     let auto_verbose = !progress && !args.no_verbose;
 
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    gix::interrupt::init_handler(1, {
-        let should_interrupt = Arc::clone(&should_interrupt);
-        move || should_interrupt.store(true, Ordering::SeqCst)
-    })?;
+    #[allow(unsafe_code)]
+    unsafe {
+        // SAFETY: The closure doesn't use mutexes or memory allocation, so it should be safe to call from a signal handler.
+        gix::interrupt::init_handler(1, {
+            let should_interrupt = Arc::clone(&should_interrupt);
+            move || should_interrupt.store(true, Ordering::SeqCst)
+        })?;
+    }
 
     match cmd {
         Subcommands::Status(crate::plumbing::options::status::Platform {
@@ -255,8 +259,8 @@ pub fn main() -> Result<()> {
                     let mut engine = core::corpus::Engine::open_or_create(
                         db,
                         core::corpus::engine::State {
-                            gitoxide_version: option_env!("GITOXIDE_VERSION")
-                                .ok_or_else(|| anyhow::anyhow!("GITOXIDE_VERSION must be set in build-script"))?
+                            gitoxide_version: option_env!("GIX_VERSION")
+                                .ok_or_else(|| anyhow::anyhow!("GIX_VERSION must be set in build-script"))?
                                 .into(),
                             progress,
                             trace_to_progress: trace,
@@ -926,6 +930,7 @@ pub fn main() -> Result<()> {
                 explain,
                 cat_file,
                 tree_mode,
+                blob_format,
             } => prepare_and_run(
                 "revision-parse",
                 trace,
@@ -942,10 +947,24 @@ pub fn main() -> Result<()> {
                             format,
                             explain,
                             cat_file,
-                            tree_mode: match tree_mode.unwrap_or_default() {
+                            tree_mode: match tree_mode {
                                 revision::resolve::TreeMode::Raw => core::repository::revision::resolve::TreeMode::Raw,
                                 revision::resolve::TreeMode::Pretty => {
                                     core::repository::revision::resolve::TreeMode::Pretty
+                                }
+                            },
+                            blob_format: match blob_format {
+                                revision::resolve::BlobFormat::Git => {
+                                    core::repository::revision::resolve::BlobFormat::Git
+                                }
+                                revision::resolve::BlobFormat::Worktree => {
+                                    core::repository::revision::resolve::BlobFormat::Worktree
+                                }
+                                revision::resolve::BlobFormat::Diff => {
+                                    core::repository::revision::resolve::BlobFormat::Diff
+                                }
+                                revision::resolve::BlobFormat::DiffOrGit => {
+                                    core::repository::revision::resolve::BlobFormat::DiffOrGit
                                 }
                             },
                         },

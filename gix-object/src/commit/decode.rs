@@ -5,7 +5,7 @@ use winnow::{
     combinator::{alt, eof, opt, preceded, repeat, rest, terminated},
     error::{AddContext, ParserError, StrContext},
     prelude::*,
-    token::take_till1,
+    token::take_till,
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, CommitRef};
@@ -42,14 +42,15 @@ pub fn commit<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
             .context(StrContext::Expected("author <signature>".into())),
         (|i: &mut _| parse::header_field(i, b"committer", parse::signature))
             .context(StrContext::Expected("committer <signature>".into())),
-        opt(|i: &mut _| parse::header_field(i, b"encoding", take_till1(NL)))
+        opt(|i: &mut _| parse::header_field(i, b"encoding", take_till(1.., NL)))
             .context(StrContext::Expected("encoding <encoding>".into())),
         repeat(
             0..,
             alt((
                 parse::any_header_field_multi_line.map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
                 |i: &mut _| {
-                    parse::any_header_field(i, take_till1(NL)).map(|(k, o)| (k.as_bstr(), Cow::Borrowed(o.as_bstr())))
+                    parse::any_header_field(i, take_till(1.., NL))
+                        .map(|(k, o)| (k.as_bstr(), Cow::Borrowed(o.as_bstr())))
                 },
             )),
         )

@@ -7,9 +7,11 @@ use gix_ref::{
     Target,
 };
 
-use crate::file::EmptyCommit;
 use crate::{
-    file::transaction::prepare_and_commit::{committer, create_at, create_symbolic_at, delete_at, empty_store},
+    file::{
+        transaction::prepare_and_commit::{committer, create_at, create_symbolic_at, delete_at, empty_store},
+        EmptyCommit,
+    },
     hex_to_id,
 };
 

@@ -1,6 +1,8 @@
-use crate::SymlinkCheck;
-use gix_fs::Stack;
 use std::path::{Path, PathBuf};
+
+use gix_fs::Stack;
+
+use crate::SymlinkCheck;
 
 impl SymlinkCheck {
     /// Create a new stack that starts operating at `root`.
@@ -34,6 +36,7 @@ impl gix_fs::stack::Delegate for Delegate {
         Ok(())
     }
 
+    #[cfg_attr(windows, allow(unused_variables))]
     fn push(&mut self, is_last_component: bool, stack: &Stack) -> std::io::Result<()> {
         #[cfg(windows)]
         {

@@ -1,6 +1,6 @@
 use crate::{
     config,
-    config::tree::{keys, Diff, Key, Section},
+    config::tree::{keys, Diff, Key, Section, SubSectionRequirement},
 };
 
 impl Diff {
@@ -17,6 +17,24 @@ impl Diff {
     );
     /// The `diff.renames` key.
     pub const RENAMES: Renames = Renames::new_renames("renames", &config::Tree::DIFF);
+
+    /// The `diff.<driver>.command` key.
+    pub const DRIVER_COMMAND: keys::String = keys::String::new_string("command", &config::Tree::DIFF)
+        .with_subsection_requirement(Some(SubSectionRequirement::Parameter("driver")));
+    /// The `diff.<driver>.textconv` key.
+    pub const DRIVER_TEXTCONV: keys::String = keys::String::new_string("textconv", &config::Tree::DIFF)
+        .with_subsection_requirement(Some(SubSectionRequirement::Parameter("driver")));
+    /// The `diff.<driver>.algorithm` key.
+    pub const DRIVER_ALGORITHM: Algorithm =
+        Algorithm::new_with_validate("algorithm", &config::Tree::DIFF, validate::Algorithm)
+            .with_subsection_requirement(Some(SubSectionRequirement::Parameter("driver")));
+    /// The `diff.<driver>.binary` key.
+    pub const DRIVER_BINARY: Binary = Binary::new_with_validate("binary", &config::Tree::DIFF, validate::Binary)
+        .with_subsection_requirement(Some(SubSectionRequirement::Parameter("driver")));
+
+    /// The `diff.external` key.
+    pub const EXTERNAL: keys::Program =
+        keys::Program::new_program("external", &config::Tree::DIFF).with_environment_override("GIT_EXTERNAL_DIFF");
 }
 
 impl Section for Diff {
@@ -25,7 +43,16 @@ impl Section for Diff {
     }
 
     fn keys(&self) -> &[&dyn Key] {
-        &[&Self::ALGORITHM, &Self::RENAME_LIMIT, &Self::RENAMES]
+        &[
+            &Self::ALGORITHM,
+            &Self::RENAME_LIMIT,
+            &Self::RENAMES,
+            &Self::DRIVER_COMMAND,
+            &Self::DRIVER_TEXTCONV,
+            &Self::DRIVER_ALGORITHM,
+            &Self::DRIVER_BINARY,
+            &Self::EXTERNAL,
+        ]
     }
 }
 
@@ -34,6 +61,9 @@ pub type Algorithm = keys::Any<validate::Algorithm>;
 
 /// The `diff.renames` key.
 pub type Renames = keys::Any<validate::Renames>;
+
+/// The `diff.<driver>.binary` key.
+pub type Binary = keys::Any<validate::Binary>;
 
 mod algorithm {
     use std::borrow::Cow;
@@ -63,6 +93,38 @@ mod algorithm {
                 });
             };
             Ok(algo)
+        }
+    }
+}
+
+mod binary {
+    use crate::config::tree::diff::Binary;
+
+    impl Binary {
+        /// Convert `value` into a tri-state boolean that can take the special value `auto`, resulting in `None`, or is a boolean.
+        /// If `None` is given, it's treated as implicit boolean `true`, as this method is made to be used
+        /// with [`gix_config::file::section::Body::value_implicit()`].
+        pub fn try_into_binary(
+            &'static self,
+            value: Option<std::borrow::Cow<'_, crate::bstr::BStr>>,
+        ) -> Result<Option<bool>, crate::config::key::GenericErrorWithValue> {
+            Ok(match value {
+                None => Some(true),
+                Some(value) => {
+                    if value.as_ref() == "auto" {
+                        None
+                    } else {
+                        Some(
+                            gix_config::Boolean::try_from(value.as_ref())
+                                .map(|b| b.0)
+                                .map_err(|err| {
+                                    crate::config::key::GenericErrorWithValue::from_value(self, value.into_owned())
+                                        .with_source(err)
+                                })?,
+                        )
+                    }
+                }
+            })
         }
     }
 }
@@ -122,6 +184,14 @@ mod validate {
         fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             let boolean = gix_config::Boolean::try_from(value).map(|b| b.0);
             Diff::RENAMES.try_into_renames(boolean)?;
+            Ok(())
+        }
+    }
+
+    pub struct Binary;
+    impl keys::Validate for Binary {
+        fn validate(&self, value: &BStr) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            Diff::DRIVER_BINARY.try_into_binary(Some(value.into()))?;
             Ok(())
         }
     }

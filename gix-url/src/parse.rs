@@ -1,7 +1,8 @@
 use std::convert::Infallible;
 
-use crate::Scheme;
 use bstr::{BStr, BString, ByteSlice};
+
+use crate::Scheme;
 
 /// The error returned by [parse()](crate::parse()).
 #[derive(Debug, thiserror::Error)]

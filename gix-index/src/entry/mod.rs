@@ -18,9 +18,9 @@ mod write;
 
 use bitflags::bitflags;
 
-// TODO: we essentially treat this as an enum withj the only exception being
-// that `FILE_EXECUTABLE.contains(FILE)` works might want to turn this into an
-// enum proper
+// TODO: we essentially treat this as an enum with the only exception being
+//      that `FILE_EXECUTABLE.contains(FILE)` works might want to turn this into an
+//      enum proper
 bitflags! {
     /// The kind of file of an entry.
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]

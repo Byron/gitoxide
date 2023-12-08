@@ -40,6 +40,9 @@ pub mod attributes;
 mod cache;
 mod config;
 ///
+#[cfg(feature = "blob-diff")]
+pub mod diff;
+///
 #[cfg(feature = "attributes")]
 pub mod filter;
 mod graph;

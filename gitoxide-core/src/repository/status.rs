@@ -1,10 +1,12 @@
-use crate::OutputFormat;
 use anyhow::{bail, Context};
-use gix::bstr::{BStr, BString};
-use gix::index::Entry;
-use gix::Progress;
-use gix_status::index_as_worktree::traits::FastEq;
-use gix_status::index_as_worktree::{Change, Conflict, EntryStatus};
+use gix::{
+    bstr::{BStr, BString},
+    index::Entry,
+    Progress,
+};
+use gix_status::index_as_worktree::{traits::FastEq, Change, Conflict, EntryStatus};
+
+use crate::OutputFormat;
 
 pub enum Submodules {
     /// display all information about submodules, including ref changes, modifications and untracked files.

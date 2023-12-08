@@ -1,9 +1,8 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use gix_features::progress::DynNestedProgress;
 use gix_features::{
     parallel::in_parallel_with_slice,
-    progress::{self, Progress},
+    progress::{self, DynNestedProgress, Progress},
     threading,
     threading::{Mutable, OwnShared},
 };

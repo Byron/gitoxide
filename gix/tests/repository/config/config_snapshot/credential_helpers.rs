@@ -1,5 +1,6 @@
-use crate::remote;
 use gix_testtools::Env;
+
+use crate::remote;
 
 mod baseline {
     use std::collections::HashMap;

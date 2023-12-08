@@ -1,6 +1,6 @@
 [package]
 name = "gix-utils"
-version = "0.1.5"
+version = "0.1.6"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate with `gitoxide` utilities that don't need feature toggles"

@@ -17,6 +17,7 @@ impl<'repo> Delegate<'repo> {
         Delegate {
             refs: Default::default(),
             objs: Default::default(),
+            paths: Default::default(),
             ambiguous_objects: Default::default(),
             idx: 0,
             kind: None,
@@ -100,6 +101,7 @@ impl<'repo> Delegate<'repo> {
 
         let range = zero_or_one_objects_or_ambiguity_err(self.objs, self.prefix, self.err, self.repo)?;
         Ok(crate::revision::Spec {
+            path: self.paths[0].take().or(self.paths[1].take()),
             first_ref: self.refs[0].take(),
             second_ref: self.refs[1].take(),
             inner: kind_to_spec(self.kind, range)?,

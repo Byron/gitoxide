@@ -1,8 +1,14 @@
 pub(crate) mod function {
     use std::{cmp::Ordering, sync::Arc};
 
-    use gix_features::progress::prodash::{Count, DynNestedProgress};
-    use gix_features::{parallel, parallel::SequenceId, progress::Progress};
+    use gix_features::{
+        parallel,
+        parallel::SequenceId,
+        progress::{
+            prodash::{Count, DynNestedProgress},
+            Progress,
+        },
+    };
 
     use super::{reduce, util, Error, Mode, Options, Outcome, ProgressId};
     use crate::data::output;

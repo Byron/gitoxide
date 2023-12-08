@@ -1,6 +1,7 @@
-use crate::fixture_name;
 use gix_date::time::Sign;
 use gix_object::{bstr::ByteSlice, Kind, TagRef, TagRefIter};
+
+use crate::fixture_name;
 
 mod method {
     use gix_object::TagRef;

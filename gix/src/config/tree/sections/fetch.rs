@@ -45,8 +45,7 @@ mod algorithm {
             &'static self,
             name: std::borrow::Cow<'_, crate::bstr::BStr>,
         ) -> Result<crate::remote::fetch::negotiate::Algorithm, crate::config::key::GenericErrorWithValue> {
-            use crate::bstr::ByteSlice;
-            use crate::remote::fetch::negotiate::Algorithm;
+            use crate::{bstr::ByteSlice, remote::fetch::negotiate::Algorithm};
 
             Ok(match name.as_ref().as_bytes() {
                 b"noop" => Algorithm::Noop,

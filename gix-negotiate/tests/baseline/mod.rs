@@ -1,8 +1,7 @@
 use std::cell::RefCell;
 
 use gix_negotiate::Algorithm;
-use gix_object::FindExt;
-use gix_object::{bstr, bstr::ByteSlice};
+use gix_object::{bstr, bstr::ByteSlice, FindExt};
 use gix_ref::{file::ReferenceExt, store::WriteReflog};
 
 #[test]

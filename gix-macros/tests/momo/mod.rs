@@ -1,5 +1,6 @@
-use gix_macros::momo;
 use std::pin::Pin;
+
+use gix_macros::momo;
 
 struct Options;
 

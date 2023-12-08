@@ -106,10 +106,15 @@ fn blob_and_tree_can_be_disambiguated_by_type() {
 #[test]
 fn trees_can_be_disambiguated_by_blob_access() {
     let repo = repo("ambiguous_blob_tree_commit").unwrap();
+    let actual = parse_spec_better_than_baseline("0000000000:a0blgqsjc", &repo).unwrap();
     assert_eq!(
-        parse_spec_better_than_baseline("0000000000:a0blgqsjc", &repo).unwrap(),
+        actual,
         Spec::from_id(hex_to_id("0000000000b36b6aa7ea4b75318ed078f55505c3").attach(&repo)),
         "we can disambiguate by providing a path, but git cannot"
+    );
+    assert_eq!(
+        actual.path_and_mode().expect("set"),
+        ("a0blgqsjc".into(), gix_object::tree::EntryKind::Blob.into())
     );
 }
 

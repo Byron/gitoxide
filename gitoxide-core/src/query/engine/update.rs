@@ -1,16 +1,16 @@
-use std::cell::RefCell;
 use std::{
+    cell::RefCell,
     convert::Infallible,
     sync::atomic::{AtomicUsize, Ordering},
     time::Instant,
 };
 
 use anyhow::{anyhow, bail};
-use gix::objs::find::Error;
 use gix::{
     bstr::{BStr, BString, ByteSlice},
-    diff::rewrites::CopySource,
+    diff::{blob::platform::prepare_diff::Operation, rewrites::CopySource},
     features::progress,
+    objs::find::Error,
     parallel::{InOrderIter, SequenceId},
     prelude::ObjectIdExt,
     Count, Progress,
@@ -173,6 +173,9 @@ pub fn update(
                         repo.object_cache_size_if_unset((object_cache_size_mb * 1024 * 1024) / threads);
                         let rx = rx.clone();
                         move || -> anyhow::Result<()> {
+                            let mut rewrite_cache =
+                                repo.diff_resource_cache(gix::diff::blob::pipeline::Mode::ToGit, Default::default())?;
+                            let mut diff_cache = rewrite_cache.clone();
                             for (chunk_id, chunk) in rx {
                                 let mut out_chunk = Vec::with_capacity(chunk.len());
                                 for Task {
@@ -201,10 +204,12 @@ pub fn update(
                                             Some(c) => c,
                                             None => continue,
                                         };
+                                        rewrite_cache.clear_resource_cache();
+                                        diff_cache.clear_resource_cache();
                                         from.changes()?
                                             .track_path()
                                             .track_rewrites(Some(rewrites))
-                                            .for_each_to_obtain_tree(&to, |change| {
+                                            .for_each_to_obtain_tree_with_cache(&to, &mut rewrite_cache, |change| {
                                                 use gix::object::tree::diff::change::Event::*;
                                                 change_counter.fetch_add(1, Ordering::SeqCst);
                                                 match change.event {
@@ -232,30 +237,47 @@ pub fn update(
                                                             );
                                                         }
                                                         (true, true) => {
-                                                            // TODO: use git attributes here to know if it's a binary file or not.
-                                                            if let Some(Ok(diff)) = change.event.diff() {
-                                                                let mut nl = 0;
-                                                                let tokens = diff.line_tokens();
-                                                                let counts = gix::diff::blob::diff(
-                                                                    diff.algo,
-                                                                    &tokens,
-                                                                    gix::diff::blob::sink::Counter::default(),
-                                                                );
-                                                                nl += counts.insertions as usize
-                                                                    + counts.removals as usize;
-                                                                let lines = LineStats {
-                                                                    added: counts.insertions as usize,
-                                                                    removed: counts.removals as usize,
-                                                                    before: tokens.before.len(),
-                                                                    after: tokens.after.len(),
-                                                                };
-                                                                lines_counter.fetch_add(nl, Ordering::SeqCst);
-                                                                out.push(FileChange {
-                                                                    relpath: change.location.to_owned(),
-                                                                    mode: FileMode::Modified,
-                                                                    source_relpath: None,
-                                                                    lines: Some(lines),
-                                                                });
+                                                            if let Ok(cache) =
+                                                                change.diff(&mut diff_cache).map(|p| p.resource_cache)
+                                                            {
+                                                                cache
+                                                                    .options
+                                                                    .skip_internal_diff_if_external_is_configured =
+                                                                    false;
+                                                                if let Ok(prep) = cache.prepare_diff() {
+                                                                    let mut nl = 0;
+                                                                    let tokens = prep.interned_input();
+                                                                    match prep.operation {
+                                                                        Operation::InternalDiff { algorithm } => {
+                                                                            let counts = gix::diff::blob::diff(
+                                                                                algorithm,
+                                                                                &tokens,
+                                                                                gix::diff::blob::sink::Counter::default(
+                                                                                ),
+                                                                            );
+                                                                            nl += counts.insertions as usize
+                                                                                + counts.removals as usize;
+                                                                            let lines = LineStats {
+                                                                                added: counts.insertions as usize,
+                                                                                removed: counts.removals as usize,
+                                                                                before: tokens.before.len(),
+                                                                                after: tokens.after.len(),
+                                                                            };
+                                                                            lines_counter
+                                                                                .fetch_add(nl, Ordering::SeqCst);
+                                                                            out.push(FileChange {
+                                                                                relpath: change.location.to_owned(),
+                                                                                mode: FileMode::Modified,
+                                                                                source_relpath: None,
+                                                                                lines: Some(lines),
+                                                                            });
+                                                                        }
+                                                                        Operation::ExternalCommand { .. } => {
+                                                                            unreachable!("disabled above")
+                                                                        }
+                                                                        Operation::SourceOrDestinationIsBinary => {}
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     },

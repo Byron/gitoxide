@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.27.0 (2023-12-06)
+
+### New Features
+
+ - <csr-id-21bea0f5496a0db607356c803a545358e766fa92/> impl `From<entry::Mode> for gix_object::tree::EntryMode`.
+
+### Changed (BREAKING)
+
+ - <csr-id-1165de0d00b99a85387868d1ebb6423fd0e89b6b/> Use new `gix-object::Find` trait
+ - <csr-id-806ea473e6e3ca3bf929f7d46c6f087296fceb09/> use `gix-object::Find` trait
+
+### New Features (BREAKING)
+
+ - <csr-id-3c8421f003bc3a5f2f51cee1b5cb6a526d5e0f38/> Add git-style metadata support.
+   As opposed to the Rust standard library, this one will get the
+   ctime from the file itself, instead of from the inode.
+   
+   That way, the index file written by `gix` will not continuously
+   be expensively rewritten by `git`, and vice versa.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 22 commits contributed to the release over the course of 46 calendar days.
+ - 54 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
+    - Merge branch 'gix-status' ([`5fdc9df`](https://github.com/Byron/gitoxide/commit/5fdc9df069f3d9a4bd88e4e0ca5d67916e2908c9))
+    - Impl `From<entry::Mode> for gix_object::tree::EntryMode`. ([`21bea0f`](https://github.com/Byron/gitoxide/commit/21bea0f5496a0db607356c803a545358e766fa92))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'gix-status' ([`dfb3f18`](https://github.com/Byron/gitoxide/commit/dfb3f1821428f294f1832543ad0cf2fc883b03fb))
+    - Adapt to changes in `gix-diff` ([`1706e23`](https://github.com/Byron/gitoxide/commit/1706e2394380c35cd98d0e106eb0985ae1912da0))
+    - Merge pull request #1131 from alexanderkjall/bump-memmap2-to-0.9 ([`f528ae8`](https://github.com/Byron/gitoxide/commit/f528ae864b9f5f2a88325d89e2596f3b66b706d4))
+    - Upgrade memmap2 from 0.7.1 to 0.9.0 ([`f4c3380`](https://github.com/Byron/gitoxide/commit/f4c338077688d7026feaaf3b95c03a8409c071ba))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Merge branch 'sh-on-windows' ([`2b80d84`](https://github.com/Byron/gitoxide/commit/2b80d8424196088d4ccc36914c87e320e4416ea1))
+    - Remove special handling in favor of allowing shell-avoidance. ([`a0cc80d`](https://github.com/Byron/gitoxide/commit/a0cc80d21e74a43d5770cf08a221ef92f39920bb))
+    - Merge branch 'gix-status' ([`c87f2cc`](https://github.com/Byron/gitoxide/commit/c87f2cc7a499cbd354c03c40f9923c80845fc56c))
+    - Add git-style metadata support. ([`3c8421f`](https://github.com/Byron/gitoxide/commit/3c8421f003bc3a5f2f51cee1b5cb6a526d5e0f38))
+    - Merge branch 'fix-1096' ([`ff99a18`](https://github.com/Byron/gitoxide/commit/ff99a18e9f9388542a9cbf17d61b413f34b1d533))
+    - Adapt to changes in `gix-object` ([`203d69c`](https://github.com/Byron/gitoxide/commit/203d69c8890acc716bd4f7a7b1b2b91a8c828bde))
+    - Merge branch 'gix-object-find' ([`c8bd660`](https://github.com/Byron/gitoxide/commit/c8bd66065316176dfbbfe7ecaa092a25cad1854b))
+    - Adapt to changes related to usage of `gix-object::Find` trait where necessary ([`5761a4d`](https://github.com/Byron/gitoxide/commit/5761a4daf80e5febe469e32220b71dc3063fb4a6))
+    - Use new `gix-object::Find` trait ([`1165de0`](https://github.com/Byron/gitoxide/commit/1165de0d00b99a85387868d1ebb6423fd0e89b6b))
+    - Use `gix-object::Find` trait ([`806ea47`](https://github.com/Byron/gitoxide/commit/806ea473e6e3ca3bf929f7d46c6f087296fceb09))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+</details>
+
 ## 0.26.0 (2023-10-12)
 
 ### Bug Fixes (BREAKING)
@@ -15,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 13 calendar days.
+ - 9 commits contributed to the release over the course of 13 calendar days.
  - 17 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Merge branch 'fix-input' ([`a899f74`](https://github.com/Byron/gitoxide/commit/a899f74a20c3e9a40f456387d71b48ca9187af17))
     - Assure a prefixed entries range is never empty. ([`357ba13`](https://github.com/Byron/gitoxide/commit/357ba137fe63e4b3f92732d665870085be888223))

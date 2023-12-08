@@ -150,9 +150,12 @@ mod fetch {
     #[test]
     #[cfg(feature = "credentials")]
     fn algorithm() -> crate::Result {
+        use gix::{
+            config::tree::{Fetch, Key},
+            remote::fetch::negotiate::Algorithm,
+        };
+
         use crate::config::tree::bcow;
-        use gix::config::tree::{Fetch, Key};
-        use gix::remote::fetch::negotiate::Algorithm;
 
         for (actual, expected) in [
             ("noop", Algorithm::Noop),
@@ -179,8 +182,10 @@ mod fetch {
     #[test]
     #[cfg(feature = "attributes")]
     fn recurse_submodule() -> crate::Result {
-        use gix::bstr::ByteSlice;
-        use gix::config::tree::{Fetch, Key};
+        use gix::{
+            bstr::ByteSlice,
+            config::tree::{Fetch, Key},
+        };
 
         for (actual, expected) in [
             ("true", gix_submodule::config::FetchRecurse::Always),
@@ -240,6 +245,37 @@ mod diff {
                 .to_string(),
             "The value of key \"diff.renames=foo\" was invalid"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn driver_binary() -> crate::Result {
+        assert_eq!(
+            Diff::DRIVER_BINARY.try_into_binary(Some(bcow("auto")))?,
+            None,
+            "this is as good as not setting it, but it's a valid value that would fail if it was just a boolean. It's undocumented though…"
+        );
+        assert!(Diff::DRIVER_BINARY.validate("auto".into()).is_ok());
+
+        for (actual, expected) in [
+            (Some("true"), Some(true)),
+            (Some("false"), Some(false)),
+            (None, Some(true)),
+        ] {
+            assert_eq!(Diff::DRIVER_BINARY.try_into_binary(actual.map(bcow))?, expected);
+            if let Some(value) = actual {
+                assert!(Diff::DRIVER_BINARY.validate(value.into()).is_ok());
+            }
+        }
+
+        assert_eq!(
+            Diff::DRIVER_BINARY
+                .try_into_binary(Some(bcow("something")))
+                .unwrap_err()
+                .to_string(),
+            "The key \"diff.<driver>.binary=something\" was invalid",
+        );
+        assert!(Diff::DRIVER_BINARY.validate("foo".into()).is_err());
         Ok(())
     }
 
@@ -412,7 +448,7 @@ mod core {
                 .try_into_usize(signed(-1))
                 .unwrap_err()
                 .to_string(),
-            "The value of key \"core.deltaBaseCacheLimit\" (possibly from GITOXIDE_PACK_CACHE_MEMORY) could not be parsed as unsigned integer"
+            "The value of key \"core.deltaBaseCacheLimit\" (possibly from GIX_PACK_CACHE_MEMORY) could not be parsed as unsigned integer"
         );
         assert!(Core::DELTA_BASE_CACHE_LIMIT.validate("-1".into()).is_err());
         Ok(())

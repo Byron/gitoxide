@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.39.0 (2023-12-06)
+
+### New Features
+
+ - <csr-id-bc44497606656cddc4f18a0acb272c34b8df4ba8/> trace credential helper invocations.
+   This should make it easier to understand what's going on in case
+   something isn't working as expected.
+
+### Bug Fixes
+
+ - <csr-id-9e6ae011f9dc48fe8a79fe17b90cfaa6c9e1a64c/> `http::Error::InitHttpClient` adds a missing word that makes the message less confusing
+   Also validate that a source is present.
+ - <csr-id-95847091dc7e37ae6cafb07d698c27661953d530/> assure we flush before turning a writer into a reader.
+   Otherwise it might be that the write-end still isn't flushed, so
+   the receiver didn't get the message it's waiting on, which wouild
+   cause us to deadlock while waiting for a response from the remote.
+
+### New Features (BREAKING)
+
+ - <csr-id-dfec2813f79cd52727d3e2d8b824b9277b4aae0e/> Add `ssl_verify` field to `client::http::Options`.
+   Currently this option only works in the curl backend.
+ - <csr-id-c3edef1c0c49accbb037bdf086dade3ed0e5e507/> make it possible to trace incoming and outgoing packetlines.
+   Due to the way this is (and has to be) setup, unfortunately one
+   has to integrate that with two crates, instead of just one.
+   
+   This changes touches multiple crates, most of which receive a single
+   boolean as last argument to indicate whether the tracing should
+   happen in the first place.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-88f8b342ab317696bcab8a0fe75c042e7290a75c/> Remove unsafe transmute of should_interrupt
+   Adds a lifetime to the ExtendedBufRead trait to specify how long the
+   callback provided must live.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 23 commits contributed to the release over the course of 53 calendar days.
+ - 54 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#1061](https://github.com/Byron/gitoxide/issues/1061), [#1075](https://github.com/Byron/gitoxide/issues/1075), [#1103](https://github.com/Byron/gitoxide/issues/1103)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1061](https://github.com/Byron/gitoxide/issues/1061)**
+    - Assure we flush before turning a writer into a reader. ([`9584709`](https://github.com/Byron/gitoxide/commit/95847091dc7e37ae6cafb07d698c27661953d530))
+ * **[#1075](https://github.com/Byron/gitoxide/issues/1075)**
+    - `http::Error::InitHttpClient` adds a missing word that makes the message less confusing ([`9e6ae01`](https://github.com/Byron/gitoxide/commit/9e6ae011f9dc48fe8a79fe17b90cfaa6c9e1a64c))
+ * **[#1103](https://github.com/Byron/gitoxide/issues/1103)**
+    - Trace credential helper invocations. ([`bc44497`](https://github.com/Byron/gitoxide/commit/bc44497606656cddc4f18a0acb272c34b8df4ba8))
+ * **Uncategorized**
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
+    - Merge branch 'remove-unsafe' ([`d2ba97c`](https://github.com/Byron/gitoxide/commit/d2ba97c057de62022d4b8b720750c3a706ac0f9c))
+    - Remove unsafe transmute of should_interrupt ([`88f8b34`](https://github.com/Byron/gitoxide/commit/88f8b342ab317696bcab8a0fe75c042e7290a75c))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'support_ssl_verify' ([`5ce9784`](https://github.com/Byron/gitoxide/commit/5ce978432231e257ef625fc401895b34f963bf6d))
+    - Assure `ssl_verify` is enabled by default, and also affect host verification. ([`ab6e89c`](https://github.com/Byron/gitoxide/commit/ab6e89cb65b5ae6bdf7ff4193227c756cc0af644))
+    - Add `ssl_verify` field to `client::http::Options`. ([`dfec281`](https://github.com/Byron/gitoxide/commit/dfec2813f79cd52727d3e2d8b824b9277b4aae0e))
+    - Assure that whitespace can't be used to mask command-line arguments in file:// invocations ([`f291437`](https://github.com/Byron/gitoxide/commit/f2914377c1cb26524cee5cc762914e6d5d0ade4a))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Merge branch 'error' ([`c372321`](https://github.com/Byron/gitoxide/commit/c372321dd6ea66a41c135d28c7319ab05a6d0942))
+    - Merge branch 'fix-1096' ([`ff99a18`](https://github.com/Byron/gitoxide/commit/ff99a18e9f9388542a9cbf17d61b413f34b1d533))
+    - Fix CI failure ([`c36c95f`](https://github.com/Byron/gitoxide/commit/c36c95f4b6e9b5b1e2c9e19188999aecd822c3b7))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+    - Merge branch 'trace-packetlines' ([`e7de4c7`](https://github.com/Byron/gitoxide/commit/e7de4c702a223ad9eb19b407391028dcb08d80c4))
+    - Make it possible to trace incoming and outgoing packetlines. ([`c3edef1`](https://github.com/Byron/gitoxide/commit/c3edef1c0c49accbb037bdf086dade3ed0e5e507))
+    - Merge branch 'fuzz' ([`c5a7e66`](https://github.com/Byron/gitoxide/commit/c5a7e66d901868237ef5a4f86534b9878cc397ff))
+    - Release gix-url v0.25.1 ([`47a1241`](https://github.com/Byron/gitoxide/commit/47a1241484fdb424184ca37f85a8b287d374d2a1))
+</details>
+
 ## 0.38.0 (2023-10-13)
 
 ### Bug Fixes
@@ -20,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-transport v0.38.0, gix-protocol v0.41.1, gix v0.55.2, gitoxide-core v0.33.1, gitoxide v0.31.1 ([`1955a57`](https://github.com/Byron/gitoxide/commit/1955a57f003f7d731d04e582e70ea86f15e8e7d9))
     - Prepare changelogs prior to release ([`12b5caf`](https://github.com/Byron/gitoxide/commit/12b5cafc49baf07d00313de468970a2db33ac1f8))
     - Bump `gix-transport` version to prevent it from being picked up. ([`8011c73`](https://github.com/Byron/gitoxide/commit/8011c73ee401bfca03811a249c46a4dd468af1b8))
 </details>

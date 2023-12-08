@@ -1,12 +1,19 @@
+//! ### Deviation
+//!
+//! Note that the algorithm implemented here is in many ways different from what `git` does.
+//!
+//! - it's less sophisticated and doesn't use any ranking of candidates. Instead, it picks the first possible match.
+//! - the set used for copy-detection is probably smaller by default.
 use std::ops::Range;
 
+use bstr::BStr;
 use gix_object::tree::{EntryKind, EntryMode};
 
-use crate::blob::DiffLineStats;
-use crate::rewrites::{CopySource, Outcome};
-use crate::{rewrites::Tracker, Rewrites};
-use bstr::BStr;
-use gix_object::FindExt;
+use crate::{
+    blob::{platform::prepare_diff::Operation, DiffLineStats, ResourceKind},
+    rewrites::{CopySource, Outcome, Tracker},
+    Rewrites,
+};
 
 /// The kind of a change.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq)]
@@ -22,6 +29,9 @@ pub enum ChangeKind {
 /// A trait providing all functionality to abstract over the concept of a change, as seen by the [`Tracker`].
 pub trait Change: Clone {
     /// Return the hash of this change for identification.
+    ///
+    /// Note that this is the id of the object as stored in `git`, i.e. it must have gone through workspace
+    /// conversions.
     fn id(&self) -> &gix_hash::oid;
     /// Return the kind of this change.
     fn kind(&self) -> ChangeKind;
@@ -66,11 +76,13 @@ impl<T: Change> Item<T> {
 
 /// A module with types used in the user-callback in [Tracker::emit()](crate::rewrites::Tracker::emit()).
 pub mod visit {
-    use crate::blob::DiffLineStats;
     use bstr::BStr;
     use gix_object::tree::EntryMode;
 
+    use crate::blob::DiffLineStats;
+
     /// The source of a rewrite, rename or copy.
+    #[derive(Debug, Clone, PartialEq, PartialOrd)]
     pub struct Source<'a> {
         /// The kind of entry.
         pub entry_mode: EntryMode,
@@ -85,7 +97,7 @@ pub mod visit {
     }
 
     /// Further identify the kind of [Source].
-    #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
     pub enum SourceKind {
         /// This is the source of an entry that was renamed, as `source` was renamed to `destination`.
         Rename,
@@ -94,7 +106,8 @@ pub mod visit {
     }
 
     /// A change along with a location.
-    pub struct Destination<'a, T> {
+    #[derive(Clone)]
+    pub struct Destination<'a, T: Clone> {
         /// The change at the given `location`.
         pub change: T,
         /// The repository-relative location of this destination.
@@ -112,21 +125,21 @@ pub mod emit {
         FindExistingBlob(#[from] gix_object::find::existing_object::Error),
         #[error("Could not obtain exhaustive item set to use as possible sources for copy detection")]
         GetItemsForExhaustiveCopyDetection(#[source] Box<dyn std::error::Error + Send + Sync>),
+        #[error(transparent)]
+        SetResource(#[from] crate::blob::platform::set_resource::Error),
+        #[error(transparent)]
+        PrepareDiff(#[from] crate::blob::platform::prepare_diff::Error),
     }
 }
 
 /// Lifecycle
 impl<T: Change> Tracker<T> {
-    /// Create a new instance with `rewrites` configuration, and the `diff_algo` to use when performing
-    /// similarity checking.
-    pub fn new(rewrites: Rewrites, diff_algo: crate::blob::Algorithm) -> Self {
+    /// Create a new instance with `rewrites` configuration.
+    pub fn new(rewrites: Rewrites) -> Self {
         Tracker {
             items: vec![],
             path_backing: vec![],
-            buf1: Vec::new(),
-            buf2: Vec::new(),
             rewrites,
-            diff_algo,
         }
     }
 }
@@ -158,14 +171,22 @@ impl<T: Change> Tracker<T> {
         None
     }
 
-    /// Can only be called once effectively as it alters its own state.
+    /// Can only be called once effectively as it alters its own state to assure each item is only emitted once.
     ///
     /// `cb(destination, source)` is called for each item, either with `Some(source)` if it's
     /// the destination of a copy or rename, or with `None` for source if no relation to other
-    /// items in the tracked set exist.
+    /// items in the tracked set exist, which is like saying 'no rename or rewrite or copy' happened.
     ///
     /// `objects` is used to access blob data for similarity checks if required and is taken directly from the object database.
-    /// Worktree filters and diff conversions will be applied afterwards automatically.
+    /// Worktree filters and text conversions will be applied afterwards automatically. Note that object-caching *should not*
+    /// be enabled as caching is implemented by `diff_cache`, after all, the blob that's actually diffed is going
+    /// through conversion steps.
+    ///
+    /// `diff_cache` is a way to retain a cache of resources that are prepared for rapid diffing, and it also controls
+    /// the diff-algorithm (provided no user-algorithm is set).
+    /// Note that we control a few options of `diff_cache` to assure it will ignore external commands.
+    /// Note that we do not control how the `diff_cache` converts resources, it's left to the caller to decide
+    /// if it should look at what's stored in `git`, or in the working tree, along with all diff-specific conversions.
     ///
     /// `push_source_tree(push_fn: push(change, location))` is a function that is called when the entire tree of the source
     /// should be added as modifications by calling `push` repeatedly to use for perfect copy tracking. Note that `push`
@@ -173,13 +194,16 @@ impl<T: Change> Tracker<T> {
     pub fn emit<PushSourceTreeFn, E>(
         &mut self,
         mut cb: impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_>>) -> crate::tree::visit::Action,
-        objects: &dyn gix_object::Find,
+        diff_cache: &mut crate::blob::Platform,
+        objects: &impl gix_object::FindObjectOrHeader,
         mut push_source_tree: PushSourceTreeFn,
     ) -> Result<Outcome, emit::Error>
     where
         PushSourceTreeFn: FnMut(&mut dyn FnMut(T, &BStr)) -> Result<(), E>,
         E: std::error::Error + Send + Sync + 'static,
     {
+        diff_cache.options.skip_internal_diff_if_external_is_configured = false;
+
         fn by_id_and_location<T: Change>(a: &Item<T>, b: &Item<T>) -> std::cmp::Ordering {
             a.change
                 .id()
@@ -192,16 +216,24 @@ impl<T: Change> Tracker<T> {
             options: self.rewrites,
             ..Default::default()
         };
-        out = self.match_pairs_of_kind(
+        self.match_pairs_of_kind(
             visit::SourceKind::Rename,
             &mut cb,
             self.rewrites.percentage,
-            out,
+            &mut out,
+            diff_cache,
             objects,
         )?;
 
         if let Some(copies) = self.rewrites.copies {
-            out = self.match_pairs_of_kind(visit::SourceKind::Copy, &mut cb, copies.percentage, out, objects)?;
+            self.match_pairs_of_kind(
+                visit::SourceKind::Copy,
+                &mut cb,
+                copies.percentage,
+                &mut out,
+                diff_cache,
+                objects,
+            )?;
 
             match copies.source {
                 CopySource::FromSetOfModifiedFiles => {}
@@ -217,8 +249,14 @@ impl<T: Change> Tracker<T> {
                     .map_err(|err| emit::Error::GetItemsForExhaustiveCopyDetection(Box::new(err)))?;
                     self.items.sort_by(by_id_and_location);
 
-                    out =
-                        self.match_pairs_of_kind(visit::SourceKind::Copy, &mut cb, copies.percentage, out, objects)?;
+                    self.match_pairs_of_kind(
+                        visit::SourceKind::Copy,
+                        &mut cb,
+                        copies.percentage,
+                        &mut out,
+                        diff_cache,
+                        objects,
+                    )?;
                 }
             }
         }
@@ -247,36 +285,43 @@ impl<T: Change> Tracker<T> {
         kind: visit::SourceKind,
         cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_>>) -> crate::tree::visit::Action,
         percentage: Option<f32>,
-        mut out: Outcome,
-        objects: &dyn gix_object::Find,
-    ) -> Result<Outcome, emit::Error> {
+        out: &mut Outcome,
+        diff_cache: &mut crate::blob::Platform,
+        objects: &impl gix_object::FindObjectOrHeader,
+    ) -> Result<(), emit::Error> {
         // we try to cheaply reduce the set of possibilities first, before possibly looking more exhaustively.
         let needs_second_pass = !needs_exact_match(percentage);
-        if self.match_pairs(cb, None /* by identity */, kind, &mut out, objects)? == crate::tree::visit::Action::Cancel
+        if self.match_pairs(cb, None /* by identity */, kind, out, diff_cache, objects)?
+            == crate::tree::visit::Action::Cancel
         {
-            return Ok(out);
+            return Ok(());
         }
         if needs_second_pass {
             let is_limited = if self.rewrites.limit == 0 {
                 false
-            } else if let Some(permutations) = permutations_over_limit(&self.items, self.rewrites.limit, kind) {
-                match kind {
-                    visit::SourceKind::Rename => {
-                        out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit = permutations;
-                    }
-                    visit::SourceKind::Copy => {
-                        out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit = permutations;
-                    }
-                }
-                true
             } else {
-                false
+                let (num_src, num_dst) =
+                    estimate_involved_items(self.items.iter().map(|item| (item.emitted, item.change.kind())), kind);
+                let permutations = num_src * num_dst;
+                if permutations > self.rewrites.limit {
+                    match kind {
+                        visit::SourceKind::Rename => {
+                            out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit = permutations;
+                        }
+                        visit::SourceKind::Copy => {
+                            out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit = permutations;
+                        }
+                    }
+                    true
+                } else {
+                    false
+                }
             };
             if !is_limited {
-                self.match_pairs(cb, percentage, kind, &mut out, objects)?;
+                self.match_pairs(cb, percentage, kind, out, diff_cache, objects)?;
             }
         }
-        Ok(out)
+        Ok(())
     }
 
     fn match_pairs(
@@ -285,9 +330,9 @@ impl<T: Change> Tracker<T> {
         percentage: Option<f32>,
         kind: visit::SourceKind,
         stats: &mut Outcome,
-        objects: &dyn gix_object::Find,
+        diff_cache: &mut crate::blob::Platform,
+        objects: &impl gix_object::FindObjectOrHeader,
     ) -> Result<crate::tree::visit::Action, emit::Error> {
-        // TODO(perf): reuse object data and interner state and interned tokens, make these available to `find_match()`
         let mut dest_ofs = 0;
         while let Some((mut dest_idx, dest)) = self.items[dest_ofs..].iter().enumerate().find_map(|(idx, item)| {
             (!item.emitted && matches!(item.change.kind(), ChangeKind::Addition)).then_some((idx, item))
@@ -298,12 +343,12 @@ impl<T: Change> Tracker<T> {
                 &self.items,
                 dest,
                 dest_idx,
-                percentage.map(|p| (p, self.diff_algo)),
+                percentage,
                 kind,
                 stats,
                 objects,
-                &mut self.buf1,
-                &mut self.buf2,
+                diff_cache,
+                &self.path_backing,
             )?
             .map(|(src_idx, src, diff)| {
                 let (id, entry_mode) = src.change.id_and_entry_mode();
@@ -338,17 +383,23 @@ impl<T: Change> Tracker<T> {
     }
 }
 
-fn permutations_over_limit<T: Change>(items: &[Item<T>], limit: usize, kind: visit::SourceKind) -> Option<usize> {
-    let (sources, destinations) = items
-        .iter()
-        .filter(|item| match kind {
-            visit::SourceKind::Rename => !item.emitted,
+/// Returns the amount of viable sources and destinations for `items` as eligible for the given `kind` of operation.
+fn estimate_involved_items(
+    items: impl IntoIterator<Item = (bool, ChangeKind)>,
+    kind: visit::SourceKind,
+) -> (usize, usize) {
+    items
+        .into_iter()
+        .filter(|(emitted, _)| match kind {
+            visit::SourceKind::Rename => !*emitted,
             visit::SourceKind::Copy => true,
         })
-        .fold((0, 0), |(mut src, mut dest), item| {
-            match item.change.kind() {
+        .fold((0, 0), |(mut src, mut dest), (emitted, change_kind)| {
+            match change_kind {
                 ChangeKind::Addition => {
-                    dest += 1;
+                    if kind == visit::SourceKind::Rename || !emitted {
+                        dest += 1;
+                    }
                 }
                 ChangeKind::Deletion => {
                     if kind == visit::SourceKind::Rename {
@@ -362,9 +413,7 @@ fn permutations_over_limit<T: Change>(items: &[Item<T>], limit: usize, kind: vis
                 }
             }
             (src, dest)
-        });
-    let permutations = sources * destinations;
-    (permutations > limit * limit).then_some(permutations)
+        })
 }
 
 fn needs_exact_match(percentage: Option<f32>) -> bool {
@@ -386,15 +435,15 @@ fn find_match<'a, T: Change>(
     items: &'a [Item<T>],
     item: &Item<T>,
     item_idx: usize,
-    percentage: Option<(f32, crate::blob::Algorithm)>,
+    percentage: Option<f32>,
     kind: visit::SourceKind,
     stats: &mut Outcome,
-    objects: &dyn gix_object::Find,
-    buf1: &mut Vec<u8>,
-    buf2: &mut Vec<u8>,
+    objects: &impl gix_object::FindObjectOrHeader,
+    diff_cache: &mut crate::blob::Platform,
+    path_backing: &[u8],
 ) -> Result<Option<SourceTuple<'a, T>>, emit::Error> {
     let (item_id, item_mode) = item.change.id_and_entry_mode();
-    if needs_exact_match(percentage.map(|t| t.0)) || item_mode.is_link() {
+    if needs_exact_match(percentage) || item_mode.is_link() {
         let first_idx = items.partition_point(|a| a.change.id() < item_id);
         let range = match items.get(first_idx..).map(|items| {
             let end = items
@@ -417,47 +466,76 @@ fn find_match<'a, T: Change>(
             return Ok(Some(src));
         }
     } else {
-        let new = objects.find_blob(item_id, buf1)?;
-        let (percentage, algo) = percentage.expect("it's set to something below 1.0 and we assured this");
+        let mut has_new = false;
+        let percentage = percentage.expect("it's set to something below 1.0 and we assured this");
         debug_assert_eq!(
             item.change.entry_mode().kind(),
             EntryKind::Blob,
             "symlinks are matched exactly, and trees aren't used here"
         );
+
         for (can_idx, src) in items
             .iter()
             .enumerate()
             .filter(|(src_idx, src)| *src_idx != item_idx && src.is_source_for_destination_of(kind, item_mode))
         {
-            let old = objects.find_blob(src.change.id(), buf2)?;
-            // TODO: make sure we get attribute handling/worktree conversion and binary skips and filters right here.
-            let tokens = crate::blob::intern::InternedInput::new(
-                crate::blob::sources::byte_lines_with_terminator(old.data),
-                crate::blob::sources::byte_lines_with_terminator(new.data),
-            );
-            let counts = crate::blob::diff(
-                algo,
-                &tokens,
-                crate::blob::sink::Counter::new(diff::Statistics {
-                    removed_bytes: 0,
-                    input: &tokens,
-                }),
-            );
-            let similarity = (old.data.len() - counts.wrapped) as f32 / old.data.len().max(new.data.len()) as f32;
-            stats.num_similarity_checks += 1;
-            if similarity >= percentage {
-                return Ok(Some((
-                    can_idx,
-                    src,
-                    DiffLineStats {
-                        removals: counts.removals,
-                        insertions: counts.insertions,
-                        before: tokens.before.len().try_into().expect("interner handles only u32"),
-                        after: tokens.after.len().try_into().expect("interner handles only u32"),
-                    }
-                    .into(),
-                )));
+            if !has_new {
+                diff_cache.set_resource(
+                    item_id.to_owned(),
+                    item_mode.kind(),
+                    item.location(path_backing),
+                    ResourceKind::NewOrDestination,
+                    objects,
+                )?;
+                has_new = true;
             }
+            let (src_id, src_mode) = src.change.id_and_entry_mode();
+            diff_cache.set_resource(
+                src_id.to_owned(),
+                src_mode.kind(),
+                src.location(path_backing),
+                ResourceKind::OldOrSource,
+                objects,
+            )?;
+            let prep = diff_cache.prepare_diff()?;
+            stats.num_similarity_checks += 1;
+            match prep.operation {
+                Operation::InternalDiff { algorithm } => {
+                    let tokens =
+                        crate::blob::intern::InternedInput::new(prep.old.intern_source(), prep.new.intern_source());
+                    let counts = crate::blob::diff(
+                        algorithm,
+                        &tokens,
+                        crate::blob::sink::Counter::new(diff::Statistics {
+                            removed_bytes: 0,
+                            input: &tokens,
+                        }),
+                    );
+                    let old_data_len = prep.old.data.as_slice().unwrap_or_default().len();
+                    let new_data_len = prep.new.data.as_slice().unwrap_or_default().len();
+                    let similarity = (old_data_len - counts.wrapped) as f32 / old_data_len.max(new_data_len) as f32;
+                    if similarity >= percentage {
+                        return Ok(Some((
+                            can_idx,
+                            src,
+                            DiffLineStats {
+                                removals: counts.removals,
+                                insertions: counts.insertions,
+                                before: tokens.before.len().try_into().expect("interner handles only u32"),
+                                after: tokens.after.len().try_into().expect("interner handles only u32"),
+                                similarity,
+                            }
+                            .into(),
+                        )));
+                    }
+                }
+                Operation::ExternalCommand { .. } => {
+                    unreachable!("we have disabled this possibility with an option")
+                }
+                Operation::SourceOrDestinationIsBinary => {
+                    // TODO: figure out if git does more here
+                }
+            };
         }
     }
     Ok(None)
@@ -484,5 +562,59 @@ mod diff {
         fn finish(self) -> Self::Out {
             self.removed_bytes
         }
+    }
+}
+
+#[cfg(test)]
+mod estimate_involved_items {
+    use super::estimate_involved_items;
+    use crate::rewrites::tracker::{visit::SourceKind, ChangeKind};
+
+    #[test]
+    fn renames_count_unemitted_as_sources_and_destinations() {
+        let items = [
+            (false, ChangeKind::Addition),
+            (true, ChangeKind::Deletion),
+            (true, ChangeKind::Deletion),
+        ];
+        assert_eq!(
+            estimate_involved_items(items, SourceKind::Rename),
+            (0, 1),
+            "here we only have one eligible source, hence nothing to do"
+        );
+        assert_eq!(
+            estimate_involved_items(items.into_iter().map(|t| (false, t.1)), SourceKind::Rename),
+            (2, 1),
+            "now we have more possibilities as renames count un-emitted deletions as source"
+        );
+    }
+
+    #[test]
+    fn copies_do_not_count_additions_as_sources() {
+        let items = [
+            (false, ChangeKind::Addition),
+            (true, ChangeKind::Addition),
+            (true, ChangeKind::Deletion),
+        ];
+        assert_eq!(
+            estimate_involved_items(items, SourceKind::Copy),
+            (0, 1),
+            "one addition as source, the other isn't counted as it's emitted, nor is it considered a copy-source.\
+            deletions don't count"
+        );
+    }
+
+    #[test]
+    fn copies_count_modifications_as_sources() {
+        let items = [
+            (false, ChangeKind::Addition),
+            (true, ChangeKind::Modification),
+            (false, ChangeKind::Modification),
+        ];
+        assert_eq!(
+            estimate_involved_items(items, SourceKind::Copy),
+            (2, 1),
+            "any modifications is a valid source, emitted or not"
+        );
     }
 }

@@ -43,9 +43,15 @@ mod index {
     #[test]
     fn at_stage() {
         let repo = repo("complex_graph").unwrap();
+        let actual = parse_spec(":file", &repo).unwrap();
         assert_eq!(
-            parse_spec(":file", &repo).unwrap(),
+            actual,
             Spec::from_id(hex_to_id("fe27474251f7f8368742f01fbd3bd5666b630a82").attach(&repo))
+        );
+        assert_eq!(
+            actual.path_and_mode().expect("set"),
+            ("file".into(), gix_object::tree::EntryKind::Blob.into()),
+            "index paths (that are present) are captured"
         );
 
         assert_eq!(
@@ -116,9 +122,15 @@ fn bad_objects_are_valid_until_they_are_actually_read_from_the_odb() {
 #[test]
 fn access_blob_through_tree() {
     let repo = repo("ambiguous_blob_tree_commit").unwrap();
+    let actual = parse_spec("0000000000cdc:a0blgqsjc", &repo).unwrap();
     assert_eq!(
-        parse_spec("0000000000cdc:a0blgqsjc", &repo).unwrap(),
+        actual,
         Spec::from_id(hex_to_id("0000000000b36b6aa7ea4b75318ed078f55505c3").attach(&repo))
+    );
+    assert_eq!(
+        actual.path_and_mode().expect("set"),
+        ("a0blgqsjc".into(), gix_object::tree::EntryKind::Blob.into()),
+        "we capture tree-paths"
     );
 
     assert_eq!(

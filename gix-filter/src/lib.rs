@@ -13,6 +13,8 @@
 use bstr::BString;
 /// A forwarding of the `encoding_rs` crate for its types and convenience.
 pub use encoding_rs as encoding;
+/// The `gix-attributes` crate whose types are mentioned in the public API of [Pipeline::convert_to_worktree()].
+pub use gix_attributes as attributes;
 
 /// a filter to replace `$Id$` with a git-hash of the buffer.
 pub mod ident;
@@ -43,7 +45,7 @@ pub struct Pipeline {
     /// State needed to keep running filter processes.
     processes: driver::State,
     /// A utility to handle multiple buffers to keep results of various filters.
-    bufs: pipeline::util::Buffers,
+    bufs: gix_utils::Buffers,
 }
 
 /// A declaration of a driver program.

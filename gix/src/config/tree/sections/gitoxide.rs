@@ -54,6 +54,7 @@ impl Section for Gitoxide {
             &Self::CORE,
             &Self::COMMIT,
             &Self::COMMITTER,
+            &Self::CREDENTIALS,
             &Self::HTTP,
             &Self::HTTPS,
             &Self::OBJECTS,
@@ -115,6 +116,15 @@ mod subsections {
         pub const FILTER_PROCESS_DELAY: keys::Boolean =
             keys::Boolean::new_boolean("filterProcessDelay", &Gitoxide::CORE);
 
+        /// The `gitoxide.core.externalCommandStderr` key (default `true`).
+        ///
+        /// If `true`, the default, `stderr` of worktree filter programs, or any other git-context bearing command
+        /// invoked will be inherited.
+        /// If `false`, it will be suppressed completely.
+        pub const EXTERNAL_COMMAND_STDERR: keys::Boolean =
+            keys::Boolean::new_boolean("externalCommandStderr", &Gitoxide::CORE)
+                .with_environment_override("GIX_EXTERNAL_COMMAND_STDERR");
+
         /// The `gitoxide.core.refsNamespace` key.
         pub const REFS_NAMESPACE: RefsNamespace =
             keys::Any::new_with_validate("refsNamespace", &Gitoxide::CORE, super::validate::RefsNamespace)
@@ -133,6 +143,7 @@ mod subsections {
                 &Self::USE_STDEV,
                 &Self::SHALLOW_FILE,
                 &Self::FILTER_PROCESS_DELAY,
+                &Self::EXTERNAL_COMMAND_STDERR,
                 &Self::REFS_NAMESPACE,
             ]
         }
@@ -179,6 +190,14 @@ mod subsections {
             http::SslVersion::new_ssl_version("sslVersionMax", &Gitoxide::HTTP).with_note(
                 "entirely new to set the upper bound for the allowed ssl version range. Overwrites the max bound of `http.sslVersion` if set. Min and Max must be set to become effective.",
             );
+        /// The `gitoxide.http.sslNoVerify` key.
+        ///
+        /// If set, disable SSL verification. Using this is discouraged as it can lead to
+        /// various security risks. An example where this may be needed is when an internal
+        /// git server uses a self-signed certificate and the user accepts the associated security risks.
+        pub const SSL_NO_VERIFY: keys::Boolean = keys::Boolean::new_boolean("sslNoVerify", &Gitoxide::HTTP)
+            .with_environment_override("GIT_SSL_NO_VERIFY")
+            .with_note("used to disable SSL verification. When this is enabled it takes priority over http.sslVerify");
         /// The `gitoxide.http.proxyAuthMethod` key.
         pub const PROXY_AUTH_METHOD: http::ProxyAuthMethod =
             http::ProxyAuthMethod::new_proxy_auth_method("proxyAuthMethod", &Gitoxide::HTTP)
@@ -199,6 +218,7 @@ mod subsections {
                 &Self::CONNECT_TIMEOUT,
                 &Self::SSL_VERSION_MIN,
                 &Self::SSL_VERSION_MAX,
+                &Self::SSL_NO_VERIFY,
                 &Self::PROXY_AUTH_METHOD,
             ]
         }
@@ -400,7 +420,7 @@ mod subsections {
         pub const CACHE_LIMIT: keys::UnsignedInteger =
             keys::UnsignedInteger::new_unsigned_integer("cacheLimit", &Gitoxide::OBJECTS)
                 .with_note("If unset or 0, there is no object cache")
-                .with_environment_override("GITOXIDE_OBJECT_CACHE_MEMORY");
+                .with_environment_override("GIX_OBJECT_CACHE_MEMORY");
         /// The `gitoxide.objects.noReplace` key.
         pub const NO_REPLACE: keys::Boolean = keys::Boolean::new_boolean("noReplace", &Gitoxide::OBJECTS);
         /// The `gitoxide.objects.replaceRefBase` key.
@@ -457,6 +477,13 @@ mod subsections {
         pub const TERMINAL_PROMPT: keys::Boolean = keys::Boolean::new_boolean("terminalPrompt", &Gitoxide::CREDENTIALS)
             .with_note("This is a custom addition to provide an alternative to the respective environment variable.")
             .with_environment_override("GIT_TERMINAL_PROMPT");
+
+        /// The `gitoxide.credentials.helperStderr` key to control what happens with the credential helpers `stderr`.
+        ///
+        /// If `true`, the default, `stderr` of credential helper programs will be inherited, just like with `git`.
+        /// If `false`, will be suppressed completely.
+        pub const HELPER_STDERR: keys::Boolean = keys::Boolean::new_boolean("helperStderr", &Gitoxide::CREDENTIALS)
+            .with_environment_override("GIX_CREDENTIALS_HELPER_STDERR");
     }
 
     impl Section for Credentials {
@@ -465,7 +492,7 @@ mod subsections {
         }
 
         fn keys(&self) -> &[&dyn Key] {
-            &[&Self::TERMINAL_PROMPT]
+            &[&Self::TERMINAL_PROMPT, &Self::HELPER_STDERR]
         }
 
         fn parent(&self) -> Option<&dyn Section> {

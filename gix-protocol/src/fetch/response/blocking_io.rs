@@ -8,9 +8,9 @@ use crate::fetch::{
     Response,
 };
 
-fn parse_v2_section<T>(
+fn parse_v2_section<'a, T>(
     line: &mut String,
-    reader: &mut impl client::ExtendedBufRead,
+    reader: &mut impl client::ExtendedBufRead<'a>,
     res: &mut Vec<T>,
     parse: impl Fn(&str) -> Result<T, response::Error>,
 ) -> Result<bool, response::Error> {
@@ -42,9 +42,9 @@ impl Response {
     /// is to predict how to parse V1 output only, and neither `client_expects_pack` nor `wants_to_negotiate` are relevant for V2.
     /// This ugliness is in place to avoid having to resort to an [an even more complex ugliness](https://github.com/git/git/blob/9e49351c3060e1fa6e0d2de64505b7becf157f28/fetch-pack.c#L583-L594)
     /// that `git` has to use to predict how many acks are supposed to be read. We also genuinely hope that this covers it all….
-    pub fn from_line_reader(
+    pub fn from_line_reader<'a>(
         version: Protocol,
-        reader: &mut impl client::ExtendedBufRead,
+        reader: &mut impl client::ExtendedBufRead<'a>,
         client_expects_pack: bool,
         wants_to_negotiate: bool,
     ) -> Result<Response, response::Error> {

@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.34.0 (2023-12-06)
+
+### New Features
+
+<csr-id-8f795e8abf706a24fe104500bf15efaa2bc07b15/>
+<csr-id-8dfbb4ba531d86894a59e2b85ec29cd3133c8c4d/>
+<csr-id-886289f98003f935d774a40f6db746ae70649936/>
+
+ - <csr-id-cf51a4de2d06eb28435ef8e386131710003b6928/> `gix rev parse --format` to provide different versions of the same content.
+   This only applies to blobs, but allows to obtain different versions of the same blob
+   like:
+   
+   * what's stored in Git
+* what would be checked out to the worktree
+* what would be diffed
+
+### Changed (BREAKING)
+
+ - <csr-id-806ea473e6e3ca3bf929f7d46c6f087296fceb09/> use `gix-object::Find` trait
+
+### New Features (BREAKING)
+
+ - <csr-id-c3edef1c0c49accbb037bdf086dade3ed0e5e507/> make it possible to trace incoming and outgoing packetlines.
+   Due to the way this is (and has to be) setup, unfortunately one
+   has to integrate that with two crates, instead of just one.
+   
+   This changes touches multiple crates, most of which receive a single
+   boolean as last argument to indicate whether the tracing should
+   happen in the first place.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 31 commits contributed to the release over the course of 53 calendar days.
+ - 54 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`c8568b9`](https://github.com/Byron/gitoxide/commit/c8568b9c9bf883f77e81a9a98b1fc2cbe726df79))
+    - Release gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`d3fd11e`](https://github.com/Byron/gitoxide/commit/d3fd11ec3783843d4e49081e1d14359ed9714b5f))
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
+    - Merge branch 'gix-status' ([`5fdc9df`](https://github.com/Byron/gitoxide/commit/5fdc9df069f3d9a4bd88e4e0ca5d67916e2908c9))
+    - `gix rev parse --format` to provide different versions of the same content. ([`cf51a4d`](https://github.com/Byron/gitoxide/commit/cf51a4de2d06eb28435ef8e386131710003b6928))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'gix-status' ([`dfb3f18`](https://github.com/Byron/gitoxide/commit/dfb3f1821428f294f1832543ad0cf2fc883b03fb))
+    - Adapt to changes in `gix-diff` ([`1706e23`](https://github.com/Byron/gitoxide/commit/1706e2394380c35cd98d0e106eb0985ae1912da0))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Merge branch 'sh-on-windows' ([`2b80d84`](https://github.com/Byron/gitoxide/commit/2b80d8424196088d4ccc36914c87e320e4416ea1))
+    - Remove special handling in favor of allowing shell-avoidance. ([`a0cc80d`](https://github.com/Byron/gitoxide/commit/a0cc80d21e74a43d5770cf08a221ef92f39920bb))
+    - Merge branch 'gix-status' ([`c87f2cc`](https://github.com/Byron/gitoxide/commit/c87f2cc7a499cbd354c03c40f9923c80845fc56c))
+    - Adapt to changes in `gix` related rename tracking ([`a28bf90`](https://github.com/Byron/gitoxide/commit/a28bf90aef49d1c51308884df84bb50567aeb501))
+    - Merge branch 'fix-1096' ([`ff99a18`](https://github.com/Byron/gitoxide/commit/ff99a18e9f9388542a9cbf17d61b413f34b1d533))
+    - Adapt to changes in `gix-object` ([`203d69c`](https://github.com/Byron/gitoxide/commit/203d69c8890acc716bd4f7a7b1b2b91a8c828bde))
+    - Merge branch 'feat_basic_connectivity_check' ([`1f9aca5`](https://github.com/Byron/gitoxide/commit/1f9aca5de45c1f7c25606cd1ddc6b93a915dcd77))
+    - Flatten `fsck connectivity` into just `fsck` much like `git fsck` ([`7ab5c76`](https://github.com/Byron/gitoxide/commit/7ab5c7625fcbfade21d4f754be7afd2f73a828ba))
+    - Refactor ([`7a88b42`](https://github.com/Byron/gitoxide/commit/7a88b420f0a43fb1ce163698723b30566add97a9))
+    - Add basic connectivity check ([`8f795e8`](https://github.com/Byron/gitoxide/commit/8f795e8abf706a24fe104500bf15efaa2bc07b15))
+    - Merge branch 'fix-1096' ([`48ef17e`](https://github.com/Byron/gitoxide/commit/48ef17e4d169f2b08d119c2dba51fcfd9c06fe61))
+    - Allow to print a tree without prettification, using `--tree-style raw`. ([`8dfbb4b`](https://github.com/Byron/gitoxide/commit/8dfbb4ba531d86894a59e2b85ec29cd3133c8c4d))
+    - Merge branch 'gix-object-find' ([`c8bd660`](https://github.com/Byron/gitoxide/commit/c8bd66065316176dfbbfe7ecaa092a25cad1854b))
+    - Adapt to changes related to usage of `gix-object::Find` trait where necessary ([`5761a4d`](https://github.com/Byron/gitoxide/commit/5761a4daf80e5febe469e32220b71dc3063fb4a6))
+    - Use `gix-object::Find` trait ([`806ea47`](https://github.com/Byron/gitoxide/commit/806ea473e6e3ca3bf929f7d46c6f087296fceb09))
+    - Adapt to changes in `gix_object` and `gix_odb`. ([`24e319e`](https://github.com/Byron/gitoxide/commit/24e319e996b4822782521430a2d0e8ce3710f123))
+    - Merge branch 'trace-packetlines' ([`e7de4c7`](https://github.com/Byron/gitoxide/commit/e7de4c702a223ad9eb19b407391028dcb08d80c4))
+    - Make it possible to trace incoming and outgoing packetlines. ([`c3edef1`](https://github.com/Byron/gitoxide/commit/c3edef1c0c49accbb037bdf086dade3ed0e5e507))
+    - Merge branch 'discover-split-worktree' ([`16170d9`](https://github.com/Byron/gitoxide/commit/16170d9c2e4de6a2e639ff99b75e65bbd0e782d7))
+    - Add `gix free discover` to inform about repository discovery. ([`886289f`](https://github.com/Byron/gitoxide/commit/886289f98003f935d774a40f6db746ae70649936))
+    - Release gix-url v0.25.1 ([`47a1241`](https://github.com/Byron/gitoxide/commit/47a1241484fdb424184ca37f85a8b287d374d2a1))
+</details>
+
 ## 0.33.1 (2023-10-13)
 
 ### Bug Fixes
@@ -20,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-transport v0.38.0, gix-protocol v0.41.1, gix v0.55.2, gitoxide-core v0.33.1, gitoxide v0.31.1 ([`1955a57`](https://github.com/Byron/gitoxide/commit/1955a57f003f7d731d04e582e70ea86f15e8e7d9))
     - Prepare changelogs prior to release ([`12b5caf`](https://github.com/Byron/gitoxide/commit/12b5cafc49baf07d00313de468970a2db33ac1f8))
     - Bump `gix-transport` version to prevent it from being picked up. ([`8011c73`](https://github.com/Byron/gitoxide/commit/8011c73ee401bfca03811a249c46a4dd468af1b8))
     - Release gix v0.55.1 ([`4642c0c`](https://github.com/Byron/gitoxide/commit/4642c0c78f45b1956837bc874f6757fc302bee4a))

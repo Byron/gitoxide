@@ -1,5 +1,4 @@
 use assert_matches::assert_matches;
-
 use gix_url::parse::Error::*;
 
 use crate::parse::parse;

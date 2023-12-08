@@ -1,8 +1,7 @@
 use gix_hash::ObjectId;
 use gix_macros::momo;
 pub use gix_object::tree::{EntryKind, EntryMode};
-use gix_object::FindExt;
-use gix_object::{bstr::BStr, TreeRefIter};
+use gix_object::{bstr::BStr, FindExt, TreeRefIter};
 
 use crate::{object::find, Id, ObjectDetached, Tree};
 

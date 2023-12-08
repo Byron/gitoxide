@@ -1,6 +1,7 @@
 //! The standard object store which should fit all needs.
-use gix_features::zlib;
 use std::{cell::RefCell, ops::Deref};
+
+use gix_features::zlib;
 
 use crate::Store;
 

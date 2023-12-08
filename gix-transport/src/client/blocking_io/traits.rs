@@ -75,7 +75,7 @@ pub trait TransportV2Ext {
         capabilities: impl Iterator<Item = (&'a str, Option<impl AsRef<str>>)> + 'a,
         arguments: Option<impl Iterator<Item = bstr::BString>>,
         trace: bool,
-    ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error>;
+    ) -> Result<Box<dyn ExtendedBufRead<'_> + Unpin + '_>, Error>;
 }
 
 impl<T: Transport> TransportV2Ext for T {
@@ -85,7 +85,7 @@ impl<T: Transport> TransportV2Ext for T {
         capabilities: impl Iterator<Item = (&'a str, Option<impl AsRef<str>>)> + 'a,
         arguments: Option<impl Iterator<Item = BString>>,
         trace: bool,
-    ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error> {
+    ) -> Result<Box<dyn ExtendedBufRead<'_> + Unpin + '_>, Error> {
         let mut writer = self.request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush, trace)?;
         writer.write_all(format!("command={command}").as_bytes())?;
         for (name, value) in capabilities {

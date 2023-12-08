@@ -8,13 +8,16 @@ impl Core {
     pub const ABBREV: Abbrev = Abbrev::new_with_validate("abbrev", &config::Tree::CORE, validate::Abbrev);
     /// The `core.bare` key.
     pub const BARE: keys::Boolean = keys::Boolean::new_boolean("bare", &config::Tree::CORE);
+    /// The `core.bigFileThreshold` key.
+    pub const BIG_FILE_THRESHOLD: keys::UnsignedInteger =
+        keys::UnsignedInteger::new_unsigned_integer("bigFileThreshold", &config::Tree::CORE);
     /// The `core.checkStat` key.
     pub const CHECK_STAT: CheckStat =
         CheckStat::new_with_validate("checkStat", &config::Tree::CORE, validate::CheckStat);
     /// The `core.deltaBaseCacheLimit` key.
     pub const DELTA_BASE_CACHE_LIMIT: keys::UnsignedInteger =
         keys::UnsignedInteger::new_unsigned_integer("deltaBaseCacheLimit", &config::Tree::CORE)
-            .with_environment_override("GITOXIDE_PACK_CACHE_MEMORY")
+            .with_environment_override("GIX_PACK_CACHE_MEMORY")
             .with_note("if unset, we default to a small 64 slot fixed-size cache that holds at most 64 full delta base objects of any size. Set to 0 to deactivate it entirely");
     /// The `core.disambiguate` key.
     pub const DISAMBIGUATE: Disambiguate =
@@ -95,6 +98,7 @@ impl Section for Core {
         &[
             &Self::ABBREV,
             &Self::BARE,
+            &Self::BIG_FILE_THRESHOLD,
             &Self::CHECK_STAT,
             &Self::DELTA_BASE_CACHE_LIMIT,
             &Self::DISAMBIGUATE,

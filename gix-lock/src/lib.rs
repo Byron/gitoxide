@@ -16,10 +16,10 @@
 //! * As the lock file is separate from the actual resource, locking is merely a convention rather than being enforced.
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
-use gix_tempfile::handle::{Closed, Writable};
 use std::path::PathBuf;
 
 pub use gix_tempfile as tempfile;
+use gix_tempfile::handle::{Closed, Writable};
 
 const DOT_LOCK_SUFFIX: &str = ".lock";
 

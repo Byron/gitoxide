@@ -1,7 +1,8 @@
-use crate::worktree::stack::probe_case;
 use bstr::ByteSlice;
 use gix_attributes::search::Outcome;
 use gix_worktree::stack::state;
+
+use crate::worktree::stack::probe_case;
 
 #[test]
 fn baseline() -> crate::Result {
@@ -29,7 +30,7 @@ fn baseline() -> crate::Result {
     let mut actual = cache.attribute_matches();
     let input = std::fs::read(base.join("baseline"))?;
     for (rela_path, expected) in (baseline::Expectations { lines: input.lines() }) {
-        let entry = cache.at_entry(rela_path, None, gix_object::find::Never)?;
+        let entry = cache.at_entry(rela_path, None, &gix_object::find::Never)?;
         let has_match = entry.matching_attributes(&mut actual);
 
         assert_eq!(
@@ -50,7 +51,7 @@ fn baseline() -> crate::Result {
     let mut actual = cache.selected_attribute_matches(["info", "test"]);
     let input = std::fs::read(base.join("baseline.selected"))?;
     for (rela_path, expected) in (baseline::Expectations { lines: input.lines() }) {
-        let entry = cache.at_entry(rela_path, None, gix_object::find::Never)?;
+        let entry = cache.at_entry(rela_path, None, &gix_object::find::Never)?;
         let has_match = entry.matching_attributes(&mut actual);
 
         assert_eq!(

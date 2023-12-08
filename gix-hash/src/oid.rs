@@ -1,6 +1,6 @@
 use std::{convert::TryInto, fmt, hash};
 
-use crate::{ObjectId, SIZE_OF_SHA1_DIGEST};
+use crate::{Kind, ObjectId, SIZE_OF_SHA1_DIGEST};
 
 /// A borrowed reference to a hash identifying objects.
 ///
@@ -135,6 +135,15 @@ impl oid {
         HexDisplay {
             inner: self,
             hex_len: self.bytes.len() * 2,
+        }
+    }
+
+    /// Returns `true` if this hash consists of all null bytes.
+    #[inline]
+    #[doc(alias = "is_zero", alias = "git2")]
+    pub fn is_null(&self) -> bool {
+        match self.kind() {
+            Kind::Sha1 => &self.bytes == oid::null_sha1().as_bytes(),
         }
     }
 }

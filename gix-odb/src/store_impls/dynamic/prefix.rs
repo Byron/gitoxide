@@ -1,7 +1,8 @@
 use std::{collections::HashSet, ops::Deref};
 
-use crate::store::{load_index, Handle};
 use gix_object::Exists;
+
+use crate::store::{load_index, Handle};
 
 ///
 pub mod lookup {

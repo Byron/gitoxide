@@ -8,9 +8,9 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+use std::{borrow::Cow, path::PathBuf};
+
 use bstr::{BStr, BString};
-use std::borrow::Cow;
-use std::path::PathBuf;
 
 ///
 pub mod expand_path;

@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 (2023-12-06)
+
+### New Features
+
+ - <csr-id-9d7e28d542b5dbacce28920232b99c454f1eab4e/> Add `Context` to provide much more context just like `git` sets it.
+   `git` sets a bunch of context-carrying environment variables which `gix`
+   shouldn't only (and optionally) read, but also pass on to spawned processes.
+   
+   With `Context` it's now possible to gather all of this information and
+   set it at once.
+   
+   With a minimal context, one will also set the `git_dir`, particularly important
+   on servers, which work with many different repositories, or a clone operation
+   which may be in the context of one directory, but affects another.
+ - <csr-id-05972f11f34795da5c70c927c958a0088367dbe7/> add `Prepare::with_shell_allow_argument_splitting()` flag.
+   This flag is enabled on windows by default to emulate `git` which
+   doesn't actually use a shell at all there.
+   
+   This should help to allow windows users to use more complex programs,
+   which might not have been possible previously.
+   
+   It also allows certain areas of `gix` to indicate that they are safe to
+   use with this flag, which always is the case when `git` is prefixed, like
+   with credential helpers.
+ - <csr-id-bc44497606656cddc4f18a0acb272c34b8df4ba8/> trace credential helper invocations.
+   This should make it easier to understand what's going on in case
+   something isn't working as expected.
+
+### New Features (BREAKING)
+
+ - <csr-id-ceb8826f0a5acf8a23a40a6af6d172ee164edb24/> add `Context::stderr` to configure whether or not to supress `stderr`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release over the course of 46 calendar days.
+ - 54 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#1103](https://github.com/Byron/gitoxide/issues/1103), [#1129](https://github.com/Byron/gitoxide/issues/1129)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1103](https://github.com/Byron/gitoxide/issues/1103)**
+    - Add some tests to be clearer about the kind of command that is created ([`1ff26b9`](https://github.com/Byron/gitoxide/commit/1ff26b9a53b007b813448acbc0528fe5db7cb870))
+    - Trace credential helper invocations. ([`bc44497`](https://github.com/Byron/gitoxide/commit/bc44497606656cddc4f18a0acb272c34b8df4ba8))
+ * **[#1129](https://github.com/Byron/gitoxide/issues/1129)**
+    - Add `Context` to provide much more context just like `git` sets it. ([`9d7e28d`](https://github.com/Byron/gitoxide/commit/9d7e28d542b5dbacce28920232b99c454f1eab4e))
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
+    - Merge branch 'adjustments-for-cargo' ([`8156340`](https://github.com/Byron/gitoxide/commit/8156340724b1b7cb15824f88c75f6ddd7302cff5))
+    - Add `Context::stderr` to configure whether or not to supress `stderr`. ([`ceb8826`](https://github.com/Byron/gitoxide/commit/ceb8826f0a5acf8a23a40a6af6d172ee164edb24))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'improve-filters' ([`f09ea13`](https://github.com/Byron/gitoxide/commit/f09ea13b94a8dad695e4d26533fcd5c739043574))
+    - Merge branch 'sh-on-windows' ([`2b80d84`](https://github.com/Byron/gitoxide/commit/2b80d8424196088d4ccc36914c87e320e4416ea1))
+    - Add `Prepare::with_shell_allow_argument_splitting()` flag. ([`05972f1`](https://github.com/Byron/gitoxide/commit/05972f11f34795da5c70c927c958a0088367dbe7))
+    - Merge branch 'fix-1103' ([`d75159c`](https://github.com/Byron/gitoxide/commit/d75159c6d49c01c24c97777c718a76261b88e5d3))
+    - Merge branch 'error' ([`c372321`](https://github.com/Byron/gitoxide/commit/c372321dd6ea66a41c135d28c7319ab05a6d0942))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+    - Assure all crates have includes configured ([`065ab57`](https://github.com/Byron/gitoxide/commit/065ab57d890f4b98cca7a7f81d68876fa84f49e0))
+</details>
+
 ## 0.2.10 (2023-10-12)
 
 A maintenance release without user-facing changes.
@@ -13,7 +80,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 51 calendar days.
+ - 5 commits contributed to the release over the course of 51 calendar days.
  - 51 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +92,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Merge branch 'reset' ([`b842691`](https://github.com/Byron/gitoxide/commit/b8426919a491dc3a7df01ee3f258fc0d8a3a327c))
     - Fix gix-command tests on windows ([`67a0220`](https://github.com/Byron/gitoxide/commit/67a0220dc4c4ff6f79a24771fb175baec22bc6b0))

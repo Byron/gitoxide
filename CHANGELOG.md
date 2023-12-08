@@ -5,6 +5,82 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.32.0 (2023-12-06)
+
+### New Features
+
+<csr-id-4aea9b097fb08e504cdfc4a7c3b7511a308dc074/>
+<csr-id-c6e83cf69f1a17e9ba3010bcce3a4ddd3305424c/>
+<csr-id-8f795e8abf706a24fe104500bf15efaa2bc07b15/>
+<csr-id-8dfbb4ba531d86894a59e2b85ec29cd3133c8c4d/>
+<csr-id-f9ae1bc6b514b6bbcda2c672f7b7ccbd999356a0/>
+<csr-id-886289f98003f935d774a40f6db746ae70649936/>
+
+ - <csr-id-cf51a4de2d06eb28435ef8e386131710003b6928/> `gix rev parse --format` to provide different versions of the same content.
+   This only applies to blobs, but allows to obtain different versions of the same blob
+   like:
+   
+   * what's stored in Git
+* what would be checked out to the worktree
+* what would be diffed
+
+### Bug Fixes
+
+ - <csr-id-b2300782ad09f17730fe2a5ba4938517d4e7ec16/> in `--trace` mode, greatly increase message-buffer size.
+   That way, it's much less likely that messages will get lost
+   due to being overwritten before they can be displayed every
+   100ms or so.
+ - <csr-id-eab22bd5d56bf91ee0edfc7156023c159c7f65f9/> set binary name for completions
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2189cee47f99350b368390eaa2a01961bb77c250/> rename `GITOXIDE_*` environment variables to `GIX_#`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 27 commits contributed to the release over the course of 54 calendar days.
+ - 54 days passed between releases.
+ - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'adjustments-for-cargo' ([`8156340`](https://github.com/Byron/gitoxide/commit/8156340724b1b7cb15824f88c75f6ddd7302cff5))
+    - Rename `GITOXIDE_*` environment variables to `GIX_#` ([`2189cee`](https://github.com/Byron/gitoxide/commit/2189cee47f99350b368390eaa2a01961bb77c250))
+    - Merge branch 'gix-status' ([`5fdc9df`](https://github.com/Byron/gitoxide/commit/5fdc9df069f3d9a4bd88e4e0ca5d67916e2908c9))
+    - `gix rev parse --format` to provide different versions of the same content. ([`cf51a4d`](https://github.com/Byron/gitoxide/commit/cf51a4de2d06eb28435ef8e386131710003b6928))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'gix-status' ([`dfb3f18`](https://github.com/Byron/gitoxide/commit/dfb3f1821428f294f1832543ad0cf2fc883b03fb))
+    - Adapt to changes in `gix-diff` ([`1706e23`](https://github.com/Byron/gitoxide/commit/1706e2394380c35cd98d0e106eb0985ae1912da0))
+    - Add the`diff::resource_cache()` low-level utility for rapid in-memory diffing of combinations of resources. ([`4aea9b0`](https://github.com/Byron/gitoxide/commit/4aea9b097fb08e504cdfc4a7c3b7511a308dc074))
+    - Merge branch 'support_ssl_verify' ([`5ce9784`](https://github.com/Byron/gitoxide/commit/5ce978432231e257ef625fc401895b34f963bf6d))
+    - In gix read http.sslVerify config value and pass it to gix-transport. ([`c6e83cf`](https://github.com/Byron/gitoxide/commit/c6e83cf69f1a17e9ba3010bcce3a4ddd3305424c))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Remove dead code from non-existent "lean-cli" feature ([`be1fa2f`](https://github.com/Byron/gitoxide/commit/be1fa2f6370501c6b8bbe9bb89f6ef5507b5f425))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Merge branch 'feat_basic_connectivity_check' ([`1f9aca5`](https://github.com/Byron/gitoxide/commit/1f9aca5de45c1f7c25606cd1ddc6b93a915dcd77))
+    - Flatten `fsck connectivity` into just `fsck` much like `git fsck` ([`7ab5c76`](https://github.com/Byron/gitoxide/commit/7ab5c7625fcbfade21d4f754be7afd2f73a828ba))
+    - Refactor ([`7a88b42`](https://github.com/Byron/gitoxide/commit/7a88b420f0a43fb1ce163698723b30566add97a9))
+    - Add basic connectivity check ([`8f795e8`](https://github.com/Byron/gitoxide/commit/8f795e8abf706a24fe104500bf15efaa2bc07b15))
+    - Merge branch 'fix-1096' ([`48ef17e`](https://github.com/Byron/gitoxide/commit/48ef17e4d169f2b08d119c2dba51fcfd9c06fe61))
+    - Allow to print a tree without prettification, using `--tree-style raw`. ([`8dfbb4b`](https://github.com/Byron/gitoxide/commit/8dfbb4ba531d86894a59e2b85ec29cd3133c8c4d))
+    - Merge branch 'trace-packetlines' ([`e7de4c7`](https://github.com/Byron/gitoxide/commit/e7de4c702a223ad9eb19b407391028dcb08d80c4))
+    - Automatically enforce strict mode if `-c` options are given on the command-line. ([`f9ae1bc`](https://github.com/Byron/gitoxide/commit/f9ae1bc6b514b6bbcda2c672f7b7ccbd999356a0))
+    - In `--trace` mode, greatly increase message-buffer size. ([`b230078`](https://github.com/Byron/gitoxide/commit/b2300782ad09f17730fe2a5ba4938517d4e7ec16))
+    - Merge branch 'discover-split-worktree' ([`16170d9`](https://github.com/Byron/gitoxide/commit/16170d9c2e4de6a2e639ff99b75e65bbd0e782d7))
+    - Add `gix free discover` to inform about repository discovery. ([`886289f`](https://github.com/Byron/gitoxide/commit/886289f98003f935d774a40f6db746ae70649936))
+    - Merge branch 'fix_completion-bin-name' ([`fb81093`](https://github.com/Byron/gitoxide/commit/fb81093684a7ff3d9979ef21c2c8f771b6f99a50))
+    - Refactor ([`7f2bc08`](https://github.com/Byron/gitoxide/commit/7f2bc08e5713758c6188428221aac518cc6ecf2f))
+    - Set binary name for completions ([`eab22bd`](https://github.com/Byron/gitoxide/commit/eab22bd5d56bf91ee0edfc7156023c159c7f65f9))
+</details>
+
 ## 0.31.1 (2023-10-13)
 
 A re-release to deal with breakage in the dependency tree (self-caused).

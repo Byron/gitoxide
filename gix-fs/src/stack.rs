@@ -63,7 +63,6 @@ impl Stack {
             relative.is_relative(),
             "only index paths are handled correctly here, must be relative"
         );
-        debug_assert!(!relative.to_string_lossy().is_empty(), "empty paths are not allowed");
 
         if self.valid_components == 0 {
             delegate.push_directory(self)?;

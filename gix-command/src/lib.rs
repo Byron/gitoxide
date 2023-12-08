@@ -2,9 +2,9 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+use std::{ffi::OsString, path::PathBuf};
+
 use bstr::BString;
-use std::ffi::OsString;
-use std::path::PathBuf;
 
 /// A structure to keep settings to use when invoking a command via [`spawn()`][Prepare::spawn()], after creating it with [`prepare()`].
 pub struct Prepare {
@@ -68,6 +68,10 @@ pub struct Context {
     /// If `true`, set `GIT_ICASE_PATHSPECS` to `1`, to let patterns match case-insensitively, or `0` otherwise.
     /// If `None`, the variable won't be set.
     pub icase_pathspecs: Option<bool>,
+    /// If `true`, inherit `stderr` just like it's the default when spawning processes.
+    /// If `false`, suppress all stderr output.
+    /// If not `None`, this will override any value set with [`Prepare::stderr()`].
+    pub stderr: Option<bool>,
 }
 
 mod prepare {
@@ -236,6 +240,9 @@ mod prepare {
                 }
                 if let Some(value) = ctx.icase_pathspecs {
                     cmd.env("GIT_ICASE_PATHSPECS", usize::from(value).to_string());
+                }
+                if let Some(stderr) = ctx.stderr {
+                    cmd.stderr(if stderr { Stdio::inherit() } else { Stdio::null() });
                 }
             }
             cmd

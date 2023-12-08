@@ -5,10 +5,10 @@ use std::sync::{
 
 use anyhow::Result;
 use clap::Parser;
+use gitoxide::shared::pretty::prepare_and_run;
 use gitoxide_core as core;
 
 use crate::porcelain::options::{Args, Subcommands};
-use gitoxide::shared::pretty::prepare_and_run;
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse_from(gix::env::args_os());
@@ -18,10 +18,14 @@ pub fn main() -> Result<()> {
         time::util::local_offset::set_soundness(time::util::local_offset::Soundness::Unsound);
     }
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    gix::interrupt::init_handler(1, {
-        let should_interrupt = Arc::clone(&should_interrupt);
-        move || should_interrupt.store(true, Ordering::SeqCst)
-    })?;
+    #[allow(unsafe_code)]
+    unsafe {
+        // SAFETY: The closure doesn't use mutexes or memory allocation, so it should be safe to call from a signal handler.
+        gix::interrupt::init_handler(1, {
+            let should_interrupt = Arc::clone(&should_interrupt);
+            move || should_interrupt.store(true, Ordering::SeqCst)
+        })?;
+    }
     let trace = false;
     let verbose = !args.quiet;
     let progress = args.progress;

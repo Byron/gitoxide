@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.39.0 (2023-12-06)
+
+### New Features
+
+ - <csr-id-1838cbd36f4c19e07080529ec05ecf6c81218686/> support for querying only the header of an object with the `FindHeader` trait.
+   That way one can know its decompressed size and its kind.
+   
+   We also add a `FindObjectOrHeader` trait for use as `dyn` trait object that
+   can find objects and access their headers.
+ - <csr-id-f984c4c58ca3a47469c1af66f9991c989f0d3e49/> Add `Find` and `Exists` trait and extension `FindExt` to easily find objects.
+   This is more convenient than having to rely on closures all the time.
+   Note that `Contains::contains` was renamed to `Exists::exists()`
+
+### Bug Fixes
+
+ - <csr-id-55729a5afe582100dc2ee0fa55f8b5ce313614df/> Report remaining input on error
+ - <csr-id-8d05cae3027e3731602292c9e2d8c3cd53ebeec9/> adjust tree parser to deal with even more unusual trees.
+ - <csr-id-5d78ab3d9e1f447f57a551561b0e773ea68b4d9a/> restore verbose error reporting capabilities when parsing of objects fails.
+   When `verbose-object-parsing-errors` is enabled, it will now once again
+   provide greater details as to where and why the parsing failed.
+ - <csr-id-3542cf5f65dad92552e12cce84e47381aa58e228/> assure all kinds of trees can be parsed.
+   Fix the slow and the fast-path tree-parsers to be able to cope
+   with a greater variety of trees.
+ - <csr-id-d25fbae8c81a3b40614d05041aafd7fbf06f849b/> Add `Copy` to `Data`, `BlobRef` and `TreeRefIter`
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-3ac5d0b7feed9554ddbf249748cb1591a7977d9b/> Keep verbatim tree-entry mode, but support discretization using the new `EntryKind`.
+   Please note that `EntryKind` and `EntryMode` can be converted from and to each other.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 23 commits contributed to the release over the course of 46 calendar days.
+ - 54 days passed between releases.
+ - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1096](https://github.com/Byron/gitoxide/issues/1096)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1096](https://github.com/Byron/gitoxide/issues/1096)**
+    - Adjust tree parser to deal with even more unusual trees. ([`8d05cae`](https://github.com/Byron/gitoxide/commit/8d05cae3027e3731602292c9e2d8c3cd53ebeec9))
+    - Assure all kinds of trees can be parsed. ([`3542cf5`](https://github.com/Byron/gitoxide/commit/3542cf5f65dad92552e12cce84e47381aa58e228))
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
+    - Upgrade to `winnow` 0.5.24 ([`abcfb65`](https://github.com/Byron/gitoxide/commit/abcfb659786425ec09eff6b644cd2ad36b7d6bc4))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'gix-status' ([`dfb3f18`](https://github.com/Byron/gitoxide/commit/dfb3f1821428f294f1832543ad0cf2fc883b03fb))
+    - Support for querying only the header of an object with the `FindHeader` trait. ([`1838cbd`](https://github.com/Byron/gitoxide/commit/1838cbd36f4c19e07080529ec05ecf6c81218686))
+    - Merge branch 'check-cfg' ([`5a0d93e`](https://github.com/Byron/gitoxide/commit/5a0d93e7522564d126c34ce5d569f9a385698513))
+    - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
+    - Merge branch 'error' ([`c372321`](https://github.com/Byron/gitoxide/commit/c372321dd6ea66a41c135d28c7319ab05a6d0942))
+    - Merge branch 'fix-1096' ([`ff99a18`](https://github.com/Byron/gitoxide/commit/ff99a18e9f9388542a9cbf17d61b413f34b1d533))
+    - Keep verbatim tree-entry mode, but support discretization using the new `EntryKind`. ([`3ac5d0b`](https://github.com/Byron/gitoxide/commit/3ac5d0b7feed9554ddbf249748cb1591a7977d9b))
+    - Report remaining input on error ([`55729a5`](https://github.com/Byron/gitoxide/commit/55729a5afe582100dc2ee0fa55f8b5ce313614df))
+    - Refactor Errors to track remaining Input ([`5825250`](https://github.com/Byron/gitoxide/commit/58252501f876bb7123b4f9bf2a75efc3011d7d37))
+    - Refactor iterating parsing so error wrapping knows where left off ([`53309be`](https://github.com/Byron/gitoxide/commit/53309be2b57f880316775df9e7f7eef3ebfa6534))
+    - Refactor gix-object parsers to look more winnow-ish ([`f633f9e`](https://github.com/Byron/gitoxide/commit/f633f9e443ec482fecb47ec7d3eccedba4fd053f))
+    - Merge branch 'fix-1096' ([`48ef17e`](https://github.com/Byron/gitoxide/commit/48ef17e4d169f2b08d119c2dba51fcfd9c06fe61))
+    - Restore verbose error reporting capabilities when parsing of objects fails. ([`5d78ab3`](https://github.com/Byron/gitoxide/commit/5d78ab3d9e1f447f57a551561b0e773ea68b4d9a))
+    - Merge branch 'gix-object-find' ([`c8bd660`](https://github.com/Byron/gitoxide/commit/c8bd66065316176dfbbfe7ecaa092a25cad1854b))
+    - Add `Copy` to `Data`, `BlobRef` and `TreeRefIter` ([`d25fbae`](https://github.com/Byron/gitoxide/commit/d25fbae8c81a3b40614d05041aafd7fbf06f849b))
+    - Add `Find` and `Exists` trait and extension `FindExt` to easily find objects. ([`f984c4c`](https://github.com/Byron/gitoxide/commit/f984c4c58ca3a47469c1af66f9991c989f0d3e49))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+</details>
+
 ## 0.38.0 (2023-10-12)
 
 ### New Features
@@ -21,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 8 calendar days.
+ - 7 commits contributed to the release over the course of 8 calendar days.
  - 17 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Merge branch 'improvements' ([`429e7b2`](https://github.com/Byron/gitoxide/commit/429e7b25f93c8a7947db19bafa74babf199a1aa6))
     - Add `compute_stream_hash` method as lower-level way of hashing objects. ([`5bb55de`](https://github.com/Byron/gitoxide/commit/5bb55decbab55f0480165a756893b0af111e485c))

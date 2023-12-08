@@ -198,11 +198,11 @@ mod writable {
         FullName, FullNameRef, Target,
     };
 
-    use crate::file::EmptyCommit;
     use crate::{
         file::{
             transaction::prepare_and_commit::committer,
             worktree::{main_store, worktree_store, Mode},
+            EmptyCommit,
         },
         hex_to_id,
     };

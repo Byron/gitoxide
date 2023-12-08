@@ -4,13 +4,12 @@ use std::{borrow::Cow, ffi::OsString};
 use gix_sec::Permission;
 
 use super::{interpolate_context, util, Error, StageOne};
-use crate::config::tree::Gitoxide;
 use crate::{
     bstr::BString,
     config,
     config::{
         cache::util::ApplyLeniency,
-        tree::{gitoxide, Core, Http},
+        tree::{gitoxide, Core, Gitoxide, Http},
         Cache,
     },
     open,
@@ -392,12 +391,27 @@ fn apply_environment_overrides(
         ),
         (
             "gitoxide",
-            Some(Cow::Borrowed("credentials".into())),
+            Some(Cow::Borrowed("http".into())),
             git_prefix,
             &[{
-                let key = &gitoxide::Credentials::TERMINAL_PROMPT;
+                let key = &gitoxide::Http::SSL_NO_VERIFY;
                 (env(key), key.name)
             }],
+        ),
+        (
+            "gitoxide",
+            Some(Cow::Borrowed("credentials".into())),
+            git_prefix,
+            &[
+                {
+                    let key = &gitoxide::Credentials::TERMINAL_PROMPT;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Credentials::HELPER_STDERR;
+                    (env(key), key.name)
+                },
+            ],
         ),
         (
             "gitoxide",
@@ -425,6 +439,10 @@ fn apply_environment_overrides(
                 },
                 {
                     let key = &gitoxide::Core::REFS_NAMESPACE;
+                    (env(key), key.name)
+                },
+                {
+                    let key = &gitoxide::Core::EXTERNAL_COMMAND_STDERR;
                     (env(key), key.name)
                 },
             ],
@@ -527,6 +545,16 @@ fn apply_environment_overrides(
             git_prefix,
             &[{
                 let key = &config::tree::Ssh::VARIANT;
+                (env(key), key.name)
+            }],
+        ),
+        #[cfg(feature = "blob-diff")]
+        (
+            "diff",
+            None,
+            git_prefix,
+            &[{
+                let key = &config::tree::Diff::EXTERNAL;
                 (env(key), key.name)
             }],
         ),

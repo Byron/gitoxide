@@ -22,8 +22,7 @@ pub mod configuration {
 ///
 pub mod to_git {
     /// A function that fills `buf` `fn(&mut buf)` with the data stored in the index of the file that should be converted.
-    pub type IndexObjectFn<'a> =
-        dyn FnMut(&mut Vec<u8>) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> + 'a;
+    pub type IndexObjectFn<'a> = dyn FnMut(&mut Vec<u8>) -> Result<Option<()>, gix_object::find::Error> + 'a;
 
     /// The error returned by [Pipeline::convert_to_git()][super::Pipeline::convert_to_git()].
     #[derive(Debug, thiserror::Error)]
@@ -190,7 +189,7 @@ impl Pipeline {
             self.options.eol_config,
         )?;
 
-        let mut bufs = self.bufs.with_src(src);
+        let mut bufs = self.bufs.use_foreign_src(src);
         let (src, dest) = bufs.src_and_dest();
         if apply_ident_filter && ident::apply(src, self.options.object_hash, dest) {
             bufs.swap();

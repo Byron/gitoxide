@@ -54,8 +54,6 @@ impl Outcome {
         collection: &MetadataCollection,
         attribute_names: &mut dyn Iterator<Item = KStringRef<'_>>,
     ) {
-        self.initialize(collection);
-
         self.selected.clear();
         self.selected.extend(attribute_names.map(|name| {
             (
@@ -63,6 +61,8 @@ impl Outcome {
                 collection.name_to_meta.get(name.as_str()).map(|meta| meta.id),
             )
         }));
+
+        self.initialize(collection);
         self.reset_remaining();
     }
 

@@ -8,6 +8,13 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
+/// Re-export for use in public API.
+#[cfg(feature = "blob")]
+pub use gix_command as command;
+/// Re-export for use in public API.
+#[cfg(feature = "blob")]
+pub use gix_object as object;
+
 /// A structure to capture how to perform rename and copy tracking, used by the [rewrites::Tracker].
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg(feature = "blob")]

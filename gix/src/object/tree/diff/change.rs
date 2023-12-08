@@ -1,5 +1,4 @@
-use crate::diff::blob::DiffLineStats;
-use crate::{bstr::BStr, Id};
+use crate::{bstr::BStr, diff::blob::DiffLineStats, Id};
 
 /// An event emitted when finding differences between two trees.
 #[derive(Debug, Clone, Copy)]
@@ -68,25 +67,25 @@ pub enum Event<'a, 'old, 'new> {
     },
 }
 
-impl<'a, 'old, 'new> Event<'a, 'old, 'new> {
-    /// Produce a platform for performing a line-diff, or `None` if this is not a [`Modification`][Event::Modification]
-    /// or one of the entries to compare is not a blob.
-    pub fn diff(
+impl<'a, 'old, 'new> super::Change<'a, 'old, 'new> {
+    /// Produce a platform for performing a line-diff no matter whether the underlying [Event] is an addition, modification,
+    /// deletion or rewrite.
+    /// Use `resource_cache` to store the diffable data and possibly reuse previously stored data.
+    /// Afterwards the platform, which holds on to `resource_cache`, can be used to perform ready-made operations on the
+    /// pre-set resources.
+    ///
+    /// ### Warning about Memory Consumption
+    ///
+    /// `resource_cache` only grows, so one should call [`gix_diff::blob::Platform::clear_resource_cache`] occasionally.
+    pub fn diff<'b>(
         &self,
-    ) -> Option<Result<crate::object::blob::diff::Platform<'old, 'new>, crate::object::blob::diff::init::Error>> {
-        match self {
-            Event::Modification {
-                previous_entry_mode,
-                previous_id,
-                entry_mode,
-                id,
-            } if entry_mode.is_blob() && previous_entry_mode.is_blob() => {
-                Some(crate::object::blob::diff::Platform::from_ids(previous_id, id))
-            }
-            _ => None,
-        }
+        resource_cache: &'b mut gix_diff::blob::Platform,
+    ) -> Result<crate::object::blob::diff::Platform<'b>, crate::object::blob::diff::init::Error> {
+        crate::object::blob::diff::Platform::from_tree_change(self, resource_cache)
     }
+}
 
+impl<'a, 'old, 'new> Event<'a, 'old, 'new> {
     /// Return the current mode of this instance.
     pub fn entry_mode(&self) -> gix_object::tree::EntryMode {
         match self {

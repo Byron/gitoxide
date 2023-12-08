@@ -83,19 +83,32 @@ impl crate::Repository {
     /// hooks or filters.
     #[cfg(feature = "attributes")]
     pub fn command_context(&self) -> Result<gix_command::Context, config::command_context::Error> {
-        use crate::config::cache::util::ApplyLeniency;
-        use crate::config::tree::gitoxide;
-        use crate::config::tree::Key;
+        use crate::config::{
+            cache::util::ApplyLeniency,
+            tree::{gitoxide, Key},
+        };
 
-        let boolean = |key: &dyn Key| {
+        let pathspec_boolean = |key: &'static config::tree::keys::Boolean| {
             self.config
                 .resolved
                 .boolean("gitoxide", Some("pathspec".into()), key.name())
+                .map(|value| key.enrich_error(value))
                 .transpose()
                 .with_leniency(self.config.lenient_config)
         };
 
         Ok(gix_command::Context {
+            stderr: {
+                let key = &gitoxide::Core::EXTERNAL_COMMAND_STDERR;
+                self.config
+                    .resolved
+                    .boolean("gitoxide", Some("core".into()), key.name())
+                    .map(|value| key.enrich_error(value))
+                    .transpose()
+                    .with_leniency(self.config.lenient_config)?
+                    .unwrap_or(true)
+                    .into()
+            },
             git_dir: self.git_dir().to_owned().into(),
             worktree_dir: self.work_dir().map(ToOwned::to_owned),
             no_replace_objects: config::shared::is_replace_refs_enabled(
@@ -105,9 +118,10 @@ impl crate::Repository {
             )?
             .map(|enabled| !enabled),
             ref_namespace: self.refs.namespace.as_ref().map(|ns| ns.as_bstr().to_owned()),
-            literal_pathspecs: boolean(&gitoxide::Pathspec::LITERAL)?,
-            glob_pathspecs: boolean(&gitoxide::Pathspec::GLOB)?.or(boolean(&gitoxide::Pathspec::NOGLOB)?),
-            icase_pathspecs: boolean(&gitoxide::Pathspec::ICASE)?,
+            literal_pathspecs: pathspec_boolean(&gitoxide::Pathspec::LITERAL)?,
+            glob_pathspecs: pathspec_boolean(&gitoxide::Pathspec::GLOB)?
+                .or(pathspec_boolean(&gitoxide::Pathspec::NOGLOB)?),
+            icase_pathspecs: pathspec_boolean(&gitoxide::Pathspec::ICASE)?,
         })
     }
 

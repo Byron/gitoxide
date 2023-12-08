@@ -122,6 +122,36 @@ pub mod diff {
             Unimplemented { name: BString },
         }
     }
+
+    ///
+    pub mod pipeline_options {
+        /// The error produced when obtaining options needed to fill in [gix_diff::blob::pipeline::Options].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            FilesystemCapabilities(#[from] crate::config::boolean::Error),
+            #[error(transparent)]
+            BigFileThreshold(#[from] crate::config::unsigned_integer::Error),
+        }
+    }
+
+    ///
+    pub mod drivers {
+        use crate::bstr::BString;
+
+        /// The error produced when obtaining a list of [Drivers](gix_diff::blob::Driver).
+        #[derive(Debug, thiserror::Error)]
+        #[error("Failed to parse value of 'diff.{name}.{attribute}'")]
+        pub struct Error {
+            /// The name fo the driver.
+            pub name: BString,
+            /// The name of the attribute we tried to parse.
+            pub attribute: &'static str,
+            /// The actual error that occurred.
+            pub source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        }
+    }
 }
 
 ///
@@ -576,9 +606,10 @@ pub(crate) struct Cache {
 
 /// Utillities shared privately across the crate, for lack of a better place.
 pub(crate) mod shared {
-    use crate::config;
-    use crate::config::cache::util::ApplyLeniency;
-    use crate::config::tree::Core;
+    use crate::{
+        config,
+        config::{cache::util::ApplyLeniency, tree::Core},
+    };
 
     pub fn is_replace_refs_enabled(
         config: &gix_config::File<'static>,

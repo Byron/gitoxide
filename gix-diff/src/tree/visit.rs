@@ -94,10 +94,10 @@ pub trait Visit {
 
 #[cfg(feature = "blob")]
 mod change_impls {
-    use crate::rewrites::tracker::ChangeKind;
-    use crate::tree::visit::Change;
     use gix_hash::oid;
     use gix_object::tree::EntryMode;
+
+    use crate::{rewrites::tracker::ChangeKind, tree::visit::Change};
 
     impl crate::rewrites::tracker::Change for crate::tree::visit::Change {
         fn id(&self) -> &oid {

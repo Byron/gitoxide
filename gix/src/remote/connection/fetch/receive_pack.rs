@@ -410,24 +410,14 @@ fn add_shallow_args(
     Ok((shallow_commits, shallow_lock))
 }
 
-fn setup_remote_progress(
+fn setup_remote_progress<'a>(
     progress: &mut dyn crate::DynNestedProgress,
-    reader: &mut Box<dyn gix_protocol::transport::client::ExtendedBufRead + Unpin + '_>,
-    should_interrupt: &AtomicBool,
+    reader: &mut Box<dyn gix_protocol::transport::client::ExtendedBufRead<'a> + Unpin + 'a>,
+    should_interrupt: &'a AtomicBool,
 ) {
     use gix_protocol::transport::client::ExtendedBufRead;
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child_with_id("remote".to_string(), ProgressId::RemoteProgress.into());
-        // SAFETY: Ugh, so, with current Rust I can't declare lifetimes in the involved traits the way they need to
-        //         be and I also can't use scoped threads to pump from local scopes to an Arc version that could be
-        //         used here due to the this being called from sync AND async code (and the async version doesn't work
-        //         with a surrounding `std::thread::scope()`.
-        //         Thus there is only claiming this is 'static which we know works for *our* implementations of ExtendedBufRead
-        //         and typical implementations, but of course it's possible for user code to come along and actually move this
-        //         handler into a context where it can outlive the current function. Is this going to happen? Probably not unless
-        //         somebody really wants to break it. So, with standard usage this value is never used past its actual lifetime.
-        #[allow(unsafe_code)]
-        let should_interrupt: &'static AtomicBool = unsafe { std::mem::transmute(should_interrupt) };
         move |is_err: bool, data: &[u8]| {
             gix_protocol::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress);
             if should_interrupt.load(Ordering::Relaxed) {
@@ -436,5 +426,5 @@ fn setup_remote_progress(
                 ProgressAction::Continue
             }
         }
-    }) as gix_protocol::transport::client::HandleProgress));
+    }) as gix_protocol::transport::client::HandleProgress<'a>));
 }

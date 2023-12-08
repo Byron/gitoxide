@@ -5,7 +5,7 @@ use gitoxide_core as core;
 use gix::bstr::BString;
 
 #[derive(Debug, clap::Parser)]
-#[clap(name = "gix", about = "The git underworld", version = option_env!("GITOXIDE_VERSION"))]
+#[clap(name = "gix", about = "The git underworld", version = option_env!("GIX_VERSION"))]
 #[clap(subcommand_required = true)]
 #[clap(arg_required_else_help = true)]
 pub struct Args {
@@ -614,6 +614,19 @@ pub mod revision {
             #[default]
             Pretty,
         }
+
+        #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+        pub enum BlobFormat {
+            /// The version stored in the Git Object Database.
+            #[default]
+            Git,
+            /// The version that would be checked out into the worktree, including filters.
+            Worktree,
+            /// The version that would be diffed (Worktree + Text-Conversion)
+            Diff,
+            /// The version that would be diffed if there is a text-conversion, or the one stored in Git otherwise.
+            DiffOrGit,
+        }
     }
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "rev", visible_alias = "r")]
@@ -645,8 +658,12 @@ pub mod revision {
             /// Show the first resulting object similar to how `git cat-file` would, but don't show the resolved spec.
             #[clap(short = 'c', long, conflicts_with = "explain")]
             cat_file: bool,
-            #[clap(short = 't', long)]
-            tree_mode: Option<resolve::TreeMode>,
+            /// How to display blobs.
+            #[clap(short = 'b', long, default_value = "git")]
+            blob_format: resolve::BlobFormat,
+            /// How to display trees as obtained with `@:dirname` or `@^{tree}`.
+            #[clap(short = 't', long, default_value = "pretty")]
+            tree_mode: resolve::TreeMode,
             /// rev-specs like `@`, `@~1` or `HEAD^2`.
             #[clap(required = true)]
             specs: Vec<std::ffi::OsString>,
@@ -658,9 +675,8 @@ pub mod revision {
 }
 
 pub mod attributes {
-    use gix::bstr::BString;
-
     use gitoxide::shared::CheckPathSpec;
+    use gix::bstr::BString;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -689,9 +705,8 @@ pub mod attributes {
 pub mod exclude {
     use std::ffi::OsString;
 
-    use gix::bstr::BString;
-
     use gitoxide::shared::CheckPathSpec;
+    use gix::bstr::BString;
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -720,9 +735,8 @@ pub mod exclude {
 pub mod index {
     use std::path::PathBuf;
 
-    use gix::bstr::BString;
-
     use gitoxide::shared::CheckPathSpec;
+    use gix::bstr::BString;
 
     pub mod entries {
         #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]

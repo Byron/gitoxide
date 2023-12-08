@@ -10,14 +10,8 @@ pub struct Tracker<T> {
     items: Vec<tracker::Item<T>>,
     /// A place to store all paths in to reduce amount of allocations.
     path_backing: Vec<u8>,
-    /// A buffer for use when fetching objects for similarity tests.
-    buf1: Vec<u8>,
-    /// Another buffer for use when fetching objects for similarity tests.
-    buf2: Vec<u8>,
     /// How to track copies and/or rewrites.
     rewrites: Rewrites,
-    /// The diff algorithm to use when checking for similarity.
-    diff_algo: crate::blob::Algorithm,
 }
 
 /// Determine in which set of files to search for copies.

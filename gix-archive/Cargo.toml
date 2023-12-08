@@ -1,6 +1,6 @@
 [package]
 name = "gix-archive"
-version = "0.6.0"
+version = "0.7.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "archive generation from of a worktree stream"
@@ -25,10 +25,10 @@ zip = ["dep:zip", "dep:time"]
 
 
 [dependencies]
-gix-worktree-stream = { version = "^0.6.0", path = "../gix-worktree-stream" }
-gix-object = { version = "^0.38.0", path = "../gix-object" }
-gix-path = { version = "^0.10.0", path = "../gix-path", optional = true }
-gix-date = { version = "^0.8.0", path = "../gix-date" }
+gix-worktree-stream = { version = "^0.7.0", path = "../gix-worktree-stream" }
+gix-object = { version = "^0.39.0", path = "../gix-object" }
+gix-path = { version = "^0.10.1", path = "../gix-path", optional = true }
+gix-date = { version = "^0.8.1", path = "../gix-date" }
 
 flate2 = { version = "1.0.26", optional = true }
 zip = { version = "0.6.6", optional = true, default-features = false, features = ["deflate", "time"] }

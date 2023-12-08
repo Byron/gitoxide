@@ -141,5 +141,16 @@ fn delegate_calls_are_consistent() -> crate::Result {
         "the stack is state so keeps thinking it's a directory which is consistent. Git does it differently though."
     );
 
+    s.make_relative_path_current("".as_ref(), &mut r)?;
+    assert_eq!(
+        r,
+        Record {
+            push_dir: 9,
+            dirs: vec![".".into()],
+            push: 14,
+        },
+        "empty-paths reset the tree effectively"
+    );
+
     Ok(())
 }

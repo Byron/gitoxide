@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.0 (2023-12-06)
+
+### New Features
+
+ - <csr-id-0f03a08e9e07979c476a7def0c045fcdfddcbb7c/> Allow obtaining mutable pipeline buffers.
+
+### Bug Fixes
+
+ - <csr-id-c752f67090265dac78e43c132de1d6cced61be9c/> Use `gix-objet::Find` error type.
+ - <csr-id-42d45906d67c6930cb0abb567e59834ac9ae1478/> cleanup trailing newlines when handling delayed files.
+   Otherwise we would have seen newlines in filepaths, which then would
+   not match any file in the list of expected paths.
+
+### New Features (BREAKING)
+
+ - <csr-id-c74c7feea9b4404c3e0f403e22cf64561c8d12ee/> simplify `Pipeline::new()` by reomving the metadata collection.
+   It's required, but in practice has no effect as it's initialized at
+   just the right time anyway, which is when it does matter.
+   
+   Also, re-export `gix_attributes as attributes` to allow using the types
+   it mentions in the public API.
+ - <csr-id-c3edef1c0c49accbb037bdf086dade3ed0e5e507/> make it possible to trace incoming and outgoing packetlines.
+   Due to the way this is (and has to be) setup, unfortunately one
+   has to integrate that with two crates, instead of just one.
+   
+   This changes touches multiple crates, most of which receive a single
+   boolean as last argument to indicate whether the tracing should
+   happen in the first place.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-969ff0f6091196134307554a54e5cf82734d9252/> pass crucial context to help spawning filter processes by adding `context` to `Pipeline::new()`.
+   Otherwise, they might now know which repository to apply to,
+   leading to errors.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 18 commits contributed to the release over the course of 49 calendar days.
+ - 54 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1129](https://github.com/Byron/gitoxide/issues/1129)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1129](https://github.com/Byron/gitoxide/issues/1129)**
+    - Pass crucial context to help spawning filter processes by adding `context` to `Pipeline::new()`. ([`969ff0f`](https://github.com/Byron/gitoxide/commit/969ff0f6091196134307554a54e5cf82734d9252))
+    - Cleanup trailing newlines when handling delayed files. ([`42d4590`](https://github.com/Byron/gitoxide/commit/42d45906d67c6930cb0abb567e59834ac9ae1478))
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
+    - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
+    - Merge branch 'gix-status' ([`dfb3f18`](https://github.com/Byron/gitoxide/commit/dfb3f1821428f294f1832543ad0cf2fc883b03fb))
+    - Adapt to changes in `gix-worktree` ([`a0e4dec`](https://github.com/Byron/gitoxide/commit/a0e4dec7162ea242d03d11e73c4ce1f761ed2853))
+    - Allow obtaining mutable pipeline buffers. ([`0f03a08`](https://github.com/Byron/gitoxide/commit/0f03a08e9e07979c476a7def0c045fcdfddcbb7c))
+    - Simplify `Pipeline::new()` by reomving the metadata collection. ([`c74c7fe`](https://github.com/Byron/gitoxide/commit/c74c7feea9b4404c3e0f403e22cf64561c8d12ee))
+    - Use `gix-objet::Find` error type. ([`c752f67`](https://github.com/Byron/gitoxide/commit/c752f67090265dac78e43c132de1d6cced61be9c))
+    - Use `Buffers` implementation from `gix-utils` ([`1ed74f7`](https://github.com/Byron/gitoxide/commit/1ed74f7bf56a01e20cd2cb9dcd8fa830c3d41e3b))
+    - Merge branch 'improve-filters' ([`f09ea13`](https://github.com/Byron/gitoxide/commit/f09ea13b94a8dad695e4d26533fcd5c739043574))
+    - Merge branch 'gix-object-find' ([`c8bd660`](https://github.com/Byron/gitoxide/commit/c8bd66065316176dfbbfe7ecaa092a25cad1854b))
+    - Adapt to changes related to usage of `gix-object::Find` trait where necessary ([`5761a4d`](https://github.com/Byron/gitoxide/commit/5761a4daf80e5febe469e32220b71dc3063fb4a6))
+    - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
+    - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
+    - Assure all crates have includes configured ([`065ab57`](https://github.com/Byron/gitoxide/commit/065ab57d890f4b98cca7a7f81d68876fa84f49e0))
+    - Merge branch 'trace-packetlines' ([`e7de4c7`](https://github.com/Byron/gitoxide/commit/e7de4c702a223ad9eb19b407391028dcb08d80c4))
+    - Make it possible to trace incoming and outgoing packetlines. ([`c3edef1`](https://github.com/Byron/gitoxide/commit/c3edef1c0c49accbb037bdf086dade3ed0e5e507))
+</details>
+
 ## 0.6.0 (2023-10-12)
 
 ### Bug Fixes
@@ -26,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 8 calendar days.
+ - 7 commits contributed to the release over the course of 8 calendar days.
  - 17 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -44,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Fix docs ([`995bc84`](https://github.com/Byron/gitoxide/commit/995bc840664cbd4aeb7f95592e3125dee63bdcd4))
     - Thanks clippy ([`345712d`](https://github.com/Byron/gitoxide/commit/345712dcdfddcccc630bbfef2ed4f461b21550d3))

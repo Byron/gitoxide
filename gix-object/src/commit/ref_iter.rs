@@ -6,7 +6,7 @@ use winnow::{
     combinator::{alt, eof, opt, terminated},
     error::StrContext,
     prelude::*,
-    token::take_till1,
+    token::take_till,
 };
 
 use crate::{
@@ -214,7 +214,7 @@ impl<'a> CommitRefIter<'a> {
                 }
             }
             Encoding => {
-                let encoding = opt(|i: &mut _| parse::header_field(i, b"encoding", take_till1(NL)))
+                let encoding = opt(|i: &mut _| parse::header_field(i, b"encoding", take_till(1.., NL)))
                     .context(StrContext::Expected("encoding <encoding>".into()))
                     .parse_next(input)?;
                 *state = State::ExtraHeaders;
@@ -227,7 +227,7 @@ impl<'a> CommitRefIter<'a> {
                 let extra_header = opt(alt((
                     |i: &mut _| parse::any_header_field_multi_line(i).map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
                     |i: &mut _| {
-                        parse::any_header_field(i, take_till1(NL))
+                        parse::any_header_field(i, take_till(1.., NL))
                             .map(|(k, o)| (k.as_bstr(), Cow::Borrowed(o.as_bstr())))
                     },
                 )))

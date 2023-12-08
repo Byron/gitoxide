@@ -1,5 +1,4 @@
-use std::path::PathBuf;
-use std::sync::atomic::AtomicBool;
+use std::{path::PathBuf, sync::atomic::AtomicBool};
 
 use gix_hash::ObjectId;
 

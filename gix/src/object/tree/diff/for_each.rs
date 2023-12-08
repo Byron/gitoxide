@@ -1,8 +1,13 @@
 use gix_object::TreeRefIter;
 
 use super::{change, Action, Change, Platform};
-use crate::diff::rewrites::tracker;
-use crate::{bstr::BStr, diff::rewrites, ext::ObjectIdExt, object::tree::diff, Repository, Tree};
+use crate::{
+    bstr::BStr,
+    diff::{rewrites, rewrites::tracker},
+    ext::ObjectIdExt,
+    object::tree::diff,
+    Repository, Tree,
+};
 
 /// The error return by methods on the [diff platform][Platform].
 #[derive(Debug, thiserror::Error)]
@@ -12,8 +17,8 @@ pub enum Error {
     Diff(#[from] gix_diff::tree::changes::Error),
     #[error("The user-provided callback failed")]
     ForEach(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
-    #[error("Could not configure diff algorithm prior to checking similarity")]
-    ConfigureDiffAlgorithm(#[from] crate::config::diff::algorithm::Error),
+    #[error(transparent)]
+    ResourceCache(#[from] crate::repository::diff::resource_cache::Error),
     #[error("Failure during rename tracking")]
     RenameTracking(#[from] tracker::emit::Error),
 }
@@ -39,15 +44,48 @@ impl<'a, 'old> Platform<'a, 'old> {
     where
         E: std::error::Error + Sync + Send + 'static,
     {
+        self.for_each_to_obtain_tree_inner(other, for_each, None)
+    }
+
+    /// Like [`Self::for_each_to_obtain_tree()`], but with a reusable `resource_cache` which is used to perform
+    /// diffs fast.
+    ///
+    /// Reusing it between multiple invocations saves a lot of IOps as it avoids the creation
+    /// of a temporary `resource_cache` that triggers reading or checking for multiple gitattribute files.
+    /// Note that it's recommended to call [`gix_diff::blob::Platform::clear_resource_cache()`] between the calls
+    /// to avoid runaway memory usage, as the cache isn't limited.
+    ///
+    /// Note that to do rename tracking like `git` does, one has to configure the `resource_cache` with
+    /// a conversion pipeline that uses [`gix_diff::blob::pipeline::Mode::ToGit`].
+    pub fn for_each_to_obtain_tree_with_cache<'new, E>(
+        &mut self,
+        other: &Tree<'new>,
+        resource_cache: &mut gix_diff::blob::Platform,
+        for_each: impl FnMut(Change<'_, 'old, 'new>) -> Result<Action, E>,
+    ) -> Result<Outcome, Error>
+    where
+        E: std::error::Error + Sync + Send + 'static,
+    {
+        self.for_each_to_obtain_tree_inner(other, for_each, Some(resource_cache))
+    }
+
+    fn for_each_to_obtain_tree_inner<'new, E>(
+        &mut self,
+        other: &Tree<'new>,
+        for_each: impl FnMut(Change<'_, 'old, 'new>) -> Result<Action, E>,
+        resource_cache: Option<&mut gix_diff::blob::Platform>,
+    ) -> Result<Outcome, Error>
+    where
+        E: std::error::Error + Sync + Send + 'static,
+    {
         let repo = self.lhs.repo;
-        let diff_algo = repo.config.diff_algorithm()?;
         let mut delegate = Delegate {
             src_tree: self.lhs,
             other_repo: other.repo,
             recorder: gix_diff::tree::Recorder::default().track_location(self.tracking),
             visit: for_each,
             location: self.tracking,
-            tracked: self.rewrites.map(|r| rewrites::Tracker::new(r, diff_algo)),
+            tracked: self.rewrites.map(rewrites::Tracker::new),
             err: None,
         };
         match gix_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
@@ -58,7 +96,7 @@ impl<'a, 'old> Platform<'a, 'old> {
         ) {
             Ok(()) => {
                 let outcome = Outcome {
-                    rewrites: delegate.process_tracked_changes()?,
+                    rewrites: delegate.process_tracked_changes(resource_cache)?,
                 };
                 match delegate.err {
                     Some(err) => Err(Error::ForEach(Box::new(err))),
@@ -131,10 +169,23 @@ where
         }
     }
 
-    fn process_tracked_changes(&mut self) -> Result<Option<rewrites::Outcome>, Error> {
+    fn process_tracked_changes(
+        &mut self,
+        diff_cache: Option<&mut gix_diff::blob::Platform>,
+    ) -> Result<Option<rewrites::Outcome>, Error> {
         let tracked = match self.tracked.as_mut() {
             Some(t) => t,
             None => return Ok(None),
+        };
+
+        let repo = self.src_tree.repo;
+        let mut storage;
+        let diff_cache = match diff_cache {
+            Some(cache) => cache,
+            None => {
+                storage = repo.diff_resource_cache(gix_diff::blob::pipeline::Mode::ToGit, Default::default())?;
+                &mut storage
+            }
         };
 
         let outcome = tracked.emit(
@@ -174,6 +225,7 @@ where
                     &mut self.err,
                 ),
             },
+            diff_cache,
             &self.src_tree.repo.objects,
             |push| {
                 self.src_tree

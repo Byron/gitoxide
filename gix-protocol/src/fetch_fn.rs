@@ -165,8 +165,10 @@ where
     Ok(())
 }
 
-fn setup_remote_progress<P>(progress: &mut P, reader: &mut Box<dyn gix_transport::client::ExtendedBufRead + Unpin + '_>)
-where
+fn setup_remote_progress<P>(
+    progress: &mut P,
+    reader: &mut Box<dyn gix_transport::client::ExtendedBufRead<'_> + Unpin + '_>,
+) where
     P: NestedProgress,
     P::SubProgress: 'static,
 {
@@ -176,5 +178,5 @@ where
             crate::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress);
             gix_transport::packetline::read::ProgressAction::Continue
         }
-    }) as gix_transport::client::HandleProgress));
+    }) as gix_transport::client::HandleProgress<'_>));
 }
