@@ -3,7 +3,7 @@ use std::{cmp::Ordering, ops::Range};
 use bstr::{BStr, ByteSlice, ByteVec};
 use filetime::FileTime;
 
-use crate::{entry, extension, Entry, PathStorage, PathStorageRef, State, Version};
+use crate::{entry, extension, DirectoryKind, Entry, PathStorage, PathStorageRef, State, Version};
 
 // TODO: integrate this somehow, somewhere, depending on later usage.
 #[allow(dead_code)]
@@ -84,6 +84,38 @@ impl State {
         self.entry_index_by_idx_and_stage(path, idx, stage, stage_cmp)
     }
 
+    /// Find the entry index in [`entries()`][State::entries()] matching the given repository-relative
+    /// `path` and `stage`, or `None`.
+    /// If `ignore_case` is `true`, a case-insensitive (ASCII-folding only) search will be performed.
+    ///
+    /// Note that if there are ambiguities, like `x` and `X` being present in the index, any of these will be returned,
+    /// deterministically.
+    ///
+    /// Use the index for accessing multiple stages if they exists, but at least the single matching entry.
+    pub fn entry_index_by_path_and_stage_icase(
+        &self,
+        path: &BStr,
+        stage: entry::Stage,
+        ignore_case: bool,
+    ) -> Option<usize> {
+        if ignore_case {
+            let mut stage_cmp = Ordering::Equal;
+            let idx = self
+                .entries
+                .binary_search_by(|e| {
+                    let res = icase_cmp(e.path(self), path);
+                    if res.is_eq() {
+                        stage_cmp = e.stage().cmp(&stage);
+                    }
+                    res
+                })
+                .ok()?;
+            self.entry_index_by_idx_and_stage_icase(path, idx, stage, stage_cmp)
+        } else {
+            self.entry_index_by_path_and_stage(path, stage)
+        }
+    }
+
     /// Walk as far in `direction` as possible, with [`Ordering::Greater`] towards higher stages, and [`Ordering::Less`]
     /// towards lower stages, and return the lowest or highest seen stage.
     /// Return `None` if there is no greater or smaller stage.
@@ -103,6 +135,30 @@ impl State {
                 .enumerate()
                 .rev()
                 .take_while(|(_, e)| e.path(self) == path)
+                .last()
+                .map(|(idx, _)| idx),
+        }
+    }
+
+    /// Walk as far in `direction` as possible, with [`Ordering::Greater`] towards higher stages, and [`Ordering::Less`]
+    /// towards lower stages, and return the lowest or highest seen stage.
+    /// Return `None` if there is no greater or smaller stage.
+    fn walk_entry_stages_icase(&self, path: &BStr, base: usize, direction: Ordering) -> Option<usize> {
+        match direction {
+            Ordering::Greater => self
+                .entries
+                .get(base + 1..)?
+                .iter()
+                .enumerate()
+                .take_while(|(_, e)| e.path(self).eq_ignore_ascii_case(path))
+                .last()
+                .map(|(idx, _)| base + 1 + idx),
+            Ordering::Equal => Some(base),
+            Ordering::Less => self.entries[..base]
+                .iter()
+                .enumerate()
+                .rev()
+                .take_while(|(_, e)| e.path(self).eq_ignore_ascii_case(path))
                 .last()
                 .map(|(idx, _)| idx),
         }
@@ -133,6 +189,31 @@ impl State {
         }
     }
 
+    fn entry_index_by_idx_and_stage_icase(
+        &self,
+        path: &BStr,
+        idx: usize,
+        wanted_stage: entry::Stage,
+        stage_cmp: Ordering,
+    ) -> Option<usize> {
+        match stage_cmp {
+            Ordering::Greater => self.entries[..idx]
+                .iter()
+                .enumerate()
+                .rev()
+                .take_while(|(_, e)| e.path(self).eq_ignore_ascii_case(path))
+                .find_map(|(idx, e)| (e.stage() == wanted_stage).then_some(idx)),
+            Ordering::Equal => Some(idx),
+            Ordering::Less => self
+                .entries
+                .get(idx + 1..)?
+                .iter()
+                .enumerate()
+                .take_while(|(_, e)| e.path(self).eq_ignore_ascii_case(path))
+                .find_map(|(ofs, e)| (e.stage() == wanted_stage).then_some(idx + ofs + 1)),
+        }
+    }
+
     /// Find the entry index in [`entries()[..upper_bound]`][State::entries()] matching the given repository-relative
     /// `path` and `stage`, or `None`.
     ///
@@ -152,11 +233,87 @@ impl State {
             .ok()
     }
 
-    /// Like [`entry_index_by_path_and_stage()`][State::entry_index_by_path_and_stage()],
+    /// Like [`entry_index_by_path_and_stage()`](State::entry_index_by_path_and_stage_icase()),
     /// but returns the entry instead of the index.
     pub fn entry_by_path_and_stage(&self, path: &BStr, stage: entry::Stage) -> Option<&Entry> {
         self.entry_index_by_path_and_stage(path, stage)
             .map(|idx| &self.entries[idx])
+    }
+
+    /// Like [`entry_index_by_path_and_stage_icase()`](State::entry_index_by_path_and_stage_icase()),
+    /// but returns the entry instead of the index.
+    pub fn entry_by_path_and_stage_icase(&self, path: &BStr, stage: entry::Stage, ignore_case: bool) -> Option<&Entry> {
+        self.entry_index_by_path_and_stage_icase(path, stage, ignore_case)
+            .map(|idx| &self.entries[idx])
+    }
+
+    /// Return the kind of directory that `path` represents, or `None` if the path is not a directory, or not
+    /// tracked in this index in any other way.
+    ///
+    /// Note that we will not match `path`, like `a/b`, to a submodule or sparse directory at `a`, which means
+    /// that `path` should be grown one component at a time in order to find the relevant entries.
+    ///
+    /// If `ignore_case` is `true`, a case-insensitive (ASCII-folding only) search will be performed.
+    ///
+    /// ### Deviation
+    ///
+    /// We allow conflicting entries to serve as indicator for an inferred directory, whereas `git` only looks
+    /// at stage 0.
+    pub fn directory_kind_by_path_icase(&self, path: &BStr, ignore_case: bool) -> Option<DirectoryKind> {
+        if ignore_case {
+            for entry in self
+                .prefixed_entries_range_icase(path, ignore_case)
+                .map(|range| &self.entries[range])?
+            {
+                let entry_path = entry.path(self);
+                if !entry_path.get(..path.len())?.eq_ignore_ascii_case(path) {
+                    // This can happen if the range starts with matches, then moves on to non-matches,
+                    // to finally and in matches again.
+                    // TODO(perf): start range from start to first mismatch, then continue from the end.
+                    continue;
+                }
+                match entry_path.get(path.len()) {
+                    Some(b'/') => {
+                        return Some(if entry.mode.is_sparse() {
+                            DirectoryKind::SparseDir
+                        } else {
+                            DirectoryKind::Inferred
+                        })
+                    }
+                    Some(_) => break,
+                    None => {
+                        if entry.mode.is_submodule() {
+                            return Some(DirectoryKind::Submodule);
+                        }
+                    }
+                }
+            }
+        } else {
+            let (Ok(idx) | Err(idx)) = self.entries.binary_search_by(|e| e.path(self).cmp(path));
+
+            for entry in self.entries.get(idx..)? {
+                let entry_path = entry.path(self);
+                if entry_path.get(..path.len())? != path {
+                    break;
+                }
+                match entry_path.get(path.len()) {
+                    Some(b'/') => {
+                        return Some(if entry.mode.is_sparse() {
+                            DirectoryKind::SparseDir
+                        } else {
+                            DirectoryKind::Inferred
+                        })
+                    }
+                    Some(_) => break,
+                    None => {
+                        if entry.mode.is_submodule() {
+                            return Some(DirectoryKind::Submodule);
+                        }
+                    }
+                }
+            }
+        }
+        None
     }
 
     /// Return the entry at `path` that is either at stage 0, or at stage 2 (ours) in case of a merge conflict.
@@ -180,6 +337,37 @@ impl State {
             self.entry_index_by_idx_and_stage(path, idx, 2, stage_at_index.cmp(&2))?
         };
         Some(&self.entries[idx])
+    }
+
+    /// Return the entry at `path` that is either at stage 0, or at stage 2 (ours) in case of a merge conflict.
+    /// If `ignore_case` is `true`, a case-insensitive (ASCII-folding only) search will be performed.
+    ///
+    /// Using this method is more efficient in comparison to doing two searches, one for stage 0 and one for stage 2.
+    ///
+    /// Note that if there are ambiguities, like `x` and `X` being present in the index, any of these will be returned,
+    /// deterministically.
+    pub fn entry_by_path_icase(&self, path: &BStr, ignore_case: bool) -> Option<&Entry> {
+        if ignore_case {
+            let mut stage_at_index = 0;
+            let idx = self
+                .entries
+                .binary_search_by(|e| {
+                    let res = icase_cmp(e.path(self), path);
+                    if res.is_eq() {
+                        stage_at_index = e.stage();
+                    }
+                    res
+                })
+                .ok()?;
+            let idx = if stage_at_index == 0 || stage_at_index == 2 {
+                idx
+            } else {
+                self.entry_index_by_idx_and_stage_icase(path, idx, 2, stage_at_index.cmp(&2))?
+            };
+            Some(&self.entries[idx])
+        } else {
+            self.entry_by_path(path)
+        }
     }
 
     /// Return the slice of entries which all share the same `prefix`, or `None` if there isn't a single such entry.
@@ -221,6 +409,49 @@ impl State {
         (low != high).then_some(low..high)
     }
 
+    /// Return the range of entries which all share the same `prefix`, or `None` if there isn't a single such entry.
+    /// If `ignore_case` is `true`, a case-insensitive (ASCII-folding only) search will be performed. Otherwise
+    /// the search is case-sensitive.
+    ///
+    /// If `prefix` is empty, the range will include all entries.
+    pub fn prefixed_entries_range_icase(&self, prefix: &BStr, ignore_case: bool) -> Option<Range<usize>> {
+        if ignore_case {
+            if prefix.is_empty() {
+                return Some(0..self.entries.len());
+            }
+            let prefix_len = prefix.len();
+            let mut low = self.entries.partition_point(|e| {
+                e.path(self).get(..prefix_len).map_or_else(
+                    || icase_cmp(e.path(self), &prefix[..e.path.len()]).is_le(),
+                    |p| icase_cmp(p, prefix).is_lt(),
+                )
+            });
+            let mut high = low
+                + self.entries[low..].partition_point(|e| {
+                    e.path(self)
+                        .get(..prefix_len)
+                        .map_or(false, |p| icase_cmp(p, prefix).is_le())
+                });
+
+            let low_entry = &self.entries.get(low)?;
+            if low_entry.stage() != 0 {
+                low = self
+                    .walk_entry_stages_icase(low_entry.path(self), low, Ordering::Less)
+                    .unwrap_or(low);
+            }
+            if let Some(high_entry) = self.entries.get(high) {
+                if high_entry.stage() != 0 {
+                    high = self
+                        .walk_entry_stages_icase(high_entry.path(self), high, Ordering::Less)
+                        .unwrap_or(high);
+                }
+            }
+            (low != high).then_some(low..high)
+        } else {
+            self.prefixed_entries_range(prefix)
+        }
+    }
+
     /// Return the entry at `idx` or _panic_ if the index is out of bounds.
     ///
     /// The `idx` is typically returned by [`entry_by_path_and_stage()`][State::entry_by_path_and_stage()].
@@ -258,6 +489,12 @@ impl State {
         );
         Some(start..end)
     }
+}
+
+fn icase_cmp(a: &[u8], b: &[u8]) -> Ordering {
+    a.iter()
+        .map(u8::to_ascii_lowercase)
+        .cmp(b.iter().map(u8::to_ascii_lowercase))
 }
 
 /// Mutation

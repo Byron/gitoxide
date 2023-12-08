@@ -629,6 +629,7 @@ The git staging area.
     * [x] 'link' base indices to take information from, split index
     * [x] 'sdir' [sparse directory entries](https://github.blog/2021-08-16-highlights-from-git-2-33/) - marker
   * [x] verification of entries and extensions as well as checksum
+  * [ ] expand sparse directory entries using information of the tree itself
 * write
   * [x] V2
   * [x] V3 - extension bits
@@ -655,7 +656,7 @@ The git staging area.
     * [ ] IEOT index entry offset table
     * [ ] 'link' base indices to take information from, split index
     * [ ] 'sdir' sparse directory entries
-* add and remove entries
+* [ ] add and remove entries
 * [x] API documentation
     * [ ] Some examples
 

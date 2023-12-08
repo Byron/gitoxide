@@ -47,6 +47,22 @@ pub enum Version {
     V4 = 4,
 }
 
+/// A representation of a directory in the index.
+///
+/// These are most of the time inferred, but may also be explicit entries.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum DirectoryKind {
+    /// The directory is implied as there is at least one tracked entry that lives within it.
+    Inferred,
+    /// The directory is present directly in the form of a sparse directory.
+    ///
+    /// These are available when cone-mode is active.
+    SparseDir,
+    /// The directory is present directly in the form of the commit of a repository that is
+    /// a submodule of the superproject (which this is the index of).
+    Submodule,
+}
+
 /// An entry in the index, identifying a non-tree item on disk.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Entry {
