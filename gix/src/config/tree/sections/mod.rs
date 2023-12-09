@@ -72,6 +72,10 @@ pub mod index;
 pub struct Init;
 mod init;
 
+#[derive(Copy, Clone, Default)]
+pub struct Mailmap;
+mod mailmap;
+
 /// The `pack` top-level section.
 #[derive(Copy, Clone, Default)]
 pub struct Pack;
