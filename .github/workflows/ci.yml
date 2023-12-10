@@ -80,6 +80,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         run: cargo check --all --bins --examples
       - run: |
+          # it should never be a failure not to get the caches, as they can be regenerated.
           git lfs fetch && git lfs checkout || true
       - uses: taiki-e/install-action@v1
         with:
