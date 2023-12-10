@@ -79,7 +79,8 @@ jobs:
       - name: "cargo check default features"
         if: startsWith(matrix.os, 'windows')
         run: cargo check --all --bins --examples
-      - run: git lfs fetch && git lfs checkout
+      - run: |
+          git lfs fetch && git lfs checkout || true
       - uses: taiki-e/install-action@v1
         with:
           tool: nextest
