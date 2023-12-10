@@ -84,7 +84,7 @@ excludes = ["dep:gix-ignore", "dep:gix-worktree", "index"]
 attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes", "dep:gix-command"]
 
 ## Add support for mailmaps, as way of determining the final name of commmiters and authors.
-mailmap = ["dep:gix-mailmap"]
+mailmap = ["dep:gix-mailmap", "revision"]
 
 ## Make revspec parsing possible, as well describing revision.
 revision = ["gix-revision/describe", "index"]
