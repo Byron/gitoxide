@@ -13,7 +13,7 @@ include = ["src/**/*", "LICENSE-*"]
 doctest = false
 
 [dependencies]
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-trace = { version = "^0.1.4", path = "../gix-trace" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-command = { version = "^0.3.0", path = "../gix-command" }

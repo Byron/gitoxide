@@ -5,26 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.27.1 (2023-12-10)
 
 ### Bug Fixes
+
+<csr-id-e2e17c60008f287796c6c10e1fa8a64a3d4a9105/>
 
  - <csr-id-03fa7ac64c99abc804252630c03b5b9085e9ea81/> NetBSD doesn't have `st_mtime_nsec` and `st_ctime_nsec`
    It has `st_mtimensec` and `st_ctimensec` instead.
    
    * https://man.netbsd.org/NetBSD-8.0/stat.2
-   * https://docs.rs/libc/0.2/x86_64-unknown-netbsd/libc/struct.stat.html#structfield.st_mtimensec
-   * https://docs.rs/libc/0.2/aarch64-unknown-netbsd/libc/struct.stat.html#structfield.st_mtimensec
-   * https://docs.rs/libc/0.2/x86_64-unknown-netbsd/libc/struct.stat.html#structfield.st_ctimensec
-   * https://docs.rs/libc/0.2/aarch64-unknown-netbsd/libc/struct.stat.html#structfield.st_ctimensec
- - <csr-id-e2e17c60008f287796c6c10e1fa8a64a3d4a9105/> builds on 32bit android now work.
-   Thanks to new CI tests, these should keep working as well.
+* https://docs.rs/libc/0.2/x86_64-unknown-netbsd/libc/struct.stat.html#structfield.st_mtimensec
+* https://docs.rs/libc/0.2/aarch64-unknown-netbsd/libc/struct.stat.html#structfield.st_mtimensec
+* https://docs.rs/libc/0.2/x86_64-unknown-netbsd/libc/struct.stat.html#structfield.st_ctimensec
+* https://docs.rs/libc/0.2/aarch64-unknown-netbsd/libc/struct.stat.html#structfield.st_ctimensec
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 2 calendar days.
+ - 5 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -36,11 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelog for `gix-index` release ([`b3ecbb7`](https://github.com/Byron/gitoxide/commit/b3ecbb7e27bbd088733c70a319a57a9e963f8bd0))
     - Merge pull request #1170 from weihanglo/netbsd ([`523692b`](https://github.com/Byron/gitoxide/commit/523692b6d9d403d0e10f36f382ce7728f3ae2ad4))
     - NetBSD doesn't have `st_mtime_nsec` and `st_ctime_nsec` ([`03fa7ac`](https://github.com/Byron/gitoxide/commit/03fa7ac64c99abc804252630c03b5b9085e9ea81))
     - Merge branch '32bit' ([`ff1542c`](https://github.com/Byron/gitoxide/commit/ff1542cedf3072a8c7c493d454aef5cc61de6d4c))
     - Builds on 32bit android now work. ([`e2e17c6`](https://github.com/Byron/gitoxide/commit/e2e17c60008f287796c6c10e1fa8a64a3d4a9105))
 </details>
+
+<csr-unknown>
+ builds on 32bit android now work.Thanks to new CI tests, these should keep working as well.<csr-unknown/>
 
 ## 0.27.0 (2023-12-06)
 

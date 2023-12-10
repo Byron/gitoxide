@@ -22,7 +22,7 @@ serde = ["dep:serde", "gix-hash/serde", "gix-actor/serde", "gix-object/serde"]
 gix-features = { version = "^0.36.1", path = "../gix-features", features = ["walkdir"]}
 gix-fs = { version = "^0.8.1", path = "../gix-fs" }
 gix-path = { version = "^0.10.1", path = "../gix-path" }
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-date = { version = "^0.8.1", path = "../gix-date" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-validate = { version = "^0.8.1", path = "../gix-validate" }

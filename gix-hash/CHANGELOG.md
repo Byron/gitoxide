@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.13.3 (2023-12-10)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 2 calendar days.
+ - 3 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelog for `gix-index` release ([`b3ecbb7`](https://github.com/Byron/gitoxide/commit/b3ecbb7e27bbd088733c70a319a57a9e963f8bd0))
     - Merge branch '32bit' ([`ff1542c`](https://github.com/Byron/gitoxide/commit/ff1542cedf3072a8c7c493d454aef5cc61de6d4c))
     - Update `faster-hex` crate to latest version ([`b0bfd01`](https://github.com/Byron/gitoxide/commit/b0bfd01e6c65cd9f6458a97bfe1218a604cd6507))
 </details>
