@@ -1,0 +1,14 @@
+[package]
+name = "gix-dir"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT OR Apache-2.0"
+description = "A crate of the gitoxide project dealing with directory walks"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.65"
+
+[lib]
+doctest = false
+
+[dependencies]
