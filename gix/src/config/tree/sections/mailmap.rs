@@ -5,9 +5,9 @@ use crate::config::{
 
 impl Mailmap {
     /// The `mailmap.blob` key
-    pub const BLOB: keys::Any = keys::Any::new("blob", &Tree::MAILMAP);
+    pub const BLOB: keys::String = keys::String::new_string("blob", &Tree::MAILMAP);
     /// The `mailmap.file` key
-    pub const FILE: keys::Any = keys::Any::new("file", &Tree::MAILMAP);
+    pub const FILE: keys::Path = keys::Path::new_path("file", &Tree::MAILMAP);
 }
 
 impl Section for Mailmap {
