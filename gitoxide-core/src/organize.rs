@@ -198,9 +198,17 @@ fn handle(
             destination.display()
         )),
         Mode::Execute => {
-            std::fs::create_dir_all(destination.parent().expect("repo destination is not the root"))?;
+            if destination.starts_with(git_workdir) {
+                let tempdir = tempfile::tempdir_in(canonicalized_destination)?;
+                let tempdest = tempdir.path().join(destination.file_name().expect("repo destination is not the root"));
+                std::fs::rename(git_workdir, &tempdest)?;
+                std::fs::create_dir_all(destination.parent().expect("repo destination is not the root"))?;
+                std::fs::rename(&tempdest, &destination)?;
+            } else {
+                std::fs::create_dir_all(destination.parent().expect("repo destination is not the root"))?;
+                std::fs::rename(git_workdir, &destination)?;
+            }
             progress.done(format!("Moving {} to {}", git_workdir.display(), destination.display()));
-            std::fs::rename(git_workdir, &destination)?;
         }
     }
     Ok(())
