@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
@@ -198,9 +199,17 @@ fn handle(
             destination.display()
         )),
         Mode::Execute => {
-            if destination.starts_with(git_workdir) {
+            if destination.starts_with(
+                git_workdir
+                    .canonicalize()
+                    .ok()
+                    .map(Cow::Owned)
+                    .unwrap_or(Cow::Borrowed(git_workdir)),
+            ) {
                 let tempdir = tempfile::tempdir_in(canonicalized_destination)?;
-                let tempdest = tempdir.path().join(destination.file_name().expect("repo destination is not the root"));
+                let tempdest = tempdir
+                    .path()
+                    .join(destination.file_name().expect("repo destination is not the root"));
                 std::fs::rename(git_workdir, &tempdest)?;
                 std::fs::create_dir_all(destination.parent().expect("repo destination is not the root"))?;
                 std::fs::rename(&tempdest, &destination)?;
