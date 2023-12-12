@@ -44,6 +44,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
         * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
     * [x] rev-parse
        - [ ] handle relative paths as relative to working directory
+       - [ ] handle `upstream` and `push` resolution.
     * [x] rev-walk
         * [x] include tips
         * [ ] exclude commits
