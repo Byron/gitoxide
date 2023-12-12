@@ -19,10 +19,10 @@ impl Diff {
     pub const RENAMES: Renames = Renames::new_renames("renames", &config::Tree::DIFF);
 
     /// The `diff.<driver>.command` key.
-    pub const DRIVER_COMMAND: keys::String = keys::String::new_string("command", &config::Tree::DIFF)
+    pub const DRIVER_COMMAND: keys::Program = keys::Program::new_program("command", &config::Tree::DIFF)
         .with_subsection_requirement(Some(SubSectionRequirement::Parameter("driver")));
     /// The `diff.<driver>.textconv` key.
-    pub const DRIVER_TEXTCONV: keys::String = keys::String::new_string("textconv", &config::Tree::DIFF)
+    pub const DRIVER_TEXTCONV: keys::Program = keys::Program::new_program("textconv", &config::Tree::DIFF)
         .with_subsection_requirement(Some(SubSectionRequirement::Parameter("driver")));
     /// The `diff.<driver>.algorithm` key.
     pub const DRIVER_ALGORITHM: Algorithm =
