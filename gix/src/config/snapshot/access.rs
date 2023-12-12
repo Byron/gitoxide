@@ -1,5 +1,6 @@
 #![allow(clippy::result_large_err)]
 use std::borrow::Cow;
+use std::ffi::OsStr;
 
 use gix_features::threading::OwnShared;
 use gix_macros::momo;
@@ -67,6 +68,21 @@ impl<'repo> Snapshot<'repo> {
         self.repo
             .config
             .trusted_file_path(key.section_name, key.subsection_name, key.value_name)
+    }
+
+    /// Return the trusted string at `key` for launching using [command::prepare()](gix_command::prepare()),
+    /// or `None` if there is no such value or if no value was found in a trusted file.
+    #[momo]
+    pub fn trusted_program<'a>(&self, key: impl Into<&'a BStr>) -> Option<Cow<'repo, OsStr>> {
+        let value = self
+            .repo
+            .config
+            .resolved
+            .string_filter_by_key(key, &mut self.repo.config.filter_config_section.clone())?;
+        Some(match gix_path::from_bstr(value) {
+            Cow::Borrowed(v) => Cow::Borrowed(v.as_os_str()),
+            Cow::Owned(v) => Cow::Owned(v.into_os_string()),
+        })
     }
 }
 

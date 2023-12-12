@@ -61,6 +61,9 @@ comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human
 #! A component is a distinct feature which may be comprised of one or more methods around a particular topic.
 #! Providers of libraries should only activate the components they need.
 
+## Provide a top-level `command` module that helps with spawning commands similarly to `git`.
+command = ["dep:gix-command"]
+
 ## Obtain information similar to `git status`.
 status = ["gix-status"]
 
@@ -81,7 +84,7 @@ worktree-mutation = ["attributes", "dep:gix-worktree-state"]
 excludes = ["dep:gix-ignore", "dep:gix-worktree", "index"]
 
 ## Query attributes and excludes. Enables access to pathspecs, worktree checkouts, filter-pipelines and submodules.
-attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes", "dep:gix-command"]
+attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes", "command"]
 
 ## Add support for mailmaps, as way of determining the final name of commmiters and authors.
 mailmap = ["dep:gix-mailmap", "revision"]
