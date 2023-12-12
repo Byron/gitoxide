@@ -22,6 +22,8 @@ impl Core {
     /// The `core.disambiguate` key.
     pub const DISAMBIGUATE: Disambiguate =
         Disambiguate::new_with_validate("disambiguate", &config::Tree::CORE, validate::Disambiguate);
+    /// The `core.editor` key.
+    pub const EDITOR: keys::Executable = keys::Executable::new_executable("editor", &config::Tree::CORE);
     /// The `core.fileMode` key.
     pub const FILE_MODE: keys::Boolean = keys::Boolean::new_boolean("fileMode", &config::Tree::CORE);
     /// The `core.ignoreCase` key.
@@ -102,6 +104,7 @@ impl Section for Core {
             &Self::CHECK_STAT,
             &Self::DELTA_BASE_CACHE_LIMIT,
             &Self::DISAMBIGUATE,
+            &Self::EDITOR,
             &Self::FILE_MODE,
             &Self::IGNORE_CASE,
             &Self::FILES_REF_LOCK_TIMEOUT,
