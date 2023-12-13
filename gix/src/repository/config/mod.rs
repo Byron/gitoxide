@@ -138,15 +138,17 @@ mod remote {
     use crate::bstr::BStr;
     use std::{borrow::Cow, collections::BTreeSet};
 
+    use crate::config::tree::{Remote, Section};
     use crate::remote;
 
+    /// Query configuration related to remotes.
     impl crate::Repository {
         /// Returns a sorted list unique of symbolic names of remotes that
         /// we deem [trustworthy][crate::open::Options::filter_config_section()].
         pub fn remote_names(&self) -> BTreeSet<Cow<'_, BStr>> {
             self.config
                 .resolved
-                .sections_by_name("remote")
+                .sections_by_name(Remote.name())
                 .map(|it| {
                     let filter = self.filter_config_section();
                     it.filter(move |s| filter(s.meta()))
@@ -167,9 +169,12 @@ mod remote {
         pub fn remote_default_name(&self, direction: remote::Direction) -> Option<Cow<'_, BStr>> {
             let name = (direction == remote::Direction::Push)
                 .then(|| {
-                    self.config
-                        .resolved
-                        .string_filter("remote", None, "pushDefault", &mut self.filter_config_section())
+                    self.config.resolved.string_filter(
+                        Remote.name(),
+                        None,
+                        Remote::PUSH_DEFAULT.name,
+                        &mut self.filter_config_section(),
+                    )
                 })
                 .flatten();
             name.or_else(|| {
@@ -190,11 +195,15 @@ mod remote {
 mod branch {
     use std::{borrow::Cow, collections::BTreeSet, convert::TryInto};
 
-    use gix_ref::FullNameRef;
-    use gix_validate::reference::name::Error as ValidateNameError;
+    use gix_ref::{FullName, FullNameRef};
 
     use crate::bstr::BStr;
+    use crate::config::cache::util::ApplyLeniencyDefault;
+    use crate::config::tree::{Branch, Push, Section};
+    use crate::repository::branch_remote_ref_name;
+    use crate::{push, remote};
 
+    /// Query configuration related to branches.
     impl crate::Repository {
         /// Return a set of unique short branch names for which custom configuration exists in the configuration,
         /// if we deem them [trustworthy][crate::open::Options::filter_config_section()].
@@ -206,20 +215,87 @@ mod branch {
             self.subsection_str_names_of("branch")
         }
 
-        /// Returns the validated reference on the remote associated with the given `short_branch_name`,
-        /// always `main` instead of `refs/heads/main`.
+        /// Returns the validated reference on the remote associated with the given `name`,
+        /// which will be used when *merging*.
+        /// The returned value corresponds to the `branch.<short_branch_name>.merge` configuration key.
         ///
-        /// The returned reference is the one we track on the remote side for merging and pushing.
-        /// Returns `None` if the remote reference was not found.
-        /// May return an error if the reference is invalid.
-        pub fn branch_remote_ref<'a>(
+        /// Returns `None` if there is no value at the given key, or if no remote or remote ref is configured.
+        /// May return an error if the reference name to be returned is invalid.
+        ///
+        /// ### Note
+        ///
+        /// This name refers to what Git calls upstream branch (as opposed to upstream *tracking* branch).
+        #[doc(alias = "branch_upstream_name", alias = "git2")]
+        pub fn branch_remote_ref_name(
             &self,
-            short_branch_name: impl Into<&'a BStr>,
-        ) -> Option<Result<Cow<'_, FullNameRef>, ValidateNameError>> {
-            self.config
-                .resolved
-                .string("branch", Some(short_branch_name.into()), "merge")
-                .map(crate::config::tree::branch::Merge::try_into_fullrefname)
+            name: &FullNameRef,
+            direction: remote::Direction,
+        ) -> Option<Result<Cow<'_, FullNameRef>, branch_remote_ref_name::Error>> {
+            match direction {
+                remote::Direction::Fetch => {
+                    let short_name = name.shorten();
+                    self.config
+                        .resolved
+                        .string("branch", Some(short_name), Branch::MERGE.name)
+                        .map(|name| crate::config::tree::branch::Merge::try_into_fullrefname(name).map_err(Into::into))
+                }
+                remote::Direction::Push => {
+                    let remote = match self.branch_remote(name.shorten(), direction)? {
+                        Ok(r) => r,
+                        Err(err) => return Some(Err(err.into())),
+                    };
+                    if remote.push_specs.is_empty() {
+                        let push_default = match self
+                            .config
+                            .resolved
+                            .string(Push.name(), None, Push::DEFAULT.name)
+                            .map_or(Ok(Default::default()), |v| {
+                                Push::DEFAULT
+                                    .try_into_default(v)
+                                    .with_lenient_default(self.config.lenient_config)
+                            }) {
+                            Ok(v) => v,
+                            Err(err) => return Some(Err(err.into())),
+                        };
+                        match push_default {
+                            push::Default::Nothing => None,
+                            push::Default::Current | push::Default::Matching => Some(Ok(Cow::Owned(name.to_owned()))),
+                            push::Default::Upstream => self.branch_remote_ref_name(name, remote::Direction::Fetch),
+                            push::Default::Simple => {
+                                match self.branch_remote_ref_name(name, remote::Direction::Fetch)? {
+                                    Ok(fetch_ref) if fetch_ref.as_ref() == name => Some(Ok(fetch_ref)),
+                                    Err(err) => Some(Err(err)),
+                                    Ok(_different_fetch_ref) => None,
+                                }
+                            }
+                        }
+                    } else {
+                        let search = gix_refspec::MatchGroup::from_push_specs(
+                            remote
+                                .push_specs
+                                .iter()
+                                .map(gix_refspec::RefSpec::to_ref)
+                                .filter(|spec| spec.destination().is_some()),
+                        );
+                        let null_id = self.object_hash().null();
+                        let out = search.match_remotes(
+                            Some(gix_refspec::match_group::Item {
+                                full_ref_name: name.as_bstr(),
+                                target: &null_id,
+                                object: None,
+                            })
+                            .into_iter(),
+                        );
+                        out.mappings.into_iter().next().and_then(|m| {
+                            m.rhs.map(|name| {
+                                FullName::try_from(name.into_owned())
+                                    .map(Cow::Owned)
+                                    .map_err(Into::into)
+                            })
+                        })
+                    }
+                }
+            }
         }
 
         /// Returns the unvalidated name of the remote associated with the given `short_branch_name`,
@@ -227,16 +303,54 @@ mod branch {
         /// In some cases, the returned name will be an URL.
         /// Returns `None` if the remote was not found or if the name contained illformed UTF-8.
         ///
+        /// * if `direction` is [remote::Direction::Fetch], we will query the `branch.<short_name>.remote` configuration.
+        /// * if `direction` is [remote::Direction::Push], the push remote will be queried by means of `branch.<short_name>.pushRemote`
+        ///   or `remote.pushDefault` as fallback.
+        ///
         /// See also [`Reference::remote_name()`][crate::Reference::remote_name()] for a more typesafe version
         /// to be used when a `Reference` is available.
+        ///
+        /// `short_branch_name` can typically be obtained by [shortening a full branch name](FullNameRef::shorten()).
+        #[doc(alias = "branch_upstream_remote", alias = "git2")]
         pub fn branch_remote_name<'a>(
             &self,
             short_branch_name: impl Into<&'a BStr>,
-        ) -> Option<crate::remote::Name<'_>> {
-            self.config
-                .resolved
-                .string("branch", Some(short_branch_name.into()), "remote")
+            direction: remote::Direction,
+        ) -> Option<remote::Name<'_>> {
+            let name = short_branch_name.into();
+            let config = &self.config.resolved;
+            (direction == remote::Direction::Push)
+                .then(|| {
+                    config
+                        .string("branch", Some(name), Branch::PUSH_REMOTE.name)
+                        .or_else(|| config.string("remote", None, crate::config::tree::Remote::PUSH_DEFAULT.name))
+                })
+                .flatten()
+                .or_else(|| config.string("branch", Some(name), Branch::REMOTE.name))
                 .and_then(|name| name.try_into().ok())
+        }
+
+        /// Like [`branch_remote_name(…)`](Self::branch_remote_name()), but returns a [Remote](crate::Remote).
+        /// `short_branch_name` is the name to use for looking up `branch.<short_branch_name>.*` values in the
+        /// configuration.
+        pub fn branch_remote<'a>(
+            &self,
+            short_branch_name: impl Into<&'a BStr>,
+            direction: remote::Direction,
+        ) -> Option<Result<crate::Remote<'_>, remote::find::existing::Error>> {
+            let name = self.branch_remote_name(short_branch_name, direction)?;
+            self.try_find_remote(name.as_bstr())
+                .map(|res| res.map_err(Into::into))
+                .or_else(|| match name {
+                    remote::Name::Url(url) => gix_url::parse(url.as_ref())
+                        .map_err(Into::into)
+                        .and_then(|url| {
+                            self.remote_at(url)
+                                .map_err(|err| remote::find::existing::Error::Find(remote::find::Error::Init(err)))
+                        })
+                        .into(),
+                    remote::Name::Symbol(_) => None,
+                })
         }
     }
 }
