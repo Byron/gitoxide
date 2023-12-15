@@ -58,9 +58,9 @@ tempfile = "3.1.0"
 
 # for async-client
 async-trait = { version = "0.1.51", optional = true }
-async-net = { version = "1.6", optional = true }
-futures-lite = { version  = "1.12.0", optional = true }
-async-io = { version = "1.6", optional = true }
+async-net = { version = "2.0", optional = true }
+futures-lite = { workspace = true, optional = true }
+async-io = { version = "2.2", optional = true }
 futures-io = { version = "0.3.16", optional = true }
 blocking = { version = "1.0.2", optional = true }
 
@@ -69,13 +69,13 @@ gix-url = { version = "^0.25.2", path = "../gix-url", optional = true }
 jwalk = { version = "0.8.0", optional = true }
 
 # for 'hours'
-itertools = { version = "0.11.0", optional = true }
+itertools = { version = "0.12.0", optional = true }
 fs-err = { version = "2.6.0", optional = true }
 crossbeam-channel = { version = "0.5.6", optional = true }
 smallvec = { version = "1.10.0", optional = true }
 
 # for 'query' and 'corpus'
-rusqlite = { version = "0.29.0", optional = true, features = ["bundled"] }
+rusqlite = { version = "0.30.0", optional = true, features = ["bundled"] }
 
 # for 'corpus'
 parking_lot = { version = "0.12.1", optional = true }

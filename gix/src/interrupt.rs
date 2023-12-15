@@ -89,7 +89,10 @@ mod init {
     ///
     /// It will abort the process on second press and won't inform the user about this behaviour either as we are unable to do so without
     /// deadlocking even when trying to write to stderr directly.
-    pub fn init_handler(
+    ///
+    /// SAFETY: `interrupt()` will be called from a signal handler. See [`signal_hook::low_level::register()`] for details about.
+    #[allow(unsafe_code, clippy::missing_safety_doc)]
+    pub unsafe fn init_handler(
         grace_count: usize,
         interrupt: impl Fn() + Send + Sync + Clone + 'static,
     ) -> io::Result<Deregister> {
@@ -110,21 +113,22 @@ mod init {
             // * we only set atomics or call functions that do
             // * there is no use of the heap
             let interrupt = interrupt.clone();
+            let action = move || {
+                static INTERRUPT_COUNT: AtomicUsize = AtomicUsize::new(0);
+                if !super::is_triggered() {
+                    INTERRUPT_COUNT.store(0, Ordering::SeqCst);
+                }
+                let msg_idx = INTERRUPT_COUNT.fetch_add(1, Ordering::SeqCst);
+                if msg_idx == grace_count {
+                    gix_tempfile::registry::cleanup_tempfiles_signal_safe();
+                    signal_hook::low_level::emulate_default_handler(*sig).ok();
+                }
+                interrupt();
+                super::trigger();
+            };
             #[allow(unsafe_code)]
             unsafe {
-                let hook_id = signal_hook::low_level::register(*sig, move || {
-                    static INTERRUPT_COUNT: AtomicUsize = AtomicUsize::new(0);
-                    if !super::is_triggered() {
-                        INTERRUPT_COUNT.store(0, Ordering::SeqCst);
-                    }
-                    let msg_idx = INTERRUPT_COUNT.fetch_add(1, Ordering::SeqCst);
-                    if msg_idx == grace_count {
-                        gix_tempfile::registry::cleanup_tempfiles_signal_safe();
-                        signal_hook::low_level::emulate_default_handler(*sig).ok();
-                    }
-                    interrupt();
-                    super::trigger();
-                })?;
+                let hook_id = signal_hook::low_level::register(*sig, action)?;
                 hooks.push((*sig, hook_id));
             }
         }

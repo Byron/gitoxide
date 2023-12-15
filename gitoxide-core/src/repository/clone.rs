@@ -45,11 +45,13 @@ pub(crate) mod function {
         let url: gix::Url = url.as_ref().try_into()?;
         let directory = directory.map_or_else(
             || {
-                gix::path::from_bstr(Cow::Borrowed(url.path.as_ref()))
-                    .as_ref()
-                    .file_stem()
-                    .map(Into::into)
-                    .context("Filename extraction failed - path too short")
+                let path = gix::path::from_bstr(Cow::Borrowed(url.path.as_ref()));
+                if !bare && path.extension() == Some(OsStr::new("git")) {
+                    path.file_stem().map(Into::into)
+                } else {
+                    path.file_name().map(Into::into)
+                }
+                .context("Filename extraction failed - path too short")
             },
             |dir| Ok(dir.into()),
         )?;

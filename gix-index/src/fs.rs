@@ -44,7 +44,7 @@ impl Metadata {
     pub fn is_dir(&self) -> bool {
         #[cfg(not(windows))]
         {
-            (self.0.st_mode & libc::S_IFMT) == libc::S_IFDIR
+            (self.0.st_mode as u32 & libc::S_IFMT as u32) == libc::S_IFDIR as u32
         }
         #[cfg(windows)]
         self.0.is_dir()
@@ -56,7 +56,10 @@ impl Metadata {
         {
             Some(system_time_from_secs_nanos(
                 self.0.st_mtime.try_into().ok()?,
+                #[cfg(not(target_os = "netbsd"))]
                 self.0.st_mtime_nsec.try_into().ok()?,
+                #[cfg(target_os = "netbsd")]
+                self.0.st_mtimensec.try_into().ok()?,
             ))
         }
         #[cfg(windows)]
@@ -72,7 +75,10 @@ impl Metadata {
         {
             Some(system_time_from_secs_nanos(
                 self.0.st_ctime.try_into().ok()?,
+                #[cfg(not(target_os = "netbsd"))]
                 self.0.st_ctime_nsec.try_into().ok()?,
+                #[cfg(target_os = "netbsd")]
+                self.0.st_ctimensec.try_into().ok()?,
             ))
         }
         #[cfg(windows)]
@@ -133,7 +139,8 @@ impl Metadata {
     pub fn is_executable(&self) -> bool {
         #[cfg(not(windows))]
         {
-            (self.0.st_mode & libc::S_IFMT) == libc::S_IFREG && self.0.st_mode & libc::S_IXUSR == libc::S_IXUSR
+            (self.0.st_mode as u32 & libc::S_IFMT as u32) == libc::S_IFREG as u32
+                && self.0.st_mode as u32 & libc::S_IXUSR as u32 == libc::S_IXUSR as u32
         }
         #[cfg(windows)]
         gix_fs::is_executable(&self.0)
@@ -143,7 +150,7 @@ impl Metadata {
     pub fn is_symlink(&self) -> bool {
         #[cfg(not(windows))]
         {
-            (self.0.st_mode & libc::S_IFMT) == libc::S_IFLNK
+            (self.0.st_mode as u32 & libc::S_IFMT as u32) == libc::S_IFLNK as u32
         }
         #[cfg(windows)]
         self.0.is_symlink()
@@ -153,7 +160,7 @@ impl Metadata {
     pub fn is_file(&self) -> bool {
         #[cfg(not(windows))]
         {
-            (self.0.st_mode & libc::S_IFMT) == libc::S_IFREG
+            (self.0.st_mode as u32 & libc::S_IFMT as u32) == libc::S_IFREG as u32
         }
         #[cfg(windows)]
         self.0.is_file()

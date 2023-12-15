@@ -175,8 +175,8 @@ clap_complete = "4.4.3"
 prodash = { workspace = true, optional = true }
 is-terminal = { version = "0.4.0", optional = true }
 env_logger = { version = "0.10.0", default-features = false }
-crosstermion = { version = "0.11.0", optional = true, default-features = false }
-futures-lite = { version = "1.12.0", optional = true, default-features = false, features = ["std"] }
+crosstermion = { version = "0.12.0", optional = true, default-features = false }
+futures-lite = { workspace = true, optional = true }
 
 # for 'tracing'
 tracing-forest = { version = "0.1.5", features = ["serde"], optional = true }
@@ -298,7 +298,9 @@ members = [
 ]
 
 [workspace.dependencies]
-prodash = { version = "26.2.2", default-features = false }
+prodash = { version = "27.0.0", default-features = false }
+futures-lite = { version = "2.1.0", default-features = false, features = ["std"] }
+faster-hex = { version = "0.9.0" }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]

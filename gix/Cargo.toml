@@ -61,6 +61,9 @@ comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human
 #! A component is a distinct feature which may be comprised of one or more methods around a particular topic.
 #! Providers of libraries should only activate the components they need.
 
+## Provide a top-level `command` module that helps with spawning commands similarly to `git`.
+command = ["dep:gix-command"]
+
 ## Obtain information similar to `git status`.
 status = ["gix-status"]
 
@@ -81,10 +84,10 @@ worktree-mutation = ["attributes", "dep:gix-worktree-state"]
 excludes = ["dep:gix-ignore", "dep:gix-worktree", "index"]
 
 ## Query attributes and excludes. Enables access to pathspecs, worktree checkouts, filter-pipelines and submodules.
-attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes", "dep:gix-command"]
+attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes", "command"]
 
 ## Add support for mailmaps, as way of determining the final name of commmiters and authors.
-mailmap = ["dep:gix-mailmap"]
+mailmap = ["dep:gix-mailmap", "revision"]
 
 ## Make revspec parsing possible, as well describing revision.
 revision = ["gix-revision/describe", "index"]
@@ -223,9 +226,9 @@ gix-date = { version = "^0.8.1", path = "../gix-date" }
 gix-refspec = { version = "^0.20.0", path = "../gix-refspec" }
 gix-filter = { version = "^0.7.0", path = "../gix-filter", optional = true }
 
-gix-config = { version = "^0.32.0", path = "../gix-config" }
+gix-config = { version = "^0.32.1", path = "../gix-config" }
 gix-odb = { version = "^0.55.0", path = "../gix-odb" }
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-actor = { version = "^0.28.1", path = "../gix-actor" }
 gix-pack = { version = "^0.45.0", path = "../gix-pack", default-features = false, features = ["object-cache-dynamic"] }
@@ -244,7 +247,7 @@ gix-trace = { version = "^0.1.4", path = "../gix-trace" }
 gix-glob = { version = "^0.14.1", path = "../gix-glob" }
 gix-credentials = { version = "^0.22.0", path = "../gix-credentials", optional = true }
 gix-prompt = { version = "^0.8.0", path = "../gix-prompt", optional = true }
-gix-index = { version = "^0.27.0", path = "../gix-index", optional = true }
+gix-index = { version = "^0.27.1", path = "../gix-index", optional = true }
 gix-attributes = { version = "^0.20.1", path = "../gix-attributes", optional = true }
 gix-ignore = { version = "^0.9.1", path = "../gix-ignore", optional = true }
 gix-worktree = { version = "^0.28.0", path = "../gix-worktree", optional = true, default-features = false }

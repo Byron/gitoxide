@@ -18,6 +18,10 @@ pub enum Error {
     RemoteConnection(#[source] Box<dyn std::error::Error + Send + Sync>),
     #[error(transparent)]
     RemoteName(#[from] crate::config::remote::symbolic_name::Error),
+    #[error(transparent)]
+    ParseConfig(#[from] crate::config::overrides::Error),
+    #[error(transparent)]
+    ApplyConfig(#[from] crate::config::Error),
     #[error("Failed to load repo-local git configuration before writing")]
     LoadConfig(#[from] gix_config::file::init::from_paths::Error),
     #[error("Failed to store configured remote in memory")]
@@ -47,7 +51,8 @@ impl PrepareFetch {
     ///
     /// ### Note for users of `async`
     ///
-    /// Even though
+    /// Even though `async` is technically supported, it will still be blocking in nature as it uses a lot of non-async writes
+    /// and computation under the hood. Thus it should be spawned into a runtime which can handle blocking futures.
     #[gix_protocol::maybe_async::maybe_async]
     pub async fn fetch_only<P>(
         &mut self,
@@ -73,6 +78,12 @@ impl PrepareFetch {
             .repo
             .as_mut()
             .expect("user error: multiple calls are allowed only until it succeeds");
+
+        if !self.config_overrides.is_empty() {
+            let mut snapshot = repo.config_snapshot_mut();
+            snapshot.append_config(&self.config_overrides, gix_config::Source::Api)?;
+            snapshot.commit()?;
+        }
 
         let remote_name = match self.remote_name.as_ref() {
             Some(name) => name.to_owned(),

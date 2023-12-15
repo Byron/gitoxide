@@ -15,7 +15,7 @@ doctest = false
 [dependencies]
 gix-pathspec = { version = "^0.4.1", path = "../gix-pathspec" }
 gix-refspec = { version = "^0.20.0", path = "../gix-refspec" }
-gix-config = { version = "^0.32.0", path = "../gix-config" }
+gix-config = { version = "^0.32.1", path = "../gix-config" }
 gix-path = { version = "^0.10.1", path = "../gix-path" }
 gix-url = { version = "^0.25.2", path = "../gix-url" }
 

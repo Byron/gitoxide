@@ -55,7 +55,7 @@ pub mod decode {
                     ObjectId::Sha1({
                         let mut buf = [0; 20];
                         faster_hex::hex_decode(buffer, &mut buf).map_err(|err| match err {
-                            faster_hex::Error::InvalidChar => Error::Invalid,
+                            faster_hex::Error::InvalidChar | faster_hex::Error::Overflow => Error::Invalid,
                             faster_hex::Error::InvalidLength(_) => {
                                 unreachable!("BUG: This is already checked")
                             }

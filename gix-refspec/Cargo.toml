@@ -15,7 +15,7 @@ doctest = false
 [dependencies]
 gix-revision = { version = "^0.24.0", path = "../gix-revision", default-features = false }
 gix-validate = { version = "^0.8.1", path = "../gix-validate" }
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 
 bstr = { version = "1.3.0", default-features = false, features = ["std"]}
 thiserror = "1.0.26"

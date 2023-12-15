@@ -14,7 +14,7 @@ doctest = false
 
 [dependencies]
 gix-features = { version = "^0.36.1", path = "../gix-features", features = ["progress", "io-pipe"] }
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-attributes = { version = "^0.20.1", path = "../gix-attributes" }
 gix-filter = { version = "^0.7.0", path = "../gix-filter" }

@@ -18,10 +18,14 @@ pub fn main() -> Result<()> {
         time::util::local_offset::set_soundness(time::util::local_offset::Soundness::Unsound);
     }
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    gix::interrupt::init_handler(1, {
-        let should_interrupt = Arc::clone(&should_interrupt);
-        move || should_interrupt.store(true, Ordering::SeqCst)
-    })?;
+    #[allow(unsafe_code)]
+    unsafe {
+        // SAFETY: The closure doesn't use mutexes or memory allocation, so it should be safe to call from a signal handler.
+        gix::interrupt::init_handler(1, {
+            let should_interrupt = Arc::clone(&should_interrupt);
+            move || should_interrupt.store(true, Ordering::SeqCst)
+        })?;
+    }
     let trace = false;
     let verbose = !args.quiet;
     let progress = args.progress;

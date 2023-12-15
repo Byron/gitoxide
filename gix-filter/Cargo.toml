@@ -13,7 +13,7 @@ include = ["src/**/*", "LICENSE-*"]
 doctest = false
 
 [dependencies]
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-trace = { version = "^0.1.4", path = "../gix-trace" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-command = { version = "^0.3.0", path = "../gix-command" }
@@ -30,6 +30,6 @@ smallvec = "1.10.0"
 
 
 [dev-dependencies]
-once_cell = "1.18.0"
+serial_test = { version = "2.0.0", default-features = false }
 gix-testtools = { path = "../tests/tools" }
 gix-worktree = { path = "../gix-worktree", default-features = false, features = ["attributes"] }

@@ -15,8 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-6cf73a44cbcd8bdca6a353cfd02d6237b1883b8c/> use `gitoxide.credentials.helperStderr` key to control how stderr is handled with helpers.
    That way users can configure each repository instance according to their needs,
    with which includes disabling the `stderr` of credential helpers.
-   
-   Please enter the message for your patch. Lines starting with
  - <csr-id-77686db3f91e16fa6657dbae2182ec72e88d3fd0/> `revision::Spec::path_and_mode()`
    Provide additional information about revspecs for use with
    worktree filters.
@@ -122,7 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 65 commits contributed to the release over the course of 53 calendar days.
+ - 68 commits contributed to the release over the course of 53 calendar days.
  - 54 days passed between releases.
  - 23 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#1061](https://github.com/Byron/gitoxide/issues/1061), [#1076](https://github.com/Byron/gitoxide/issues/1076), [#1090](https://github.com/Byron/gitoxide/issues/1090), [#1125](https://github.com/Byron/gitoxide/issues/1125), [#1129](https://github.com/Byron/gitoxide/issues/1129), [#972](https://github.com/Byron/gitoxide/issues/972)
@@ -152,6 +150,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#972](https://github.com/Byron/gitoxide/issues/972)**
     - Allow multiple packs to be received one after another. ([`3ff1827`](https://github.com/Byron/gitoxide/commit/3ff1827a12557a601da22d138beb97e8647d5d6e))
  * **Uncategorized**
+    - Release gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`c8568b9`](https://github.com/Byron/gitoxide/commit/c8568b9c9bf883f77e81a9a98b1fc2cbe726df79))
+    - Release gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`d3fd11e`](https://github.com/Byron/gitoxide/commit/d3fd11ec3783843d4e49081e1d14359ed9714b5f))
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
     - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Merge branch 'adjustments-for-cargo' ([`8156340`](https://github.com/Byron/gitoxide/commit/8156340724b1b7cb15824f88c75f6ddd7302cff5))
     - Add `gitoxide.core.externalCommandStderr` to allow enabling `stderr` to the enclosing terminal. ([`2762724`](https://github.com/Byron/gitoxide/commit/27627248a019d85a904ecd8a57e395f34c1b16a4))
@@ -212,9 +213,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Add `Head::try_into_peeled_object()` and `Head::peel_to_object_in_place()` ([`117357e`](https://github.com/Byron/gitoxide/commit/117357e7bbfcb1bfe887f85173e88db9436814b1))
     - Improve `head()` peeling API ([`4e6a4e6`](https://github.com/Byron/gitoxide/commit/4e6a4e6ef440c72f61513ba82b439b9dca298e73))
 </details>
-
-<csr-unknown>
-If the server doesn’t think it’s ready it will send NAK and be done.So the logic should be, for a NAK to stop the read-loop, that the clientexpects a pack, and the server is ready. If the client is not ready, orthe server isn’t ready, keep NAK and consider them the end of a round,hence break the loop. allow to open split worktree repositories<csr-unknown/>
 
 ## 0.55.2 (2023-10-13)
 
