@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.39.1 (2023-12-15)
+
+### New Features
+
+ - <csr-id-7b4573ad57a33bb180c661056cd81e81ed478be2/> add `file::Store::set_packed_buffer_mmap_threshold()`.
+   That way it's possible to control under which circumstances, if at all,
+   memory maps will be used.
+
+### Bug Fixes
+
+ - <csr-id-6c1da71566a454198b01c3fc0f6972e5433ef375/> assure memory maps don't get in the way of updating `.git/packet-refs` on Windows.
+   The solution entails to not use memory maps on Windows which is certainly fine
+   on todays systems, even though it's likely to add latency.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 8 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1183](https://github.com/Byron/gitoxide/issues/1183)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1183](https://github.com/Byron/gitoxide/issues/1183)**
+    - Assure memory maps don't get in the way of updating `.git/packet-refs` on Windows. ([`6c1da71`](https://github.com/Byron/gitoxide/commit/6c1da71566a454198b01c3fc0f6972e5433ef375))
+    - Add `file::Store::set_packed_buffer_mmap_threshold()`. ([`7b4573a`](https://github.com/Byron/gitoxide/commit/7b4573ad57a33bb180c661056cd81e81ed478be2))
+</details>
+
 ## 0.39.0 (2023-12-06)
 
 ### Documentation
@@ -19,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 53 calendar days.
+ - 15 commits contributed to the release over the course of 53 calendar days.
  - 54 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -31,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
     - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Upgrade to `winnow` 0.5.24 ([`abcfb65`](https://github.com/Byron/gitoxide/commit/abcfb659786425ec09eff6b644cd2ad36b7d6bc4))
     - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
