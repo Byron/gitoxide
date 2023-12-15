@@ -349,113 +349,128 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
 #[test]
 fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_deleted_and_are_deleted_from_packed_ref_file(
 ) -> crate::Result {
-    let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
-    assert!(
-        store.try_find_loose("main")?.is_none(),
-        "no loose main available, it's packed"
-    );
-    assert!(
-        store.open_packed_buffer()?.expect("packed").try_find("main")?.is_some(),
-        "packed main is available"
-    );
+    for use_mmap in [false, true] {
+        let (_keep, mut store) = store_writable("make_packed_ref_repository.sh")?;
+        if use_mmap {
+            store.set_packed_buffer_mmap_threshold(0);
+        }
+        assert!(
+            store.try_find_loose("main")?.is_none(),
+            "no loose main available, it's packed"
+        );
+        assert!(
+            store.open_packed_buffer()?.expect("packed").try_find("main")?.is_some(),
+            "packed main is available"
+        );
 
-    let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-    let edits = store
-        .transaction()
-        .prepare(
-            Some(RefEdit {
-                change: Change::Delete {
-                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
-                    log: RefLog::AndReference,
-                },
-                name: "refs/heads/main".try_into()?,
-                deref: false,
-            }),
-            Fail::Immediately,
-            Fail::Immediately,
-        )?
-        .commit(committer().to_ref())?;
-
-    assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
-    let packed = store.open_packed_buffer()?.expect("packed ref present");
-    assert!(packed.try_find("main")?.is_none(), "no main present after deletion");
-    Ok(())
-}
-
-#[test]
-fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() -> crate::Result {
-    let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
-    let packed = store.open_packed_buffer()?.expect("packed-refs");
-    let branch = store.find("newer-as-loose")?;
-    let branch_id = branch.target.try_id().map(ToOwned::to_owned).expect("peeled");
-    assert_ne!(
-        packed.find("newer-as-loose")?.target(),
-        branch_id,
-        "the packed ref is outdated"
-    );
-
-    let edits = store
-        .transaction()
-        .prepare(
-            Some(RefEdit {
-                change: Change::Delete {
-                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(branch_id)),
-                    log: RefLog::AndReference,
-                },
-                name: branch.name,
-                deref: false,
-            }),
-            Fail::Immediately,
-            Fail::Immediately,
-        )?
-        .commit(committer().to_ref())?;
-
-    assert_eq!(
-        edits.len(),
-        1,
-        "only one edit even though technically two places were changed"
-    );
-    assert!(
-        store.try_find("newer-as-loose",)?.is_none(),
-        "reference is deleted everywhere"
-    );
-    Ok(())
-}
-
-#[test]
-fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
-    for mode in ["must-exist", "may-exist"] {
-        let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
-
+        let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
         let edits = store
             .transaction()
             .prepare(
-                store.open_packed_buffer()?.expect("packed-refs").iter()?.map(|r| {
-                    let r = r.expect("valid ref");
-                    RefEdit {
-                        change: Change::Delete {
-                            expected: match mode {
-                                "must-exist" => PreviousValue::MustExistAndMatch(Target::Peeled(r.target())),
-                                "may-exist" => PreviousValue::ExistingMustMatch(Target::Peeled(r.target())),
-                                _ => unimplemented!("unknown mode: {}", mode),
-                            },
-                            log: RefLog::AndReference,
-                        },
-                        name: r.name.into(),
-                        deref: false,
-                    }
+                Some(RefEdit {
+                    change: Change::Delete {
+                        expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
+                        log: RefLog::AndReference,
+                    },
+                    name: "refs/heads/main".try_into()?,
+                    deref: false,
                 }),
                 Fail::Immediately,
                 Fail::Immediately,
             )?
             .commit(committer().to_ref())?;
 
-        assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
+        assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
+        let packed = store.open_packed_buffer()?.expect("packed ref present");
+        assert!(packed.try_find("main")?.is_none(), "no main present after deletion");
+    }
+    Ok(())
+}
 
-        let packed = store.open_packed_buffer()?;
-        assert!(packed.is_none(), "it won't make up packed refs");
-        for edit in edits {
-            assert!(store.try_find(&edit.name)?.is_none(), "delete ref cannot be found");
+#[test]
+fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() -> crate::Result {
+    for use_mmap in [false, true] {
+        let (_keep, mut store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
+        if use_mmap {
+            store.set_packed_buffer_mmap_threshold(0);
+        }
+        let packed = store.open_packed_buffer()?.expect("packed-refs");
+        let branch = store.find("newer-as-loose")?;
+        let branch_id = branch.target.try_id().map(ToOwned::to_owned).expect("peeled");
+        assert_ne!(
+            packed.find("newer-as-loose")?.target(),
+            branch_id,
+            "the packed ref is outdated"
+        );
+
+        let edits = store
+            .transaction()
+            .prepare(
+                Some(RefEdit {
+                    change: Change::Delete {
+                        expected: PreviousValue::MustExistAndMatch(Target::Peeled(branch_id)),
+                        log: RefLog::AndReference,
+                    },
+                    name: branch.name,
+                    deref: false,
+                }),
+                Fail::Immediately,
+                Fail::Immediately,
+            )?
+            .commit(committer().to_ref())?;
+
+        assert_eq!(
+            edits.len(),
+            1,
+            "only one edit even though technically two places were changed"
+        );
+        assert!(
+            store.try_find("newer-as-loose",)?.is_none(),
+            "reference is deleted everywhere"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
+    for mode in ["must-exist", "may-exist"] {
+        for use_mmap in [false, true] {
+            let (_keep, mut store) = store_writable("make_packed_ref_repository.sh")?;
+            if use_mmap {
+                store.set_packed_buffer_mmap_threshold(0);
+            }
+
+            let edits = store
+                .transaction()
+                .prepare(
+                    store.open_packed_buffer()?.expect("packed-refs").iter()?.map(|r| {
+                        let r = r.expect("valid ref");
+                        RefEdit {
+                            change: Change::Delete {
+                                expected: match mode {
+                                    "must-exist" => PreviousValue::MustExistAndMatch(Target::Peeled(r.target())),
+                                    "may-exist" => PreviousValue::ExistingMustMatch(Target::Peeled(r.target())),
+                                    _ => unimplemented!("unknown mode: {}", mode),
+                                },
+                                log: RefLog::AndReference,
+                            },
+                            name: r.name.into(),
+                            deref: false,
+                        }
+                    }),
+                    Fail::Immediately,
+                    Fail::Immediately,
+                )?
+                .commit(committer().to_ref())?;
+
+            assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
+
+            let packed = store.open_packed_buffer()?;
+            assert!(packed.is_none(), "it won't make up packed refs");
+            for edit in edits {
+                assert!(store.try_find(&edit.name)?.is_none(), "delete ref cannot be found");
+            }
         }
     }
     Ok(())

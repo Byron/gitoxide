@@ -20,6 +20,8 @@ pub struct Store {
     /// The kind of hash to assume in a couple of situations. Note that currently we are able to read any valid hash from files
     /// which might want to change one day.
     object_hash: gix_hash::Kind,
+    /// The amount of bytes needed for `mmap` to be used to open packed refs.
+    packed_buffer_mmap_threshold: u64,
 
     /// The way to handle reflog edits
     pub write_reflog: WriteReflog,
@@ -34,8 +36,19 @@ pub struct Store {
 mod access {
     use std::path::Path;
 
+    /// Mutation
+    impl file::Store {
+        /// Set the amount of `bytes` needed for the `.git/packed-refs` file to be memory mapped.
+        /// Returns the previous value, which is always 32KB.
+        pub fn set_packed_buffer_mmap_threshold(&mut self, mut bytes: u64) -> u64 {
+            std::mem::swap(&mut self.packed_buffer_mmap_threshold, &mut bytes);
+            bytes
+        }
+    }
+
     use crate::file;
 
+    /// Access
     impl file::Store {
         /// Return the `.git` directory at which all references are loaded.
         ///

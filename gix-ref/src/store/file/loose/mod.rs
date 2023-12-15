@@ -36,6 +36,7 @@ mod init {
         pub fn at(git_dir: PathBuf, write_reflog: file::WriteReflog, object_hash: gix_hash::Kind) -> Self {
             file::Store {
                 git_dir,
+                packed_buffer_mmap_threshold: 32 * 1024,
                 common_dir: None,
                 write_reflog,
                 namespace: None,
@@ -54,6 +55,7 @@ mod init {
         ) -> Self {
             file::Store {
                 git_dir,
+                packed_buffer_mmap_threshold: 32 * 1024,
                 common_dir: Some(common_dir),
                 write_reflog,
                 namespace: None,
