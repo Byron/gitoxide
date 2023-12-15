@@ -7,9 +7,13 @@ set -eu -o pipefail
   git checkout -b main
 
   git commit --allow-empty -q -m c1
+  git branch broken
 
   git remote add --fetch remote_repo .
   git branch --set-upstream-to remote_repo/main
+
+  git checkout broken
+  git branch --set-upstream-to remote_repo/broken
 
   git config branch.broken.merge not_a_valid_merge_ref
   git config push.default simple
@@ -84,3 +88,46 @@ EOF
 EOF
 )
 
+(mkdir push-remote && cd push-remote
+  git init -q
+
+  git checkout -b main
+  git commit --allow-empty -q -m c1
+
+  cat<<EOF >.git/config
+[remote "origin"]
+    url = .
+    fetch = +refs/heads/*:refs/remotes/origin/*
+
+[remote "push-origin"]
+    url = .
+    fetch = +refs/heads/*:refs/remotes/push-remote/*
+
+[branch "main"]
+    remote = "origin"
+    pushRemote = push-origin
+    merge = refs/heads/other
+EOF
+)
+
+
+(mkdir push-remote-default && cd push-remote-default
+  git init -q
+
+  git checkout -b main
+  git commit --allow-empty -q -m c1
+
+  cat<<EOF >.git/config
+
+[remote "push-origin"]
+    url = .
+    fetch = +refs/heads/*:refs/remotes/push-remote/*
+
+[branch "main"]
+    remote = "origin"
+    merge = refs/heads/other
+
+[remote]
+    pushDefault = push-origin
+EOF
+)

@@ -200,7 +200,7 @@ mod branch {
     use crate::bstr::BStr;
     use crate::config::cache::util::ApplyLeniencyDefault;
     use crate::config::tree::{Branch, Push, Section};
-    use crate::repository::branch_remote_ref_name;
+    use crate::repository::{branch_remote_ref_name, branch_remote_tracking_ref_name};
     use crate::{push, remote};
 
     /// Query configuration related to branches.
@@ -225,6 +225,9 @@ mod branch {
         /// ### Note
         ///
         /// This name refers to what Git calls upstream branch (as opposed to upstream *tracking* branch).
+        /// The value is also fast to retrieve compared to its tracking branch.
+        /// Also note that a [remote::Direction] isn't used here as Git only supports (and requires) configuring
+        /// the remote to fetch from, not the one to push to.
         #[doc(alias = "branch_upstream_name", alias = "git2")]
         pub fn branch_remote_ref_name(
             &self,
@@ -270,32 +273,48 @@ mod branch {
                             }
                         }
                     } else {
-                        let search = gix_refspec::MatchGroup::from_push_specs(
-                            remote
-                                .push_specs
-                                .iter()
-                                .map(gix_refspec::RefSpec::to_ref)
-                                .filter(|spec| spec.destination().is_some()),
-                        );
-                        let null_id = self.object_hash().null();
-                        let out = search.match_remotes(
-                            Some(gix_refspec::match_group::Item {
-                                full_ref_name: name.as_bstr(),
-                                target: &null_id,
-                                object: None,
-                            })
-                            .into_iter(),
-                        );
-                        out.mappings.into_iter().next().and_then(|m| {
-                            m.rhs.map(|name| {
-                                FullName::try_from(name.into_owned())
-                                    .map(Cow::Owned)
-                                    .map_err(Into::into)
-                            })
-                        })
+                        matching_remote(name, remote.push_specs.iter(), self.object_hash())
+                            .map(|res| res.map_err(Into::into))
                     }
                 }
             }
+        }
+
+        /// Return the validated name of the reference that tracks the corresponding reference of `name` on the remote for
+        /// `direction`. Note that a branch with that name might not actually exist.
+        ///
+        /// * with `remote` being [remote::Direction::Fetch], we return the tracking branch that is on the destination
+        ///   side of a `src:dest` refspec. For instance, with `name` being `main` and the default refspec
+        ///   `refs/heads/*:refs/remotes/origin/*`, `refs/heads/main` would match and produce `refs/remotes/origin/main`.
+        /// * with `remote` being [remote::Direction::Push], we return the tracking branch that corresponds to the remote
+        ///   branch that we would push to. For instance, with `name` being `main` and no setup at all, we
+        ///   would push to `refs/heads/main` on the remote. And that one would be fetched matching the
+        ///   `refs/heads/*:refs/remotes/origin/*` fetch refspec, hence `refs/remotes/origin/main` is returned.
+        ///   Note that `push` refspecs can be used to map `main` to `other` (using a push refspec `refs/heads/main:refs/heads/other`),
+        ///   which would then lead to `refs/remotes/origin/other` to be returned instead.
+        ///
+        /// Note that if there is an ambiguity, that is if `name` maps to multiple tracking branches, the first matching mapping
+        /// is returned, according to the order in which the fetch or push refspecs occour in the configuration file.
+        #[doc(alias = "branch_upstream_name", alias = "git2")]
+        pub fn branch_remote_tracking_ref_name(
+            &self,
+            name: &FullNameRef,
+            direction: remote::Direction,
+        ) -> Option<Result<Cow<'_, FullNameRef>, branch_remote_tracking_ref_name::Error>> {
+            let remote_ref = match self.branch_remote_ref_name(name, direction)? {
+                Ok(r) => r,
+                Err(err) => return Some(Err(err.into())),
+            };
+            let remote = match self.branch_remote(name.shorten(), direction)? {
+                Ok(r) => r,
+                Err(err) => return Some(Err(err.into())),
+            };
+
+            if remote.fetch_specs.is_empty() {
+                return None;
+            }
+            matching_remote(remote_ref.as_ref(), remote.fetch_specs.iter(), self.object_hash())
+                .map(|res| res.map_err(Into::into))
         }
 
         /// Returns the unvalidated name of the remote associated with the given `short_branch_name`,
@@ -352,6 +371,36 @@ mod branch {
                     remote::Name::Symbol(_) => None,
                 })
         }
+    }
+
+    fn matching_remote<'a>(
+        lhs: &FullNameRef,
+        specs: impl IntoIterator<Item = &'a gix_refspec::RefSpec>,
+        object_hash: gix_hash::Kind,
+    ) -> Option<Result<Cow<'static, FullNameRef>, gix_validate::reference::name::Error>> {
+        let search = gix_refspec::MatchGroup {
+            specs: specs
+                .into_iter()
+                .map(gix_refspec::RefSpec::to_ref)
+                .filter(|spec| spec.source().is_some() && spec.destination().is_some())
+                .collect(),
+        };
+        let null_id = object_hash.null();
+        let out = search.match_remotes(
+            Some(gix_refspec::match_group::Item {
+                full_ref_name: lhs.as_bstr(),
+                target: &null_id,
+                object: None,
+            })
+            .into_iter(),
+        );
+        out.mappings.into_iter().next().and_then(|m| {
+            m.rhs.map(|name| {
+                FullName::try_from(name.into_owned())
+                    .map(Cow::Owned)
+                    .map_err(Into::into)
+            })
+        })
     }
 }
 
