@@ -93,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ i686-unknown-linux-gnu, armv7-linux-androideabi ]
+        target: [ armv7-linux-androideabi ]
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
