@@ -36,7 +36,7 @@ mod init {
         pub fn at(git_dir: PathBuf, write_reflog: file::WriteReflog, object_hash: gix_hash::Kind) -> Self {
             file::Store {
                 git_dir,
-                packed_buffer_mmap_threshold: 32 * 1024,
+                packed_buffer_mmap_threshold: packed_refs_mmap_threshold(),
                 common_dir: None,
                 write_reflog,
                 namespace: None,
@@ -55,13 +55,21 @@ mod init {
         ) -> Self {
             file::Store {
                 git_dir,
-                packed_buffer_mmap_threshold: 32 * 1024,
+                packed_buffer_mmap_threshold: packed_refs_mmap_threshold(),
                 common_dir: Some(common_dir),
                 write_reflog,
                 namespace: None,
                 packed: gix_fs::SharedFileSnapshotMut::new().into(),
                 object_hash,
             }
+        }
+    }
+
+    fn packed_refs_mmap_threshold() -> u64 {
+        if cfg!(windows) {
+            u64::MAX
+        } else {
+            32 * 1024
         }
     }
 }
