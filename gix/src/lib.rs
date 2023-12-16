@@ -187,6 +187,8 @@ pub mod tag;
 
 ///
 pub mod progress;
+///
+pub mod push;
 
 ///
 pub mod diff;
