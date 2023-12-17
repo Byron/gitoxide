@@ -10,7 +10,8 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-libfuzzer-sys = "0.3"
+libfuzzer-sys = "0.4.7"
+arbitrary = { version = "1", features = ["derive"] }
 
 [dependencies.gix-config]
 path = ".."
