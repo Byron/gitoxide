@@ -32,3 +32,9 @@ name = "fuzz_file_section"
 path = "fuzz_targets/fuzz_file_section.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "fuzz_file"
+path = "fuzz_targets/fuzz_file.rs"
+test = false
+doc = false
