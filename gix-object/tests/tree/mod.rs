@@ -125,6 +125,11 @@ mod from_bytes {
     }
 
     #[test]
+    fn fuzzed() {
+        assert!(gix_object::TreeRef::from_bytes(b"2").is_err(), "fail, but don't crash");
+    }
+
+    #[test]
     fn special_trees() -> crate::Result {
         for (name, expected_entry_count) in [
             ("maybe-special", 160),
