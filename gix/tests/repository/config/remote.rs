@@ -1,6 +1,16 @@
+use gix::bstr::BStr;
+use std::borrow::Cow;
 use std::iter::FromIterator;
 
-use crate::{named_repo, remote, remote::cow_str, Result};
+use crate::{named_repo, remote, Result};
+
+fn remote_names<'a>(it: impl IntoIterator<Item = &'a str>) -> Vec<Cow<'a, BStr>> {
+    it.into_iter().map(|n| Cow::Borrowed(n.into())).collect()
+}
+
+fn remote_name(name: &str) -> Cow<'_, BStr> {
+    Cow::Borrowed(name.into())
+}
 
 #[test]
 fn remote_and_branch_names() {
@@ -13,15 +23,15 @@ fn remote_and_branch_names() {
     let repo = remote::repo("clone");
     assert_eq!(
         Vec::from_iter(repo.remote_names().into_iter()),
-        vec!["myself", "origin"]
+        remote_names(["myself", "origin"])
     );
     assert_eq!(
         repo.remote_default_name(gix::remote::Direction::Fetch),
-        Some(cow_str("origin"))
+        Some(remote_name("origin"))
     );
     assert_eq!(
         repo.remote_default_name(gix::remote::Direction::Push),
-        Some(cow_str("origin"))
+        Some(remote_name("origin"))
     );
     assert_eq!(Vec::from_iter(repo.branch_names()), vec!["main"]);
 }
@@ -32,7 +42,7 @@ fn remote_default_name() {
 
     assert_eq!(
         repo.remote_default_name(gix::remote::Direction::Push),
-        Some(cow_str("myself")),
+        Some(remote_name("myself")),
         "overridden via remote.pushDefault"
     );
 

@@ -135,16 +135,25 @@ impl crate::Repository {
 mod transport;
 
 mod remote {
+    use crate::bstr::BStr;
     use std::{borrow::Cow, collections::BTreeSet};
 
-    use crate::{bstr::ByteSlice, remote};
+    use crate::remote;
 
     impl crate::Repository {
         /// Returns a sorted list unique of symbolic names of remotes that
         /// we deem [trustworthy][crate::open::Options::filter_config_section()].
-        // TODO: Use `remote::Name` here
-        pub fn remote_names(&self) -> BTreeSet<&str> {
-            self.subsection_names_of("remote")
+        pub fn remote_names(&self) -> BTreeSet<Cow<'_, BStr>> {
+            self.config
+                .resolved
+                .sections_by_name("remote")
+                .map(|it| {
+                    let filter = self.filter_config_section();
+                    it.filter(move |s| filter(s.meta()))
+                        .filter_map(|section| section.header().subsection_name().map(Cow::Borrowed))
+                        .collect()
+                })
+                .unwrap_or_default()
         }
 
         /// Obtain the branch-independent name for a remote for use in the given `direction`, or `None` if it could not be determined.
@@ -155,25 +164,23 @@ mod remote {
         /// # Notes
         ///
         /// It's up to the caller to determine what to do if the current `head` is unborn or detached.
-        // TODO: use remote::Name here
-        pub fn remote_default_name(&self, direction: remote::Direction) -> Option<Cow<'_, str>> {
+        pub fn remote_default_name(&self, direction: remote::Direction) -> Option<Cow<'_, BStr>> {
             let name = (direction == remote::Direction::Push)
                 .then(|| {
                     self.config
                         .resolved
                         .string_filter("remote", None, "pushDefault", &mut self.filter_config_section())
-                        .and_then(|s| match s {
-                            Cow::Borrowed(s) => s.to_str().ok().map(Cow::Borrowed),
-                            Cow::Owned(s) => s.to_str().ok().map(|s| Cow::Owned(s.into())),
-                        })
                 })
                 .flatten();
             name.or_else(|| {
                 let names = self.remote_names();
                 match names.len() {
                     0 => None,
-                    1 => names.iter().next().copied().map(Cow::Borrowed),
-                    _more_than_one => names.get("origin").copied().map(Cow::Borrowed),
+                    1 => names.into_iter().next(),
+                    _more_than_one => {
+                        let origin = Cow::Borrowed("origin".into());
+                        names.contains(&origin).then_some(origin)
+                    }
                 }
             })
         }
@@ -191,8 +198,12 @@ mod branch {
     impl crate::Repository {
         /// Return a set of unique short branch names for which custom configuration exists in the configuration,
         /// if we deem them [trustworthy][crate::open::Options::filter_config_section()].
+        ///
+        /// ### Note
+        ///
+        /// Branch names that have illformed UTF-8 will silently be skipped.
         pub fn branch_names(&self) -> BTreeSet<&str> {
-            self.subsection_names_of("branch")
+            self.subsection_str_names_of("branch")
         }
 
         /// Returns the validated reference on the remote associated with the given `short_branch_name`,
@@ -237,7 +248,7 @@ impl crate::Repository {
             .unwrap_or(config::section::is_trusted)
     }
 
-    fn subsection_names_of<'a>(&'a self, header_name: &'a str) -> BTreeSet<&'a str> {
+    fn subsection_str_names_of<'a>(&'a self, header_name: &'a str) -> BTreeSet<&'a str> {
         self.config
             .resolved
             .sections_by_name(header_name)
