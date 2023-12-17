@@ -1,0 +1,39 @@
+[package]
+name = "gix-object-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.gix-object]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "fuzz_tree"
+path = "fuzz_targets/fuzz_tree.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_commit"
+path = "fuzz_targets/fuzz_commit.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_tag"
+path = "fuzz_targets/fuzz_tag.rs"
+test = false
+doc = false
