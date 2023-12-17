@@ -228,6 +228,8 @@ mod branch {
         /// The value is also fast to retrieve compared to its tracking branch.
         /// Also note that a [remote::Direction] isn't used here as Git only supports (and requires) configuring
         /// the remote to fetch from, not the one to push to.
+        ///
+        /// See also [`Reference::remote_ref_name()`](crate::Reference::remote_ref_name()).
         #[doc(alias = "branch_upstream_name", alias = "git2")]
         pub fn branch_remote_ref_name(
             &self,
@@ -295,6 +297,8 @@ mod branch {
         ///
         /// Note that if there is an ambiguity, that is if `name` maps to multiple tracking branches, the first matching mapping
         /// is returned, according to the order in which the fetch or push refspecs occour in the configuration file.
+        ///
+        /// See also [`Reference::remote_tracking_ref_name()`](crate::Reference::remote_tracking_ref_name()).
         #[doc(alias = "branch_upstream_name", alias = "git2")]
         pub fn branch_remote_tracking_ref_name(
             &self,
@@ -326,7 +330,7 @@ mod branch {
         /// * if `direction` is [remote::Direction::Push], the push remote will be queried by means of `branch.<short_name>.pushRemote`
         ///   or `remote.pushDefault` as fallback.
         ///
-        /// See also [`Reference::remote_name()`][crate::Reference::remote_name()] for a more typesafe version
+        /// See also [`Reference::remote_name()`](crate::Reference::remote_name()) for a more typesafe version
         /// to be used when a `Reference` is available.
         ///
         /// `short_branch_name` can typically be obtained by [shortening a full branch name](FullNameRef::shorten()).
@@ -352,6 +356,8 @@ mod branch {
         /// Like [`branch_remote_name(…)`](Self::branch_remote_name()), but returns a [Remote](crate::Remote).
         /// `short_branch_name` is the name to use for looking up `branch.<short_branch_name>.*` values in the
         /// configuration.
+        ///
+        /// See also [`Reference::remote()`](crate::Reference::remote()).
         pub fn branch_remote<'a>(
             &self,
             short_branch_name: impl Into<&'a BStr>,
