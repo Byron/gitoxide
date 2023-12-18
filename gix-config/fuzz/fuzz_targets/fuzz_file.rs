@@ -33,6 +33,16 @@ fuzz_target!(|ctx: Ctx| {
     _ = black_box(file.sections_by_name(ctx.sections_by_name).map(|x| x.count()));
     _ = black_box(file.frontmatter());
 
+    for section in file.sections() {
+        for key in section.keys() {
+            _ = black_box(
+                section
+                    .value_implicit(key.as_ref())
+                    .expect("The key exists, so should the value."),
+            );
+        }
+    }
+
     let roundtrip_as_string: Vec<u8> = file.to_bstring().into();
     _ = unwrap_or_return!(black_box(File::from_bytes_no_includes(
         &roundtrip_as_string,
