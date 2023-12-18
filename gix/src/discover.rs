@@ -63,6 +63,12 @@ impl ThreadSafeRepository {
     ///
     /// Finally, use the `trust_map` to determine which of our own repository options to use
     /// based on the trust level of the effective repository directory.
+    ///
+    /// ### Note
+    ///
+    /// Consider to set [`match_ceiling_dir_or_error = false`](gix_discover::upwards::Options::match_ceiling_dir_or_error)
+    /// to allow discovery if an outside environment variable sets non-matching ceiling directories for greater
+    /// compatibility with Git.
     #[momo]
     pub fn discover_with_environment_overrides_opts(
         directory: impl AsRef<Path>,
