@@ -13,22 +13,27 @@ mod traverse;
 mod peel;
 
 mod sibling_branch {
-    use gix::revision::spec::parse::Error;
-
-    use crate::revision::spec::from_bytes::{parse_spec_no_baseline, repo};
+    use crate::revision::spec::from_bytes::{parse_spec, repo};
+    use crate::util::hex_to_id;
 
     #[test]
-    fn is_planned_and_delayed_until_remotes_are_sorted() {
+    fn push_and_upstream() -> crate::Result {
         let repo = repo("complex_graph").unwrap();
-        assert!(matches!(
-            parse_spec_no_baseline("main@{push}", &repo).unwrap_err(),
-            Error::Planned { .. }
-        ));
-
-        assert!(matches!(
-            parse_spec_no_baseline("main@{upstream}", &repo).unwrap_err(),
-            Error::Planned { .. }
-        ));
+        for op in ["upstream", "push"] {
+            for branch in ["", "main"] {
+                let actual = parse_spec(format!("{branch}@{{{op}}}"), &repo)?;
+                assert_eq!(
+                    actual.first_reference().expect("set").name.as_bstr(),
+                    "refs/remotes/origin/main"
+                );
+                assert_eq!(actual.second_reference(), None);
+                assert_eq!(
+                    actual.single().expect("just one"),
+                    hex_to_id("55e825ebe8fd2ff78cad3826afb696b96b576a7e")
+                );
+            }
+        }
+        Ok(())
     }
 }
 

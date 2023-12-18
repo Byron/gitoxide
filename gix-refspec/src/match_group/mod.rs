@@ -16,14 +16,22 @@ impl<'a> MatchGroup<'a> {
             specs: specs.into_iter().filter(|s| s.op == Operation::Fetch).collect(),
         }
     }
+
+    /// Take all the push ref specs from `specs` get a match group ready.
+    pub fn from_push_specs(specs: impl IntoIterator<Item = RefSpecRef<'a>>) -> Self {
+        MatchGroup {
+            specs: specs.into_iter().filter(|s| s.op == Operation::Push).collect(),
+        }
+    }
 }
 
 /// Matching
 impl<'a> MatchGroup<'a> {
-    /// Match all `items` against all fetch specs present in this group, returning deduplicated mappings from source to destination.
-    /// Note that this method only makes sense if the specs are indeed fetch specs and may panic otherwise.
+    /// Match all `items` against all *fetch* specs present in this group, returning deduplicated mappings from source to destination.
+    /// *Note that this method is correct only for specs*, even though it also *works for push-specs*.
     ///
     /// Note that negative matches are not part of the return value, so they are not observable but will be used to remove mappings.
+    // TODO: figure out how to deal with push-specs, probably when push is being implemented.
     pub fn match_remotes<'item>(self, mut items: impl Iterator<Item = Item<'item>> + Clone) -> Outcome<'a, 'item> {
         let mut out = Vec::new();
         let mut seen = BTreeSet::default();
@@ -54,11 +62,11 @@ impl<'a> MatchGroup<'a> {
 
         let mut has_negation = false;
         for (spec_index, (spec, matcher)) in self.specs.iter().zip(matchers.iter_mut()).enumerate() {
+            if spec.mode == Mode::Negative {
+                has_negation = true;
+                continue;
+            }
             for (item_index, item) in items.clone().enumerate() {
-                if spec.mode == Mode::Negative {
-                    has_negation = true;
-                    continue;
-                }
                 if let Some(matcher) = matcher {
                     let (matched, rhs) = matcher.matches_lhs(item);
                     if matched {
@@ -73,8 +81,8 @@ impl<'a> MatchGroup<'a> {
             }
         }
 
-        if let Some(id) = has_negation.then(|| items.next().map(|i| i.target)).flatten() {
-            let null_id = gix_hash::ObjectId::null(id.kind());
+        if let Some(hash_kind) = has_negation.then(|| items.next().map(|i| i.target.kind())).flatten() {
+            let null_id = hash_kind.null();
             for matcher in matchers
                 .into_iter()
                 .zip(self.specs.iter())

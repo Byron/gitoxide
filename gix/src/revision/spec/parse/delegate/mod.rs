@@ -199,10 +199,9 @@ impl<'repo> Delegate<'repo> {
         }
     }
     fn follow_refs_to_objects_if_needed(&mut self) -> Option<()> {
-        assert_eq!(self.refs.len(), self.objs.len());
         let repo = self.repo;
         for (r, obj) in self.refs.iter().zip(self.objs.iter_mut()) {
-            if let (_ref_opt @ Some(ref_), obj_opt @ None) = (r, obj) {
+            if let (Some(ref_), obj_opt @ None) = (r, obj) {
                 if let Some(id) = ref_.target.try_id().map(ToOwned::to_owned).or_else(|| {
                     ref_.clone()
                         .attach(repo)

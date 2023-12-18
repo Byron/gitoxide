@@ -145,6 +145,33 @@ mod ssh {
     }
 }
 
+mod push {
+    use crate::config::tree::bcow;
+    use gix::config::tree::Push;
+    use gix::push;
+
+    #[test]
+    fn default() -> crate::Result {
+        for (actual, expected) in [
+            ("nothing", push::Default::Nothing),
+            ("current", push::Default::Current),
+            ("upstream", push::Default::Upstream),
+            ("tracking", push::Default::Upstream),
+            ("simple", push::Default::Simple),
+            ("matching", push::Default::Matching),
+        ] {
+            assert_eq!(Push::DEFAULT.try_into_default(bcow(actual))?, expected);
+        }
+
+        assert_eq!(
+            Push::DEFAULT.try_into_default(bcow("Nothing")).unwrap_err().to_string(),
+            "The key \"push.default=Nothing\" was invalid",
+            "case-sensitive comparisons"
+        );
+        Ok(())
+    }
+}
+
 mod fetch {
 
     #[test]

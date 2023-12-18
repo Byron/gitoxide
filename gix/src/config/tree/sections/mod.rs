@@ -86,6 +86,11 @@ pub mod pack;
 pub struct Protocol;
 pub mod protocol;
 
+/// The `push` top-level section.
+#[derive(Copy, Clone, Default)]
+pub struct Push;
+pub mod push;
+
 /// The `remote` top-level section.
 #[derive(Copy, Clone, Default)]
 pub struct Remote;

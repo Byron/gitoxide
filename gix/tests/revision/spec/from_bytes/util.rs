@@ -189,11 +189,11 @@ fn compare_with_baseline(
     }
 }
 
-pub fn parse_spec<'a>(
-    spec: &str,
-    repo: &'a gix::Repository,
-) -> Result<gix::revision::Spec<'a>, gix::revision::spec::parse::Error> {
-    parse_spec_opts(spec, repo, Default::default())
+pub fn parse_spec(
+    spec: impl AsRef<str>,
+    repo: &gix::Repository,
+) -> Result<gix::revision::Spec<'_>, gix::revision::spec::parse::Error> {
+    parse_spec_opts(spec.as_ref(), repo, Default::default())
 }
 
 pub fn repo(name: &str) -> crate::Result<gix::Repository> {

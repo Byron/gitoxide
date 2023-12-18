@@ -1,4 +1,4 @@
-use crate::{bstr::BString, object, reference};
+use crate::{bstr::BString, object, reference, remote};
 
 /// A hint to know what to do if refs and object names are equal.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
@@ -59,6 +59,19 @@ pub enum Error {
     Malformed,
     #[error("Unborn heads do not have a reflog yet")]
     UnbornHeadsHaveNoRefLog,
+    #[error("Unborn heads cannot have push or upstream tracking branches")]
+    UnbornHeadForSibling,
+    #[error("Branch named {name} does not have a {} tracking branch configured", direction.as_str())]
+    NoTrackingBranch {
+        name: gix_ref::FullName,
+        direction: remote::Direction,
+    },
+    #[error("Error when obtaining {} tracking branch for {name}", direction.as_str())]
+    GetTrackingBranch {
+        name: gix_ref::FullName,
+        direction: remote::Direction,
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    },
     #[error("This feature will be implemented once {dependency}")]
     Planned { dependency: &'static str },
     #[error("Reference {reference:?} does not have a reference log, cannot {action}")]

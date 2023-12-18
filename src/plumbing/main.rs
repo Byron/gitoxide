@@ -930,6 +930,7 @@ pub fn main() -> Result<()> {
                 explain,
                 cat_file,
                 tree_mode,
+                reference,
                 blob_format,
             } => prepare_and_run(
                 "revision-parse",
@@ -947,6 +948,7 @@ pub fn main() -> Result<()> {
                             format,
                             explain,
                             cat_file,
+                            show_reference: reference,
                             tree_mode: match tree_mode {
                                 revision::resolve::TreeMode::Raw => core::repository::revision::resolve::TreeMode::Raw,
                                 revision::resolve::TreeMode::Pretty => {
