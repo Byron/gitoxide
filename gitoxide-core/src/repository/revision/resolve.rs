@@ -6,6 +6,7 @@ pub struct Options {
     pub cat_file: bool,
     pub tree_mode: TreeMode,
     pub blob_format: BlobFormat,
+    pub show_reference: bool,
 }
 
 pub enum TreeMode {
@@ -46,6 +47,7 @@ pub(crate) mod function {
             cat_file,
             tree_mode,
             blob_format,
+            show_reference,
         }: Options,
     ) -> anyhow::Result<()> {
         repo.object_cache_size_if_unset(1024 * 1024);
@@ -76,6 +78,12 @@ pub(crate) mod function {
                     let spec = repo.rev_parse(spec)?;
                     if cat_file {
                         return display_object(&repo, spec, tree_mode, cache.as_mut().map(|c| (blob_format, c)), out);
+                    }
+                    if let Some(r) = spec.first_reference().filter(|_| show_reference) {
+                        writeln!(out, "{}", r.name)?;
+                    }
+                    if let Some(r) = spec.second_reference().filter(|_| show_reference) {
+                        writeln!(out, "{}", r.name)?;
                     }
                     writeln!(out, "{spec}", spec = spec.detach())?;
                 }
