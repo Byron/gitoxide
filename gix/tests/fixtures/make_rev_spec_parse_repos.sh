@@ -338,6 +338,16 @@ git init complex_graph
   git add file && git commit -m A
   git branch a
 
+  git remote add origin .
+  cat <<EOF>>.git/config
+
+  [branch "main"]
+  	remote = origin
+  	merge = refs/heads/main
+EOF
+
+  git fetch
+
   baseline ":/message" # finds 'message recent' instead of 'initial message'
   baseline ":/!-message" # above, negated
   baseline ":/mes.age" # regexes work too
@@ -390,6 +400,11 @@ git init complex_graph
   baseline "@^{tree}"
   baseline "@:"
   baseline "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+
+  baseline @{push}
+  baseline main@{push}
+  baseline main@{upstream}
+  baseline @{upstream}
 
   baseline "^"
   baseline "^!"

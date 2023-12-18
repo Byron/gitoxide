@@ -9,6 +9,7 @@ use gix_revision::spec::parse::{
 use crate::{
     bstr::{BStr, BString, ByteSlice},
     ext::ReferenceExt,
+    remote,
     revision::spec::parse::{Delegate, Error, RefsHint},
 };
 
@@ -106,6 +107,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
         self.unset_disambiguate_call();
         match query {
             ReflogLookup::Date(_date) => {
+                // TODO: actually do this - this should be possible now despite incomplete date parsing
                 self.err.push(Error::Planned {
                     dependency: "remote handling and ref-specs are fleshed out more",
                 });
@@ -215,11 +217,51 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
         }
     }
 
-    fn sibling_branch(&mut self, _kind: SiblingBranch) -> Option<()> {
+    fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()> {
         self.unset_disambiguate_call();
-        self.err.push(Error::Planned {
-            dependency: "remote handling and ref-specs are fleshed out more",
-        });
+        let reference = match &mut self.refs[self.idx] {
+            val @ None => match self.repo.head().map(crate::Head::try_into_referent) {
+                Ok(Some(r)) => {
+                    *val = Some(r.clone().detach());
+                    r
+                }
+                Ok(None) => {
+                    self.err.push(Error::UnbornHeadForSibling);
+                    return None;
+                }
+                Err(err) => {
+                    self.err.push(err.into());
+                    return None;
+                }
+            },
+            Some(r) => r.clone().attach(self.repo),
+        };
+        let direction = match kind {
+            SiblingBranch::Upstream => remote::Direction::Fetch,
+            SiblingBranch::Push => remote::Direction::Push,
+        };
+        match reference.remote_tracking_ref_name(direction) {
+            None => self.err.push(Error::NoTrackingBranch {
+                name: reference.inner.name,
+                direction,
+            }),
+            Some(Err(err)) => self.err.push(Error::GetTrackingBranch {
+                name: reference.inner.name,
+                direction,
+                source: Box::new(err),
+            }),
+            Some(Ok(name)) => match self.repo.find_reference(name.as_ref()) {
+                Err(err) => self.err.push(Error::GetTrackingBranch {
+                    name: reference.inner.name,
+                    direction,
+                    source: Box::new(err),
+                }),
+                Ok(r) => {
+                    self.refs[self.idx] = r.inner.into();
+                    return Some(());
+                }
+            },
+        };
         None
     }
 }
