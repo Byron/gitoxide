@@ -12,6 +12,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4.7"
 arbitrary = { version = "1", features = ["derive"] }
+bstr = "1.8.0"
 
 [dependencies.gix-config]
 path = ".."
@@ -23,5 +24,11 @@ members = ["."]
 [[bin]]
 name = "parse"
 path = "fuzz_targets/parse.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_file"
+path = "fuzz_targets/fuzz_file.rs"
 test = false
 doc = false
