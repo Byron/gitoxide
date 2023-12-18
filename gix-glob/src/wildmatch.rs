@@ -185,144 +185,146 @@ pub(crate) mod function {
                     let mut next = if negated { p.next() } else { Some((p_idx, p_ch)) };
                     let mut prev_p_ch = 0;
                     let mut matched = false;
+                    let mut p_idx_ofs = 0;
                     loop {
-                        match next {
-                            None => return AbortAll,
-                            Some((p_idx, mut p_ch)) => match p_ch {
-                                BACKSLASH => match p.next() {
-                                    Some((_, p_ch)) => {
-                                        if p_ch == t_ch {
-                                            matched = true
-                                        } else {
-                                            prev_p_ch = p_ch;
-                                        }
+                        let Some((mut p_idx, mut p_ch)) = next else {
+                            return AbortAll;
+                        };
+                        p_idx += p_idx_ofs;
+                        match p_ch {
+                            BACKSLASH => match p.next() {
+                                Some((_, p_ch)) => {
+                                    if p_ch == t_ch {
+                                        matched = true
+                                    } else {
+                                        prev_p_ch = p_ch;
                                     }
-                                    None => return AbortAll,
-                                },
-                                b'-' if prev_p_ch != 0
-                                    && p.peek().is_some()
-                                    && p.peek().map(|t| t.1) != Some(BRACKET_CLOSE) =>
-                                {
-                                    p_ch = p.next().expect("peeked").1;
-                                    if p_ch == BACKSLASH {
-                                        p_ch = match p.next() {
-                                            Some(t) => t.1,
-                                            None => return AbortAll,
-                                        };
-                                    }
-                                    if t_ch <= p_ch && t_ch >= prev_p_ch {
-                                        matched = true;
-                                    } else if mode.contains(Mode::IGNORE_CASE) && t_ch.is_ascii_lowercase() {
-                                        let t_ch_upper = t_ch.to_ascii_uppercase();
-                                        if (t_ch_upper <= p_ch.to_ascii_uppercase()
-                                            && t_ch_upper >= prev_p_ch.to_ascii_uppercase())
-                                            || (t_ch_upper <= prev_p_ch.to_ascii_uppercase()
-                                                && t_ch_upper >= p_ch.to_ascii_uppercase())
-                                        {
-                                            matched = true;
-                                        }
-                                    }
-                                    prev_p_ch = 0;
                                 }
-                                BRACKET_OPEN if matches!(p.peek(), Some((_, COLON))) => {
-                                    p.next();
-                                    while p.peek().map_or(false, |t| t.1 != BRACKET_CLOSE) {
-                                        p.next();
-                                    }
-                                    let closing_bracket_idx = match p.next() {
-                                        Some((idx, _)) => idx,
+                                None => return AbortAll,
+                            },
+                            b'-' if prev_p_ch != 0
+                                && p.peek().is_some()
+                                && p.peek().map(|t| t.1) != Some(BRACKET_CLOSE) =>
+                            {
+                                p_ch = p.next().expect("peeked").1;
+                                if p_ch == BACKSLASH {
+                                    p_ch = match p.next() {
+                                        Some(t) => t.1,
                                         None => return AbortAll,
                                     };
-                                    const BRACKET__COLON__BRACKET: usize = 3;
-                                    if closing_bracket_idx - p_idx < BRACKET__COLON__BRACKET
-                                        || pattern[closing_bracket_idx - 1] != COLON
-                                    {
-                                        if t_ch == BRACKET_OPEN {
-                                            matched = true
-                                        }
-                                        p = pattern[p_idx + 1..]
-                                            .iter()
-                                            .map(possibly_lowercase)
-                                            .enumerate()
-                                            .peekable();
-                                    } else {
-                                        let class = &pattern.as_bytes()[p_idx + 2..closing_bracket_idx - 1];
-                                        match class {
-                                            b"alnum" => {
-                                                if t_ch.is_ascii_alphanumeric() {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"alpha" => {
-                                                if t_ch.is_ascii_alphabetic() {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"blank" => {
-                                                if t_ch.is_ascii_whitespace() {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"cntrl" => {
-                                                if t_ch.is_ascii_control() {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"digit" => {
-                                                if t_ch.is_ascii_digit() {
-                                                    matched = true;
-                                                }
-                                            }
-
-                                            b"graph" => {
-                                                if t_ch.is_ascii_graphic() {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"lower" => {
-                                                if t_ch.is_ascii_lowercase() {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"print" => {
-                                                if (0x20u8..=0x7e).contains(&t_ch) {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"punct" => {
-                                                if t_ch.is_ascii_punctuation() {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"space" => {
-                                                if t_ch == b' ' {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"upper" => {
-                                                if t_ch.is_ascii_uppercase()
-                                                    || mode.contains(Mode::IGNORE_CASE) && t_ch.is_ascii_lowercase()
-                                                {
-                                                    matched = true;
-                                                }
-                                            }
-                                            b"xdigit" => {
-                                                if t_ch.is_ascii_hexdigit() {
-                                                    matched = true;
-                                                }
-                                            }
-                                            _ => return AbortAll,
-                                        };
-                                        prev_p_ch = 0;
-                                    }
                                 }
-                                _ => {
-                                    prev_p_ch = p_ch;
-                                    if p_ch == t_ch {
+                                if t_ch <= p_ch && t_ch >= prev_p_ch {
+                                    matched = true;
+                                } else if mode.contains(Mode::IGNORE_CASE) && t_ch.is_ascii_lowercase() {
+                                    let t_ch_upper = t_ch.to_ascii_uppercase();
+                                    if (t_ch_upper <= p_ch.to_ascii_uppercase()
+                                        && t_ch_upper >= prev_p_ch.to_ascii_uppercase())
+                                        || (t_ch_upper <= prev_p_ch.to_ascii_uppercase()
+                                            && t_ch_upper >= p_ch.to_ascii_uppercase())
+                                    {
                                         matched = true;
                                     }
                                 }
-                            },
+                                prev_p_ch = 0;
+                            }
+                            BRACKET_OPEN if matches!(p.peek(), Some((_, COLON))) => {
+                                p.next();
+                                while p.peek().map_or(false, |t| t.1 != BRACKET_CLOSE) {
+                                    p.next();
+                                }
+                                let closing_bracket_idx = match p.next() {
+                                    Some((idx, _)) => idx,
+                                    None => return AbortAll,
+                                };
+                                const BRACKET__COLON__BRACKET: usize = 3;
+                                if closing_bracket_idx.saturating_sub(p_idx) < BRACKET__COLON__BRACKET
+                                    || pattern[closing_bracket_idx - 1] != COLON
+                                {
+                                    if t_ch == BRACKET_OPEN {
+                                        matched = true
+                                    }
+                                    if p_idx > pattern.len() {
+                                        return AbortAll;
+                                    }
+                                    p = pattern[p_idx..].iter().map(possibly_lowercase).enumerate().peekable();
+                                    p_idx_ofs += p_idx;
+                                } else {
+                                    let class = &pattern.as_bytes()[p_idx + 2..closing_bracket_idx - 1];
+                                    match class {
+                                        b"alnum" => {
+                                            if t_ch.is_ascii_alphanumeric() {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"alpha" => {
+                                            if t_ch.is_ascii_alphabetic() {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"blank" => {
+                                            if t_ch.is_ascii_whitespace() {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"cntrl" => {
+                                            if t_ch.is_ascii_control() {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"digit" => {
+                                            if t_ch.is_ascii_digit() {
+                                                matched = true;
+                                            }
+                                        }
+
+                                        b"graph" => {
+                                            if t_ch.is_ascii_graphic() {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"lower" => {
+                                            if t_ch.is_ascii_lowercase() {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"print" => {
+                                            if (0x20u8..=0x7e).contains(&t_ch) {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"punct" => {
+                                            if t_ch.is_ascii_punctuation() {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"space" => {
+                                            if t_ch == b' ' {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"upper" => {
+                                            if t_ch.is_ascii_uppercase()
+                                                || mode.contains(Mode::IGNORE_CASE) && t_ch.is_ascii_lowercase()
+                                            {
+                                                matched = true;
+                                            }
+                                        }
+                                        b"xdigit" => {
+                                            if t_ch.is_ascii_hexdigit() {
+                                                matched = true;
+                                            }
+                                        }
+                                        _ => return AbortAll,
+                                    };
+                                    prev_p_ch = 0;
+                                }
+                            }
+                            _ => {
+                                prev_p_ch = p_ch;
+                                if p_ch == t_ch {
+                                    matched = true;
+                                }
+                            }
                         };
                         next = p.next();
                         if let Some((_, BRACKET_CLOSE)) = next {
