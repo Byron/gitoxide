@@ -325,6 +325,22 @@ fn single_paths_match_anywhere() {
     );
 }
 
+#[test]
+fn exponential_runaway_denial_of_service() {
+    // original: "?[at(/\u{1d}\0\u{4}\u{14}\0[[[[:[\0\0\0\0\0\0\0\0Wt(/\u{1d}\0\u{4}\u{14}\0[[[[:[\0\0\0\0\0\0\0\0\0\0\0]"
+    //  reduced: "[[:[:]"
+    for pattern in [
+        "*?[wxxxxxx\0!t[:rt]\u{14}*",
+        "?[at(/\u{1d}\0\u{4}\u{14}\0[[[[:[\0\0\0\0\0\0\0\0\0\0/s\0\0\0*\0\0\0\0\0\0\0\0]\0\0\0\0\0\0\0\0\0",
+        "[[:digit]ab]",
+        "[[:]ab]",
+        "[[:[:x]",
+    ] {
+        let pat = pat(pattern);
+        match_file(&pat, "relative/path", Case::Sensitive);
+    }
+}
+
 fn pat<'a>(pattern: impl Into<&'a BStr>) -> gix_glob::Pattern {
     gix_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
 }
