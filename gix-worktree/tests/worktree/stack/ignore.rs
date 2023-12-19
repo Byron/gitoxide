@@ -76,6 +76,12 @@ fn exclude_by_dir_is_handled_just_like_git() {
             expected_pattern, "tld/",
             "each entry matches on the main directory exclude, ignoring negations entirely"
         );
+        // TODO: adjust baseline to also include precious files.
+        assert_eq!(
+            match_.kind,
+            gix_ignore::Kind::Expendable,
+            "for now all patterns are expendable until precious files are supported by git"
+        );
         assert_eq!(line, 2);
         assert_eq!(source, ".gitignore");
     }
@@ -134,6 +140,14 @@ fn check_against_baseline() -> crate::Result {
             (Some(m), Some((source_file, line, pattern))) => {
                 assert_eq!(m.pattern.to_string(), pattern);
                 assert_eq!(m.sequence_number, line);
+                // TODO: adjust baseline to also include precious files.
+                if !m.pattern.is_negative() {
+                    assert_eq!(
+                        m.kind,
+                        platform.excluded_kind().expect("it matches"),
+                        "both values agree, no matter which method is used"
+                    );
+                }
                 // Paths read from the index are relative to the repo, and they don't exist locally due tot skip-worktree
                 if m.source.map_or(false, std::path::Path::exists) {
                     assert_eq!(

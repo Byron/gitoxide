@@ -13,12 +13,26 @@ impl<'a> Platform<'a> {
 
     /// See if the currently set entry is excluded as per exclude and git-ignore files.
     ///
+    /// Note that this threats both classes, [*trashable*](gix_ignore::Kind::Expendable) and [*precious*](gix_ignore::Kind::Precious)
+    /// as equal. If you need to differentiate, use [`matching_exclude_pattern()`](Self::matching_exclude_pattern)
+    /// or [`excluded_kind()`](Self::excluded_kind).
+    ///
     /// # Panics
     ///
     /// If the cache was configured without exclude patterns.
     pub fn is_excluded(&self) -> bool {
         self.matching_exclude_pattern()
             .map_or(false, |m| !m.pattern.is_negative())
+    }
+
+    /// See if a non-negative ignore-pattern matches and obtain the kind of exclude, or return `None`
+    /// if the path isn't excluded.
+    ///
+    /// This is similar to [`is_excluded()`](Self::is_excluded), but provides details that are useful to
+    /// decide what to do with the excluded item.
+    pub fn excluded_kind(&self) -> Option<gix_ignore::Kind> {
+        self.matching_exclude_pattern()
+            .and_then(|m| (!m.pattern.is_negative()).then_some(m.kind))
     }
 
     /// Check all exclude patterns to see if the currently set path matches any of them.
