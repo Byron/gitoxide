@@ -34,3 +34,9 @@ name = "fuzz_log"
 path = "fuzz_targets/fuzz_log.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "fuzz_packed_buffer"
+path = "fuzz_targets/fuzz_packed_buffer.rs"
+test = false
+doc = false
