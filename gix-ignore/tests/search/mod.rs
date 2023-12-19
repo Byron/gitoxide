@@ -81,6 +81,7 @@ fn baseline_from_git_dir() -> crate::Result {
                     sequence_number,
                     pattern: _,
                     source,
+                    kind: gix_ignore::Kind::Expendable,
                 }),
                 Some((expected_source, line, _expected_pattern)),
             ) => {
@@ -100,28 +101,66 @@ fn baseline_from_git_dir() -> crate::Result {
 }
 
 #[test]
-fn from_overrides() {
-    let input = ["simple", "pattern/"];
+fn from_overrides_with_precious() {
+    let input = ["$s?mple", "pattern/"];
     let group = gix_ignore::Search::from_overrides(input.iter());
+
     assert_eq!(
         group.pattern_matching_relative_path("Simple".into(), None, gix_glob::pattern::Case::Fold),
-        Some(pattern_to_match(&gix_glob::parse("simple").unwrap(), 0))
+        Some(pattern_to_match(
+            &gix_glob::parse("s?mple").unwrap(),
+            1,
+            gix_ignore::Kind::Precious
+        )),
+        ""
+    );
+}
+
+#[test]
+fn from_overrides_with_excludes() {
+    let group = gix_ignore::Search::from_overrides(["$simple", "!simple", "pattern/"]);
+    assert_eq!(
+        group.pattern_matching_relative_path("Simple".into(), None, gix_glob::pattern::Case::Fold),
+        Some(pattern_to_match(
+            &gix_glob::parse("!simple").unwrap(),
+            2,
+            gix_ignore::Kind::Expendable
+        )),
+        "Now the negative pattern matches - the sequence numbers are 1-based"
+    );
+}
+
+#[test]
+fn from_overrides() {
+    let group = gix_ignore::Search::from_overrides(["simple", "pattern/"]);
+    assert_eq!(
+        group.pattern_matching_relative_path("Simple".into(), None, gix_glob::pattern::Case::Fold),
+        Some(pattern_to_match(
+            &gix_glob::parse("simple").unwrap(),
+            1,
+            gix_ignore::Kind::Expendable
+        ))
     );
     assert_eq!(
         group.pattern_matching_relative_path("pattern".into(), Some(true), gix_glob::pattern::Case::Sensitive),
-        Some(pattern_to_match(&gix_glob::parse("pattern/").unwrap(), 1))
+        Some(pattern_to_match(
+            &gix_glob::parse("pattern/").unwrap(),
+            2,
+            gix_ignore::Kind::Expendable
+        ))
     );
     assert_eq!(group.patterns.len(), 1);
     assert_eq!(
-        gix_ignore::Search::from_overrides(input).patterns[0],
+        gix_ignore::Search::from_overrides(["simple", "pattern/"]).patterns[0],
         group.patterns.into_iter().next().unwrap()
     );
 }
 
-fn pattern_to_match(pattern: &gix_glob::Pattern, sequence_number: usize) -> Match<'_> {
+fn pattern_to_match(pattern: &gix_glob::Pattern, sequence_number: usize, kind: gix_ignore::Kind) -> Match<'_> {
     Match {
         pattern,
         source: None,
         sequence_number,
+        kind,
     }
 }

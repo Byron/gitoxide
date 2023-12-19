@@ -1937,6 +1937,7 @@ dependencies = [
  "gix-glob 0.15.1",
  "gix-path 0.10.3",
  "gix-testtools",
+ "gix-trace 0.1.6",
  "serde",
  "unicode-bom",
 ]
