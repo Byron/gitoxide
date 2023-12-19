@@ -9,7 +9,7 @@ pub mod load {
         #[error("The mailmap file declared in `mailmap.file` could not be read")]
         Io(#[from] std::io::Error),
         #[error("The configured mailmap.blob could not be parsed")]
-        BlobSpec(#[from] gix_hash::decode::Error),
+        BlobSpec(#[from] crate::revision::spec::parse::single::Error),
         #[error(transparent)]
         PathInterpolate(#[from] gix_config::path::interpolate::Error),
         #[error("Could not find object configured in `mailmap.blob`")]

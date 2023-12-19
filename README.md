@@ -41,6 +41,7 @@ What follows is a high-level list of features and those which are planned:
 
 * [x] clone
 * [x] fetch
+* [ ] blame
 * [ ] push
 * [ ] reset
 * [ ] status

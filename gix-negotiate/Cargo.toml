@@ -14,7 +14,7 @@ doctest = false
 test = false
 
 [dependencies]
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-date = { version = "^0.8.1", path = "../gix-date" }
 gix-commitgraph = { version = "^0.22.1", path = "../gix-commitgraph" }

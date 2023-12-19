@@ -51,7 +51,9 @@ pub fn undo(input: &BStr) -> Result<(Cow<'_, BStr>, usize), undo::Error> {
             .get(position + 1..)
             .ok_or_else(|| undo::Error::new("Unexpected end of input", input))?
             .as_bstr();
-        let next = input[0];
+        let next = *input
+            .first()
+            .ok_or_else(|| undo::Error::new("Unexpected end of input", input))?;
         *input = input.get(1..).unwrap_or_default().as_bstr();
         Ok(next)
     }

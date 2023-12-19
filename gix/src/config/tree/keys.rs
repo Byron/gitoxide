@@ -165,9 +165,19 @@ pub type RemoteName = Any<validate::RemoteName>;
 pub type Boolean = Any<validate::Boolean>;
 
 /// A key that represents an executable program, shell script or shell commands.
+///
+/// Once obtained with [trusted_program()](crate::config::Snapshot::trusted_program())
+/// one can run it with [command::prepare()](gix_command::prepare), possibly after
+/// [obtaining](crate::Repository::command_context) and [setting](gix_command::Prepare::with_context)
+/// a git [command context](gix_command::Context) (depending on the commands needs).
 pub type Program = Any<validate::Program>;
 
 /// A key that represents an executable program as identified by name or path.
+///
+/// Once obtained with [trusted_program()](crate::config::Snapshot::trusted_program())
+/// one can run it with [command::prepare()](gix_command::prepare), possibly after
+/// [obtaining](crate::Repository::command_context) and [setting](gix_command::Prepare::with_context)
+/// a git [command context](gix_command::Context) (depending on the commands needs).
 pub type Executable = Any<validate::Executable>;
 
 /// A key that represents a path (to a resource).

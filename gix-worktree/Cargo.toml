@@ -21,9 +21,9 @@ attributes = ["dep:gix-attributes"]
 serde = [ "dep:serde", "bstr/serde", "gix-index/serde", "gix-hash/serde", "gix-object/serde", "gix-attributes?/serde", "gix-ignore/serde" ]
 
 [dependencies]
-gix-index = { version = "^0.27.0", path = "../gix-index" }
+gix-index = { version = "^0.27.1", path = "../gix-index" }
 gix-fs = { version = "^0.8.1", path = "../gix-fs" }
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-glob = { version = "^0.14.1", path = "../gix-glob" }
 gix-path = { version = "^0.10.1", path = "../gix-path" }

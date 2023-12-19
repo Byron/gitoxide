@@ -22,6 +22,8 @@ impl Core {
     /// The `core.disambiguate` key.
     pub const DISAMBIGUATE: Disambiguate =
         Disambiguate::new_with_validate("disambiguate", &config::Tree::CORE, validate::Disambiguate);
+    /// The `core.editor` key.
+    pub const EDITOR: keys::Program = keys::Program::new_program("editor", &config::Tree::CORE);
     /// The `core.fileMode` key.
     pub const FILE_MODE: keys::Boolean = keys::Boolean::new_boolean("fileMode", &config::Tree::CORE);
     /// The `core.ignoreCase` key.
@@ -58,10 +60,10 @@ impl Core {
         .with_environment_override("GIT_ASKPASS")
         .with_note("fallback is 'SSH_ASKPASS'");
     /// The `core.excludesFile` key.
-    pub const EXCLUDES_FILE: keys::Executable = keys::Executable::new_executable("excludesFile", &config::Tree::CORE);
+    pub const EXCLUDES_FILE: keys::Path = keys::Path::new_path("excludesFile", &config::Tree::CORE);
     /// The `core.attributesFile` key.
-    pub const ATTRIBUTES_FILE: keys::Executable =
-        keys::Executable::new_executable("attributesFile", &config::Tree::CORE)
+    pub const ATTRIBUTES_FILE: keys::Path =
+        keys::Path::new_path("attributesFile", &config::Tree::CORE)
             .with_deviation("for checkout - it's already queried but needs building of attributes group, and of course support during checkout");
     /// The `core.sshCommand` key.
     pub const SSH_COMMAND: keys::Executable = keys::Executable::new_executable("sshCommand", &config::Tree::CORE)
@@ -102,6 +104,7 @@ impl Section for Core {
             &Self::CHECK_STAT,
             &Self::DELTA_BASE_CACHE_LIMIT,
             &Self::DISAMBIGUATE,
+            &Self::EDITOR,
             &Self::FILE_MODE,
             &Self::IGNORE_CASE,
             &Self::FILES_REF_LOCK_TIMEOUT,

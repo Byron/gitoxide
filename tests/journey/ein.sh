@@ -139,6 +139,24 @@ title "Porcelain ${kind}"
                 expect_run_sh $SUCCESSFULLY 'find . -maxdepth 2 | sort'
               }
             )
+
+            (with "--execute with move into subdirectory of itself"
+              (cd example.com
+                rm -Rf a-repo-with-extension origin-and-fork
+                mv one-origin ../
+                cd ..
+                rmdir example.com && mv one-origin example.com
+              )
+              it "succeeds" && {
+                WITH_SNAPSHOT="$snapshot/execute-success-new-root" \
+                expect_run_sh $SUCCESSFULLY "$exe tool organize --execute 2>/dev/null"
+              }
+
+              it "does alter the directory structure as these are already in place" && {
+                WITH_SNAPSHOT="$snapshot/directory-structure-after-organize-to-new-root" \
+                expect_run_sh $SUCCESSFULLY 'find . -maxdepth 2 -type d | sort'
+              }
+            )
           )
           if test "$kind" != "max-pure"; then
           (with "running with no further arguments"

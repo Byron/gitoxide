@@ -95,6 +95,8 @@
 pub use gix_actor as actor;
 #[cfg(feature = "attributes")]
 pub use gix_attributes as attrs;
+#[cfg(feature = "command")]
+pub use gix_command as command;
 pub use gix_commitgraph as commitgraph;
 #[cfg(feature = "credentials")]
 pub use gix_credentials as credentials;
@@ -185,6 +187,8 @@ pub mod tag;
 
 ///
 pub mod progress;
+///
+pub mod push;
 
 ///
 pub mod diff;

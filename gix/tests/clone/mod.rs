@@ -443,14 +443,19 @@ mod blocking_io {
             "local clone always adopts the name of the remote"
         );
 
-        let short_name = referent.name().shorten();
+        let ref_name = referent.name();
         assert_eq!(
-            repo.branch_remote_name(short_name).expect("remote is set").as_ref(),
+            referent
+                .remote_name(gix::remote::Direction::Fetch)
+                .expect("remote is set")
+                .as_ref(),
             remote_name,
             "the remote branch information is fully configured"
         );
         assert_eq!(
-            repo.branch_remote_ref(short_name).expect("present")?.as_bstr(),
+            repo.branch_remote_ref_name(ref_name, gix::remote::Direction::Fetch)
+                .expect("present")?
+                .as_bstr(),
             "refs/heads/main"
         );
 

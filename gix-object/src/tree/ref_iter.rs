@@ -104,6 +104,9 @@ fn mode_from_decimal(i: &[u8]) -> Option<(u32, &[u8])> {
         mode = (mode << 3) + (b - b'0') as u32;
         spacer_pos += 1;
     }
+    if i.len() < spacer_pos {
+        return None;
+    }
     let (_, i) = i.split_at(spacer_pos);
     Some((mode, i))
 }

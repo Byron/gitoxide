@@ -87,16 +87,12 @@ impl Options<'_> {
     ///
     /// Note that `GIT_DISCOVERY_ACROSS_FILESYSTEM` for `cross_fs` is **not** read,
     /// as it requires parsing of `git-config` style boolean values.
-    ///
-    /// In addition, this function disables `match_ceiling_dir_or_error` to allow
-    /// discovery if an outside environment variable sets non-matching ceiling directories.
     // TODO: test
     pub fn apply_environment(mut self) -> Self {
         let name = "GIT_CEILING_DIRECTORIES";
         if let Some(ceiling_dirs) = env::var_os(name) {
             self.ceiling_dirs = parse_ceiling_dirs(&ceiling_dirs);
         }
-        self.match_ceiling_dir_or_error = false;
         self
     }
 }

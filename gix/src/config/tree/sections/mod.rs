@@ -72,6 +72,10 @@ pub mod index;
 pub struct Init;
 mod init;
 
+#[derive(Copy, Clone, Default)]
+pub struct Mailmap;
+mod mailmap;
+
 /// The `pack` top-level section.
 #[derive(Copy, Clone, Default)]
 pub struct Pack;
@@ -81,6 +85,11 @@ pub mod pack;
 #[derive(Copy, Clone, Default)]
 pub struct Protocol;
 pub mod protocol;
+
+/// The `push` top-level section.
+#[derive(Copy, Clone, Default)]
+pub struct Push;
+pub mod push;
 
 /// The `remote` top-level section.
 #[derive(Copy, Clone, Default)]

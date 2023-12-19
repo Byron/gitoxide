@@ -13,16 +13,14 @@ pub struct Matcher<'a> {
 
 impl<'a> Matcher<'a> {
     /// Match `item` against this spec and return `(true, Some<rhs>)` to gain the other side of the match as configured, or `(true, None)`
-    /// if there was no `rhs`.
+    /// if there was no `rhs` but the `item` matched. Lastly, return `(false, None)` if `item` didn't match at all.
     ///
     /// This may involve resolving a glob with an allocation, as the destination is built using the matching portion of a glob.
     pub fn matches_lhs(&self, item: Item<'_>) -> (bool, Option<Cow<'a, BStr>>) {
         match (self.lhs, self.rhs) {
             (Some(lhs), None) => (lhs.matches(item).is_match(), None),
             (Some(lhs), Some(rhs)) => lhs.matches(item).into_match_outcome(rhs, item),
-            (None, _) => {
-                unreachable!("For all we know, the lefthand side is never empty. Push specs might change that.")
-            }
+            (None, _) => (false, None),
         }
     }
 }

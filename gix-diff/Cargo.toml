@@ -23,7 +23,7 @@ wasm = ["dep:getrandom"]
 doctest = false
 
 [dependencies]
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-filter = { version = "^0.7.0", path = "../gix-filter", optional = true }
 gix-worktree = { version = "^0.28.0", path = "../gix-worktree", default-features = false, features = ["attributes"], optional = true }

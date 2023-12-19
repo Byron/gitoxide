@@ -655,6 +655,9 @@ pub mod revision {
             /// Equivalent to the `explain` subcommand.
             #[clap(short = 'e', long)]
             explain: bool,
+            /// Also show the name of the reference which led to the object.
+            #[clap(short = 'r', long, conflicts_with = "explain")]
+            reference: bool,
             /// Show the first resulting object similar to how `git cat-file` would, but don't show the resolved spec.
             #[clap(short = 'c', long, conflicts_with = "explain")]
             cat_file: bool,

@@ -14,9 +14,9 @@ autotests = false
 doctest = false
 
 [dependencies]
-gix-index = { version = "^0.27.0", path = "../gix-index" }
+gix-index = { version = "^0.27.1", path = "../gix-index" }
 gix-fs = { version = "^0.8.1", path = "../gix-fs" }
-gix-hash = { version = "^0.13.2", path = "../gix-hash" }
+gix-hash = { version = "^0.13.3", path = "../gix-hash" }
 gix-object = { version = "^0.39.0", path = "../gix-object" }
 gix-path = { version = "^0.10.1", path = "../gix-path" }
 gix-features = { version = "^0.36.1", path = "../gix-features" }

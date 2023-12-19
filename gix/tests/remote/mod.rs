@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::PathBuf};
+use std::path::PathBuf;
 
 use gix_testtools::scripted_fixture_read_only;
 
@@ -62,10 +62,6 @@ pub(crate) fn into_daemon_remote_if_async<'repo, 'a>(
         }
         new_remote
     }
-}
-
-pub(crate) fn cow_str(s: &str) -> Cow<str> {
-    Cow::Borrowed(s)
 }
 
 mod connect;

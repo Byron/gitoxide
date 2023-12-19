@@ -676,6 +676,10 @@ fn extract_archive(
             )
         })?;
     if archive_identity != required_script_identity {
+        eprintln!(
+            "Ignoring archive at '{}' as its generating script changed",
+            archive.display()
+        );
         return Err(std::io::ErrorKind::NotFound.into());
     }
 

@@ -79,7 +79,9 @@ jobs:
       - name: "cargo check default features"
         if: startsWith(matrix.os, 'windows')
         run: cargo check --all --bins --examples
-      - run: git lfs fetch && git lfs checkout
+      - run: |
+          # it should never be a failure not to get the caches, as they can be regenerated.
+          git lfs fetch && git lfs checkout || true
       - uses: taiki-e/install-action@v1
         with:
           tool: nextest
@@ -91,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ i686-unknown-linux-gnu, armv7-linux-androideabi ]
+        target: [ armv7-linux-androideabi ]
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable

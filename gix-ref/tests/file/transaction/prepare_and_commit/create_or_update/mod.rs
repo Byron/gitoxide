@@ -685,9 +685,9 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 
     let packed = store.open_packed_buffer().unwrap().expect("packed refs is available");
     assert_eq!(
-        packed.find("main")?.target(),
-        old_id,
-        "packed refs aren't rewritten, the change goes into the loose ref instead which shadows packed refs of same name"
+            packed.find("main")?.target(),
+            old_id,
+            "packed refs aren't rewritten, the change goes into the loose ref instead which shadows packed refs of same name"
         );
     assert_eq!(
         store.find_loose("main")?.target.try_id(),
@@ -786,10 +786,10 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
         .prepare(edits, Fail::Immediately, Fail::Immediately)?
         .commit(committer().to_ref())?;
     assert_eq!(
-        edits.len(),
-        2,
-        "it claims to have performed all desired operations, even though some don't make it into the pack as 'side-car'"
-    );
+            edits.len(),
+            2,
+            "it claims to have performed all desired operations, even though some don't make it into the pack as 'side-car'"
+        );
 
     assert_eq!(
         store.loose_iter()?.filter_map(Result::ok).count(),

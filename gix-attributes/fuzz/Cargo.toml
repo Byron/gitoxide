@@ -1,0 +1,28 @@
+[package]
+name = "gix-attributes-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+anyhow = "1.0.75"
+arbitrary = { version = "1.3.2", features = ["derive"] }
+libfuzzer-sys = "0.4"
+gix-attributes = { path = ".." }
+gix-glob = { path = "../../gix-glob" }
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "fuzz_search"
+path = "fuzz_targets/fuzz_search.rs"
+test = false
+doc = false

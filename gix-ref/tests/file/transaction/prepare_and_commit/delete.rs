@@ -426,7 +426,6 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
 fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
     for mode in ["must-exist", "may-exist"] {
         let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
-
         let edits = store
             .transaction()
             .prepare(

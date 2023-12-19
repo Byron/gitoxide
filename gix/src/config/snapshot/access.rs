@@ -1,5 +1,6 @@
 #![allow(clippy::result_large_err)]
 use std::borrow::Cow;
+use std::ffi::OsStr;
 
 use gix_features::threading::OwnShared;
 use gix_macros::momo;
@@ -51,7 +52,7 @@ impl<'repo> Snapshot<'repo> {
     ///
     /// Note that this method takes the most recent value at `key` even if it is from a file with reduced trust.
     #[momo]
-    pub fn string<'a>(&self, key: impl Into<&'a BStr>) -> Option<Cow<'_, BStr>> {
+    pub fn string<'a>(&self, key: impl Into<&'a BStr>) -> Option<Cow<'repo, BStr>> {
         self.repo.config.resolved.string_by_key(key)
     }
 
@@ -62,11 +63,26 @@ impl<'repo> Snapshot<'repo> {
     pub fn trusted_path<'a>(
         &self,
         key: impl Into<&'a BStr>,
-    ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
+    ) -> Option<Result<Cow<'repo, std::path::Path>, gix_config::path::interpolate::Error>> {
         let key = gix_config::parse::key(key.into())?;
         self.repo
             .config
             .trusted_file_path(key.section_name, key.subsection_name, key.value_name)
+    }
+
+    /// Return the trusted string at `key` for launching using [command::prepare()](gix_command::prepare()),
+    /// or `None` if there is no such value or if no value was found in a trusted file.
+    #[momo]
+    pub fn trusted_program<'a>(&self, key: impl Into<&'a BStr>) -> Option<Cow<'repo, OsStr>> {
+        let value = self
+            .repo
+            .config
+            .resolved
+            .string_filter_by_key(key, &mut self.repo.config.filter_config_section.clone())?;
+        Some(match gix_path::from_bstr(value) {
+            Cow::Borrowed(v) => Cow::Borrowed(v.as_os_str()),
+            Cow::Owned(v) => Cow::Owned(v.into_os_string()),
+        })
     }
 }
 

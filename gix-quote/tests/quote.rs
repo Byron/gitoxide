@@ -80,5 +80,12 @@ mod ansi_c {
             assert_eq!(unquoted, std::borrow::Cow::Borrowed(b"hello there".as_bstr()));
             assert_eq!(&input[consumed..], " out of quote");
         }
+
+        #[test]
+        fn fuzzed() {
+            for invalid in ["\"\\", "\"Q\u{2}QT\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\0\0\\"] {
+                assert!(ansi_c::undo(invalid.into()).is_err());
+            }
+        }
     }
 }
