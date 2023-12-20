@@ -55,11 +55,16 @@ impl Metadata {
         #[cfg(not(windows))]
         {
             Some(system_time_from_secs_nanos(
+                #[cfg(not(target_os = "aix"))]
                 self.0.st_mtime.try_into().ok()?,
-                #[cfg(not(target_os = "netbsd"))]
+                #[cfg(target_os = "aix")]
+                self.0.st_mtim.tv_sec.try_into().ok()?,
+                #[cfg(not(any(target_os = "netbsd", target_os = "aix")))]
                 self.0.st_mtime_nsec.try_into().ok()?,
                 #[cfg(target_os = "netbsd")]
                 self.0.st_mtimensec.try_into().ok()?,
+                #[cfg(target_os = "aix")]
+                self.0.st_mtim.tv_nsec.try_into().ok()?,
             ))
         }
         #[cfg(windows)]
@@ -74,11 +79,16 @@ impl Metadata {
         #[cfg(not(windows))]
         {
             Some(system_time_from_secs_nanos(
+                #[cfg(not(target_os = "aix"))]
                 self.0.st_ctime.try_into().ok()?,
-                #[cfg(not(target_os = "netbsd"))]
+                #[cfg(target_os = "aix")]
+                self.0.st_ctim.tv_sec.try_into().ok()?,
+                #[cfg(not(any(target_os = "netbsd", target_os = "aix")))]
                 self.0.st_ctime_nsec.try_into().ok()?,
                 #[cfg(target_os = "netbsd")]
                 self.0.st_ctimensec.try_into().ok()?,
+                #[cfg(target_os = "aix")]
+                self.0.st_ctim.tv_nsec.try_into().ok()?,
             ))
         }
         #[cfg(windows)]
