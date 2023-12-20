@@ -54,27 +54,27 @@ use bstr::{BStr, BString, ByteSlice};
 /// assert_eq!(normalize_bstr(r#"hello "world\"""#), Cow::<BStr>::Owned(BString::from(r#"hello world""#)));
 /// ```
 #[must_use]
-pub fn normalize(input: Cow<'_, BStr>) -> Cow<'_, BStr> {
+pub fn normalize(mut input: Cow<'_, BStr>) -> Cow<'_, BStr> {
     if input.as_ref() == "\"\"" {
         return Cow::Borrowed("".into());
     }
-
-    let size = input.len();
-    if size >= 3 && input[0] == b'"' && input[size - 1] == b'"' && input[size - 2] != b'\\' {
-        match input {
-            Cow::Borrowed(input) => return normalize_bstr(&input[1..size - 1]),
-            Cow::Owned(mut input) => {
+    // An optimization to strip enclosing quotes without producing a new value/copy it.
+    while input.len() >= 3 && input[0] == b'"' && input[input.len() - 1] == b'"' && input[input.len() - 2] != b'\\' {
+        match &mut input {
+            Cow::Borrowed(input) => *input = &input[1..input.len() - 1],
+            Cow::Owned(input) => {
                 input.pop();
                 input.remove(0);
-                return normalize_bstring(input);
             }
+        }
+        if input.as_ref() == "\"\"" {
+            return Cow::Borrowed("".into());
         }
     }
 
-    if input.find_byteset(b"\\\"").is_none() {
+    if input.find_byteset(br#"\""#).is_none() {
         return input;
     }
-
     let mut out: BString = Vec::with_capacity(input.len()).into();
     let mut bytes = input.iter().copied();
     while let Some(c) = bytes.next() {
