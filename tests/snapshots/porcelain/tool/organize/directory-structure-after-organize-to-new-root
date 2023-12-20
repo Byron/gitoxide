@@ -1,8 +1,0 @@
-.
-./dir
-./example.com
-./example.com/one-origin
-./no-origin
-./no-origin/.git
-./special-origin
-./special-origin/.git

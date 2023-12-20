@@ -1,4 +1,0 @@
-Error: Could not access repository or failed to read streaming pack file
-
-Caused by:
-    Want to get specific refs, but remote doesn't support this capability
