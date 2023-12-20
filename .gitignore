@@ -9,3 +9,6 @@ target/
 /tests/fixtures/commit-graphs/
 
 **/generated-do-not-edit/
+
+# Cargo lock files of fuzz targets - let's have the latest versions of everything under test
+**/fuzz/Cargo.lock
