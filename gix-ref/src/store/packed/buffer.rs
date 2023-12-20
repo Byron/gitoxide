@@ -26,24 +26,8 @@ pub mod open {
 
     /// Initialization
     impl packed::Buffer {
-        /// Open the file at `path` and map it into memory if the file size is larger than `use_memory_map_if_larger_than_bytes`.
-        ///
-        /// In order to allow fast lookups and optimizations, the contents of the packed refs must be sorted.
-        /// If that's not the case, they will be sorted on the fly with the data being written into a memory buffer.
-        pub fn open(path: PathBuf, use_memory_map_if_larger_than_bytes: u64) -> Result<Self, Error> {
+        fn open_with_backing(backing: packed::Backing, path: PathBuf) -> Result<Self, Error> {
             let (backing, offset) = {
-                let backing = if std::fs::metadata(&path)?.len() <= use_memory_map_if_larger_than_bytes {
-                    packed::Backing::InMemory(std::fs::read(&path)?)
-                } else {
-                    packed::Backing::Mapped(
-                        // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
-                        #[allow(unsafe_code)]
-                        unsafe {
-                            Mmap::map(&std::fs::File::open(&path)?)?
-                        },
-                    )
-                };
-
                 let (offset, sorted) = {
                     let mut input = backing.as_ref();
                     if *input.first().unwrap_or(&b' ') == b'#' {
@@ -83,6 +67,34 @@ pub mod open {
                 data: backing,
                 path,
             })
+        }
+
+        /// Open the file at `path` and map it into memory if the file size is larger than `use_memory_map_if_larger_than_bytes`.
+        ///
+        /// In order to allow fast lookups and optimizations, the contents of the packed refs must be sorted.
+        /// If that's not the case, they will be sorted on the fly with the data being written into a memory buffer.
+        pub fn open(path: PathBuf, use_memory_map_if_larger_than_bytes: u64) -> Result<Self, Error> {
+            let backing = if std::fs::metadata(&path)?.len() <= use_memory_map_if_larger_than_bytes {
+                packed::Backing::InMemory(std::fs::read(&path)?)
+            } else {
+                packed::Backing::Mapped(
+                    // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
+                    #[allow(unsafe_code)]
+                    unsafe {
+                        Mmap::map(&std::fs::File::open(&path)?)?
+                    },
+                )
+            };
+            Self::open_with_backing(backing, path)
+        }
+
+        /// Open a buffer from `bytes`, which is the content of a typical `packed-refs` file.
+        ///
+        /// In order to allow fast lookups and optimizations, the contents of the packed refs must be sorted.
+        /// If that's not the case, they will be sorted on the fly.
+        pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+            let backing = packed::Backing::InMemory(bytes.into());
+            Self::open_with_backing(backing, PathBuf::from("<memory>"))
         }
     }
 

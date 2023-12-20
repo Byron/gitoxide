@@ -1,0 +1,42 @@
+[package]
+name = "gix-ref-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+anyhow = "1.0.75"
+arbitrary = { version = "1.3.2", features = ["derive"] }
+bstr = "1.8.0"
+libfuzzer-sys = "0.4"
+
+[dependencies.gix-ref]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "fuzz_names"
+path = "fuzz_targets/fuzz_names.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_log"
+path = "fuzz_targets/fuzz_log.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_packed_buffer"
+path = "fuzz_targets/fuzz_packed_buffer.rs"
+test = false
+doc = false
