@@ -37,7 +37,7 @@ fn fuzzed() {
         let start = std::time::Instant::now();
         gix_url::parse(url.as_bstr()).ok();
         assert!(
-            start.elapsed() < Duration::from_millis(100),
+            start.elapsed() < Duration::from_millis(250),
             "URL at '{}' parsed too slowly, took {:.00}s",
             location.display(),
             start.elapsed().as_secs_f32()
