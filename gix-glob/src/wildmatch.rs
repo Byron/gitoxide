@@ -22,6 +22,7 @@ pub(crate) mod function {
         NoMatch,
         AbortAll,
         AbortToStarStar,
+        RecursionLimitReached,
     }
 
     const STAR: u8 = b'*';
@@ -32,8 +33,13 @@ pub(crate) mod function {
     const COLON: u8 = b':';
 
     const NEGATE_CLASS: u8 = b'!';
+    /// Setting this limit to something reasonable means less compute time spent on unnecessarily complex patterns, or malicious ones.
+    const RECURSION_LIMIT: usize = 64;
 
-    fn match_recursive(pattern: &BStr, text: &BStr, mode: Mode) -> Result {
+    fn match_recursive(pattern: &BStr, text: &BStr, mode: Mode, depth: usize) -> Result {
+        if depth == RECURSION_LIMIT {
+            return RecursionLimitReached;
+        }
         use self::Result::*;
         let possibly_lowercase = |c: &u8| {
             if mode.contains(Mode::IGNORE_CASE) {
@@ -89,7 +95,12 @@ pub(crate) mod function {
                                     })
                                 {
                                     if next.map_or(NoMatch, |(idx, _)| {
-                                        match_recursive(pattern[idx + 1..].as_bstr(), text[t_idx..].as_bstr(), mode)
+                                        match_recursive(
+                                            pattern[idx + 1..].as_bstr(),
+                                            text[t_idx..].as_bstr(),
+                                            mode,
+                                            depth + 1,
+                                        )
                                     }) == Match
                                     {
                                         return Match;
@@ -152,7 +163,7 @@ pub(crate) mod function {
                                 return NoMatch;
                             }
                         }
-                        let res = match_recursive(pattern[p_idx..].as_bstr(), text[t_idx..].as_bstr(), mode);
+                        let res = match_recursive(pattern[p_idx..].as_bstr(), text[t_idx..].as_bstr(), mode, depth + 1);
                         if res != NoMatch {
                             if !match_slash || res != AbortToStarStar {
                                 return res;
@@ -352,6 +363,10 @@ pub(crate) mod function {
     ///
     /// `mode` can be used to adjust the way the matching is performed.
     pub fn wildmatch(pattern: &BStr, value: &BStr, mode: Mode) -> bool {
-        match_recursive(pattern, value, mode) == Result::Match
+        let res = match_recursive(pattern, value, mode, 0);
+        if res == Result::RecursionLimitReached {
+            gix_features::trace::error!("Recursion limit of {} reached for pattern '{pattern}'", RECURSION_LIMIT);
+        }
+        res == Result::Match
     }
 }
