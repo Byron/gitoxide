@@ -15,7 +15,7 @@ jobs:
      with:
        oss-fuzz-project-name: 'gitoxide'
        language: rust
-       fuzz-seconds: 600
+       fuzz-seconds: 840
    - name: Upload Crash
      uses: actions/upload-artifact@v3
      if: failure() && steps.build.outcome == 'success'
