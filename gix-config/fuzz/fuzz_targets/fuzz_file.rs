@@ -1,32 +1,75 @@
 #![no_main]
 
+use anyhow::Result;
 use arbitrary::Arbitrary;
+use bstr::BStr;
 use gix_config::{
     file::{init::Options, Metadata},
     File,
 };
 use libfuzzer_sys::fuzz_target;
+use std::error::Error;
+use std::fmt;
 use std::hint::black_box;
 
 #[derive(Arbitrary, Debug)]
 struct Ctx<'a> {
     input: &'a [u8],
     sections_by_name: &'a str,
+    section_subsection_key_triples: Vec<(&'a str, Option<&'a [u8]>, &'a str)>,
 }
 
-macro_rules! unwrap_or_return {
-    ($e:expr) => {
-        match $e {
-            Ok(val) => val,
-            Err(_) => return,
-        }
-    };
-}
+const DEFAULT_TRIPLE: (&str, Option<&'static [u8]>, &str) = ("section", Some(b"subsection"), "key");
 
-fuzz_target!(|ctx: Ctx| {
+fn fuzz(ctx: Ctx) -> Result<()> {
     let meta = Metadata::default();
     let options = Options::default();
-    let file = unwrap_or_return!(File::from_bytes_no_includes(&ctx.input, meta.clone(), options.clone()));
+    let file = File::from_bytes_no_includes(&ctx.input, meta.clone(), options.clone())?;
+
+    let mut triples = ctx.section_subsection_key_triples.iter();
+
+    let (section_name, subsection_name, key) = triples.next().unwrap_or(&DEFAULT_TRIPLE);
+    _ = black_box(file.string(section_name, subsection_name.map(|x| BStr::new(x)), key));
+    _ = black_box(file.string_by_key(BStr::new(key)));
+    _ = black_box(file.string_filter(section_name, subsection_name.map(|x| BStr::new(x)), key, &mut |_| false));
+    _ = black_box(file.string_filter_by_key(BStr::new(key), &mut |_| false));
+
+    let (section_name, subsection_name, key) = triples.next().unwrap_or(&DEFAULT_TRIPLE);
+    _ = black_box(file.path(section_name, subsection_name.map(|x| BStr::new(x)), key));
+    _ = black_box(file.path_by_key(BStr::new(key)));
+    _ = black_box(file.path_filter(section_name, subsection_name.map(|x| BStr::new(x)), key, &mut |_| false));
+    _ = black_box(file.path_filter_by_key(BStr::new(key), &mut |_| false));
+
+    let (section_name, subsection_name, key) = triples.next().unwrap_or(&DEFAULT_TRIPLE);
+    _ = black_box(file.boolean(section_name, subsection_name.map(|x| BStr::new(x)), key));
+    _ = black_box(file.boolean_by_key(BStr::new(key)));
+    _ = black_box(file.boolean_filter(section_name, subsection_name.map(|x| BStr::new(x)), key, &mut |_| false));
+    _ = black_box(file.boolean_filter_by_key(BStr::new(key), &mut |_| false));
+
+    let (section_name, subsection_name, key) = triples.next().unwrap_or(&DEFAULT_TRIPLE);
+    _ = black_box(file.integer(section_name, subsection_name.map(|x| BStr::new(x)), key));
+    _ = black_box(file.integer_by_key(BStr::new(key)));
+    _ = black_box(file.integer_filter(section_name, subsection_name.map(|x| BStr::new(x)), key, &mut |_| false));
+    _ = black_box(file.integer_filter_by_key(BStr::new(key), &mut |_| false));
+
+    let (section_name, subsection_name, key) = triples.next().unwrap_or(&DEFAULT_TRIPLE);
+    _ = black_box(file.strings(section_name, subsection_name.map(|x| BStr::new(x)), key));
+    _ = black_box(file.strings_by_key(BStr::new(key)));
+    _ = black_box(file.strings_filter(section_name, subsection_name.map(|x| BStr::new(x)), key, &mut |_| false));
+    _ = black_box(file.strings_filter_by_key(BStr::new(key), &mut |_| false));
+
+    let (section_name, subsection_name, key) = triples.next().unwrap_or(&DEFAULT_TRIPLE);
+    _ = black_box(file.integers(section_name, subsection_name.map(|x| BStr::new(x)), key));
+    _ = black_box(file.integers_by_key(BStr::new(key)));
+    _ = black_box(file.integers_filter(section_name, subsection_name.map(|x| BStr::new(x)), key, &mut |_| false));
+    _ = black_box(file.integers_filter_by_key(BStr::new(key), &mut |_| false));
+
+    let (section_name, subsection_name, key) = triples.next().unwrap_or(&DEFAULT_TRIPLE);
+    _ = black_box(file.integers(section_name, subsection_name.map(|x| BStr::new(x)), key));
+    _ = black_box(file.integers_by_key(BStr::new(key)));
+    _ = black_box(file.integers_filter(section_name, subsection_name.map(|x| BStr::new(x)), key, &mut |_| false));
+    _ = black_box(file.integers_filter_by_key(BStr::new(key), &mut |_| false));
+
     _ = black_box(file.sections().count());
     _ = black_box(file.sections_and_ids().count());
     _ = black_box(file.sections_and_postmatter().count());
@@ -44,9 +87,14 @@ fuzz_target!(|ctx: Ctx| {
     }
 
     let roundtrip_as_string: Vec<u8> = file.to_bstring().into();
-    _ = unwrap_or_return!(black_box(File::from_bytes_no_includes(
+    _ = black_box(File::from_bytes_no_includes(
         &roundtrip_as_string,
         meta.clone(),
         options.clone(),
-    )));
+    ))?;
+    Ok(())
+}
+
+fuzz_target!(|ctx: Ctx| {
+    _ = black_box(fuzz(ctx));
 });
