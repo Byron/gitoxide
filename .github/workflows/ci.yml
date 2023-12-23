@@ -42,7 +42,7 @@ jobs:
       - name: install Rust via Rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal;
       - uses: Swatinem/rust-cache@v2
-      - run: /github/home/.cargo/bin/cargo build --no-default-features --features max-pure
+      - run: /github/home/.cargo/bin/cargo install --debug --locked --no-default-features --features max-pure --path .
 
   test:
     runs-on: ubuntu-latest

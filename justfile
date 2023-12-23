@@ -242,3 +242,7 @@ fmt:
     cargo +nightly fmt --all -- --config-path rustfmt-nightly.toml
     cargo +stable fmt --all -- --check
     just --fmt --unstable
+
+# Cancel this after the first few seconds, as yanked crates will appear in warnings.
+find-yanked:
+    cargo install --debug --locked --no-default-features --features max-pure --path .
