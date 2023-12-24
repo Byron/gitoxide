@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{
     convert::{TryFrom, TryInto},
     path::Path,
@@ -62,24 +63,13 @@ impl File {
     pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
         Self::try_from(path.as_ref())
     }
-}
 
-impl TryFrom<&Path> for File {
-    type Error = Error;
-
-    fn try_from(path: &Path) -> Result<Self, Self::Error> {
-        let data = std::fs::File::open(path)
-            .and_then(|file| {
-                // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
-                #[allow(unsafe_code)]
-                unsafe {
-                    Mmap::map(&file)
-                }
-            })
-            .map_err(|e| Error::Io {
-                err: e,
-                path: path.to_owned(),
-            })?;
+    /// A lower-level constructor which constructs a new instance directly from the mapping in `data`,
+    /// assuming that it originated from `path`.
+    ///
+    /// Note that `path` is only used for verification of the hash its basename contains, but otherwise
+    /// is not of importance.
+    pub fn new(data: memmap2::Mmap, path: PathBuf) -> Result<File, Error> {
         let data_size = data.len();
         if data_size < MIN_FILE_SIZE {
             return Err(Error::Corrupt(
@@ -240,10 +230,30 @@ impl TryFrom<&Path> for File {
             extra_edges_list_range,
             fan,
             oid_lookup_offset,
-            path: path.to_owned(),
+            path,
             hash_len: object_hash.len_in_bytes(),
             object_hash,
         })
+    }
+}
+
+impl TryFrom<&Path> for File {
+    type Error = Error;
+
+    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+        let data = std::fs::File::open(path)
+            .and_then(|file| {
+                // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
+                #[allow(unsafe_code)]
+                unsafe {
+                    Mmap::map(&file)
+                }
+            })
+            .map_err(|e| Error::Io {
+                err: e,
+                path: path.to_owned(),
+            })?;
+        Self::new(data, path.to_owned())
     }
 }
 
