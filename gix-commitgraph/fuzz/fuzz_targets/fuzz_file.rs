@@ -1,17 +1,17 @@
 #![no_main]
 
 use anyhow::Result;
-use arbitrary::Arbitrary;
 use gix_commitgraph::File;
 use libfuzzer_sys::fuzz_target;
-use std::fs;
 use std::hint::black_box;
-use tempfile::NamedTempFile;
 
 fn fuzz(data: &[u8]) -> Result<()> {
-    let named_temp_file = NamedTempFile::new()?;
-    fs::write(named_temp_file.path(), data).expect("Unable to write fuzzed file");
-    let file = File::try_from(named_temp_file.path())?;
+    let data = {
+        let mut d = memmap2::MmapMut::map_anon(data.len())?;
+        d.copy_from_slice(data);
+        d.make_read_only()?
+    };
+    let file = File::new(data, "does not matter".into())?;
 
     _ = black_box(file.iter_base_graph_ids().count());
     _ = black_box(file.iter_commits().count());
