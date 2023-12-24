@@ -9,7 +9,11 @@ fn fuzz(data: &[u8]) -> Result<()> {
     _ = black_box(url.user());
     _ = black_box(url.password());
     _ = black_box(url.password());
-    _ = black_box(url.host_argument_safe());
+    if let Some(safe_host) = black_box(url.host_argument_safe()) {
+        // Ensure malicious host paths can't be returned see;
+        // https://secure.phabricator.com/T12961
+        assert!(!safe_host.starts_with("ssh://-"));
+    }
     _ = black_box(url.path_argument_safe());
     _ = black_box(url.path_is_root());
     _ = black_box(url.port_or_default());
