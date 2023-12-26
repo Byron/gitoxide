@@ -67,6 +67,11 @@ impl TryFrom<&BStr> for Integer {
             return Err(int_err(s));
         }
 
+        let last_idx = s.len() - 1;
+        if !s.is_char_boundary(last_idx) {
+            return Err(int_err(s));
+        }
+
         let (number, suffix) = s.split_at(s.len() - 1);
         if let (Ok(value), Ok(suffix)) = (number.parse(), suffix.parse()) {
             Ok(Self {

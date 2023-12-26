@@ -53,6 +53,7 @@ fn invalid_from_str() {
     assert!(Integer::try_from(b("g")).is_err());
     assert!(Integer::try_from(b("123123123123123123123123")).is_err());
     assert!(Integer::try_from(b("gg")).is_err());
+    assert!(Integer::try_from(b("™️🤦‍♂️")).is_err());
 }
 
 #[test]
