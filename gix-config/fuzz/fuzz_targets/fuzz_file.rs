@@ -8,8 +8,6 @@ use gix_config::{
     File,
 };
 use libfuzzer_sys::fuzz_target;
-use std::error::Error;
-use std::fmt;
 use std::hint::black_box;
 
 #[derive(Arbitrary, Debug)]
