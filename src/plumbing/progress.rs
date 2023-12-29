@@ -5,7 +5,9 @@ use std::{
 
 use crosstermion::crossterm::style::Stylize;
 use owo_colors::OwoColorize;
-use tabled::{Style, TableIteratorExt, Tabled};
+use tabled::settings::peaker::PriorityMax;
+use tabled::settings::{Extract, Style, Width};
+use tabled::Tabled;
 
 #[derive(Clone)]
 enum Usage {
@@ -95,7 +97,7 @@ impl Tabled for Record {
     }
 
     fn headers() -> Vec<Cow<'static, str>> {
-        vec![]
+        vec!["icon".into(), "key".into(), "info".into()]
     }
 }
 
@@ -572,7 +574,17 @@ pub fn show_progress() -> anyhow::Result<()> {
             .filter(|e| matches!(e.usage, NotApplicable { .. }))
             .count()
     )?;
-    println!("{}", sorted.table().with(Style::blank()));
+
+    let mut table = tabled::Table::new(sorted);
+    let table = table.with(Style::blank()).with(Extract::rows(1..));
+    println!(
+        "{}",
+        if let Some((terminal_size::Width(w), _)) = terminal_size::terminal_size() {
+            table.with(Width::wrap(w as usize).keep_words().priority::<PriorityMax>())
+        } else {
+            table
+        }
+    );
     println!("{buf}");
     Ok(())
 }
