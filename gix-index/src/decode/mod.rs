@@ -213,7 +213,7 @@ impl State {
             });
         }
 
-        let checksum = gix_hash::ObjectId::from(data);
+        let checksum = gix_hash::ObjectId::from_bytes_or_panic(data);
         let checksum = (!checksum.is_null()).then_some(checksum);
         if let Some((expected_checksum, actual_checksum)) = expected_checksum.zip(checksum) {
             if actual_checksum != expected_checksum {

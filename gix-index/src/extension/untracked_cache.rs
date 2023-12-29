@@ -100,7 +100,7 @@ pub fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Option<UntrackedCache
     hash_valid.for_each_set_bit(|index| {
         let (hash, rest) = split_at_pos(data, hash_len)?;
         data = rest;
-        directories[index].exclude_file_oid = ObjectId::from(hash).into();
+        directories[index].exclude_file_oid = ObjectId::from_bytes_or_panic(hash).into();
         Some(())
     });
 
@@ -149,7 +149,7 @@ fn decode_oid_stat(data: &[u8], hash_len: usize) -> Option<(OidStat, &[u8])> {
     Some((
         OidStat {
             stat,
-            id: ObjectId::from(hash),
+            id: ObjectId::from_bytes_or_panic(hash),
         },
         data,
     ))

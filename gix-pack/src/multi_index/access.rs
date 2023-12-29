@@ -51,7 +51,7 @@ impl File {
     ///
     /// It can be used to validate it didn't change after creation.
     pub fn checksum(&self) -> gix_hash::ObjectId {
-        gix_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
+        gix_hash::ObjectId::from_bytes_or_panic(&self.data[self.data.len() - self.hash_len..])
     }
     /// Return all names of index files (`*.idx`) whose objects we contain.
     ///

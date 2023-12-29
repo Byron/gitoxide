@@ -29,7 +29,7 @@ fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
 
     let (id, mut data) = if num_entries >= 0 {
         let (hash, data) = split_at_pos(data, hash_len)?;
-        (ObjectId::from(hash), data)
+        (ObjectId::from_bytes_or_panic(hash), data)
     } else {
         (
             ObjectId::null(gix_hash::Kind::from_hex_len(hash_len * 2).expect("valid hex_len")),

@@ -27,7 +27,7 @@ impl data::Entry {
             }
             REF_DELTA => {
                 let delta = RefDelta {
-                    base_id: gix_hash::ObjectId::from(&d[consumed..][..hash_len]),
+                    base_id: gix_hash::ObjectId::from_bytes_or_panic(&d[consumed..][..hash_len]),
                 };
                 consumed += hash_len;
                 delta
@@ -69,7 +69,7 @@ impl data::Entry {
                 r.read_exact(hash)?;
                 #[allow(clippy::redundant_slicing)]
                 let delta = RefDelta {
-                    base_id: gix_hash::ObjectId::from(&hash[..]),
+                    base_id: gix_hash::ObjectId::from_bytes_or_panic(&hash[..]),
                 };
                 consumed += hash_len;
                 delta

@@ -51,7 +51,7 @@ pub fn decode(mut data: &[u8], object_hash: gix_hash::Kind) -> Option<Paths> {
             data = rest;
             *stage = Some(Stage {
                 mode: *mode,
-                id: ObjectId::from(hash),
+                id: ObjectId::from_bytes_or_panic(hash),
             });
         }
 

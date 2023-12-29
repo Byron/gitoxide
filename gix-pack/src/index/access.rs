@@ -36,7 +36,7 @@ impl index::File {
                 .map(|c| {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
-                        oid: gix_hash::ObjectId::from(oid),
+                        oid: gix_hash::ObjectId::from_bytes_or_panic(oid),
                         pack_offset: crate::read_u32(ofs) as u64,
                         crc32: None,
                     }
@@ -55,7 +55,7 @@ impl index::File {
             )
             .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
-                oid: gix_hash::ObjectId::from(oid),
+                oid: gix_hash::ObjectId::from_bytes_or_panic(oid),
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(crate::read_u32(crc32)),
             }),
