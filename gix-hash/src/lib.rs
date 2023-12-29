@@ -11,7 +11,7 @@
 
 #[path = "oid.rs"]
 mod borrowed;
-pub use borrowed::oid;
+pub use borrowed::{oid, Error};
 
 mod object_id;
 pub use object_id::{decode, ObjectId};

@@ -1,6 +1,5 @@
 use std::{
     borrow::Borrow,
-    convert::TryInto,
     hash::{Hash, Hasher},
     ops::Deref,
 };
@@ -152,6 +151,19 @@ impl ObjectId {
     }
 }
 
+/// Lifecycle
+impl ObjectId {
+    /// Convert `bytes` into an owned object Id or panic if the slice length doesn't indicate a supported hash.
+    ///
+    /// Use `Self::try_from(bytes)` for a fallible version.
+    pub fn from_bytes_or_panic(bytes: &[u8]) -> Self {
+        match bytes.len() {
+            20 => Self::Sha1(bytes.try_into().expect("prior length validation")),
+            other => panic!("BUG: unsupported hash len: {other}"),
+        }
+    }
+}
+
 /// Sha1 hash specific methods
 impl ObjectId {
     /// Instantiate an Digest from 20 bytes of a Sha1 digest.
@@ -195,20 +207,19 @@ impl From<[u8; SIZE_OF_SHA1_DIGEST]> for ObjectId {
     }
 }
 
-impl From<&[u8]> for ObjectId {
-    fn from(v: &[u8]) -> Self {
-        match v.len() {
-            20 => Self::Sha1(v.try_into().expect("prior length validation")),
-            other => panic!("BUG: unsupported hash len: {other}"),
-        }
-    }
-}
-
 impl From<&oid> for ObjectId {
     fn from(v: &oid) -> Self {
         match v.kind() {
             Kind::Sha1 => ObjectId::from_20_bytes(v.as_bytes()),
         }
+    }
+}
+
+impl TryFrom<&[u8]> for ObjectId {
+    type Error = crate::Error;
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        Ok(oid::try_from_bytes(bytes)?.into())
     }
 }
 
