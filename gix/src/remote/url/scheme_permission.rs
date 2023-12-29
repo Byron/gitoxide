@@ -72,7 +72,7 @@ impl SchemePermission {
                         scheme
                             .to_str()
                             .ok()
-                            .and_then(|scheme| gix_url::Scheme::try_from(scheme).ok().map(|scheme| (section, scheme)))
+                            .map(|scheme| (section, gix_url::Scheme::from(scheme)))
                     })
                 }) {
                     if let Some(value) = section

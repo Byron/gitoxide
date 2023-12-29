@@ -59,24 +59,6 @@ fn validated_name(name: Cow<'_, BStr>) -> Result<Cow<'_, BStr>, Error> {
         .ok_or(Error::InvalidName)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn empty_header_names_are_legal() {
-        assert!(Header::new("", None).is_ok(), "yes, git allows this, so do we");
-    }
-
-    #[test]
-    fn empty_header_sub_names_are_legal() {
-        assert!(
-            Header::new("remote", Some(Cow::Borrowed("".into()))).is_ok(),
-            "yes, git allows this, so do we"
-        );
-    }
-}
-
 impl Header<'_> {
     ///Return true if this is a header like `[legacy.subsection]`, or false otherwise.
     pub fn is_legacy(&self) -> bool {
@@ -176,5 +158,23 @@ impl From<&Header<'_>> for BString {
 impl<'a> From<Header<'a>> for Event<'a> {
     fn from(header: Header<'_>) -> Event<'_> {
         Event::SectionHeader(header)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_header_names_are_legal() {
+        assert!(Header::new("", None).is_ok(), "yes, git allows this, so do we");
+    }
+
+    #[test]
+    fn empty_header_sub_names_are_legal() {
+        assert!(
+            Header::new("remote", Some(Cow::Borrowed("".into()))).is_ok(),
+            "yes, git allows this, so do we"
+        );
     }
 }

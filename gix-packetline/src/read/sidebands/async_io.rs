@@ -72,24 +72,6 @@ enum State<'a, T> {
 #[allow(unsafe_code, clippy::non_send_fields_in_send_ty)]
 unsafe impl<'a, T> Send for State<'a, T> where T: Send {}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    fn receiver<T: Send>(_i: T) {}
-
-    /// We want to declare items containing pointers of `StreamingPeekableIter` `Send` as well, so it must be `Send` itself.
-    #[test]
-    fn streaming_peekable_iter_is_send() {
-        receiver(StreamingPeekableIter::new(Vec::<u8>::new(), &[], false));
-    }
-
-    #[test]
-    fn state_is_send() {
-        let mut s = StreamingPeekableIter::new(Vec::<u8>::new(), &[], false);
-        receiver(State::Idle { parent: Some(&mut s) });
-    }
-}
-
 impl<'a, T, F> WithSidebands<'a, T, F>
 where
     T: AsyncRead + Unpin,
@@ -379,5 +361,23 @@ where
         };
         self.consume(nread);
         Poll::Ready(Ok(nread))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn receiver<T: Send>(_i: T) {}
+
+    /// We want to declare items containing pointers of `StreamingPeekableIter` `Send` as well, so it must be `Send` itself.
+    #[test]
+    fn streaming_peekable_iter_is_send() {
+        receiver(StreamingPeekableIter::new(Vec::<u8>::new(), &[], false));
+    }
+
+    #[test]
+    fn state_is_send() {
+        let mut s = StreamingPeekableIter::new(Vec::<u8>::new(), &[], false);
+        receiver(State::Idle { parent: Some(&mut s) });
     }
 }
