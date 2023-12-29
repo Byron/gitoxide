@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+
+### New Features
+
+ - <csr-id-8053710e2940ced8ab8a7805de3bb94408352a9e/> Fuzz more of the gix-config api
+
+### Bug Fixes
+
+ - <csr-id-1fe600e72911c2f27b20be312b2e805451e7d58c/> assure that `GIT_CONFIG_NOSYTEM` is treated as boolean.
+   That way, it can also be deactivated, which is exactly what `git`
+   does.
+
+### Other
+
+ - <csr-id-14460020ff5f5c6f1d5c4089d35d7d6932604d14/> Add a fuzz harness for File
+ - <csr-id-ebc051c1d470bbb063deb9ff57ba058b93f1e8a3/> Add fuzzer for file::Section
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 23 commits contributed to the release over the course of 21 calendar days.
+ - 22 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
+    - Thanks clippy ([`d38d1cc`](https://github.com/Byron/gitoxide/commit/d38d1cc1aa3402629a0f182324e3310e730ce3f2))
+    - Merge branch 'fix-config' ([`7ddf948`](https://github.com/Byron/gitoxide/commit/7ddf948302c4a5b9783a5c589b0e783a739e30a1))
+    - Remove unused imports ([`f89e6c4`](https://github.com/Byron/gitoxide/commit/f89e6c4f620752f012ab6872df5439e1fed918e2))
+    - Merge branch 'fuzz-gix-config' ([`0f71709`](https://github.com/Byron/gitoxide/commit/0f717092313391ad663a41bf1a898d9970188db2))
+    - Add corpus builder for config ([`27490d9`](https://github.com/Byron/gitoxide/commit/27490d989971559a38e03f5819f990d57a57f16b))
+    - Fuzz more of gix_config::File ([`c6d1635`](https://github.com/Byron/gitoxide/commit/c6d1635b0ebb136b0ed7815a2a94386d554dc5fd))
+    - Merge branch 'gix-config-fix' ([`b6d4e99`](https://github.com/Byron/gitoxide/commit/b6d4e993b90e3fed4a9e27b6ccaa2f56c4e12ed8))
+    - Disable CI fuzzing while it's broken ([`75f48d6`](https://github.com/Byron/gitoxide/commit/75f48d6b3643b915d1538383291167f8e66bcaa1))
+    - Reproduce fuzzed issue leading to stack-overflow, and fix it. ([`90219cd`](https://github.com/Byron/gitoxide/commit/90219cd87742cd0a94fe7c4b7c9d8639e68adbdf))
+    - Merge branch 'gix-config' ([`7917c13`](https://github.com/Byron/gitoxide/commit/7917c13258d7765e06cf30ab2cbe9fcb8c2f6619))
+    - Remove `file_section` test in favor of integrating reasonsable tests with `file`. ([`64a4a75`](https://github.com/Byron/gitoxide/commit/64a4a75942e7737c2ef94edab0f593f92e58f373))
+    - Add a fuzz harness for File ([`1446002`](https://github.com/Byron/gitoxide/commit/14460020ff5f5c6f1d5c4089d35d7d6932604d14))
+    - Add fuzzer for file::Section ([`ebc051c`](https://github.com/Byron/gitoxide/commit/ebc051c1d470bbb063deb9ff57ba058b93f1e8a3))
+    - Merge pull request #1186 from silvergasp/fuzz-gix-config ([`f5a0296`](https://github.com/Byron/gitoxide/commit/f5a0296cec2eab00dc62922f3780966438cf2a2a))
+    - Fuzz more of the gix-config api ([`8053710`](https://github.com/Byron/gitoxide/commit/8053710e2940ced8ab8a7805de3bb94408352a9e))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+    - Release gix-ref v0.39.1 ([`c1cfe6e`](https://github.com/Byron/gitoxide/commit/c1cfe6e4ab0d97ca98e93e1c01d9afa3b2c9a351))
+    - Merge branch 'archive-handling' ([`7549559`](https://github.com/Byron/gitoxide/commit/7549559fcbf42249939f41fd7aa34b4449eb1fec))
+    - Check all git-lfs managed files into the repository ([`35439de`](https://github.com/Byron/gitoxide/commit/35439defd2d71779d4b3795b7652cde18ff11150))
+    - Merge branch '32bit' ([`ff1542c`](https://github.com/Byron/gitoxide/commit/ff1542cedf3072a8c7c493d454aef5cc61de6d4c))
+    - Assure that `GIT_CONFIG_NOSYTEM` is treated as boolean. ([`1fe600e`](https://github.com/Byron/gitoxide/commit/1fe600e72911c2f27b20be312b2e805451e7d58c))
+</details>
+
 ## 0.32.1 (2023-12-07)
 
 ### New Features
@@ -19,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -30,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-config v0.32.1 ([`cd26fd8`](https://github.com/Byron/gitoxide/commit/cd26fd8babb023286ed9f6a6c71a06575de8d246))
     - Merge branch 'adjustments-for-cargo' ([`56588a9`](https://github.com/Byron/gitoxide/commit/56588a9b3e97665f1dd4c11dc74a692f35abba60))
     - `GIT_CONFIG_NOSYSTEM` now also affects the installation directory. ([`6738955`](https://github.com/Byron/gitoxide/commit/6738955949d82a66c070dcb65e368652898bd1d2))
 </details>
@@ -2803,7 +2873,7 @@ This is a maintenance release without functional changes.
  - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)

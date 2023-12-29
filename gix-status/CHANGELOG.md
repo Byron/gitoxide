@@ -5,281 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.23.1 (2023-08-02)
-
-### Bug Fixes
-
- - <csr-id-82ae37d70dc244cdf705d20c617d4b0e6bf3cdbf/> don't panic during checkouts when submodules or sparse directories are encountered.
-   Now we trace instead.
-
-## 0.23.0 (2023-07-22)
-
-### Bug Fixes (BREAKING)
-
- - <csr-id-68bd71cc0c47b0d86c7cb8fb9fe73a03cf8b52f6/> make it possible to pass information about the directory status when matching attributes.
-   This is significant for archiving operations, even though it's not important when matching attributes
-   otherwise.
-
-## 0.22.0 (2023-07-19)
-
-### Bug Fixes (BREAKING)
-
- - <csr-id-68bd71cc0c47b0d86c7cb8fb9fe73a03cf8b52f6/> make it possible to pass information about the directory status when matching attributes.
-   This is significant for archiving operations, even though it's not important when matching attributes
-   otherwise.
-
-### New Features
-
- - <csr-id-9cd256e91c6c6800b5f6c673285bf08e566f068f/> add `Cache::attributes_metadata()`.
-   A function to obtain the metadata-collection which allows to initialize attribute match
-   initialization in code that can't use the `gix_worktree` crate dependency.
-
-### New Features (BREAKING)
-
- - <csr-id-29a64c289946301d5e502ee956f3606280409faf/> make it possible to use filter pipeline with streaming for checkouts.
-   This is done by providing a `gix_filter::Pipeline` to `checkout::Options` to control
-   how filters are applied.
- - <csr-id-9c936755833b10989124f2cce1b675ae7e78af64/> add `cache::State::Attributes` to only load attributes.
-   Even though technically, this isn't really needed, it's required if one wants
-   to support things that git doesn't usually do, like providing conversion of worktree
-   files without a worktree, which can be happening whith `gix-archive` for example.
-   
-   As part of this change, `cache::State::id_mappings_from_index()` looses its `ignore` parameter
-   as it wasn't required in the first place.
-
-## 0.21.1 (2023-06-29)
-
-A maintenance release without user-facing changes.
-
-## 0.21.0 (2023-06-29)
-
-A maintenance release without user-facing changes.
-
-## 0.20.0 (2023-06-22)
-
-<csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/>
+## Unreleased
 
 ### Chore
 
- - <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
-
-## 0.19.0 (2023-06-10)
-
-A maintenance release without user-facing changes.
-
-## 0.18.0 (2023-06-06)
-
-### Bug Fixes
-
- - <csr-id-c86ca69b57cda379fdfe1b4a7af8fabbdfcec28d/> disallow reading macros when they are not global.
-
-## 0.17.1 (2023-04-29)
-
-A maintenance release without user-facing changes.
-
-## 0.17.0 (2023-04-27)
-
-A maintenance release without user-facing changes.
-
-## 0.16.0 (2023-04-26)
-
-### New Features
-
- - <csr-id-c402891d269a77913be39a92b1fc7fccba509557/> `cache::state::ignore::Source` to specify where to read `.gitignore` files from.
-   This allows better tuning and makes it more versatile for usage in any application, not
-   just `git`.
- - <csr-id-745fc37b87d64e4fd821a692b223eda4f5df81ce/> provide statistics for cache operations, and turn debug API into better public API for `Cache`.
-   That way it's a bit clearer what it is doing and does away with
-   some rather dubious test code.
- - <csr-id-0a8e50f64a8a730fbbd14b465e08d96ebfcf697d/> diff between worktree and index
-
-### Bug Fixes
-
- - <csr-id-27157ae7b3bec4e3117645a6456ff8cc28755f81/> `cache::Ignore` assures that case-sensitivity is handled similarly to git.
-   Previously directory excludes like `dir/` could (possibly) yield different results compared to git.
-   This is an opportunitstic change as it wasn't possible to trigger the wanted behaviour in a test
-   related to directory-specific matching. It did trigger, however, when matching normal patterns
-   which indicated there was indeed a bug.
-
-### New Features (BREAKING)
-
- - <csr-id-af9ca15622be650b0fb65acf1b501918df880fd7/> support to obtain `Attributes` using the `Cache` type.
- - <csr-id-b83ee366a3c65c717beb587ad809268f1c54b8ad/> Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability.
-   With it it's possible to not automatically declare all optional dependencies externally visible
-   features, and thus re-use feature names that oterwise are also a crate name.
-   
-   Previously I thought that `serde1` is for future-proofing and supporting multiple serde versions
-   at the same time. However, it's most definitely a burden I wouldn't want anyway, so using
-   `serde` seems to be the way to go into the future.
- - <csr-id-b645d28f9641c6b4022e1e37ad9fe528922ec747/> remove types that are now available in `gix-os`
-
-## 0.15.2 (2023-03-30)
-
-### Documentation
-
- - <csr-id-cc48c35d0ecf35824910c5b6ecc62fe9b2aff1b5/> fix minor typos
-
-## 0.15.1 (2023-03-26)
-
-A maintenance release without any user-facing changes.
-
-## 0.15.0 (2023-03-10)
-
-A maintenance release without user-facing changes.
-
-## 0.14.0 (2023-03-04)
-
-A maintenance release without user-facing changes.
-
-## 0.13.0 (2023-03-01)
-
-A maintenance release without user-facing changes.
-
-## 0.12.3 (2023-02-20)
-
-### Bug Fixes
-
- - <csr-id-135d317065aae87af302beb6c26bb6ca8e30b6aa/> compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`.
-   `as_ref()` relies on a known target type which isn't always present. However, once
-   there is only one implementation, that's no problem, but when that changes compilation
-   fails due to ambiguity.
-
-## 0.12.2 (2023-02-17)
-
-<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
-<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
-
-### New Features (BREAKING)
-
- - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
-   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
-   This isn't more than a patch release as it should break nobody
-   who is adhering to the MSRV, but let's be careful and mark it
-   breaking.
-   
-   Note that `git-features` and `git-pack` are still on edition 2018
-   as they make use of a workaround to support (safe) mutable access
-   to non-overlapping entries in a slice which doesn't work anymore
-   in edition 2021.
-
-### Changed (BREAKING)
-
- - <csr-id-d7ee622cfa9fc3cf7a97b823dd70f0aa1355365e/> Simplify `Cache` by removing its lifetime.
-   The lifetime was more of a premature optimization that makes actually using
-   the cache much harder than it needs to be.
- - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
-
-### New Features
-
- - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
- - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
-
-### Chore
-
- - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
- - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
-
-### Documentation
-
- - <csr-id-39ed9eda62b7718d5109135e5ad406fb1fe2978c/> fix typos
-
-## 0.12.1 (2023-01-10)
-
-A maintenance release without user-facing changes.
-
-## 0.12.0 (2023-01-09)
-
-A maintenance release without user-facing changes.
-
-## 0.11.0 (2022-12-30)
-
-### Changed (BREAKING)
-
- - <csr-id-d7ee622cfa9fc3cf7a97b823dd70f0aa1355365e/> Simplify `Cache` by removing its lifetime.
-   The lifetime was more of a premature optimization that makes actually using
-   the cache much harder than it needs to be.
-
-## 0.10.0 (2022-12-19)
-
-A maintenance release without user-facing changes.
-
-## 0.9.0 (2022-11-21)
-
-### New Features (BREAKING)
-
- - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
-   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
-   This isn't more than a patch release as it should break nobody
-   who is adhering to the MSRV, but let's be careful and mark it
-   breaking.
-   
-   Note that `gix-features` and `gix-pack` are still on edition 2018
-   as they make use of a workaround to support (safe) mutable access
-   to non-overlapping entries in a slice which doesn't work anymore
-   in edition 2021.
-
-## 0.8.0 (2022-11-17)
-
-A maintenance release without user-facing changes.
-
-## 0.7.0 (2022-11-06)
-
-A maintenance release without user-facing changes.
-
-## 0.6.0 (2022-10-10)
-
-Maintenance release without user-facing changes.
-
-## 0.5.0 (2022-09-20)
-
-### Changed (BREAKING)
-
- - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
-
-## 0.4.3 (2022-08-27)
-
-Maintenance release without user-facing changes.
-
-## 0.4.2 (2022-08-24)
-
-<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
-<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
-
-### Chore
-
- - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
- - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
-
-### New Features
-
- - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
- - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
-
-## 0.4.1 (2022-08-17)
-
-A maintenance release without user facing changes.
-
-## 0.4.0 (2022-07-22)
-
-This is a maintenance release with no functional changes.
-
-## 0.3.0 (2023-12-06)
-
-A maintenance release without user-facing changes.
-
-### Changed (BREAKING)
-
- - <csr-id-7407fec0f73a132e3273c643ede264a401227de1/> use `gix-object::Find` trait
-
-### Bug Fixes
-
- - <csr-id-13ab6291eca79b2a5b538d923f7138c3d755d18d/> remove unused dependency and improve documentation slightly
+ - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+   Our MSRV follows the one of `helix`, which in turn follows Firefox.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 46 calendar days.
+ - 7 commits contributed to the release over the course of 19 calendar days.
+ - 22 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs of next release ([`86e49fc`](https://github.com/Byron/gitoxide/commit/86e49fca969d97c5744d7dc6a3abc8eb522bf3b9))
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+    - Merge branch 'archive-handling' ([`7549559`](https://github.com/Byron/gitoxide/commit/7549559fcbf42249939f41fd7aa34b4449eb1fec))
+    - Check all git-lfs managed files into the repository ([`35439de`](https://github.com/Byron/gitoxide/commit/35439defd2d71779d4b3795b7652cde18ff11150))
+    - Release gix-hash v0.13.3, gix-index v0.27.1 ([`98b08f4`](https://github.com/Byron/gitoxide/commit/98b08f4d0d9237be0e0c2caa9bf5c13ae8bbf9d8))
+</details>
+
+## v0.3.0 (2023-12-06)
+
+### Bug Fixes
+
+ - <csr-id-13ab6291eca79b2a5b538d923f7138c3d755d18d/> remove unused dependency and improve documentation slightly
+
+### Changed (BREAKING)
+
+ - <csr-id-7407fec0f73a132e3273c643ede264a401227de1/> use `gix-object::Find` trait
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 46 calendar days.
  - 54 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -291,6 +63,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`d3fd11e`](https://github.com/Byron/gitoxide/commit/d3fd11ec3783843d4e49081e1d14359ed9714b5f))
     - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
     - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
@@ -305,9 +78,16 @@ A maintenance release without user-facing changes.
     - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
 </details>
 
-## 0.2.0 (2023-10-12)
+## v0.2.0 (2023-10-12)
 
-A maintenance release without documented changes.
+### New Features
+
+ - <csr-id-de66b4c26a937a4f6462dff5ec58275dae01813a/> `status` now supports filters.
+   This is important as it allows to streaming-read from the worktree and
+   correctly change, for example, `git-lfs` files back into their manifests,
+   and to arrive at the correct hash.
+ - <csr-id-0e10b62557fbd5b33a4aebab24e442e23304ac0a/> a way for `status` to stop early.
+   That way, 'is_dirty()` scenarios can be done without wasting too much time.
 
 ### New Features (BREAKING)
 
@@ -326,15 +106,6 @@ A maintenance release without documented changes.
    as 'directory' which is compared to what's in the worktree.
    
    We also simplify blob handling.
-
-### New Features
-
- - <csr-id-de66b4c26a937a4f6462dff5ec58275dae01813a/> `status` now supports filters.
-   This is important as it allows to streaming-read from the worktree and
-   correctly change, for example, `git-lfs` files back into their manifests,
-   and to arrive at the correct hash.
- - <csr-id-0e10b62557fbd5b33a4aebab24e442e23304ac0a/> a way for `status` to stop early.
-   That way, 'is_dirty()` scenarios can be done without wasting too much time.
 
 ### Commit Statistics
 
@@ -367,11 +138,7 @@ A maintenance release without documented changes.
     - Add symlink checking for `gix status` ([`c044919`](https://github.com/Byron/gitoxide/commit/c044919383b14f9355cf279add64297c2acedeed))
 </details>
 
-## 0.1.0 (2023-09-24)
-
-<csr-id-93feea269eebd114e866e6f29f4a73c0096df9e0/>
-
-An initial release with the ability to checkout indices with simple files only.
+## v0.1.0 (2023-09-24)
 
 ### Chore
 
@@ -380,21 +147,14 @@ An initial release with the ability to checkout indices with simple files only.
    create bogus feature toggles that are only used for testing, yet visbible
    to users.
 
-### Bug Fixes (BREAKING)
-
- - <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
-   This reduces compile time due to avoiding duplication.
-
 ### New Features (BREAKING)
 
  - <csr-id-2d011253c64aaeede546a2e4cdd143142689044b/> various improvements
 
-### Bug Fixes
+### Bug Fixes (BREAKING)
 
- - <csr-id-93feea269eebd114e866e6f29f4a73c0096df9e0/> split tests off into their own crate to allow feature toggles.
-   That way we can test with the `parallel` feature and won't have to
-   create bogus feature toggles that are only used for testing, yet visbible
-   to users.
+ - <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
+   This reduces compile time due to avoiding duplication.
 
 ### Commit Statistics
 
@@ -433,8 +193,4 @@ An initial release with the ability to checkout indices with simple files only.
     - Adapt to changes in `gix-worktree` ([`e5717e1`](https://github.com/Byron/gitoxide/commit/e5717e1d12c49285d31a90b03b7f8e9cbc6c1108))
     - Create new `gix-status` crate to capture `git-status` like functionality ([`be9af32`](https://github.com/Byron/gitoxide/commit/be9af327c75d693658a2427ee9a711e631a8da7d))
 </details>
-
-## 0.0.0 (2022-01-08)
-
-Reserve the name for a necessary crate of the `gitoxide` project.
 

@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-193ffcd9945891867a14aa5b6f87e27d3880b280/> Add `rev parse --reference`.
+   It's similar to `git rev-parse --symbolic-full-name`.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-59b8104a5320d946abc9f5736fa76696cef1459d/> mark `gix::interrupt::init_handler()` as unsafe
+   The passed `interrupt()` argument will be called from a signal
+   handler, so that needs to be documented and the call sites need to
+   state that they fulfill the contract.
+   
+   Thanks to @Manishearth for pointing this out.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 21 calendar days.
+ - 22 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade tabled and setup wordwrapping ([`a78caba`](https://github.com/Byron/gitoxide/commit/a78caba1e70adfae7beb2b4f6a18b8124efba46c))
+    - Merge branch 'tracking-branch' ([`0fe20e8`](https://github.com/Byron/gitoxide/commit/0fe20e80145419e1662f869657dabf689786395f))
+    - Add `rev parse --reference`. ([`193ffcd`](https://github.com/Byron/gitoxide/commit/193ffcd9945891867a14aa5b6f87e27d3880b280))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+    - Merge branch 'push-yvzxzqrkkvry' ([`4917beb`](https://github.com/Byron/gitoxide/commit/4917beb5760a9bafb75b59331b282f4d6dbb64f5))
+    - Mark `gix::interrupt::init_handler()` as unsafe ([`59b8104`](https://github.com/Byron/gitoxide/commit/59b8104a5320d946abc9f5736fa76696cef1459d))
+</details>
+
 ## 0.32.0 (2023-12-06)
 
 ### New Features

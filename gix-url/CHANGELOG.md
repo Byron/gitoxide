@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 19 calendar days.
+ - 22 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
+    - Merge pull request #1209 from silvergasp/fuzz-gix-url ([`5e84453`](https://github.com/Byron/gitoxide/commit/5e844533553352ecb4c345f24ff32da89c286b6f))
+    - Add fuzzing assert to fuzz against CVE-2017-1000117 ([`8d4f9d7`](https://github.com/Byron/gitoxide/commit/8d4f9d7359344f95d6631f7ac53fe54a40beb5f1))
+    - Fuzz more of gix_url::Url ([`19e1b7b`](https://github.com/Byron/gitoxide/commit/19e1b7b4320dd9da47705d3cbcdbb571c4339d30))
+    - Merge branch 'gix-glob-fix' ([`c1e4c62`](https://github.com/Byron/gitoxide/commit/c1e4c629c32f136d1bc6159d47c0a9cda1fffd19))
+    - Make CI runs more robust by changing timings ([`dab926d`](https://github.com/Byron/gitoxide/commit/dab926d39e3603d21ff4f9f57aa351e04d39304a))
+    - Merge branch 'fuzz-gix-ref' ([`8ee1194`](https://github.com/Byron/gitoxide/commit/8ee119442b2ff4b846a34b57a222a6abdf6c95d8))
+    - Let's have the latest versions of fuzzers automatically ([`5828f37`](https://github.com/Byron/gitoxide/commit/5828f3796031de8d9f50bd6536697754da0b3d8c))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+    - Upgrade `url` to latest version. ([`58ed530`](https://github.com/Byron/gitoxide/commit/58ed530da0eed05b6b5b97d4941a53e06b679918))
+</details>
+
 ## 0.25.2 (2023-12-06)
 
 ### Bug Fixes
@@ -18,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 52 calendar days.
+ - 16 commits contributed to the release over the course of 52 calendar days.
  - 53 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1082](https://github.com/Byron/gitoxide/issues/1082), [#1119](https://github.com/Byron/gitoxide/issues/1119)
@@ -34,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1119](https://github.com/Byron/gitoxide/issues/1119)**
     - Specify minimum required `url` version of v2.2.0. ([`ee47fba`](https://github.com/Byron/gitoxide/commit/ee47fbab9ff995bc76a4c75185fe8e6e7c1d4ba3))
  * **Uncategorized**
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
     - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
     - Merge branch 'gix-status' ([`dfb3f18`](https://github.com/Byron/gitoxide/commit/dfb3f1821428f294f1832543ad0cf2fc883b03fb))

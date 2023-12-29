@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+<csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/>
+<csr-id-de400fd0c4959ed60009a2fd71a88d7bcf6d5191/>
+
+### Chore
+
+ - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+
+### Other
+
+ - <csr-id-de400fd0c4959ed60009a2fd71a88d7bcf6d5191/> Add gix-object fuzzers
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 16 commits contributed to the release over the course of 18 calendar days.
+ - 22 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1185](https://github.com/Byron/gitoxide/issues/1185)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1185](https://github.com/Byron/gitoxide/issues/1185)**
+    - Fix tree-parse issue found by fuzzer ([`7d81a76`](https://github.com/Byron/gitoxide/commit/7d81a769f895b21716e92fb63298b9d547a5cca4))
+ * **Uncategorized**
+    - Prepare changelogs of next release ([`86e49fc`](https://github.com/Byron/gitoxide/commit/86e49fca969d97c5744d7dc6a3abc8eb522bf3b9))
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
+    - Merge pull request #1199 from silvergasp/fuzz-git-object ([`7d21ce9`](https://github.com/Byron/gitoxide/commit/7d21ce9fa0e10549b5340a92da32f70f9a3f7d62))
+    - Add corpus builders for tree/tags ([`5a02529`](https://github.com/Byron/gitoxide/commit/5a0252964d36aaa8a4a8cdbe7d17f59f3480d1b4))
+    - Merge pull request #1192 from silvergasp/fuzz-git-object ([`e2f42dd`](https://github.com/Byron/gitoxide/commit/e2f42dd93a2c749f1dbf7f9b7f35b37c9ea62cd4))
+    - Add fuzz_commit seed corpus builder ([`2297ca1`](https://github.com/Byron/gitoxide/commit/2297ca16bad699083d69f6a99d4fb6a51956df6b))
+    - Merge branch 'fuzz-gix-ref' ([`8ee1194`](https://github.com/Byron/gitoxide/commit/8ee119442b2ff4b846a34b57a222a6abdf6c95d8))
+    - Let's have the latest versions of fuzzers automatically ([`5828f37`](https://github.com/Byron/gitoxide/commit/5828f3796031de8d9f50bd6536697754da0b3d8c))
+    - Merge branch 'fuzz_object' ([`7df919b`](https://github.com/Byron/gitoxide/commit/7df919b356adfc1653bcd41137fa44a7054647be))
+    - Add gix-object fuzzers ([`de400fd`](https://github.com/Byron/gitoxide/commit/de400fd0c4959ed60009a2fd71a88d7bcf6d5191))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+    - Merge branch 'archive-handling' ([`7549559`](https://github.com/Byron/gitoxide/commit/7549559fcbf42249939f41fd7aa34b4449eb1fec))
+    - Check all git-lfs managed files into the repository ([`35439de`](https://github.com/Byron/gitoxide/commit/35439defd2d71779d4b3795b7652cde18ff11150))
+    - Git-lfs might fail early; let's rely on these caches to be recreated, where possible ([`b6f2b81`](https://github.com/Byron/gitoxide/commit/b6f2b818f34e85edbdb0777a1df0cbf7fc9a0c98))
+</details>
+
 ## 0.39.0 (2023-12-06)
 
 ### New Features
@@ -39,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release over the course of 46 calendar days.
+ - 24 commits contributed to the release over the course of 46 calendar days.
  - 54 days passed between releases.
  - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1096](https://github.com/Byron/gitoxide/issues/1096)
@@ -54,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Adjust tree parser to deal with even more unusual trees. ([`8d05cae`](https://github.com/Byron/gitoxide/commit/8d05cae3027e3731602292c9e2d8c3cd53ebeec9))
     - Assure all kinds of trees can be parsed. ([`3542cf5`](https://github.com/Byron/gitoxide/commit/3542cf5f65dad92552e12cce84e47381aa58e228))
  * **Uncategorized**
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
     - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Upgrade to `winnow` 0.5.24 ([`abcfb65`](https://github.com/Byron/gitoxide/commit/abcfb659786425ec09eff6b644cd2ad36b7d6bc4))
     - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))

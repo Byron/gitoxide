@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+
+### New Features
+
+ - <csr-id-ff18e0bdb2ffbff5b47003f62e04e815d9c14575/> Add `packed::Buffer::from_bytes()`.
+   This way the source of the `packed-refs` file contents can be arbitrary.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 14 calendar days.
+ - 14 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
+    - Thanks clippy ([`d38d1cc`](https://github.com/Byron/gitoxide/commit/d38d1cc1aa3402629a0f182324e3310e730ce3f2))
+    - Merge branch 'fuzz-gix-config' ([`0f71709`](https://github.com/Byron/gitoxide/commit/0f717092313391ad663a41bf1a898d9970188db2))
+    - Fuzz more of gix-ref log ([`d83b4e0`](https://github.com/Byron/gitoxide/commit/d83b4e0b16ba7cf28145184d76cef5f89143f641))
+    - Merge branch 'fuzz-gix-ref' ([`8ee1194`](https://github.com/Byron/gitoxide/commit/8ee119442b2ff4b846a34b57a222a6abdf6c95d8))
+    - Let's have the latest versions of fuzzers automatically ([`5828f37`](https://github.com/Byron/gitoxide/commit/5828f3796031de8d9f50bd6536697754da0b3d8c))
+    - Add gix_ref::packed::Buffer fuzzer ([`fb28daa`](https://github.com/Byron/gitoxide/commit/fb28daa5b15101409057a9fc6e74f11c298eca3e))
+    - Add `packed::Buffer::from_bytes()`. ([`ff18e0b`](https://github.com/Byron/gitoxide/commit/ff18e0bdb2ffbff5b47003f62e04e815d9c14575))
+    - Add log fuzzer to gix-ref ([`3be3b15`](https://github.com/Byron/gitoxide/commit/3be3b15c6487b4fca3f0609ff04aad9cac226eba))
+    - Add named fuzz-harness to gix-ref ([`3e37a22`](https://github.com/Byron/gitoxide/commit/3e37a221cf1d50404874f448cbe5ab264108f7db))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+</details>
+
 ## 0.39.1 (2023-12-15)
 
 ### New Features
@@ -23,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 6 commits contributed to the release over the course of 5 calendar days.
  - 8 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1183](https://github.com/Byron/gitoxide/issues/1183)
@@ -37,6 +85,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1183](https://github.com/Byron/gitoxide/issues/1183)**
     - Assure memory maps don't get in the way of updating `.git/packet-refs` on Windows. ([`6c1da71`](https://github.com/Byron/gitoxide/commit/6c1da71566a454198b01c3fc0f6972e5433ef375))
     - Add `file::Store::set_packed_buffer_mmap_threshold()`. ([`7b4573a`](https://github.com/Byron/gitoxide/commit/7b4573ad57a33bb180c661056cd81e81ed478be2))
+ * **Uncategorized**
+    - Release gix-ref v0.39.1 ([`c1cfe6e`](https://github.com/Byron/gitoxide/commit/c1cfe6e4ab0d97ca98e93e1c01d9afa3b2c9a351))
+    - Merge branch 'archive-handling' ([`7549559`](https://github.com/Byron/gitoxide/commit/7549559fcbf42249939f41fd7aa34b4449eb1fec))
+    - Check all git-lfs managed files into the repository ([`35439de`](https://github.com/Byron/gitoxide/commit/35439defd2d71779d4b3795b7652cde18ff11150))
+    - Release gix-hash v0.13.3, gix-index v0.27.1 ([`98b08f4`](https://github.com/Byron/gitoxide/commit/98b08f4d0d9237be0e0c2caa9bf5c13ae8bbf9d8))
 </details>
 
 ## 0.39.0 (2023-12-06)

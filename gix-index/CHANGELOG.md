@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+<csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/>
+
+### Chore
+
+ - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+
+### Bug Fixes
+
+ - <csr-id-569caa0314599c93651d9116d00fde64b81d2ace/> use correct fields for ctime and mtime on AIX
+   On AIX, ctime and mtime are structs containing seconds and nanoseconds.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 17 calendar days.
+ - 19 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs of next release ([`86e49fc`](https://github.com/Byron/gitoxide/commit/86e49fca969d97c5744d7dc6a3abc8eb522bf3b9))
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
+    - Adapt to changes in `gix-hash` ([`859a092`](https://github.com/Byron/gitoxide/commit/859a092bb6ad04ee9bab424cf5b56f299a9645d3))
+    - Merge pull request #1194 from ecnelises/aix_stattime ([`940e3ca`](https://github.com/Byron/gitoxide/commit/940e3ca568f4546bd1055a2179f4b8ccc22ea2a9))
+    - Use correct fields for ctime and mtime on AIX ([`569caa0`](https://github.com/Byron/gitoxide/commit/569caa0314599c93651d9116d00fde64b81d2ace))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+    - Merge branch 'archive-handling' ([`7549559`](https://github.com/Byron/gitoxide/commit/7549559fcbf42249939f41fd7aa34b4449eb1fec))
+    - Check all git-lfs managed files into the repository ([`35439de`](https://github.com/Byron/gitoxide/commit/35439defd2d71779d4b3795b7652cde18ff11150))
+</details>
+
 ## 0.27.1 (2023-12-10)
 
 ### Bug Fixes
@@ -24,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 2 calendar days.
+ - 6 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -36,15 +77,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-hash v0.13.3, gix-index v0.27.1 ([`98b08f4`](https://github.com/Byron/gitoxide/commit/98b08f4d0d9237be0e0c2caa9bf5c13ae8bbf9d8))
     - Prepare changelog for `gix-index` release ([`b3ecbb7`](https://github.com/Byron/gitoxide/commit/b3ecbb7e27bbd088733c70a319a57a9e963f8bd0))
     - Merge pull request #1170 from weihanglo/netbsd ([`523692b`](https://github.com/Byron/gitoxide/commit/523692b6d9d403d0e10f36f382ce7728f3ae2ad4))
     - NetBSD doesn't have `st_mtime_nsec` and `st_ctime_nsec` ([`03fa7ac`](https://github.com/Byron/gitoxide/commit/03fa7ac64c99abc804252630c03b5b9085e9ea81))
     - Merge branch '32bit' ([`ff1542c`](https://github.com/Byron/gitoxide/commit/ff1542cedf3072a8c7c493d454aef5cc61de6d4c))
     - Builds on 32bit android now work. ([`e2e17c6`](https://github.com/Byron/gitoxide/commit/e2e17c60008f287796c6c10e1fa8a64a3d4a9105))
 </details>
-
-<csr-unknown>
- builds on 32bit android now work.Thanks to new CI tests, these should keep working as well.<csr-unknown/>
 
 ## 0.27.0 (2023-12-06)
 

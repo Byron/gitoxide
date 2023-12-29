@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-193ffcd9945891867a14aa5b6f87e27d3880b280/> Add `rev parse --reference`.
+   It's similar to `git rev-parse --symbolic-full-name`.
+
+### Bug Fixes
+
+ - <csr-id-0bc95684c32a053de22c06e6e45c8de5704fd8fb/> leave extensions in place if they are not `.git` when using `gix clone <url>`.
+   Previously it would happily remove e.g. a `.net` extension, even though it's part of the
+   repository name.
+   
+   Further, when cloning with `--bare`, don't strip the extension at all as it's common
+   to keep the `.git` extension in this case.
+ - <csr-id-f1b33ba7518881adfe31a03c366000e1a6e0d7d4/> `ein t organize` can now handles repository moves from `./repo-name` to `./repo-name/actual-repo-name`.
+   Previously such renames would fail as a directory can't be moved into a sub-directory of itself.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 21 calendar days.
+ - 22 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#1172](https://github.com/Byron/gitoxide/issues/1172), [#1177](https://github.com/Byron/gitoxide/issues/1177)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1172](https://github.com/Byron/gitoxide/issues/1172)**
+    - `ein t organize` can now handles repository moves from `./repo-name` to `./repo-name/actual-repo-name`. ([`f1b33ba`](https://github.com/Byron/gitoxide/commit/f1b33ba7518881adfe31a03c366000e1a6e0d7d4))
+ * **[#1177](https://github.com/Byron/gitoxide/issues/1177)**
+    - Leave extensions in place if they are not `.git` when using `gix clone <url>`. ([`0bc9568`](https://github.com/Byron/gitoxide/commit/0bc95684c32a053de22c06e6e45c8de5704fd8fb))
+ * **Uncategorized**
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade sysinfo ([`e06ab59`](https://github.com/Byron/gitoxide/commit/e06ab59e1377aeeef83d107c41c0d1d144571153))
+    - Merge branch 'tracking-branch' ([`0fe20e8`](https://github.com/Byron/gitoxide/commit/0fe20e80145419e1662f869657dabf689786395f))
+    - Add `rev parse --reference`. ([`193ffcd`](https://github.com/Byron/gitoxide/commit/193ffcd9945891867a14aa5b6f87e27d3880b280))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+    - Merge branch 'fix-1177' ([`401b73d`](https://github.com/Byron/gitoxide/commit/401b73dcd2235dc73e0ebf01e3fc7a28baed0c35))
+    - Merge branch 'organize-into-own-child' ([`84c998b`](https://github.com/Byron/gitoxide/commit/84c998bc6fbc8d45988ed56043ed54812c65bc4d))
+    - Allow organize to move repositories into a child directory of their current location ([`15193a7`](https://github.com/Byron/gitoxide/commit/15193a7a96a19665fc14237842918f4198637f8a))
+    - Merge branch '32bit' ([`ff1542c`](https://github.com/Byron/gitoxide/commit/ff1542cedf3072a8c7c493d454aef5cc61de6d4c))
+    - Upgrade all dependencies of `gitoxide-core` ([`c8f804c`](https://github.com/Byron/gitoxide/commit/c8f804cc02a895182697f631cf3d49692f94e516))
+    - Update `prodash` to latest version ([`97f62cb`](https://github.com/Byron/gitoxide/commit/97f62cb183cc36d6045c9320697bb0b4755d6f6b))
+</details>
+
 ## 0.34.0 (2023-12-06)
 
 ### New Features
@@ -39,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 31 commits contributed to the release over the course of 53 calendar days.
+ - 32 commits contributed to the release over the course of 53 calendar days.
  - 54 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -51,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`a96956b`](https://github.com/Byron/gitoxide/commit/a96956b0978c3618e7d3f2da049696f55a3b3c82))
     - Release gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`c8568b9`](https://github.com/Byron/gitoxide/commit/c8568b9c9bf883f77e81a9a98b1fc2cbe726df79))
     - Release gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`d3fd11e`](https://github.com/Byron/gitoxide/commit/d3fd11ec3783843d4e49081e1d14359ed9714b5f))
     - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))

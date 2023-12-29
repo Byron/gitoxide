@@ -5,6 +5,127 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+
+### New Features
+
+ - <csr-id-3fba5b856b37af2db40c29f463efe09dcfc8d085/> `Repository::rev_parse*()` now supports `branch@{upstream|push|u|p}`.
+   Previously it would be parsed, but always error as the implementation didn't exist.
+   Now it will return the fetch and push tracking branches respectively.
+ - <csr-id-270322e75a49f9a5c2d996cf0a20c6d622b40394/> Add `Reference::remote_tracking_ref_name()` and `*::remote_ref_name()`.
+   These methods mirror their respective `Repository::branch_*` prefixed versions.
+ - <csr-id-4aa4b05b9dc785d550386218915208c0c9fdb78b/> add `Repository::branch_remote_tracking_ref_name()`.
+ - <csr-id-8ac2dccd62d88c0c196d2fc054a68a1b69121da0/> add `push.default` config key
+ - <csr-id-3f842134d0e2bbc9c62ee77af3c8e5c7fd9f47d1/> add `config::Snapshot::trusted_program()`.
+   That way it's possible to obtain an executable, program or script
+   from a key in the configuration that is in a trusted section of the
+   configuration.
+   
+   This goes along with a new `command` feature that brings in the `command`
+   module at the top level to be able to execute such commands.
+ - <csr-id-b5c36b805d0b269e6d87ca8b6c517b7fd7337622/> add `clone::PrepareFetch::with_in_memory_config_overrides()`.
+   With it one can affect the repository configuration right before fetching.
+
+### New Features (BREAKING)
+
+ - <csr-id-5c07c760e392e9aecbe521f30ade5b693f977dc0/> `Repository::remote_names|remote_default_name()` now returns `Cow<'_, BStr>` instead of `Cow<'_, str>`.
+   That way information won't degenerate due to enforcement of UTF-8.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-404fde55d3cc85acce207ca259b0fa9b144dd694/> rename `Repository::branch_remote_ref()` to `Repository::branch_remote_ref_name()`, add `direction` argument (also to `Repository::branch_remote_name()` and `Repository::branch_remote()`).
+   This better differentiates the return value from the corresponding ref objects,
+   which would require the named ref to exist in the repository.
+   
+   The `direction` argument allows to get the reference to push to as well.
+   Further, it now takes a full ref name to support deriving the name of branches
+   to push to.
+   
+   Regarding `Repository::branch_remote()`,  previously, this functionality
+   was only available from a `Reference`,
+   but now it's more generally available with just a branch name.
+   
+   The method was also adjusted to permit looking up non-symbolic remote
+   names, like remotes that are specified by their URL.
+ - <csr-id-59b8104a5320d946abc9f5736fa76696cef1459d/> mark `gix::interrupt::init_handler()` as unsafe
+   The passed `interrupt()` argument will be called from a signal
+   handler, so that needs to be documented and the call sites need to
+   state that they fulfill the contract.
+   
+   Thanks to @Manishearth for pointing this out.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 39 commits contributed to the release over the course of 22 calendar days.
+ - 22 days passed between releases.
+ - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 4 unique issues were worked on: [#1158](https://github.com/Byron/gitoxide/issues/1158), [#1165](https://github.com/Byron/gitoxide/issues/1165), [#1178](https://github.com/Byron/gitoxide/issues/1178), [#1191](https://github.com/Byron/gitoxide/issues/1191)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1158](https://github.com/Byron/gitoxide/issues/1158)**
+    - Remove extra-lines from changelog ([`11c9f66`](https://github.com/Byron/gitoxide/commit/11c9f66523011064e5e82d3b32713a7f4643809d))
+ * **[#1165](https://github.com/Byron/gitoxide/issues/1165)**
+    - Complete partial note ([`8ef0538`](https://github.com/Byron/gitoxide/commit/8ef053882957819e44485c356204a2689376ba1c))
+ * **[#1178](https://github.com/Byron/gitoxide/issues/1178)**
+    - Add `config::Snapshot::trusted_program()`. ([`3f84213`](https://github.com/Byron/gitoxide/commit/3f842134d0e2bbc9c62ee77af3c8e5c7fd9f47d1))
+ * **[#1191](https://github.com/Byron/gitoxide/issues/1191)**
+    - Add note to clarify what users might want to do ([`2e04403`](https://github.com/Byron/gitoxide/commit/2e04403589356c320f44f1516c29770d91a3d20b))
+ * **Uncategorized**
+    - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
+    - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
+    - Thanks clippy ([`d38d1cc`](https://github.com/Byron/gitoxide/commit/d38d1cc1aa3402629a0f182324e3310e730ce3f2))
+    - Merge branch 'tracking-branch' ([`0fe20e8`](https://github.com/Byron/gitoxide/commit/0fe20e80145419e1662f869657dabf689786395f))
+    - Refactor ([`530c15d`](https://github.com/Byron/gitoxide/commit/530c15d45227ac9e86b3edd8c029a9c7da8e5842))
+    - `Repository::rev_parse*()` now supports `branch@{upstream|push|u|p}`. ([`3fba5b8`](https://github.com/Byron/gitoxide/commit/3fba5b856b37af2db40c29f463efe09dcfc8d085))
+    - Add `Reference::remote_tracking_ref_name()` and `*::remote_ref_name()`. ([`270322e`](https://github.com/Byron/gitoxide/commit/270322e75a49f9a5c2d996cf0a20c6d622b40394))
+    - Add `Repository::branch_remote_tracking_ref_name()`. ([`4aa4b05`](https://github.com/Byron/gitoxide/commit/4aa4b05b9dc785d550386218915208c0c9fdb78b))
+    - Rename `Repository::branch_remote_ref()` to `Repository::branch_remote_ref_name()`, add `direction` argument (also to `Repository::branch_remote_name()` and `Repository::branch_remote()`). ([`404fde5`](https://github.com/Byron/gitoxide/commit/404fde55d3cc85acce207ca259b0fa9b144dd694))
+    - `Repository::remote_names|remote_default_name()` now returns `Cow<'_, BStr>` instead of `Cow<'_, str>`. ([`5c07c76`](https://github.com/Byron/gitoxide/commit/5c07c760e392e9aecbe521f30ade5b693f977dc0))
+    - Add `push.default` config key ([`8ac2dcc`](https://github.com/Byron/gitoxide/commit/8ac2dccd62d88c0c196d2fc054a68a1b69121da0))
+    - Merge branch 'match_ceiling_dir_or_error' ([`cda5b51`](https://github.com/Byron/gitoxide/commit/cda5b51f3b39153fd8919209e2210da3051b928d))
+    - Merge branch 'main' into fix-1183 ([`1691ba6`](https://github.com/Byron/gitoxide/commit/1691ba669537f4a39ebb0891747dc509a6aedbef))
+    - Release gix-ref v0.39.1 ([`c1cfe6e`](https://github.com/Byron/gitoxide/commit/c1cfe6e4ab0d97ca98e93e1c01d9afa3b2c9a351))
+    - Merge branch 'patch-1' ([`20dce42`](https://github.com/Byron/gitoxide/commit/20dce42c85dc7c55a3ee1db42a6fd03c017ffc8a))
+    - Differentiate between `Executable` and `Program` ([`56d1d09`](https://github.com/Byron/gitoxide/commit/56d1d09307e65f3d721bdb73b8740734b94dbd62))
+    - Add `core.editor` key ([`ff71e07`](https://github.com/Byron/gitoxide/commit/ff71e07a45e62a6775f9e3e739e89c6718153c74))
+    - Merge branch 'archive-handling' ([`7549559`](https://github.com/Byron/gitoxide/commit/7549559fcbf42249939f41fd7aa34b4449eb1fec))
+    - Check all git-lfs managed files into the repository ([`35439de`](https://github.com/Byron/gitoxide/commit/35439defd2d71779d4b3795b7652cde18ff11150))
+    - Git-lfs might fail early; let's rely on these caches to be recreated, where possible ([`b6f2b81`](https://github.com/Byron/gitoxide/commit/b6f2b818f34e85edbdb0777a1df0cbf7fc9a0c98))
+    - Release gix-hash v0.13.3, gix-index v0.27.1 ([`98b08f4`](https://github.com/Byron/gitoxide/commit/98b08f4d0d9237be0e0c2caa9bf5c13ae8bbf9d8))
+    - Merge branch 'mailmap-config-section' ([`8dda069`](https://github.com/Byron/gitoxide/commit/8dda069306fb140b1267b213079310a974b2d979))
+    - Use new `mailmap` keys and make a few improvements. ([`7f65ffd`](https://github.com/Byron/gitoxide/commit/7f65ffdb57488d5561b2f54a613259d74e26b250))
+    - Assign more suitable types to `mailmap` keys ([`1bf3e88`](https://github.com/Byron/gitoxide/commit/1bf3e888e5b7c37bedb738d7a8f30dd3dbf3d75d))
+    - Add config section for mailmap.{blob,file}. ([`86c7fa1`](https://github.com/Byron/gitoxide/commit/86c7fa198c03152eaa99129472d03531d941e0a3))
+    - Merge branch 'configure-prepare-fetch' ([`281fda0`](https://github.com/Byron/gitoxide/commit/281fda06a89b1d38cf6afeda23cf80a68486140b))
+    - Add `clone::PrepareFetch::with_in_memory_config_overrides()`. ([`b5c36b8`](https://github.com/Byron/gitoxide/commit/b5c36b805d0b269e6d87ca8b6c517b7fd7337622))
+    - Allow overriding Git configuration when cloning. ([`9833b45`](https://github.com/Byron/gitoxide/commit/9833b45c59ebb078b3f5c35fdb0a5b9bd3453fbc))
+    - Merge branch 'push-yvzxzqrkkvry' ([`4917beb`](https://github.com/Byron/gitoxide/commit/4917beb5760a9bafb75b59331b282f4d6dbb64f5))
+    - Fixup new unsafe interrupt handler ([`c23bb87`](https://github.com/Byron/gitoxide/commit/c23bb878812a54f589fd1626a9ae8c3e12ce5ec5))
+    - Mark `gix::interrupt::init_handler()` as unsafe ([`59b8104`](https://github.com/Byron/gitoxide/commit/59b8104a5320d946abc9f5736fa76696cef1459d))
+    - Reduce size of unsafe block in signal handler ([`d77bc0e`](https://github.com/Byron/gitoxide/commit/d77bc0e96787d555fe8c6ca34b7710cda3681c8e))
+    - Release gix-config v0.32.1 ([`cd26fd8`](https://github.com/Byron/gitoxide/commit/cd26fd8babb023286ed9f6a6c71a06575de8d246))
+    - Merge branch 'adjustments-for-cargo' ([`56588a9`](https://github.com/Byron/gitoxide/commit/56588a9b3e97665f1dd4c11dc74a692f35abba60))
+    - Fix import/prevent warning ([`ec0211a`](https://github.com/Byron/gitoxide/commit/ec0211afa6313d0f640dc4cbb4c0988ad27009df))
+</details>
+
 ## 0.56.0 (2023-12-06)
 
 ### New Features
@@ -120,7 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 68 commits contributed to the release over the course of 53 calendar days.
+ - 69 commits contributed to the release over the course of 53 calendar days.
  - 54 days passed between releases.
  - 23 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#1061](https://github.com/Byron/gitoxide/issues/1061), [#1076](https://github.com/Byron/gitoxide/issues/1076), [#1090](https://github.com/Byron/gitoxide/issues/1090), [#1125](https://github.com/Byron/gitoxide/issues/1125), [#1129](https://github.com/Byron/gitoxide/issues/1129), [#972](https://github.com/Byron/gitoxide/issues/972)
@@ -150,6 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#972](https://github.com/Byron/gitoxide/issues/972)**
     - Allow multiple packs to be received one after another. ([`3ff1827`](https://github.com/Byron/gitoxide/commit/3ff1827a12557a601da22d138beb97e8647d5d6e))
  * **Uncategorized**
+    - Release gix v0.56.0 ([`476d5ef`](https://github.com/Byron/gitoxide/commit/476d5ef2309ed0de20f3a46f0aad803579ab9ed4))
     - Release gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`c8568b9`](https://github.com/Byron/gitoxide/commit/c8568b9c9bf883f77e81a9a98b1fc2cbe726df79))
     - Release gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`d3fd11e`](https://github.com/Byron/gitoxide/commit/d3fd11ec3783843d4e49081e1d14359ed9714b5f))
     - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
