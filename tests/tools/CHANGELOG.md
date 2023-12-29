@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.13.0 (2023-12-29)
 
+<csr-id-ef54aab9e5521add4154ee8d902d62612a9d8d4a/>
+<csr-id-7f7db9794c23b87c8ea50b7bcf38955c9d977624/>
+<csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/>
+
 ### Chore
 
  - <csr-id-ef54aab9e5521add4154ee8d902d62612a9d8d4a/> switch `nom` to `winnow` in remaining uses in `gix-object`, `gix-ref`, and `gix-actor` for ~20% more performance.
@@ -43,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 47 commits contributed to the release over the course of 218 calendar days.
+ - 49 commits contributed to the release over the course of 218 calendar days.
  - 243 days passed between releases.
  - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#960](https://github.com/Byron/gitoxide/issues/960)
@@ -57,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#960](https://github.com/Byron/gitoxide/issues/960)**
     - Try to prevent 'git' reading user and system configuration ([`33be0e0`](https://github.com/Byron/gitoxide/commit/33be0e032e4802b0d8e261cccf19ecb9244ffb36))
  * **Uncategorized**
+    - Set `gix-testtools` package versions so that it can be released ([`793c2af`](https://github.com/Byron/gitoxide/commit/793c2afbb5e4a5c817b06c15103310781769abfd))
+    - Release gix-testtools v0.13.0 ([`7fe620d`](https://github.com/Byron/gitoxide/commit/7fe620d6135e7619c5484aeca7ca8823bee585e1))
     - Release gix-date v0.8.2, gix-hash v0.14.0, gix-trace v0.1.5, gix-features v0.37.0, gix-actor v0.29.0, gix-validate v0.8.2, gix-object v0.40.0, gix-path v0.10.2, gix-glob v0.15.0, gix-quote v0.4.9, gix-attributes v0.21.0, gix-command v0.3.1, gix-packetline-blocking v0.17.1, gix-utils v0.1.7, gix-filter v0.8.0, gix-fs v0.9.0, gix-chunk v0.4.6, gix-commitgraph v0.23.0, gix-hashtable v0.5.0, gix-revwalk v0.11.0, gix-traverse v0.36.0, gix-worktree-stream v0.8.0, gix-archive v0.8.0, gix-config-value v0.14.2, gix-tempfile v12.0.0, gix-lock v12.0.0, gix-ref v0.40.0, gix-sec v0.10.2, gix-config v0.33.0, gix-prompt v0.8.1, gix-url v0.26.0, gix-credentials v0.23.0, gix-ignore v0.10.0, gix-bitmap v0.2.9, gix-index v0.28.0, gix-worktree v0.29.0, gix-diff v0.39.0, gix-discover v0.28.0, gix-macros v0.1.2, gix-mailmap v0.21.0, gix-negotiate v0.11.0, gix-pack v0.46.0, gix-odb v0.56.0, gix-pathspec v0.5.0, gix-packetline v0.17.1, gix-transport v0.40.0, gix-protocol v0.43.0, gix-revision v0.25.0, gix-refspec v0.21.0, gix-status v0.4.0, gix-submodule v0.7.0, gix-worktree-state v0.6.0, gix v0.57.0, gix-fsck v0.2.0, gitoxide-core v0.35.0, gitoxide v0.33.0, safety bump 40 crates ([`e1aae19`](https://github.com/Byron/gitoxide/commit/e1aae191d7421c748913c92e2c5883274331dd20))
     - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
     - Upgrade testtools dependencies to latest feasible version ([`29c5904`](https://github.com/Byron/gitoxide/commit/29c59045425dcfc23392e0b766d6d6ca399b00a4))
