@@ -2574,6 +2574,8 @@ dependencies = [
  "libc",
  "once_cell",
  "parking_lot",
+ "signal-hook",
+ "signal-hook-registry",
  "tempfile",
 ]
 
@@ -2601,10 +2603,10 @@ dependencies = [
  "fastrand 2.0.1",
  "fs_extra",
  "gix-discover 0.26.0",
- "gix-fs 0.9.0",
+ "gix-fs 0.8.1",
  "gix-ignore 0.8.0",
  "gix-lock 10.0.0",
- "gix-tempfile 12.0.0",
+ "gix-tempfile 11.0.1",
  "gix-worktree 0.26.0",
  "io-close",
  "is_ci",
