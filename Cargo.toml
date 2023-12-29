@@ -175,7 +175,7 @@ clap_complete = "4.4.3"
 prodash = { workspace = true, optional = true }
 is-terminal = { version = "0.4.0", optional = true }
 env_logger = { version = "0.10.0", default-features = false }
-crosstermion = { version = "0.12.0", optional = true, default-features = false }
+crosstermion = { version = "0.13.0", optional = true, default-features = false }
 futures-lite = { workspace = true, optional = true }
 
 # for 'tracing'
@@ -184,7 +184,7 @@ tracing-subscriber = { version = "0.3.17", optional = true }
 tracing = { version = "0.1.37", optional = true }
 
 # for progress
-owo-colors = "3.5.0"
+owo-colors = "4.0.0"
 tabled = { version = "0.10.0", default-features = false }
 
 # Avoid pre-compiled binaries, see https://github.com/serde-rs/serde/issues/2538 and https://github.com/serde-rs/serde/pull/2590
@@ -298,7 +298,7 @@ members = [
 ]
 
 [workspace.dependencies]
-prodash = { version = "27.0.0", default-features = false }
+prodash = { version = "28.0.0", default-features = false }
 futures-lite = { version = "2.1.0", default-features = false, features = ["std"] }
 faster-hex = { version = "0.9.0" }
 

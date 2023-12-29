@@ -772,9 +772,9 @@ dependencies = [
 
 [[package]]
 name = "crosstermion"
-version = "0.12.1"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4fb1963117df5f418acb1b1c9214992e587c9a576158a7177e38fbcf33bf9ea"
+checksum = "400415b86f4dc01b9e4e129e822dad900e546287319da7ab229654978d3e07e1"
 dependencies = [
  "ansiterm",
  "async-channel 2.1.1",
@@ -1251,7 +1251,7 @@ dependencies = [
  "is-terminal",
  "once_cell",
  "owo-colors",
- "prodash 27.0.0",
+ "prodash 28.0.0",
  "serde_derive",
  "tabled",
  "time",
@@ -1357,7 +1357,7 @@ dependencies = [
  "is_ci",
  "once_cell",
  "parking_lot",
- "prodash 27.0.0",
+ "prodash 28.0.0",
  "regex",
  "reqwest",
  "serde",
@@ -1705,7 +1705,7 @@ dependencies = [
  "libc",
  "once_cell",
  "parking_lot",
- "prodash 27.0.0",
+ "prodash 28.0.0",
  "sha1",
  "sha1_smol",
  "thiserror",
@@ -3129,15 +3129,6 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
@@ -3604,9 +3595,9 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "owo-colors"
-version = "3.5.0"
+version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
+checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 
 [[package]]
 name = "papergrid"
@@ -3796,9 +3787,9 @@ checksum = "9516b775656bc3e8985e19cd4b8c0c0de045095074e453d2c0a513b5f978392d"
 
 [[package]]
 name = "prodash"
-version = "27.0.0"
+version = "28.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7309f1ec8d18f40e3b874087c413ba69566bb7212e6d4cfdd25758e51cb0068d"
+checksum = "744a264d26b88a6a7e37cbad97953fa233b94d585236310bcbc88474b4092d79"
 dependencies = [
  "async-io 2.2.1",
  "bytesize",
@@ -3874,17 +3865,18 @@ dependencies = [
 
 [[package]]
 name = "ratatui"
-version = "0.24.0"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ebc917cfb527a566c37ecb94c7e3fd098353516fb4eb6bea17015ade0182425"
+checksum = "a5659e52e4ba6e07b2dad9f1158f578ef84a73762625ddb51536019f34d180eb"
 dependencies = [
  "bitflags 2.4.0",
  "cassowary",
  "crossterm",
  "indoc",
- "itertools 0.11.0",
+ "itertools 0.12.0",
  "lru",
  "paste",
+ "stability",
  "strum",
  "unicode-segmentation",
  "unicode-width",
@@ -4414,6 +4406,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 
 [[package]]
+name = "stability"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebd1b177894da2a2d9120208c3386066af06a488255caabc5de8ddca22dbc3ce"
+dependencies = [
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4849,9 +4851,9 @@ dependencies = [
 
 [[package]]
 name = "tui-react"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a93d64ce9d859e49cba06be4904ecda0fb94b1e22f51e027dc44c122bea9ed5b"
+checksum = "2ffacd73e2d4666c1aec4e85ab986354909e276f1dbff5c75f86bcebce566511"
 dependencies = [
  "log",
  "ratatui",
