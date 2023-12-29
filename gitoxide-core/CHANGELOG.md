@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.35.0 (2023-12-29)
 
 ### New Features
 
@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 13 commits contributed to the release over the course of 21 calendar days.
+ - 14 commits contributed to the release over the course of 21 calendar days.
  - 22 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1172](https://github.com/Byron/gitoxide/issues/1172), [#1177](https://github.com/Byron/gitoxide/issues/1177)
@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1177](https://github.com/Byron/gitoxide/issues/1177)**
     - Leave extensions in place if they are not `.git` when using `gix clone <url>`. ([`0bc9568`](https://github.com/Byron/gitoxide/commit/0bc95684c32a053de22c06e6e45c8de5704fd8fb))
  * **Uncategorized**
+    - Prepare changelogs of next release ([`e78a92b`](https://github.com/Byron/gitoxide/commit/e78a92bfeda168b2f35bb7ba9a94175cdece12f2))
     - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
     - Upgrade sysinfo ([`e06ab59`](https://github.com/Byron/gitoxide/commit/e06ab59e1377aeeef83d107c41c0d1d144571153))
     - Merge branch 'tracking-branch' ([`0fe20e8`](https://github.com/Byron/gitoxide/commit/0fe20e80145419e1662f869657dabf689786395f))
