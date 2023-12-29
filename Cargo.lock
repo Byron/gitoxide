@@ -1676,7 +1676,7 @@ dependencies = [
  "gix-hash 0.13.3",
  "gix-object 0.39.0",
  "gix-path 0.10.1",
- "gix-tempfile 11.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-tempfile 11.0.1",
  "gix-trace 0.1.4",
  "gix-worktree 0.28.0",
  "imara-diff",
@@ -2585,7 +2585,6 @@ version = "11.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "388dd29114a86ec69b28d1e26d6d63a662300ecf61ab3f4cc578f7d7dc9e7e23"
 dependencies = [
- "dashmap",
  "gix-fs 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc",
  "once_cell",
