@@ -156,7 +156,7 @@ fn load_one<'a>(
                 gid,
                 size,
             },
-            id: gix_hash::ObjectId::from(hash),
+            id: gix_hash::ObjectId::from_bytes_or_panic(hash),
             flags: flags & !entry::Flags::PATH_LEN,
             // This forces us to add the bits we need before being able to use them.
             mode: entry::Mode::from_bits_truncate(mode),

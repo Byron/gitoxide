@@ -1,6 +1,5 @@
 use gix_hash::ObjectId;
 use gix_testtools::fixture_path_standalone;
-pub use gix_testtools::{fixture_path, scripted_fixture_read_only};
 
 pub fn hex_to_id(hex: &str) -> ObjectId {
     ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")

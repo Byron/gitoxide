@@ -147,7 +147,7 @@ impl File {
         let data_len_without_trailer = self.data.len() - self.hash_len;
         let mut hasher = gix_features::hash::hasher(self.object_hash());
         hasher.update(&self.data[..data_len_without_trailer]);
-        let actual = gix_hash::ObjectId::from(hasher.digest().as_ref());
+        let actual = gix_hash::ObjectId::from_bytes_or_panic(hasher.digest().as_ref());
 
         let expected = self.checksum();
         if actual == expected {

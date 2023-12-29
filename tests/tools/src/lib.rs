@@ -52,7 +52,7 @@ impl Drop for GitDaemon {
 }
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
-static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::Cache>>> = Lazy::new(|| {
+static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::Stack>>> = Lazy::new(|| {
     let cache = (|| {
         let (repo_path, _) = gix_discover::upwards(Path::new(".")).ok()?;
         let (gix_dir, work_tree) = repo_path.into_repository_and_work_tree_directories();
@@ -63,13 +63,13 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::Cache>>> = Lazy::new(|| {
             .ignore_case
             .then_some(gix_ignore::glob::pattern::Case::Fold)
             .unwrap_or_default();
-        let state = gix_worktree::cache::State::IgnoreStack(gix_worktree::cache::state::Ignore::new(
+        let state = gix_worktree::stack::State::IgnoreStack(gix_worktree::stack::state::Ignore::new(
             Default::default(),
-            gix_ignore::Search::from_git_dir(gix_dir, None, &mut buf).ok()?,
+            gix_ignore::Search::from_git_dir(&gix_dir, None, &mut buf).ok()?,
             None,
-            gix_worktree::cache::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
+            gix_worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
         ));
-        Some(gix_worktree::Cache::new(
+        Some(gix_worktree::Stack::new(
             work_tree,
             state,
             case,

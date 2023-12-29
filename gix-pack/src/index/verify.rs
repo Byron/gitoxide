@@ -121,7 +121,7 @@ impl index::File {
     ///
     /// It's a hash over all bytes of the index.
     pub fn index_checksum(&self) -> gix_hash::ObjectId {
-        gix_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
+        gix_hash::ObjectId::from_bytes_or_panic(&self.data[self.data.len() - self.hash_len..])
     }
 
     /// Returns the hash of the pack data file that this index file corresponds to.
@@ -129,7 +129,7 @@ impl index::File {
     /// It should [`crate::data::File::checksum()`] of the corresponding pack data file.
     pub fn pack_checksum(&self) -> gix_hash::ObjectId {
         let from = self.data.len() - self.hash_len * 2;
-        gix_hash::ObjectId::from(&self.data[from..][..self.hash_len])
+        gix_hash::ObjectId::from_bytes_or_panic(&self.data[from..][..self.hash_len])
     }
 
     /// Validate that our [`index_checksum()`][index::File::index_checksum()] matches the actual contents

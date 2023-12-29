@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context};
 use bytesize::ByteSize;
 use rusqlite::{params, OptionalExtension};
-use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, SystemExt};
+use sysinfo::{CpuRefreshKind, RefreshKind};
 
 use crate::corpus::{Engine, Run};
 
@@ -152,7 +152,7 @@ impl Engine {
             sysinfo::System::new_with_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::new().with_frequency()));
         let cpu = &sys.cpus()[0];
         let vendor = Some(cpu.vendor_id().to_owned());
-        let host = sys.host_name();
+        let host = sysinfo::System::host_name();
         let brand = Some(cpu.brand().to_owned());
         Ok(self.con.query_row(
             "INSERT INTO runner (vendor, brand, host_name) VALUES (?1, ?2, ?3) \

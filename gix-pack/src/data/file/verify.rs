@@ -14,7 +14,7 @@ pub mod checksum {
 impl File {
     /// The checksum in the trailer of this pack data file
     pub fn checksum(&self) -> gix_hash::ObjectId {
-        gix_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
+        gix_hash::ObjectId::from_bytes_or_panic(&self.data[self.data.len() - self.hash_len..])
     }
 
     /// Verifies that the checksum of the packfile over all bytes preceding it indeed matches the actual checksum,

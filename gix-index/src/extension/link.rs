@@ -43,7 +43,7 @@ pub(crate) fn decode(data: &[u8], object_hash: gix_hash::Kind) -> Result<Link, d
         .ok_or(decode::Error::Corrupt(
             "link extension too short to read share index checksum",
         ))
-        .map(|(id, d)| (gix_hash::ObjectId::from(id), d))?;
+        .map(|(id, d)| (gix_hash::ObjectId::from_bytes_or_panic(id), d))?;
 
     if data.is_empty() {
         return Ok(Link {

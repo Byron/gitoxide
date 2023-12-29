@@ -1,4 +1,4 @@
-use std::{convert::TryInto, fmt, hash};
+use std::{convert::TryInto, hash};
 
 use crate::{Kind, ObjectId, SIZE_OF_SHA1_DIGEST};
 
@@ -41,28 +41,30 @@ pub struct HexDisplay<'a> {
     hex_len: usize,
 }
 
-impl<'a> fmt::Display for HexDisplay<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut hex = crate::Kind::hex_buf();
+impl<'a> std::fmt::Display for HexDisplay<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut hex = Kind::hex_buf();
         let max_len = self.inner.hex_to_buf(hex.as_mut());
         let hex = std::str::from_utf8(&hex[..self.hex_len.min(max_len)]).expect("ascii only in hex");
         f.write_str(hex)
     }
 }
 
-impl fmt::Debug for oid {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+impl std::fmt::Debug for oid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}({})",
             match self.kind() {
-                crate::Kind::Sha1 => "Sha1",
+                Kind::Sha1 => "Sha1",
             },
             self.to_hex(),
         )
     }
 }
 
+/// The error returned when trying to convert a byte slice to an [`oid`] or [`ObjectId`]
+#[allow(missing_docs)]
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Cannot instantiate git hash from a digest of length {0}")]
@@ -104,8 +106,8 @@ impl oid {
 impl oid {
     /// The kind of hash used for this instance.
     #[inline]
-    pub fn kind(&self) -> crate::Kind {
-        crate::Kind::from_len_in_bytes(self.bytes.len())
+    pub fn kind(&self) -> Kind {
+        Kind::from_len_in_bytes(self.bytes.len())
     }
 
     /// The first byte of the hash, commonly used to partition a set of object ids.
@@ -164,7 +166,7 @@ impl oid {
     /// Write ourselves to `out` in hexadecimal notation.
     #[inline]
     pub fn write_hex_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
-        let mut hex = crate::Kind::hex_buf();
+        let mut hex = Kind::hex_buf();
         let hex_len = self.hex_to_buf(&mut hex);
         out.write_all(&hex[..hex_len])
     }
@@ -182,12 +184,20 @@ impl AsRef<oid> for &oid {
     }
 }
 
+impl<'a> TryFrom<&'a [u8]> for &'a oid {
+    type Error = Error;
+
+    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
+        oid::try_from_bytes(value)
+    }
+}
+
 impl ToOwned for oid {
-    type Owned = crate::ObjectId;
+    type Owned = ObjectId;
 
     fn to_owned(&self) -> Self::Owned {
         match self.kind() {
-            crate::Kind::Sha1 => crate::ObjectId::Sha1(self.bytes.try_into().expect("no bug in hash detection")),
+            Kind::Sha1 => ObjectId::Sha1(self.bytes.try_into().expect("no bug in hash detection")),
         }
     }
 }
@@ -198,8 +208,8 @@ impl<'a> From<&'a [u8; SIZE_OF_SHA1_DIGEST]> for &'a oid {
     }
 }
 
-impl fmt::Display for &oid {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for &oid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for b in self.as_bytes() {
             write!(f, "{b:02x}")?;
         }
@@ -207,7 +217,7 @@ impl fmt::Display for &oid {
     }
 }
 
-impl PartialEq<crate::ObjectId> for &oid {
+impl PartialEq<ObjectId> for &oid {
     fn eq(&self, other: &ObjectId) -> bool {
         *self == other.as_ref()
     }

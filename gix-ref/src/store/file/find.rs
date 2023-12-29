@@ -45,7 +45,7 @@ impl file::Store {
         Error: From<E>,
     {
         self.find_one_with_verified_input(partial.try_into()?, None)
-            .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
+            .map(|r| r.map(Into::into))
     }
 
     /// Similar to [`file::Store::find()`], but allows to pass a snapshotted packed buffer instead.
@@ -267,8 +267,7 @@ pub mod existing {
             Name: TryInto<&'a PartialNameRef, Error = E>,
             crate::name::Error: From<E>,
         {
-            self.find_existing_inner(partial, None)
-                .map(|r| r.try_into().expect("always loose without packed"))
+            self.find_existing_inner(partial, None).map(Into::into)
         }
 
         /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.

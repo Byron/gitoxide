@@ -62,17 +62,14 @@ mod impl_ {
         use windows::{
             core::{Error, PCWSTR},
             Win32::{
-                Foundation::{CloseHandle, BOOL, HANDLE, HLOCAL, PSID},
+                Foundation::{CloseHandle, LocalFree, BOOL, HANDLE, HLOCAL, PSID},
                 Security::{
                     Authorization::{GetNamedSecurityInfoW, SE_FILE_OBJECT},
                     CheckTokenMembership, EqualSid, GetTokenInformation, IsWellKnownSid, TokenOwner,
                     WinBuiltinAdministratorsSid, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, TOKEN_OWNER,
                     TOKEN_QUERY,
                 },
-                System::{
-                    Memory::LocalFree,
-                    Threading::{GetCurrentProcess, GetCurrentThread, OpenProcessToken, OpenThreadToken},
-                },
+                System::Threading::{GetCurrentProcess, GetCurrentThread, OpenProcessToken, OpenThreadToken},
             },
         };
 
@@ -113,43 +110,43 @@ mod impl_ {
                 let mut token = HANDLE::default();
                 // Use the current thread token if possible, otherwise open the process token
                 OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, true, &mut token)
-                    .ok()
-                    .or_else(|_| OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token).ok())?;
+                    .or_else(|_| OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token))?;
 
                 let mut buffer_size = 0;
                 let mut buffer = Vec::<u8>::new();
-                GetTokenInformation(token, TokenOwner, None, 0, &mut buffer_size);
+                GetTokenInformation(token, TokenOwner, None, 0, &mut buffer_size).ok();
                 if buffer_size != 0 {
                     buffer.resize(buffer_size as usize, 0);
-                    if GetTokenInformation(
+                    match GetTokenInformation(
                         token,
                         TokenOwner,
                         Some(buffer.as_mut_ptr() as *mut std::ffi::c_void),
                         buffer_size,
                         &mut buffer_size,
-                    )
-                    .as_bool()
-                    {
-                        let token_owner = buffer.as_ptr() as *const TOKEN_OWNER;
-                        let token_owner = (*token_owner).Owner;
+                    ) {
+                        Ok(()) => {
+                            let token_owner = buffer.as_ptr() as *const TOKEN_OWNER;
+                            let token_owner = (*token_owner).Owner;
 
-                        is_owned = EqualSid(folder_owner, token_owner).as_bool();
+                            is_owned = EqualSid(folder_owner, token_owner).is_ok();
 
-                        // Admin-group owned folders are considered owned by the current user, if they are in the admin group
-                        if !is_owned && IsWellKnownSid(token_owner, WinBuiltinAdministratorsSid).as_bool() {
-                            let mut is_member = BOOL::default();
-                            // TODO: re-use the handle
-                            match CheckTokenMembership(HANDLE::default(), token_owner, &mut is_member).ok() {
-                                Err(e) => err_msg = Some(format!("Couldn't check if user is an administrator: {}", e)),
-                                Ok(()) => is_owned = is_member.as_bool(),
+                            // Admin-group owned folders are considered owned by the current user, if they are in the admin group
+                            if !is_owned && IsWellKnownSid(token_owner, WinBuiltinAdministratorsSid).as_bool() {
+                                let mut is_member = BOOL::default();
+                                // TODO: re-use the handle
+                                match CheckTokenMembership(HANDLE::default(), token_owner, &mut is_member) {
+                                    Err(e) => {
+                                        err_msg = Some(format!("Couldn't check if user is an administrator: {}", e))
+                                    }
+                                    Ok(()) => is_owned = is_member.as_bool(),
+                                }
                             }
                         }
-                    } else {
-                        err_msg = format!(
-                            "Couldn't get actual token information for current process with err: {}",
-                            Error::from_win32()
-                        )
-                        .into();
+                        Err(err) => {
+                            err_msg =
+                                format!("Couldn't get actual token information for current process with err: {err}",)
+                                    .into();
+                        }
                     }
                 } else {
                     err_msg = format!(
@@ -158,7 +155,7 @@ mod impl_ {
                     )
                     .into();
                 }
-                CloseHandle(token);
+                CloseHandle(token)?;
             } else {
                 err_msg = format!(
                     "Couldn't get security information for path '{}' with err {}",
@@ -167,7 +164,7 @@ mod impl_ {
                 )
                 .into();
             }
-            LocalFree(HLOCAL(pdescriptor.0 as isize)).ok();
+            LocalFree(HLOCAL(pdescriptor.0)).ok();
         }
 
         err_msg.map(|msg| Err(err(msg))).unwrap_or(Ok(is_owned))

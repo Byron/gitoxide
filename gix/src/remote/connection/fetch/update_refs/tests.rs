@@ -605,7 +605,7 @@ mod update {
         let (mut mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/remotes/origin/new", &repo);
         mappings.push(Mapping {
             remote: Source::Ref(gix_protocol::handshake::Ref::Direct {
-                full_ref_name: "refs/heads/main".try_into().unwrap(),
+                full_ref_name: "refs/heads/main".into(),
                 object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
             }),
             local: Some("refs/heads/symbolic".into()),
@@ -728,7 +728,7 @@ mod update {
         let (mut mappings, specs) = mapping_from_spec("HEAD:refs/remotes/origin/new-HEAD", &repo);
         mappings.push(Mapping {
             remote: Source::Ref(gix_protocol::handshake::Ref::Direct {
-                full_ref_name: "refs/heads/main".try_into().unwrap(),
+                full_ref_name: "refs/heads/main".into(),
                 object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
             }),
             local: Some("refs/remotes/origin/main".into()),
