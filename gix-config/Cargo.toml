@@ -9,7 +9,7 @@ edition = "2021"
 keywords = ["git-config", "git", "config", "gitoxide"]
 categories = ["config", "parser-implementations"]
 include = ["src/**/*", "LICENSE-*", "README.md"]
-rust-version = "1.70"
+rust-version = "1.65"
 autotests = false
 
 [features]
