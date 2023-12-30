@@ -105,6 +105,7 @@ impl Ignore {
             let match_ = gix_ignore::search::Match {
                 pattern: &mapping.pattern,
                 sequence_number: mapping.sequence_number,
+                kind: mapping.value,
                 source,
             };
             if mapping.pattern.is_negative() {

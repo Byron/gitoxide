@@ -133,6 +133,7 @@ is usable to some extent.
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
+  * [gix-dir](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-dir)
 * **idea** _(just a name placeholder)_
   * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
   * [gix-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fetchhead)

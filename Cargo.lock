@@ -1701,6 +1701,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-dir"
+version = "0.0.0"
+
+[[package]]
 name = "gix-discover"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1937,6 +1941,7 @@ dependencies = [
  "gix-glob 0.15.1",
  "gix-path 0.10.3",
  "gix-testtools",
+ "gix-trace 0.1.6",
  "serde",
  "unicode-bom",
 ]

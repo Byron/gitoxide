@@ -3,6 +3,22 @@ use gix_glob::{pattern::Mode, Pattern};
 use gix_testtools::fixture_bytes;
 
 #[test]
+fn precious() {
+    let input = fixture_bytes("ignore/precious.txt");
+    let actual: Vec<_> = gix_ignore::parse(&input).map(flat_map).collect();
+    assert_eq!(
+        actual,
+        vec![
+            pat_precious(".config", Mode::NO_SUB_DIR, 1),
+            pat("$starts-with-dollar", Mode::NO_SUB_DIR, 2),
+            pat_precious("*.html", Mode::NO_SUB_DIR | Mode::ENDS_WITH, 4),
+            pat("foo.html", Mode::NO_SUB_DIR | Mode::NEGATIVE, 6),
+            pat_precious("!/*", Mode::empty(), 12),
+        ]
+    );
+}
+
+#[test]
 fn byte_order_marks_are_no_patterns() {
     assert_eq!(
         flatten(gix_ignore::parse("\u{feff}hello".as_bytes()).next()),
@@ -58,7 +74,7 @@ fn backslashes_before_hashes_are_no_comments() {
 
 #[test]
 fn trailing_spaces_can_be_escaped_to_be_literal() {
-    fn parse_one(input: &str) -> (BString, Mode, usize) {
+    fn parse_one(input: &str) -> (BString, Mode, usize, gix_ignore::Kind) {
         let actual: Vec<_> = gix_ignore::parse(input.as_bytes()).map(flat_map).collect();
         assert_eq!(actual.len(), 1, "{input:?} should match");
         actual.into_iter().next().expect("present")
@@ -101,14 +117,20 @@ fn trailing_spaces_can_be_escaped_to_be_literal() {
     );
 }
 
-fn flatten(input: Option<(Pattern, usize)>) -> Option<(BString, gix_glob::pattern::Mode, usize)> {
+fn flatten(
+    input: Option<(Pattern, usize, gix_ignore::Kind)>,
+) -> Option<(BString, gix_glob::pattern::Mode, usize, gix_ignore::Kind)> {
     input.map(flat_map)
 }
 
-fn flat_map(input: (Pattern, usize)) -> (BString, gix_glob::pattern::Mode, usize) {
-    (input.0.text, input.0.mode, input.1)
+fn flat_map(input: (Pattern, usize, gix_ignore::Kind)) -> (BString, gix_glob::pattern::Mode, usize, gix_ignore::Kind) {
+    (input.0.text, input.0.mode, input.1, input.2)
 }
 
-fn pat(pattern: &str, mode: Mode, pos: usize) -> (BString, Mode, usize) {
-    (pattern.into(), mode, pos)
+fn pat(pattern: &str, mode: Mode, pos: usize) -> (BString, Mode, usize, gix_ignore::Kind) {
+    (pattern.into(), mode, pos, gix_ignore::Kind::Expendable)
+}
+
+fn pat_precious(pattern: &str, mode: Mode, pos: usize) -> (BString, Mode, usize, gix_ignore::Kind) {
+    (pattern.into(), mode, pos, gix_ignore::Kind::Precious)
 }

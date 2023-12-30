@@ -608,6 +608,18 @@ A plumbing crate with shared functionality regarding EWAH compressed bitmaps, as
   * [x] decode on-disk representation
   * [ ] encode on-disk representation
 
+### gix-dir
+
+A git directory walk.
+
+* [ ] list untracked files
+    - [ ] `normal` - files and directories
+    - [ ] `all` - expand to untracked files in untracked directories
+* [ ] list ignored files
+    - [ ] `matching` mode (show every ignored file, do not aggregate into parent directory)
+    - [ ] `traditional` mode (aggregate all ignored files of a folder into ignoring the folder itself)
+* [ ] accelerated walk with `untracked`-cache (as provided by `UNTR` extension of `gix_index::File`)
+
 ### gix-index
 
 The git staging area.
@@ -629,6 +641,7 @@ The git staging area.
     * [x] 'link' base indices to take information from, split index
     * [x] 'sdir' [sparse directory entries](https://github.blog/2021-08-16-highlights-from-git-2-33/) - marker
   * [x] verification of entries and extensions as well as checksum
+  * [ ] expand sparse directory entries using information of the tree itself
 * write
   * [x] V2
   * [x] V3 - extension bits
@@ -655,7 +668,7 @@ The git staging area.
     * [ ] IEOT index entry offset table
     * [ ] 'link' base indices to take information from, split index
     * [ ] 'sdir' sparse directory entries
-* add and remove entries
+* [ ] add and remove entries
 * [x] API documentation
     * [ ] Some examples
 

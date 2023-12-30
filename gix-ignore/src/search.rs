@@ -15,6 +15,8 @@ pub struct Match<'a> {
     pub pattern: &'a gix_glob::Pattern,
     /// The path to the source from which the pattern was loaded, or `None` if it was specified by other means.
     pub source: Option<&'a Path>,
+    /// The kind of pattern this match represents.
+    pub kind: crate::Kind,
     /// The line at which the pattern was found in its `source` file, or the occurrence in which it was provided.
     pub sequence_number: usize,
 }
@@ -24,13 +26,13 @@ pub struct Match<'a> {
 pub struct Ignore;
 
 impl Pattern for Ignore {
-    type Value = ();
+    type Value = crate::Kind;
 
     fn bytes_to_patterns(bytes: &[u8], _source: &std::path::Path) -> Vec<pattern::Mapping<Self::Value>> {
         crate::parse(bytes)
-            .map(|(pattern, line_number)| pattern::Mapping {
+            .map(|(pattern, line_number, kind)| pattern::Mapping {
                 pattern,
-                value: (),
+                value: kind,
                 sequence_number: line_number,
             })
             .collect()
@@ -61,7 +63,7 @@ impl Search {
         Ok(group)
     }
 
-    /// Parse a list of patterns, using slashes as path separators
+    /// Parse a list of ignore patterns, using slashes as path separators.
     pub fn from_overrides(patterns: impl IntoIterator<Item = impl Into<OsString>>) -> Self {
         Self::from_overrides_inner(&mut patterns.into_iter().map(Into::into))
     }
@@ -73,11 +75,13 @@ impl Search {
                     .enumerate()
                     .filter_map(|(seq_id, pattern)| {
                         let pattern = gix_path::try_into_bstr(PathBuf::from(pattern)).ok()?;
-                        gix_glob::parse(pattern.as_ref()).map(|p| pattern::Mapping {
-                            pattern: p,
-                            value: (),
-                            sequence_number: seq_id,
-                        })
+                        crate::parse(pattern.as_ref())
+                            .next()
+                            .map(|(p, _seq_id, kind)| pattern::Mapping {
+                                pattern: p,
+                                value: kind,
+                                sequence_number: seq_id + 1,
+                            })
                     })
                     .collect(),
                 source: None,
@@ -112,7 +116,7 @@ pub fn pattern_matching_relative_path<'a>(
     list.patterns.iter().rev().find_map(
         |pattern::Mapping {
              pattern,
-             value: (),
+             value: kind,
              sequence_number,
          }| {
             pattern
@@ -125,6 +129,7 @@ pub fn pattern_matching_relative_path<'a>(
                 )
                 .then_some(Match {
                     pattern,
+                    kind: *kind,
                     source: list.source.as_deref(),
                     sequence_number: *sequence_number,
                 })
