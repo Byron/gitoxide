@@ -1,0 +1,22 @@
+# ---- Magic signatures ----
+":(top)"
+"top"
+":/"
+
+":(icase)"
+"icase"
+
+":(literal)"
+"literal"
+
+":(glob)"
+"glob"
+
+# We can't close attr as they take arguments.
+":(attr:"
+":(attr:!"
+"attr"
+
+":(exclude)"
+"exclude"
+":!"

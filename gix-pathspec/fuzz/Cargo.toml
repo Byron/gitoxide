@@ -9,6 +9,7 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
+anyhow = "1.0.77"
 libfuzzer-sys = "0.4"
 
 [dependencies.gix-pathspec]
