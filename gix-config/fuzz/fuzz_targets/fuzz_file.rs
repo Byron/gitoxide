@@ -9,6 +9,7 @@ use gix_config::{
     File,
 };
 use libfuzzer_sys::fuzz_target;
+use std::borrow::Cow;
 use std::hint::black_box;
 use std::str;
 
@@ -56,6 +57,12 @@ fn fuzz_immutable(file: &File, section_name: &str, subsection_name: &Option<BStr
     _ = black_box(file.integers_by_key(key));
     _ = black_box(file.integers_filter(section_name, subsection_name, key, &mut |_| false));
     _ = black_box(file.integers_filter_by_key(key, &mut |_| false));
+
+    // Sections and frontmatter.
+    _ = black_box(file.sections_and_ids().count());
+    _ = black_box(file.sections_and_postmatter().count());
+    _ = black_box(file.sections_by_name("section").map(|x| x.count()));
+    _ = black_box(file.frontmatter());
 }
 
 fn fuzz_mutable(file: &mut File, section_name: &str, subsection_name: &Option<BString>, key: &str) -> Result<()> {
@@ -70,7 +77,7 @@ fn fuzz_mutable(file: &mut File, section_name: &str, subsection_name: &Option<BS
     };
 
     // Mutate section.
-    {
+    let section_id = {
         let mut section = file.section_mut(section_name, subsection_name)?;
         section.push_newline();
         section.set(key.to_string().try_into()?, BStr::new("Set value"));
@@ -79,7 +86,39 @@ fn fuzz_mutable(file: &mut File, section_name: &str, subsection_name: &Option<BS
         if let Some((key, value)) = kv_pair {
             section.push_with_comment(key, Some(&value), "Popped");
         }
+        section.id()
+    };
+
+    _ = black_box(file.section_mut_by_key(key));
+    _ = black_box(file.section_mut_by_id(section_id));
+
+    let new_section_name = section_name.to_string() + "_new";
+    _ = black_box(file.section_mut_or_create_new(&new_section_name, subsection_name));
+    _ = black_box(file.section_mut_or_create_new_filter(&new_section_name, subsection_name, &mut |_| false));
+
+    _ = black_box(file.section_mut_filter(section_name, subsection_name, &mut |_| false));
+    _ = black_box(file.section_mut_filter_by_key(key, &mut |_| false));
+    if let Some(removed_section) = file.remove_section(&new_section_name, subsection_name) {
+        _ = black_box(file.push_section(removed_section));
     }
+    _ = black_box(file.new_section(Cow::Owned(new_section_name.clone()), None));
+    let renamed_section_name = section_name.to_string() + "_renamed";
+    let renamed_subsection_name: Option<Cow<'_, BStr>> =
+        subsection_name.map(|x| Cow::Owned((x.to_string() + "_renamed").into()));
+    _ = black_box(file.rename_section(
+        &new_section_name.clone(),
+        subsection_name,
+        Cow::Owned(renamed_section_name.clone()),
+        renamed_subsection_name.clone(),
+    ));
+
+    _ = black_box(file.rename_section_filter(
+        &new_section_name.clone(),
+        subsection_name,
+        Cow::Owned(renamed_section_name.clone()),
+        renamed_subsection_name.clone(),
+        &mut |_| false,
+    ));
 
     // Singular raw.
     _ = black_box(
@@ -95,7 +134,7 @@ fn fuzz_mutable(file: &mut File, section_name: &str, subsection_name: &Option<BS
 fn fuzz(input: &[u8]) -> Result<()> {
     let meta = Metadata::default();
     let options = Options::default();
-    let mut file = File::from_bytes_no_includes(input, meta.clone(), options.clone())?;
+    let file = File::from_bytes_no_includes(input, meta.clone(), options.clone())?;
 
     let section_triples: Vec<_> = file
         .sections()
@@ -118,22 +157,22 @@ fn fuzz(input: &[u8]) -> Result<()> {
         black_box(fuzz_immutable(&file, &section_name, &subsection_name, &key));
     }
 
+    let mut mutated_file = file.clone();
+
     for section_triple in section_triples.iter() {
         let (section_name, subsection_name, key) = section_triple;
-        _ = black_box(fuzz_mutable(&mut file, &section_name, &subsection_name, &key));
+        _ = black_box(fuzz_mutable(&mut mutated_file, &section_name, &subsection_name, &key));
     }
 
-    _ = black_box(file.sections_and_ids().count());
-    _ = black_box(file.sections_and_postmatter().count());
-    _ = black_box(file.sections_by_name("section").map(|x| x.count()));
-    _ = black_box(file.frontmatter());
+    _ = black_box(mutated_file.append(file));
 
-    let roundtrip_as_string: Vec<u8> = file.to_bstring().into();
+    let roundtrip_as_string: Vec<u8> = mutated_file.to_bstring().into();
     _ = black_box(File::from_bytes_no_includes(
         &roundtrip_as_string,
         meta.clone(),
         options.clone(),
-    ))?;
+    )?);
+
     Ok(())
 }
 
