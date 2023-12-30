@@ -20,6 +20,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@1.70.0 # dictated by `firefox` to support the `helix` editor, IMPORTANT: adjust etc/msrv-badge.svg as well
+      - uses: dtolnay/rust-toolchain@1.67.0 # dictated by `firefox` to support the `helix` editor, but now driven by the `time` crate. IMPORTANT: adjust etc/msrv-badge.svg as well
       - uses: extractions/setup-just@v1
       - run: just ci-check-msrv
