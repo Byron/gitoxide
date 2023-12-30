@@ -1,0 +1,19 @@
+# A random set lookup/config pairs.
+"[core]"
+"core"
+
+"[http]"
+"http"
+
+"[section \"subsection\"]"
+"section"
+"subsection"
+
+# Directives
+"include"
+"includeIf"
+"gitdir:"
+"onbranch:"
+"hasconfig:"
+"remote"
+"path"
