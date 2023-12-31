@@ -468,9 +468,8 @@ fn find_match<'a, T: Change>(
     } else {
         let mut has_new = false;
         let percentage = percentage.expect("it's set to something below 1.0 and we assured this");
-        debug_assert_eq!(
-            item.change.entry_mode().kind(),
-            EntryKind::Blob,
+        debug_assert!(
+            item_mode.is_blob(),
             "symlinks are matched exactly, and trees aren't used here"
         );
 
