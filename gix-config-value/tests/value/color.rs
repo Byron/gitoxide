@@ -54,6 +54,7 @@ mod name {
         assert!(Name::from_str("#").is_err());
         assert!(Name::from_str("#fff").is_err());
         assert!(Name::from_str("#gggggg").is_err());
+        assert!(Name::from_str("#=»©=").is_err());
     }
 }
 
