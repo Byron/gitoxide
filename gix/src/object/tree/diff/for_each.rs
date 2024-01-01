@@ -42,7 +42,7 @@ impl<'a, 'old> Platform<'a, 'old> {
         for_each: impl FnMut(Change<'_, 'old, 'new>) -> Result<Action, E>,
     ) -> Result<Outcome, Error>
     where
-        E: std::error::Error + Sync + Send + 'static,
+        E: Into<Box<dyn std::error::Error + Sync + Send + 'static>>,
     {
         self.for_each_to_obtain_tree_inner(other, for_each, None)
     }
@@ -64,7 +64,7 @@ impl<'a, 'old> Platform<'a, 'old> {
         for_each: impl FnMut(Change<'_, 'old, 'new>) -> Result<Action, E>,
     ) -> Result<Outcome, Error>
     where
-        E: std::error::Error + Sync + Send + 'static,
+        E: Into<Box<dyn std::error::Error + Sync + Send + 'static>>,
     {
         self.for_each_to_obtain_tree_inner(other, for_each, Some(resource_cache))
     }
@@ -76,7 +76,7 @@ impl<'a, 'old> Platform<'a, 'old> {
         resource_cache: Option<&mut gix_diff::blob::Platform>,
     ) -> Result<Outcome, Error>
     where
-        E: std::error::Error + Sync + Send + 'static,
+        E: Into<Box<dyn std::error::Error + Sync + Send + 'static>>,
     {
         let repo = self.lhs.repo;
         let mut delegate = Delegate {
@@ -99,14 +99,14 @@ impl<'a, 'old> Platform<'a, 'old> {
                     rewrites: delegate.process_tracked_changes(resource_cache)?,
                 };
                 match delegate.err {
-                    Some(err) => Err(Error::ForEach(Box::new(err))),
+                    Some(err) => Err(Error::ForEach(err.into())),
                     None => Ok(outcome),
                 }
             }
             Err(gix_diff::tree::changes::Error::Cancelled) => delegate
                 .err
                 .map_or(Err(Error::Diff(gix_diff::tree::changes::Error::Cancelled)), |err| {
-                    Err(Error::ForEach(Box::new(err)))
+                    Err(Error::ForEach(err.into()))
                 }),
             Err(err) => Err(err.into()),
         }
@@ -126,7 +126,7 @@ struct Delegate<'a, 'old, 'new, VisitFn, E> {
 impl<'a, 'old, 'new, VisitFn, E> Delegate<'a, 'old, 'new, VisitFn, E>
 where
     VisitFn: for<'delegate> FnMut(Change<'delegate, 'old, 'new>) -> Result<Action, E>,
-    E: std::error::Error + Sync + Send + 'static,
+    E: Into<Box<dyn std::error::Error + Sync + Send + 'static>>,
 {
     /// Call `visit` on an attached version of `change`.
     fn emit_change(
@@ -240,7 +240,7 @@ where
 impl<'a, 'old, 'new, VisitFn, E> gix_diff::tree::Visit for Delegate<'a, 'old, 'new, VisitFn, E>
 where
     VisitFn: for<'delegate> FnMut(Change<'delegate, 'old, 'new>) -> Result<Action, E>,
-    E: std::error::Error + Sync + Send + 'static,
+    E: Into<Box<dyn std::error::Error + Sync + Send + 'static>>,
 {
     fn pop_front_tracked_path_and_set_current(&mut self) {
         self.recorder.pop_front_tracked_path_and_set_current()
