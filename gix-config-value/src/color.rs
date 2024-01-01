@@ -204,7 +204,7 @@ impl FromStr for Name {
         }
 
         if let Some(s) = s.strip_prefix('#') {
-            if s.len() == 6 {
+            if s.len() == 6 && s.is_char_boundary(2) && s.is_char_boundary(4) && s.is_char_boundary(6) {
                 let rgb = (
                     u8::from_str_radix(&s[..2], 16),
                     u8::from_str_radix(&s[2..4], 16),
