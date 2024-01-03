@@ -71,3 +71,23 @@ fn path_argument_safe() -> crate::Result {
     assert_eq!(url.path_argument_safe(), None);
     Ok(())
 }
+
+#[test]
+fn display() {
+    fn compare(input: &str, expected: &str, message: &str) {
+        let url = gix_url::parse(input.into()).expect("input is valid url");
+        assert_eq!(format!("{url}"), expected, "{message}");
+    }
+
+    compare(
+        "ssh://foo/-oProxyCommand=open$IFS-aCalculator",
+        "ssh://foo/-oProxyCommand=open$IFS-aCalculator",
+        "it round-trips with sane unicode and without password",
+    );
+    compare("/path/to/repo", "/path/to/repo", "same goes for simple paths");
+    compare(
+        "https://user:password@host/path",
+        "https://user:<redacted>@host/path",
+        "it visibly redacts passwords though",
+    );
+}
