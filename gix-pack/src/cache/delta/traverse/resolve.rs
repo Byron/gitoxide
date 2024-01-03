@@ -57,7 +57,6 @@ mod node {
         /// Children are `Node`s referring to pack entries whose base object is this pack entry.
         pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> + 'a {
             let children = self.child_items;
-            // SAFETY: The index is a valid index into the children array.
             // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
             #[allow(unsafe_code)]
             self.item.children.iter().map(move |&index| Node {
