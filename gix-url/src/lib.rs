@@ -55,13 +55,17 @@ pub fn expand_path(user: Option<&expand_path::ForUser>, path: &BStr) -> Result<P
 
 /// A URL with support for specialized git related capabilities.
 ///
-/// Additionally there is support for [deserialization](Url::from_bytes()) and serialization
-/// (_see the [`std::fmt::Display::fmt()`] implementation_).
+/// Additionally there is support for [deserialization](Url::from_bytes()) and [serialization](Url::to_bstring()).
 ///
 /// # Security Warning
 ///
-/// URLs may contain passwords and we serialize them when [formatting](std::fmt::Display) or
-/// [serializing losslessly](Url::to_bstring()).
+/// URLs may contain passwords and using standard [formatting](std::fmt::Display) will redact
+/// such password, whereas [lossless serialization](Url::to_bstring()) will contain all parts of the
+/// URL.
+/// **Beware that some URls still print secrets if they use them outside of the designated password fields.**
+///
+/// Also note that URLs that fail to parse are typically stored in [the resulting error](parse::Error) type
+/// and printed in full using its display implementation.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {
