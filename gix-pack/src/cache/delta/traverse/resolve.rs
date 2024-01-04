@@ -14,7 +14,7 @@ use crate::{
     data::EntryRange,
 };
 
-mod node {
+mod root {
     use crate::cache::delta::{traverse::util::ItemSliceSync, Item};
 
     /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
@@ -26,7 +26,10 @@ mod node {
     impl<'a, T: Send> Node<'a, T> {
         /// SAFETY: The child_items must be unique among between users of the `ItemSliceSync`.
         #[allow(unsafe_code)]
-        pub(crate) unsafe fn new(item: &'a mut Item<T>, child_items: &'a ItemSliceSync<'a, Item<T>>) -> Self {
+        pub(in crate::cache::delta::traverse) unsafe fn new(
+            item: &'a mut Item<T>,
+            child_items: &'a ItemSliceSync<'a, Item<T>>,
+        ) -> Self {
             Node { item, child_items }
         }
     }
@@ -68,7 +71,7 @@ mod node {
     }
 }
 
-pub(crate) struct State<'items, F, MBFN, T: Send> {
+pub(in crate::cache::delta::traverse) struct State<'items, F, MBFN, T: Send> {
     pub delta_bytes: Vec<u8>,
     pub fully_resolved_delta_bytes: Vec<u8>,
     pub progress: Box<dyn Progress>,
@@ -78,7 +81,7 @@ pub(crate) struct State<'items, F, MBFN, T: Send> {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn deltas<T, F, MBFN, E, R>(
+pub(in crate::cache::delta::traverse) fn deltas<T, F, MBFN, E, R>(
     objects: gix_features::progress::StepShared,
     size: gix_features::progress::StepShared,
     item: &mut Item<T>,
@@ -118,9 +121,9 @@ where
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed
     let root_level = 0;
-    // SAFETY: The child items are unique
+    // SAFETY: The child items are unique, as `item` is the root of a tree of dependent child items.
     #[allow(unsafe_code)]
-    let root_node = unsafe { node::Node::new(item, child_items) };
+    let root_node = unsafe { root::Node::new(item, child_items) };
     let mut nodes: Vec<_> = vec![(root_level, root_node)];
     while let Some((level, mut base)) = nodes.pop() {
         if should_interrupt.load(Ordering::Relaxed) {
@@ -240,7 +243,7 @@ fn deltas_mt<T, F, MBFN, E, R>(
     objects: gix_features::progress::StepShared,
     size: gix_features::progress::StepShared,
     progress: &dyn Progress,
-    nodes: Vec<(u16, node::Node<'_, T>)>,
+    nodes: Vec<(u16, root::Node<'_, T>)>,
     resolve: F,
     resolve_data: &R,
     modify_base: MBFN,

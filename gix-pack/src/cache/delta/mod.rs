@@ -17,7 +17,11 @@ pub mod traverse;
 ///
 pub mod from_offsets;
 
-/// An item stored within the [`Tree`]
+/// An item stored within the [`Tree`] whose data is stored in a pack file, identified by
+/// the offset of its first (`offset`) and last (`next_offset`) bytes.
+///
+/// It represents either a root entry, or one that relies on a base to be resolvable,
+/// alongside associated `data` `T`.
 pub struct Item<T> {
     /// The offset into the pack file at which the pack entry's data is located.
     pub offset: crate::data::Offset,
