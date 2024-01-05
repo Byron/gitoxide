@@ -9,7 +9,7 @@ use crate::{
 
 /// A opaque type that represents a section body.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
-pub struct Body<'event>(pub(crate) crate::parse::section::Events<'event>);
+pub struct Body<'event>(pub(crate) Vec<Event<'event>>);
 
 /// Access
 impl<'event> Body<'event> {
@@ -163,7 +163,7 @@ impl<'event> Body<'event> {
 /// An owning iterator of a section body. Created by [`Body::into_iter`], yielding
 /// un-normalized (`key`, `value`) pairs.
 // TODO: tests
-pub struct BodyIter<'event>(smallvec::IntoIter<[Event<'event>; 64]>);
+pub struct BodyIter<'event>(std::vec::IntoIter<Event<'event>>);
 
 impl<'event> IntoIterator for Body<'event> {
     type Item = (Key<'event>, Cow<'event, BStr>);

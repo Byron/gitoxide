@@ -1,4 +1,24 @@
 mod section {
+    use crate::parse::section::Header;
+    use crate::parse::{section, Comment, Event, Events, Section};
+    use bstr::BStr;
+    use std::borrow::Cow;
+
+    #[test]
+    fn size_of_events() {
+        assert_eq!(
+            std::mem::size_of::<Section<'_>>(),
+            112,
+            "this value should only ever decrease"
+        );
+        assert_eq!(std::mem::size_of::<Events<'_>>(), 744,);
+        assert_eq!(std::mem::size_of::<Event<'_>>(), 88,);
+        assert_eq!(std::mem::size_of::<Header<'_>>(), 88,);
+        assert_eq!(std::mem::size_of::<Comment<'_>>(), 32,);
+        assert_eq!(std::mem::size_of::<Option<Cow<'_, BStr>>>(), 32,);
+        assert_eq!(std::mem::size_of::<section::Name<'_>>(), 24,);
+        assert_eq!(std::mem::size_of::<section::Key<'_>>(), 24,);
+    }
 
     mod header {
         mod unvalidated {
@@ -92,10 +112,6 @@ pub(crate) mod util {
     use std::{borrow::Cow, convert::TryFrom};
 
     use crate::parse::{section, Comment, Event};
-
-    pub fn into_events(events: Vec<Event<'_>>) -> section::Events<'_> {
-        events.into()
-    }
 
     pub fn section_header(
         name: &str,

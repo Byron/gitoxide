@@ -182,7 +182,9 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
         let key_sep_events = whitespace.key_value_separators();
         MultiValueMut::set_offset(offsets, section_id, offset_index, 2 + key_sep_events.len());
         section.insert(offset, Event::Value(escape_value(value).into()));
-        section.insert_many(offset, key_sep_events.into_iter().rev());
+        section
+            .splice(offset..offset, key_sep_events.into_iter().rev())
+            .for_each(|_| {});
         section.insert(offset, Event::SectionKey(key.to_owned()));
     }
 

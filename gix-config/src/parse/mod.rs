@@ -93,7 +93,7 @@ pub struct Section<'a> {
     /// The section name and subsection name, if any.
     pub header: section::Header<'a>,
     /// The syntactic events found in this section.
-    pub events: section::Events<'a>,
+    pub events: Vec<Event<'a>>,
 }
 
 /// A parsed comment containing the comment marker and comment.
