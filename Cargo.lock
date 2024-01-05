@@ -482,6 +482,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7534301c0ea17abb4db06d75efc7b4b0fa360fce8e175a4330d721c71c942ff"
 
 [[package]]
+name = "cap"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f125eb85b84a24c36b02ed1d22c9dd8632f53b3cde6e4d23512f94021030003"
+
+[[package]]
 name = "cassowary"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1596,6 +1602,8 @@ name = "gix-config-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
+ "bytesize",
+ "cap",
  "gix",
  "gix-config",
  "gix-path 0.10.3",
