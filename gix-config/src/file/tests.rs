@@ -51,19 +51,16 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                file::section::Body(
-                    vec![
-                        newline_event(),
-                        name_event("a"),
-                        Event::KeyValueSeparator,
-                        value_event("b"),
-                        newline_event(),
-                        name_event("c"),
-                        Event::KeyValueSeparator,
-                        value_event("d"),
-                    ]
-                    .into(),
-                ),
+                file::section::Body(vec![
+                    newline_event(),
+                    name_event("a"),
+                    Event::KeyValueSeparator,
+                    value_event("b"),
+                    newline_event(),
+                    name_event("c"),
+                    Event::KeyValueSeparator,
+                    value_event("d"),
+                ]),
             );
             sections
         };
@@ -96,19 +93,16 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                file::section::Body(
-                    vec![
-                        newline_event(),
-                        name_event("a"),
-                        Event::KeyValueSeparator,
-                        value_event("b"),
-                        newline_event(),
-                        name_event("c"),
-                        Event::KeyValueSeparator,
-                        value_event("d"),
-                    ]
-                    .into(),
-                ),
+                file::section::Body(vec![
+                    newline_event(),
+                    name_event("a"),
+                    Event::KeyValueSeparator,
+                    value_event("b"),
+                    newline_event(),
+                    name_event("c"),
+                    Event::KeyValueSeparator,
+                    value_event("d"),
+                ]),
             );
             sections
         };
@@ -144,24 +138,21 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                file::section::Body(
-                    vec![
-                        newline_event(),
-                        name_event("a"),
-                        Event::KeyValueSeparator,
-                        value_event("b"),
-                        newline_event(),
-                        name_event("c"),
-                        Event::KeyValueSeparator,
-                        value_event("d"),
-                        newline_event(),
-                    ]
-                    .into(),
-                ),
+                file::section::Body(vec![
+                    newline_event(),
+                    name_event("a"),
+                    Event::KeyValueSeparator,
+                    value_event("b"),
+                    newline_event(),
+                    name_event("c"),
+                    Event::KeyValueSeparator,
+                    value_event("d"),
+                    newline_event(),
+                ]),
             );
             sections.insert(
                 SectionId(1),
-                file::section::Body(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")].into()),
+                file::section::Body(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")]),
             );
             sections
         };
@@ -193,24 +184,21 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                file::section::Body(
-                    vec![
-                        newline_event(),
-                        name_event("a"),
-                        Event::KeyValueSeparator,
-                        value_event("b"),
-                        newline_event(),
-                        name_event("c"),
-                        Event::KeyValueSeparator,
-                        value_event("d"),
-                        newline_event(),
-                    ]
-                    .into(),
-                ),
+                file::section::Body(vec![
+                    newline_event(),
+                    name_event("a"),
+                    Event::KeyValueSeparator,
+                    value_event("b"),
+                    newline_event(),
+                    name_event("c"),
+                    Event::KeyValueSeparator,
+                    value_event("d"),
+                    newline_event(),
+                ]),
             );
             sections.insert(
                 SectionId(1),
-                file::section::Body(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")].into()),
+                file::section::Body(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")]),
             );
             sections
         };
