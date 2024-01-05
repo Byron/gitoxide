@@ -169,7 +169,6 @@ mod config_name {
 mod section {
     use crate::parse::{
         error::ParseNode,
-        section,
         tests::util::{
             comment_event, fully_consumed, name_event, newline_custom_event, newline_event,
             section_header as parsed_section_header, value_done_event, value_event, value_not_done_event,
@@ -180,7 +179,7 @@ mod section {
 
     fn section<'a>(mut i: &'a [u8], node: &mut ParseNode) -> winnow::IResult<&'a [u8], Section<'a>> {
         let mut header = None;
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         super::section(&mut i, node, &mut |e| match &header {
             None => {
                 header = Some(e);
@@ -217,7 +216,6 @@ mod section {
                     value_event(""),
                     newline_custom_event("\r\n")
                 ]
-                .into(),
             }),
         );
     }
@@ -238,7 +236,6 @@ mod section {
                     value_event("v"),
                     newline_custom_event("\r\n")
                 ]
-                .into(),
             }),
         );
         assert_eq!(
@@ -254,7 +251,6 @@ mod section {
                     value_event(""),
                     newline_custom_event("\r\n")
                 ]
-                .into(),
             }),
         );
     }
@@ -302,7 +298,6 @@ mod section {
                     whitespace_event(" "),
                     value_event("\"lol\"")
                 ]
-                .into()
             })
         );
     }
@@ -321,7 +316,6 @@ mod section {
                     Event::KeyValueSeparator,
                     value_event(""),
                 ]
-                .into()
             })
         );
 
@@ -337,7 +331,6 @@ mod section {
                     value_event(""),
                     newline_event(),
                 ]
-                .into()
             })
         );
     }
@@ -374,7 +367,6 @@ mod section {
                     whitespace_event(" "),
                     value_event("\"lol\"")
                 ]
-                .into()
             })
         );
     }
@@ -386,7 +378,7 @@ mod section {
             section(b"[hello] c", &mut node).unwrap(),
             fully_consumed(Section {
                 header: parsed_section_header("hello", None),
-                events: vec![whitespace_event(" "), name_event("c"), value_event("")].into()
+                events: vec![whitespace_event(" "), name_event("c"), value_event("")]
             })
         );
 
@@ -402,7 +394,6 @@ mod section {
                     name_event("d"),
                     value_event("")
                 ]
-                .into()
             })
         );
     }
@@ -445,7 +436,6 @@ mod section {
                     whitespace_event(" "),
                     value_event("d"),
                 ]
-                .into()
             })
         );
     }
@@ -472,7 +462,6 @@ mod section {
                     whitespace_event(" "),
                     comment_event('#', " \"b\t ; c"),
                 ]
-                .into()
             })
         );
     }
@@ -494,7 +483,6 @@ mod section {
                     value_done_event(";\""),
                     comment_event(';', "a"),
                 ]
-                .into()
             })
         );
     }
@@ -512,7 +500,6 @@ mod section {
                     value_event(""),
                     comment_event('#', "world"),
                 ]
-                .into()
             })
         );
     }
@@ -522,53 +509,53 @@ mod value_continuation {
     use bstr::ByteSlice;
 
     use crate::parse::{
-        section,
-        tests::util::{into_events, newline_custom_event, newline_event, value_done_event, value_not_done_event},
+        tests::util::{newline_custom_event, newline_event, value_done_event, value_not_done_event},
+        Event,
     };
 
-    pub fn value_impl<'a>(mut i: &'a [u8], events: &mut section::Events<'a>) -> winnow::IResult<&'a [u8], ()> {
+    pub fn value_impl<'a>(mut i: &'a [u8], events: &mut Vec<Event<'a>>) -> winnow::IResult<&'a [u8], ()> {
         super::value_impl(&mut i, &mut |e| events.push(e)).map(|_| (i, ()))
     }
 
     #[test]
     fn simple_continuation() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"hello\\\nworld", &mut events).unwrap().0, b"");
         assert_eq!(
             events,
-            into_events(vec![
+            vec![
                 value_not_done_event("hello"),
                 newline_event(),
                 value_done_event("world")
-            ])
+            ]
         );
     }
 
     #[test]
     fn continuation_with_whitespace() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"hello\\\n        world", &mut events).unwrap().0, b"");
         assert_eq!(
             events,
-            into_events(vec![
+            vec![
                 value_not_done_event("hello"),
                 newline_event(),
                 value_done_event("        world")
-            ])
+            ]
         );
 
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"hello\\\r\n        world", &mut events).unwrap().0, b"");
         assert_eq!(
             events,
-            into_events(vec![
+            vec![
                 value_not_done_event("hello"),
                 newline_custom_event("\r\n"),
                 value_done_event("        world")
-            ])
+            ]
         );
 
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert!(
             value_impl(b"hello\\\r\r\n        world", &mut events).is_err(),
             "\\r must be followed by \\n"
@@ -577,7 +564,7 @@ mod value_continuation {
 
     #[test]
     fn complex_continuation_with_leftover_comment() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(
             value_impl(b"1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut events)
                 .unwrap()
@@ -586,44 +573,40 @@ mod value_continuation {
         );
         assert_eq!(
             events,
-            into_events(vec![
+            vec![
                 value_not_done_event(r#"1    "\""#),
                 newline_event(),
                 value_not_done_event(r#"a ; e "\""#),
                 newline_event(),
                 value_done_event("d")
-            ])
+            ]
         );
     }
 
     #[test]
     fn quote_split_over_two_lines_with_leftover_comment() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"\"\\\n;\";a", &mut events).unwrap().0, b";a");
         assert_eq!(
             events,
-            into_events(vec![
-                value_not_done_event("\""),
-                newline_event(),
-                value_done_event(";\"")
-            ])
+            vec![value_not_done_event("\""), newline_event(), value_done_event(";\"")]
         );
 
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"\"a\\\r\nb;\";c", &mut events).unwrap().0, b";c");
         assert_eq!(
             events,
-            into_events(vec![
+            vec![
                 value_not_done_event("\"a"),
                 newline_custom_event("\r\n"),
                 value_done_event("b;\"")
-            ])
+            ]
         );
     }
 
     #[test]
     fn quote_split_over_multiple_lines_without_surrounding_quotes_but_inner_quotes() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(
             value_impl(
                 br#"1\
@@ -639,7 +622,7 @@ mod value_continuation {
         );
         assert_eq!(
             events,
-            into_events(vec![
+            vec![
                 value_not_done_event("1"),
                 newline_event(),
                 value_not_done_event("\"2\" a"),
@@ -647,13 +630,13 @@ mod value_continuation {
                 value_not_done_event("\\\"3 b\\\""),
                 newline_event(),
                 value_done_event("4")
-            ])
+            ]
         );
     }
 
     #[test]
     fn quote_split_over_multiple_lines_with_surrounding_quotes() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(
             value_impl(
                 br#""1\
@@ -669,7 +652,7 @@ mod value_continuation {
         );
         assert_eq!(
             events,
-            into_events(vec![
+            vec![
                 value_not_done_event("\"1"),
                 newline_event(),
                 value_not_done_event("\"2\" a"),
@@ -677,97 +660,94 @@ mod value_continuation {
                 value_not_done_event("\\\"3 b\\\""),
                 newline_event(),
                 value_done_event("4 \"")
-            ])
+            ]
         );
     }
 }
 
 mod value_no_continuation {
     use super::value_continuation::value_impl;
-    use crate::parse::{
-        section,
-        tests::util::{into_events, value_event},
-    };
+    use crate::parse::tests::util::value_event;
 
     #[test]
     fn no_comment() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"hello", &mut events).unwrap().0, b"");
-        assert_eq!(events, into_events(vec![value_event("hello")]));
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn windows_newline() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"hi\r\nrest", &mut events).unwrap().0, b"\r\nrest");
-        assert_eq!(events, into_events(vec![value_event("hi")]));
+        assert_eq!(events, vec![value_event("hi")]);
 
         events.clear();
         assert_eq!(value_impl(b"hi\r\r\r\nrest", &mut events).unwrap().0, b"\r\r\r\nrest");
-        assert_eq!(events, into_events(vec![value_event("hi")]));
+        assert_eq!(events, vec![value_event("hi")]);
     }
 
     #[test]
     fn no_comment_newline() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"hello\na", &mut events).unwrap().0, b"\na");
-        assert_eq!(events, into_events(vec![value_event("hello")]));
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn semicolon_comment_not_consumed() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"hello;world", &mut events).unwrap().0, b";world");
-        assert_eq!(events, into_events(vec![value_event("hello")]));
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn octothorpe_comment_not_consumed() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(b"hello#world", &mut events).unwrap().0, b"#world");
-        assert_eq!(events, into_events(vec![value_event("hello")]));
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn values_with_extraneous_whitespace_without_comment() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(
             value_impl(b"hello               ", &mut events).unwrap().0,
             b"               "
         );
-        assert_eq!(events, into_events(vec![value_event("hello")]));
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn values_with_extraneous_whitespace_before_comment() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(
             value_impl(b"hello             #world", &mut events).unwrap().0,
             b"             #world"
         );
-        assert_eq!(events, into_events(vec![value_event("hello")]));
+        assert_eq!(events, vec![value_event("hello")]);
 
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(
             value_impl(b"hello             ;world", &mut events).unwrap().0,
             b"             ;world"
         );
-        assert_eq!(events, into_events(vec![value_event("hello")]));
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     #[allow(clippy::needless_raw_string_hashes)]
     fn trans_escaped_comment_marker_not_consumed() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(br##"hello"#"world; a"##, &mut events).unwrap().0, b"; a");
-        assert_eq!(events, into_events(vec![value_event(r##"hello"#"world"##)]));
+        assert_eq!(events, vec![value_event(r##"hello"#"world"##)]);
     }
 
     #[test]
     fn complex_test() {
-        let mut events = section::Events::default();
+        let mut events = Vec::new();
         assert_eq!(value_impl(br#"value";";ahhhh"#, &mut events).unwrap().0, b";ahhhh");
-        assert_eq!(events, into_events(vec![value_event(r#"value";""#)]));
+        assert_eq!(events, vec![value_event(r#"value";""#)]);
     }
 
     #[test]
@@ -794,15 +774,14 @@ mod value_no_continuation {
 mod key_value_pair {
     use crate::parse::{
         error::ParseNode,
-        section,
-        tests::util::{into_events, name_event, value_event, whitespace_event},
+        tests::util::{name_event, value_event, whitespace_event},
         Event,
     };
 
     fn key_value<'a>(
         mut i: &'a [u8],
         node: &mut ParseNode,
-        events: &mut section::Events<'a>,
+        events: &mut Vec<Event<'a>>,
     ) -> winnow::IResult<&'a [u8], ()> {
         super::key_value_pair(&mut i, node, &mut |e| events.push(e)).map(|_| (i, ()))
     }
@@ -815,20 +794,20 @@ mod key_value_pair {
             key_value("你好".as_bytes(), &mut node, &mut vec).is_ok(),
             "Verifying `is_ok` because bad keys get ignored, the caller parser handles this as error"
         );
-        assert_eq!(vec, into_events(vec![]));
+        assert_eq!(vec, vec![]);
 
         let mut node = ParseNode::SectionHeader;
         let mut vec = Default::default();
         assert!(key_value("a = 你好 ".as_bytes(), &mut node, &mut vec).is_ok());
         assert_eq!(
             vec,
-            into_events(vec![
+            vec![
                 name_event("a"),
                 whitespace_event(" "),
                 Event::KeyValueSeparator,
                 whitespace_event(" "),
                 value_event("你好")
-            ])
+            ]
         );
     }
 
@@ -839,24 +818,24 @@ mod key_value_pair {
         assert!(key_value(b"a =b", &mut node, &mut vec).is_ok());
         assert_eq!(
             vec,
-            into_events(vec![
+            vec![
                 name_event("a"),
                 whitespace_event(" "),
                 Event::KeyValueSeparator,
                 value_event("b")
-            ])
+            ]
         );
 
         let mut vec = Default::default();
         assert!(key_value(b"a= b", &mut node, &mut vec).is_ok());
         assert_eq!(
             vec,
-            into_events(vec![
+            vec![
                 name_event("a"),
                 Event::KeyValueSeparator,
                 whitespace_event(" "),
                 value_event("b")
-            ])
+            ]
         );
     }
 }

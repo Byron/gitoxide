@@ -14,6 +14,10 @@ publish = false
 name = "config"
 path = "config.rs"
 
+[[test]]
+name = "mem"
+path = "mem.rs"
+
 [dev-dependencies]
 gix-config = { path = ".."}
 gix-testtools = { path = "../../tests/tools"}
@@ -23,3 +27,6 @@ gix-path = { path = "../../gix-path" }
 gix-sec = { path = "../../gix-sec" }
 serial_test = { version = "2.0.0", default-features = false }
 bstr = { version = "1.3.0", default-features = false, features = ["std"] }
+
+bytesize = "1.3.0"
+cap = { version = "0.1.2", features = ["stats"] }

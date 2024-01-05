@@ -262,7 +262,8 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 
         let sep_events = self.whitespace.key_value_separators();
         size += sep_events.len();
-        body.insert_many(index.0, sep_events.into_iter().rev());
+        body.splice(index.0..index.0, sep_events.into_iter().rev())
+            .for_each(|_| {});
 
         body.insert(index.0, Event::SectionKey(key));
         size += 1;
@@ -310,7 +311,7 @@ impl<'event> Deref for SectionMut<'_, 'event> {
 }
 
 impl<'event> file::section::Body<'event> {
-    pub(crate) fn as_mut(&mut self) -> &mut parse::section::Events<'event> {
+    pub(crate) fn as_mut(&mut self) -> &mut Vec<Event<'event>> {
         &mut self.0
     }
 }

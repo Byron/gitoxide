@@ -53,6 +53,8 @@ impl<'a> File<'a> {
 
         this.frontmatter_events = frontmatter;
 
+        this.sections.reserve(sections.len());
+        this.section_order.reserve(sections.len());
         for section in sections {
             this.push_section_internal(crate::file::Section {
                 header: section.header,
@@ -61,7 +63,6 @@ impl<'a> File<'a> {
                 id: Default::default(),
             });
         }
-
         this
     }
 }

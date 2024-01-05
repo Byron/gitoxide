@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use crate::{
     parse,
-    parse::{section, Event, Section},
+    parse::{Event, Section},
 };
 
 /// A type store without allocation all events that are typically preceding the first section.
@@ -292,7 +292,7 @@ fn from_bytes<'a, 'b>(
     filter: Option<fn(&Event<'a>) -> bool>,
 ) -> Result<Events<'b>, parse::Error> {
     let mut header = None;
-    let mut events = section::Events::default();
+    let mut events = Vec::with_capacity(256);
     let mut frontmatter = FrontMatterEvents::default();
     let mut sections = Vec::new();
     parse::from_bytes(input, &mut |e: Event<'_>| match e {

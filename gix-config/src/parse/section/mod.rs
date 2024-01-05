@@ -1,7 +1,6 @@
 use std::{borrow::Cow, fmt::Display};
 
 use bstr::BStr;
-use smallvec::SmallVec;
 
 use crate::parse::{Event, Section};
 
@@ -9,9 +8,6 @@ use crate::parse::{Event, Section};
 pub mod header;
 
 pub(crate) mod unvalidated;
-
-/// A container for events, avoiding heap allocations in typical files.
-pub type Events<'a> = SmallVec<[Event<'a>; 64]>;
 
 /// A parsed section header, containing a name and optionally a subsection name.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
