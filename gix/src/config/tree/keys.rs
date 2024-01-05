@@ -133,6 +133,10 @@ impl<T: Validate> Key for Any<T> {
         self.section
     }
 
+    fn as_config_key(&self) -> &dyn gix_config::Key {
+        self
+    }
+
     fn subsection_requirement(&self) -> Option<&SubSectionRequirement> {
         self.subsection_requirement.as_ref()
     }

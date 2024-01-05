@@ -6,7 +6,7 @@ use gix_features::threading::OwnShared;
 use gix_macros::momo;
 
 use crate::{
-    bstr::{BStr, BString, ByteSlice},
+    bstr::{BStr, BString},
     config::{CommitAutoRollback, Snapshot, SnapshotMut},
 };
 
@@ -134,8 +134,8 @@ impl<'repo> SnapshotMut<'repo> {
         let current = match section.parent() {
             Some(parent) => self
                 .config
-                .set_raw_value(parent.name(), Some(section.name().into()), key.name(), value)?,
-            None => self.config.set_raw_value(section.name(), None, key.name(), value)?,
+                .set_raw_value_by(parent.name(), Some(section.name().into()), key.name(), value)?,
+            None => self.config.set_raw_value_by(section.name(), None, key.name(), value)?,
         };
         Ok(current.map(std::borrow::Cow::into_owned))
     }
@@ -155,13 +155,9 @@ impl<'repo> SnapshotMut<'repo> {
         let value = new_value.into();
         key.validate(value)?;
 
-        let name = key
-            .full_name(Some(subsection.into()))
-            .expect("we know it needs a subsection");
-        let key = gix_config::parse::key((**name).as_bstr()).expect("statically known keys can always be parsed");
         let current =
             self.config
-                .set_raw_value(key.section_name, key.subsection_name, key.value_name.to_owned(), value)?;
+                .set_raw_value_in_subsection(key.as_config_key(), subsection.into(), value)?;
         Ok(current.map(std::borrow::Cow::into_owned))
     }
 

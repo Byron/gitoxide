@@ -7,7 +7,7 @@ use crate::{
     file::{mutable::multi_value::EntryData, Index, MetadataFilter, MultiValueMut, Size, ValueMut},
     lookup,
     parse::{section, Event},
-    File,
+    File, Key,
 };
 
 /// # Raw value API
@@ -458,14 +458,14 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = gix_config::File::try_from("[core]a=b").unwrap();
-    /// let prev = git_config.set_raw_value("core", None, "a", "e")?;
-    /// git_config.set_raw_value("core", None, "b", "f")?;
+    /// let prev = git_config.set_raw_value(&"core.a", "e")?;
+    /// git_config.set_raw_value(&"core.b", "f")?;
     /// assert_eq!(prev.expect("present").as_ref(), "b");
     /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
     /// assert_eq!(git_config.raw_value("core", None, "b")?, Cow::<BStr>::Borrowed("f".into()));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn set_raw_value<'b, Key, E>(
+    pub fn set_raw_value_by<'b, Key, E>(
         &mut self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
@@ -477,6 +477,25 @@ impl<'event> File<'event> {
         section::key::Error: From<E>,
     {
         self.set_raw_value_filter(section_name, subsection_name, key, new_value, &mut |_| true)
+    }
+
+    /// TODO
+    pub fn set_raw_value<'b>(
+        &mut self,
+        key: &'event dyn Key,
+        new_value: impl Into<&'b BStr>,
+    ) -> Result<Option<Cow<'event, BStr>>, crate::file::set_raw_value::Error> {
+        self.set_raw_value_by(key.section_name(), None, key.name(), new_value)
+    }
+
+    /// TODO
+    pub fn set_raw_value_in_subsection<'b>(
+        &mut self,
+        key: &'event dyn Key,
+        subsection_name: &BStr,
+        new_value: impl Into<&'b BStr>,
+    ) -> Result<Option<Cow<'event, BStr>>, crate::file::set_raw_value::Error> {
+        self.set_raw_value_by(key.section_name(), Some(subsection_name), key.name(), new_value)
     }
 
     /// Similar to [`set_raw_value()`][Self::set_raw_value()], but only sets existing values in sections matching

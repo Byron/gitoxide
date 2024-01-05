@@ -57,7 +57,7 @@ mod blocking_and_async_io {
             let mut repo = remote::repo("clone");
             if let Some(version) = version {
                 repo.config_snapshot_mut()
-                    .set_raw_value(Protocol::VERSION, (version as u8).to_string().as_str())?;
+                    .set_raw_value(&Protocol::VERSION, (version as u8).to_string().as_str())?;
             }
 
             let remote = into_daemon_remote_if_async(

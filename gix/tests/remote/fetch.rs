@@ -486,7 +486,7 @@ mod blocking_and_async_io {
             let (mut repo, _tmp) = repo_rw("two-origins");
             if let Some(version) = version {
                 repo.config_snapshot_mut()
-                    .set_raw_value(Protocol::VERSION, (version as u8).to_string().as_str())?;
+                    .set_raw_value(&Protocol::VERSION, (version as u8).to_string().as_str())?;
             }
 
             // No updates

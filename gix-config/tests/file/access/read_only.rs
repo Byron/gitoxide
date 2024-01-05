@@ -308,10 +308,10 @@ fn unknown_section() -> crate::Result {
         gix_config::lookup::existing::Error::SubSectionMissing
     ));
 
-    config.set_raw_value("present", Some("subsection".into()), "key", "value")?;
+    config.set_raw_value_by("present", Some("subsection".into()), "key", "value")?;
     assert!(config.section("present", Some("subsection".into())).is_ok());
 
-    config.set_raw_value("new", Some("subsection".into()), "key", "value")?;
+    config.set_raw_value_by("new", Some("subsection".into()), "key", "value")?;
     assert!(config.section("new", Some("subsection".into())).is_ok());
 
     for id in config.sections_and_ids().map(|(_, id)| id).collect::<Vec<_>>() {

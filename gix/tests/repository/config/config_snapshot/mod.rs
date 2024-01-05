@@ -12,7 +12,7 @@ fn commit_auto_rollback() -> crate::Result {
 
     {
         let mut config = repo.config_snapshot_mut();
-        config.set_raw_value("core", None, "abbrev", "4")?;
+        config.set_raw_value(&Core::ABBREV, "4")?;
         let repo = config.commit_auto_rollback()?;
         assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
     }
@@ -21,7 +21,7 @@ fn commit_auto_rollback() -> crate::Result {
 
     let repo = {
         let mut config = repo.config_snapshot_mut();
-        config.set_raw_value("core", None, "abbrev", "4")?;
+        config.set_raw_value(&Core::ABBREV, "4")?;
         let mut repo = config.commit_auto_rollback()?;
         assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
         // access to the mutable repo underneath
@@ -44,7 +44,7 @@ fn snapshot_mut_commit_and_forget() -> crate::Result {
     assert_eq!(repo.config_snapshot().integer("core.abbrev").expect("set"), 4);
     {
         let mut repo = repo.config_snapshot_mut();
-        repo.set_raw_value("core", None, "abbrev", "8")?;
+        repo.set_raw_value(&Core::ABBREV, "8")?;
         repo.forget();
     }
     assert_eq!(repo.config_snapshot().integer("core.abbrev"), Some(4));
@@ -62,7 +62,7 @@ fn values_are_set_in_memory_only() {
 
     {
         let mut config = repo.config_snapshot_mut();
-        config.set_raw_value("hallo", None, "welt", "true").unwrap();
+        config.set_raw_value_by("hallo", None, "welt", "true").unwrap();
         config
             .set_subsection_value(&Branch::MERGE, "main", "refs/heads/foo")
             .unwrap();
