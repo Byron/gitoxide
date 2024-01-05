@@ -154,16 +154,22 @@ where
             },
             {
                 move |node, state, threads_left, should_interrupt| {
-                    resolve::deltas(
-                        object_counter.clone(),
-                        size_counter.clone(),
-                        node,
-                        state,
-                        resolve_data,
-                        object_hash.len_in_bytes(),
-                        threads_left,
-                        should_interrupt,
-                    )
+                    // SAFETY: This invariant is upheld since `child_items` and `node` come from the same Tree.
+                    // This means we can rely on Tree's invariant that node.children will be the only `children` array in
+                    // for nodes in this tree that will contain any of those children.
+                    #[allow(unsafe_code)]
+                    unsafe {
+                        resolve::deltas(
+                            object_counter.clone(),
+                            size_counter.clone(),
+                            node,
+                            state,
+                            resolve_data,
+                            object_hash.len_in_bytes(),
+                            threads_left,
+                            should_interrupt,
+                        )
+                    }
                 }
             },
             || (!should_interrupt.load(Ordering::Relaxed)).then(|| std::time::Duration::from_millis(50)),

@@ -32,6 +32,10 @@ pub struct Item<T> {
     /// Indices into our Tree's `items`, one for each pack entry that depends on us.
     ///
     /// Limited to u32 as that's the maximum amount of objects in a pack.
+    // SAFETY INVARIANT:
+    //    - only one Item in a tree may have any given child index. `future_child_offsets`
+    //      should also not contain any indices found in `children`.\
+    //    - These indices should be in bounds for tree.child_items
     children: Vec<u32>,
 }
 
@@ -46,13 +50,20 @@ enum NodeKind {
 /// It does this by making the guarantee that iteration only happens once.
 pub struct Tree<T> {
     /// The root nodes, i.e. base objects
+    // SAFETY invariant: see Item.children
     root_items: Vec<Item<T>>,
     /// The child nodes, i.e. those that rely a base object, like ref and ofs delta objects
+    // SAFETY invariant: see Item.children
     child_items: Vec<Item<T>>,
     /// The last encountered node was either a root or a child.
     last_seen: Option<NodeKind>,
     /// Future child offsets, associating their offset into the pack with their index in the items array.
     /// (parent_offset, child_index)
+    // SAFETY invariant:
+    //    - None of these child indices should already have parents
+    //      i.e. future_child_offsets[i].1 should never be also found
+    //      in Item.children. Indices should be found here at most once.
+    //    - These indices should be in bounds for tree.child_items.
     future_child_offsets: Vec<(crate::data::Offset, usize)>,
 }
 
@@ -94,6 +105,12 @@ impl<T> Tree<T> {
     ) -> Result<(), traverse::Error> {
         if !self.future_child_offsets.is_empty() {
             for (parent_offset, child_index) in self.future_child_offsets.drain(..) {
+                // SAFETY invariants upheld:
+                //  - We are draining from future_child_offsets and adding to children, keeping things the same.
+                //  - We can rely on the `future_child_offsets` invariant to be sure that `children` is
+                //    not getting any indices that are already in use in `children` elsewhere
+                //  - The indices are in bounds for child_items since they were in bounds for future_child_offsets,
+                //    we can carry over the invariant.
                 if let Ok(i) = self.child_items.binary_search_by_key(&parent_offset, |i| i.offset) {
                     self.child_items[i].children.push(child_index as u32);
                 } else if let Ok(i) = self.root_items.binary_search_by_key(&parent_offset, |i| i.offset) {
@@ -120,6 +137,7 @@ impl<T> Tree<T> {
             offset,
             next_offset: 0,
             data,
+            // SAFETY INVARIANT upheld: there are no children
             children: Default::default(),
         });
         Ok(())
@@ -135,6 +153,19 @@ impl<T> Tree<T> {
         self.assert_is_incrementing_and_update_next_offset(offset)?;
 
         let next_child_index = self.child_items.len();
+        // SAFETY INVARIANT upheld:
+        // - This is one of two methods that modifies `children` and future_child_offsets. Out
+        //   of the two, it is the only one that produces new indices in the system.
+        // - This always pushes next_child_index to *either* `children` or `future_child_offsets`,
+        //   maintaining the cross-field invariant there.
+        // - This method will always push to child_items (at the end), incrementing
+        //   future values of next_child_index. This means next_child_index is always
+        //   unique for this method call.
+        // - As the only method producing new indices, this is the only time
+        //   next_child_index will be added to children/future_child_offsets, upholding the invariant.
+        // - Since next_child_index will always be a valid index by the end of this method,
+        //   this always produces valid in-bounds indices, upholding the bounds invariant.
+
         if let Ok(i) = self.child_items.binary_search_by_key(&base_offset, |i| i.offset) {
             self.child_items[i].children.push(next_child_index as u32);
         } else if let Ok(i) = self.root_items.binary_search_by_key(&base_offset, |i| i.offset) {
@@ -148,6 +179,7 @@ impl<T> Tree<T> {
             offset,
             next_offset: 0,
             data,
+            // SAFETY INVARIANT upheld: there are no children
             children: Default::default(),
         });
         Ok(())
