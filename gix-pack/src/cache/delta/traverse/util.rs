@@ -16,21 +16,21 @@ use std::marker::PhantomData;
 /// more than one base. And that's what one would really have to do for two threads to encounter the same child.
 ///
 /// Thus I believe it's impossible for this data structure to end up in a place where it violates its assumption.
-pub(in crate::cache::delta::traverse) struct ItemSliceSync<'a, T>
+pub(super) struct ItemSliceSync<'a, T>
 where
     T: Send,
 {
     items: *mut T,
     #[cfg(debug_assertions)]
     len: usize,
-    phantom: PhantomData<&'a T>,
+    phantom: PhantomData<&'a mut T>,
 }
 
 impl<'a, T> ItemSliceSync<'a, T>
 where
     T: Send,
 {
-    pub(in crate::cache::delta::traverse) fn new(items: &'a mut [T]) -> Self {
+    pub(super) fn new(items: &'a mut [T]) -> Self {
         ItemSliceSync {
             items: items.as_mut_ptr(),
             #[cfg(debug_assertions)]
@@ -41,21 +41,24 @@ where
 
     // SAFETY: The index must point into the slice and must not be reused concurrently.
     #[allow(unsafe_code)]
-    pub(in crate::cache::delta::traverse) unsafe fn get_mut(&self, index: usize) -> &'a mut T {
+    pub(super) unsafe fn get_mut(&self, index: usize) -> &'a mut T {
         #[cfg(debug_assertions)]
         if index >= self.len {
             panic!("index out of bounds: the len is {} but the index is {index}", self.len);
         }
-        // SAFETY: The index is within the slice
-        // SAFETY: The children array is alive by the 'a lifetime.
+        // SAFETY:
+        //    - The index is within the slice (required by documentation)
+        //    - We have mutable access to `items` as ensured by Self::new()
+        //    - This is the only method on this type giving access to items
+        //    - The documentation requires that this access is unique
         unsafe { &mut *self.items.add(index) }
     }
 }
 
-// SAFETY: T is `Send`, and we only use the pointer for creating new pointers.
+// SAFETY: This is logically an &mut T, which is Send if T is Send
+// (note: this is different from &T, which also needs T: Sync)
 #[allow(unsafe_code)]
 unsafe impl<T> Send for ItemSliceSync<'_, T> where T: Send {}
-// SAFETY: T is `Send`, and as long as the user follows the contract of
-// `get_mut()`, we only ever access one T at a time.
+// SAFETY: This is logically an &mut T, which is Sync if T is Sync
 #[allow(unsafe_code)]
 unsafe impl<T> Sync for ItemSliceSync<'_, T> where T: Send {}
