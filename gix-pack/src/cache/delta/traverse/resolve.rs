@@ -60,7 +60,7 @@ mod root {
 
         /// Returns true if this node has children, e.g. is not a leaf in the tree.
         pub fn has_children(&self) -> bool {
-            !self.item.children.is_empty()
+            !self.item.children().is_empty()
         }
 
         /// Transform this `Node` into an iterator over its children.
@@ -69,7 +69,7 @@ mod root {
         pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> + 'a {
             let children = self.child_items;
             #[allow(unsafe_code)]
-            self.item.children.iter().map(move |&index| {
+            self.item.children().iter().map(move |&index| {
                 // SAFETY: Due to the invariant on new(), we can rely on these indices
                 // being unique.
                 let item = unsafe { children.get_mut(index as usize) };

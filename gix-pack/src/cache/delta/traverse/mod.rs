@@ -132,10 +132,11 @@ where
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 
         let start = std::time::Instant::now();
-        let child_items = ItemSliceSync::new(&mut self.child_items);
+        let (mut root_items, mut child_items_vec) = self.take_root_and_child();
+        let child_items = ItemSliceSync::new(&mut child_items_vec);
         let child_items = &child_items;
         in_parallel_with_slice(
-            &mut self.root_items,
+            &mut root_items,
             thread_limit,
             {
                 {
@@ -180,8 +181,8 @@ where
         size_progress.show_throughput(start);
 
         Ok(Outcome {
-            roots: self.root_items,
-            children: self.child_items,
+            roots: root_items,
+            children: child_items_vec,
         })
     }
 }
