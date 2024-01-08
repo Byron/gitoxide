@@ -1784,6 +1784,7 @@ dependencies = [
  "flate2",
  "gix-hash 0.14.1",
  "gix-trace 0.1.7",
+ "gix-utils 0.1.8",
  "jwalk",
  "libc",
  "once_cell",
