@@ -29,7 +29,7 @@ fn main_store(
     let (dir, tmp) = dir(packed, writable)?;
     let git_dir = dir.join("repo").join(".git");
     Ok((
-        gix_ref::file::Store::at(git_dir.clone(), Default::default(), Default::default()),
+        gix_ref::file::Store::at(git_dir.clone(), Default::default(), Default::default(), false),
         gix_odb::at(git_dir.join("objects"))?,
         tmp,
     ))
@@ -50,7 +50,13 @@ fn worktree_store(
         .into_repository_and_work_tree_directories();
     let common_dir = git_dir.join("../..");
     Ok((
-        gix_ref::file::Store::for_linked_worktree(git_dir, common_dir.clone(), Default::default(), Default::default()),
+        gix_ref::file::Store::for_linked_worktree(
+            git_dir,
+            common_dir.clone(),
+            Default::default(),
+            Default::default(),
+            false,
+        ),
         gix_odb::at(common_dir.join("objects"))?,
         tmp,
     ))

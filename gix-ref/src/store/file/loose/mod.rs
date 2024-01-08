@@ -33,7 +33,13 @@ mod init {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
         /// `refs/` subdirectory.
         /// The `object_hash` defines which kind of hash we should recognize.
-        pub fn at(git_dir: PathBuf, write_reflog: file::WriteReflog, object_hash: gix_hash::Kind) -> Self {
+        /// `precompose_unicode` is used to set to the value of [`Self::precompose_unicode].
+        pub fn at(
+            git_dir: PathBuf,
+            write_reflog: file::WriteReflog,
+            object_hash: gix_hash::Kind,
+            precompose_unicode: bool,
+        ) -> Self {
             file::Store {
                 git_dir,
                 packed_buffer_mmap_threshold: packed_refs_mmap_threshold(),
@@ -42,6 +48,7 @@ mod init {
                 namespace: None,
                 packed: gix_fs::SharedFileSnapshotMut::new().into(),
                 object_hash,
+                precompose_unicode,
             }
         }
 
@@ -52,6 +59,7 @@ mod init {
             common_dir: PathBuf,
             write_reflog: file::WriteReflog,
             object_hash: gix_hash::Kind,
+            precompose_unicode: bool,
         ) -> Self {
             file::Store {
                 git_dir,
@@ -61,6 +69,7 @@ mod init {
                 namespace: None,
                 packed: gix_fs::SharedFileSnapshotMut::new().into(),
                 object_hash,
+                precompose_unicode,
             }
         }
     }

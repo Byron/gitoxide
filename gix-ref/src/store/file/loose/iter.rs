@@ -13,13 +13,18 @@ pub(in crate::store_impl::file) struct SortedLoosePaths {
 }
 
 impl SortedLoosePaths {
-    pub fn at(path: &Path, base: PathBuf, filename_prefix: Option<BString>) -> Self {
+    pub fn at(path: &Path, base: PathBuf, filename_prefix: Option<BString>, precompose_unicode: bool) -> Self {
         SortedLoosePaths {
             base,
             filename_prefix,
             file_walk: path.is_dir().then(|| {
                 // serial iteration as we expect most refs in packed-refs anyway.
-                gix_features::fs::walkdir_sorted_new(path, gix_features::fs::walkdir::Parallelism::Serial).into_iter()
+                gix_features::fs::walkdir_sorted_new(
+                    path,
+                    gix_features::fs::walkdir::Parallelism::Serial,
+                    precompose_unicode,
+                )
+                .into_iter()
             }),
         }
     }
@@ -32,10 +37,10 @@ impl Iterator for SortedLoosePaths {
         for entry in self.file_walk.as_mut()?.by_ref() {
             match entry {
                 Ok(entry) => {
-                    if !entry.file_type().is_file() {
+                    if !entry.file_type().map_or(false, |ft| ft.is_file()) {
                         continue;
                     }
-                    let full_path = entry.path().to_owned();
+                    let full_path = entry.path().into_owned();
                     if let Some((prefix, name)) = self
                         .filename_prefix
                         .as_deref()

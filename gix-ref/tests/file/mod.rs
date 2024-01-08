@@ -19,6 +19,7 @@ pub fn store_at(name: &str) -> crate::Result<Store> {
         path.join(".git"),
         gix_ref::store::WriteReflog::Normal,
         gix_hash::Kind::Sha1,
+        false,
     ))
 }
 
@@ -27,7 +28,12 @@ fn store_writable(name: &str) -> crate::Result<(gix_testtools::tempfile::TempDir
     let git_dir = dir.path().join(".git");
     Ok((
         dir,
-        Store::at(git_dir, gix_ref::store::WriteReflog::Normal, gix_hash::Kind::Sha1),
+        Store::at(
+            git_dir,
+            gix_ref::store::WriteReflog::Normal,
+            gix_hash::Kind::Sha1,
+            false,
+        ),
     ))
 }
 

@@ -28,6 +28,7 @@ pub(crate) mod prepare_and_commit {
             dir.path().into(),
             gix_ref::store::WriteReflog::Normal,
             gix_hash::Kind::Sha1,
+            false,
         );
         Ok((dir, store))
     }

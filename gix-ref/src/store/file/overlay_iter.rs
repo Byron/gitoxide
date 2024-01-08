@@ -220,15 +220,18 @@ impl file::Store {
 pub(crate) enum IterInfo<'a> {
     Base {
         base: &'a Path,
+        precompose_unicode: bool,
     },
     BaseAndIterRoot {
         base: &'a Path,
         iter_root: PathBuf,
         prefix: Cow<'a, Path>,
+        precompose_unicode: bool,
     },
     PrefixAndBase {
         base: &'a Path,
         prefix: &'a Path,
+        precompose_unicode: bool,
     },
     ComputedIterationRoot {
         /// The root to iterate over
@@ -239,6 +242,8 @@ pub(crate) enum IterInfo<'a> {
         prefix: Cow<'a, Path>,
         /// The remainder of the prefix that wasn't a valid path
         remainder: Option<BString>,
+        /// If `true`, we will convert decomposed into precomposed unicode.
+        precompose_unicode: bool,
     },
 }
 
@@ -255,24 +260,33 @@ impl<'a> IterInfo<'a> {
 
     fn into_iter(self) -> Peekable<SortedLoosePaths> {
         match self {
-            IterInfo::Base { base } => SortedLoosePaths::at(&base.join("refs"), base.into(), None),
+            IterInfo::Base {
+                base,
+                precompose_unicode,
+            } => SortedLoosePaths::at(&base.join("refs"), base.into(), None, precompose_unicode),
             IterInfo::BaseAndIterRoot {
                 base,
                 iter_root,
                 prefix: _,
-            } => SortedLoosePaths::at(&iter_root, base.into(), None),
-            IterInfo::PrefixAndBase { base, prefix } => SortedLoosePaths::at(&base.join(prefix), base.into(), None),
+                precompose_unicode,
+            } => SortedLoosePaths::at(&iter_root, base.into(), None, precompose_unicode),
+            IterInfo::PrefixAndBase {
+                base,
+                prefix,
+                precompose_unicode,
+            } => SortedLoosePaths::at(&base.join(prefix), base.into(), None, precompose_unicode),
             IterInfo::ComputedIterationRoot {
                 iter_root,
                 base,
                 prefix: _,
                 remainder,
-            } => SortedLoosePaths::at(&iter_root, base.into(), remainder),
+                precompose_unicode,
+            } => SortedLoosePaths::at(&iter_root, base.into(), remainder, precompose_unicode),
         }
         .peekable()
     }
 
-    fn from_prefix(base: &'a Path, prefix: Cow<'a, Path>) -> std::io::Result<Self> {
+    fn from_prefix(base: &'a Path, prefix: Cow<'a, Path>, precompose_unicode: bool) -> std::io::Result<Self> {
         if prefix.is_absolute() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
@@ -292,6 +306,7 @@ impl<'a> IterInfo<'a> {
                 base,
                 iter_root,
                 prefix,
+                precompose_unicode,
             })
         } else {
             let filename_prefix = iter_root
@@ -314,6 +329,7 @@ impl<'a> IterInfo<'a> {
                 prefix,
                 iter_root,
                 remainder: filename_prefix,
+                precompose_unicode,
             })
         }
     }
@@ -332,16 +348,24 @@ impl file::Store {
                 IterInfo::PrefixAndBase {
                     base: self.git_dir(),
                     prefix: namespace.to_path(),
+                    precompose_unicode: self.precompose_unicode,
                 },
                 self.common_dir().map(|base| IterInfo::PrefixAndBase {
                     base,
                     prefix: namespace.to_path(),
+                    precompose_unicode: self.precompose_unicode,
                 }),
                 packed,
             ),
             None => self.iter_from_info(
-                IterInfo::Base { base: self.git_dir() },
-                self.common_dir().map(|base| IterInfo::Base { base }),
+                IterInfo::Base {
+                    base: self.git_dir(),
+                    precompose_unicode: self.precompose_unicode,
+                },
+                self.common_dir().map(|base| IterInfo::Base {
+                    base,
+                    precompose_unicode: self.precompose_unicode,
+                }),
                 packed,
             ),
         }
@@ -357,19 +381,20 @@ impl file::Store {
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
             None => {
-                let git_dir_info = IterInfo::from_prefix(self.git_dir(), prefix.into())?;
+                let git_dir_info = IterInfo::from_prefix(self.git_dir(), prefix.into(), self.precompose_unicode)?;
                 let common_dir_info = self
                     .common_dir()
-                    .map(|base| IterInfo::from_prefix(base, prefix.into()))
+                    .map(|base| IterInfo::from_prefix(base, prefix.into(), self.precompose_unicode))
                     .transpose()?;
                 self.iter_from_info(git_dir_info, common_dir_info, packed)
             }
             Some(namespace) => {
                 let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
-                let git_dir_info = IterInfo::from_prefix(self.git_dir(), prefix.clone().into())?;
+                let git_dir_info =
+                    IterInfo::from_prefix(self.git_dir(), prefix.clone().into(), self.precompose_unicode)?;
                 let common_dir_info = self
                     .common_dir()
-                    .map(|base| IterInfo::from_prefix(base, prefix.into()))
+                    .map(|base| IterInfo::from_prefix(base, prefix.into(), self.precompose_unicode))
                     .transpose()?;
                 self.iter_from_info(git_dir_info, common_dir_info, packed)
             }
