@@ -368,7 +368,7 @@ fn take_spaces1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
 }
 
 fn take_newlines1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
-    repeat(1.., alt(("\r\n", "\n")))
+    repeat(1..1024, alt(("\r\n", "\n")))
         .map(|()| ())
         .recognize()
         .map(bstr::ByteSlice::as_bstr)
