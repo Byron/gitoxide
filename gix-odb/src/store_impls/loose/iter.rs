@@ -70,6 +70,7 @@ impl loose::Store {
                 fs::walkdir::Parallelism::ThreadPoolPerTraversal {
                     thread_name: "gix_odb::loose::Store::iter: fs-walk",
                 },
+                false,
             )
             .min_depth(2)
             .max_depth(3)

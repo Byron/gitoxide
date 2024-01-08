@@ -5,6 +5,7 @@ use gix_features::threading::OwnShared;
 use gix_macros::momo;
 
 use super::{Error, Options};
+use crate::config::cache::util::ApplyLeniency;
 use crate::{
     config,
     config::{
@@ -194,11 +195,23 @@ impl ThreadSafeRepository {
         let mut refs = {
             let reflog = repo_config.reflog.unwrap_or(gix_ref::store::WriteReflog::Disable);
             let object_hash = repo_config.object_hash;
+            let precompose_unicode = repo_config
+                .git_dir_config
+                .boolean("core", None, Core::PRECOMPOSE_UNICODE.name())
+                .map(|v| Core::PRECOMPOSE_UNICODE.enrich_error(v))
+                .transpose()
+                .with_leniency(lenient_config)
+                .map_err(|err| Error::Config(err.into()))?
+                .unwrap_or_default();
             match &common_dir {
-                Some(common_dir) => {
-                    crate::RefStore::for_linked_worktree(git_dir.to_owned(), common_dir.into(), reflog, object_hash)
-                }
-                None => crate::RefStore::at(git_dir.to_owned(), reflog, object_hash),
+                Some(common_dir) => crate::RefStore::for_linked_worktree(
+                    git_dir.to_owned(),
+                    common_dir.into(),
+                    reflog,
+                    object_hash,
+                    precompose_unicode,
+                ),
+                None => crate::RefStore::at(git_dir.to_owned(), reflog, object_hash, precompose_unicode),
             }
         };
         let head = refs.find("HEAD").ok();
