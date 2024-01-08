@@ -14,3 +14,5 @@ doctest = false
 
 [dependencies]
 fastrand = "2.0.0"
+unicode-normalization = { version = "0.1.19", default-features = false }
+
