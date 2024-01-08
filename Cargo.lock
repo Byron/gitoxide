@@ -1392,7 +1392,6 @@ dependencies = [
  "signal-hook",
  "smallvec",
  "thiserror",
- "unicode-normalization",
  "walkdir",
 ]
 

@@ -12,21 +12,23 @@ pub fn agent() -> &'static str {
     concat!("oxide-", env!("CARGO_PKG_VERSION"))
 }
 
-/// Equivalent to `std::env::args_os()`, but with precomposed unicode on `MacOS` and other apple platforms.
-#[cfg(not(target_vendor = "apple"))]
+/// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
+/// It does not change the input arguments on any other platform.
+///
+/// Note that this ignores `core.precomposeUnicode` as git-config isn't available yet. It's default enabled in modern git though,
+/// and generally decomposed unicode is nothing one would want in a git repository.
 pub fn args_os() -> impl Iterator<Item = OsString> {
-    std::env::args_os()
+    args_os_opt(cfg!(target_vendor = "apple"))
 }
 
-/// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
-///
-/// Note that this ignores `core.precomposeUnicode` as git-config isn't available yet. It's default enabled in modern git though.
-#[cfg(target_vendor = "apple")]
-pub fn args_os() -> impl Iterator<Item = OsString> {
-    use unicode_normalization::UnicodeNormalization;
-    std::env::args_os().map(|arg| match arg.to_str() {
-        Some(arg) => arg.nfc().collect::<String>().into(),
-        None => arg,
+/// Like [`args_os()`], but with the `precompose_unicode` parameter akin to `core.precomposeUnicode` in the Git configuration.
+pub fn args_os_opt(precompose_unicode: bool) -> impl Iterator<Item = OsString> {
+    std::env::args_os().map(move |arg| {
+        if precompose_unicode {
+            gix_utils::str::precompose_os_string(arg.into()).into_owned()
+        } else {
+            arg
+        }
     })
 }
 
