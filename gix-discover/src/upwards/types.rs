@@ -63,6 +63,10 @@ pub struct Options<'a> {
     /// that this is merely an optimization for those who discover a lot of repositories in the same process.
     ///
     /// If unset, the current working directory will be obtained automatically.
+    /// Note that the path here might or might not contained decomposed unicode, which may end up in a path
+    /// relevant us, like the git-dir or the worktree-dir. However, when opening the repository, it will
+    /// change decomposed unicode to precomposed unicode based on the value of `core.precomposeUnicode`, and we
+    /// don't have to deal with that value here just yet.
     pub current_dir: Option<&'a std::path::Path>,
 }
 

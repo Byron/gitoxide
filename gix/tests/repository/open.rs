@@ -1,6 +1,55 @@
+use std::borrow::Cow;
 use std::error::Error;
 
 use crate::util::named_subrepo_opts;
+
+#[test]
+fn on_root_with_decomposed_unicode() -> crate::Result {
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
+
+    let decomposed = "a\u{308}";
+
+    let root = tmp.path().join(decomposed);
+    std::fs::create_dir(&root)?;
+
+    let repo = gix::init(root)?;
+    let precompose_unicode = repo
+        .config_snapshot()
+        .boolean("core.precomposeUnicode")
+        .expect("created by init based on fs-capabilities");
+
+    assert!(repo.git_dir().is_dir());
+    let work_dir = repo.work_dir().expect("non-bare");
+    assert!(work_dir.is_dir());
+
+    if precompose_unicode {
+        assert!(
+            matches!(
+                gix::utils::str::precompose_path(repo.git_dir().into()),
+                Cow::Borrowed(_),
+            ),
+            "there is no change, as the path is already precomposed"
+        );
+        assert!(matches!(
+            gix::utils::str::precompose_path(work_dir.into()),
+            Cow::Borrowed(_),
+        ));
+    } else {
+        assert!(
+            matches!(
+                gix::utils::str::precompose_path(repo.git_dir().into()),
+                Cow::Owned(_),
+            ),
+            "this has an effect as the path isn't precomposed, a necessity on filesystems that don't fold decomposition"
+        );
+        assert!(matches!(
+            gix::utils::str::precompose_path(work_dir.into()),
+            Cow::Owned(_),
+        ));
+    }
+
+    Ok(())
+}
 
 #[test]
 fn bare_repo_with_index() -> crate::Result {

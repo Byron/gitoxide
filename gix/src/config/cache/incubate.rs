@@ -1,6 +1,8 @@
 #![allow(clippy::result_large_err)]
+
 use super::{util, Error};
-use crate::config::tree::{Core, Extensions};
+use crate::config::cache::util::ApplyLeniency;
+use crate::config::tree::{Core, Extensions, Key};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
@@ -12,6 +14,7 @@ pub(crate) struct StageOne {
     pub lossy: Option<bool>,
     pub object_hash: gix_hash::Kind,
     pub reflog: Option<gix_ref::store::WriteReflog>,
+    pub precompose_unicode: bool,
 }
 
 /// Initialization
@@ -69,6 +72,13 @@ impl StageOne {
             )?;
             config.append(worktree_config);
         };
+        let precompose_unicode = config
+            .boolean("core", None, Core::PRECOMPOSE_UNICODE.name())
+            .map(|v| Core::PRECOMPOSE_UNICODE.enrich_error(v))
+            .transpose()
+            .with_leniency(lenient)
+            .map_err(Error::ConfigBoolean)?
+            .unwrap_or_default();
 
         let reflog = util::query_refupdates(&config, lenient)?;
         Ok(StageOne {
@@ -78,6 +88,7 @@ impl StageOne {
             lossy,
             object_hash,
             reflog,
+            precompose_unicode,
         })
     }
 }

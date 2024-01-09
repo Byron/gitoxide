@@ -25,6 +25,7 @@ gix-path = { version = "^0.10.3", path = "../gix-path" }
 gix-quote = { version = "^0.4.10", path = "../gix-quote" }
 gix-object = { version = "^0.40.1", path = "../gix-object" }
 gix-pack = { version = "^0.46.1", path = "../gix-pack", default-features = false }
+gix-fs = { version = "^0.9.1", path = "../gix-fs" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
 tempfile = "3.1.0"
