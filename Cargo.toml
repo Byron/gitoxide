@@ -308,3 +308,7 @@ faster-hex = { version = "0.9.0" }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]
+
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/gitoxide-max-pure-v{ version }-{ target }{ archive-suffix }"
+bin-dir = "gitoxide-max-pure-v{ version }-{ target }/{ bin }{ binary-ext }"

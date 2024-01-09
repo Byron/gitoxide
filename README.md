@@ -161,10 +161,10 @@ Our [stability guide] helps to judge how much churn can be expected when dependi
 
 ### Download a Binary Release
 
-Using `cargo quickinstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-quickinstall`, assuming 
+Using `cargo binstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-quickinstall`, assuming 
 the [rust toolchain][rustup] is present.
 
-Then install gitoxide with `cargo quickinstall gitoxide`.
+Then install gitoxide with `cargo binstall gitoxide`.
 
 See the [releases section][releases] for manual installation and various alternative builds that are _slimmer_ or _smaller_, depending
 on your needs, for _Linux_, _MacOS_ and _Windows_.
