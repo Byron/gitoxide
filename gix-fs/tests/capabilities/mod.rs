@@ -2,8 +2,8 @@
 fn probe() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::File::create(dir.path().join("config")).unwrap();
-    let ctx = gix_fs::Capabilities::probe(dir.path());
-    dbg!(ctx);
+    gix_fs::Capabilities::probe(dir.path());
+
     let entries: Vec<_> = std::fs::read_dir(dir.path())
         .unwrap()
         .filter_map(Result::ok)
