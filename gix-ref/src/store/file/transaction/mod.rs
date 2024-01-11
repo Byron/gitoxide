@@ -11,14 +11,21 @@ use crate::{
 /// How to handle packed refs during a transaction
 #[derive(Default)]
 pub enum PackedRefs<'a> {
-    /// Only propagate deletions of references. This is the default
+    /// Only propagate deletions of references. This is the default.
+    /// This means deleted references are removed from disk if they are loose and from the packed-refs file if they are present.
     #[default]
     DeletionsOnly,
-    /// Propagate deletions as well as updates to references which are peeled, that is contain an object id
+    /// Propagate deletions as well as updates to references which are peeled and contain an object id.
+    ///
+    /// This means deleted references are removed from disk if they are loose and from the packed-refs file if they are present,
+    /// while updates are also written into the loose file as well as into packed-refs, potentially creating an entry.
     DeletionsAndNonSymbolicUpdates(Box<dyn gix_object::Find + 'a>),
-    /// Propagate deletions as well as updates to references which are peeled, that is contain an object id. Furthermore delete the
+    /// Propagate deletions as well as updates to references which are peeled and contain an object id. Furthermore delete the
     /// reference which is originally updated if it exists. If it doesn't, the new value will be written into the packed ref right away.
     /// Note that this doesn't affect symbolic references at all, which can't be placed into packed refs.
+    ///
+    /// Thus, this is similar to `DeletionsAndNonSymbolicUpdates`, but removes the loose reference after the update, leaving only their copy
+    /// in `packed-refs`.
     DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<dyn gix_object::Find + 'a>),
 }
 

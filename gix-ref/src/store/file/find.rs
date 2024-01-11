@@ -10,9 +10,19 @@ pub use error::Error;
 use crate::{
     file,
     store_impl::{file::loose, packed},
-    BStr, BString, FullNameRef, PartialNameRef, Reference,
+    BStr, BString, FullNameRef, PartialName, PartialNameRef, Reference,
 };
 
+/// ### Finding References - notes about precomposed unicode.
+///
+/// Generally, ref names and the target of symbolic refs are stored as-is if [`Self::precompose_unicode`] is `false`.
+/// If `true`, refs are stored as precomposed unicode in `packed-refs`, but stored as is on disk as it is then assumed
+/// to be indifferent, i.e. `"a\u{308}"` is the same as `"ä"`.
+///
+/// This also means that when refs are packed for transmission to another machine, both their names and the target of
+/// symbolic references need to be precomposed.
+///
+/// Namespaces are left as is as they never get past the particular repository that uses them.
 impl file::Store {
     /// Find a single reference by the given `path` which is required to be a valid reference name.
     ///
@@ -66,10 +76,37 @@ impl file::Store {
         partial_name: &PartialNameRef,
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
+        fn decompose_if(mut r: Reference, input_changed_to_precomposed: bool) -> Reference {
+            if input_changed_to_precomposed {
+                use gix_object::bstr::ByteSlice;
+                let decomposed = r
+                    .name
+                    .0
+                    .to_str()
+                    .ok()
+                    .map(|name| gix_utils::str::decompose(name.into()));
+                if let Some(Cow::Owned(decomposed)) = decomposed {
+                    r.name.0 = decomposed.into();
+                }
+            }
+            r
+        }
         let mut buf = BString::default();
+        let mut precomposed_partial_name_storage = packed.filter(|_| self.precompose_unicode).and_then(|_| {
+            use gix_object::bstr::ByteSlice;
+            let precomposed = partial_name.0.to_str().ok()?;
+            let precomposed = gix_utils::str::precompose(precomposed.into());
+            match precomposed {
+                Cow::Owned(precomposed) => Some(PartialName(precomposed.into())),
+                Cow::Borrowed(_) => None,
+            }
+        });
+        let precomposed_partial_name = precomposed_partial_name_storage
+            .as_ref()
+            .map(std::convert::AsRef::as_ref);
         for inbetween in &["", "tags", "heads", "remotes"] {
-            match self.find_inner(inbetween, partial_name, packed, &mut buf) {
-                Ok(Some(r)) => return Ok(Some(r)),
+            match self.find_inner(inbetween, partial_name, precomposed_partial_name, packed, &mut buf) {
+                Ok(Some(r)) => return Ok(Some(decompose_if(r, precomposed_partial_name.is_some()))),
                 Ok(None) => {
                     continue;
                 }
@@ -77,6 +114,10 @@ impl file::Store {
             }
         }
         if partial_name.as_bstr() != "HEAD" {
+            if let Some(mut precomposed) = precomposed_partial_name_storage {
+                precomposed = precomposed.join("HEAD".into()).expect("HEAD is valid name");
+                precomposed_partial_name_storage = Some(precomposed);
+            }
             self.find_inner(
                 "remotes",
                 partial_name
@@ -84,9 +125,13 @@ impl file::Store {
                     .join("HEAD".into())
                     .expect("HEAD is valid name")
                     .as_ref(),
+                precomposed_partial_name_storage
+                    .as_ref()
+                    .map(std::convert::AsRef::as_ref),
                 None,
                 &mut buf,
             )
+            .map(|res| res.map(|r| decompose_if(r, precomposed_partial_name_storage.is_some())))
         } else {
             Ok(None)
         }
@@ -96,10 +141,13 @@ impl file::Store {
         &self,
         inbetween: &str,
         partial_name: &PartialNameRef,
+        precomposed_partial_name: Option<&PartialNameRef>,
         packed: Option<&packed::Buffer>,
         path_buf: &mut BString,
     ) -> Result<Option<Reference>, Error> {
-        let full_name = partial_name.construct_full_name_ref(inbetween, path_buf);
+        let full_name = precomposed_partial_name
+            .unwrap_or(partial_name)
+            .construct_full_name_ref(inbetween, path_buf);
         let content_buf = self.ref_contents(full_name).map_err(|err| Error::ReadFileContents {
             source: err,
             path: self.reference_path(full_name),

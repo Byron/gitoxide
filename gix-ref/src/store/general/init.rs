@@ -22,6 +22,9 @@ impl crate::Store {
     ///
     /// `object_hash` defines the kind of hash to assume when dealing with refs.
     /// `precompose_unicode` is used to set to the value of [`crate::file::Store::precompose_unicode].
+    ///
+    /// Note that if `precompose_unicode` is set, the `git_dir` is also expected to use precomposed unicode,
+    /// or else some operations that strip prefixes will fail.
     pub fn at(
         git_dir: PathBuf,
         reflog_mode: WriteReflog,

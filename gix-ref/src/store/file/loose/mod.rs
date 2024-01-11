@@ -33,7 +33,9 @@ mod init {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
         /// `refs/` subdirectory.
         /// The `object_hash` defines which kind of hash we should recognize.
-        /// `precompose_unicode` is used to set to the value of [`Self::precompose_unicode].
+        ///
+        /// Note that if `precompose_unicode` is set, the `git_dir` is also expected to use precomposed unicode,
+        /// or else some operations that strip prefixes will fail.
         pub fn at(
             git_dir: PathBuf,
             write_reflog: file::WriteReflog,
@@ -54,6 +56,9 @@ mod init {
 
         /// Like [`at()`][file::Store::at()], but for _linked_ work-trees which use `git_dir` as private ref store and `common_dir` for
         /// shared references.
+        ///
+        /// Note that if `precompose_unicode` is set, the `git_dir` and `common_dir` are also expected to use precomposed unicode,
+        /// or else some operations that strip prefixes will fail.
         pub fn for_linked_worktree(
             git_dir: PathBuf,
             common_dir: PathBuf,

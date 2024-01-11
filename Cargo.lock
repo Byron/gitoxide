@@ -2402,6 +2402,7 @@ dependencies = [
  "gix-path 0.10.3",
  "gix-tempfile 12.0.1",
  "gix-testtools",
+ "gix-utils 0.1.8",
  "gix-validate 0.8.3",
  "memmap2 0.9.3",
  "serde",

@@ -208,6 +208,9 @@ impl file::Store {
     /// Return a platform to obtain iterator over all references, or prefixed ones, loose or packed, sorted by their name.
     ///
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themselves.
+    ///
+    /// Note that since packed-refs are storing refs as precomposed unicode if [`Self::precompose_unicode`] is true, for consistency
+    /// we also return loose references as precomposed unicode.
     pub fn iter(&self) -> Result<Platform<'_>, packed::buffer::open::Error> {
         Ok(Platform {
             store: self,

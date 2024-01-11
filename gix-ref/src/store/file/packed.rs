@@ -16,6 +16,8 @@ impl file::Store {
         Ok(packed::Transaction::new_from_pack_and_lock(
             self.assure_packed_refs_uptodate()?,
             lock,
+            self.precompose_unicode,
+            self.namespace.clone(),
         ))
     }
 

@@ -54,7 +54,7 @@ pub(crate) mod prepare_and_commit {
         }
     }
 
-    fn create_at(name: &str) -> RefEdit {
+    pub(crate) fn create_at(name: &str) -> RefEdit {
         RefEdit {
             change: Change::Update {
                 log: LogChange {
