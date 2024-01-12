@@ -85,7 +85,6 @@ jobs:
       - uses: taiki-e/install-action@v1
         with:
           tool: nextest
-          version: 0.9
       - name: "Test (nextest)"
         run: cargo nextest run --all --no-fail-fast
 
