@@ -136,7 +136,7 @@ pub fn assert_section_value(
     .expect("non-empty");
 
     assert_eq!(
-        config.string("section", None, "value"),
+        config.string_by("section", None, "value"),
         match expected {
             Some(Value::Original) => Some(cow_str("base-value")),
             Some(Value::Override) => Some(cow_str("override-value")),

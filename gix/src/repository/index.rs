@@ -1,4 +1,8 @@
-use crate::{config::cache::util::ApplyLeniencyDefault, repository::IndexPersistedOrInMemory, worktree};
+use crate::{
+    config::{cache::util::ApplyLeniencyDefault, tree::Index},
+    repository::IndexPersistedOrInMemory,
+    worktree,
+};
 
 /// Index access
 impl crate::Repository {
@@ -10,14 +14,14 @@ impl crate::Repository {
         let thread_limit = self
             .config
             .resolved
-            .string("index", None, "threads")
+            .string(Index::THREADS)
             .map(|value| crate::config::tree::Index::THREADS.try_into_index_threads(value))
             .transpose()
             .with_lenient_default(self.config.lenient_config)?;
         let skip_hash = self
             .config
             .resolved
-            .boolean("index", None, "skipHash")
+            .boolean(Index::SKIP_HASH)
             .map(|res| crate::config::tree::Index::SKIP_HASH.enrich_error(res))
             .transpose()
             .with_lenient_default(self.config.lenient_config)?

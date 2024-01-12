@@ -75,7 +75,7 @@ impl ThreadSafeRepository {
         let branch_name = repo
             .config
             .resolved
-            .string("init", None, Init::DEFAULT_BRANCH.name)
+            .string(Init::DEFAULT_BRANCH)
             .unwrap_or_else(|| Cow::Borrowed(DEFAULT_BRANCH_NAME.into()));
         if branch_name.as_ref() != DEFAULT_BRANCH_NAME {
             let sym_ref: FullName =

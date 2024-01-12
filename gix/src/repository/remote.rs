@@ -139,7 +139,7 @@ impl crate::Repository {
         let mut config_url = |key: &'static config::tree::keys::Url, kind: &'static str| {
             self.config
                 .resolved
-                .string_filter("remote", Some(name_or_url), key.name, &mut filter)
+                .string_filter(&format!("remote.{}.{}", name_or_url, key.name), &mut filter)
                 .map(|url| {
                     key.try_into_url(url).map_err(|err| find::Error::Url {
                         kind,
@@ -153,7 +153,7 @@ impl crate::Repository {
         let config = &self.config.resolved;
 
         let fetch_specs = config
-            .strings_filter("remote", Some(name_or_url), "fetch", &mut filter)
+            .strings_filter(&format!("remote.{}.{}", name_or_url, "fetch"), &mut filter)
             .map(|specs| {
                 config_spec(
                     specs,
@@ -163,7 +163,7 @@ impl crate::Repository {
                 )
             });
         let push_specs = config
-            .strings_filter("remote", Some(name_or_url), "push", &mut filter)
+            .strings_filter(&format!("remote.{}.{}", name_or_url, "push"), &mut filter)
             .map(|specs| {
                 config_spec(
                     specs,
@@ -173,7 +173,7 @@ impl crate::Repository {
                 )
             });
         let fetch_tags = config
-            .string_filter("remote", Some(name_or_url), "tagOpt", &mut filter)
+            .string_filter(&format!("remote.{}.{}", name_or_url, "tagOpt"), &mut filter)
             .map(|value| {
                 config::tree::Remote::TAG_OPT
                     .try_into_tag_opt(value)

@@ -41,12 +41,7 @@ fn snapshot_mut_commit_and_forget() -> crate::Result {
         repo.set_value(&Core::ABBREV, "4")?;
         repo.commit()?
     };
-    assert_eq!(
-        repo.config_snapshot()
-            .integer(Core::ABBREV.logical_name().as_str())
-            .expect("set"),
-        4
-    );
+    assert_eq!(repo.config_snapshot().integer("core.abbrev").expect("set"), 4);
     {
         let mut repo = repo.config_snapshot_mut();
         repo.set_raw_value("core", None, "abbrev", "8")?;
@@ -104,7 +99,7 @@ fn set_value_in_subsection() {
         //       Maybe a sub-type?
         assert_eq!(
             config
-                .string_by_key(&*gitoxide::Credentials::TERMINAL_PROMPT.logical_name())
+                .string(&*gitoxide::Credentials::TERMINAL_PROMPT.logical_name())
                 .expect("just set")
                 .as_ref(),
             "yes"

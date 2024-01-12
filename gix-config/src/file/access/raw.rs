@@ -14,12 +14,20 @@ use crate::{
 ///
 /// These functions are the raw value API, returning normalized byte strings.
 impl<'event> File<'event> {
+    /// TODO
+    pub fn raw_value(
+        &self,
+        key: impl Key,
+    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
+        self.raw_value_by(key.section_name(), key.subsection_name(), key.name())
+    }
+
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
     /// Consider [`Self::raw_values()`] if you want to get all values of
     /// a multivar instead.
-    pub fn raw_value(
+    pub fn raw_value_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
@@ -151,6 +159,14 @@ impl<'event> File<'event> {
         Err(lookup::existing::Error::KeyMissing)
     }
 
+    /// TODO
+    pub fn raw_values(
+        &self,
+        key: impl Key,
+    ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
+        self.raw_values_by(key.section_name(), key.subsection_name(), key.name())
+    }
+
     /// Returns all uninterpreted values given a section, an optional subsection
     /// ain order of occurrence.
     ///
@@ -189,7 +205,7 @@ impl<'event> File<'event> {
     ///
     /// Consider [`Self::raw_value`] if you want to get the resolved single
     /// value for a given key, if your key does not support multi-valued values.
-    pub fn raw_values(
+    pub fn raw_values_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
@@ -235,6 +251,14 @@ impl<'event> File<'event> {
         } else {
             Ok(values)
         }
+    }
+
+    /// TODO
+    pub fn raw_values_mut(
+        &mut self,
+        key: &'event dyn Key,
+    ) -> Result<MultiValueMut<'_, '_, 'event>, lookup::existing::Error> {
+        self.raw_values_mut_by(key.section_name(), key.subsection_name(), key.name())
     }
 
     /// Returns mutable references to all uninterpreted values given a section,
@@ -287,7 +311,7 @@ impl<'event> File<'event> {
     ///
     /// Note that this operation is relatively expensive, requiring a full
     /// traversal of the config.
-    pub fn raw_values_mut<'lookup>(
+    pub fn raw_values_mut_by<'lookup>(
         &mut self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&'lookup BStr>,
@@ -568,7 +592,7 @@ impl<'event> File<'event> {
         Iter: IntoIterator<Item = Item>,
         Item: Into<&'a BStr>,
     {
-        self.raw_values_mut(section_name, subsection_name, key.as_ref())
+        self.raw_values_mut_by(section_name, subsection_name, key.as_ref())
             .map(|mut v| v.set_values(new_values))
     }
 }

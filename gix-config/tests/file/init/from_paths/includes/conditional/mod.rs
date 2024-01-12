@@ -88,7 +88,7 @@ fn include_and_includeif_correct_inclusion_order_and_delayed_resolve_include() -
         };
 
         assert_eq!(
-            config.strings("section", None, "value"),
+            config.strings_by("section", None, "value"),
             Some(vec![
                 cow_str("base"),
                 cow_str("first-incl-path"),

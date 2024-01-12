@@ -64,7 +64,7 @@ mod set_string {
                 Err(err) => panic!("{file_string:?} failed with: {err}"),
             };
             assert_eq!(
-                file.raw_value("a", None, "k").expect("present").as_ref(),
+                file.raw_value("a.k").expect("present").as_ref(),
                 expected,
                 "{file_string:?}"
             );

@@ -146,6 +146,42 @@ impl<T: Validate> Key for Any<T> {
     }
 }
 
+impl<T: Validate> gix_config::Key for Any<T> {
+    fn name(&self) -> &str {
+        self.name
+    }
+
+    fn section_name(&self) -> &str {
+        self.section.parent().map_or_else(|| self.section.name(), Section::name)
+    }
+
+    fn subsection_name(&self) -> Option<&BStr> {
+        if self.section.parent().is_some() {
+            Some(self.section.name().into())
+        } else {
+            None
+        }
+    }
+}
+
+impl<T: Validate> gix_config::Key for &Any<T> {
+    fn name(&self) -> &str {
+        self.name
+    }
+
+    fn section_name(&self) -> &str {
+        self.section.parent().map_or_else(|| self.section.name(), Section::name)
+    }
+
+    fn subsection_name(&self) -> Option<&BStr> {
+        if self.section.parent().is_some() {
+            Some(self.section.name().into())
+        } else {
+            None
+        }
+    }
+}
+
 /// A key which represents a date.
 pub type Time = Any<validate::Time>;
 

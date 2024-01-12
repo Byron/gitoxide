@@ -4,7 +4,6 @@ use std::{borrow::Cow, path::PathBuf, time::Duration};
 use gix_lock::acquire::Fail;
 
 use crate::{
-    bstr::BStr,
     config,
     config::{
         boolean,
@@ -20,12 +19,12 @@ use crate::{
 impl Cache {
     #[cfg(feature = "blob-diff")]
     pub(crate) fn diff_algorithm(&self) -> Result<gix_diff::blob::Algorithm, config::diff::algorithm::Error> {
-        use crate::config::{cache::util::ApplyLeniencyDefault, diff::algorithm::Error};
+        use crate::config::{cache::util::ApplyLeniencyDefault, diff::algorithm::Error, tree::Diff};
         self.diff_algorithm
             .get_or_try_init(|| {
                 let name = self
                     .resolved
-                    .string("diff", None, "algorithm")
+                    .string(Diff::ALGORITHM)
                     .unwrap_or_else(|| Cow::Borrowed("myers".into()));
                 config::tree::Diff::ALGORITHM
                     .try_into_algorithm(name)
@@ -122,7 +121,7 @@ impl Cache {
     pub(crate) fn big_file_threshold(&self) -> Result<u64, config::unsigned_integer::Error> {
         Ok(self
             .resolved
-            .integer_by_key("core.bigFileThreshold")
+            .integer("core.bigFileThreshold")
             .map(|number| Core::BIG_FILE_THRESHOLD.try_into_u64(number))
             .transpose()
             .with_leniency(self.lenient_config)?
@@ -137,7 +136,7 @@ impl Cache {
             .user_agent
             .get_or_init(|| {
                 self.resolved
-                    .string_by_key(Gitoxide::USER_AGENT.logical_name().as_str())
+                    .string(Gitoxide::USER_AGENT.logical_name().as_str())
                     .map_or_else(|| crate::env::agent().into(), |s| s.to_string())
             })
             .to_owned();
@@ -148,10 +147,8 @@ impl Cache {
     #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
     pub(crate) fn trace_packet(&self) -> bool {
         use config::tree::Gitoxide;
-
-        use crate::config::tree::Section;
         self.resolved
-            .boolean(Gitoxide.name(), None, Gitoxide::TRACE_PACKET.name())
+            .boolean(Gitoxide::TRACE_PACKET)
             .and_then(Result::ok)
             .unwrap_or_default()
     }
@@ -175,7 +172,7 @@ impl Cache {
     pub(crate) fn may_use_commit_graph(&self) -> Result<bool, config::boolean::Error> {
         const DEFAULT: bool = true;
         self.resolved
-            .boolean_by_key("core.commitGraph")
+            .boolean("core.commitGraph")
             .map_or(Ok(DEFAULT), |res| {
                 Core::COMMIT_GRAPH
                     .enrich_error(res)
@@ -194,7 +191,7 @@ impl Cache {
         {
             out[idx] = self
                 .resolved
-                .integer_filter("core", None, key.name, &mut self.filter_config_section.clone())
+                .integer_filter(key, &mut self.filter_config_section.clone())
                 .map(|res| key.try_into_lock_timeout(res))
                 .transpose()
                 .with_leniency(self.lenient_config)?
@@ -206,7 +203,7 @@ impl Cache {
     /// The path to the user-level excludes file to ignore certain files in the worktree.
     #[cfg(feature = "excludes")]
     pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, gix_config::path::interpolate::Error>> {
-        self.trusted_file_path("core", None, Core::EXCLUDES_FILE.name)?
+        self.trusted_file_path(Core::EXCLUDES_FILE)?
             .map(std::borrow::Cow::into_owned)
             .into()
     }
@@ -215,16 +212,11 @@ impl Cache {
     /// if present.
     pub(crate) fn trusted_file_path(
         &self,
-        section_name: impl AsRef<str>,
-        subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        key: impl gix_config::Key,
     ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
-        let path = self.resolved.path_filter(
-            section_name,
-            subsection_name,
-            key,
-            &mut self.filter_config_section.clone(),
-        )?;
+        let path = self
+            .resolved
+            .path_filter(key, &mut self.filter_config_section.clone())?;
 
         let install_dir = crate::path::install_dir().ok();
         let home = self.home_dir();
@@ -255,7 +247,7 @@ impl Cache {
             check_stat: self
                 .apply_leniency(
                     self.resolved
-                        .string("core", None, "checkStat")
+                        .string(Core::CHECK_STAT)
                         .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
                 )?
                 .unwrap_or(true),
@@ -275,7 +267,7 @@ impl Cache {
         let git_dir = repo.git_dir();
         let thread_limit = self.apply_leniency(
             self.resolved
-                .integer_filter_by_key("checkout.workers", &mut self.filter_config_section.clone())
+                .integer_filter("checkout.workers", &mut self.filter_config_section.clone())
                 .map(|value| crate::config::tree::Checkout::WORKERS.try_from_workers(value)),
         )?;
         let capabilities = self.fs_capabilities()?;
@@ -347,10 +339,7 @@ impl Cache {
         attributes: crate::open::permissions::Attributes,
     ) -> Result<(gix_worktree::stack::state::Attributes, Vec<u8>), config::attribute_stack::Error> {
         use gix_attributes::Source;
-        let configured_or_user_attributes = match self
-            .trusted_file_path("core", None, Core::ATTRIBUTES_FILE.name)
-            .transpose()?
-        {
+        let configured_or_user_attributes = match self.trusted_file_path(Core::ATTRIBUTES_FILE).transpose()? {
             Some(attributes) => Some(attributes),
             None => {
                 if attributes.git {
@@ -399,7 +388,7 @@ impl Cache {
 
             let val = self
                 .resolved
-                .string("gitoxide", Some("pathspec".into()), key.name())
+                .string(&format!("gitoxide.pathspec.{key}"))
                 .map(gix_path::from_bstr)?;
             Some(val.into_owned().into())
         });
@@ -456,6 +445,6 @@ fn boolean(
         "BUG: key name and hardcoded name must match"
     );
     Ok(me
-        .apply_leniency(me.resolved.boolean_by_key(full_key).map(|v| key.enrich_error(v)))?
+        .apply_leniency(me.resolved.boolean(full_key).map(|v| key.enrich_error(v)))?
         .unwrap_or(default))
 }

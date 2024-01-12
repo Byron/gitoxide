@@ -29,7 +29,7 @@ impl<'repo> Snapshot<'repo> {
     /// Like [`boolean()`][Self::boolean()], but it will report an error if the value couldn't be interpreted as boolean.
     #[momo]
     pub fn try_boolean<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<bool, gix_config::value::Error>> {
-        self.repo.config.resolved.boolean_by_key(key)
+        self.repo.config.resolved.boolean(key.into())
     }
 
     /// Return the resolved integer at `key`, or `None` if there is no such value or if the value can't be interpreted as
@@ -45,7 +45,7 @@ impl<'repo> Snapshot<'repo> {
     /// Like [`integer()`][Self::integer()], but it will report an error if the value couldn't be interpreted as boolean.
     #[momo]
     pub fn try_integer<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<i64, gix_config::value::Error>> {
-        self.repo.config.resolved.integer_by_key(key)
+        self.repo.config.resolved.integer(key.into())
     }
 
     /// Return the string at `key`, or `None` if there is no such value.
@@ -53,7 +53,7 @@ impl<'repo> Snapshot<'repo> {
     /// Note that this method takes the most recent value at `key` even if it is from a file with reduced trust.
     #[momo]
     pub fn string<'a>(&self, key: impl Into<&'a BStr>) -> Option<Cow<'repo, BStr>> {
-        self.repo.config.resolved.string_by_key(key)
+        self.repo.config.resolved.string(key.into())
     }
 
     /// Return the trusted and fully interpolated path at `key`, or `None` if there is no such value
@@ -64,10 +64,7 @@ impl<'repo> Snapshot<'repo> {
         &self,
         key: impl Into<&'a BStr>,
     ) -> Option<Result<Cow<'repo, std::path::Path>, gix_config::path::interpolate::Error>> {
-        let key = gix_config::parse::key(key.into())?;
-        self.repo
-            .config
-            .trusted_file_path(key.section_name, key.subsection_name, key.value_name)
+        self.repo.config.trusted_file_path(key.into())
     }
 
     /// Return the trusted string at `key` for launching using [command::prepare()](gix_command::prepare()),
@@ -78,7 +75,7 @@ impl<'repo> Snapshot<'repo> {
             .repo
             .config
             .resolved
-            .string_filter_by_key(key, &mut self.repo.config.filter_config_section.clone())?;
+            .string_filter(key.into(), &mut self.repo.config.filter_config_section.clone())?;
         Some(match gix_path::from_bstr(value) {
             Cow::Borrowed(v) => Cow::Borrowed(v.as_os_str()),
             Cow::Owned(v) => Cow::Owned(v.into_os_string()),
