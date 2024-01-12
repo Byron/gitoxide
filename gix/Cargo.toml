@@ -171,6 +171,14 @@ pack-cache-lru-dynamic = ["gix-pack/pack-cache-lru-dynamic"]
 ## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
 max-performance = [ "max-performance-safe", "gix-features/zlib-ng", "fast-sha1" ]
 
+## Activate other features that maximize performance, like usage of threads, `zlib-ng-compat`, and access to caching in object databases.
+## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
+## Unlike `max-performance`, `max-performance-zlib-ng-compat` uses zlib-ng via
+## libz-sys in zlib-ng-compat mode, which is useful when building with other
+## software that needs zlib, or to avoid linking conflicts when using other
+## software that uses zlib-ng-compat.
+max-performance-zlib-ng-compat = [ "max-performance-safe", "gix-features/zlib-ng-compat", "fast-sha1" ]
+
 ## If enabled, use assembly versions of sha1 on supported platforms.
 ## This might cause compile failures as well which is why it can be turned off separately.
 fast-sha1 = [ "gix-features/fast-sha1" ]
