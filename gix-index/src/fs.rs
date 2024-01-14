@@ -186,6 +186,11 @@ impl Metadata {
 }
 
 #[cfg(not(windows))]
-fn system_time_from_secs_nanos(secs: u64, nanos: u32) -> SystemTime {
-    std::time::UNIX_EPOCH + std::time::Duration::new(secs, nanos)
+fn system_time_from_secs_nanos(secs: i64, nanos: u32) -> SystemTime {
+    let d = std::time::Duration::new(secs.abs_diff(0), nanos);
+    if secs < 0 {
+        std::time::UNIX_EPOCH - d
+    } else {
+        std::time::UNIX_EPOCH + d
+    }
 }
