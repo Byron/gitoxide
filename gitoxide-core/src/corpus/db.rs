@@ -131,7 +131,7 @@ pub fn create(path: impl AsRef<std::path::Path>) -> anyhow::Result<rusqlite::Con
         task integer,
         gitoxide_version integer,
         insertion_time integer NOT NULL, -- in seconds since UNIX epoch
-        duration real, -- in seconds or NULL if not yet finished (either successfull or with failure)
+        duration real, -- in seconds or NULL if not yet finished (either successful or with failure)
         error text, -- or NULL if there was no error
         spans_json text, -- all spans collecteted while performing the run
         FOREIGN KEY (repository) REFERENCES repository (id),

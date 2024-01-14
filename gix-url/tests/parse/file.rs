@@ -102,7 +102,7 @@ fn no_relative_paths_if_protocol() -> crate::Result {
         assert_matches::assert_matches!(
             gix_url::parse("file://.\\".into()),
             Err(gix_url::parse::Error::MissingRepositoryPath { .. }),
-            "DEVIATION: on windows, this parses with git into something nonesensical Diag: url=file://./ Diag: protocol=file Diag: hostandport=./ Diag: path=//./"
+            "DEVIATION: on windows, this parses with git into something nonsensical Diag: url=file://./ Diag: protocol=file Diag: hostandport=./ Diag: path=//./"
         );
     }
     Ok(())

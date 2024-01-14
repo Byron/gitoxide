@@ -47,7 +47,7 @@ impl<'repo> Tree<'repo> {
     /// # Performance Notes
     ///
     /// Searching tree entries is currently done in sequence, which allows to the search to be allocation free. It would be possible
-    /// to re-use a vector and use a binary search instead, which might be able to improve performance over all.
+    /// to reuse a vector and use a binary search instead, which might be able to improve performance over all.
     /// However, a benchmark should be created first to have some data and see which trade-off to choose here.
     ///
     pub fn lookup_entry<I, P>(&self, path: I, buf: &mut Vec<u8>) -> Result<Option<Entry<'repo>>, find::existing::Error>
@@ -91,7 +91,7 @@ impl<'repo> Tree<'repo> {
     /// # Performance Notes
     ///
     /// Searching tree entries is currently done in sequence, which allows to the search to be allocation free. It would be possible
-    /// to re-use a vector and use a binary search instead, which might be able to improve performance over all.
+    /// to reuse a vector and use a binary search instead, which might be able to improve performance over all.
     /// However, a benchmark should be created first to have some data and see which trade-off to choose here.
     ///
     pub fn peel_to_entry<I, P>(&mut self, path: I) -> Result<Option<Entry<'repo>>, find::existing::Error>

@@ -78,7 +78,7 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
-    /// Subcommands for creating worktree archivs
+    /// Subcommands for creating worktree archives
     #[cfg(feature = "gitoxide-core-tools-archive")]
     Archive(archive::Platform),
     /// Subcommands for interacting with commit-graphs

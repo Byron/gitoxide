@@ -193,7 +193,7 @@ pub mod prepare_diff {
         /// is `false`.
         ///
         /// Use [`Outcome::interned_input()`] to easily obtain an interner for use with [`imara_diff::diff()`], or maintain one yourself
-        /// for greater re-use.
+        /// for greater reuse.
         InternalDiff {
             /// The algorithm we determined should be used, which is one of (in order, first set one wins):
             ///
@@ -349,7 +349,7 @@ impl Platform {
     ///
     /// ### Important
     ///
-    /// If an error occours, the previous resource of `kind` will be cleared, preventing further diffs
+    /// If an error occurs, the previous resource of `kind` will be cleared, preventing further diffs
     /// unless another attempt succeeds.
     pub fn set_resource(
         &mut self,

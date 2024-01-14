@@ -14,7 +14,7 @@ pub fn function(mut repo: gix::Repository, spec: Option<String>, mut out: impl s
     let commits: gix::revision::Walk<'_> = id
         .object()?
         .peel_to_kind(gix::object::Kind::Commit)
-        .context("Need commitish as starting point")?
+        .context("Need committish as starting point")?
         .id()
         .ancestors()
         .all()?;

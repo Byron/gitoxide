@@ -26,7 +26,7 @@ default = ["max-performance-safe", "comfort", "basic", "extras"]
 #! enabled as long as it doesn't sacrifice compatibility. Most users will be fine with that but will pay with higher compile times than necessary as they
 #! probably don't use all of these features.
 #!
-#! **Thus it's recommended to take a moment and optimize build times by chosing only those 'Components' that you require.** *'Performance' relevant features should
+#! **Thus it's recommended to take a moment and optimize build times by choosing only those 'Components' that you require.** *'Performance' relevant features should
 #! be chosen next to maximize efficiency.*
 #!
 #! #### Application Developers
@@ -121,11 +121,11 @@ async-network-client = ["gix-protocol/async-client", "gix-pack/streaming-input",
 async-network-client-async-std = ["async-std", "async-network-client", "gix-transport/async-std"]
 ## Make `gix-protocol` available along with a blocking client, providing access to the `file://`, git://` and `ssh://` transports.
 blocking-network-client = ["gix-protocol/blocking-client", "gix-pack/streaming-input", "attributes", "credentials"]
-## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport avaialble.
+## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport available.
 blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
 ## Stacks with `blocking-http-transport-curl` and also enables the `rustls` backend to avoid `openssl`.
 blocking-http-transport-curl-rustls = ["blocking-http-transport-curl", "dep:curl-for-configuration-only", "curl-for-configuration-only?/rustls"]
-## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport avaialble.
+## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport available.
 blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
 blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls" ]
@@ -139,7 +139,7 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 #! #### Performance
 #!
 #! The reason these features exist is to allow optimization for compile time and optimize for compatibility by default. This means that some performance options around
-#! SHA1 and ZIP might not compile on all platforms, so it depeneds on the end-user who compiles the application to chose these based on their needs.
+#! SHA1 and ZIP might not compile on all platforms, so it depends on the end-user who compiles the application to chose these based on their needs.
 
 ## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
 ## on some platforms.

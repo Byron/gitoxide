@@ -144,7 +144,7 @@ pub mod diff {
         #[derive(Debug, thiserror::Error)]
         #[error("Failed to parse value of 'diff.{name}.{attribute}'")]
         pub struct Error {
-            /// The name fo the driver.
+            /// The name of the driver.
             pub name: BString,
             /// The name of the attribute we tried to parse.
             pub attribute: &'static str,
@@ -604,7 +604,7 @@ pub(crate) struct Cache {
     // TODO: make core.precomposeUnicode available as well.
 }
 
-/// Utillities shared privately across the crate, for lack of a better place.
+/// Utilities shared privately across the crate, for lack of a better place.
 pub(crate) mod shared {
     use crate::{
         config,

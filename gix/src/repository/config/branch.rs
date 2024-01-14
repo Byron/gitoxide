@@ -99,7 +99,7 @@ impl crate::Repository {
     ///   which would then lead to `refs/remotes/origin/other` to be returned instead.
     ///
     /// Note that if there is an ambiguity, that is if `name` maps to multiple tracking branches, the first matching mapping
-    /// is returned, according to the order in which the fetch or push refspecs occour in the configuration file.
+    /// is returned, according to the order in which the fetch or push refspecs occur in the configuration file.
     ///
     /// See also [`Reference::remote_tracking_ref_name()`](crate::Reference::remote_tracking_ref_name()).
     #[doc(alias = "branch_upstream_name", alias = "git2")]

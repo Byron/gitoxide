@@ -31,7 +31,7 @@ impl Search {
     /// there is none. It doesn't have to end at a directory boundary though, nor does it denote a directory.
     ///
     /// Note that the common_prefix is always matched case-sensitively, and it is useful to skip large portions of input.
-    /// Further, excluded pathspecs don't participate which makes this common prefix inclusive. To work correclty though,
+    /// Further, excluded pathspecs don't participate which makes this common prefix inclusive. To work correctly though,
     /// one will have to additionally match paths that have the common prefix with that pathspec itself to assure it is
     /// not excluded.
     pub fn common_prefix(&self) -> &BStr {

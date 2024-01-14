@@ -47,7 +47,7 @@ fn fuzz(ctx: Ctx) -> Result<()> {
 
 fuzz_target!(|ctx: Ctx| {
     if let Err(e) = fuzz(ctx) {
-        // Excersize display/debug fmt code.
+        // Exercise display/debug fmt code.
         _ = black_box(format!("{e} {e:?}"));
     }
 });

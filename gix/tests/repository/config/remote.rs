@@ -301,7 +301,7 @@ mod branch_remote {
                 .expect("exists")?
                 .shorten(),
             "origin/other",
-            "as above, but we covert it to the tracking branch"
+            "as above, but we convert it to the tracking branch"
         );
 
         repo.config_snapshot_mut().set_value(&Push::DEFAULT, "simple")?;

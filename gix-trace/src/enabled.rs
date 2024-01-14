@@ -264,7 +264,7 @@ macro_rules! fieldset {
         $crate::fieldset!(@ { $($out),*, $k } $($rest)*)
     };
 
-    // Remainder is unparseable, but exists --- must be format args!
+    // Remainder is unparsable, but exists --- must be format args!
     (@ { $(,)* $($out:expr),* } $($rest:tt)+) => {
         $crate::fieldset!(@ { "message", $($out),*, })
     };

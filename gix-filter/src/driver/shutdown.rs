@@ -14,7 +14,7 @@ pub enum Mode {
 
 /// Lifecycle
 impl State {
-    /// Handle long-running processes according to `mode`. If an error occours, all remaining processes will be ignored automatically.
+    /// Handle long-running processes according to `mode`. If an error occurs, all remaining processes will be ignored automatically.
     /// Return a list of `(process, Option<status>)`
     pub fn shutdown(self, mode: Mode) -> Result<Vec<(BString, Option<std::process::ExitStatus>)>, std::io::Error> {
         let mut out = Vec::with_capacity(self.running.len());
