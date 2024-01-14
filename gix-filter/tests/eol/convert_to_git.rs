@@ -101,7 +101,7 @@ fn crlf_in_index_prevents_conversion_to_lf() -> crate::Result {
     let mut buf = Vec::new();
     let mut called = false;
     let changed = eol::convert_to_git(
-        b"elligible\n",
+        b"eligible\n",
         AttributesDigest::TextAutoInput,
         &mut buf,
         &mut |buf| {

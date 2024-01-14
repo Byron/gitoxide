@@ -16,7 +16,7 @@ pub struct Iter<'a> {
 
 /// A structure to associate object ids of a tree with sections in the index entries list.
 ///
-/// It allows to more quickly build trees by avoiding as it can quickly re-use portions of the index and its associated tree ids
+/// It allows to more quickly build trees by avoiding as it can quickly reuse portions of the index and its associated tree ids
 /// if there was no change to them. Portions of this tree are invalidated as the index is changed.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Tree {

@@ -345,7 +345,7 @@ mod blocking_and_async_io {
             for (shallow_args, expected) in [(None, [1, 7, 7]), (Some("--depth=2"), [1, 2, 2])] {
                 if version == gix::protocol::transport::Protocol::V1 && shallow_args.is_some() {
                     // TODO: We cannot yet handle shallow mode for V1 as it will send shallow-info as part of the handshake :/.
-                    //       It's probaby not the most important thing to be able to clone from a shallow remote anyway.
+                    //       It's probably not the most important thing to be able to clone from a shallow remote anyway.
                     continue;
                 }
                 for (fetch_tags, expected_ref_count) in [fetch::Tags::None, fetch::Tags::Included, fetch::Tags::All]

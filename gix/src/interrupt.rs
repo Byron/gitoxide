@@ -193,7 +193,7 @@ where
     }
 }
 
-/// A wrapper for implementors of [`std::io::Read`] or [`std::io::BufRead`] with interrupt support.
+/// A wrapper for implementers of [`std::io::Read`] or [`std::io::BufRead`] with interrupt support.
 ///
 /// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
 pub struct Read<R> {

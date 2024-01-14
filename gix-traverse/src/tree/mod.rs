@@ -47,7 +47,7 @@ pub mod visit {
     pub enum Action {
         /// Continue the traversal of entries.
         Continue,
-        /// Stop the traversal of entries, making this te last call to [`visit_(tree|nontree)(…)`][super::Visit::visit_nontree()].
+        /// Stop the traversal of entries, making this the last call to [`visit_(tree|nontree)(…)`][super::Visit::visit_nontree()].
         Cancel,
         /// Don't dive into the entry, skipping children effectively. Only useful in [`visit_tree(…)`][super::Visit::visit_tree()].
         Skip,

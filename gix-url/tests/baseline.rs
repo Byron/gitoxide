@@ -50,7 +50,7 @@ fn run() {
 
     assert_ne!(test_count, 0, "the baseline is never empty");
     if failures.is_empty() {
-        todo!("The baseline is currently meddling with hooks, thats not needed anymore since the failure rate is 0: move this into a module of the normal tests");
+        todo!("The baseline is currently meddling with hooks, that's not needed anymore since the failure rate is 0: move this into a module of the normal tests");
     }
 
     let failure_count = failures.len();

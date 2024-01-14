@@ -73,7 +73,7 @@ impl Metadata {
 
     /// Return the time at which the underlying file was created.
     ///
-    /// Note that this differes from [`std::fs::Metadata::created()`] which would return
+    /// Note that this differs from [`std::fs::Metadata::created()`] which would return
     /// the inode birth time, which is notably different to what `git` does.
     pub fn created(&self) -> Option<SystemTime> {
         #[cfg(not(windows))]

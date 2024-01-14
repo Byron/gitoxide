@@ -103,7 +103,7 @@ impl Pipeline {
         &mut self.options
     }
 
-    /// Return our double-buffers for re-use by the caller.
+    /// Return our double-buffers for reuse by the caller.
     pub fn buffers_mut(&mut self) -> &mut gix_utils::Buffers {
         &mut self.bufs
     }

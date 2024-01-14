@@ -49,7 +49,7 @@ pub(crate) mod function {
         let commits = id
             .object()?
             .peel_to_kind(gix::object::Kind::Commit)
-            .context("Need commitish as starting point")?
+            .context("Need committish as starting point")?
             .id()
             .ancestors()
             .sorting(Sorting::ByCommitTimeNewestFirst)

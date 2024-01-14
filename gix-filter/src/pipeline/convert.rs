@@ -242,7 +242,7 @@ pub enum ToGitOutcome<'pipeline, R> {
 ///
 /// ### Panics
 ///
-/// If `std::io::Read` is used on it and the output is delayed, a panic will occour. The caller is responsible for either disallowing delayed
+/// If `std::io::Read` is used on it and the output is delayed, a panic will occur. The caller is responsible for either disallowing delayed
 /// results or if allowed, handle them. Use [`is_delayed()][Self::is_delayed()].
 pub enum ToWorktreeOutcome<'input, 'pipeline> {
     /// The original input wasn't changed and the original buffer is present

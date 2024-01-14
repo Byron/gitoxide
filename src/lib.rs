@@ -24,5 +24,5 @@
 #![allow(missing_docs)]
 #![forbid(unsafe_code)]
 
-/// everything in common beteween the `gix` and `ein` binaries.
+/// everything in common between the `gix` and `ein` binaries.
 pub mod shared;

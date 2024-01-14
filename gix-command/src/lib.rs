@@ -86,7 +86,7 @@ mod prepare {
 
     /// Builder
     impl Prepare {
-        /// If called, the command will not be executed directly, but with `sh`, but ony if the
+        /// If called, the command will not be executed directly, but with `sh`, but only if the
         /// command passed to [`prepare`](super::prepare()) requires this.
         ///
         /// This also allows to pass shell scripts as command, or use commands that contain arguments which are subsequently

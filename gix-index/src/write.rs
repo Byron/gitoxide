@@ -5,7 +5,7 @@ use crate::{entry, extension, write::util::CountBytes, State, Version};
 /// A way to specify which of the optional extensions to write.
 #[derive(Default, Debug, Copy, Clone)]
 pub enum Extensions {
-    /// Writes all available optional extensions to avoid loosing any information.
+    /// Writes all available optional extensions to avoid losing any information.
     #[default]
     All,
     /// Only write the given optional extensions, with each extension being marked by a boolean flag.

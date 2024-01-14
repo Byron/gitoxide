@@ -133,7 +133,7 @@ mod impl_ {
                             // Admin-group owned folders are considered owned by the current user, if they are in the admin group
                             if !is_owned && IsWellKnownSid(token_owner, WinBuiltinAdministratorsSid).as_bool() {
                                 let mut is_member = BOOL::default();
-                                // TODO: re-use the handle
+                                // TODO: reuse the handle
                                 match CheckTokenMembership(HANDLE::default(), token_owner, &mut is_member) {
                                     Err(e) => {
                                         err_msg = Some(format!("Couldn't check if user is an administrator: {}", e))

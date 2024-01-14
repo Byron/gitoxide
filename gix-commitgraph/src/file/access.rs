@@ -16,7 +16,7 @@ impl File {
         self.base_graph_count
     }
 
-    /// Returns the commit data for the commit located at the given lexigraphical position.
+    /// Returns the commit data for the commit located at the given lexicographical position.
     ///
     /// `pos` must range from 0 to `self.num_commits()`.
     ///
@@ -40,7 +40,7 @@ impl File {
     pub fn id_at(&self, pos: file::Position) -> &gix_hash::oid {
         assert!(
             pos.0 < self.num_commits(),
-            "expected lexigraphical position less than {}, got {}",
+            "expected lexicographical position less than {}, got {}",
             self.num_commits(),
             pos.0
         );
@@ -115,7 +115,7 @@ impl File {
     pub(crate) fn commit_data_bytes(&self, pos: file::Position) -> &[u8] {
         assert!(
             pos.0 < self.num_commits(),
-            "expected lexigraphical position less than {}, got {}",
+            "expected lexicographical position less than {}, got {}",
             self.num_commits(),
             pos.0
         );

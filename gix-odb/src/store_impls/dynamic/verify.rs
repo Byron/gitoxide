@@ -66,7 +66,7 @@ pub mod integrity {
     #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
     #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub struct IndexStatistics {
-        /// The path to the index or multi-pack index for which statics were gathered.
+        /// The path to the index or multi-pack index for which statistics were gathered.
         pub path: PathBuf,
         /// The actual statistics for the index at `path`.
         pub statistics: SingleOrMultiStatistics,

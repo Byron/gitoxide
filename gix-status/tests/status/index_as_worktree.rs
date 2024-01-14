@@ -68,7 +68,7 @@ fn fixture_filtered_detailed(
     mut prepare_index: impl FnMut(&mut gix_index::State),
     submodule_dirty: bool,
 ) -> Outcome {
-    // This can easily happen in some fixtures, which can cause flakyness. It's time-dependent after all.
+    // This can easily happen in some fixtures, which can cause flakiness. It's time-dependent after all.
     fn ignore_racyclean(mut out: Outcome) -> Outcome {
         out.racy_clean = 0;
         out
@@ -116,7 +116,7 @@ fn fixture_filtered_detailed(
     ignore_racyclean(ignore_updated(ignore_worktree_stats(outcome)))
 }
 
-/// Note that we also reset certain information to assure there is no flakyness - everything regarding race-detection otherwise can cause failures.
+/// Note that we also reset certain information to assure there is no flakiness - everything regarding race-detection otherwise can cause failures.
 fn records_to_tuple<'index>(records: impl IntoIterator<Item = Record<'index, (), ()>>) -> Vec<Expectation<'index>> {
     records
         .into_iter()
