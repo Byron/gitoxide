@@ -5,7 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-7c2eeb07ed0184a6c271f4a54604cba7d2abe811/> Add directory lookup, as well as ignore-case capabilities.
+   This is needed to be able to refer from an entry on disk to the index,
+   and figure out if the index already has such entry.
+   
+   New methods are:
+   
+   * File::entry_by_path_icase
+   * File::prefixed_entry_range_icase
+   * File::entry_by_path_and_stage_icase
+   * File::directory_kind_by_path_icase
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 16 calendar days.
+ - 16 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'fix-stat-with-negative-times' ([`08e6ca8`](https://github.com/Byron/gitoxide/commit/08e6ca8241047f75b84c1123f9f911625a2014fb))
+    - Assure negative nanoseconds on MacOS are handled ([`bf49cd4`](https://github.com/Byron/gitoxide/commit/bf49cd4508433dba6aacf963f49662516b3a960c))
+    - Fix stat on files with timestamps before the epoch ([`f4a29dc`](https://github.com/Byron/gitoxide/commit/f4a29dc17e60b208c515b921ba504acd7290e85c))
+    - Add test for file metadata handling with extreme values ([`5c57c6b`](https://github.com/Byron/gitoxide/commit/5c57c6b9c4353dac657370cbc93e69ae38df7acd))
+    - Merge pull request #1249 from joshtriplett/simplify-cfg-within-function ([`dfb7b0f`](https://github.com/Byron/gitoxide/commit/dfb7b0f717b76dd60f0dda7d7adf041ca13d2059))
+    - Merge pull request #1248 from joshtriplett/tyop ([`39f35da`](https://github.com/Byron/gitoxide/commit/39f35da390bc46005d0374b9bf4e7106fc1bd0ec))
+    - Avoid using #[cfg] on multiple individual function arguments ([`6fc27ee`](https://github.com/Byron/gitoxide/commit/6fc27ee8f5ae7ce9fe7e6d07c5c31719cb6b7b1b))
+    - Typo fixes ([`3ef3bc2`](https://github.com/Byron/gitoxide/commit/3ef3bc20a1b90799e5ac26858f898bc7a7c96901))
+    - Merge branch 'gix-status' ([`c3983c6`](https://github.com/Byron/gitoxide/commit/c3983c6b8d63d85ec713ae8d661723f9cf0bd55b))
+    - Add directory lookup, as well as ignore-case capabilities. ([`7c2eeb0`](https://github.com/Byron/gitoxide/commit/7c2eeb07ed0184a6c271f4a54604cba7d2abe811))
+</details>
+
 ## 0.28.1 (2023-12-30)
+
+<csr-id-3bd09ef120945a9669321ea856db4079a5dab930/>
 
 ### Chore
 
@@ -20,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.3, gix-hash v0.14.1, gix-trace v0.1.6, gix-features v0.37.1, gix-actor v0.29.1, gix-validate v0.8.3, gix-object v0.40.1, gix-path v0.10.3, gix-glob v0.15.1, gix-quote v0.4.10, gix-attributes v0.21.1, gix-command v0.3.2, gix-packetline-blocking v0.17.2, gix-utils v0.1.8, gix-filter v0.8.1, gix-fs v0.9.1, gix-chunk v0.4.7, gix-commitgraph v0.23.1, gix-hashtable v0.5.1, gix-revwalk v0.11.1, gix-traverse v0.36.1, gix-worktree-stream v0.8.1, gix-archive v0.8.1, gix-config-value v0.14.3, gix-tempfile v12.0.1, gix-lock v12.0.1, gix-ref v0.40.1, gix-sec v0.10.3, gix-config v0.33.1, gix-prompt v0.8.2, gix-url v0.26.1, gix-credentials v0.23.1, gix-ignore v0.10.1, gix-bitmap v0.2.10, gix-index v0.28.1, gix-worktree v0.29.1, gix-diff v0.39.1, gix-discover v0.28.1, gix-macros v0.1.3, gix-mailmap v0.21.1, gix-negotiate v0.11.1, gix-pack v0.46.1, gix-odb v0.56.1, gix-pathspec v0.5.1, gix-packetline v0.17.2, gix-transport v0.40.1, gix-protocol v0.43.1, gix-revision v0.25.1, gix-refspec v0.21.1, gix-status v0.4.1, gix-submodule v0.7.1, gix-worktree-state v0.6.1, gix v0.57.1 ([`972241f`](https://github.com/Byron/gitoxide/commit/972241f1904944e8b6e84c6aa1649a49be7a85c3))
     - Merge branch 'msrv' ([`8c492d7`](https://github.com/Byron/gitoxide/commit/8c492d7b7e6e5d520b1e3ffeb489eeb88266aa75))
     - Change `rust-version` manifest field back to 1.65. ([`3bd09ef`](https://github.com/Byron/gitoxide/commit/3bd09ef120945a9669321ea856db4079a5dab930))
 </details>
