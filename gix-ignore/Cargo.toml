@@ -19,7 +19,7 @@ serde = ["dep:serde", "bstr/serde", "gix-glob/serde"]
 [dependencies]
 gix-glob = { version = "^0.15.1", path = "../gix-glob" }
 gix-path = { version = "^0.10.3", path = "../gix-path" }
-gix-trace = { version = "^0.1.6", path = "../gix-trace" }
+gix-trace = { version = "^0.1.7", path = "../gix-trace" }
 
 bstr = { version = "1.3.0", default-features = false, features = ["std", "unicode"]}
 unicode-bom = "2.0.2"

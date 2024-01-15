@@ -23,7 +23,7 @@ gix-path = { version = "^0.10.3", path = "../gix-path" }
 gix-command = { version = "^0.3.2", path = "../gix-command" }
 gix-config-value = { version = "^0.14.3", path = "../gix-config-value" }
 gix-prompt = { version = "^0.8.2", path = "../gix-prompt" }
-gix-trace = { version = "^0.1.6", path = "../gix-trace" }
+gix-trace = { version = "^0.1.7", path = "../gix-trace" }
 
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }

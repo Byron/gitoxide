@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.28.2 (2024-01-15)
 
 ### New Features
 
@@ -16,15 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    New methods are:
    
    * File::entry_by_path_icase
-   * File::prefixed_entry_range_icase
-   * File::entry_by_path_and_stage_icase
-   * File::directory_kind_by_path_icase
+* File::prefixed_entry_range_icase
+* File::entry_by_path_and_stage_icase
+* File::directory_kind_by_path_icase
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 16 calendar days.
+ - 11 commits contributed to the release over the course of 16 calendar days.
  - 16 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to `gix-index` release ([`17d1aac`](https://github.com/Byron/gitoxide/commit/17d1aac91ad22291ad6d72f6e8798ebb741a8d7d))
     - Merge branch 'fix-stat-with-negative-times' ([`08e6ca8`](https://github.com/Byron/gitoxide/commit/08e6ca8241047f75b84c1123f9f911625a2014fb))
     - Assure negative nanoseconds on MacOS are handled ([`bf49cd4`](https://github.com/Byron/gitoxide/commit/bf49cd4508433dba6aacf963f49662516b3a960c))
     - Fix stat on files with timestamps before the epoch ([`f4a29dc`](https://github.com/Byron/gitoxide/commit/f4a29dc17e60b208c515b921ba504acd7290e85c))

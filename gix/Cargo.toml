@@ -246,22 +246,22 @@ gix-negotiate = { version = "^0.11.1", path = "../gix-negotiate", optional = tru
 
 gix-path = { version = "^0.10.3", path = "../gix-path" }
 gix-url = { version = "^0.26.1", path = "../gix-url" }
-gix-traverse = { version = "^0.36.1", path = "../gix-traverse" }
+gix-traverse = { version = "^0.36.2", path = "../gix-traverse" }
 gix-diff = { version = "^0.39.1", path = "../gix-diff", default-features = false }
 gix-mailmap = { version = "^0.21.1", path = "../gix-mailmap", optional = true }
-gix-features = { version = "^0.37.1", path = "../gix-features", features = ["progress", "once_cell"] }
-gix-trace = { version = "^0.1.6", path = "../gix-trace" }
+gix-features = { version = "^0.37.2", path = "../gix-features", features = ["progress", "once_cell"] }
+gix-trace = { version = "^0.1.7", path = "../gix-trace" }
 
 gix-glob = { version = "^0.15.1", path = "../gix-glob" }
 gix-credentials = { version = "^0.23.1", path = "../gix-credentials", optional = true }
 gix-prompt = { version = "^0.8.2", path = "../gix-prompt", optional = true }
-gix-index = { version = "^0.28.1", path = "../gix-index", optional = true }
+gix-index = { version = "^0.28.2", path = "../gix-index", optional = true }
 gix-attributes = { version = "^0.21.1", path = "../gix-attributes", optional = true }
 gix-ignore = { version = "^0.10.1", path = "../gix-ignore", optional = true }
 gix-worktree = { version = "^0.29.1", path = "../gix-worktree", optional = true, default-features = false }
 gix-worktree-state = { version = "^0.6.1", path = "../gix-worktree-state", optional = true }
 gix-hashtable = { version = "^0.5.1", path = "../gix-hashtable" }
-gix-commitgraph = { version = "^0.23.1", path = "../gix-commitgraph" }
+gix-commitgraph = { version = "^0.23.2", path = "../gix-commitgraph" }
 gix-pathspec = { version = "^0.5.1", path = "../gix-pathspec", optional = true }
 gix-submodule = { version = "^0.7.1", path = "../gix-submodule", optional = true }
 gix-status = { version = "^0.4.1", path = "../gix-status", optional = true }

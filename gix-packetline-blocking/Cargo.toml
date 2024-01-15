@@ -27,7 +27,7 @@ async-io = []
 serde = ["dep:serde", "bstr/serde"]
 
 [dependencies]
-gix-trace = { version = "^0.1.6", path = "../gix-trace" }
+gix-trace = { version = "^0.1.7", path = "../gix-trace" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 thiserror = "1.0.34"

@@ -13,7 +13,7 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-trace = { version = "^0.1.6", path = "../gix-trace" }
+gix-trace = { version = "^0.1.7", path = "../gix-trace" }
 bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 thiserror = "1.0.26"
 once_cell = "1.17.1"

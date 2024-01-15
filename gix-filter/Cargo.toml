@@ -14,7 +14,7 @@ doctest = false
 
 [dependencies]
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
-gix-trace = { version = "^0.1.6", path = "../gix-trace" }
+gix-trace = { version = "^0.1.7", path = "../gix-trace" }
 gix-object = { version = "^0.40.1", path = "../gix-object" }
 gix-command = { version = "^0.3.2", path = "../gix-command" }
 gix-quote = { version = "^0.4.10", path = "../gix-quote" }

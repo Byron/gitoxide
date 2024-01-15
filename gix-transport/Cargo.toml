@@ -54,7 +54,7 @@ required-features = ["async-client"]
 
 [dependencies]
 gix-command = { version = "^0.3.2", path = "../gix-command" }
-gix-features = { version = "^0.37.1", path = "../gix-features" }
+gix-features = { version = "^0.37.2", path = "../gix-features" }
 gix-url = { version = "^0.26.1", path = "../gix-url" }
 gix-sec = { version = "^0.10.3", path = "../gix-sec" }
 gix-packetline = { version = "^0.17.2", path = "../gix-packetline" }

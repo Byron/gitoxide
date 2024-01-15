@@ -18,7 +18,7 @@ doctest = false
 serde= ["dep:serde", "gix-hash/serde", "gix-object/serde", "gix-pack/serde"]
 
 [dependencies]
-gix-features = { version = "^0.37.1", path = "../gix-features", features = ["rustsha1", "walkdir", "zlib", "crc32" ] }
+gix-features = { version = "^0.37.2", path = "../gix-features", features = ["rustsha1", "walkdir", "zlib", "crc32" ] }
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
 gix-date = { version = "^0.8.3", path = "../gix-date" }
 gix-path = { version = "^0.10.3", path = "../gix-path" }
