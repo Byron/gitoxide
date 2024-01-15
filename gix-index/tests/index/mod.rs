@@ -5,6 +5,7 @@ use gix_hash::ObjectId;
 mod access;
 mod entry;
 mod file;
+mod fs;
 mod init;
 
 pub fn hex_to_id(hex: &str) -> ObjectId {

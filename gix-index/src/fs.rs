@@ -66,10 +66,11 @@ impl Metadata {
             #[cfg(target_os = "aix")]
             let nanoseconds = self.0.st_mtim.tv_nsec;
 
-            Some(system_time_from_secs_nanos(
-                seconds.try_into().ok()?,
-                nanoseconds.try_into().ok()?,
-            ))
+            // All operating systems treat the seconds as offset from unix epoch, hence it must
+            // be signed in order to deal with dates before epoch.
+            // Rustix seems to think this value is u64, but we fix it here for now.
+            let seconds = seconds as i64;
+            system_time_from_secs_nanos(seconds, nanoseconds.try_into().ok()?)
         }
         #[cfg(windows)]
         self.0.modified().ok()
@@ -94,10 +95,11 @@ impl Metadata {
             #[cfg(target_os = "aix")]
             let nanoseconds = self.0.st_ctim.tv_nsec;
 
-            Some(system_time_from_secs_nanos(
-                seconds.try_into().ok()?,
-                nanoseconds.try_into().ok()?,
-            ))
+            // All operating systems treat the seconds as offset from unix epoch, hence it must
+            // be signed in order to deal with dates before epoch.
+            // Rustix seems to think this value is u64, but we fix it here for now.
+            let seconds = seconds as i64;
+            system_time_from_secs_nanos(seconds, nanoseconds.try_into().ok()?)
         }
         #[cfg(windows)]
         self.0.created().ok()
@@ -186,6 +188,30 @@ impl Metadata {
 }
 
 #[cfg(not(windows))]
-fn system_time_from_secs_nanos(secs: u64, nanos: u32) -> SystemTime {
-    std::time::UNIX_EPOCH + std::time::Duration::new(secs, nanos)
+fn system_time_from_secs_nanos(secs: i64, nanos: i32) -> Option<SystemTime> {
+    // Copied from https://github.com/rust-lang/rust at a8ece1190bf6b340175bc5b688e52bd29924f483, MIT licensed, and adapted.
+    // On Apple OS, dates before epoch are represented differently than on other
+    // Unix platforms: e.g. 1/10th of a second before epoch is represented as `seconds=-1`
+    // and `nanoseconds=100_000_000` on other platforms, but is `seconds=0` and
+    // `nanoseconds=-900_000_000` on Apple OS.
+    //
+    // To compensate, we first detect this special case by checking if both
+    // seconds and nanoseconds are in range, and then correct the value for seconds
+    // and nanoseconds to match the common unix representation.
+    //
+    // Please note that Apple OS nonetheless accepts the standard unix format when
+    // setting file times, which makes this compensation round-trippable and generally
+    // transparent.
+    #[cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos", target_os = "watchos"))]
+    let (secs, nanos) = if (secs <= 0 && secs > i64::MIN) && (nanos < 0 && nanos > -1_000_000_000) {
+        (secs - 1, nanos + 1_000_000_000)
+    } else {
+        (secs, nanos)
+    };
+    let d = std::time::Duration::new(secs.abs_diff(0), nanos.try_into().ok()?);
+    Some(if secs < 0 {
+        std::time::UNIX_EPOCH - d
+    } else {
+        std::time::UNIX_EPOCH + d
+    })
 }
