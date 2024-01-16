@@ -91,7 +91,8 @@ fn fuzz(input: &[u8]) -> Result<()> {
 
     let mut buf = Vec::new();
     let mut sections = Vec::new();
-    for section in file.sections() {
+    // Don't perform too much work as this can blow up the size of the file.
+    for section in file.sections().take(10) {
         fuzz_immutable_section(section, &mut buf);
 
         let header = section.header();
