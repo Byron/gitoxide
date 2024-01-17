@@ -21,7 +21,7 @@ mod shared {
     }
 }
 
-#[cfg(any(feature = "walkdir", feature = "fs-walkdir-parallel"))]
+#[cfg(any(feature = "walkdir", feature = "fs-walkdir-parallel", feature = "fs-read-dir"))]
 mod walkdir_precompose {
     use std::borrow::Cow;
     use std::ffi::OsStr;
@@ -83,11 +83,13 @@ mod walkdir_precompose {
 
     /// A platform over entries in a directory, which may or may not precompose unicode after retrieving
     /// paths from the file system.
+    #[cfg(any(feature = "walkdir", feature = "fs-walkdir-parallel"))]
     pub struct WalkDir<T> {
         pub(crate) inner: Option<T>,
         pub(crate) precompose_unicode: bool,
     }
 
+    #[cfg(any(feature = "walkdir", feature = "fs-walkdir-parallel"))]
     pub struct WalkDirIter<T, I, E>
     where
         T: Iterator<Item = Result<I, E>>,
@@ -97,6 +99,7 @@ mod walkdir_precompose {
         pub(crate) precompose_unicode: bool,
     }
 
+    #[cfg(any(feature = "walkdir", feature = "fs-walkdir-parallel"))]
     impl<T, I, E> Iterator for WalkDirIter<T, I, E>
     where
         T: Iterator<Item = Result<I, E>>,
@@ -108,6 +111,32 @@ mod walkdir_precompose {
             self.inner
                 .next()
                 .map(|res| res.map(|entry| DirEntry::new(entry, self.precompose_unicode)))
+        }
+    }
+}
+
+///
+#[cfg(feature = "fs-read-dir")]
+pub mod read_dir {
+    use std::borrow::Cow;
+    use std::ffi::OsStr;
+    use std::fs::FileType;
+    use std::path::Path;
+
+    /// A directory entry adding precompose-unicode support to [`std::fs::DirEntry`].
+    pub type DirEntry = super::walkdir_precompose::DirEntry<std::fs::DirEntry>;
+
+    impl super::walkdir_precompose::DirEntryApi for std::fs::DirEntry {
+        fn path(&self) -> Cow<'_, Path> {
+            self.path().into()
+        }
+
+        fn file_name(&self) -> Cow<'_, OsStr> {
+            self.file_name().into()
+        }
+
+        fn file_type(&self) -> std::io::Result<FileType> {
+            self.file_type()
         }
     }
 }
