@@ -4,7 +4,7 @@ use gix_hash::ObjectId;
 use gix_object::bstr::{BStr, BString};
 use memmap2::Mmap;
 
-use crate::{file, transaction::RefEdit, FullNameRef};
+use crate::{file, transaction::RefEdit, FullNameRef, Namespace};
 
 #[derive(Debug)]
 enum Backing {
@@ -38,6 +38,9 @@ pub(crate) struct Transaction {
     lock: Option<gix_lock::File>,
     #[allow(dead_code)] // It just has to be kept alive, hence no reads
     closed_lock: Option<gix_lock::Marker>,
+    precompose_unicode: bool,
+    /// The namespace to use when preparing or writing refs
+    namespace: Option<Namespace>,
 }
 
 /// A reference as parsed from the `packed-refs` file

@@ -8,11 +8,17 @@ use std::path::PathBuf;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Capabilities {
-    /// If true, the filesystem will store paths as decomposed unicode, i.e. `ä` becomes `"a\u{308}"`, which means that
-    /// we have to turn these forms back from decomposed to precomposed unicode before storing it in the index or generally
-    /// using it. This also applies to input received from the command-line, so callers may have to be aware of this and
-    /// perform conversions accordingly.
-    /// If false, no conversions will be performed.
+    /// If `true`, the filesystem will consider the precomposed umlaut `ä` similiar to its decomposed form `"a\u{308}"` and consider them the same.
+    /// If `false`, the filesystem will only see bytes which means that the above example could live side-by-side.
+    ///
+    /// Even though a filesystem that treats both forms the same will still reproduce the exact same byte sequence during traversal for instance,
+    /// this might also mean that we see paths in their decomposed form (this happens when creating directory `ä` in MacOS Finder for example).
+    ///
+    /// If Git would store such decomposed paths in the repository, which only sees bytes, on linux this might mean the path will look strange
+    /// at best, which is why it prefers to store precomposed unicode on systems where it matters, like MacOS and Windows.
+    ///
+    /// For best compatibility, and with this value being `true`, we will turn decomposed paths and input like command-line arguments into their
+    /// precomposed forms, so no decomposed byte sequences should end up in storage.
     pub precompose_unicode: bool,
     /// If true, the filesystem ignores the case of input, which makes `A` the same file as `a`.
     /// This is also called case-folding.
@@ -33,7 +39,27 @@ pub use snapshot::{FileSnapshot, SharedFileSnapshot, SharedFileSnapshotMut};
 pub mod symlink;
 
 ///
+pub mod read_dir;
+pub use read_dir::function::read_dir;
+
+///
 pub mod dir;
+
+/// Like [`std::env::current_dir()`], but it will `precompose_unicode` if that value is true, if the current directory
+/// is valid unicode and if there are decomposed unicode codepoints.
+///
+/// Thus, it will turn `"a\u{308}"` into `ä` if `true`.
+/// Keeping it `false` will not alter the output.
+///
+/// Note that `precompose_unicode` most be set using the `core.precomposeUnicode` git configuration.
+pub fn current_dir(precompose_unicode: bool) -> std::io::Result<PathBuf> {
+    let cwd = std::env::current_dir()?;
+    Ok(if precompose_unicode {
+        gix_utils::str::precompose_path(cwd.into()).into_owned()
+    } else {
+        cwd
+    })
+}
 
 /// A stack of path components with the delegation of side-effects as the currently set path changes, component by component.
 #[derive(Clone)]

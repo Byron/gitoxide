@@ -1392,7 +1392,6 @@ dependencies = [
  "signal-hook",
  "smallvec",
  "thiserror",
- "unicode-normalization",
  "walkdir",
 ]
 
@@ -1734,6 +1733,7 @@ dependencies = [
  "bstr",
  "defer",
  "dunce",
+ "gix-fs 0.9.1",
  "gix-hash 0.14.1",
  "gix-path 0.10.3",
  "gix-ref 0.40.1",
@@ -1785,6 +1785,7 @@ dependencies = [
  "flate2",
  "gix-hash 0.14.1",
  "gix-trace 0.1.7",
+ "gix-utils 0.1.8",
  "jwalk",
  "libc",
  "once_cell",
@@ -1845,6 +1846,7 @@ name = "gix-fs"
 version = "0.9.1"
 dependencies = [
  "gix-features 0.37.2",
+ "gix-utils 0.1.8",
  "serde",
  "tempfile",
 ]
@@ -2163,6 +2165,7 @@ dependencies = [
  "document-features",
  "gix-date 0.8.3",
  "gix-features 0.37.2",
+ "gix-fs 0.9.1",
  "gix-hash 0.14.1",
  "gix-object 0.40.1",
  "gix-pack",
@@ -2402,6 +2405,7 @@ dependencies = [
  "gix-path 0.10.3",
  "gix-tempfile 12.0.1",
  "gix-testtools",
+ "gix-utils 0.1.8",
  "gix-validate 0.8.3",
  "memmap2 0.9.3",
  "serde",
@@ -2752,6 +2756,7 @@ name = "gix-utils"
 version = "0.1.8"
 dependencies = [
  "fastrand 2.0.1",
+ "unicode-normalization",
 ]
 
 [[package]]

@@ -205,9 +205,9 @@ pub fn into(
         write_file(tpl, PathCursor(&mut dot_git).at(filename))?;
     }
 
-    {
+    let caps = {
         let mut config = gix_config::File::default();
-        {
+        let caps = {
             let caps = fs_capabilities.unwrap_or_else(|| gix_fs::Capabilities::probe(&dot_git));
             let mut core = config.new_section("core", None).expect("valid section name");
 
@@ -218,14 +218,16 @@ pub fn into(
             core.push(key("symlinks"), Some(bool(caps.symlink).into()));
             core.push(key("ignorecase"), Some(bool(caps.ignore_case).into()));
             core.push(key("precomposeunicode"), Some(bool(caps.precompose_unicode).into()));
-        }
+            caps
+        };
         let mut cursor = PathCursor(&mut dot_git);
         let config_path = cursor.at("config");
         std::fs::write(config_path, config.to_bstring()).map_err(|err| Error::IoWrite {
             source: err,
             path: config_path.to_owned(),
         })?;
-    }
+        caps
+    };
 
     Ok(gix_discover::repository::Path::from_dot_git_dir(
         dot_git,
@@ -234,7 +236,7 @@ pub fn into(
         } else {
             gix_discover::repository::Kind::WorkTree { linked_git_dir: None }
         },
-        &std::env::current_dir()?,
+        &gix_fs::current_dir(caps.precompose_unicode)?,
     )
     .expect("by now the `dot_git` dir is valid as we have accessed it"))
 }

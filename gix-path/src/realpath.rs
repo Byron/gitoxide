@@ -30,6 +30,8 @@ pub(crate) mod function {
     /// Do not fail for non-existing components, but assume these are as is.
     ///
     /// If `path` is relative, the current working directory be used to make it absolute.
+    /// Note that the returned path will be verbatim, and repositories with `core.precomposeUnicode`
+    /// set will probably want to precompose the paths unicode.
     pub fn realpath(path: impl AsRef<Path>) -> Result<PathBuf, Error> {
         let path = path.as_ref();
         let cwd = path

@@ -39,7 +39,15 @@ pub(crate) mod function {
         // us the parent directory. (`Path::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
-        let cwd = current_dir.map_or_else(|| std::env::current_dir().map(Cow::Owned), |cwd| Ok(Cow::Borrowed(cwd)))?;
+        let cwd = current_dir.map_or_else(
+            || {
+                // The paths we return are relevant to the repository, but at this time it's impossible to know
+                // what `core.precomposeUnicode` is going to be. Hence the one using these paths will have to
+                // transform the paths as needed, because we can't. `false` means to leave the obtained path as is.
+                gix_fs::current_dir(false).map(Cow::Owned)
+            },
+            |cwd| Ok(Cow::Borrowed(cwd)),
+        )?;
         #[cfg(windows)]
         let directory = dunce::simplified(directory);
         let dir = gix_path::normalize(directory.into(), cwd.as_ref()).ok_or_else(|| Error::InvalidInput {

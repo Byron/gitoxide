@@ -17,7 +17,7 @@ pub struct Options {
     /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `object_hash`.
     pub use_multi_pack_index: bool,
     /// The current directory of the process at the time of instantiation.
-    /// If unset, it will be retrieved using `std::env::current_dir()`.
+    /// If unset, it will be retrieved using `gix_fs::current_dir(false)`.
     pub current_dir: Option<std::path::PathBuf>,
 }
 
@@ -80,7 +80,13 @@ impl Store {
         }: Options,
     ) -> std::io::Result<Self> {
         let _span = gix_features::trace::detail!("gix_odb::Store::at()");
-        let current_dir = current_dir.map_or_else(std::env::current_dir, Ok)?;
+        let current_dir = current_dir.map_or_else(
+            || {
+                // It's only used for real-pathing alternate paths and there it just needs to be consistent (enough).
+                gix_fs::current_dir(false)
+            },
+            Ok,
+        )?;
         if !objects_dir.is_dir() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other, // TODO: use NotADirectory when stabilized

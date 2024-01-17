@@ -123,7 +123,9 @@ impl<'repo> Remote<'repo> {
                 let (git_dir, _work_dir) = gix_discover::repository::Path::from_dot_git_dir(
                     dir.clone().into_owned(),
                     kind,
-                    &std::env::current_dir()?,
+                    // precomposed unicode doesn't matter here as long as the produced path is accessible,
+                    // which is a given either way.
+                    &gix_fs::current_dir(false)?,
                 )
                 .ok_or_else(|| Error::InvalidRemoteRepositoryPath {
                     directory: dir.into_owned(),

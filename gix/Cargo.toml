@@ -300,9 +300,6 @@ parking_lot = "0.12.1"
 
 document-features = { version = "0.2.0", optional = true }
 
-[target.'cfg(target_vendor = "apple")'.dependencies]
-unicode-normalization = { version = "0.1.19", default-features = false }
-
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
 is_ci = "1.1.1"

@@ -56,6 +56,7 @@ impl Store {
             inner: gix_features::fs::walkdir_new(
                 &self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()),
                 gix_features::fs::walkdir::Parallelism::Serial,
+                false,
             )
             .min_depth(1)
             .max_depth(1)

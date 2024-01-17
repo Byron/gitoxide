@@ -25,7 +25,10 @@ progress-unit-human-numbers = ["prodash?/unit-human"]
 progress-unit-bytes = ["dep:bytesize", "prodash?/unit-bytes"]
 
 ## If set, walkdir iterators will be multi-threaded.
-fs-walkdir-parallel = [ "dep:jwalk" ]
+fs-walkdir-parallel = [ "dep:jwalk", "dep:gix-utils" ]
+
+## Provide utilities suitable for working with the `std::fs::read_dir()`.
+fs-read-dir = ["dep:gix-utils"]
 
 ## Implement `tracing` with `tracing-core`, which provides applications with valuable performance details if they opt-in to it.
 ##
@@ -47,7 +50,7 @@ parallel = ["dep:crossbeam-channel",
 once_cell = ["dep:once_cell"]
 ## Makes facilities of the `walkdir` crate partially available.
 ## In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
-walkdir = ["dep:walkdir"]
+walkdir = ["dep:walkdir", "dep:gix-utils"]
 #* an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism.
 io-pipe = ["dep:bytes"]
 ## provide a proven and fast `crc32` implementation.
@@ -116,6 +119,9 @@ required-features = ["io-pipe"]
 [dependencies]
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
 gix-trace = { version = "^0.1.7", path = "../gix-trace" }
+
+# for walkdir
+gix-utils = { version = "^0.1.8", path = "../gix-utils", optional = true }
 
 # 'parallel' feature
 crossbeam-channel = { version = "0.5.0", optional = true }

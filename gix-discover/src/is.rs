@@ -177,6 +177,7 @@ pub(crate) fn git_with_metadata(
             dot_git.as_ref().into(),
             gix_ref::store::WriteReflog::Normal,
             object_hash_should_not_matter_here,
+            false,
         );
         let head = refs.find_loose("HEAD")?;
         if head.name.as_bstr() != "HEAD" {

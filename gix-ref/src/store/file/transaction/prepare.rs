@@ -329,8 +329,13 @@ impl<'s, 'p> Transaction<'s, 'p> {
                         self.store
                             .assure_packed_refs_uptodate()?
                             .map(|p| {
-                                buffer_into_transaction(p, packed_refs_lock_fail_mode)
-                                    .map_err(Error::PackedTransactionAcquire)
+                                buffer_into_transaction(
+                                    p,
+                                    packed_refs_lock_fail_mode,
+                                    self.store.precompose_unicode,
+                                    self.store.namespace.clone(),
+                                )
+                                .map_err(Error::PackedTransactionAcquire)
                             })
                             .transpose()?
                     };

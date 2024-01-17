@@ -27,6 +27,13 @@ pub struct Store {
     pub write_reflog: WriteReflog,
     /// The namespace to use for edits and reads
     pub namespace: Option<Namespace>,
+    /// If set, we will convert decomposed unicode like `a\u308` into precomposed unicode like `ä` when reading
+    /// ref names from disk.
+    /// Note that this is an internal operation that isn't observable on the outside, but it's needed for lookups
+    /// to packed-refs or symlinks to work correctly.
+    /// Iterated references will be returned verbatim, thus when sending them over the wire they have to be precomposed
+    /// as needed.
+    pub precompose_unicode: bool,
     /// A packed buffer which can be mapped in one version and shared as such.
     /// It's updated only in one spot, which is prior to reading it based on file stamps.
     /// Doing it like this has the benefit of being able to hand snapshots out to people without blocking others from updating it.

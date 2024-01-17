@@ -17,7 +17,7 @@ fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
 
 fn empty_store(writemode: WriteReflog) -> Result<(TempDir, file::Store)> {
     let dir = TempDir::new()?;
-    let store = file::Store::at(dir.path().into(), writemode, gix_hash::Kind::Sha1);
+    let store = file::Store::at(dir.path().into(), writemode, gix_hash::Kind::Sha1, false);
     Ok((dir, store))
 }
 

@@ -28,6 +28,7 @@ fn run() -> crate::Result {
                 base.join("client").join(".git"),
                 WriteReflog::Disable,
                 gix_hash::Kind::Sha1,
+                false,
             );
             let lookup_names = |names: &[&str]| -> Vec<gix_hash::ObjectId> {
                 names

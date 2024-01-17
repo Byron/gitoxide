@@ -87,7 +87,9 @@ impl ThreadSafeRepository {
                 }
             }
         };
-        let cwd = std::env::current_dir()?;
+
+        // The be altered later based on `core.precomposeUnicode`.
+        let cwd = gix_fs::current_dir(false)?;
         let (git_dir, worktree_dir) = gix_discover::repository::Path::from_dot_git_dir(path, kind, &cwd)
             .expect("we have sanitized path with is_git()")
             .into_repository_and_work_tree_directories();
@@ -136,7 +138,8 @@ impl ThreadSafeRepository {
             }
         };
 
-        let cwd = std::env::current_dir()?;
+        // The be altered later based on `core.precomposeUnicode`.
+        let cwd = gix_fs::current_dir(false)?;
         let (git_dir, worktree_dir) = gix_discover::repository::Path::from_dot_git_dir(path, path_kind, &cwd)
             .expect("we have sanitized path with is_git()")
             .into_repository_and_work_tree_directories();
@@ -149,9 +152,9 @@ impl ThreadSafeRepository {
     }
 
     pub(crate) fn open_from_paths(
-        git_dir: PathBuf,
+        mut git_dir: PathBuf,
         mut worktree_dir: Option<PathBuf>,
-        options: Options,
+        mut options: Options,
     ) -> Result<Self, Error> {
         let _span = gix_trace::detail!("open_from_paths()");
         let Options {
@@ -170,35 +173,58 @@ impl ThreadSafeRepository {
                 },
             ref api_config_overrides,
             ref cli_config_overrides,
-            ref current_dir,
+            ref mut current_dir,
         } = options;
-        let current_dir = current_dir.as_deref().expect("BUG: current_dir must be set by caller");
         let git_dir_trust = git_dir_trust.expect("trust must be determined by now");
 
-        // TODO: assure we handle the worktree-dir properly as we can have config per worktree with an extension.
-        //       This would be something read in later as have to first check for extensions. Also this means
-        //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
-        //       as it may have its own configuration. That's fine actually.
-        let common_dir = gix_discover::path::from_plain_file(git_dir.join("commondir").as_ref())
+        let mut common_dir = gix_discover::path::from_plain_file(git_dir.join("commondir").as_ref())
             .transpose()?
             .map(|cd| git_dir.join(cd));
-        let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
-
         let repo_config = config::cache::StageOne::new(
-            common_dir_ref,
+            common_dir.as_deref().unwrap_or(&git_dir),
             git_dir.as_ref(),
             git_dir_trust,
             lossy_config,
             lenient_config,
         )?;
+
+        if repo_config.precompose_unicode {
+            git_dir = gix_utils::str::precompose_path(git_dir.into()).into_owned();
+            if let Some(common_dir) = common_dir.as_mut() {
+                if let Cow::Owned(precomposed) = gix_utils::str::precompose_path((&*common_dir).into()) {
+                    *common_dir = precomposed;
+                }
+            }
+            if let Some(worktree_dir) = worktree_dir.as_mut() {
+                if let Cow::Owned(precomposed) = gix_utils::str::precompose_path((&*worktree_dir).into()) {
+                    *worktree_dir = precomposed;
+                }
+            }
+        }
+        let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
+
+        let current_dir = {
+            let current_dir_ref = current_dir.as_mut().expect("BUG: current_dir must be set by caller");
+            if repo_config.precompose_unicode {
+                if let Cow::Owned(precomposed) = gix_utils::str::precompose_path((&*current_dir_ref).into()) {
+                    *current_dir_ref = precomposed;
+                }
+            }
+            current_dir_ref.as_path()
+        };
+
         let mut refs = {
             let reflog = repo_config.reflog.unwrap_or(gix_ref::store::WriteReflog::Disable);
             let object_hash = repo_config.object_hash;
             match &common_dir {
-                Some(common_dir) => {
-                    crate::RefStore::for_linked_worktree(git_dir.to_owned(), common_dir.into(), reflog, object_hash)
-                }
-                None => crate::RefStore::at(git_dir.to_owned(), reflog, object_hash),
+                Some(common_dir) => crate::RefStore::for_linked_worktree(
+                    git_dir.to_owned(),
+                    common_dir.into(),
+                    reflog,
+                    object_hash,
+                    repo_config.precompose_unicode,
+                ),
+                None => crate::RefStore::at(git_dir.to_owned(), reflog, object_hash, repo_config.precompose_unicode),
             }
         };
         let head = refs.find("HEAD").ok();

@@ -43,7 +43,8 @@ impl ThreadSafeRepository {
         let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
         let mut options = trust_map.into_value_by_level(trust);
         options.git_dir_trust = trust.into();
-        options.current_dir = Some(std::env::current_dir().map_err(upwards::Error::CurrentDir)?);
+        // Note that we will adjust the `current_dir` later so it matches the value of `core.precomposeUnicode`.
+        options.current_dir = Some(gix_fs::current_dir(false).map_err(upwards::Error::CurrentDir)?);
         Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
     }
 

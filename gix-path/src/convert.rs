@@ -246,7 +246,7 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 /// instead.
 ///
 /// Note that we might access the `current_dir` if we run out of path components to pop off, which is expected to be absolute
-/// as typical return value of `std::env::current_dir()`.
+/// as typical return value of `std::env::current_dir()` or `gix_fs::current_dir(…)` when `core.precomposeUnicode` is known.
 /// As a `current_dir` like `/c` can be exhausted by paths like `../../r`, `None` will be returned to indicate the inability
 /// to produce a logically consistent path.
 pub fn normalize<'a>(path: Cow<'a, Path>, current_dir: &Path) -> Option<Cow<'a, Path>> {
