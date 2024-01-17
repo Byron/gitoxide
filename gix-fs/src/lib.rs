@@ -39,6 +39,10 @@ pub use snapshot::{FileSnapshot, SharedFileSnapshot, SharedFileSnapshotMut};
 pub mod symlink;
 
 ///
+pub mod read_dir;
+pub use read_dir::function::read_dir;
+
+///
 pub mod dir;
 
 /// Like [`std::env::current_dir()`], but it will `precompose_unicode` if that value is true, if the current directory
