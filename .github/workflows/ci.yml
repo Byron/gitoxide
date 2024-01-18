@@ -32,53 +32,53 @@ on:
       - Makefile
 
 jobs:
-#   pure-rust-build:
-#     runs-on: ubuntu-latest
-#     container: debian:buster
-#     steps:
-#       - uses: actions/checkout@v3
-#       - name: Prerequisites
-#         run: apt-get update && apt-get install --no-install-recommends -y ca-certificates curl gcc libc-dev # gcc is required as OS abstraction
-#       - name: install Rust via Rustup
-#         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal;
-#       - uses: Swatinem/rust-cache@v2
-#       - run: /github/home/.cargo/bin/cargo install --debug --locked --no-default-features --features max-pure --path .
+  pure-rust-build:
+    runs-on: ubuntu-latest
+    container: debian:buster
+    steps:
+      - uses: actions/checkout@v3
+      - name: Prerequisites
+        run: apt-get update && apt-get install --no-install-recommends -y ca-certificates curl gcc libc-dev # gcc is required as OS abstraction
+      - name: install Rust via Rustup
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal;
+      - uses: Swatinem/rust-cache@v2
+      - run: /github/home/.cargo/bin/cargo install --debug --locked --no-default-features --features max-pure --path .
 
-#   test:
-#     runs-on: ubuntu-latest
-#     steps:
-#     - uses: actions/checkout@v3
-#     - uses: dtolnay/rust-toolchain@stable
-#     - uses: Swatinem/rust-cache@v2
-#     - name: Setup dependencies
-#       run:
-#         sudo apt-get install tree
-#     - uses: extractions/setup-just@v1
-#     - name: test
-#       env:
-#         CI: true
-#         GITOXIDE_TEST_IGNORE_ARCHIVES: 1
-#       run: just ci-test
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+    - name: Setup dependencies
+      run:
+        sudo apt-get install tree
+    - uses: extractions/setup-just@v1
+    - name: test
+      env:
+        CI: true
+        GITOXIDE_TEST_IGNORE_ARCHIVES: 1
+      run: just ci-test
 
   test-fast:
     strategy:
       matrix:
         os:
           - windows-latest
-          # - macos-latest
-          # - ubuntu-latest
+          - macos-latest
+          - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      # - name: Setup dependencies (macos)
-      #   if: startsWith(matrix.os, 'macos')
-      #   run:
-      #     brew install tree openssl gnu-sed
-      # - name: "cargo check default features"
-      #   if: startsWith(matrix.os, 'windows')
-      #   run: cargo check --all --bins --examples
+      - name: Setup dependencies (macos)
+        if: startsWith(matrix.os, 'macos')
+        run:
+          brew install tree openssl gnu-sed
+      - name: "cargo check default features"
+        if: startsWith(matrix.os, 'windows')
+        run: cargo check --all --bins --examples
       - run: |
           # it should never be a failure not to get the caches, as they can be regenerated.
           git lfs fetch && git lfs checkout || true
@@ -88,128 +88,128 @@ jobs:
       - name: "Test (nextest)"
         run: cargo nextest run --all --no-fail-fast
 
-  # test-32bit:
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       target: [ armv7-linux-androideabi ]
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: dtolnay/rust-toolchain@stable
-  #     - uses: Swatinem/rust-cache@v2
-  #     - name: Install Rust
-  #       uses: dtolnay/rust-toolchain@master
-  #       with:
-  #         toolchain: stable
-  #         targets: ${{ matrix.target }}
-  #     - uses: taiki-e/install-action@v1
-  #       with:
-  #         tool: cross
-  #     - name: "check"
-  #       run: cross check -p gix --target ${{ matrix.target }}
-  #     - name: "Test (unit)"
-  #       # run high-level unit tests that exercise a lot of code while being pure Rust to ease building test binaries.
-  #       # TODO: figure out why `git` doesn't pick up environment configuration so build scripts fail when using `-p gix`.
-  #       run: cross test -p gix-hashtable --target ${{ matrix.target }}
+  test-32bit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ armv7-linux-androideabi ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+      - uses: taiki-e/install-action@v1
+        with:
+          tool: cross
+      - name: "check"
+        run: cross check -p gix --target ${{ matrix.target }}
+      - name: "Test (unit)"
+        # run high-level unit tests that exercise a lot of code while being pure Rust to ease building test binaries.
+        # TODO: figure out why `git` doesn't pick up environment configuration so build scripts fail when using `-p gix`.
+        run: cross test -p gix-hashtable --target ${{ matrix.target }}
 
-  # installation:
-  #   strategy:
-  #     matrix:
-  #       build: [ win-msvc, win-gnu, win32-msvc, win32-gnu ]
-  #       include:
-  #         - build: win-msvc
-  #           os: windows-latest
-  #           rust: stable
-  #           target: x86_64-pc-windows-msvc
-  #         - build: win-gnu
-  #           os: windows-latest
-  #           rust: stable-x86_64-gnu
-  #           target: x86_64-pc-windows-gnu
-  #         - build: win32-msvc
-  #           os: windows-latest
-  #           rust: stable
-  #           target: i686-pc-windows-msvc
-  #         - build: win32-gnu
-  #           os: windows-latest
-  #           rust: stable
-  #           target: i686-pc-windows-gnu
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Install Rust
-  #       uses: dtolnay/rust-toolchain@master
-  #       with:
-  #         toolchain: ${{ matrix.rust }}
-  #         targets: ${{ matrix.target }}
-  #     - uses: Swatinem/rust-cache@v2
-  #     - uses: msys2/setup-msys2@v2
-  #       with:
-  #         msystem: MINGW${{ startsWith(matrix.target, 'i686-') && '32' || '64' }}
-  #         pacboy: cc:p
-  #         path-type: inherit
-  #     - name: "Install prerequisites"
-  #       run: vcpkg install  zlib:x64-windows-static-md
-  #     - name: "Installation from crates.io: gitoxide"
-  #       run: cargo +${{ matrix.rust }} install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force gitoxide
-  #       shell: msys2 {0}
+  installation:
+    strategy:
+      matrix:
+        build: [ win-msvc, win-gnu, win32-msvc, win32-gnu ]
+        include:
+          - build: win-msvc
+            os: windows-latest
+            rust: stable
+            target: x86_64-pc-windows-msvc
+          - build: win-gnu
+            os: windows-latest
+            rust: stable-x86_64-gnu
+            target: x86_64-pc-windows-gnu
+          - build: win32-msvc
+            os: windows-latest
+            rust: stable
+            target: i686-pc-windows-msvc
+          - build: win32-gnu
+            os: windows-latest
+            rust: stable
+            target: i686-pc-windows-gnu
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW${{ startsWith(matrix.target, 'i686-') && '32' || '64' }}
+          pacboy: cc:p
+          path-type: inherit
+      - name: "Install prerequisites"
+        run: vcpkg install  zlib:x64-windows-static-md
+      - name: "Installation from crates.io: gitoxide"
+        run: cargo +${{ matrix.rust }} install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force gitoxide
+        shell: msys2 {0}
 
-  # lint:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: dtolnay/rust-toolchain@master
-  #       with:
-  #         toolchain: stable
-  #         components: clippy,rustfmt
-  #     - uses: extractions/setup-just@v1
-  #     - name: Run cargo clippy
-  #       run: just clippy -D warnings
-  #     - name: Run cargo doc
-  #       run: just doc
-  #     - name: Run cargo fmt
-  #       run: cargo fmt --all -- --check
-  #     - name: Run cargo diet
-  #       run: |
-  #         curl -LSfs https://raw.githubusercontent.com/the-lean-crate/cargo-diet/master/ci/install.sh | \
-  #          sh -s -- --git the-lean-crate/cargo-diet --target x86_64-unknown-linux-musl --tag v1.2.4
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy,rustfmt
+      - uses: extractions/setup-just@v1
+      - name: Run cargo clippy
+        run: just clippy -D warnings
+      - name: Run cargo doc
+        run: just doc
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+      - name: Run cargo diet
+        run: |
+          curl -LSfs https://raw.githubusercontent.com/the-lean-crate/cargo-diet/master/ci/install.sh | \
+           sh -s -- --git the-lean-crate/cargo-diet --target x86_64-unknown-linux-musl --tag v1.2.4
 
-  #         # Let's not fail CI for this, it will fail locally often enough, and a crate a little bigger
-  #         # than allows is no problem either if it comes to that.
-  #         just check-size || true
+          # Let's not fail CI for this, it will fail locally often enough, and a crate a little bigger
+          # than allows is no problem either if it comes to that.
+          just check-size || true
   
-  # cargo-deny:
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       checks:
-  #         - advisories
-  #         - bans licenses sources
+  cargo-deny:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
 
-  #   # Prevent sudden announcement of a new advisory from failing ci:
-  #   continue-on-error: ${{ matrix.checks == 'advisories' }}
+    # Prevent sudden announcement of a new advisory from failing ci:
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
 
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #   - uses: EmbarkStudios/cargo-deny-action@v1
-  #     with:
-  #       command: check ${{ matrix.checks }}
-  # wasm:
-  #   name: WebAssembly
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: true
-  #   strategy:
-  #     matrix:
-  #       target: [ wasm32-unknown-unknown, wasm32-wasi ]
-  #   steps:
-  #     - uses: actions/checkout@master
-  #     - name: Install Rust
-  #       run: rustup update stable && rustup default stable && rustup target add ${{ matrix.target }}
-  #     - uses: Swatinem/rust-cache@v2
-  #     - run: set +x; for name in gix-actor gix-attributes gix-bitmap gix-chunk gix-command gix-commitgraph gix-date gix-glob gix-hash gix-hashtable gix-mailmap gix-object gix-packetline gix-path gix-quote gix-refspec gix-revision gix-traverse gix-validate; do (cd $name && cargo build --target ${{ matrix.target }}); done
-  #       name: crates without feature toggles
-  #     - run: set +x; for feature in progress fs-walkdir-parallel parallel io-pipe crc32 zlib zlib-rust-backend fast-sha1 rustsha1 cache-efficiency-debug; do (cd gix-features && cargo build --features $feature --target ${{ matrix.target }}); done
-  #       name: features of gix-features
-  #     - run: set +x; for name in gix-pack; do (cd $name && cargo build --features wasm --target ${{ matrix.target }}); done
-  #       name: crates with 'wasm' feature
-  #     - run: cd gix-pack && cargo build --all-features --target ${{ matrix.target }}
-  #       name: gix-pack with all features (including wasm)
+    steps:
+    - uses: actions/checkout@v3
+    - uses: EmbarkStudios/cargo-deny-action@v1
+      with:
+        command: check ${{ matrix.checks }}
+  wasm:
+    name: WebAssembly
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        target: [ wasm32-unknown-unknown, wasm32-wasi ]
+    steps:
+      - uses: actions/checkout@master
+      - name: Install Rust
+        run: rustup update stable && rustup default stable && rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+      - run: set +x; for name in gix-actor gix-attributes gix-bitmap gix-chunk gix-command gix-commitgraph gix-date gix-glob gix-hash gix-hashtable gix-mailmap gix-object gix-packetline gix-path gix-quote gix-refspec gix-revision gix-traverse gix-validate; do (cd $name && cargo build --target ${{ matrix.target }}); done
+        name: crates without feature toggles
+      - run: set +x; for feature in progress fs-walkdir-parallel parallel io-pipe crc32 zlib zlib-rust-backend fast-sha1 rustsha1 cache-efficiency-debug; do (cd gix-features && cargo build --features $feature --target ${{ matrix.target }}); done
+        name: features of gix-features
+      - run: set +x; for name in gix-pack; do (cd $name && cargo build --features wasm --target ${{ matrix.target }}); done
+        name: crates with 'wasm' feature
+      - run: cd gix-pack && cargo build --all-features --target ${{ matrix.target }}
+        name: gix-pack with all features (including wasm)

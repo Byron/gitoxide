@@ -71,16 +71,6 @@ mod impl_ {
     }
 
     pub fn is_path_owned_by_current_user(path: &Path) -> io::Result<bool> {
-        if matches!(dbg!(sys(dbg!(path))), Ok(true)) {
-            return Ok(true);
-        }
-
-        let res = dbg!(non_sys(path));
-
-        panic!("seriously wtf");
-    }
-
-    fn sys(path: &Path) -> io::Result<bool> {
         use windows_sys::Win32::{
             Foundation::{GetLastError, LocalFree, ERROR_INSUFFICIENT_BUFFER, ERROR_SUCCESS},
             Security::{
@@ -192,138 +182,22 @@ mod impl_ {
 
             // If the current user is the owner of the parent folder then they also
             // own this file
-            if dbg!(EqualSid(folder_owner, token_owner)) != 0 {
+            if EqualSid(folder_owner, token_owner) != 0 {
                 return Ok(true);
             }
 
             // Admin-group owned folders are considered owned by the current user, if they are in the admin group
-            if dbg!(IsWellKnownSid(token_owner, WinBuiltinAdministratorsSid)) == 0 {
-                return dbg!(Ok(false));
+            if IsWellKnownSid(token_owner, WinBuiltinAdministratorsSid) == 0 {
+                return Ok(false);
             }
 
             let mut is_member = 0;
-            if dbg!(CheckTokenMembership(0, token_owner, &mut is_member)) == 0 {
+            if CheckTokenMembership(0, token_owner, &mut is_member) == 0 {
                 error!("Couldn't check if user is an administrator");
             }
 
-            dbg!(Ok(is_member != 0))
+            Ok(is_member != 0)
         }
-    }
-
-    fn non_sys(path: &Path) -> std::io::Result<bool> {
-        fn err(msg: impl Into<String>) -> std::io::Error {
-            std::io::Error::new(std::io::ErrorKind::Other, msg.into())
-        }
-
-        use windows::{
-            core::{Error, PCWSTR},
-            Win32::{
-                Foundation::{CloseHandle, LocalFree, BOOL, HANDLE, HLOCAL, PSID},
-                Security::{
-                    Authorization::{GetNamedSecurityInfoW, SE_FILE_OBJECT},
-                    CheckTokenMembership, EqualSid, GetTokenInformation, IsWellKnownSid, TokenOwner,
-                    WinBuiltinAdministratorsSid, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, TOKEN_OWNER,
-                    TOKEN_QUERY,
-                },
-                System::Threading::{GetCurrentProcess, GetCurrentThread, OpenProcessToken, OpenThreadToken},
-            },
-        };
-
-        let mut err_msg = None;
-        let mut is_owned = false;
-
-        if !path.exists() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                format!("{:?} does not exist.", path),
-            ));
-        }
-
-        // Home is not actually owned by the corresponding user
-        // but it can be considered de-facto owned by the user
-        // Ignore errors here and just do the regular checks below
-        if gix_path::realpath(path).ok() == gix_path::env::home_dir() {
-            return Ok(true);
-        }
-
-        #[allow(unsafe_code)]
-        unsafe {
-            let mut folder_owner = PSID::default();
-            let mut pdescriptor = PSECURITY_DESCRIPTOR::default();
-            let result = GetNamedSecurityInfoW(
-                PCWSTR(to_wide_path(path).as_ptr()),
-                SE_FILE_OBJECT,
-                OWNER_SECURITY_INFORMATION,
-                Some(&mut folder_owner),
-                None,
-                None,
-                None,
-                &mut pdescriptor,
-            );
-
-            // Workaround for https://github.com/microsoft/win32metadata/issues/884
-            if result.is_ok() {
-                let mut token = HANDLE::default();
-                // Use the current thread token if possible, otherwise open the process token
-                OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, true, &mut token)
-                    .or_else(|_| OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token))?;
-
-                let mut buffer_size = 0;
-                let mut buffer = Vec::<u8>::new();
-                GetTokenInformation(token, TokenOwner, None, 0, &mut buffer_size).ok();
-                if buffer_size != 0 {
-                    buffer.resize(buffer_size as usize, 0);
-                    match GetTokenInformation(
-                        token,
-                        TokenOwner,
-                        Some(buffer.as_mut_ptr() as *mut std::ffi::c_void),
-                        buffer_size,
-                        &mut buffer_size,
-                    ) {
-                        Ok(()) => {
-                            let token_owner = buffer.as_ptr() as *const TOKEN_OWNER;
-                            let token_owner = (*token_owner).Owner;
-
-                            is_owned = dbg!(EqualSid(folder_owner, token_owner)).is_ok();
-
-                            // Admin-group owned folders are considered owned by the current user, if they are in the admin group
-                            if !is_owned && dbg!(IsWellKnownSid(token_owner, WinBuiltinAdministratorsSid)).as_bool() {
-                                let mut is_member = BOOL::default();
-                                // TODO: reuse the handle
-                                match dbg!(CheckTokenMembership(HANDLE::default(), token_owner, &mut is_member)) {
-                                    Err(e) => {
-                                        err_msg = Some(format!("Couldn't check if user is an administrator: {}", e))
-                                    }
-                                    Ok(()) => is_owned = dbg!(is_member.as_bool()),
-                                }
-                            }
-                        }
-                        Err(err) => {
-                            err_msg =
-                                format!("Couldn't get actual token information for current process with err: {err}",)
-                                    .into();
-                        }
-                    }
-                } else {
-                    err_msg = format!(
-                        "Couldn't get token information size info for current process with err: {}",
-                        Error::from_win32()
-                    )
-                    .into();
-                }
-                CloseHandle(token)?;
-            } else {
-                err_msg = format!(
-                    "Couldn't get security information for path '{}' with err {}",
-                    path.display(),
-                    Error::from_win32()
-                )
-                .into();
-            }
-            LocalFree(HLOCAL(pdescriptor.0)).ok();
-        }
-
-        err_msg.map(|msg| Err(err(msg))).unwrap_or(Ok(is_owned))
     }
 
     fn to_wide_path(path: impl AsRef<Path>) -> Vec<u16> {
