@@ -71,6 +71,10 @@ mod impl_ {
     }
 
     pub fn is_path_owned_by_current_user(path: &Path) -> io::Result<bool> {
+        dbg!(is_path_owned_by_current_user_real(path))
+    }
+
+    fn is_path_owned_by_current_user_real(path: &Path) -> io::Result<bool> {
         use windows_sys::Win32::{
             Foundation::{GetLastError, LocalFree, ERROR_INSUFFICIENT_BUFFER, ERROR_SUCCESS},
             Security::{

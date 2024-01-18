@@ -65,20 +65,20 @@ jobs:
       matrix:
         os:
           - windows-latest
-          - macos-latest
-          - ubuntu-latest
+          # - macos-latest
+          # - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Setup dependencies (macos)
-        if: startsWith(matrix.os, 'macos')
-        run:
-          brew install tree openssl gnu-sed
-      - name: "cargo check default features"
-        if: startsWith(matrix.os, 'windows')
-        run: cargo check --all --bins --examples
+      # - name: Setup dependencies (macos)
+      #   if: startsWith(matrix.os, 'macos')
+      #   run:
+      #     brew install tree openssl gnu-sed
+      # - name: "cargo check default features"
+      #   if: startsWith(matrix.os, 'windows')
+      #   run: cargo check --all --bins --examples
       - run: |
           # it should never be a failure not to get the caches, as they can be regenerated.
           git lfs fetch && git lfs checkout || true
