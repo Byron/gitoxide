@@ -4,6 +4,8 @@
 pub enum Error {
     #[error("The maximum allowed number {} of symlinks in path is exceeded", .max_symlinks)]
     MaxSymlinksExceeded { max_symlinks: u8 },
+    #[error("Cannot resolve symlinks in path with more than {max_symlink_checks} components (takes too long)")]
+    ExcessiveComponentCount { max_symlink_checks: usize },
     #[error(transparent)]
     ReadLink(std::io::Error),
     #[error(transparent)]
@@ -57,6 +59,8 @@ pub(crate) mod function {
         let mut num_symlinks = 0;
         let mut path_backing: PathBuf;
         let mut components = path.components();
+        const MAX_SYMLINK_CHECKS: usize = 2048;
+        let mut symlink_checks = 0;
         while let Some(component) = components.next() {
             match component {
                 part @ (RootDir | Prefix(_)) => real_path.push(part),
@@ -68,6 +72,7 @@ pub(crate) mod function {
                 }
                 Normal(part) => {
                     real_path.push(part);
+                    symlink_checks += 1;
                     if real_path.is_symlink() {
                         num_symlinks += 1;
                         if num_symlinks > max_symlinks {
@@ -82,6 +87,11 @@ pub(crate) mod function {
                         link_destination.extend(components);
                         path_backing = link_destination;
                         components = path_backing.components();
+                    }
+                    if symlink_checks > MAX_SYMLINK_CHECKS {
+                        return Err(Error::ExcessiveComponentCount {
+                            max_symlink_checks: MAX_SYMLINK_CHECKS,
+                        });
                     }
                 }
             }

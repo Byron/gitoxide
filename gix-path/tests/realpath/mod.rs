@@ -1,7 +1,30 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+
+use bstr::ByteVec;
+use tempfile::tempdir;
 
 use gix_path::{realpath::Error, realpath_opts};
-use tempfile::tempdir;
+
+#[test]
+fn fuzzed_timeout() -> crate::Result {
+    let path = PathBuf::from(std::fs::read("tests/fixtures/fuzzed/54k-path-components.path")?.into_string()?);
+    assert_eq!(path.components().count(), 54862);
+    let start = std::time::Instant::now();
+    assert!(matches!(
+        gix_path::realpath_opts(&path, Path::new("/cwd"), gix_path::realpath::MAX_SYMLINKS).unwrap_err(),
+        gix_path::realpath::Error::ExcessiveComponentCount {
+            max_symlink_checks: 2048
+        }
+    ));
+    assert!(
+        start.elapsed() < Duration::from_millis(500),
+        "took too long: {:.02} , we can't take too much time for this, and should keep the amount of work reasonable\
+        as paths can be part of URls which sometimes are canonicalized",
+        start.elapsed().as_secs_f32()
+    );
+    Ok(())
+}
 
 #[test]
 fn assorted() -> crate::Result {
