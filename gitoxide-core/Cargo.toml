@@ -2,7 +2,7 @@
 name = "gitoxide-core"
 description = "The library implementing all capabilities of the gitoxide CLI"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.35.0"
+version = "0.36.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -44,12 +44,12 @@ serde = ["gix/serde", "dep:serde_json", "dep:serde", "bytesize/serde"]
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-gix = { version = "^0.57.1", path = "../gix", default-features = false, features = ["blob-diff", "revision", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt", "status"] }
-gix-pack-for-configuration-only = { package = "gix-pack", version = "^0.46.1", path = "../gix-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static", "generate", "streaming-input"] }
-gix-transport-configuration-only = { package = "gix-transport", version = "^0.40.1", path = "../gix-transport", default-features = false }
-gix-archive-for-configuration-only = { package = "gix-archive", version = "^0.8.1", path = "../gix-archive", optional = true, features = ["tar", "tar_gz"] }
-gix-status = { version = "^0.4.1", path = "../gix-status" }
-gix-fsck = { version = "^0.2.0", path = "../gix-fsck" }
+gix = { version = "^0.58.0", path = "../gix", default-features = false, features = ["blob-diff", "revision", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt", "status"] }
+gix-pack-for-configuration-only = { package = "gix-pack", version = "^0.47.0", path = "../gix-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static", "generate", "streaming-input"] }
+gix-transport-configuration-only = { package = "gix-transport", version = "^0.41.0", path = "../gix-transport", default-features = false }
+gix-archive-for-configuration-only = { package = "gix-archive", version = "^0.9.0", path = "../gix-archive", optional = true, features = ["tar", "tar_gz"] }
+gix-status = { version = "^0.5.0", path = "../gix-status" }
+gix-fsck = { version = "^0.3.0", path = "../gix-fsck" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
 thiserror = "1.0.34"
@@ -65,7 +65,7 @@ futures-io = { version = "0.3.16", optional = true }
 blocking = { version = "1.0.2", optional = true }
 
 # for 'organize' functionality
-gix-url = { version = "^0.26.1", path = "../gix-url", optional = true }
+gix-url = { version = "^0.27.0", path = "../gix-url", optional = true }
 jwalk = { version = "0.8.0", optional = true }
 
 # for 'hours'

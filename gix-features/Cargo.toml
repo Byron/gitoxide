@@ -2,7 +2,7 @@
 name = "gix-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.37.2"
+version = "0.38.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -121,7 +121,7 @@ gix-hash = { version = "^0.14.1", path = "../gix-hash" }
 gix-trace = { version = "^0.1.7", path = "../gix-trace" }
 
 # for walkdir
-gix-utils = { version = "^0.1.8", path = "../gix-utils", optional = true }
+gix-utils = { version = "^0.1.9", path = "../gix-utils", optional = true }
 
 # 'parallel' feature
 crossbeam-channel = { version = "0.5.0", optional = true }

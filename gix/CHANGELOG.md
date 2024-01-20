@@ -5,23 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.58.0 (2024-01-20)
 
 ### New Features
+
+<csr-id-a7e606b4dffe5c524b60a89fa0dbc753e80ce599/>
+<csr-id-1ba9488a7c3737a4b5a15a871108924095c061b2/>
 
  - <csr-id-8847676ddd1aefb3610d384245ec6d692d5258de/> add `max-control` feature for fine-grained performance control.
    This also adds the following performance features:
    
    - `zlib-ng`
-   - `zlib-ng-compat`
-   - `zlib-stock`
-   - `parallel-walkdir`
- - <csr-id-a7e606b4dffe5c524b60a89fa0dbc753e80ce599/> add `env::args_os_opt()` which takes an argument to determine input unicode-decomposition
-   This allows for the possibility to respect `core.precomposeUnicode` should one already have that value.
- - <csr-id-1ba9488a7c3737a4b5a15a871108924095c061b2/> `max-performance-zlib-ng-compat` flag
-   This allows users to use zlib-ng-compat without having to add a dependency on gix-features, and without having to keep track of which options max-performance depends on other than max-performance-safe.
-   
-   Essentially it's for use in projects that also include `zlib` in their builds, which would fail to build with `max-performance`, but who otherwise don't need `max-performance-safe`.
+- `zlib-ng-compat`
+- `zlib-stock`
+- `parallel-walkdir`
 
 ### Bug Fixes
 
@@ -33,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 18 calendar days.
+ - 13 commits contributed to the release over the course of 18 calendar days.
  - 20 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#670](https://github.com/Byron/gitoxide/issues/670)
@@ -47,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#670](https://github.com/Byron/gitoxide/issues/670)**
     - `object::tree::diff::Platform::for_each_to_obtain_tree(callback)` errors are more convenient to use. ([`e3c5a0f`](https://github.com/Byron/gitoxide/commit/e3c5a0feaeef5ca1683da0adee25154c9e868b3e))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
     - Merge branch 'finegrained-features' ([`d8570d0`](https://github.com/Byron/gitoxide/commit/d8570d08c72a977b22ff44d4c8b49af6c3017885))
     - Add `max-control` feature for fine-grained performance control. ([`8847676`](https://github.com/Byron/gitoxide/commit/8847676ddd1aefb3610d384245ec6d692d5258de))
     - Merge branch 'dirwalk' ([`5d176fc`](https://github.com/Byron/gitoxide/commit/5d176fc5ab82bfc7c194b4d929e73da9659ae8b8))
@@ -59,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `max-performance-zlib-ng-compat` flag ([`1ba9488`](https://github.com/Byron/gitoxide/commit/1ba9488a7c3737a4b5a15a871108924095c061b2))
     - Add a max-performance-zlib-ng-compat flag ([`cfb06ec`](https://github.com/Byron/gitoxide/commit/cfb06ec695f1926778c78362cc6cd6a8f48f7e84))
 </details>
+
+<csr-unknown>
+ add env::args_os_opt() which takes an argument to determine input unicode-decompositionThis allows for the possibility to respect core.precomposeUnicode should one already have that value. max-performance-zlib-ng-compat flagThis allows users to use zlib-ng-compat without having to add a dependency on gix-features, and without having to keep track of which options max-performance depends on other than max-performance-safe.Essentially it’s for use in projects that also include zlib in their builds, which would fail to build with max-performance, but who otherwise don’t need max-performance-safe.<csr-unknown/>
 
 ## 0.57.1 (2023-12-30)
 

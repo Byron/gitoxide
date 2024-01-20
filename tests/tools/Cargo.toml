@@ -1,7 +1,7 @@
 [package]
 name = "gix-testtools"
 description = "Shared code for gitoxide crates to facilitate testing"
-version = "0.13.0"
+version = "0.14.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -18,8 +18,8 @@ gix-lock = "10"
 gix-discover = "0.26"
 gix-ignore = "0.8"
 gix-worktree = "0.26"
-gix-fs = { version = "^0.9.1", path = "../../gix-fs" }
-gix-tempfile = { version = "12.0.0", default-features = false, features = ["signals"], path = "../../gix-tempfile" }
+gix-fs = { version = "^0.10.0", path = "../../gix-fs" }
+gix-tempfile = { version = "^13.0.0", default-features = false, features = ["signals"], path = "../../gix-tempfile" }
 
 winnow = { version = "0.5.24", features = ["simd"] }
 fastrand = "2.0.0"

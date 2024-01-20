@@ -1,6 +1,6 @@
 [package]
 name = "gix-submodule"
-version = "0.7.1"
+version = "0.8.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing git submodules"
@@ -13,11 +13,11 @@ include = ["src/**/*", "LICENSE-*"]
 doctest = false
 
 [dependencies]
-gix-pathspec = { version = "^0.5.1", path = "../gix-pathspec" }
-gix-refspec = { version = "^0.21.1", path = "../gix-refspec" }
-gix-config = { version = "^0.33.1", path = "../gix-config" }
-gix-path = { version = "^0.10.3", path = "../gix-path" }
-gix-url = { version = "^0.26.1", path = "../gix-url" }
+gix-pathspec = { version = "^0.6.0", path = "../gix-pathspec" }
+gix-refspec = { version = "^0.22.0", path = "../gix-refspec" }
+gix-config = { version = "^0.34.0", path = "../gix-config" }
+gix-path = { version = "^0.10.4", path = "../gix-path" }
+gix-url = { version = "^0.27.0", path = "../gix-url" }
 
 bstr = { version = "1.5.0", default-features = false }
 thiserror = "1.0.44"

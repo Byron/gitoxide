@@ -1,6 +1,6 @@
 [package]
 name = "gix-fsck"
-version = "0.2.0"
+version = "0.3.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Cameron Esfahani <cesfahani@gmail.com>", "Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
@@ -15,7 +15,7 @@ doctest = false
 [dependencies]
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
 gix-hashtable = { version = "^0.5.1", path = "../gix-hashtable" }
-gix-object = { version = "^0.40.1", path = "../gix-object" }
+gix-object = { version = "^0.41.0", path = "../gix-object" }
 
 [dev-dependencies]
 gix-odb = { path = "../gix-odb" }
