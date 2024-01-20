@@ -141,14 +141,28 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 #! The reason these features exist is to allow optimization for compile time and optimize for compatibility by default. This means that some performance options around
 #! SHA1 and ZIP might not compile on all platforms, so it depends on the end-user who compiles the application to chose these based on their needs.
 
-## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
-## on some platforms.
-max-performance-safe = [
+## Activate features that maximize performance, like using threads, but leave everything else that might affect compatibility out to allow users more fine-grained
+## control over performance features like which `zlib*` implementation to use.
+## No C toolchain is involved.
+max-control = [
     "parallel",
     "pack-cache-lru-static",
     "pack-cache-lru-dynamic",
-    "gix-features/fs-walkdir-parallel"
 ]
+
+## Activate features that maximize performance, like usage of threads, `and access to caching in object databases, skipping the ones known to cause compile failures
+## on some platforms.
+## Note that this configuration still uses a pure Rust zlib implementation which isn't the fastest compared to its C-alternatives.
+## No C toolchain is involved.
+max-performance-safe = [
+    "max-control",
+    "parallel-walkdir"
+]
+
+## If set, walkdir iterators will be multi-threaded which affects the listing of loose objects and references.
+## Note, however, that this will use `rayon` under the hood and spawn threads for each traversal to avoid a global rayon thread pool.
+## Thus this option is more interesting to one-off client applications, rather than the server.
+parallel-walkdir = ["gix-features/fs-walkdir-parallel"]
 
 ## The tempfile registry uses a better implementation of a thread-safe hashmap, relying on an external crate.
 ## This may be useful when tempfiles are created and accessed in a massively parallel fashion and you know that this is indeed faster than
@@ -169,19 +183,23 @@ pack-cache-lru-dynamic = ["gix-pack/pack-cache-lru-dynamic"]
 
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
-max-performance = [ "max-performance-safe", "gix-features/zlib-ng", "fast-sha1" ]
-
-## Activate other features that maximize performance, like usage of threads, `zlib-ng-compat`, and access to caching in object databases.
-## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
-## Unlike `max-performance`, `max-performance-zlib-ng-compat` uses zlib-ng via
-## libz-sys in zlib-ng-compat mode, which is useful when building with other
-## software that needs zlib, or to avoid linking conflicts when using other
-## software that uses zlib-ng-compat.
-max-performance-zlib-ng-compat = [ "max-performance-safe", "gix-features/zlib-ng-compat", "fast-sha1" ]
+max-performance = [ "max-performance-safe", "zlib-ng", "fast-sha1" ]
 
 ## If enabled, use assembly versions of sha1 on supported platforms.
 ## This might cause compile failures as well which is why it can be turned off separately.
 fast-sha1 = [ "gix-features/fast-sha1" ]
+
+## Use the C-based zlib-ng backend, which can compress and decompress significantly faster.
+## Note that this will cause duplicate symbol errors if the application also depends on `zlib` - use `zlib-ng-compat` in that case.
+zlib-ng = ["gix-features/zlib-ng"]
+
+## Use zlib-ng via its zlib-compat API. Useful if you already need zlib for C
+## code elsewhere in your dependencies. Otherwise, use `zlib-ng`.
+zlib-ng-compat = ["gix-features/zlib-ng-compat"]
+
+## Use a slower C-based backend which can compress and decompress significantly faster than the rust version.
+## Unlike `zlib-ng-compat`, this allows using dynamic linking with system `zlib` libraries and doesn't require cmake.
+zlib-stock = ["gix-features/zlib-stock"]
 
 #! #### Other
 #!
