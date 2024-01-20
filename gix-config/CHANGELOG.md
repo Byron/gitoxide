@@ -5,7 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-b382f76a4ace08a6e743b292c4f2c383dfd94e8f/> assure excessive amounts of newlines can't lead to amplification.
+   Now we won't read more than 1024 newlines in a row, which leads to
+   a protection from specifically crafted configuration files which
+   can amplify themselves when large amounts of edits happen on them.
+   
+   If somebody where to create a lot of sections based on one that
+   has a huge amount of newlines before it, this whitespace would
+   be retained with each new section, causing huge files to be created
+   in memory that cause great delays when writing the file back
+   and re-reading it.
+   
+   Maybe there would have been a way to avoid copying excessive amounts
+   of whitespace when altering a section, or maybe one could also
+   have adjusted the fuzz-test that found it [1].
+   This would, however, have been much harder and time-consuming to
+   implement for dubious value.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-c71d16e45ea4ed68b76a43a7ed653d73f3672878/> greatly reduce peak memory usage when reading files.
+   Previously it was possible to cause a memory consumption of 2.5GB
+   by merely reading a specifically tuned configuration file sized a little
+   less than 1MB, a massive 2500x amplification.
+   
+   Data structures have been optimized and premature optimizations removed
+   in favor of much more efficient memory usage.
+   
+   Now the same file causes a 36MB peak memory usage, still quite a lot,
+   but also ~70x less than before.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 20 calendar days.
+ - 20 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Limit the amount of work done to avoid the creation of huge file when fuzzing the section API ([`4138902`](https://github.com/Byron/gitoxide/commit/4138902242affac8a61b6b650417401d1f18f34e))
+    - Release gix-trace v0.1.7, gix-features v0.37.2, gix-commitgraph v0.23.2, gix-traverse v0.36.2, gix-index v0.28.2 ([`b6c04c8`](https://github.com/Byron/gitoxide/commit/b6c04c87b426bf36a059df8dc52b56d384b27b79))
+    - Assure excessive amounts of newlines can't lead to amplification. ([`b382f76`](https://github.com/Byron/gitoxide/commit/b382f76a4ace08a6e743b292c4f2c383dfd94e8f))
+    - Merge branch 'fix-fuzzer' ([`17a81c7`](https://github.com/Byron/gitoxide/commit/17a81c731e72e51c7a7492bd5f11ee40697e8deb))
+    - Add test for memory usage in worse-case scenario ([`6bb407f`](https://github.com/Byron/gitoxide/commit/6bb407fe2bdc98a3a34172932642f1eff8c4c576))
+    - Greatly reduce peak memory usage when reading files. ([`c71d16e`](https://github.com/Byron/gitoxide/commit/c71d16e45ea4ed68b76a43a7ed653d73f3672878))
+    - Optimize gix-config fuzzer performance ([`36f4d92`](https://github.com/Byron/gitoxide/commit/36f4d925a1bbc39a64f4b964711698fa485ce980))
+    - Merge branch 'fuzz-gix-config' ([`34e4a16`](https://github.com/Byron/gitoxide/commit/34e4a16949710aa10dd5ab6c253016d14109d541))
+    - Add gix_config::File fuzzer dictionary ([`2420547`](https://github.com/Byron/gitoxide/commit/242054716f825fd33ae1bbb6553f5975c42c7bee))
+    - Fuzz more of mutable gix_config::File API ([`9cdb461`](https://github.com/Byron/gitoxide/commit/9cdb461deaf736e39f34551a447c3a280b32f003))
+</details>
+
 ## 0.33.1 (2023-12-30)
+
+<csr-id-3bd09ef120945a9669321ea856db4079a5dab930/>
 
 ### Chore
 
@@ -20,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.3, gix-hash v0.14.1, gix-trace v0.1.6, gix-features v0.37.1, gix-actor v0.29.1, gix-validate v0.8.3, gix-object v0.40.1, gix-path v0.10.3, gix-glob v0.15.1, gix-quote v0.4.10, gix-attributes v0.21.1, gix-command v0.3.2, gix-packetline-blocking v0.17.2, gix-utils v0.1.8, gix-filter v0.8.1, gix-fs v0.9.1, gix-chunk v0.4.7, gix-commitgraph v0.23.1, gix-hashtable v0.5.1, gix-revwalk v0.11.1, gix-traverse v0.36.1, gix-worktree-stream v0.8.1, gix-archive v0.8.1, gix-config-value v0.14.3, gix-tempfile v12.0.1, gix-lock v12.0.1, gix-ref v0.40.1, gix-sec v0.10.3, gix-config v0.33.1, gix-prompt v0.8.2, gix-url v0.26.1, gix-credentials v0.23.1, gix-ignore v0.10.1, gix-bitmap v0.2.10, gix-index v0.28.1, gix-worktree v0.29.1, gix-diff v0.39.1, gix-discover v0.28.1, gix-macros v0.1.3, gix-mailmap v0.21.1, gix-negotiate v0.11.1, gix-pack v0.46.1, gix-odb v0.56.1, gix-pathspec v0.5.1, gix-packetline v0.17.2, gix-transport v0.40.1, gix-protocol v0.43.1, gix-revision v0.25.1, gix-refspec v0.21.1, gix-status v0.4.1, gix-submodule v0.7.1, gix-worktree-state v0.6.1, gix v0.57.1 ([`972241f`](https://github.com/Byron/gitoxide/commit/972241f1904944e8b6e84c6aa1649a49be7a85c3))
     - Merge branch 'msrv' ([`8c492d7`](https://github.com/Byron/gitoxide/commit/8c492d7b7e6e5d520b1e3ffeb489eeb88266aa75))
     - Change `rust-version` manifest field back to 1.65. ([`3bd09ef`](https://github.com/Byron/gitoxide/commit/3bd09ef120945a9669321ea856db4079a5dab930))
     - Merge branch 'fuzz-gix-config' ([`ce44fe3`](https://github.com/Byron/gitoxide/commit/ce44fe3f04fdcd01ba1d98165194431c918a80b1))
@@ -2911,7 +2976,7 @@ This is a maintenance release without functional changes.
  - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)

@@ -5,7 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-8847676ddd1aefb3610d384245ec6d692d5258de/> add `max-control` feature for fine-grained performance control.
+   This also adds the following performance features:
+   
+   - `zlib-ng`
+   - `zlib-ng-compat`
+   - `zlib-stock`
+   - `parallel-walkdir`
+ - <csr-id-a7e606b4dffe5c524b60a89fa0dbc753e80ce599/> add `env::args_os_opt()` which takes an argument to determine input unicode-decomposition
+   This allows for the possibility to respect `core.precomposeUnicode` should one already have that value.
+ - <csr-id-1ba9488a7c3737a4b5a15a871108924095c061b2/> `max-performance-zlib-ng-compat` flag
+   This allows users to use zlib-ng-compat without having to add a dependency on gix-features, and without having to keep track of which options max-performance depends on other than max-performance-safe.
+   
+   Essentially it's for use in projects that also include `zlib` in their builds, which would fail to build with `max-performance`, but who otherwise don't need `max-performance-safe`.
+
+### Bug Fixes
+
+ - <csr-id-e3c5a0feaeef5ca1683da0adee25154c9e868b3e/> `object::tree::diff::Platform::for_each_to_obtain_tree(callback)` errors are more convenient to use.
+   Due to a change in how the generic error type is declared it should now be possible to
+   use `anyhow` with it as well.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 18 calendar days.
+ - 20 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#670](https://github.com/Byron/gitoxide/issues/670)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#670](https://github.com/Byron/gitoxide/issues/670)**
+    - `object::tree::diff::Platform::for_each_to_obtain_tree(callback)` errors are more convenient to use. ([`e3c5a0f`](https://github.com/Byron/gitoxide/commit/e3c5a0feaeef5ca1683da0adee25154c9e868b3e))
+ * **Uncategorized**
+    - Merge branch 'finegrained-features' ([`d8570d0`](https://github.com/Byron/gitoxide/commit/d8570d08c72a977b22ff44d4c8b49af6c3017885))
+    - Add `max-control` feature for fine-grained performance control. ([`8847676`](https://github.com/Byron/gitoxide/commit/8847676ddd1aefb3610d384245ec6d692d5258de))
+    - Merge branch 'dirwalk' ([`5d176fc`](https://github.com/Byron/gitoxide/commit/5d176fc5ab82bfc7c194b4d929e73da9659ae8b8))
+    - Use `gix_fs::current_dir(precompose_unicode)`. ([`7d8d167`](https://github.com/Byron/gitoxide/commit/7d8d1678c9dd185a369e996551a6ed89fbb391f5))
+    - Adapt to changes in `gix-features` ([`eacb5a4`](https://github.com/Byron/gitoxide/commit/eacb5a4ae2fd94b095005cfbc0a8b2aa67539e52))
+    - Add `env::args_os_opt()` which takes an argument to determine input unicode-decomposition ([`a7e606b`](https://github.com/Byron/gitoxide/commit/a7e606b4dffe5c524b60a89fa0dbc753e80ce599))
+    - Release gix-trace v0.1.7, gix-features v0.37.2, gix-commitgraph v0.23.2, gix-traverse v0.36.2, gix-index v0.28.2 ([`b6c04c8`](https://github.com/Byron/gitoxide/commit/b6c04c87b426bf36a059df8dc52b56d384b27b79))
+    - Merge pull request #1248 from joshtriplett/tyop ([`39f35da`](https://github.com/Byron/gitoxide/commit/39f35da390bc46005d0374b9bf4e7106fc1bd0ec))
+    - Typo fixes ([`3ef3bc2`](https://github.com/Byron/gitoxide/commit/3ef3bc20a1b90799e5ac26858f898bc7a7c96901))
+    - `max-performance-zlib-ng-compat` flag ([`1ba9488`](https://github.com/Byron/gitoxide/commit/1ba9488a7c3737a4b5a15a871108924095c061b2))
+    - Add a max-performance-zlib-ng-compat flag ([`cfb06ec`](https://github.com/Byron/gitoxide/commit/cfb06ec695f1926778c78362cc6cd6a8f48f7e84))
+</details>
+
 ## 0.57.1 (2023-12-30)
+
+<csr-id-3bd09ef120945a9669321ea856db4079a5dab930/>
 
 ### Chore
 
@@ -20,7 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.3, gix-hash v0.14.1, gix-trace v0.1.6, gix-features v0.37.1, gix-actor v0.29.1, gix-validate v0.8.3, gix-object v0.40.1, gix-path v0.10.3, gix-glob v0.15.1, gix-quote v0.4.10, gix-attributes v0.21.1, gix-command v0.3.2, gix-packetline-blocking v0.17.2, gix-utils v0.1.8, gix-filter v0.8.1, gix-fs v0.9.1, gix-chunk v0.4.7, gix-commitgraph v0.23.1, gix-hashtable v0.5.1, gix-revwalk v0.11.1, gix-traverse v0.36.1, gix-worktree-stream v0.8.1, gix-archive v0.8.1, gix-config-value v0.14.3, gix-tempfile v12.0.1, gix-lock v12.0.1, gix-ref v0.40.1, gix-sec v0.10.3, gix-config v0.33.1, gix-prompt v0.8.2, gix-url v0.26.1, gix-credentials v0.23.1, gix-ignore v0.10.1, gix-bitmap v0.2.10, gix-index v0.28.1, gix-worktree v0.29.1, gix-diff v0.39.1, gix-discover v0.28.1, gix-macros v0.1.3, gix-mailmap v0.21.1, gix-negotiate v0.11.1, gix-pack v0.46.1, gix-odb v0.56.1, gix-pathspec v0.5.1, gix-packetline v0.17.2, gix-transport v0.40.1, gix-protocol v0.43.1, gix-revision v0.25.1, gix-refspec v0.21.1, gix-status v0.4.1, gix-submodule v0.7.1, gix-worktree-state v0.6.1, gix v0.57.1 ([`972241f`](https://github.com/Byron/gitoxide/commit/972241f1904944e8b6e84c6aa1649a49be7a85c3))
     - Merge branch 'msrv' ([`8c492d7`](https://github.com/Byron/gitoxide/commit/8c492d7b7e6e5d520b1e3ffeb489eeb88266aa75))
     - Change `rust-version` manifest field back to 1.65. ([`3bd09ef`](https://github.com/Byron/gitoxide/commit/3bd09ef120945a9669321ea856db4079a5dab930))
 </details>
