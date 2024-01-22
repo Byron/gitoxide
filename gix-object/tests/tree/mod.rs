@@ -214,6 +214,25 @@ mod entry_mode {
     }
 
     #[test]
+    fn is_methods() {
+        fn mode(kind: EntryKind) -> EntryMode {
+            kind.into()
+        }
+
+        assert!(mode(EntryKind::Blob).is_blob());
+        assert!(!mode(EntryKind::Blob).is_link());
+        assert!(mode(EntryKind::BlobExecutable).is_blob());
+        assert!(mode(EntryKind::Blob).is_blob_or_symlink());
+        assert!(mode(EntryKind::BlobExecutable).is_blob_or_symlink());
+
+        assert!(!mode(EntryKind::Link).is_blob());
+        assert!(mode(EntryKind::Link).is_link());
+        assert!(mode(EntryKind::Link).is_blob_or_symlink());
+        assert!(mode(EntryKind::Tree).is_tree());
+        assert!(mode(EntryKind::Commit).is_commit());
+    }
+
+    #[test]
     fn as_bytes() {
         let mut buf = Default::default();
         for (mode, expected) in [
