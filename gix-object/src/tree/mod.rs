@@ -12,9 +12,12 @@ pub mod write;
 /// The mode of items storable in a tree, similar to the file mode on a unix file system.
 ///
 /// Used in [`mutable::Entry`][crate::tree::Entry] and [`EntryRef`].
+///
+/// Note that even though it can be created from any `u16`, it should be preferable to
+/// create it by converting [`EntryKind`] into `EntryMode`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EntryMode(u16);
+pub struct EntryMode(pub u16);
 
 /// A discretized version of ideal and valid values for entry modes.
 ///
