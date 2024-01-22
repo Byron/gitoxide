@@ -12,9 +12,12 @@ pub mod write;
 /// The mode of items storable in a tree, similar to the file mode on a unix file system.
 ///
 /// Used in [`mutable::Entry`][crate::tree::Entry] and [`EntryRef`].
+///
+/// Note that even though it can be created from any `u16`, it should be preferable to
+/// create it by converting [`EntryKind`] into `EntryMode`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EntryMode(u16);
+pub struct EntryMode(pub u16);
 
 /// A discretized version of ideal and valid values for entry modes.
 ///
@@ -72,46 +75,50 @@ impl std::ops::Deref for EntryMode {
     }
 }
 
+const IFMT: u16 = 0o170000;
+
 impl EntryMode {
     /// Discretize the raw mode into an enum with well-known state while dropping unnecessary details.
     pub const fn kind(&self) -> EntryKind {
-        match self.0 {
-            0o40000 => EntryKind::Tree,
-            0o120000 => EntryKind::Link,
-            0o160000 => EntryKind::Commit,
-            blob_mode => {
-                if blob_mode & 0o000100 == 0o000100 {
-                    EntryKind::BlobExecutable
-                } else {
-                    EntryKind::Blob
-                }
+        let etype = self.0 & IFMT;
+        if etype == 0o100000 {
+            if self.0 & 0o000100 == 0o000100 {
+                EntryKind::BlobExecutable
+            } else {
+                EntryKind::Blob
             }
+        } else if etype == EntryKind::Link as u16 {
+            EntryKind::Link
+        } else if etype == EntryKind::Tree as u16 {
+            EntryKind::Tree
+        } else {
+            EntryKind::Commit
         }
     }
 
     /// Return true if this entry mode represents a Tree/directory
     pub const fn is_tree(&self) -> bool {
-        self.0 == EntryKind::Tree as u16
+        self.0 & IFMT == EntryKind::Tree as u16
     }
 
     /// Return true if this entry mode represents the commit of a submodule.
     pub const fn is_commit(&self) -> bool {
-        self.0 == EntryKind::Commit as u16
+        self.0 & IFMT == EntryKind::Commit as u16
     }
 
     /// Return true if this entry mode represents a symbolic link
     pub const fn is_link(&self) -> bool {
-        self.0 == EntryKind::Link as u16
+        self.0 & IFMT == EntryKind::Link as u16
     }
 
     /// Return true if this entry mode represents anything BUT Tree/directory
     pub const fn is_no_tree(&self) -> bool {
-        self.0 != EntryKind::Tree as u16
+        self.0 & IFMT != EntryKind::Tree as u16
     }
 
     /// Return true if the entry is any kind of blob.
     pub const fn is_blob(&self) -> bool {
-        matches!(self.kind(), EntryKind::Blob | EntryKind::BlobExecutable)
+        self.0 & IFMT == 0o100000
     }
 
     /// Return true if the entry is an executable blob.
