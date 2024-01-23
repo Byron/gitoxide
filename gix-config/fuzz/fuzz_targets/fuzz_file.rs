@@ -7,13 +7,20 @@ use bstr::{BStr, BString};
 use gix_config::file::{init::Options, Metadata};
 use libfuzzer_sys::fuzz_target;
 use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::convert::TryInto;
 use std::hint::black_box;
 use std::str;
 
 fn fuzz_immutable_section(section: &gix_config::file::Section<'_>, buf: &mut Vec<u8>) {
+    for (key, value) in section.body().clone() {
+        let _ = black_box((key, value));
+    }
+    let mut seen = BTreeSet::new();
     for key in section.keys() {
-        let _ = black_box(section.value(key));
+        if seen.insert(key) {
+            let _ = black_box(section.values(key.as_ref()));
+        }
     }
     buf.clear();
     let _ = black_box(section.write_to(buf));
