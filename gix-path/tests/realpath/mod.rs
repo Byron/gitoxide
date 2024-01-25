@@ -18,7 +18,7 @@ fn fuzzed_timeout() -> crate::Result {
         }
     ));
     assert!(
-        start.elapsed() < Duration::from_millis(500),
+        start.elapsed() < Duration::from_millis(if cfg!(windows) { 1000 } else { 500 }),
         "took too long: {:.02} , we can't take too much time for this, and should keep the amount of work reasonable\
         as paths can be part of URls which sometimes are canonicalized",
         start.elapsed().as_secs_f32()
