@@ -26,7 +26,7 @@ gix-fs = { version = "^0.10.0", path = "../gix-fs" }
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
 gix-object = { version = "^0.41.0", path = "../gix-object" }
 gix-glob = { version = "^0.16.0", path = "../gix-glob" }
-gix-path = { version = "^0.10.4", path = "../gix-path" }
+gix-path = { version = "^0.10.5", path = "../gix-path" }
 gix-attributes = { version = "^0.22.0", path = "../gix-attributes", optional = true }
 gix-ignore = { version = "^0.11.0", path = "../gix-ignore" }
 gix-features = { version = "^0.38.0", path = "../gix-features" }

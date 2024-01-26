@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.10.5 (2024-01-26)
+
+### Bug Fixes
+
+ - <csr-id-8ba04e0d3525fc290d9ef24836c5ba88c022e8b7/> always try `HOME` environment variable first when obtaining the home directory.
+   This will fix issues like the one described here:
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 1 calendar day.
+ - 6 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'fix-home' ([`e40352c`](https://github.com/Byron/gitoxide/commit/e40352cd2f7b74da84fc8095c8cad917d07910a1))
+    - Always try `HOME` environment variable first when obtaining the home directory. ([`8ba04e0`](https://github.com/Byron/gitoxide/commit/8ba04e0d3525fc290d9ef24836c5ba88c022e8b7))
+    - Assure time-based test doesn't spuriously fail on slow windows machines (CI) ([`74704c7`](https://github.com/Byron/gitoxide/commit/74704c78276bd8bc9bdf3950e05a79bbc7d41309))
+</details>
+
 ## 0.10.4 (2024-01-20)
 
 ### Bug Fixes
@@ -24,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 4 calendar days.
+ - 7 commits contributed to the release over the course of 4 calendar days.
  - 20 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -36,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
     - Merge branch 'url-fuzz' ([`db86fba`](https://github.com/Byron/gitoxide/commit/db86fba550b8378caa737bccf80852d1309f0684))
     - Prevent very long path from using unbounded time in `realpath()`. ([`8d4bf40`](https://github.com/Byron/gitoxide/commit/8d4bf403aecbe16ad2f4083f40c504c6fc4d7eab))

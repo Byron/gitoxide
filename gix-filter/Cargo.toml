@@ -19,7 +19,7 @@ gix-object = { version = "^0.41.0", path = "../gix-object" }
 gix-command = { version = "^0.3.3", path = "../gix-command" }
 gix-quote = { version = "^0.4.10", path = "../gix-quote" }
 gix-utils = { version = "^0.1.9", path = "../gix-utils" }
-gix-path = { version = "^0.10.4", path = "../gix-path" }
+gix-path = { version = "^0.10.5", path = "../gix-path" }
 gix-packetline = { package = "gix-packetline-blocking", version = "^0.17.3", path = "../gix-packetline-blocking" }
 gix-attributes = { version = "^0.22.0", path = "../gix-attributes" }
 

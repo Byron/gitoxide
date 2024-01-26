@@ -17,7 +17,7 @@ doctest = false
 serde= ["dep:serde", "bstr/serde", "bitflags/serde"]
 
 [dependencies]
-gix-path = { version = "^0.10.4", path = "../gix-path" }
+gix-path = { version = "^0.10.5", path = "../gix-path" }
 gix-features = { version = "^0.38.0", path = "../gix-features" }
 bstr = { version = "1.3.0", default-features = false, features = ["std"]}
 bitflags = "2"

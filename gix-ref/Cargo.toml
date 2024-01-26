@@ -21,7 +21,7 @@ serde = ["dep:serde", "gix-hash/serde", "gix-actor/serde", "gix-object/serde"]
 [dependencies]
 gix-features = { version = "^0.38.0", path = "../gix-features", features = ["walkdir"]}
 gix-fs = { version = "^0.10.0", path = "../gix-fs" }
-gix-path = { version = "^0.10.4", path = "../gix-path" }
+gix-path = { version = "^0.10.5", path = "../gix-path" }
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
 gix-date = { version = "^0.8.3", path = "../gix-date" }
 gix-object = { version = "^0.41.0", path = "../gix-object" }
