@@ -8,7 +8,7 @@ use crate::{
 
 impl Search {
     /// Return the first [`Match`] of `relative_path`, or `None`.
-    /// `is_dir` is `true` if `relative_path` is a directory.
+    /// `is_dir` is `true` if `relative_path` is a directory, or assumed `false` if `None`.
     /// `attributes` is called as `attributes(relative_path, case, is_dir, outcome) -> has_match` to obtain for attributes for `relative_path`, if
     /// the underlying pathspec defined an attribute filter, to be stored in `outcome`, returning true if there was a match.
     /// All attributes of the pathspec have to be present in the defined value for the pathspec to match.
@@ -52,7 +52,7 @@ impl Search {
             }
 
             let case = if ignore_case { Case::Fold } else { Case::Sensitive };
-            let mut is_match = mapping.value.pattern.is_nil() || mapping.value.pattern.path.is_empty();
+            let mut is_match = mapping.value.pattern.always_matches();
             if !is_match {
                 is_match = if mapping.pattern.first_wildcard_pos.is_none() {
                     match_verbatim(mapping, relative_path, is_dir, case)
@@ -116,6 +116,67 @@ impl Search {
         } else {
             res
         }
+    }
+
+    /// As opposed to [`Self::pattern_matching_relative_path()`], this method will return `true` for a possibly partial `relative_path`
+    /// if this pathspec *could* match by looking at the shortest shared prefix only.
+    ///
+    /// This is useful if `relative_path` is a directory leading up to the item that is going to be matched in full later.
+    /// Note that it should not end with `/` to indicate it's a directory, rather, use `is_dir` to indicate this.
+    /// `is_dir` is `true` if `relative_path` is a directory, or assumed `false` if `None`.
+    /// Returns `false` if this pathspec has no chance of ever matching `relative_path`.
+    pub fn can_match_relative_path(&self, relative_path: &BStr, is_dir: Option<bool>) -> bool {
+        if self.patterns.is_empty() {
+            return true;
+        }
+        let common_prefix_len = self.common_prefix_len.min(relative_path.len());
+        if relative_path.get(..common_prefix_len).map_or(true, |rela_path_prefix| {
+            rela_path_prefix != self.common_prefix()[..common_prefix_len]
+        }) {
+            return false;
+        }
+        for mapping in &self.patterns {
+            let pattern = &mapping.value.pattern;
+            if mapping.pattern.first_wildcard_pos == Some(0) && !pattern.is_excluded() {
+                return true;
+            }
+            let max_usable_pattern_len = mapping.pattern.first_wildcard_pos.unwrap_or_else(|| pattern.path.len());
+            let common_len = max_usable_pattern_len.min(relative_path.len());
+
+            let pattern_path = pattern.path[..common_len].as_bstr();
+            let longest_possible_relative_path = &relative_path[..common_len];
+            let ignore_case = pattern.signature.contains(MagicSignature::ICASE);
+            let mut is_match = pattern.always_matches();
+            if !is_match && common_len != 0 {
+                is_match = if ignore_case {
+                    pattern_path.eq_ignore_ascii_case(longest_possible_relative_path)
+                } else {
+                    pattern_path == longest_possible_relative_path
+                };
+
+                if is_match {
+                    is_match = if common_len < max_usable_pattern_len {
+                        pattern.path.get(common_len) == Some(&b'/')
+                    } else if relative_path.len() > max_usable_pattern_len {
+                        relative_path.get(common_len) == Some(&b'/')
+                    } else {
+                        is_match
+                    };
+                    if let Some(is_dir) = is_dir.filter(|_| pattern.signature.contains(MagicSignature::MUST_BE_DIR)) {
+                        is_match = if is_dir {
+                            matches!(pattern.path.get(common_len), None | Some(&b'/'))
+                        } else {
+                            relative_path.get(common_len) == Some(&b'/')
+                        }
+                    }
+                }
+            }
+            if is_match {
+                return !pattern.is_excluded();
+            }
+        }
+
+        self.all_patterns_are_excluded
     }
 }
 

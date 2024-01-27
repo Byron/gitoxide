@@ -142,6 +142,12 @@ impl Pattern {
         self.signature.contains(MagicSignature::EXCLUDE)
     }
 
+    /// Returns `true` is this pattern is supposed to always match, as it's either empty or designated `nil`.
+    /// Note that technically the pattern might still be excluded.
+    pub fn always_matches(&self) -> bool {
+        self.is_nil() || self.path.is_empty()
+    }
+
     /// Translate ourselves to a long display format, that when parsed back will yield the same pattern.
     ///
     /// Note that the
