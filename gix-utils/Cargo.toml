@@ -12,7 +12,11 @@ include = ["src/**/*", "LICENSE-*"]
 [lib]
 doctest = false
 
+[features]
+bstr = ["dep:bstr"]
+
 [dependencies]
 fastrand = "2.0.0"
+bstr = { version = "1.5.0", default-features = false, features = ["std"], optional = true }
 unicode-normalization = { version = "0.1.19", default-features = false }
 

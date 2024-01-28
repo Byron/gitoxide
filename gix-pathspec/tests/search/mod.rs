@@ -286,6 +286,31 @@ fn simplified_search_wildcards() -> crate::Result {
 }
 
 #[test]
+fn simplified_search_wildcards_simple() -> crate::Result {
+    let search = gix_pathspec::Search::from_specs(pathspecs(&["dir/*"]), None, Path::new(""))?;
+    for is_dir in [None, Some(false), Some(true)] {
+        assert!(
+            !search.can_match_relative_path("a".into(), is_dir),
+            "definitely out of bound"
+        );
+        assert!(
+            !search.can_match_relative_path("di".into(), is_dir),
+            "prefix is not enough"
+        );
+        assert!(
+            search.can_match_relative_path("dir".into(), is_dir),
+            "directories can match"
+        );
+        assert!(
+            search.can_match_relative_path("dir/file".into(), is_dir),
+            "substrings can also match"
+        );
+    }
+
+    Ok(())
+}
+
+#[test]
 fn simplified_search_handles_nil() -> crate::Result {
     let search = gix_pathspec::Search::from_specs(pathspecs(&[":"]), None, Path::new(""))?;
     assert!(search.can_match_relative_path("a".into(), None), "everything matches");

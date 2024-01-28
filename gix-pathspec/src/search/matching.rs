@@ -129,7 +129,8 @@ impl Search {
     ///
     /// This is useful if `relative_path` is a directory leading up to the item that is going to be matched in full later.
     /// Note that it should not end with `/` to indicate it's a directory, rather, use `is_dir` to indicate this.
-    /// `is_dir` is `true` if `relative_path` is a directory, or assumed `false` if `None`.
+    /// `is_dir` is `true` if `relative_path` is a directory. If `None`, the fact that a pathspec might demand a directory match
+    /// is ignored.
     /// Returns `false` if this pathspec has no chance of ever matching `relative_path`.
     pub fn can_match_relative_path(&self, relative_path: &BStr, is_dir: Option<bool>) -> bool {
         if self.patterns.is_empty() {
@@ -163,7 +164,9 @@ impl Search {
                 if is_match {
                     is_match = if common_len < max_usable_pattern_len {
                         pattern.path.get(common_len) == Some(&b'/')
-                    } else if relative_path.len() > max_usable_pattern_len {
+                    } else if relative_path.len() > max_usable_pattern_len
+                        && mapping.pattern.first_wildcard_pos.is_none()
+                    {
                         relative_path.get(common_len) == Some(&b'/')
                     } else {
                         is_match

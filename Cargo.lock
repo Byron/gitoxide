@@ -2755,6 +2755,7 @@ dependencies = [
 name = "gix-utils"
 version = "0.1.9"
 dependencies = [
+ "bstr",
  "fastrand 2.0.1",
  "unicode-normalization",
 ]
