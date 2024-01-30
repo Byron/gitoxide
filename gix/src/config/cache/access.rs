@@ -171,13 +171,11 @@ impl Cache {
 
     pub(crate) fn may_use_commit_graph(&self) -> Result<bool, config::boolean::Error> {
         const DEFAULT: bool = true;
-        self.resolved
-            .boolean("core.commitGraph")
-            .map_or(Ok(DEFAULT), |res| {
-                Core::COMMIT_GRAPH
-                    .enrich_error(res)
-                    .with_lenient_default_value(self.lenient_config, DEFAULT)
-            })
+        self.resolved.boolean("core.commitGraph").map_or(Ok(DEFAULT), |res| {
+            Core::COMMIT_GRAPH
+                .enrich_error(res)
+                .with_lenient_default_value(self.lenient_config, DEFAULT)
+        })
     }
 
     /// Returns (file-timeout, pack-refs timeout)

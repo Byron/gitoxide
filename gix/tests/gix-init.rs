@@ -94,9 +94,7 @@ mod with_overrides {
         );
         let config = repo.config_snapshot();
         assert_eq!(
-            config
-                .strings("gitoxide.core.shallowFile")
-                .expect("at least one value"),
+            config.strings("gitoxide.core.shallowFile").expect("at least one value"),
             [
                 cow_bstr("shallow-file-cli"),
                 cow_bstr("shallow-file-api"),
@@ -123,30 +121,20 @@ mod with_overrides {
             ]
         );
         assert_eq!(
-            config
-                .integers("http.lowSpeedLimit")
-                .transpose()?
-                .expect("many values"),
+            config.integers("http.lowSpeedLimit").transpose()?.expect("many values"),
             [5120, 3, 2, 1]
         );
         assert_eq!(
-            config
-                .integers("http.lowSpeedTime")
-                .transpose()?
-                .expect("many values"),
+            config.integers("http.lowSpeedTime").transpose()?.expect("many values"),
             [10, 3, 2, 1]
         );
         assert_eq!(
-            config
-                .strings("http.proxyAuthMethod")
-                .expect("at least one value"),
+            config.strings("http.proxyAuthMethod").expect("at least one value"),
             [cow_bstr("basic")],
             "this value isn't overridden directly"
         );
         assert_eq!(
-            config
-                .strings("gitoxide.https.proxy")
-                .expect("at least one value"),
+            config.strings("gitoxide.https.proxy").expect("at least one value"),
             [
                 cow_bstr("https-upper"),
                 cow_bstr(if cfg!(windows) {
@@ -157,24 +145,18 @@ mod with_overrides {
             ]
         );
         assert_eq!(
-            config
-                .strings("gitoxide.http.proxy")
-                .expect("at least one value"),
+            config.strings("gitoxide.http.proxy").expect("at least one value"),
             [cow_bstr("http-lower")]
         );
         assert_eq!(
-            config
-                .strings("gitoxide.http.allProxy")
-                .expect("at least one value"),
+            config.strings("gitoxide.http.allProxy").expect("at least one value"),
             [
                 cow_bstr("all-proxy"), // on windows, environment variables are case-insensitive
                 cow_bstr(if cfg!(windows) { "all-proxy" } else { "all-proxy-lower" })
             ]
         );
         assert_eq!(
-            config
-                .strings("gitoxide.http.noProxy")
-                .expect("at least one value"),
+            config.strings("gitoxide.http.noProxy").expect("at least one value"),
             [
                 cow_bstr("no-proxy"), // on windows, environment variables are case-insensitive
                 cow_bstr(if cfg!(windows) { "no-proxy" } else { "no-proxy-lower" })

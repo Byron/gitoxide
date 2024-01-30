@@ -90,10 +90,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             &[cow_str("")],
             "unset values show up as empty within a string array"
         );
-        assert_eq!(
-            config.strings("core.bool-implicit").expect("present"),
-            &[cow_str("")],
-        );
+        assert_eq!(config.strings("core.bool-implicit").expect("present"), &[cow_str("")],);
 
         assert_eq!(config.string("doesn't.exist"), None);
 

@@ -131,9 +131,7 @@ impl Personas {
                 date.logical_name(),
                 "BUG: drift of expected name and actual name of the key (we hardcode it to save an allocation)"
             );
-            config
-                .string(key)
-                .map(|time| date.try_into_time(time, now.into()))
+            config.string(key).map(|time| date.try_into_time(time, now.into()))
         };
 
         let fallback = (

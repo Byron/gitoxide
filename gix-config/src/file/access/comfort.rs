@@ -36,11 +36,7 @@ impl<'event> File<'event> {
     }
 
     /// Like [`string_filter()`][File::string_filter_by()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn string_filter(
-        &self,
-        key: impl Key,
-        filter: &mut MetadataFilter,
-    ) -> Option<Cow<'_, BStr>> {
+    pub fn string_filter(&self, key: impl Key, filter: &mut MetadataFilter) -> Option<Cow<'_, BStr>> {
         self.raw_value_filter(key.section_name(), key.subsection_name(), key.name(), filter)
             .ok()
     }
@@ -84,11 +80,7 @@ impl<'event> File<'event> {
     }
 
     /// Like [`path_filter()`][File::path_filter_by()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn path_filter(
-        &self,
-        key: impl Key,
-        filter: &mut MetadataFilter,
-    ) -> Option<crate::Path<'_>> {
+    pub fn path_filter(&self, key: impl Key, filter: &mut MetadataFilter) -> Option<crate::Path<'_>> {
         self.path_filter_by(key.section_name(), key.subsection_name(), key.name(), filter)
     }
 
@@ -135,11 +127,7 @@ impl<'event> File<'event> {
     }
 
     /// Like [`boolean_filter()`][File::boolean_filter_by()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn boolean_filter(
-        &self,
-        key: impl Key,
-        filter: &mut MetadataFilter,
-    ) -> Option<Result<bool, value::Error>> {
+    pub fn boolean_filter(&self, key: impl Key, filter: &mut MetadataFilter) -> Option<Result<bool, value::Error>> {
         self.boolean_filter_by(key.section_name(), key.subsection_name(), key.name(), filter)
     }
 
@@ -176,11 +164,7 @@ impl<'event> File<'event> {
     }
 
     /// Like [`integer_filter()`][File::integer_filter_by()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn integer_filter(
-        &self,
-        key: impl Key,
-        filter: &mut MetadataFilter,
-    ) -> Option<Result<i64, value::Error>> {
+    pub fn integer_filter(&self, key: impl Key, filter: &mut MetadataFilter) -> Option<Result<i64, value::Error>> {
         self.integer_filter_by(key.section_name(), key.subsection_name(), key.name(), filter)
     }
 
@@ -213,11 +197,7 @@ impl<'event> File<'event> {
     }
 
     /// Like [`strings_filter()`][File::strings_filter_by()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn strings_filter(
-        &self,
-        key: impl Key,
-        filter: &mut MetadataFilter,
-    ) -> Option<Vec<Cow<'_, BStr>>> {
+    pub fn strings_filter(&self, key: impl Key, filter: &mut MetadataFilter) -> Option<Vec<Cow<'_, BStr>>> {
         self.strings_filter_by(key.section_name(), key.subsection_name(), key.name(), filter)
     }
 

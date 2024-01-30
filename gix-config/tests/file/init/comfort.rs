@@ -56,7 +56,10 @@ fn from_git_dir() -> crate::Result {
         "system configuration can be overridden with GIT_CONFIG_SYSTEM"
     );
     assert_eq!(
-        config.string_by("a", None, "system-override").expect("present").as_ref(),
+        config
+            .string_by("a", None, "system-override")
+            .expect("present")
+            .as_ref(),
         "from-b.config",
         "globals resolve their includes"
     );

@@ -132,9 +132,10 @@ impl<'repo> SnapshotMut<'repo> {
         key.validate(value)?;
         let section = key.section();
         let current = match section.parent() {
-            Some(parent) => self
-                .config
-                .set_raw_value_by(parent.name(), Some(section.name().into()), key.name(), value)?,
+            Some(parent) => {
+                self.config
+                    .set_raw_value_by(parent.name(), Some(section.name().into()), key.name(), value)?
+            }
             None => self.config.set_raw_value_by(section.name(), None, key.name(), value)?,
         };
         Ok(current.map(std::borrow::Cow::into_owned))
@@ -155,9 +156,9 @@ impl<'repo> SnapshotMut<'repo> {
         let value = new_value.into();
         key.validate(value)?;
 
-        let current =
-            self.config
-                .set_raw_value_in_subsection(key.as_config_key(), subsection.into(), value)?;
+        let current = self
+            .config
+            .set_raw_value_in_subsection(key.as_config_key(), subsection.into(), value)?;
         Ok(current.map(std::borrow::Cow::into_owned))
     }
 
