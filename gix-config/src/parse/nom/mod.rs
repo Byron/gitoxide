@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use bstr::{BStr, ByteSlice};
 use winnow::{
-    combinator::{alt, delimited, fold_repeat, opt, preceded, repeat},
+    combinator::{alt, delimited, opt, preceded, repeat},
     error::{ErrorKind, InputError as NomError, ParserError as _},
     prelude::*,
     stream::{Offset as _, Stream as _},
@@ -18,7 +18,7 @@ pub fn from_bytes<'i>(mut input: &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) 
     let bom = unicode_bom::Bom::from(input);
     input.next_slice(bom.len());
 
-    fold_repeat(
+    repeat(
         0..,
         alt((
             comment.map(Event::Comment),
@@ -29,9 +29,8 @@ pub fn from_bytes<'i>(mut input: &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) 
                 Ok(o)
             },
         )),
-        || (),
-        |_acc, event| dispatch(event),
     )
+    .fold(|| (), |_acc, event| dispatch(event))
     .parse_next(&mut input)
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
