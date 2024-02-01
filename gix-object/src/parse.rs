@@ -3,7 +3,7 @@ use winnow::{
     combinator::{preceded, repeat, terminated},
     error::{AddContext, ParserError, StrContext},
     prelude::*,
-    token::{take_till, take_until0, take_while},
+    token::{take_till, take_until, take_while},
     Parser,
 };
 
@@ -21,7 +21,7 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParserError<&'a [u8]> + AddCont
         (
             take_till(1.., NL),
             NL,
-            repeat(1.., terminated((SPACE, take_until0(NL)), NL)).map(|()| ()),
+            repeat(1.., terminated((SPACE, take_until(0.., NL)), NL)).map(|()| ()),
         )
             .recognize()
             .map(|o: &[u8]| {

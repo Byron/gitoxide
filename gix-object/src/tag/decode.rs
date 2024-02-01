@@ -3,7 +3,7 @@ use winnow::{
     error::{AddContext, ParserError, StrContext},
     prelude::*,
     stream::AsChar,
-    token::{take_until0, take_while},
+    token::{take_until, take_while},
 };
 
 use crate::{parse, parse::NL, BStr, ByteSlice, TagRef};
@@ -47,12 +47,12 @@ pub fn message<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<(&'a B
         NL,
         alt((
             (
-                take_until0(PGP_SIGNATURE_BEGIN),
+                take_until(0.., PGP_SIGNATURE_BEGIN),
                 preceded(
                     NL,
                     (
                         &PGP_SIGNATURE_BEGIN[1..],
-                        take_until0(PGP_SIGNATURE_END),
+                        take_until(0.., PGP_SIGNATURE_END),
                         PGP_SIGNATURE_END,
                         rest,
                     )
