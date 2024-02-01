@@ -7,7 +7,7 @@ pub(crate) mod function {
         error::{AddContext, ParserError, StrContext},
         prelude::*,
         stream::AsChar,
-        token::{take, take_until0, take_while},
+        token::{take, take_until, take_while},
     };
 
     use crate::{IdentityRef, SignatureRef};
@@ -22,7 +22,7 @@ pub(crate) mod function {
             identity,
             b" ",
             (
-                terminated(take_until0(SPACE), take(1usize))
+                terminated(take_until(0.., SPACE), take(1usize))
                     .verify_map(|v| btoi::<SecondsSinceUnixEpoch>(v).ok())
                     .context(StrContext::Expected("<timestamp>".into())),
                 alt((
@@ -60,8 +60,8 @@ pub(crate) mod function {
         i: &mut &'a [u8],
     ) -> PResult<IdentityRef<'a>, E> {
         (
-            terminated(take_until0(&b" <"[..]), take(2usize)).context(StrContext::Expected("<name>".into())),
-            terminated(take_until0(&b">"[..]), take(1usize)).context(StrContext::Expected("<email>".into())),
+            terminated(take_until(0.., &b" <"[..]), take(2usize)).context(StrContext::Expected("<name>".into())),
+            terminated(take_until(0.., &b">"[..]), take(1usize)).context(StrContext::Expected("<email>".into())),
         )
             .map(|(name, email): (&[u8], &[u8])| IdentityRef {
                 name: name.as_bstr(),

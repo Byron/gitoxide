@@ -4,7 +4,7 @@ use winnow::{
     combinator::{eof, rest, separated_pair, terminated},
     error::{ErrorKind, ParserError},
     prelude::*,
-    token::take_until1,
+    token::take_until,
 };
 
 use crate::{
@@ -33,7 +33,7 @@ pub struct TrailerRef<'a> {
 
 fn parse_single_line_trailer<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<(&'a BStr, &'a BStr), E> {
     *i = i.trim_end();
-    let (token, value) = separated_pair(take_until1(b":".as_ref()), b": ", rest).parse_next(i)?;
+    let (token, value) = separated_pair(take_until(1.., b":".as_ref()), b": ", rest).parse_next(i)?;
 
     if token.trim_end().len() != token.len() || value.trim_start().len() != value.len() {
         Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Fail).cut())
