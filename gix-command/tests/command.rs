@@ -1,4 +1,119 @@
 use gix_testtools::Result;
+use std::path::Path;
+
+#[test]
+fn extract_interpreter() -> gix_testtools::Result {
+    let root = gix_testtools::scripted_fixture_read_only("win_path_lookup.sh")?;
+    assert_eq!(
+        gix_command::extract_interpreter(&root.join("b").join("exe")),
+        Some(gix_command::shebang::Data {
+            interpreter: Path::new("/b/exe").into(),
+            args: vec![]
+        })
+    );
+    Ok(())
+}
+
+mod shebang {
+    mod parse {
+        use gix_command::shebang;
+
+        fn parse(input: &str) -> Option<shebang::Data> {
+            shebang::parse(input.into())
+        }
+
+        fn exe(name: &str) -> Option<shebang::Data> {
+            shebang::Data {
+                interpreter: name.into(),
+                args: Vec::new(),
+            }
+            .into()
+        }
+
+        fn exe_arg(name: &str, arg: &str) -> Option<shebang::Data> {
+            shebang::Data {
+                interpreter: name.into(),
+                args: shell_words::split(arg)
+                    .expect("can parse")
+                    .into_iter()
+                    .map(Into::into)
+                    .collect(),
+            }
+            .into()
+        }
+
+        #[test]
+        fn valid() {
+            assert_eq!(parse("#!/bin/sh"), exe("/bin/sh"));
+            assert_eq!(parse("#!/bin/sh   "), exe("/bin/sh"), "trim trailing whitespace");
+            assert_eq!(
+                parse("#!/bin/sh\t\nother"),
+                exe("/bin/sh"),
+                "trimming works for tabs as well"
+            );
+            assert_eq!(
+                parse("#!\\bin\\sh"),
+                exe("\\bin\\sh"),
+                "backslashes are recognized as path separator"
+            );
+            assert_eq!(
+                parse("#!C:\\Program Files\\shell.exe\r\nsome stuff"),
+                exe("C:\\Program Files\\shell.exe"),
+                "absolute windows paths are fine"
+            );
+            assert_eq!(
+                parse("#!/bin/sh -i -o -u\nunrelated content"),
+                exe_arg("/bin/sh", "-i -o -u"),
+                "argument splitting happens as well"
+            );
+            assert_eq!(
+                parse("#!/bin/sh  -o\nunrelated content"),
+                exe_arg("/bin/sh", "-o"),
+                "single arguments are OK too"
+            );
+            assert_eq!(
+                parse("#!/bin/exe anything goes\nunrelated content"),
+                exe_arg("/bin/exe", "anything goes"),
+                "any argument works"
+            );
+
+            #[cfg(unix)]
+            {
+                use bstr::ByteSlice;
+                use std::os::unix::ffi::OsStrExt;
+                assert_eq!(
+                    shebang::parse(b"#!/bin/sh   -x \xC3\x28\x41 -y  ".as_bstr()),
+                    Some(shebang::Data {
+                        interpreter: "/bin/sh".into(),
+                        args: vec![std::ffi::OsStr::from_bytes(b"-x \xC3\x28\x41 -y").to_owned()]
+                    }),
+                    "illformed UTF8 in the arguments leads to them not being split - useful in case it's just one path or so"
+                );
+
+                assert_eq!(
+                    shebang::parse(b"#!/bin/\xC3\x28\x41 ".as_bstr()),
+                    Some(shebang::Data {
+                        interpreter: std::ffi::OsStr::from_bytes(b"/bin/\xC3\x28\x41").to_owned().into(),
+                        args: vec![]
+                    }),
+                    "illformed UTF8 in the executable path is fine as well"
+                );
+            }
+        }
+
+        #[test]
+        fn invalid() {
+            assert_eq!(parse(""), None);
+            assert_eq!(parse("missing shebang"), None);
+            assert_eq!(parse("#!missing-slash"), None);
+            assert_eq!(
+                parse("/bin/sh"),
+                None,
+                "shebang missing, even though a valid path is given"
+            );
+        }
+    }
+}
 
 mod context {
     use gix_command::Context;
