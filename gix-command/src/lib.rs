@@ -79,6 +79,7 @@ pub struct Context {
 }
 
 mod prepare {
+    use std::borrow::Cow;
     use std::{
         ffi::OsString,
         process::{Command, Stdio},
@@ -86,7 +87,7 @@ mod prepare {
 
     use bstr::ByteSlice;
 
-    use crate::{Context, Prepare};
+    use crate::{extract_interpreter, win_path_lookup, Context, Prepare};
 
     /// Builder
     impl Prepare {
@@ -208,6 +209,24 @@ mod prepare {
                         cmd
                     }
                 }
+            } else if cfg!(windows) {
+                let program: Cow<'_, std::path::Path> = std::env::var_os("PATH")
+                    .and_then(|path| win_path_lookup(prep.command.as_ref(), &path))
+                    .map(Cow::Owned)
+                    .unwrap_or(Cow::Borrowed(prep.command.as_ref()));
+                if let Some(shebang) = extract_interpreter(program.as_ref()) {
+                    let mut cmd = Command::new(shebang.interpreter);
+                    // For relative paths, we may have picked up a file in the current repository
+                    // for which an attacker could control everything. Hence, strip options just like Git.
+                    // If the file was found in the PATH though, it should be trustworthy.
+                    if program.is_absolute() {
+                        cmd.args(shebang.args);
+                    }
+                    cmd.arg(prep.command);
+                    cmd
+                } else {
+                    Command::new(prep.command)
+                }
             } else {
                 Command::new(prep.command)
             };
@@ -254,14 +273,50 @@ mod prepare {
     }
 }
 
+fn is_exe(executable: &Path) -> bool {
+    executable.extension() == Some(std::ffi::OsStr::new("exe"))
+}
+
+/// Try to find `command` in the `path_value` (the value of `PATH`) as separated by `;`, or return `None`.
+/// Has special handling for `.exe` extensions, as these will be appended automatically if needed.
+/// Note that just like Git, no lookup is performed if a slash or backslash is in `command`.
+fn win_path_lookup(command: &Path, path_value: &std::ffi::OsStr) -> Option<PathBuf> {
+    fn lookup(root: &bstr::BStr, command: &Path, is_exe: bool) -> Option<PathBuf> {
+        let mut path = gix_path::try_from_bstr(root).ok()?.join(command);
+        if !is_exe {
+            path.set_extension("exe");
+        }
+        if path.is_file() {
+            return Some(path);
+        }
+        if is_exe {
+            return None;
+        }
+        path.set_extension("");
+        path.is_file().then_some(path)
+    }
+    if command.components().take(2).count() == 2 {
+        return None;
+    }
+    let path = gix_path::os_str_into_bstr(path_value).ok()?;
+    let is_exe = is_exe(command);
+
+    for root in path.split(|b| *b == b';') {
+        if let Some(executable) = lookup(root.as_bstr(), command, is_exe) {
+            return Some(executable);
+        }
+    }
+    None
+}
+
 /// Parse the shebang (`#!<path>`) from the first line of `executable`, and return the shebang
 /// data when available.
 pub fn extract_interpreter(executable: &Path) -> Option<shebang::Data> {
     #[cfg(windows)]
-    if executable.extension() == Some(std::ffi::OsStr::new("exe")) {
+    if is_exe(executable) {
         return None;
     }
-    let mut buf = [0; 128]; // Note: Git only uses 100 here.
+    let mut buf = [0; 100]; // Note: just like Git
     let mut file = std::fs::File::open(executable).ok()?;
     let n = file.read(&mut buf).ok()?;
     shebang::parse(buf[..n].as_bstr())
@@ -354,5 +409,43 @@ pub fn prepare(cmd: impl Into<OsString>) -> Prepare {
         env: Vec::new(),
         use_shell: false,
         allow_manual_arg_splitting: cfg!(windows),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn internal_win_path_lookup() -> gix_testtools::Result {
+        let root = gix_testtools::scripted_fixture_read_only("win_path_lookup.sh")?;
+        let mut paths: Vec<_> = std::fs::read_dir(&root)?
+            .filter_map(Result::ok)
+            .map(|e| e.path().to_str().expect("no illformed UTF8").to_owned())
+            .collect();
+        paths.sort();
+        let lookup_path: OsString = paths.join(";").into();
+
+        assert_eq!(
+            win_path_lookup("a/b".as_ref(), &lookup_path),
+            None,
+            "any path with separator is considered ready to use"
+        );
+        assert_eq!(
+            win_path_lookup("x".as_ref(), &lookup_path),
+            Some(root.join("a").join("x.exe")),
+            "exe will be preferred, and it searches left to right thus doesn't find c/x.exe"
+        );
+        assert_eq!(
+            win_path_lookup("x.exe".as_ref(), &lookup_path),
+            Some(root.join("a").join("x.exe")),
+            "no matter what, a/x won't be found as it's shadowed by an exe file"
+        );
+        assert_eq!(
+            win_path_lookup("exe".as_ref(), &lookup_path),
+            Some(root.join("b").join("exe")),
+            "it finds files further down the path as well"
+        );
+        Ok(())
     }
 }

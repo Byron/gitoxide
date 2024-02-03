@@ -1,4 +1,18 @@
 use gix_testtools::Result;
+use std::path::Path;
+
+#[test]
+fn extract_interpreter() -> gix_testtools::Result {
+    let root = gix_testtools::scripted_fixture_read_only("win_path_lookup.sh")?;
+    assert_eq!(
+        gix_command::extract_interpreter(&root.join("b").join("exe")),
+        Some(gix_command::shebang::Data {
+            interpreter: Path::new("/b/exe").into(),
+            args: vec![]
+        })
+    );
+    Ok(())
+}
 
 mod shebang {
     mod parse {
