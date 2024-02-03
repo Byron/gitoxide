@@ -13,7 +13,7 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-command = { version = "^0.3.2", path = "../gix-command" }
+gix-command = { version = "^0.3.4", path = "../gix-command" }
 gix-config-value = { version = "^0.14.3", path = "../gix-config-value" }
 
 thiserror = "1.0.32"
