@@ -20,7 +20,7 @@ thiserror = "1.0.32"
 parking_lot = "0.12.1"
 
 [target.'cfg(unix)'.dependencies]
-rustix = { version = "0.38.4", features = ["termios"] }
+rustix = { version = "0.38.31", features = ["termios"] }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools"}
