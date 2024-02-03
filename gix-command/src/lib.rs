@@ -2,9 +2,13 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
-use std::{ffi::OsString, path::PathBuf};
+use std::io::Read;
+use std::{
+    ffi::OsString,
+    path::{Path, PathBuf},
+};
 
-use bstr::BString;
+use bstr::{BString, ByteSlice};
 
 /// A structure to keep settings to use when invoking a command via [`spawn()`][Prepare::spawn()], after creating it with [`prepare()`].
 pub struct Prepare {
@@ -247,6 +251,82 @@ mod prepare {
             }
             cmd
         }
+    }
+}
+
+/// Parse the shebang (`#!<path>`) from the first line of `executable`, and return the shebang
+/// data when available.
+pub fn extract_interpreter(executable: &Path) -> Option<shebang::Data> {
+    #[cfg(windows)]
+    if executable.extension() == Some(std::ffi::OsStr::new("exe")) {
+        return None;
+    }
+    let mut buf = [0; 128]; // Note: Git only uses 100 here.
+    let mut file = std::fs::File::open(executable).ok()?;
+    let n = file.read(&mut buf).ok()?;
+    shebang::parse(buf[..n].as_bstr())
+}
+
+///
+pub mod shebang {
+    use bstr::{BStr, ByteSlice};
+    use std::ffi::OsString;
+    use std::path::PathBuf;
+
+    /// Parse `buf` to extract all shebang information.
+    pub fn parse(buf: &BStr) -> Option<Data> {
+        let mut line = buf.lines().next()?;
+        line = line.strip_prefix(b"#!")?;
+
+        let slash_idx = line.rfind_byteset(b"/\\")?;
+        Some(match line[slash_idx..].find_byte(b' ') {
+            Some(space_idx) => {
+                let space = slash_idx + space_idx;
+                Data {
+                    interpreter: gix_path::from_byte_slice(line[..space].trim()).to_owned(),
+                    args: line
+                        .get(space + 1..)
+                        .and_then(|mut r| {
+                            r = r.trim();
+                            if r.is_empty() {
+                                return None;
+                            }
+
+                            match r.as_bstr().to_str() {
+                                Ok(args) => shell_words::split(args)
+                                    .ok()
+                                    .map(|args| args.into_iter().map(Into::into).collect()),
+                                Err(_) => Some(vec![gix_path::from_byte_slice(r).to_owned().into()]),
+                            }
+                        })
+                        .unwrap_or_default(),
+                }
+            }
+            None => Data {
+                interpreter: gix_path::from_byte_slice(line.trim()).to_owned(),
+                args: Vec::new(),
+            },
+        })
+    }
+
+    /// Shebang information as [parsed](parse()) from a buffer that should contain at least one line.
+    ///
+    /// ### Deviation
+    ///
+    /// According to the [shebang documentation](https://en.wikipedia.org/wiki/Shebang_(Unix)), it will only consider
+    /// the path of the executable, along with the arguments as the consecutive portion after the space that separates
+    /// them. Argument splitting would then have to be done elsewhere, probably in the kernel.
+    ///
+    /// To make that work without the kernel, we perform the splitting while Git just ignores options.
+    /// For now it seems more compatible to not ignore options, but if it is important this could be changed.
+    #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
+    pub struct Data {
+        /// The interpreter to run.
+        pub interpreter: PathBuf,
+        /// The remainder of the line past the space after `interpreter`, without leading or trailing whitespace,
+        /// as pre-split arguments just like a shell would do it.
+        /// Note that we accept that illformed UTF-8 will prevent argument splitting.
+        pub args: Vec<OsString>,
     }
 }
 
