@@ -1,3 +1,5 @@
+use bstr::BStr;
+use gix_pathspec::search::MatchKind::*;
 use std::path::Path;
 
 #[test]
@@ -10,29 +12,67 @@ fn no_pathspecs_match_everything() -> crate::Result {
     let mut search = gix_pathspec::Search::from_specs([], None, Path::new(""))?;
     assert_eq!(search.patterns().count(), 0, "nothing artificial is added");
     let m = search
-        .pattern_matching_relative_path("hello".into(), None, &mut |_, _, _, _| {
-            unreachable!("must not be called")
-        })
+        .pattern_matching_relative_path("hello".into(), None, &mut no_attrs)
         .expect("matches");
     assert_eq!(m.pattern.prefix_directory(), "", "there is no prefix as none was given");
+    assert_eq!(m.kind, Always, "no pathspec always matches");
     assert_eq!(
         m.sequence_number, 0,
         "this is actually a fake pattern, as we have to match even though there isn't anything"
     );
-
     assert!(search.can_match_relative_path("anything".into(), None));
+    Ok(())
+}
 
+#[test]
+fn starts_with() -> crate::Result {
+    let mut search = gix_pathspec::Search::from_specs(pathspecs(&["a/*"]), None, Path::new(""))?;
+    assert!(
+        search
+            .pattern_matching_relative_path("a".into(), Some(false), &mut no_attrs)
+            .is_none(),
+        "this can only match if it's a directory"
+    );
+    assert!(
+        search
+            .pattern_matching_relative_path("a".into(), Some(true), &mut no_attrs)
+            .is_none(),
+        "can't match as the '*' part is missing in value"
+    );
+    assert!(
+        search.can_match_relative_path("a".into(), Some(true)),
+        "prefix-matches work though"
+    );
+    assert!(
+        search.can_match_relative_path("a".into(), Some(false)),
+        "but not if it's a file"
+    );
+    assert!(
+        search.can_match_relative_path("a".into(), None),
+        "if unspecified, we match for good measure"
+    );
+    assert_eq!(
+        search
+            .pattern_matching_relative_path("a/file".into(), None, &mut no_attrs)
+            .expect("matches")
+            .kind,
+        WildcardMatch,
+        "a wildmatch is always performed here, even though it looks like a prefix"
+    );
     Ok(())
 }
 
 #[test]
 fn simplified_search_respects_must_be_dir() -> crate::Result {
     let mut search = gix_pathspec::Search::from_specs(pathspecs(&["a/be/"]), None, Path::new(""))?;
-    search
-        .pattern_matching_relative_path("a/be/file".into(), Some(false), &mut |_, _, _, _| {
-            unreachable!("must not be called")
-        })
-        .expect("matches as this is a prefix match");
+    assert_eq!(
+        search
+            .pattern_matching_relative_path("a/be/file".into(), Some(false), &mut no_attrs)
+            .expect("matches as this is a prefix match")
+            .kind,
+        Prefix,
+        "a verbatim part of the spec matches"
+    );
     assert!(
         !search.can_match_relative_path("any".into(), Some(false)),
         "not our directory: a, and must be dir"
@@ -79,7 +119,7 @@ fn simplified_search_respects_must_be_dir() -> crate::Result {
     );
     assert!(
         search
-            .pattern_matching_relative_path("a/b".into(), None, &mut |_, _, _, _| unreachable!("must not be called"))
+            .pattern_matching_relative_path("a/b".into(), None, &mut no_attrs)
             .is_none(),
         "no match if it's not the whole pattern that matches"
     );
@@ -183,21 +223,20 @@ fn no_pathspecs_respect_prefix() -> crate::Result {
     );
     assert!(
         search
-            .pattern_matching_relative_path("hello".into(), None, &mut |_, _, _, _| unreachable!(
-                "must not be called"
-            ))
+            .pattern_matching_relative_path("hello".into(), None, &mut no_attrs)
             .is_none(),
         "not the right prefix"
     );
     assert!(!search.can_match_relative_path("hello".into(), None));
     let m = search
-        .pattern_matching_relative_path("a/b".into(), None, &mut |_, _, _, _| unreachable!("must not be called"))
+        .pattern_matching_relative_path("a/b".into(), None, &mut no_attrs)
         .expect("match");
     assert_eq!(
         m.pattern.prefix_directory(),
         "a",
         "the prefix directory matched verbatim"
     );
+    assert_eq!(m.kind, Prefix, "the common path also works like a prefix");
     assert!(search.can_match_relative_path("a/".into(), Some(true)));
     assert!(search.can_match_relative_path("a".into(), Some(true)));
     assert!(!search.can_match_relative_path("a".into(), Some(false)));
@@ -249,7 +288,7 @@ fn prefixes_are_always_case_sensitive() -> crate::Result {
             .iter()
             .filter(|relative_path| {
                 search
-                    .pattern_matching_relative_path(relative_path.as_str().into(), Some(false), &mut |_, _, _, _| false)
+                    .pattern_matching_relative_path(relative_path.as_str().into(), Some(false), &mut no_attrs)
                     .is_some()
             })
             .collect();
@@ -441,4 +480,8 @@ mod baseline {
         let expected = files::parse_expected(&std::fs::read(root.join("baseline.git"))?);
         Ok((root, items, expected))
     }
+}
+
+fn no_attrs(_: &BStr, _: gix_glob::pattern::Case, _: bool, _: &mut gix_attributes::search::Outcome) -> bool {
+    unreachable!("must not be called")
 }

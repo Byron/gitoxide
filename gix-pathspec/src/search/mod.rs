@@ -9,6 +9,22 @@ pub struct Match<'a> {
     pub pattern: &'a Pattern,
     /// The number of the sequence the matching pathspec was in, or the line of pathspec file it was read from if [Search::source] is not `None`.
     pub sequence_number: usize,
+    /// How the pattern matched.
+    pub kind: MatchKind,
+}
+
+/// Describe how a pathspec pattern matched.
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub enum MatchKind {
+    /// The match happened because there wasn't any pattern, which matches all, or because there was a nil pattern or one with an empty path.
+    /// Thus this is not a match by merit.
+    Always,
+    /// The first part of a pathspec matches, like `dir/` that matches `dir/a`.
+    Prefix,
+    /// The whole pathspec matched and used a wildcard match, like `a/*` matching `a/file`.
+    WildcardMatch,
+    /// The entire pathspec matched, letter by letter, e.g. `a/file` matching `a/file`.
+    Verbatim,
 }
 
 mod init;

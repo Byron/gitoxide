@@ -1,6 +1,8 @@
 use bstr::{BStr, BString, ByteSlice};
 use gix_glob::pattern::Case;
 
+use crate::search::MatchKind;
+use crate::search::MatchKind::*;
 use crate::{
     search::{Match, Spec},
     MagicSignature, Pattern, Search, SearchMode,
@@ -53,9 +55,10 @@ impl Search {
 
             let case = if ignore_case { Case::Fold } else { Case::Sensitive };
             let mut is_match = mapping.value.pattern.always_matches();
+            let mut how = Always;
             if !is_match {
                 is_match = if mapping.pattern.first_wildcard_pos.is_none() {
-                    match_verbatim(mapping, relative_path, is_dir, case)
+                    match_verbatim(mapping, relative_path, is_dir, case, &mut how)
                 } else {
                     let wildmatch_mode = match mapping.value.pattern.search_mode {
                         SearchMode::ShellGlob => Some(gix_glob::wildmatch::Mode::empty()),
@@ -72,12 +75,13 @@ impl Search {
                                 wildmatch_mode,
                             );
                             if !is_match {
-                                match_verbatim(mapping, relative_path, is_dir, case)
+                                match_verbatim(mapping, relative_path, is_dir, case, &mut how)
                             } else {
+                                how = mapping.pattern.first_wildcard_pos.map_or(Verbatim, |_| WildcardMatch);
                                 true
                             }
                         }
-                        None => match_verbatim(mapping, relative_path, is_dir, case),
+                        None => match_verbatim(mapping, relative_path, is_dir, case, &mut how),
                     }
                 }
             }
@@ -97,6 +101,7 @@ impl Search {
             is_match.then_some(Match {
                 pattern: &mapping.value.pattern,
                 sequence_number: mapping.sequence_number,
+                kind: how,
             })
         });
 
@@ -112,6 +117,7 @@ impl Search {
             Some(Match {
                 pattern: &MATCH_ALL_STAND_IN,
                 sequence_number: patterns_len,
+                kind: Always,
             })
         } else {
             res
@@ -185,16 +191,18 @@ fn match_verbatim(
     relative_path: &BStr,
     is_dir: bool,
     case: Case,
+    how: &mut MatchKind,
 ) -> bool {
     let pattern_len = mapping.value.pattern.path.len();
     let mut relative_path_ends_with_slash_at_pattern_len = false;
-    let match_is_allowed = relative_path.get(pattern_len).map_or_else(
-        || relative_path.len() == pattern_len,
+    let (match_is_allowed, probably_how) = relative_path.get(pattern_len).map_or_else(
+        || (relative_path.len() == pattern_len, Verbatim),
         |b| {
             relative_path_ends_with_slash_at_pattern_len = *b == b'/';
-            relative_path_ends_with_slash_at_pattern_len
+            (relative_path_ends_with_slash_at_pattern_len, Prefix)
         },
     );
+    *how = probably_how;
     let pattern_requirement_is_met = !mapping.pattern.mode.contains(gix_glob::pattern::Mode::MUST_BE_DIR)
         || (relative_path_ends_with_slash_at_pattern_len || is_dir);
 
