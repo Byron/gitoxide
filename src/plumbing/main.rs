@@ -146,6 +146,44 @@ pub fn main() -> Result<()> {
     }
 
     match cmd {
+        #[cfg(feature = "gitoxide-core-tools-clean")]
+        Subcommands::Clean(crate::plumbing::options::clean::Command {
+            debug,
+            execute,
+            ignored,
+            precious,
+            directories,
+            pathspec,
+            repositories,
+            skip_hidden_repositories,
+            find_untracked_repositories,
+        }) => prepare_and_run(
+            "clean",
+            trace,
+            verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |_progress, out, err| {
+                core::repository::clean(
+                    repository(Mode::Lenient)?,
+                    out,
+                    err,
+                    pathspec,
+                    core::repository::clean::Options {
+                        debug,
+                        format,
+                        execute,
+                        ignored,
+                        precious,
+                        directories,
+                        repositories,
+                        skip_hidden_repositories: skip_hidden_repositories.map(Into::into),
+                        find_untracked_repositories: find_untracked_repositories.into(),
+                    },
+                )
+            },
+        ),
         Subcommands::Status(crate::plumbing::options::status::Platform {
             statistics,
             submodules,

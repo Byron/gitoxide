@@ -28,6 +28,9 @@ corpus = [ "dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel", "
 ## The ability to create archives from virtual worktrees, similar to `git archive`.
 archive = ["dep:gix-archive-for-configuration-only", "gix/worktree-archive"]
 
+## The ability to clean a repository, similar to `git clean`.
+clean = [ "gix/dirwalk" ]
+
 #! ### Mutually Exclusive Networking
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
 
