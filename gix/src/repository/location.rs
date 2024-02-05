@@ -15,6 +15,17 @@ impl crate::Repository {
         self.options.git_dir_trust.expect("definitely set by now")
     }
 
+    /// Return the current working directory as present during the instantiation of this repository.
+    ///
+    /// Note that this should be preferred over manually obtaining it as this may have been adjusted to
+    /// deal with `core.precomposeUnicode`.
+    pub fn current_dir(&self) -> &Path {
+        self.options
+            .current_dir
+            .as_deref()
+            .expect("BUG: cwd is always set after instantiation")
+    }
+
     /// Returns the main git repository if this is a repository on a linked work-tree, or the `git_dir` itself.
     pub fn common_dir(&self) -> &std::path::Path {
         self.common_dir.as_deref().unwrap_or_else(|| self.git_dir())
