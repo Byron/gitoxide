@@ -1,3 +1,5 @@
+use std::collections::TryReserveError;
+
 ///
 pub mod entry;
 ///
@@ -13,4 +15,13 @@ pub enum Error {
     ZlibInflate(#[from] gix_features::zlib::inflate::Error),
     #[error("A delta chain could not be followed as the ref base with id {0} could not be found")]
     DeltaBaseUnresolved(gix_hash::ObjectId),
+    #[error("Entry too large to fit in memory")]
+    OutOfMemory,
+}
+
+impl From<TryReserveError> for Error {
+    #[cold]
+    fn from(_: TryReserveError) -> Self {
+        Self::OutOfMemory
+    }
 }

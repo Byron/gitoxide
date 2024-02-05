@@ -35,8 +35,8 @@ mod util {
         fn try_find<'a>(&self, id: &oid, buffer: &'a mut Vec<u8>) -> Result<Option<gix_object::Data<'a>>, Error> {
             match self.data_by_id.get(&id.to_owned()) {
                 Some(data) => {
-                    buffer.resize(data.len(), 0);
-                    buffer.copy_from_slice(data);
+                    buffer.clear();
+                    buffer.extend_from_slice(data);
                     Ok(Some(gix_object::Data {
                         kind: gix_object::Kind::Blob,
                         data: buffer.as_slice(),

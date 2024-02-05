@@ -76,7 +76,7 @@ pub struct Driver {
 fn clear_and_set_capacity(buf: &mut Vec<u8>, cap: usize) {
     buf.clear();
     if buf.capacity() < cap {
-        buf.reserve(cap);
-        assert!(buf.capacity() >= cap, "{} >= {}", buf.capacity(), cap);
+        buf.try_reserve(cap).expect("OOM");
+        debug_assert!(buf.capacity() >= cap, "{} >= {}", buf.capacity(), cap);
     }
 }

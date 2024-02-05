@@ -71,3 +71,16 @@ fn read_u32(b: &[u8]) -> u32 {
 fn read_u64(b: &[u8]) -> u64 {
     u64::from_be_bytes(b.try_into().unwrap())
 }
+
+use std::borrow::BorrowMut;
+use std::collections::TryReserveError;
+
+/// Replaces content of the given `Vec` with the slice. The vec will have the same length
+/// as the slice. The vec can be either `&mut Vec` or `Vec`.
+fn set_vec_to_slice<V: BorrowMut<Vec<u8>>>(mut vec: V, source: &[u8]) -> Result<V, TryReserveError> {
+    let out = vec.borrow_mut();
+    out.clear();
+    out.try_reserve(source.len())?;
+    out.extend_from_slice(source);
+    Ok(vec)
+}
