@@ -149,11 +149,11 @@ impl Search {
             let max_usable_pattern_len = mapping.pattern.first_wildcard_pos.unwrap_or_else(|| pattern.path.len());
             let common_len = max_usable_pattern_len.min(relative_path.len());
 
-            let pattern_path = pattern.path[..common_len].as_bstr();
-            let longest_possible_relative_path = &relative_path[..common_len];
             let ignore_case = pattern.signature.contains(MagicSignature::ICASE);
             let mut is_match = pattern.always_matches();
             if !is_match && common_len != 0 {
+                let pattern_path = pattern.path[..common_len].as_bstr();
+                let longest_possible_relative_path = &relative_path[..common_len];
                 is_match = if ignore_case {
                     pattern_path.eq_ignore_ascii_case(longest_possible_relative_path)
                 } else {
@@ -175,6 +175,59 @@ impl Search {
                             relative_path.get(common_len) == Some(&b'/')
                         }
                     }
+                }
+            }
+            if is_match {
+                return !pattern.is_excluded();
+            }
+        }
+
+        self.all_patterns_are_excluded
+    }
+
+    /// Returns `true` if `relative_path` matches the prefix of this pathspec.
+    ///
+    /// For example, the relative path `d` matches `d/`, `d*/`, `d/` and `d/*`, but not `d/d/*` or `dir`.
+    /// When `leading` is `true`, then `d` matches `d/d` as well. Thus `relative_path` must may be
+    /// partially included in `pathspec`, otherwise it has to be fully included.
+    pub fn directory_matches_prefix(&self, relative_path: &BStr, leading: bool) -> bool {
+        if self.patterns.is_empty() {
+            return true;
+        }
+        let common_prefix_len = self.common_prefix_len.min(relative_path.len());
+        if relative_path.get(..common_prefix_len).map_or(true, |rela_path_prefix| {
+            rela_path_prefix != self.common_prefix()[..common_prefix_len]
+        }) {
+            return false;
+        }
+        for mapping in &self.patterns {
+            let pattern = &mapping.value.pattern;
+            if mapping.pattern.first_wildcard_pos.is_some() && pattern.is_excluded() {
+                return true;
+            }
+            let mut rightmost_idx = mapping.pattern.first_wildcard_pos.map_or_else(
+                || pattern.path.len(),
+                |idx| pattern.path[..idx].rfind_byte(b'/').unwrap_or(idx),
+            );
+            let ignore_case = pattern.signature.contains(MagicSignature::ICASE);
+            let mut is_match = pattern.always_matches();
+            if !is_match {
+                let plen = relative_path.len();
+                if leading && rightmost_idx > plen {
+                    if let Some(idx) = pattern.path[..plen]
+                        .rfind_byte(b'/')
+                        .or_else(|| pattern.path[plen..].find_byte(b'/').map(|idx| idx + plen))
+                    {
+                        rightmost_idx = idx;
+                    }
+                }
+                if let Some(relative_path) = relative_path.get(..rightmost_idx) {
+                    let pattern_path = pattern.path[..rightmost_idx].as_bstr();
+                    is_match = if ignore_case {
+                        pattern_path.eq_ignore_ascii_case(relative_path)
+                    } else {
+                        pattern_path == relative_path
+                    };
                 }
             }
             if is_match {

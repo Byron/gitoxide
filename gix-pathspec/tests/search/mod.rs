@@ -8,6 +8,116 @@ fn directories() -> crate::Result {
 }
 
 #[test]
+fn directory_matches_prefix() -> crate::Result {
+    for spec in ["dir", "dir/", "di*", "dir/*", "dir/*.o"] {
+        for specs in [&[spec] as &[_], &[spec, "other"]] {
+            let search = gix_pathspec::Search::from_specs(pathspecs(specs), None, Path::new(""))?;
+            assert!(
+                search.directory_matches_prefix("dir".into(), false),
+                "{spec}: must match"
+            );
+            assert!(
+                !search.directory_matches_prefix("d".into(), false),
+                "{spec}: must not match"
+            );
+        }
+    }
+
+    for spec in ["dir/d", "dir/d/", "dir/*/*", "dir/d/*.o"] {
+        for specs in [&[spec] as &[_], &[spec, "other"]] {
+            let search = gix_pathspec::Search::from_specs(pathspecs(specs), None, Path::new(""))?;
+            assert!(
+                search.directory_matches_prefix("dir/d".into(), false),
+                "{spec}: must match"
+            );
+            assert!(
+                search.directory_matches_prefix("dir/d".into(), true),
+                "{spec}: must match"
+            );
+            for leading in [false, true] {
+                assert!(
+                    !search.directory_matches_prefix("d".into(), leading),
+                    "{spec}: must not match"
+                );
+                assert!(
+                    !search.directory_matches_prefix("di".into(), leading),
+                    "{spec}: must not match"
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn directory_matches_prefix_starting_wildcards_always_match() -> crate::Result {
+    let search = gix_pathspec::Search::from_specs(pathspecs(&["*ir"]), None, Path::new(""))?;
+    assert!(search.directory_matches_prefix("dir".into(), false));
+    assert!(search.directory_matches_prefix("d".into(), false));
+    Ok(())
+}
+
+#[test]
+fn directory_matches_prefix_leading() -> crate::Result {
+    let search = gix_pathspec::Search::from_specs(pathspecs(&["d/d/generated/b"]), None, Path::new(""))?;
+    assert!(!search.directory_matches_prefix("di".into(), false));
+    assert!(!search.directory_matches_prefix("di".into(), true));
+    assert!(search.directory_matches_prefix("d".into(), true));
+    assert!(!search.directory_matches_prefix("d".into(), false));
+    assert!(search.directory_matches_prefix("d/d".into(), true));
+    assert!(!search.directory_matches_prefix("d/d".into(), false));
+    assert!(search.directory_matches_prefix("d/d/generated".into(), true));
+    assert!(!search.directory_matches_prefix("d/d/generated".into(), false));
+    assert!(!search.directory_matches_prefix("d/d/generatedfoo".into(), false));
+    assert!(!search.directory_matches_prefix("d/d/generatedfoo".into(), true));
+
+    let search = gix_pathspec::Search::from_specs(pathspecs(&[":(icase)d/d/GENERATED/b"]), None, Path::new(""))?;
+    assert!(
+        search.directory_matches_prefix("d/d/generated".into(), true),
+        "icase is respected as well"
+    );
+    assert!(!search.directory_matches_prefix("d/d/generated".into(), false));
+    Ok(())
+}
+
+#[test]
+fn directory_matches_prefix_negative_wildcard() -> crate::Result {
+    let search = gix_pathspec::Search::from_specs(pathspecs(&[":!*generated*"]), None, Path::new(""))?;
+    assert!(
+        search.directory_matches_prefix("di".into(), false),
+        "it's always considered matching, we can't really tell anyway"
+    );
+    assert!(search.directory_matches_prefix("di".into(), true));
+    assert!(search.directory_matches_prefix("d".into(), true));
+    assert!(search.directory_matches_prefix("d".into(), false));
+    assert!(search.directory_matches_prefix("d/d".into(), true));
+    assert!(search.directory_matches_prefix("d/d".into(), false));
+    assert!(search.directory_matches_prefix("d/d/generated".into(), true));
+    assert!(search.directory_matches_prefix("d/d/generated".into(), false));
+    assert!(search.directory_matches_prefix("d/d/generatedfoo".into(), false));
+    assert!(search.directory_matches_prefix("d/d/generatedfoo".into(), true));
+
+    let search = gix_pathspec::Search::from_specs(pathspecs(&[":(exclude,icase)*GENERATED*"]), None, Path::new(""))?;
+    assert!(search.directory_matches_prefix("d/d/generated".into(), true));
+    assert!(search.directory_matches_prefix("d/d/generated".into(), false));
+    Ok(())
+}
+
+#[test]
+fn directory_matches_prefix_all_excluded() -> crate::Result {
+    for spec in ["!dir", "!dir/", "!d*", "!di*", "!dir/*", "!dir/*.o", "!*ir"] {
+        for specs in [&[spec] as &[_], &[spec, "other"]] {
+            let search = gix_pathspec::Search::from_specs(pathspecs(specs), None, Path::new(""))?;
+            assert!(
+                !search.directory_matches_prefix("dir".into(), false),
+                "{spec}: must not match, it's excluded"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn no_pathspecs_match_everything() -> crate::Result {
     let mut search = gix_pathspec::Search::from_specs([], None, Path::new(""))?;
     assert_eq!(search.patterns().count(), 0, "nothing artificial is added");
@@ -21,6 +131,7 @@ fn no_pathspecs_match_everything() -> crate::Result {
         "this is actually a fake pattern, as we have to match even though there isn't anything"
     );
     assert!(search.can_match_relative_path("anything".into(), None));
+    assert!(search.directory_matches_prefix("anything".into(), false));
     Ok(())
 }
 
@@ -51,6 +162,8 @@ fn starts_with() -> crate::Result {
         search.can_match_relative_path("a".into(), None),
         "if unspecified, we match for good measure"
     );
+    assert!(search.directory_matches_prefix("a".into(), false));
+    assert!(!search.directory_matches_prefix("ab".into(), false));
     assert_eq!(
         search
             .pattern_matching_relative_path("a/file".into(), None, &mut no_attrs)
