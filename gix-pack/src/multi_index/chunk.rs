@@ -121,7 +121,7 @@ pub mod fanout {
             return None;
         }
         let mut out = [0; 256];
-        for (c, f) in chunk.chunks(4).zip(out.iter_mut()) {
+        for (c, f) in chunk.chunks_exact(4).zip(out.iter_mut()) {
             *f = u32::from_be_bytes(c.try_into().unwrap());
         }
         out.into()

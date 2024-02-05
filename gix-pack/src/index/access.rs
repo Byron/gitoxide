@@ -31,7 +31,7 @@ impl index::File {
     fn iter_v1(&self) -> impl Iterator<Item = Entry> + '_ {
         match self.version {
             index::Version::V1 => self.data[V1_HEADER_SIZE..]
-                .chunks(N32_SIZE + self.hash_len)
+                .chunks_exact(N32_SIZE + self.hash_len)
                 .take(self.num_objects as usize)
                 .map(|c| {
                     let (ofs, oid) = c.split_at(N32_SIZE);
@@ -47,14 +47,19 @@ impl index::File {
 
     fn iter_v2(&self) -> impl Iterator<Item = Entry> + '_ {
         let pack64_offset = self.offset_pack_offset64_v2();
+        let oids = self.data[V2_HEADER_SIZE..]
+            .chunks_exact(self.hash_len)
+            .take(self.num_objects as usize);
+        let crcs = self.data[self.offset_crc32_v2()..]
+            .chunks_exact(N32_SIZE)
+            .take(self.num_objects as usize);
+        let offsets = self.data[self.offset_pack_offset_v2()..]
+            .chunks_exact(N32_SIZE)
+            .take(self.num_objects as usize);
+        assert_eq!(oids.len(), crcs.len());
+        assert_eq!(crcs.len(), offsets.len());
         match self.version {
-            index::Version::V2 => izip!(
-                self.data[V2_HEADER_SIZE..].chunks(self.hash_len),
-                self.data[self.offset_crc32_v2()..].chunks(N32_SIZE),
-                self.data[self.offset_pack_offset_v2()..].chunks(N32_SIZE)
-            )
-            .take(self.num_objects as usize)
-            .map(move |(oid, crc32, ofs32)| Entry {
+            index::Version::V2 => izip!(oids, crcs, offsets).map(move |(oid, crc32, ofs32)| Entry {
                 oid: gix_hash::ObjectId::from_bytes_or_panic(oid),
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(crate::read_u32(crc32)),
@@ -162,10 +167,10 @@ impl index::File {
             index::Version::V1 => self.iter().map(|e| e.pack_offset).collect(),
             index::Version::V2 => {
                 let offset32_start = &self.data[self.offset_pack_offset_v2()..];
+                let offsets32 = offset32_start.chunks_exact(N32_SIZE).take(self.num_objects as usize);
+                assert_eq!(self.num_objects as usize, offsets32.len());
                 let pack_offset_64_start = self.offset_pack_offset64_v2();
-                offset32_start
-                    .chunks(N32_SIZE)
-                    .take(self.num_objects as usize)
+                offsets32
                     .map(|offset| self.pack_offset_from_offset_v2(offset, pack_offset_64_start))
                     .collect()
             }
