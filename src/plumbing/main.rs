@@ -226,8 +226,8 @@ pub fn main() -> Result<()> {
                         add_paths: add_path,
                         prefix,
                         files: add_virtual_file
-                            .chunks(2)
-                            .map(|c| (c[0].to_owned(), c[1].clone()))
+                            .chunks_exact(2)
+                            .map(|c| (c[0].clone(), c[1].clone()))
                             .collect(),
                         format: format.map(|f| match f {
                             crate::plumbing::options::archive::Format::Internal => {

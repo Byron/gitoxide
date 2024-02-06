@@ -121,7 +121,7 @@ impl index::File {
                 let (chunk_size, thread_limit, available_cores) =
                     parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
                 let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
-                let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
+                let input_chunks = index_entries.chunks(chunk_size);
                 let reduce_progress = OwnShared::new(Mutable::new({
                     let mut p = progress.add_child_with_id("Traversing".into(), ProgressId::DecodedObjects.into());
                     p.init(Some(self.num_objects() as usize), progress::count("objects"));

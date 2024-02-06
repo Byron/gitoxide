@@ -96,9 +96,10 @@ impl State {
                     let entries_res = match index_offsets_table {
                         Some(entry_offsets) => {
                             let chunk_size = (entry_offsets.len() as f32 / num_threads as f32).ceil() as usize;
-                            let num_chunks = entry_offsets.chunks(chunk_size).count();
+                            let entry_offsets_chunked = entry_offsets.chunks(chunk_size);
+                            let num_chunks = entry_offsets_chunked.len();
                             let mut threads = Vec::with_capacity(num_chunks);
-                            for (id, chunks) in entry_offsets.chunks(chunk_size).enumerate() {
+                            for (id, chunks) in entry_offsets_chunked.enumerate() {
                                 let chunks = chunks.to_vec();
                                 threads.push(
                                     gix_features::parallel::build_thread()

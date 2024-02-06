@@ -57,7 +57,7 @@ impl File {
         let start = self.base_graphs_list_offset.unwrap_or(0);
         let base_graphs_list = &self.data[start..][..self.hash_len * usize::from(self.base_graph_count)];
         base_graphs_list
-            .chunks(self.hash_len)
+            .chunks_exact(self.hash_len)
             .map(gix_hash::oid::from_bytes_unchecked)
     }
 
