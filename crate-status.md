@@ -658,7 +658,9 @@ The git staging area.
 * `stat` update
     * [ ] optional threaded `stat` based on thread_cost (aka preload)
 * [x] handling of `.gitignore` and system file exclude configuration
-* [ ] handle potential races
+* [x] lookups that ignore the case
+    * [ ] multi-threaded lookup table generation with the same algorithm as the one used by Git
+    * [ ] expand sparse folders (don't know how this relates to traversals right now)
 * maintain extensions when altering the cache
     * [ ] TREE for speeding up tree generation
     * [ ] REUC resolving undo
