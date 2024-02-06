@@ -84,10 +84,26 @@ impl File {
             lock_path,
         })
     }
+
+    /// Like [`acquire_to_update_resource()`](File::acquire_to_update_resource), but allows to set filesystem permissions using `make_permissions`.
+    pub fn acquire_to_update_resource_with_permissions(
+        at_path: impl AsRef<Path>,
+        mode: Fail,
+        boundary_directory: Option<PathBuf>,
+        make_permissions: impl Fn() -> std::fs::Permissions,
+    ) -> Result<File, Error> {
+        let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, &|p, d, c| {
+            gix_tempfile::writable_at_with_permissions(p, d, c, make_permissions())
+        })?;
+        Ok(File {
+            inner: handle,
+            lock_path,
+        })
+    }
 }
 
 impl Marker {
-    /// Like [`acquire_to_update_resource()`][File::acquire_to_update_resource()] but _without_ the possibility to make changes
+    /// Like [`acquire_to_update_resource()`](File::acquire_to_update_resource()) but _without_ the possibility to make changes
     /// and commit them.
     ///
     /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
@@ -111,6 +127,23 @@ impl Marker {
             } else {
                 gix_tempfile::mark_at(p, d, c)
             }
+        })?;
+        Ok(Marker {
+            created_from_file: false,
+            inner: handle,
+            lock_path,
+        })
+    }
+
+    /// Like [`acquire_to_hold_resource()`](Marker::acquire_to_hold_resource), but allows to set filesystem permissions using `make_permissions`.
+    pub fn acquire_to_hold_resource_with_permissions(
+        at_path: impl AsRef<Path>,
+        mode: Fail,
+        boundary_directory: Option<PathBuf>,
+        make_permissions: impl Fn() -> std::fs::Permissions,
+    ) -> Result<Marker, Error> {
+        let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, &|p, d, c| {
+            gix_tempfile::mark_at_with_permissions(p, d, c, make_permissions())
         })?;
         Ok(Marker {
             created_from_file: false,
