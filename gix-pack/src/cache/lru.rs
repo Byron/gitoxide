@@ -3,7 +3,7 @@ use super::DecodeEntry;
 #[cfg(feature = "pack-cache-lru-dynamic")]
 mod memory {
     use super::DecodeEntry;
-    use crate::set_vec_to_slice;
+    use crate::cache::set_vec_to_slice;
     use clru::WeightScale;
     use std::num::NonZeroUsize;
 
@@ -47,7 +47,7 @@ mod memory {
     impl DecodeEntry for MemoryCappedHashmap {
         fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: gix_object::Kind, compressed_size: usize) {
             self.debug.put();
-            let Ok(data) = set_vec_to_slice(self.free_list.pop().unwrap_or_default(), data) else {
+            let Some(data) = set_vec_to_slice(self.free_list.pop().unwrap_or_default(), data) else {
                 return;
             };
             let res = self.inner.put_with_weight(
@@ -67,7 +67,7 @@ mod memory {
 
         fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(gix_object::Kind, usize)> {
             let res = self.inner.get(&(pack_id, offset)).and_then(|e| {
-                set_vec_to_slice(out, &e.data).ok()?;
+                set_vec_to_slice(out, &e.data)?;
                 Some((e.kind, e.compressed_size))
             });
             if res.is_some() {
@@ -86,7 +86,7 @@ pub use memory::MemoryCappedHashmap;
 #[cfg(feature = "pack-cache-lru-static")]
 mod _static {
     use super::DecodeEntry;
-    use crate::set_vec_to_slice;
+    use crate::cache::set_vec_to_slice;
     struct Entry {
         pack_id: u32,
         offset: u64,
@@ -150,7 +150,7 @@ mod _static {
             self.debug.put();
             let mut v = std::mem::take(&mut self.last_evicted);
             self.mem_used -= v.capacity();
-            if set_vec_to_slice(&mut v, data).is_err() {
+            if set_vec_to_slice(&mut v, data).is_none() {
                 return;
             }
             self.mem_used += v.capacity();
@@ -169,7 +169,7 @@ mod _static {
         fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(gix_object::Kind, usize)> {
             let res = self.inner.lookup(|e: &mut Entry| {
                 if e.pack_id == pack_id && e.offset == offset {
-                    set_vec_to_slice(&mut *out, &e.data).ok()?;
+                    set_vec_to_slice(&mut *out, &e.data)?;
                     Some((e.kind, e.compressed_size))
                 } else {
                     None

@@ -4,7 +4,7 @@ use crate::cache;
 
 #[cfg(feature = "object-cache-dynamic")]
 mod memory {
-    use crate::{cache, set_vec_to_slice};
+    use crate::{cache, cache::set_vec_to_slice};
     use clru::WeightScale;
     use std::num::NonZeroUsize;
 
@@ -54,7 +54,7 @@ mod memory {
         /// Put the object going by `id` of `kind` with `data` into the cache.
         fn put(&mut self, id: gix_hash::ObjectId, kind: gix_object::Kind, data: &[u8]) {
             self.debug.put();
-            let Ok(data) = set_vec_to_slice(self.free_list.pop().unwrap_or_default(), data) else {
+            let Some(data) = set_vec_to_slice(self.free_list.pop().unwrap_or_default(), data) else {
                 return;
             };
             let res = self.inner.put_with_weight(id, Entry { data, kind });
@@ -68,7 +68,7 @@ mod memory {
         /// Try to retrieve the object named `id` and place its data into `out` if available and return `Some(kind)` if found.
         fn get(&mut self, id: &gix_hash::ObjectId, out: &mut Vec<u8>) -> Option<gix_object::Kind> {
             let res = self.inner.get(id).and_then(|e| {
-                set_vec_to_slice(out, &e.data).ok()?;
+                set_vec_to_slice(out, &e.data)?;
                 Some(e.kind)
             });
             if res.is_some() {

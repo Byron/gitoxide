@@ -178,8 +178,9 @@ impl File {
         match entry.header {
             Tree | Blob | Commit | Tag => {
                 let size: usize = entry.decompressed_size.try_into().map_err(|_| Error::OutOfMemory)?;
-                out.clear();
-                out.try_reserve(size)?;
+                if let Some(additional) = size.checked_sub(out.len()) {
+                    out.try_reserve(additional)?;
+                }
                 out.resize(size, 0);
                 self.decompress_entry(&entry, inflate, out.as_mut_slice())
                     .map(|consumed_input| {

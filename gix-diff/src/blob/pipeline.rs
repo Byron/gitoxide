@@ -150,14 +150,7 @@ pub mod convert_to_diffable {
         #[error(transparent)]
         ConvertToGit(#[from] gix_filter::pipeline::convert::to_git::Error),
         #[error("Memory allocation failed")]
-        OutOfMemory,
-    }
-
-    impl From<TryReserveError> for Error {
-        #[cold]
-        fn from(_: TryReserveError) -> Self {
-            Self::OutOfMemory
-        }
+        OutOfMemory(#[from] TryReserveError),
     }
 }
 
