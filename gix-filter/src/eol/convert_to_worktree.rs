@@ -7,16 +7,21 @@ use crate::{
 
 /// Convert all `\n` in `src` to `crlf` if `digest` and `config` indicate it, returning `true` if `buf` holds the result, or `false`
 /// if no change was made after all.
-pub fn convert_to_worktree(src: &[u8], digest: AttributesDigest, buf: &mut Vec<u8>, config: Configuration) -> bool {
+pub fn convert_to_worktree(
+    src: &[u8],
+    digest: AttributesDigest,
+    buf: &mut Vec<u8>,
+    config: Configuration,
+) -> Result<bool, std::collections::TryReserveError> {
     if src.is_empty() || digest.to_eol(config) != Some(Mode::CrLf) {
-        return false;
+        return Ok(false);
     }
     let stats = Stats::from_bytes(src);
     if !stats.will_convert_lf_to_crlf(digest, config) {
-        return false;
+        return Ok(false);
     }
 
-    clear_and_set_capacity(buf, src.len() + stats.lone_lf);
+    clear_and_set_capacity(buf, src.len() + stats.lone_lf)?;
 
     let mut ofs = 0;
     while let Some(pos) = src[ofs..].find_byteset(b"\r\n") {
@@ -39,5 +44,5 @@ pub fn convert_to_worktree(src: &[u8], digest: AttributesDigest, buf: &mut Vec<u
         }
     }
     buf.push_str(&src[ofs..]);
-    true
+    Ok(true)
 }

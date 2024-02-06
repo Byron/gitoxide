@@ -5,20 +5,21 @@ use gix_filter::{
 };
 
 #[test]
-fn no_conversion_if_attribute_digest_does_not_allow_it() {
+fn no_conversion_if_attribute_digest_does_not_allow_it() -> crate::Result {
     let mut buf = Vec::new();
     for digest in [
         AttributesDigest::Binary,
         AttributesDigest::TextInput,
         AttributesDigest::TextAutoInput,
     ] {
-        let changed = eol::convert_to_worktree(b"hi\nho", digest, &mut buf, Default::default());
+        let changed = eol::convert_to_worktree(b"hi\nho", digest, &mut buf, Default::default())?;
         assert!(!changed, "the digest doesn't allow for CRLF changes");
     }
+    Ok(())
 }
 
 #[test]
-fn no_conversion_if_configuration_does_not_allow_it() {
+fn no_conversion_if_configuration_does_not_allow_it() -> crate::Result {
     let mut buf = Vec::new();
     for digest in [AttributesDigest::Text, AttributesDigest::TextAuto] {
         for config in [
@@ -31,14 +32,15 @@ fn no_conversion_if_configuration_does_not_allow_it() {
                 eol: Some(Mode::Lf),
             },
         ] {
-            let changed = eol::convert_to_worktree(b"hi\nho", digest, &mut buf, config);
+            let changed = eol::convert_to_worktree(b"hi\nho", digest, &mut buf, config)?;
             assert!(!changed, "the configuration doesn't allow for changes");
         }
     }
+    Ok(())
 }
 
 #[test]
-fn no_conversion_if_nothing_to_do() {
+fn no_conversion_if_nothing_to_do() -> crate::Result {
     let mut buf = Vec::new();
     for (input, digest, msg) in [
         (
@@ -62,36 +64,39 @@ fn no_conversion_if_nothing_to_do() {
             "designated binary is never handled",
         ),
     ] {
-        let changed = eol::convert_to_worktree(input, digest, &mut buf, Default::default());
+        let changed = eol::convert_to_worktree(input, digest, &mut buf, Default::default())?;
         assert!(!changed, "{msg}");
     }
+    Ok(())
 }
 
 #[test]
-fn each_nl_is_replaced_with_crnl() {
+fn each_nl_is_replaced_with_crnl() -> crate::Result {
     let mut buf = Vec::new();
     let changed = eol::convert_to_worktree(
         b"hi\n\nho\nend",
         AttributesDigest::TextCrlf,
         &mut buf,
         Default::default(),
-    );
+    )?;
     assert!(
         changed,
         "the buffer has to be changed as it is explicitly demanded and has newlines to convert"
     );
     assert_eq!(buf.as_bstr(), "hi\r\n\r\nho\r\nend");
+    Ok(())
 }
 
 #[test]
-fn existing_crnl_are_not_replaced_for_safety_nor_are_lone_cr() {
+fn existing_crnl_are_not_replaced_for_safety_nor_are_lone_cr() -> crate::Result {
     let mut buf = Vec::new();
     let changed = eol::convert_to_worktree(
         b"hi\r\n\nho\r\nend\r",
         AttributesDigest::TextCrlf,
         &mut buf,
         Default::default(),
-    );
+    )?;
     assert!(changed);
     assert_eq!(buf.as_bstr(), "hi\r\n\r\nho\r\nend\r");
+    Ok(())
 }

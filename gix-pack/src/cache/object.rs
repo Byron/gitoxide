@@ -4,11 +4,9 @@ use crate::cache;
 
 #[cfg(feature = "object-cache-dynamic")]
 mod memory {
-    use std::num::NonZeroUsize;
-
+    use crate::{cache, cache::set_vec_to_slice};
     use clru::WeightScale;
-
-    use crate::cache;
+    use std::num::NonZeroUsize;
 
     struct Entry {
         data: Vec<u8>,
@@ -56,21 +54,10 @@ mod memory {
         /// Put the object going by `id` of `kind` with `data` into the cache.
         fn put(&mut self, id: gix_hash::ObjectId, kind: gix_object::Kind, data: &[u8]) {
             self.debug.put();
-            let res = self.inner.put_with_weight(
-                id,
-                Entry {
-                    data: self.free_list.pop().map_or_else(
-                        || Vec::from(data),
-                        |mut v| {
-                            v.clear();
-                            v.resize(data.len(), 0);
-                            v.copy_from_slice(data);
-                            v
-                        },
-                    ),
-                    kind,
-                },
-            );
+            let Some(data) = set_vec_to_slice(self.free_list.pop().unwrap_or_default(), data) else {
+                return;
+            };
+            let res = self.inner.put_with_weight(id, Entry { data, kind });
             match res {
                 Ok(Some(previous_entry)) => self.free_list.push(previous_entry.data),
                 Ok(None) => {}
@@ -80,10 +67,9 @@ mod memory {
 
         /// Try to retrieve the object named `id` and place its data into `out` if available and return `Some(kind)` if found.
         fn get(&mut self, id: &gix_hash::ObjectId, out: &mut Vec<u8>) -> Option<gix_object::Kind> {
-            let res = self.inner.get(id).map(|e| {
-                out.resize(e.data.len(), 0);
-                out.copy_from_slice(&e.data);
-                e.kind
+            let res = self.inner.get(id).and_then(|e| {
+                set_vec_to_slice(out, &e.data)?;
+                Some(e.kind)
             });
             if res.is_some() {
                 self.debug.hit()

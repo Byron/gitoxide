@@ -177,13 +177,11 @@ impl File {
         use crate::data::entry::Header::*;
         match entry.header {
             Tree | Blob | Commit | Tag => {
-                out.resize(
-                    entry
-                        .decompressed_size
-                        .try_into()
-                        .expect("size representable by machine"),
-                    0,
-                );
+                let size: usize = entry.decompressed_size.try_into().map_err(|_| Error::OutOfMemory)?;
+                if let Some(additional) = size.checked_sub(out.len()) {
+                    out.try_reserve(additional)?;
+                }
+                out.resize(size, 0);
                 self.decompress_entry(&entry, inflate, out.as_mut_slice())
                     .map(|consumed_input| {
                         Outcome::from_object_entry(
@@ -280,12 +278,14 @@ impl File {
         let chain_len = chain.len();
         let (first_buffer_end, second_buffer_end) = {
             let delta_start = base_buffer_size.unwrap_or(0);
-            out.resize(delta_start + total_delta_data_size, 0);
 
             let delta_range = Range {
                 start: delta_start,
                 end: delta_start + total_delta_data_size,
             };
+            out.try_reserve(delta_range.end.saturating_sub(out.len()))?;
+            out.resize(delta_range.end, 0);
+
             let mut instructions = &mut out[delta_range.clone()];
             let mut relative_delta_start = 0;
             let mut biggest_result_size = 0;
@@ -321,12 +321,12 @@ impl File {
             // Now we can produce a buffer like this
             // [<biggest-result-buffer, possibly filled with resolved base object data>]<biggest-result-buffer><delta-1..delta-n>
             // from [<possibly resolved base object>]<delta-1..delta-n>...
-            let biggest_result_size: usize = biggest_result_size
-                .try_into()
-                .expect("biggest result size small enough to fit into usize");
+            let biggest_result_size: usize = biggest_result_size.try_into().map_err(|_| Error::OutOfMemory)?;
             let first_buffer_size = biggest_result_size;
             let second_buffer_size = first_buffer_size;
-            out.resize(first_buffer_size + second_buffer_size + total_delta_data_size, 0);
+            let out_size = first_buffer_size + second_buffer_size + total_delta_data_size;
+            out.try_reserve(out_size.saturating_sub(out.len()))?;
+            out.resize(out_size, 0);
 
             // Now 'rescue' the deltas, because in the next step we possibly overwrite that portion
             // of memory with the base object (in the majority of cases)
@@ -400,7 +400,8 @@ impl File {
             // this seems inverted, but remember: we swapped the buffers on the last iteration
             target_buf[..last_result_size].copy_from_slice(&source_buf[..last_result_size]);
         }
-        out.resize(last_result_size, 0);
+        debug_assert!(out.len() >= last_result_size);
+        out.truncate(last_result_size);
 
         let object_kind = object_kind.expect("a base object as root of any delta chain that we are here to resolve");
         let consumed_input = consumed_input.expect("at least one decompressed delta object");

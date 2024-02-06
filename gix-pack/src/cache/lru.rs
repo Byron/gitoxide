@@ -2,11 +2,10 @@ use super::DecodeEntry;
 
 #[cfg(feature = "pack-cache-lru-dynamic")]
 mod memory {
-    use std::num::NonZeroUsize;
-
-    use clru::WeightScale;
-
     use super::DecodeEntry;
+    use crate::cache::set_vec_to_slice;
+    use clru::WeightScale;
+    use std::num::NonZeroUsize;
 
     struct Entry {
         data: Vec<u8>,
@@ -48,18 +47,13 @@ mod memory {
     impl DecodeEntry for MemoryCappedHashmap {
         fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: gix_object::Kind, compressed_size: usize) {
             self.debug.put();
+            let Some(data) = set_vec_to_slice(self.free_list.pop().unwrap_or_default(), data) else {
+                return;
+            };
             let res = self.inner.put_with_weight(
                 (pack_id, offset),
                 Entry {
-                    data: self.free_list.pop().map_or_else(
-                        || Vec::from(data),
-                        |mut v| {
-                            v.clear();
-                            v.resize(data.len(), 0);
-                            v.copy_from_slice(data);
-                            v
-                        },
-                    ),
+                    data,
                     kind,
                     compressed_size,
                 },
@@ -72,10 +66,9 @@ mod memory {
         }
 
         fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(gix_object::Kind, usize)> {
-            let res = self.inner.get(&(pack_id, offset)).map(|e| {
-                out.resize(e.data.len(), 0);
-                out.copy_from_slice(&e.data);
-                (e.kind, e.compressed_size)
+            let res = self.inner.get(&(pack_id, offset)).and_then(|e| {
+                set_vec_to_slice(out, &e.data)?;
+                Some((e.kind, e.compressed_size))
             });
             if res.is_some() {
                 self.debug.hit()
@@ -93,6 +86,7 @@ pub use memory::MemoryCappedHashmap;
 #[cfg(feature = "pack-cache-lru-static")]
 mod _static {
     use super::DecodeEntry;
+    use crate::cache::set_vec_to_slice;
     struct Entry {
         pack_id: u32,
         offset: u64,
@@ -154,33 +148,28 @@ mod _static {
                 }
             }
             self.debug.put();
-            let (prev_cap, cur_cap);
+            let mut v = std::mem::take(&mut self.last_evicted);
+            self.mem_used -= v.capacity();
+            if set_vec_to_slice(&mut v, data).is_none() {
+                return;
+            }
+            self.mem_used += v.capacity();
             if let Some(previous) = self.inner.insert(Entry {
                 offset,
                 pack_id,
-                data: {
-                    let mut v = std::mem::take(&mut self.last_evicted);
-                    prev_cap = v.capacity();
-                    v.clear();
-                    v.resize(data.len(), 0);
-                    v.copy_from_slice(data);
-                    cur_cap = v.capacity();
-                    v
-                },
+                data: v,
                 kind,
                 compressed_size,
             }) {
                 // No need to adjust capacity as we already counted it.
                 self.last_evicted = previous.data;
             }
-            self.mem_used = self.mem_used + cur_cap - prev_cap;
         }
 
         fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(gix_object::Kind, usize)> {
             let res = self.inner.lookup(|e: &mut Entry| {
                 if e.pack_id == pack_id && e.offset == offset {
-                    out.resize(e.data.len(), 0);
-                    out.copy_from_slice(&e.data);
+                    set_vec_to_slice(&mut *out, &e.data)?;
                     Some((e.kind, e.compressed_size))
                 } else {
                     None

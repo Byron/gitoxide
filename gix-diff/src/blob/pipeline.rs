@@ -112,6 +112,8 @@ impl Mode {
 
 ///
 pub mod convert_to_diffable {
+    use std::collections::TryReserveError;
+
     use bstr::BString;
     use gix_object::tree::EntryKind;
 
@@ -147,6 +149,8 @@ pub mod convert_to_diffable {
         ConvertToWorktree(#[from] gix_filter::pipeline::convert::to_worktree::Error),
         #[error(transparent)]
         ConvertToGit(#[from] gix_filter::pipeline::convert::to_git::Error),
+        #[error("Memory allocation failed")]
+        OutOfMemory(#[from] TryReserveError),
     }
 }
 
@@ -339,8 +343,9 @@ impl Pipeline {
                                                         })?;
                                                     }
                                                     ToGitOutcome::Buffer(buf) => {
-                                                        out.resize(buf.len(), 0);
-                                                        out.copy_from_slice(buf);
+                                                        out.clear();
+                                                        out.try_reserve(buf.len())?;
+                                                        out.extend_from_slice(buf);
                                                     }
                                                 }
                                             } else {
@@ -452,8 +457,9 @@ impl Pipeline {
                                     match res {
                                         ToWorktreeOutcome::Unchanged(_) => {}
                                         ToWorktreeOutcome::Buffer(src) => {
-                                            out.resize(src.len(), 0);
-                                            out.copy_from_slice(src);
+                                            out.clear();
+                                            out.try_reserve(src.len())?;
+                                            out.extend_from_slice(src);
                                         }
                                         ToWorktreeOutcome::Process(MaybeDelayed::Immediate(mut stream)) => {
                                             std::io::copy(&mut stream, out).map_err(|err| {

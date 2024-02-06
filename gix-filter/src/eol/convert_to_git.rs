@@ -34,6 +34,8 @@ pub enum Error {
     RoundTrip { msg: &'static str, path: PathBuf },
     #[error("Could not obtain index object to check line endings for")]
     FetchObjectFromIndex(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+    #[error("Could not allocate buffer")]
+    OutOfMemory(#[from] std::collections::TryReserveError),
 }
 
 /// A function that writes a buffer like `fn(&mut buf)` with by tes of an object in the index that is the one that should be converted.
@@ -145,7 +147,7 @@ pub(crate) mod function {
             return Ok(false);
         }
 
-        clear_and_set_capacity(buf, src.len() - stats.crlf);
+        clear_and_set_capacity(buf, src.len() - stats.crlf)?;
         if stats.lone_cr == 0 {
             buf.extend(src.iter().filter(|b| **b != b'\r'));
         } else {
