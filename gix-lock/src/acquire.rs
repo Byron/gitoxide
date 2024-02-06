@@ -60,6 +60,8 @@ impl File {
     /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
     /// a rollback. Otherwise the containing directory is expected to exist, even though the resource doesn't have to.
     ///
+    /// Note that permissions will be set to `0o666`, which usually results in `0o644` after passing a default umask, on Unix systems.
+    ///
     /// ### Warning of potential resource leak
     ///
     /// Please note that the underlying file will remain if destructors don't run, as is the case when interrupting the application.
@@ -71,7 +73,11 @@ impl File {
         boundary_directory: Option<PathBuf>,
     ) -> Result<File, Error> {
         let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, &|p, d, c| {
-            gix_tempfile::writable_at(p, d, c)
+            if let Some(permissions) = default_permissions() {
+                gix_tempfile::writable_at_with_permissions(p, d, c, permissions)
+            } else {
+                gix_tempfile::writable_at(p, d, c)
+            }
         })?;
         Ok(File {
             inner: handle,
@@ -87,6 +93,8 @@ impl Marker {
     /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
     /// a rollback.
     ///
+    /// Note that permissions will be set to `0o666`, which usually results in `0o644` after passing a default umask, on Unix systems.
+    ///
     /// ### Warning of potential resource leak
     ///
     /// Please note that the underlying file will remain if destructors don't run, as is the case when interrupting the application.
@@ -98,7 +106,11 @@ impl Marker {
         boundary_directory: Option<PathBuf>,
     ) -> Result<Marker, Error> {
         let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, &|p, d, c| {
-            gix_tempfile::mark_at(p, d, c)
+            if let Some(permissions) = default_permissions() {
+                gix_tempfile::mark_at_with_permissions(p, d, c, permissions)
+            } else {
+                gix_tempfile::mark_at(p, d, c)
+            }
         })?;
         Ok(Marker {
             created_from_file: false,
@@ -167,6 +179,18 @@ fn add_lock_suffix(resource_path: &Path) -> PathBuf {
         || DOT_LOCK_SUFFIX.chars().skip(1).collect(),
         |ext| format!("{}{}", ext.to_string_lossy(), DOT_LOCK_SUFFIX),
     ))
+}
+
+fn default_permissions() -> Option<std::fs::Permissions> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        Some(std::fs::Permissions::from_mode(0o666))
+    }
+    #[cfg(not(unix))]
+    {
+        None
+    }
 }
 
 #[cfg(test)]
