@@ -73,10 +73,11 @@ pub struct Driver {
     pub required: bool,
 }
 
-fn clear_and_set_capacity(buf: &mut Vec<u8>, cap: usize) {
+fn clear_and_set_capacity(buf: &mut Vec<u8>, cap: usize) -> Result<(), std::collections::TryReserveError> {
     buf.clear();
     if buf.capacity() < cap {
-        buf.try_reserve(cap).expect("memory allocation succeeds");
+        buf.try_reserve(cap)?;
         debug_assert!(buf.capacity() >= cap, "{} >= {}", buf.capacity(), cap);
     }
+    Ok(())
 }

@@ -38,6 +38,8 @@ pub mod to_git {
         Configuration(#[from] super::configuration::Error),
         #[error("Copy of driver process output to memory failed")]
         ReadProcessOutputToBuffer(#[from] std::io::Error),
+        #[error("Could not allocate buffer")]
+        OutOfMemory(#[from] std::collections::TryReserveError),
     }
 }
 
@@ -53,6 +55,8 @@ pub mod to_worktree {
         Driver(#[from] crate::driver::apply::Error),
         #[error(transparent)]
         Configuration(#[from] super::configuration::Error),
+        #[error("Could not allocate buffer")]
+        OutOfMemory(#[from] std::collections::TryReserveError),
     }
 }
 
@@ -151,7 +155,7 @@ impl Pipeline {
             self.bufs.swap();
         }
 
-        if apply_ident_filter && ident::undo(&self.bufs.src, &mut self.bufs.dest) {
+        if apply_ident_filter && ident::undo(&self.bufs.src, &mut self.bufs.dest)? {
             self.bufs.swap();
         }
         Ok(if in_buffer {
@@ -191,12 +195,12 @@ impl Pipeline {
 
         let mut bufs = self.bufs.use_foreign_src(src);
         let (src, dest) = bufs.src_and_dest();
-        if apply_ident_filter && ident::apply(src, self.options.object_hash, dest) {
+        if apply_ident_filter && ident::apply(src, self.options.object_hash, dest)? {
             bufs.swap();
         }
 
         let (src, dest) = bufs.src_and_dest();
-        if eol::convert_to_worktree(src, digest, dest, self.options.eol_config) {
+        if eol::convert_to_worktree(src, digest, dest, self.options.eol_config)? {
             bufs.swap();
         };
 
