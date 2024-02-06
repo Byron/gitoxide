@@ -22,7 +22,13 @@ pub(crate) enum Mode {
 
 /// Utilities
 impl Handle<()> {
-    fn at_path(path: &Path, directory: ContainingDirectory, cleanup: AutoRemove, mode: Mode) -> io::Result<usize> {
+    fn at_path(
+        path: &Path,
+        directory: ContainingDirectory,
+        cleanup: AutoRemove,
+        mode: Mode,
+        permissions: Option<std::fs::Permissions>,
+    ) -> io::Result<usize> {
         let tempfile = {
             let mut builder = tempfile::Builder::new();
             let dot_ext_storage;
@@ -33,6 +39,9 @@ impl Handle<()> {
             if let Some(ext) = path.extension() {
                 dot_ext_storage = format!(".{}", ext.to_string_lossy());
                 builder.suffix(&dot_ext_storage);
+            }
+            if let Some(permissions) = permissions {
+                builder.permissions(permissions);
             }
             let parent_dir = path.parent().expect("parent directory is present");
             let parent_dir = directory.resolve(parent_dir)?;
@@ -76,7 +85,20 @@ impl Handle<Closed> {
     /// signal is encountered as destructors won't run. See [the top-level documentation](crate) for more.
     pub fn at(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Handle {
-            id: Handle::<()>::at_path(path.as_ref(), directory, cleanup, Mode::Closed)?,
+            id: Handle::<()>::at_path(path.as_ref(), directory, cleanup, Mode::Closed, None)?,
+            _marker: Default::default(),
+        })
+    }
+
+    /// Like [`at`](Self::at()), but with support for filesystem `permissions`.
+    pub fn at_with_permissions(
+        path: impl AsRef<Path>,
+        directory: ContainingDirectory,
+        cleanup: AutoRemove,
+        permissions: std::fs::Permissions,
+    ) -> io::Result<Self> {
+        Ok(Handle {
+            id: Handle::<()>::at_path(path.as_ref(), directory, cleanup, Mode::Closed, Some(permissions))?,
             _marker: Default::default(),
         })
     }
@@ -104,7 +126,20 @@ impl Handle<Writable> {
     /// signal is encountered as destructors won't run. See [the top-level documentation](crate) for more.
     pub fn at(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Handle {
-            id: Handle::<()>::at_path(path.as_ref(), directory, cleanup, Mode::Writable)?,
+            id: Handle::<()>::at_path(path.as_ref(), directory, cleanup, Mode::Writable, None)?,
+            _marker: Default::default(),
+        })
+    }
+
+    /// Like [`at`](Self::at()), but with support for filesystem `permissions`.
+    pub fn at_with_permissions(
+        path: impl AsRef<Path>,
+        directory: ContainingDirectory,
+        cleanup: AutoRemove,
+        permissions: std::fs::Permissions,
+    ) -> io::Result<Self> {
+        Ok(Handle {
+            id: Handle::<()>::at_path(path.as_ref(), directory, cleanup, Mode::Writable, Some(permissions))?,
             _marker: Default::default(),
         })
     }

@@ -207,6 +207,16 @@ pub fn writable_at(
     Handle::<Writable>::at(path, directory, cleanup)
 }
 
+/// Like [`writable_at`], but allows to set the given filesystem `permissions`.
+pub fn writable_at_with_permissions(
+    path: impl AsRef<Path>,
+    directory: ContainingDirectory,
+    cleanup: AutoRemove,
+    permissions: std::fs::Permissions,
+) -> io::Result<Handle<Writable>> {
+    Handle::<Writable>::at_with_permissions(path, directory, cleanup, permissions)
+}
+
 /// A shortcut to [`Handle::<Closed>::at()`] providing a closed temporary file to mark the presence of something.
 pub fn mark_at(
     path: impl AsRef<Path>,
@@ -214,4 +224,14 @@ pub fn mark_at(
     cleanup: AutoRemove,
 ) -> io::Result<Handle<Closed>> {
     Handle::<Closed>::at(path, directory, cleanup)
+}
+
+/// Like [`mark_at`], but allows to set the given filesystem `permissions`.
+pub fn mark_at_with_permissions(
+    path: impl AsRef<Path>,
+    directory: ContainingDirectory,
+    cleanup: AutoRemove,
+    permissions: std::fs::Permissions,
+) -> io::Result<Handle<Closed>> {
+    Handle::<Closed>::at_with_permissions(path, directory, cleanup, permissions)
 }
