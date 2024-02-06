@@ -167,7 +167,7 @@ anyhow = "1.0.42"
 
 gitoxide-core = { version = "^0.36.0", path = "gitoxide-core" }
 gix-features = { version = "^0.38.0", path = "gix-features" }
-gix = { version = "^0.58.0", path = "gix", default-features = false }
+gix = { version = "^0.59.0", path = "gix", default-features = false }
 time = "0.3.23"
 
 clap = { version = "4.1.1", features = ["derive", "cargo"] }
