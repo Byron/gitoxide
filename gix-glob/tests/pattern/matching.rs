@@ -66,7 +66,7 @@ fn compare_baseline_with_ours() {
                 is_match, *expected_matches,
                 "baseline for matches must be {expected_matches} - check baseline and git version: {m:?}"
             );
-            match std::panic::catch_unwind(|| {
+            let actual = std::panic::catch_unwind(|| {
                 let pattern = pat(pattern);
                 pattern.matches_repo_relative_path(
                     value,
@@ -75,7 +75,8 @@ fn compare_baseline_with_ours() {
                     *case,
                     gix_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
                 )
-            }) {
+            });
+            match actual {
                 Ok(actual_match) => {
                     if actual_match == is_match {
                         total_correct += 1;

@@ -445,13 +445,14 @@ fn find_match<'a, T: Change>(
     let (item_id, item_mode) = item.change.id_and_entry_mode();
     if needs_exact_match(percentage) || item_mode.is_link() {
         let first_idx = items.partition_point(|a| a.change.id() < item_id);
-        let range = match items.get(first_idx..).map(|items| {
+        let range = items.get(first_idx..).map(|items| {
             let end = items
                 .iter()
                 .position(|a| a.change.id() != item_id)
                 .map_or(items.len(), |idx| first_idx + idx);
             first_idx..end
-        }) {
+        });
+        let range = match range {
             Some(range) => range,
             None => return Ok(None),
         };

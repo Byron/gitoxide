@@ -45,7 +45,7 @@ pub mod baseline {
         pub local: Option<BString>,
     }
 
-    pub fn input() -> impl Iterator<Item = gix_refspec::match_group::Item<'static>> + ExactSizeIterator + Clone {
+    pub fn input() -> impl ExactSizeIterator<Item = gix_refspec::match_group::Item<'static>> + Clone {
         INPUT.iter().map(Ref::to_item)
     }
 

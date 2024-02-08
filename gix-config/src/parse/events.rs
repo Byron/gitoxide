@@ -256,7 +256,7 @@ impl<'a> Events<'a> {
     /// Consumes the parser to produce an iterator of all contained events.
     #[must_use = "iterators are lazy and do nothing unless consumed"]
     #[allow(clippy::should_implement_trait)]
-    pub fn into_iter(self) -> impl Iterator<Item = parse::Event<'a>> + std::iter::FusedIterator {
+    pub fn into_iter(self) -> impl std::iter::FusedIterator<Item = parse::Event<'a>> {
         self.frontmatter.into_iter().chain(
             self.sections
                 .into_iter()

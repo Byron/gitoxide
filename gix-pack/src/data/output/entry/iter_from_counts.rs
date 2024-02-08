@@ -181,7 +181,7 @@ pub(crate) mod function {
                                 .clone();
                                 let base_index_offset = pack_range.start;
                                 let counts_in_pack = &counts[pack_range];
-                                match output::Entry::from_pack_entry(
+                                let entry = output::Entry::from_pack_entry(
                                     pack_entry,
                                     count,
                                     counts_in_pack,
@@ -205,7 +205,8 @@ pub(crate) mod function {
                                         }
                                     }),
                                     version,
-                                ) {
+                                );
+                                match entry {
                                     Some(entry) => {
                                         stats.objects_copied_from_pack += 1;
                                         entry
