@@ -8,16 +8,16 @@ mod section {
     fn size_of_events() {
         assert_eq!(
             std::mem::size_of::<Section<'_>>(),
-            112,
+            96,
             "this value should only ever decrease"
         );
-        assert_eq!(std::mem::size_of::<Events<'_>>(), 744,);
-        assert_eq!(std::mem::size_of::<Event<'_>>(), 88,);
-        assert_eq!(std::mem::size_of::<Header<'_>>(), 88,);
-        assert_eq!(std::mem::size_of::<Comment<'_>>(), 32,);
-        assert_eq!(std::mem::size_of::<Option<Cow<'_, BStr>>>(), 32,);
-        assert_eq!(std::mem::size_of::<section::Name<'_>>(), 24,);
-        assert_eq!(std::mem::size_of::<section::Key<'_>>(), 24,);
+        assert_eq!(std::mem::size_of::<Events<'_>>(), 616);
+        assert_eq!(std::mem::size_of::<Event<'_>>(), 72);
+        assert_eq!(std::mem::size_of::<Header<'_>>(), 72);
+        assert_eq!(std::mem::size_of::<Comment<'_>>(), 32);
+        assert_eq!(std::mem::size_of::<Option<Cow<'_, BStr>>>(), 24);
+        assert_eq!(std::mem::size_of::<section::Name<'_>>(), 24);
+        assert_eq!(std::mem::size_of::<section::Key<'_>>(), 24);
     }
 
     mod header {
