@@ -39,7 +39,7 @@ impl Match<'_> {
 /// Access
 impl Search {
     /// Return an iterator over the patterns that participate in the search.
-    pub fn patterns(&self) -> impl Iterator<Item = &Pattern> + '_ {
+    pub fn patterns(&self) -> impl ExactSizeIterator<Item = &Pattern> + '_ {
         self.patterns.iter().map(|m| &m.value.pattern)
     }
 
