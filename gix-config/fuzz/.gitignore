@@ -2,4 +2,7 @@
 target
 corpus
 artifacts
-Cargo.lock
+
+# These usually involve a lot of local CPU time, keep them.
+$artifacts
+$corpus
