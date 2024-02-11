@@ -101,6 +101,12 @@ mod serde_only {
                     if f.fs_monitor().is_some() {
                         names.push("fs-monitor (FSMN)");
                     };
+                    if f.had_offset_table() {
+                        names.push("offset-table (IEOT)")
+                    }
+                    if f.had_end_of_index_marker() {
+                        names.push("end-of-index (EOIE)")
+                    }
                     Extensions { names, tree }
                 },
                 entries: {

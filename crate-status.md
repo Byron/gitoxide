@@ -628,6 +628,7 @@ The git staging area.
   * [x] V2 - the default, including long-paths support
   * [x] V3 - extended flags
   * [x] V4 - delta-compression for paths
+  * [ ] TODO(perf): multi-threaded implementation should boost performance, spends most time in storing paths, has barely any benefit right now.
   * optional threading
     * [x] concurrent loading of index extensions
     * [x] threaded entry reading
