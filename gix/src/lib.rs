@@ -101,6 +101,8 @@ pub use gix_commitgraph as commitgraph;
 #[cfg(feature = "credentials")]
 pub use gix_credentials as credentials;
 pub use gix_date as date;
+#[cfg(feature = "dirwalk")]
+pub use gix_dir as dir;
 pub use gix_features as features;
 use gix_features::threading::OwnShared;
 pub use gix_features::{
@@ -174,6 +176,9 @@ pub use types::{Pathspec, PathspecDetached, Submodule};
 ///
 pub mod clone;
 pub mod commit;
+#[cfg(feature = "dirwalk")]
+///
+pub mod dirwalk;
 pub mod head;
 pub mod id;
 pub mod object;

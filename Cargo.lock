@@ -1343,6 +1343,7 @@ dependencies = [
  "gix-credentials",
  "gix-date 0.8.3",
  "gix-diff",
+ "gix-dir",
  "gix-discover 0.30.0",
  "gix-features 0.38.0",
  "gix-filter",
