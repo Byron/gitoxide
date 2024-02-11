@@ -612,12 +612,12 @@ A plumbing crate with shared functionality regarding EWAH compressed bitmaps, as
 
 A git directory walk.
 
-* [ ] list untracked files
-    - [ ] `normal` - files and directories
-    - [ ] `all` - expand to untracked files in untracked directories
-* [ ] list ignored files
-    - [ ] `matching` mode (show every ignored file, do not aggregate into parent directory)
-    - [ ] `traditional` mode (aggregate all ignored files of a folder into ignoring the folder itself)
+* [x] list untracked files
+* [x] list ignored files
+* [x] collapsing of untracked and ignored directories
+* [x] pathspec based filtering
+* [ ] multi-threaded initialization of icase hash table is always used to accelerate index lookups, even if ignoreCase = false for performance
+* [ ] special handling of submodules (for now, submodules or nested repositories are detected, but they can't be walked into naturally)
 * [ ] accelerated walk with `untracked`-cache (as provided by `UNTR` extension of `gix_index::File`)
 
 ### gix-index
