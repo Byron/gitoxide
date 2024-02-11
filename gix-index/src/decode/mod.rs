@@ -35,7 +35,7 @@ use gix_features::parallel::InOrderIter;
 use crate::util::read_u32;
 
 /// Options to define how to decode an index state [from bytes][State::from_bytes()].
-#[derive(Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Options {
     /// If Some(_), we are allowed to use more than one thread. If Some(N), use no more than N threads. If Some(0)|None, use as many threads
     /// as there are logical cores.
@@ -59,13 +59,13 @@ impl State {
         data: &[u8],
         timestamp: FileTime,
         object_hash: gix_hash::Kind,
-        Options {
+        _options @ Options {
             thread_limit,
             min_extension_block_in_bytes_for_threading,
             expected_checksum,
         }: Options,
     ) -> Result<(Self, Option<gix_hash::ObjectId>), Error> {
-        let _span = gix_features::trace::detail!("gix_index::State::from_bytes()");
+        let _span = gix_features::trace::detail!("gix_index::State::from_bytes()", options = ?_options);
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);
 
@@ -160,10 +160,10 @@ impl State {
                             //       100GB/s on a single core.
                             while let (Ok(lhs), Some(res)) = (acc.as_mut(), results.next()) {
                                 match res {
-                                    Ok(rhs) => {
+                                    Ok(mut rhs) => {
                                         lhs.is_sparse |= rhs.is_sparse;
                                         let ofs = lhs.path_backing.len();
-                                        lhs.path_backing.extend(rhs.path_backing);
+                                        lhs.path_backing.append(&mut rhs.path_backing);
                                         lhs.entries.extend(rhs.entries.into_iter().map(|mut e| {
                                             e.path.start += ofs;
                                             e.path.end += ofs;
@@ -236,6 +236,8 @@ impl State {
             untracked,
             fs_monitor,
             is_sparse: is_sparse_from_ext, // a marker is needed in case there are no directories
+            end_of_index,
+            offset_table,
         } = ext;
         is_sparse |= is_sparse_from_ext;
 
@@ -248,6 +250,8 @@ impl State {
                 path_backing,
                 is_sparse,
 
+                end_of_index_at_decode_time: end_of_index,
+                offset_table_at_decode_time: offset_table,
                 tree,
                 link,
                 resolve_undo,

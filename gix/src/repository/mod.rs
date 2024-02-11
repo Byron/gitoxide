@@ -43,6 +43,9 @@ mod config;
 #[cfg(feature = "blob-diff")]
 pub mod diff;
 ///
+#[cfg(feature = "dirwalk")]
+pub mod dirwalk;
+///
 #[cfg(feature = "attributes")]
 pub mod filter;
 mod graph;

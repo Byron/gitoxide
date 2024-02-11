@@ -227,6 +227,8 @@ fn file_with_conflicts() {
 fn v4_with_delta_paths_and_ieot_ext() {
     let file = file("v4_more_files_IEOT");
     assert_eq!(file.version(), Version::V4);
+    assert!(file.had_end_of_index_marker());
+    assert!(file.had_offset_table());
 
     assert_eq!(file.entries().len(), 10);
     for (idx, path) in [

@@ -42,11 +42,26 @@ pub fn precompose_path(path: Cow<'_, Path>) -> Cow<'_, Path> {
 /// Return the precomposed version of `name`, or `name` itself if it contained illformed unicode,
 /// or if the unicode version didn't contains decomposed unicode.
 /// Otherwise, similar to [`precompose()`]
-pub fn precompose_os_string(path: Cow<'_, OsStr>) -> Cow<'_, OsStr> {
-    match path.to_str() {
-        None => path,
+pub fn precompose_os_string(name: Cow<'_, OsStr>) -> Cow<'_, OsStr> {
+    match name.to_str() {
+        None => name,
         Some(maybe_decomposed) => match precompose(maybe_decomposed.into()) {
-            Cow::Borrowed(_) => path,
+            Cow::Borrowed(_) => name,
+            Cow::Owned(precomposed) => Cow::Owned(precomposed.into()),
+        },
+    }
+}
+
+/// Return the precomposed version of `s`, or `s` itself if it contained illformed unicode,
+/// or if the unicode version didn't contains decomposed unicode.
+/// Otherwise, similar to [`precompose()`]
+#[cfg(feature = "bstr")]
+pub fn precompose_bstr(s: Cow<'_, bstr::BStr>) -> Cow<'_, bstr::BStr> {
+    use bstr::ByteSlice;
+    match s.to_str().ok() {
+        None => s,
+        Some(maybe_decomposed) => match precompose(maybe_decomposed.into()) {
+            Cow::Borrowed(_) => s,
             Cow::Owned(precomposed) => Cow::Owned(precomposed.into()),
         },
     }

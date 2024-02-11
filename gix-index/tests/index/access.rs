@@ -1,106 +1,8 @@
 use crate::index::Fixture;
+use bstr::{BString, ByteSlice};
 
 fn icase_fixture() -> gix_index::File {
     Fixture::Generated("v2_icase_name_clashes").open()
-}
-
-mod directory_by_path {
-    use crate::index::Fixture;
-    use gix_index::DirectoryKind;
-
-    #[test]
-    fn normal_entries_are_never_a_directory() {
-        for fixture in [
-            Fixture::Generated("v2_deeper_tree.sh"),
-            Fixture::Generated("v2_more_files.sh"),
-        ] {
-            let file = fixture.open();
-            for entry in file.entries() {
-                for ignore_case in [false, true] {
-                    assert_eq!(file.directory_kind_by_path_icase(entry.path(&file), ignore_case), None);
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn inferred() {
-        let file = Fixture::Generated("v2_deeper_tree.sh").open();
-
-        let searches = ["d", "d/nested", "sub", "sub/a", "sub/b", "sub/c", "sub/c/d"];
-        for search in searches {
-            assert_eq!(
-                file.directory_kind_by_path_icase(search.into(), false),
-                Some(DirectoryKind::Inferred),
-                "directories can be inferred if the index contains an entry in them"
-            );
-        }
-
-        for search in searches.into_iter().map(str::to_ascii_uppercase) {
-            assert_eq!(
-                file.directory_kind_by_path_icase(search.as_str().into(), true),
-                Some(DirectoryKind::Inferred),
-                "directories can be inferred if the index contains an entry in them, also in case-insensitive mode"
-            );
-            assert_eq!(
-                file.directory_kind_by_path_icase(search.as_str().into(), false),
-                None,
-                "nothing can be found in case-sensitive mode"
-            );
-        }
-    }
-
-    #[test]
-    fn entries_themselves_are_returned_as_dir_only_if_sparse_or_commits() {
-        let file = Fixture::Generated("v2_all_file_kinds.sh").open();
-        for (search, ignore_case) in [("sub", false), ("SuB", true)] {
-            assert_eq!(
-                file.directory_kind_by_path_icase(search.into(), ignore_case),
-                Some(DirectoryKind::Submodule),
-                "submodules can be found verbatim"
-            );
-        }
-
-        let file = Fixture::Generated("v3_sparse_index.sh").open();
-        for sparse_dir in ["d", "c1/c3"] {
-            assert_eq!(
-                file.directory_kind_by_path_icase(sparse_dir.into(), false),
-                Some(DirectoryKind::SparseDir),
-                "sparse directories can be found verbatim"
-            );
-        }
-
-        for sparse_dir in ["D", "C1/c3", "c1/C3"] {
-            assert_eq!(
-                file.directory_kind_by_path_icase(sparse_dir.into(), true),
-                Some(DirectoryKind::SparseDir),
-                "sparse directories can be found verbatim"
-            );
-        }
-    }
-
-    #[test]
-    fn icase_handling() {
-        let file = Fixture::Generated("v2_icase_name_clashes.sh").open();
-
-        for search in ["d", "D"] {
-            assert_eq!(
-                file.directory_kind_by_path_icase(search.into(), true),
-                Some(DirectoryKind::Inferred),
-                "There exists 'd' and 'D/file', and we manage to find the directory"
-            );
-        }
-
-        for ignore_case in [false, true] {
-            for search in ["d/x", "D/X", "D/B", "file", "FILE_X"] {
-                assert_eq!(
-                    file.directory_kind_by_path_icase(search.into(), ignore_case),
-                    None,
-                    "even though `D` exists as directory, we are not able to find it, which makes sense as there is no sub-entry"
-                );
-            }
-        }
-    }
 }
 
 #[test]
@@ -114,28 +16,111 @@ fn entry_by_path() {
 }
 
 #[test]
-fn entry_by_path_icase() {
+fn dirwalk_api_and_icase_support() {
+    let file = Fixture::Loose("ignore-case-realistic").open();
+    let icase = file.prepare_icase_backing();
+    for entry in file.entries() {
+        let entry_path = entry.path(&file);
+        let a = file.entry_by_path_icase(entry_path, false, &icase);
+        let b = file.entry_by_path_icase(entry_path, true, &icase);
+        let c = file.entry_by_path_icase(entry_path.to_ascii_uppercase().as_bstr(), true, &icase);
+        assert_eq!(
+            a,
+            b,
+            "{entry_path}: an index without clashes produces exactly the same result, found {:?} and icase {:?}",
+            a.map(|e| e.path(&file)),
+            b.map(|e| e.path(&file))
+        );
+        assert_eq!(
+            a,
+            c,
+            "{entry_path}: lower-case lookups work as well, found {:?} and icase {:?}",
+            a.map(|e| e.path(&file)),
+            c.map(|e| e.path(&file))
+        );
+
+        let mut last_pos = 0;
+        while let Some(slash_idx) = entry_path[last_pos..].find_byte(b'/') {
+            last_pos += slash_idx;
+            let dir = entry_path[..last_pos].as_bstr();
+            last_pos += 1;
+
+            let entry = file
+                .entry_closest_to_directory(dir)
+                .unwrap_or_else(|| panic!("didn't find {dir}"));
+            assert!(
+                entry.path(&file).starts_with(dir),
+                "entry must actually be inside of directory"
+            );
+
+            let dir_upper: BString = dir.to_ascii_uppercase().into();
+            let other_entry = file
+                .entry_closest_to_directory_icase(dir_upper.as_bstr(), true, &icase)
+                .unwrap_or_else(|| panic!("didn't find upper-cased {dir_upper}"));
+            assert_eq!(other_entry, entry, "the first entry is always the same, no matter what kind of search is conducted (as there are no clashes/ambiguities here)")
+        }
+    }
+}
+
+#[test]
+fn ignorecase_clashes_and_order() {
     let file = icase_fixture();
+    let icase = file.prepare_icase_backing();
+    for entry in file.entries() {
+        let entry_path = entry.path(&file);
+        let a = file.entry_by_path_icase(entry_path, false, &icase);
+        assert_eq!(
+            a,
+            Some(entry),
+            "{entry_path}: in a case-sensitive search, we get exact matches, found {:?} ",
+            a.map(|e| e.path(&file)),
+        );
+
+        let mut last_pos = 0;
+        while let Some(slash_idx) = entry_path[last_pos..].find_byte(b'/') {
+            last_pos += slash_idx;
+            let dir = entry_path[..last_pos].as_bstr();
+            last_pos += 1;
+
+            let entry = file
+                .entry_closest_to_directory(dir)
+                .unwrap_or_else(|| panic!("didn't find {dir}"));
+            assert!(
+                entry.path(&file).starts_with(dir),
+                "entry must actually be inside of directory"
+            );
+        }
+    }
     assert_eq!(
-        file.entry_by_path("D/b".into()),
-        None,
-        "the 'b' is uppercase in the index"
-    );
-    assert_eq!(
-        file.entry_by_path_icase("D/b".into(), false),
-        None,
-        "ignore case off means it's just the same as the non-icase method"
-    );
-    assert_eq!(
-        file.entry_by_path_icase("D/b".into(), true),
-        file.entry_by_path("D/B".into()),
-        "with case-folding, the index entry can be found"
+        file.entry_by_path_icase("file_x".into(), true, &icase)
+            .map(|e| e.path(&file))
+            .expect("in index"),
+        "FILE_X",
+        "it finds the entry that was inserted first"
     );
 
     assert_eq!(
-        file.entry_by_path_icase("file_x".into(), true),
-        file.entry_by_path("FILE_x".into()),
-        "case-folding can make matches ambiguous, and it's unclear what we get"
+        file.entry_by_path_icase("x".into(), true, &icase)
+            .map(|e| e.path(&file))
+            .expect("in index"),
+        "X",
+        "the file 'X' was inserted first, no way to see the symlink under 'x'"
+    );
+
+    assert!(
+        file.entry_closest_to_directory("d".into()).is_none(),
+        "this is a file, and this directory search isn't case-sensitive"
+    );
+    let entry = file.entry_closest_to_directory("D".into());
+    assert_eq!(
+        entry.map(|e| e.path(&file)).expect("present"),
+        "D/B",
+        "this is a directory, indeed, we find the first file in it"
+    );
+    let entry_icase = file.entry_closest_to_directory_icase("d".into(), true, &icase);
+    assert_eq!(
+        entry_icase, entry,
+        "case-insensitive searches don't confuse directories and files, so `d` finds `D`, the directory."
     );
 }
 
@@ -146,28 +131,6 @@ fn prefixed_entries_icase_with_name_clashes() {
         file.prefixed_entries_range("file".into()),
         Some(7..9),
         "case sensitive search yields only two: file_x and file_X"
-    );
-    assert_eq!(
-        file.prefixed_entries_range_icase("file".into(), false),
-        Some(7..9),
-        "case-sensitivity can be turned off even for icase searches"
-    );
-    assert_eq!(
-        file.prefixed_entries_range_icase("file".into(), true),
-        Some(3..9),
-        "case sensitive search yields all relevant items, but… it only assures the start and end of the range is correct \
-        which is: 3: FILE_X, 4: FILE_x, …[not the right prefix]…, 7: file_X, 8: file_x"
-    );
-
-    assert_eq!(
-        file.prefixed_entries_range_icase("d/".into(), true),
-        Some(1..3),
-        "this emulates a directory search (but wouldn't catch git commits or sparse dirs): 1: D/B, 2: D/C"
-    );
-    assert_eq!(
-        file.prefixed_entries_range_icase("d".into(), true),
-        Some(1..7),
-        "without slash one can get everything that matches: 1: D/B, 2: D/C, …inbetweens… 6: d"
     );
 }
 
@@ -183,27 +146,6 @@ fn entry_by_path_and_stage() {
         );
         assert_eq!(file.entry_by_path_and_stage(path, 0), Some(entry));
     }
-}
-
-#[test]
-fn entry_by_path_and_stage_icase() {
-    let file = icase_fixture();
-    assert_eq!(
-        file.entry_by_path_and_stage_icase("D/b".into(), 0, true),
-        file.entry_by_path_and_stage("D/B".into(), 0),
-        "with case-folding, the index entry can be found"
-    );
-    assert_eq!(
-        file.entry_by_path_and_stage_icase("D/b".into(), 0, false),
-        None,
-        "if case-folding is disabled, it is case-sensitive"
-    );
-
-    assert_eq!(
-        file.entry_by_path_and_stage_icase("file_x".into(), 0, true),
-        file.entry_by_path_and_stage("FILE_x".into(), 0),
-        "case-folding can make matches ambiguous, and it's unclear what we get"
-    );
 }
 
 #[test]
@@ -311,19 +253,9 @@ fn sort_entries() {
         "d",
         &["d/a", "d/b", "d/c", "d/last/123", "d/last/34", "d/last/6"],
     );
-    check_prefix_icase(
-        &file,
-        "D",
-        &["d/a", "d/b", "d/c", "d/last/123", "d/last/34", "d/last/6"],
-    );
     check_prefix(
         &file,
         "d/",
-        &["d/a", "d/b", "d/c", "d/last/123", "d/last/34", "d/last/6"],
-    );
-    check_prefix_icase(
-        &file,
-        "D/",
         &["d/a", "d/b", "d/c", "d/last/123", "d/last/34", "d/last/6"],
     );
     check_prefix(&file, "d/last", &["d/last/123", "d/last/34", "d/last/6"]);
@@ -333,9 +265,7 @@ fn sort_entries() {
     check_prefix(&file, "d/last/34", &["d/last/34"]);
     check_prefix(&file, "d/last/6", &["d/last/6"]);
     check_prefix(&file, "x", &["x"]);
-    check_prefix_icase(&file, "X", &["x"]);
     check_prefix(&file, "a", &["a", "an initially incorrectly ordered entry"]);
-    check_prefix_icase(&file, "A", &["a", "an initially incorrectly ordered entry"]);
 }
 
 #[test]
@@ -376,17 +306,6 @@ fn check_prefix(index: &gix_index::State, prefix: &str, expected: &[&str]) {
             .iter()
             .map(|e| e.path(index))
             .collect::<Vec<_>>(),
-        expected,
-        "{prefix:?}"
-    );
-}
-
-fn check_prefix_icase(index: &gix_index::State, prefix: &str, expected: &[&str]) {
-    let range = index
-        .prefixed_entries_range_icase(prefix.into(), true)
-        .unwrap_or_else(|| panic!("{prefix:?} must match at least one entry"));
-    assert_eq!(
-        index.entries()[range].iter().map(|e| e.path(index)).collect::<Vec<_>>(),
         expected,
         "{prefix:?}"
     );

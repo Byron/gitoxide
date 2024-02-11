@@ -6,9 +6,15 @@ target/
 
 # repositories used for local testing
 /tests/fixtures/repos
+$/tests/fixtures/repos/
+
 /tests/fixtures/commit-graphs/
+$/tests/fixtures/commit-graphs/
 
 **/generated-do-not-edit/
 
 # Cargo lock files of fuzz targets - let's have the latest versions of everything under test
 **/fuzz/Cargo.lock
+
+# newer Git sees these as precious, older Git falls through to the pattern above
+$**/fuzz/Cargo.lock

@@ -129,7 +129,7 @@ prodash-render-line = ["prodash/render-line", "prodash-render-line-crossterm", "
 cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 
 ##  A way to enable most `gitoxide-core` tools found in `ein tools`, namely `organize` and `estimate hours`.
-gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours", "gitoxide-core-tools-archive"]
+gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours", "gitoxide-core-tools-archive", "gitoxide-core-tools-clean"]
 
 ## A program to perform analytics on a `git` repository, using an auto-maintained sqlite database
 gitoxide-core-tools-query = ["gitoxide-core/query"]
@@ -139,6 +139,9 @@ gitoxide-core-tools-corpus = ["gitoxide-core/corpus"]
 
 ## A sub-command to generate archive from virtual worktree checkouts.
 gitoxide-core-tools-archive = ["gitoxide-core/archive"]
+
+## A sub-command to clean the worktree from untracked and ignored files.
+gitoxide-core-tools-clean = ["gitoxide-core/clean"]
 
 #! ### Building Blocks for mutually exclusive networking
 #! Blocking and async features are mutually exclusive and cause a compile-time error. This also means that `cargo … --all-features` will fail.

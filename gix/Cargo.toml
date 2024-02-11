@@ -51,7 +51,7 @@ default = ["max-performance-safe", "comfort", "basic", "extras"]
 basic = ["blob-diff", "revision", "index"]
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
-extras = ["worktree-stream", "worktree-archive", "revparse-regex", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt", "status"]
+extras = ["worktree-stream", "worktree-archive", "revparse-regex", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt", "status", "dirwalk"]
 
 ## Various progress-related features that improve the look of progress message units.
 comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
@@ -72,6 +72,9 @@ interrupt = ["dep:signal-hook", "gix-tempfile/signals"]
 
 ## Access to `.git/index` files.
 index = ["dep:gix-index"]
+
+## Support directory walks with Git-style annoations.
+dirwalk = ["dep:gix-dir"]
 
 ## Access to credential helpers, which provide credentials for URLs.
 # Note that `gix-negotiate` just piggibacks here, as 'credentials' is equivalent to 'fetch & push' right now.
@@ -251,6 +254,7 @@ gix-sec = { version = "^0.10.4", path = "../gix-sec" }
 gix-date = { version = "^0.8.3", path = "../gix-date" }
 gix-refspec = { version = "^0.22.0", path = "../gix-refspec" }
 gix-filter = { version = "^0.9.0", path = "../gix-filter", optional = true }
+gix-dir = { version = "^0.1.0", path = "../gix-dir", optional = true }
 
 gix-config = { version = "^0.35.0", path = "../gix-config" }
 gix-odb = { version = "^0.58.0", path = "../gix-odb" }

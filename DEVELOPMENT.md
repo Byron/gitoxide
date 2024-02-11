@@ -309,3 +309,5 @@ GIT_SSH_COMMAND="ssh -VVV" \
 git <command>
 ```
 
+Consider adding `GIT_TRACE2_PERF=1` (possibly add `GIT_TRACE2_PERF_BRIEF=1` for brevity) as well for statistics and variables 
+(see [their source for more](https://github.com/git/git/blob/b50a608ba20348cb3dfc16a696816d51780e3f0f/trace2/tr2_sysenv.c#L50).

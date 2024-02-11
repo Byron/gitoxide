@@ -81,6 +81,8 @@ pub enum Subcommands {
     /// Subcommands for creating worktree archives
     #[cfg(feature = "gitoxide-core-tools-archive")]
     Archive(archive::Platform),
+    #[cfg(feature = "gitoxide-core-tools-clean")]
+    Clean(clean::Command),
     /// Subcommands for interacting with commit-graphs
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
@@ -475,6 +477,59 @@ pub mod mailmap {
     pub enum Subcommands {
         /// Print all entries in configured mailmaps, inform about errors as well.
         Entries,
+    }
+}
+
+#[cfg(feature = "gitoxide-core-tools-clean")]
+pub mod clean {
+    use gitoxide::shared::CheckPathSpec;
+    use gix::bstr::BString;
+
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum FindRepository {
+        All,
+        #[default]
+        NonBare,
+    }
+
+    impl From<FindRepository> for gitoxide_core::repository::clean::FindRepository {
+        fn from(value: FindRepository) -> Self {
+            match value {
+                FindRepository::All => gitoxide_core::repository::clean::FindRepository::All,
+                FindRepository::NonBare => gitoxide_core::repository::clean::FindRepository::NonBare,
+            }
+        }
+    }
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Command {
+        /// Print additional debug information to help understand decisions it made.
+        #[arg(long)]
+        pub debug: bool,
+        /// Actually perform the operation, which deletes files on disk without chance of recovery.
+        #[arg(long, short = 'e')]
+        pub execute: bool,
+        /// Remove ignored (and expendable) files.
+        #[arg(long, short = 'x')]
+        pub ignored: bool,
+        /// Remove precious files.
+        #[arg(long, short = 'p')]
+        pub precious: bool,
+        /// Remove whole directories.
+        #[arg(long, short = 'd')]
+        pub directories: bool,
+        /// Remove nested repositories.
+        #[arg(long, short = 'r')]
+        pub repositories: bool,
+        /// Enter ignored directories to skip repositories contained within.
+        #[arg(long)]
+        pub skip_hidden_repositories: Option<FindRepository>,
+        /// What kind of repositories to find inside of untracked directories.
+        #[arg(long, default_value = "non-bare")]
+        pub find_untracked_repositories: FindRepository,
+        /// The git path specifications to list attributes for, or unset to read from stdin one per line.
+        #[clap(value_parser = CheckPathSpec)]
+        pub pathspec: Vec<BString>,
     }
 }
 

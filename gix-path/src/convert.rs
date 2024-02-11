@@ -36,6 +36,14 @@ pub fn os_string_into_bstring(path: OsString) -> Result<BString, Utf8Error> {
     }
 }
 
+/// Like [`into_bstr()`], but takes `Cow<OsStr>` as input for a lossless, but fallible, conversion.
+pub fn try_os_str_into_bstr(path: Cow<'_, OsStr>) -> Result<Cow<'_, BStr>, Utf8Error> {
+    match path {
+        Cow::Borrowed(path) => os_str_into_bstr(path).map(Cow::Borrowed),
+        Cow::Owned(path) => os_string_into_bstring(path).map(Cow::Owned),
+    }
+}
+
 /// Convert the given path either into its raw bytes on unix or its UTF8 encoded counterpart on windows.
 ///
 /// On windows, if the source Path contains ill-formed, lone surrogates, the UTF-8 conversion will fail

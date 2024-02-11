@@ -28,6 +28,8 @@ gix-traverse = { version = "^0.37.0", path = "../gix-traverse" }
 gix-lock = { version = "^13.0.0", path = "../gix-lock" }
 gix-fs = { version = "^0.10.0", path = "../gix-fs" }
 
+hashbrown = "0.14.3"
+fnv = "1.0.7"
 thiserror = "1.0.32"
 memmap2 = "0.9.0"
 filetime = "0.2.15"

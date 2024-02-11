@@ -26,6 +26,8 @@ mod from_tree {
                 resolve_undo: None,
                 untracked: None,
                 fs_monitor: None,
+                offset_table_at_decode_time: false,
+                end_of_index_at_decode_time: false,
             }
         }
         /// Create an index [`State`] by traversing `tree` recursively, accessing sub-trees
@@ -63,6 +65,8 @@ mod from_tree {
                 resolve_undo: None,
                 untracked: None,
                 fs_monitor: None,
+                offset_table_at_decode_time: false,
+                end_of_index_at_decode_time: false,
             })
         }
     }
