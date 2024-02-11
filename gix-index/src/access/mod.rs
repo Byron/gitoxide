@@ -557,6 +557,14 @@ impl State {
     pub fn fs_monitor(&self) -> Option<&extension::FsMonitor> {
         self.fs_monitor.as_ref()
     }
+    /// Return `true` if the end-of-index extension was present when decoding this index.
+    pub fn had_end_of_index_marker(&self) -> bool {
+        self.end_of_index_at_decode_time
+    }
+    /// Return `true` if the offset-table extension was present when decoding this index.
+    pub fn had_offset_table(&self) -> bool {
+        self.offset_table_at_decode_time
+    }
 }
 
 #[cfg(test)]

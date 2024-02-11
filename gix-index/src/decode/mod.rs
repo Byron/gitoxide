@@ -236,6 +236,8 @@ impl State {
             untracked,
             fs_monitor,
             is_sparse: is_sparse_from_ext, // a marker is needed in case there are no directories
+            end_of_index,
+            offset_table,
         } = ext;
         is_sparse |= is_sparse_from_ext;
 
@@ -248,6 +250,8 @@ impl State {
                 path_backing,
                 is_sparse,
 
+                end_of_index_at_decode_time: end_of_index,
+                offset_table_at_decode_time: offset_table,
                 tree,
                 link,
                 resolve_undo,

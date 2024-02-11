@@ -128,6 +128,8 @@ pub struct State {
     is_sparse: bool,
 
     // Extensions
+    end_of_index_at_decode_time: bool,
+    offset_table_at_decode_time: bool,
     tree: Option<extension::Tree>,
     link: Option<extension::Link>,
     resolve_undo: Option<extension::resolve_undo::Paths>,

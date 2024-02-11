@@ -134,6 +134,8 @@ fn load_one<'a>(
             (path, skip_padding(data, first_byte_of_entry))
         };
 
+        // TODO(perf): for some reason, this causes tremendous `memmove` time even though the backing
+        //             has enough capacity most of the time.
         path_backing.extend_from_slice(path);
         data
     };

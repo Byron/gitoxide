@@ -50,8 +50,12 @@ pub(crate) fn all(
             extension::fs_monitor::SIGNATURE => {
                 ext.fs_monitor = extension::fs_monitor::decode(ext_data);
             }
-            extension::end_of_index_entry::SIGNATURE => {} // skip already done
-            extension::index_entry_offset_table::SIGNATURE => {} // not relevant/obtained already
+            extension::end_of_index_entry::SIGNATURE => {
+                ext.end_of_index = true;
+            } // skip already done
+            extension::index_entry_offset_table::SIGNATURE => {
+                ext.offset_table = true;
+            } // not relevant/obtained already
             mandatory if mandatory[0].is_ascii_lowercase() => match mandatory {
                 extension::link::SIGNATURE => ext.link = extension::link::decode(ext_data, object_hash)?.into(),
                 extension::sparse::SIGNATURE => {
@@ -77,4 +81,6 @@ pub(crate) struct Outcome {
     pub untracked: Option<extension::UntrackedCache>,
     pub fs_monitor: Option<extension::FsMonitor>,
     pub is_sparse: bool,
+    pub offset_table: bool,
+    pub end_of_index: bool,
 }
