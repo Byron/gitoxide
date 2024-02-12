@@ -120,7 +120,7 @@ mod prepare {
             self
         }
 
-        /// Use a shell, but try to split arguments by hand if this be safely done without a shell.
+        /// Use a shell, but try to split arguments by hand if this can be safely done without a shell.
         ///
         /// If that's not the case, use a shell instead.
         pub fn with_shell_allow_argument_splitting(mut self) -> Self {
@@ -202,7 +202,14 @@ mod prepare {
                         let mut cmd = Command::new(if cfg!(windows) { "sh" } else { "/bin/sh" });
                         cmd.arg("-c");
                         if !prep.args.is_empty() {
-                            prep.command.push(" \"$@\"")
+                            if prep.command.to_str().map_or(true, |cmd| !cmd.contains("$@")) {
+                                prep.command.push(" \"$@\"");
+                            } else {
+                                gix_trace::debug!(
+                                    "Will not add '$@' to '{:?}' as it seems to contain it already",
+                                    prep.command
+                                );
+                            }
                         }
                         cmd.arg(prep.command);
                         cmd.arg("--");

@@ -324,10 +324,20 @@ mod prepare {
             "this always needs a shell as we need tilde expansion"
         );
     }
+
+    #[test]
+    fn script_with_dollar_at() {
+        let cmd = std::process::Command::from(gix_command::prepare("echo \"$@\" >&2").with_shell().arg("store"));
+        assert_eq!(
+            format!("{cmd:?}"),
+            format!(r#""{SH}" "-c" "echo \"$@\" >&2" "--" "store""#),
+            "this is how credential helpers have to work as for some reason they don't get '$@' added in Git.\
+            We deal with it by not doubling the '$@' argument, which seems more flexible."
+        );
+    }
 }
 
 mod spawn {
-    #[cfg(unix)]
     use bstr::ByteSlice;
 
     #[test]
@@ -356,6 +366,19 @@ mod spawn {
         assert!(
             cmd.env_remove("PATH").spawn().is_err(),
             "no command named 'echo hi' exists"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn script_with_dollar_at() -> crate::Result {
+        let out = std::process::Command::from(gix_command::prepare("echo \"$@\"").with_shell().arg("arg"))
+            .spawn()?
+            .wait_with_output()?;
+        assert_eq!(
+            out.stdout.to_str_lossy().trim(),
+            "arg",
+            "the argument is just mentioned once"
         );
         Ok(())
     }
