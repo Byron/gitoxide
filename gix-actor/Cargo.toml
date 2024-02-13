@@ -21,7 +21,7 @@ gix-features = { version = "^0.38.0", path = "../gix-features", optional = true 
 gix-date = { version = "^0.8.3", path = "../gix-date" }
 
 thiserror = "1.0.38"
-btoi = "0.4.2"
+btoi.workspace = true
 bstr = { version = "1.3.0", default-features = false, features = ["std", "unicode"]}
 winnow = { version = "0.5.36", features = ["simd"] }
 itoa = "1.0.1"

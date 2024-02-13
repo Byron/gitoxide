@@ -308,6 +308,7 @@ members = [
 prodash = { version = "28.0.0", default-features = false }
 futures-lite = { version = "2.1.0", default-features = false, features = ["std"] }
 faster-hex = { version = "0.9.0", default-features = false }
+btoi = { version = "0.4.3", default-features = false }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]
