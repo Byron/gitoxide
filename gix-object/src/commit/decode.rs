@@ -5,6 +5,7 @@ use winnow::{
     combinator::{alt, eof, opt, preceded, repeat, rest, terminated},
     error::{AddContext, ParserError, StrContext},
     prelude::*,
+    stream::Stream as _,
     token::take_till,
 };
 
@@ -15,9 +16,13 @@ pub fn message<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
 ) -> PResult<&'a BStr, E> {
     if i.is_empty() {
         // newline + [message]
+        let start = i.checkpoint();
         return Err(
-            winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Eof)
-                .add_context(i, StrContext::Expected("newline + <message>".into())),
+            winnow::error::ErrMode::from_error_kind(i, winnow::error::ErrorKind::Eof).add_context(
+                i,
+                &start,
+                StrContext::Expected("newline + <message>".into()),
+            ),
         );
     }
     preceded(NL, rest.map(ByteSlice::as_bstr))

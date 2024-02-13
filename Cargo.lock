@@ -1407,7 +1407,7 @@ dependencies = [
  "gix-date 0.8.1",
  "itoa",
  "thiserror",
- "winnow",
+ "winnow 0.5.40",
 ]
 
 [[package]]
@@ -1421,7 +1421,7 @@ dependencies = [
  "gix-date 0.8.1",
  "itoa",
  "thiserror",
- "winnow",
+ "winnow 0.5.40",
 ]
 
 [[package]]
@@ -1439,7 +1439,7 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "thiserror",
- "winnow",
+ "winnow 0.6.0",
 ]
 
 [[package]]
@@ -1594,7 +1594,7 @@ dependencies = [
  "smallvec",
  "thiserror",
  "unicode-bom",
- "winnow",
+ "winnow 0.6.0",
 ]
 
 [[package]]
@@ -2132,7 +2132,7 @@ dependencies = [
  "itoa",
  "smallvec",
  "thiserror",
- "winnow",
+ "winnow 0.5.40",
 ]
 
 [[package]]
@@ -2151,7 +2151,7 @@ dependencies = [
  "itoa",
  "smallvec",
  "thiserror",
- "winnow",
+ "winnow 0.5.40",
 ]
 
 [[package]]
@@ -2173,7 +2173,7 @@ dependencies = [
  "serde",
  "smallvec",
  "thiserror",
- "winnow",
+ "winnow 0.6.0",
 ]
 
 [[package]]
@@ -2361,7 +2361,7 @@ dependencies = [
  "maybe-async",
  "serde",
  "thiserror",
- "winnow",
+ "winnow 0.6.0",
 ]
 
 [[package]]
@@ -2406,7 +2406,7 @@ dependencies = [
  "gix-validate 0.8.1",
  "memmap2 0.7.1",
  "thiserror",
- "winnow",
+ "winnow 0.5.40",
 ]
 
 [[package]]
@@ -2429,7 +2429,7 @@ dependencies = [
  "memmap2 0.9.3",
  "serde",
  "thiserror",
- "winnow",
+ "winnow 0.6.0",
 ]
 
 [[package]]
@@ -2648,7 +2648,7 @@ dependencies = [
  "parking_lot",
  "tar",
  "tempfile",
- "winnow",
+ "winnow 0.6.0",
  "xz2",
 ]
 
@@ -4864,7 +4864,7 @@ checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
 dependencies = [
  "indexmap",
  "toml_datetime",
- "winnow",
+ "winnow 0.5.40",
 ]
 
 [[package]]
@@ -5538,9 +5538,18 @@ checksum = "dff9641d1cd4be8d1a070daf9e3773c5f67e78b4d9d42263020c057706765c04"
 
 [[package]]
 name = "winnow"
-version = "0.5.36"
+version = "0.5.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "818ce546a11a9986bc24f93d0cdf38a8a1a400f1473ea8c82e59f6e0ffab9249"
+checksum = "f593a95398737aeed53e489c785df13f3618e41dbcd6718c6addbf1395aa6876"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "winnow"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b1dbce9e90e5404c5a52ed82b1d13fc8cfbdad85033b6f57546ffd1265f8451"
 dependencies = [
  "memchr",
 ]

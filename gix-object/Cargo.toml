@@ -38,7 +38,7 @@ btoi = "0.4.2"
 itoa = "1.0.1"
 thiserror = "1.0.34"
 bstr = { version = "1.3.0", default-features = false, features = ["std", "unicode"] }
-winnow = { version = "0.5.36", features = ["simd"] }
+winnow = { version = "0.6.0", features = ["simd"] }
 smallvec = { version = "1.4.0", features = ["write"] }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 

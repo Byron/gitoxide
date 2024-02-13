@@ -46,7 +46,7 @@ impl<'a> Iterator for packed::Iter<'a> {
                 Some(Ok(reference))
             }
             Err(_) => {
-                self.cursor.reset(start);
+                self.cursor.reset(&start);
                 let (failed_line, next_cursor) = self
                     .cursor
                     .find_byte(b'\n')
