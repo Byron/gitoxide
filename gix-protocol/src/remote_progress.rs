@@ -4,7 +4,7 @@ use bstr::ByteSlice;
 use winnow::{
     combinator::{opt, preceded, terminated},
     prelude::*,
-    token::{tag, take_till},
+    token::take_till,
 };
 
 /// The information usually found in remote progress messages as sent by a git server during
@@ -85,7 +85,7 @@ fn next_optional_percentage(i: &mut &[u8]) -> PResult<Option<u32>, ()> {
             take_till(0.., |c: u8| c.is_ascii_digit()),
             parse_number.try_map(u32::try_from),
         ),
-        tag(b"%"),
+        b"%",
     ))
     .parse_next(i)
 }
