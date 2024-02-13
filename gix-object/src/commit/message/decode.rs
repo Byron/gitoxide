@@ -37,7 +37,7 @@ fn subject_and_body<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<(
         }
     }
 
-    i.reset(start);
+    i.reset(&start);
     rest.map(|r: &[u8]| (r.as_bstr(), None)).parse_next(i)
 }
 

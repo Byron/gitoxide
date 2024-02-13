@@ -162,7 +162,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "in slice at ' 12345 -1215'\n  0: expected `<email>` at ' 12345 -1215'\n  1: expected `<name> <<email>>` at ' 12345 -1215'\n  2: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at ' 12345 -1215'\n"
+                        "in slice at ' 12345 -1215'\n  0: expected `<email>` at ' 12345 -1215'\n  1: expected `<name> <<email>>` at 'hello < 12345 -1215'\n  2: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at 'hello < 12345 -1215'\n"
                     );
         }
 
@@ -173,7 +173,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "in predicate verification at 'abc -1215'\n  0: expected `<timestamp>` at 'abc -1215'\n  1: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at 'abc -1215'\n"
+                        "in predicate verification at 'abc -1215'\n  0: expected `<timestamp>` at 'abc -1215'\n  1: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at 'hello <> abc -1215'\n"
                     );
         }
     }

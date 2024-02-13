@@ -71,10 +71,10 @@ pub fn from_bytes<'i>(mut input: &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) 
     Ok(())
 }
 
-fn newlines_from(input: &[u8], start: winnow::stream::Checkpoint<&[u8]>) -> usize {
+fn newlines_from(input: &[u8], start: winnow::stream::Checkpoint<&[u8], &[u8]>) -> usize {
     let offset = input.offset_from(&start);
     let mut start_input = input;
-    start_input.reset(start);
+    start_input.reset(&start);
     start_input.next_slice(offset).iter().filter(|c| **c == b'\n').count()
 }
 
@@ -97,7 +97,7 @@ fn section<'i>(
 ) -> PResult<(), NomError<&'i [u8]>> {
     let start = i.checkpoint();
     let header = section_header(i).map_err(|e| {
-        i.reset(start);
+        i.reset(&start);
         e
     })?;
     dispatch(Event::SectionHeader(header));
@@ -277,17 +277,17 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) -> PRes
                     let escaped_index = i.offset_from(&value_start_checkpoint);
                     let escape_index = escaped_index - 1;
                     let Some(mut c) = i.next_token() else {
-                        i.reset(start_checkpoint);
+                        i.reset(&start_checkpoint);
                         return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token));
                     };
                     let mut consumed = 1;
                     if c == b'\r' {
                         c = i.next_token().ok_or_else(|| {
-                            i.reset(start_checkpoint);
+                            i.reset(&start_checkpoint);
                             winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token)
                         })?;
                         if c != b'\n' {
-                            i.reset(start_checkpoint);
+                            i.reset(&start_checkpoint);
                             return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Slice));
                         }
                         consumed += 1;
@@ -297,7 +297,7 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) -> PRes
                         b'\n' => {
                             partial_value_found = true;
 
-                            i.reset(value_start_checkpoint);
+                            i.reset(&value_start_checkpoint);
 
                             let value = i.next_slice(escape_index).as_bstr();
                             dispatch(Event::ValueNotDone(Cow::Borrowed(value)));
@@ -312,7 +312,7 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) -> PRes
                         }
                         b'n' | b't' | b'\\' | b'b' | b'"' => {}
                         _ => {
-                            i.reset(start_checkpoint);
+                            i.reset(&start_checkpoint);
                             return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Token));
                         }
                     }
@@ -325,7 +325,7 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) -> PRes
         }
     }
     if is_in_quotes {
-        i.reset(start_checkpoint);
+        i.reset(&start_checkpoint);
         return Err(winnow::error::ErrMode::from_error_kind(i, ErrorKind::Slice));
     }
 
@@ -342,7 +342,7 @@ fn value_impl<'i>(i: &mut &'i [u8], dispatch: &mut dyn FnMut(Event<'i>)) -> PRes
         Some(idx) => idx,
     };
 
-    i.reset(value_start_checkpoint);
+    i.reset(&value_start_checkpoint);
     let value_end_no_trailing_whitespace = i[..value_end]
         .iter()
         .enumerate()
