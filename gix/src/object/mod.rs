@@ -77,8 +77,8 @@ impl<'repo> Object<'repo> {
     /// Transform this object into a blob, or panic if it is none.
     pub fn into_blob(self) -> Blob<'repo> {
         match self.try_into() {
-            Ok(tree) => tree,
-            Err(this) => panic!("Tried to use {} as tree, but was {}", this.id, this.kind),
+            Ok(blob) => blob,
+            Err(this) => panic!("Tried to use {} as blob, but was {}", this.id, this.kind),
         }
     }
 
@@ -102,7 +102,7 @@ impl<'repo> Object<'repo> {
     pub fn into_tag(self) -> Tag<'repo> {
         match self.try_into() {
             Ok(tag) => tag,
-            Err(this) => panic!("Tried to use {} as commit, but was {}", this.id, this.kind),
+            Err(this) => panic!("Tried to use {} as tag, but was {}", this.id, this.kind),
         }
     }
 
