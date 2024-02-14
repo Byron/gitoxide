@@ -57,6 +57,16 @@ cp -R ignored-dir ignored-dir-with-nested-bare-repository
   git init --bare bare
 )
 
+cp -R ignored-dir-with-nested-bare-repository ignored-dir-nested-minimal
+(cd ignored-dir-nested-minimal
+  (cd bare
+    rm -Rf hooks config description
+  )
+  (cd dir/subdir/nested-bare
+    rm -Rf refs hooks config description
+  )
+)
+
 mkdir untracked-hidden-bare
 (cd untracked-hidden-bare
   mkdir subdir
@@ -244,6 +254,17 @@ git init expendable-and-precious
 
   git commit -m "init"
 )
+
+git init expendable-and-precious-nested-in-ignored-dir
+(cd expendable-and-precious-nested-in-ignored-dir
+  echo 'ignored/' > .gitignore
+  git add .gitignore && git commit -m "init"
+  mkdir -p ignored/other
+  cp -Rv ../expendable-and-precious ignored/d
+  rm -Rf ignored/d/*-by-filematch ignored/d/some-*
+  mkdir -p other/ignored && >other/ignored/a
+)
+
 
 mkdir empty-and-untracked-dir
 (cd empty-and-untracked-dir
