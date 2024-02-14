@@ -13,6 +13,9 @@ pub mod buffers;
 ///
 pub mod str;
 
+///
+pub mod btoi;
+
 /// A utility to do buffer-swapping with.
 ///
 /// Use `src` to read from and `dest` to write to, and after actually changing data, call [Buffers::swap()].

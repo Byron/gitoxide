@@ -1,7 +1,7 @@
 pub(crate) mod function {
     use bstr::ByteSlice;
-    use btoi::btoi;
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
+    use gix_utils::btoi::btoi;
     use winnow::{
         combinator::{alt, separated_pair, terminated},
         error::{AddContext, ParserError, StrContext},

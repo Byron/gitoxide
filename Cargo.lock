@@ -1429,12 +1429,12 @@ name = "gix-actor"
 version = "0.30.0"
 dependencies = [
  "bstr",
- "btoi",
  "document-features",
  "gix-date 0.8.3",
  "gix-features 0.38.0",
  "gix-hash 0.14.1",
  "gix-testtools",
+ "gix-utils 0.1.9",
  "itoa",
  "pretty_assertions",
  "serde",
@@ -2002,7 +2002,6 @@ version = "0.30.0"
 dependencies = [
  "bitflags 2.4.1",
  "bstr",
- "btoi",
  "document-features",
  "filetime",
  "fnv",
@@ -2013,6 +2012,7 @@ dependencies = [
  "gix-lock 13.1.0",
  "gix-object 0.41.0",
  "gix-traverse 0.37.0",
+ "gix-utils 0.1.9",
  "hashbrown 0.14.3",
  "itoa",
  "libc",
@@ -2159,7 +2159,6 @@ name = "gix-object"
 version = "0.41.0"
 dependencies = [
  "bstr",
- "btoi",
  "criterion",
  "document-features",
  "gix-actor 0.30.0",
@@ -2167,6 +2166,7 @@ dependencies = [
  "gix-features 0.38.0",
  "gix-hash 0.14.1",
  "gix-testtools",
+ "gix-utils 0.1.9",
  "gix-validate 0.8.3",
  "itoa",
  "pretty_assertions",
@@ -2347,7 +2347,6 @@ dependencies = [
  "async-std",
  "async-trait",
  "bstr",
- "btoi",
  "document-features",
  "futures-io",
  "futures-lite 2.1.0",
@@ -2358,6 +2357,7 @@ dependencies = [
  "gix-packetline",
  "gix-testtools",
  "gix-transport",
+ "gix-utils 0.1.9",
  "maybe-async",
  "serde",
  "thiserror",
@@ -2380,7 +2380,7 @@ name = "gix-quote"
 version = "0.4.10"
 dependencies = [
  "bstr",
- "btoi",
+ "gix-utils 0.1.9",
  "thiserror",
 ]
 

@@ -13,6 +13,7 @@ include = ["src/**/*", "LICENSE-*"]
 doctest = false
 
 [dependencies]
-bstr = { version = "1.3.0", default-features = false, features = ["std"]}
+gix-utils = { version = "^0.1.9", path = "../gix-utils" }
+
+bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 thiserror = "1.0.38"
-btoi = "0.4.2"
