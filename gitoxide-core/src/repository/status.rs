@@ -1,4 +1,5 @@
 use anyhow::{bail, Context};
+use gix::bstr::ByteSlice;
 use gix::{
     bstr::{BStr, BString},
     index::Entry,
@@ -46,7 +47,7 @@ pub fn show(
     let mut index = repo.index_or_empty()?;
     let index = gix::threading::make_mut(&mut index);
     let pathspec = repo.pathspec(
-        pathspecs,
+        pathspecs.iter().map(|p| p.as_bstr()),
         true,
         index,
         gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
@@ -74,23 +75,67 @@ pub fn show(
         out,
         changes: Vec::new(),
     };
-    let outcome = gix_status::index_as_worktree(
-        index,
-        repo.work_dir()
-            .context("This operation cannot be run on a bare repository")?,
-        &mut printer,
-        FastEq,
-        Submodule,
-        repo.objects.clone().into_arc()?,
-        &mut progress,
-        pathspec.detach()?,
-        repo.filter_pipeline(Some(gix::hash::ObjectId::empty_tree(repo.object_hash())))?
-            .0
-            .into_parts()
-            .0,
-        &gix::interrupt::IS_INTERRUPTED,
-        options,
-    )?;
+    let filter_pipeline = repo
+        .filter_pipeline(Some(gix::hash::ObjectId::empty_tree(repo.object_hash())))?
+        .0
+        .into_parts()
+        .0;
+
+    let mut collect = gix::dir::walk::delegate::Collect::default();
+    let (outcome, walk_outcome) = gix::features::parallel::threads(|scope| -> anyhow::Result<_> {
+        // TODO: it's either this, or not running both in parallel and setting UPTODATE flags whereever
+        //       there is no modification. This can save disk queries as dirwalk can then trust what's in
+        //       the index regarding the type.
+        // NOTE: collect here as rename-tracking needs that anyway.
+        let walk_outcome = gix::features::parallel::build_thread()
+            .name("gix status::dirwalk".into())
+            .spawn_scoped(scope, {
+                let repo = repo.clone().into_sync();
+                let index = &index;
+                let collect = &mut collect;
+                move || {
+                    let repo = repo.to_thread_local();
+                    repo.dirwalk(
+                        index,
+                        pathspecs,
+                        repo.dirwalk_options()?
+                            .emit_untracked(gix::dir::walk::EmissionMode::CollapseDirectory),
+                        collect,
+                    )
+                }
+            })?;
+
+        let outcome = gix_status::index_as_worktree(
+            index,
+            repo.work_dir()
+                .context("This operation cannot be run on a bare repository")?,
+            &mut printer,
+            FastEq,
+            Submodule,
+            repo.objects.clone().into_arc()?,
+            &mut progress,
+            pathspec.detach()?,
+            filter_pipeline,
+            &gix::interrupt::IS_INTERRUPTED,
+            options,
+        )?;
+
+        let walk_outcome = walk_outcome.join().expect("no panic")?;
+        Ok((outcome, walk_outcome))
+    })?;
+
+    for entry in collect
+        .into_entries_by_path()
+        .into_iter()
+        .filter_map(|(entry, dir_status)| dir_status.is_none().then_some(entry))
+    {
+        writeln!(
+            printer.out,
+            "{status: >3} {rela_path}",
+            status = "?",
+            rela_path = entry.rela_path
+        )?;
+    }
 
     if outcome.entries_to_update != 0 && allow_write {
         {
@@ -115,6 +160,7 @@ pub fn show(
 
     if statistics {
         writeln!(err, "{outcome:#?}").ok();
+        writeln!(err, "{walk_outcome:#?}").ok();
     }
 
     writeln!(err, "\nhead -> index and untracked files aren't implemented yet")?;
