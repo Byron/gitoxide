@@ -578,7 +578,7 @@ fn untracked_and_ignored_pathspec_guidance() -> crate::Result {
 }
 
 #[test]
-fn untracked_and_ignored_for_deletion_negative_spec() -> crate::Result {
+fn untracked_and_ignored_for_deletion_negative_wildcard_spec() -> crate::Result {
     let root = fixture("subdir-untracked-and-ignored");
     let (out, entries) = collect_filtered(
         &root,
@@ -628,6 +628,274 @@ fn untracked_and_ignored_for_deletion_negative_spec() -> crate::Result {
         "'generated' folders are excluded, and collapsing is done where possible. \
          Note that Git wants to incorrectly delete `d/d` as it doesn't see the excluded \
          ignored file inside, which would incorrectly delete something the users didn't want deleted."
+    );
+    Ok(())
+}
+
+#[test]
+fn untracked_and_ignored_for_deletion_positive_wildcard_spec() -> crate::Result {
+    let root = fixture("subdir-untracked-and-ignored");
+    let (out, entries) = collect_filtered(
+        &root,
+        |keep, ctx| {
+            walk(
+                &root,
+                &root,
+                ctx,
+                walk::Options {
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_untracked: CollapseDirectory,
+                    emit_pruned: true,
+                    for_deletion: Some(Default::default()),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("*generated*"),
+    );
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 8,
+            returned_entries: entries.len(),
+            seen_entries: 27,
+        },
+    );
+    assert_eq!(
+        &entries,
+        &[
+            entry_nokind(".git", DotGit),
+            entry_nomatch(".gitignore", Pruned, File),
+            entry_nomatch("a.o", Ignored(Expendable), File),
+            entry_nomatch("b.o", Ignored(Expendable), File),
+            entry_nomatch("c.o", Ignored(Expendable), File),
+            entry_nomatch("d/a.o", Ignored(Expendable), File),
+            entry_nomatch("d/b.o", Ignored(Expendable), File),
+            entry_nomatch("d/d/a", Pruned, File),
+            entry_nomatch("d/d/a.o", Ignored(Expendable), File),
+            entry_nomatch("d/d/b.o", Ignored(Expendable), File),
+            entryps("d/d/generated", Ignored(Expendable), Directory, WildcardMatch),
+            entryps("d/generated", Ignored(Expendable), Directory, WildcardMatch),
+            entryps("generated", Ignored(Expendable), Directory, WildcardMatch),
+            entry_nomatch("objs", Ignored(Expendable), Directory),
+        ],
+        "'generated' folders are included, and collapsing is done where possible"
+    );
+    Ok(())
+}
+
+#[test]
+fn untracked_and_ignored_for_deletion_nonmatching_wildcard_spec() -> crate::Result {
+    let root = fixture("subdir-untracked-and-ignored");
+    let (out, entries) = collect_filtered(
+        &root,
+        |keep, ctx| {
+            walk(
+                &root,
+                &root,
+                ctx,
+                walk::Options {
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_untracked: CollapseDirectory,
+                    emit_pruned: true,
+                    for_deletion: Some(Default::default()),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("*foo*"),
+    );
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 8,
+            returned_entries: entries.len(),
+            seen_entries: 28,
+        },
+    );
+    assert_eq!(
+        &entries,
+        &[
+            entry_nokind(".git", DotGit),
+            entry_nomatch(".gitignore", Pruned, File),
+            entry_nomatch("a.o", Ignored(Expendable), File),
+            entry_nomatch("b.o", Ignored(Expendable), File),
+            entry_nomatch("c.o", Ignored(Expendable), File),
+            entry_nomatch("d/a.o", Ignored(Expendable), File),
+            entry_nomatch("d/b.o", Ignored(Expendable), File),
+            entry_nomatch("d/d", Ignored(Expendable), Directory),
+            entry_nomatch("d/d/a", Pruned, File),
+            entry_nomatch("d/generated", Ignored(Expendable), Directory),
+            entry_nomatch("generated", Ignored(Expendable), Directory),
+            entry_nomatch("objs", Ignored(Expendable), Directory),
+        ],
+        "'generated' folders are included, and collapsing is done where possible"
+    );
+    Ok(())
+}
+
+#[test]
+fn nested_ignored_dirs_for_deletion_nonmatching_wildcard_spec() -> crate::Result {
+    let root = fixture("ignored-dir-nested-minimal");
+    let (_out, entries) = collect_filtered(
+        &root,
+        |keep, ctx| {
+            walk(
+                &root,
+                &root,
+                ctx,
+                walk::Options {
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_untracked: CollapseDirectory,
+                    emit_pruned: false,
+                    for_deletion: Some(Default::default()),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("*foo*"),
+    );
+    // NOTE: do not use `_out` as `.git` directory contents can change, it's controlled by Git, causing flakiness.
+
+    assert_eq!(
+        &entries,
+        &[],
+        "it figures out that nothing actually matches, even though it has to check everything"
+    );
+
+    let (_out, entries) = collect_filtered(
+        &root,
+        |keep, ctx| {
+            walk(
+                &root,
+                &root,
+                ctx,
+                walk::Options {
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_untracked: CollapseDirectory,
+                    emit_pruned: true,
+                    for_deletion: Some(Default::default()),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("*foo*"),
+    );
+    // NOTE: do not use `_out` as `.git` directory contents can change, it's controlled by Git, causing flakiness.
+
+    assert_eq!(
+        &entries,
+        &[
+            entry_nokind(".git", DotGit),
+            entry_nomatch(".gitignore", Pruned, File),
+            entry_nomatch("bare/HEAD", Pruned, File),
+            entry_nomatch("bare/info/exclude", Pruned, File),
+            entry_nomatch("bare/objects", Untracked, Directory),
+            entry_nomatch("bare/refs", Untracked, Directory),
+            entry_nomatch("dir", Ignored(Expendable), Directory),
+        ],
+        "it's possible to observe pruned entries like before"
+    );
+    Ok(())
+}
+
+#[test]
+fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
+    let root = fixture("expendable-and-precious-nested-in-ignored-dir");
+    let (out, entries) = collect(&root, |keep, ctx| {
+        walk(
+            &root,
+            &root,
+            ctx,
+            walk::Options {
+                emit_ignored: Some(CollapseDirectory),
+                emit_untracked: CollapseDirectory,
+                emit_pruned: true,
+                emit_tracked: true,
+                for_deletion: Some(Default::default()),
+                ..options()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 5,
+        },
+    );
+
+    assert_eq!(
+        &entries,
+        &[
+            entry_nokind(".git", DotGit),
+            entry(".gitignore", Tracked, File).with_index_kind(File),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("other", Ignored(Expendable), Directory),
+        ],
+        "without pathspec, it collapses completely. \
+         It's interesting that 'other' claims to be ignored - due to the collapse of `other/ignored` it inherits the sub-directory status.\
+         However, it's what we want, compared to the alternative of leaving it empty, and then detecting it as empty\
+         the next time we run."
+    );
+
+    let (out, entries) = collect_filtered(
+        &root,
+        |keep, ctx| {
+            walk(
+                &root,
+                &root,
+                ctx,
+                walk::Options {
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_untracked: CollapseDirectory,
+                    emit_pruned: true,
+                    for_deletion: Some(Default::default()),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("*ignored*"),
+    );
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 9,
+            returned_entries: entries.len(),
+            seen_entries: 19,
+        },
+    );
+
+    assert_eq!(
+        &entries,
+        &[
+            entry_nokind(".git", DotGit),
+            entry_nokind("ignored/d/.git", DotGit),
+            entryps("ignored/d/.gitignore", Ignored(Expendable), File, WildcardMatch),
+            entryps("ignored/d/a.o", Ignored(Expendable), File, WildcardMatch),
+            entryps(
+                "ignored/d/all-expendable",
+                Ignored(Expendable),
+                Directory,
+                WildcardMatch
+            ),
+            entryps("ignored/d/all-precious", Ignored(Precious), Directory, WildcardMatch),
+            entryps("ignored/d/mixed", Ignored(Expendable), Directory, WildcardMatch),
+            entryps("ignored/d/precious", Ignored(Expendable), File, WildcardMatch),
+            entryps("other", Ignored(Expendable), Directory, WildcardMatch),
+        ],
+        "with pathspec, we match what's inside and expect to have all the lowest-level paths that have 'ignored' in them.\
+         It seems strange that 'precious' isn't precious, while 'all-precious' is. However, the ignore-search is special
+         as it goes backward through directories (using directory-declarations), and aborts if it matched. Thus it finds
+         that '$/all-precious/' matched, but in the other cases it maches 'ignored/'.
+        'other' gets folded and inherits, just like before."
     );
     Ok(())
 }

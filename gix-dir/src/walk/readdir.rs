@@ -66,7 +66,7 @@ pub(super) fn recursive(
         if can_recurse(current_bstr.as_bstr(), info, opts.for_deletion, delegate) {
             let (action, subdir_prevent_collapse) =
                 recursive(false, current, current_bstr, info, ctx, opts, delegate, out, state)?;
-            prevent_collapse = subdir_prevent_collapse;
+            prevent_collapse |= subdir_prevent_collapse;
             if action != Action::Continue {
                 break;
             }
@@ -158,6 +158,7 @@ impl Mark {
                 } else {
                     dir_info.disk_kind
                 },
+                pathspec_match: filter_dir_pathspec(dir_info.pathspec_match),
                 ..dir_info
             };
             if opts.should_hold(empty_info.status) {
@@ -174,18 +175,10 @@ impl Mark {
             }
         } else if *prevent_collapse {
             self.emit_all_held(state, opts, out, delegate)
-        } else if let Some(action) = self.try_collapse(
-            dir_rela_path,
-            dir_info,
-            state,
-            prevent_collapse,
-            out,
-            opts,
-            ctx,
-            delegate,
-        ) {
+        } else if let Some(action) = self.try_collapse(dir_rela_path, dir_info, state, out, opts, ctx, delegate) {
             action
         } else {
+            *prevent_collapse = true;
             self.emit_all_held(state, opts, out, delegate)
         }
     }
@@ -213,7 +206,6 @@ impl Mark {
         dir_rela_path: &BStr,
         dir_info: classify::Outcome,
         state: &mut State,
-        prevent_collapse: &mut bool,
         out: &mut walk::Outcome,
         opts: Options,
         ctx: &mut Context<'_>,
@@ -229,7 +221,6 @@ impl Mark {
         {
             entries += 1;
             if kind == Some(entry::Kind::Repository) {
-                *prevent_collapse = true;
                 return None;
             }
             if pathspec_match.map_or(false, |m| {
@@ -287,12 +278,10 @@ impl Mark {
             .filter_map(|e| e.pathspec_match)
             .max()
             .or_else(|| {
-                // Only take directory matches for value if they are above the 'guessed' ones.
+                // Only take directory matches as value if they are above the 'guessed' ones.
                 // Otherwise we end up with seemingly matched entries in the parent directory which
                 // affects proper folding.
-                dir_info
-                    .pathspec_match
-                    .filter(|m| matches!(m, PathspecMatch::WildcardMatch | PathspecMatch::Verbatim))
+                filter_dir_pathspec(dir_info.pathspec_match)
             });
         let mut removed_without_emitting = 0;
         let mut action = Action::Continue;
@@ -315,6 +304,15 @@ impl Mark {
         });
         Some(action)
     }
+}
+
+fn filter_dir_pathspec(current: Option<PathspecMatch>) -> Option<PathspecMatch> {
+    current.filter(|m| {
+        matches!(
+            m,
+            PathspecMatch::Always | PathspecMatch::WildcardMatch | PathspecMatch::Verbatim
+        )
+    })
 }
 
 impl Options {

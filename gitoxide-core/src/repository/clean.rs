@@ -103,44 +103,24 @@ pub(crate) mod function {
                 continue;
             }
 
-            pruned_entries += usize::from(entry.pathspec_match.is_none());
-            if entry.status.is_pruned() || entry.pathspec_match.is_none() {
-                continue;
-            }
-            let mut disk_kind = entry.disk_kind.expect("present if not pruned");
-            match disk_kind {
-                Kind::File | Kind::Symlink => {}
-                Kind::EmptyDirectory | Kind::Directory | Kind::Repository => {
-                    let keep = directories
-                        || entry
-                            .pathspec_match
-                            .map_or(false, |m| m != gix::dir::entry::PathspecMatch::Always);
-                    if !keep {
-                        skipped_directories += 1;
-                        if debug {
-                            writeln!(err, "DBG: prune '{}' as -d is missing", entry.rela_path).ok();
-                        }
-                        continue;
-                    }
-                }
-            };
-
-            let keep = entry
+            let pathspec_includes_entry = entry
                 .pathspec_match
-                .map_or(true, |m| m != gix::dir::entry::PathspecMatch::Excluded);
-            if !keep {
-                if debug {
-                    writeln!(err, "DBG: prune '{}' as it is excluded by pathspec", entry.rela_path).ok();
-                }
+                .map_or(false, |m| m != gix::dir::entry::PathspecMatch::Excluded);
+            pruned_entries += usize::from(!pathspec_includes_entry);
+            if !pathspec_includes_entry && debug {
+                writeln!(err, "DBG: prune '{}' as it is excluded by pathspec", entry.rela_path).ok();
+            }
+            if entry.status.is_pruned() || !pathspec_includes_entry {
                 continue;
             }
 
+            let mut disk_kind = entry.disk_kind.expect("present if not pruned");
             let keep = match entry.status {
                 Status::DotGit | Status::Pruned | Status::TrackedExcluded => {
-                    unreachable!("Pruned aren't emitted")
+                    unreachable!("BUG: Pruned are skipped already as their pathspec is always None")
                 }
                 Status::Tracked => {
-                    unreachable!("tracked aren't emitted")
+                    unreachable!("BUG: tracked aren't emitted")
                 }
                 Status::Ignored(gix::ignore::Kind::Expendable) => {
                     skipped_ignored += usize::from(!ignored);
@@ -168,18 +148,30 @@ pub(crate) mod function {
                 disk_kind = gix::dir::entry::Kind::Repository;
             }
 
+            match disk_kind {
+                Kind::File | Kind::Symlink => {}
+                Kind::EmptyDirectory | Kind::Directory => {
+                    if !directories {
+                        skipped_directories += 1;
+                        if debug {
+                            writeln!(err, "DBG: prune '{}' as -d is missing", entry.rela_path).ok();
+                        }
+                        continue;
+                    }
+                }
+                Kind::Repository => {
+                    if !repositories {
+                        skipped_repositories += 1;
+                        if debug {
+                            writeln!(err, "DBG: skipped repository at '{}'", entry.rela_path)?;
+                        }
+                        continue;
+                    }
+                }
+            };
+
             let is_ignored = matches!(entry.status, gix::dir::entry::Status::Ignored(_));
             let display_path = entry.rela_path[prefix_len..].as_bstr();
-            if (!repositories || is_ignored) && disk_kind == gix::dir::entry::Kind::Repository {
-                if !is_ignored {
-                    skipped_repositories += 1;
-                }
-                if debug {
-                    writeln!(err, "DBG: skipped repository at '{display_path}'")?;
-                }
-                continue;
-            }
-
             if disk_kind == gix::dir::entry::Kind::Directory {
                 saw_ignored_directory |= is_ignored;
                 saw_untracked_directory |= entry.status == gix::dir::entry::Status::Untracked;
@@ -194,8 +186,8 @@ pub(crate) mod function {
                         Cow::Owned(format!(
                             "({})",
                             match kind {
-                                gix::ignore::Kind::Precious => "$",
-                                gix::ignore::Kind::Expendable => "❌",
+                                gix::ignore::Kind::Precious => "💲",
+                                gix::ignore::Kind::Expendable => "🗑️",
                             }
                         ))
                     }
@@ -210,10 +202,16 @@ pub(crate) mod function {
                         },
                 },
                 maybe = if execute { "removing" } else { "WOULD remove" },
-                suffix = if disk_kind == gix::dir::entry::Kind::Repository {
-                    " repository"
-                } else {
-                    ""
+                suffix = match disk_kind {
+                    Kind::File | Kind::Symlink | Kind::Directory => {
+                        ""
+                    }
+                    Kind::EmptyDirectory => {
+                        " empty"
+                    }
+                    Kind::Repository => {
+                        " repository"
+                    }
                 },
             )?;
 
