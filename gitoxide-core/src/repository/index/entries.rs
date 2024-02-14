@@ -419,7 +419,7 @@ pub(crate) mod function {
                 buf.push_str(" ➡ ");
             }
             if a.is_excluded {
-                buf.push_str(" ❌");
+                buf.push_str(" 🗑️");
             }
             if !a.attributes.is_empty() {
                 buf.push_str(" (");
