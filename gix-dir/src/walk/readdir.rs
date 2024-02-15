@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::entry::{PathspecMatch, Status};
 use crate::walk::function::{can_recurse, emit_entry};
 use crate::walk::EmissionMode::CollapseDirectory;
-use crate::walk::{classify, Action, Context, Delegate, Error, Options, Outcome};
+use crate::walk::{classify, Action, CollapsedEntriesEmissionMode, Context, Delegate, Error, Options, Outcome};
 use crate::{entry, walk, Entry};
 
 /// ### Deviation
@@ -286,12 +286,21 @@ impl Mark {
         let mut removed_without_emitting = 0;
         let mut action = Action::Continue;
         for entry in state.on_hold.drain(self.start_index..) {
-            if entry.status != dir_status && action == Action::Continue {
-                let info = classify::Outcome::from(&entry);
-                action = emit_entry(Cow::Owned(entry.rela_path), info, Some(dir_status), opts, out, delegate);
-            } else {
+            if action != Action::Continue {
                 removed_without_emitting += 1;
-            };
+                continue;
+            }
+            match opts.emit_collapsed {
+                Some(mode) => {
+                    if mode == CollapsedEntriesEmissionMode::All || entry.status != dir_status {
+                        let info = classify::Outcome::from(&entry);
+                        action = emit_entry(Cow::Owned(entry.rela_path), info, Some(dir_status), opts, out, delegate);
+                    } else {
+                        removed_without_emitting += 1;
+                    }
+                }
+                None => removed_without_emitting += 1,
+            }
         }
         out.seen_entries += removed_without_emitting as u32;
 

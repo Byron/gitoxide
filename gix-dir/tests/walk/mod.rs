@@ -10,6 +10,7 @@ use gix_dir::entry;
 use gix_dir::entry::Kind::*;
 use gix_dir::entry::PathspecMatch::*;
 use gix_dir::entry::Status::*;
+use gix_dir::walk::CollapsedEntriesEmissionMode::{All, OnStatusMismatch};
 use gix_dir::walk::EmissionMode::*;
 use gix_dir::walk::ForDeletionMode;
 use gix_ignore::Kind::*;
@@ -1060,6 +1061,7 @@ fn untracked_and_ignored() -> crate::Result {
             walk::Options {
                 emit_ignored: Some(CollapseDirectory),
                 emit_untracked: CollapseDirectory,
+                emit_collapsed: Some(OnStatusMismatch),
                 ..options()
             },
             keep,
@@ -1147,6 +1149,7 @@ fn untracked_and_ignored_collapse_handling_mixed() -> crate::Result {
                         emit_ignored: Some(CollapseDirectory),
                         emit_untracked: CollapseDirectory,
                         for_deletion: None,
+                        emit_collapsed: Some(OnStatusMismatch),
                         ..options()
                     },
                     keep,
@@ -1242,6 +1245,7 @@ fn untracked_and_ignored_collapse_handling_for_deletion_with_wildcards() -> crat
                     emit_ignored: Some(CollapseDirectory),
                     emit_untracked: CollapseDirectory,
                     for_deletion: Some(Default::default()),
+                    emit_collapsed: Some(OnStatusMismatch),
                     ..options()
                 },
                 keep,
@@ -1363,6 +1367,7 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
                 emit_ignored: Some(CollapseDirectory),
                 emit_untracked: CollapseDirectory,
                 for_deletion: Some(Default::default()),
+                emit_collapsed: Some(OnStatusMismatch),
                 ..options()
             },
             keep,
@@ -1408,6 +1413,7 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
                     emit_ignored: Some(CollapseDirectory),
                     emit_untracked: CollapseDirectory,
                     for_deletion: Some(Default::default()),
+                    emit_collapsed: Some(OnStatusMismatch),
                     ..options()
                 },
                 keep,
@@ -1489,6 +1495,7 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
                     emit_ignored: Some(CollapseDirectory),
                     emit_untracked: CollapseDirectory,
                     for_deletion: Some(Default::default()),
+                    emit_collapsed: Some(OnStatusMismatch),
                     ..options()
                 },
                 keep,
@@ -1590,6 +1597,7 @@ fn precious_are_not_expendable() {
             walk::Options {
                 emit_ignored: Some(CollapseDirectory),
                 emit_untracked: CollapseDirectory,
+                emit_collapsed: Some(OnStatusMismatch),
                 ..options()
             },
             keep,
@@ -1629,6 +1637,7 @@ fn precious_are_not_expendable() {
                     walk::Options {
                         emit_ignored: Some(CollapseDirectory),
                         emit_untracked: CollapseDirectory,
+                        emit_collapsed: Some(OnStatusMismatch),
                         ..options()
                     },
                     keep,
@@ -2763,6 +2772,7 @@ fn untracked_and_ignored_collapse_mix() {
             walk::Options {
                 emit_ignored: Some(Matching),
                 emit_untracked: CollapseDirectory,
+                emit_collapsed: Some(OnStatusMismatch),
                 ..options_emit_all()
             },
             keep,
@@ -2787,6 +2797,43 @@ fn untracked_and_ignored_collapse_mix() {
             entry("untracked", Untracked, Directory),
         ],
         "untracked collapses separately from ignored, but note that matching directories are still emitted, i.e. ignored/"
+    );
+
+    let (out, entries) = collect(&root, |keep, ctx| {
+        walk(
+            &root,
+            &root,
+            ctx,
+            walk::Options {
+                emit_ignored: Some(Matching),
+                emit_untracked: CollapseDirectory,
+                emit_collapsed: Some(All),
+                ..options_emit_all()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 4,
+            returned_entries: entries.len(),
+            seen_entries: 8,
+        }
+    );
+    assert_eq!(
+        entries,
+        [
+            entry(".gitignore", Untracked, File),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-inside/d.o", Ignored(Expendable), File),
+            entry("mixed", Untracked, Directory),
+            entry_dirstat("mixed/c", Untracked, File, Untracked),
+            entry_dirstat("mixed/c.o", Ignored(Expendable), File, Untracked),
+            entry("untracked", Untracked, Directory),
+            entry_dirstat("untracked/a", Untracked, File, Untracked),
+        ],
+        "we can also emit all collapsed entries"
     );
 }
 

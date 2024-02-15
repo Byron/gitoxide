@@ -58,8 +58,9 @@ pub trait Delegate {
     /// item isn't yet known. Pruned entries are also only emitted if [`Options::emit_pruned`] is `true`.
     ///
     /// `collapsed_directory_status` is `Some(dir_status)` if this entry was part of a directory with the given
-    /// `dir_status` that wasn't the same as the one of `entry`. Depending on the operation, these then want to be
-    /// used or discarded.
+    /// `dir_status` that wasn't the same as the one of `entry` and if [Options::emit_collapsed] was
+    /// [CollapsedEntriesEmissionMode::OnStatusMismatch]. It will also be `Some(dir_status)` if that option
+    /// was [CollapsedEntriesEmissionMode::All].
     fn emit(&mut self, entry: EntryRef<'_>, collapsed_directory_status: Option<entry::Status>) -> Action;
 
     /// Return `true` if the given entry can be recursed into. Will only be called if the entry is a physical directory.
@@ -92,6 +93,23 @@ pub enum EmissionMode {
     /// Note that doing so is more expensive as it requires us to keep track of all entries in the directory structure
     /// until it's clear what to finally emit.
     CollapseDirectory,
+}
+
+/// The way entries that are contained in collapsed directories are emitted using the [Delegate].
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
+pub enum CollapsedEntriesEmissionMode {
+    /// Emit only entries if their status does not match the one of the parent directory that is
+    /// going to be collapsed.
+    ///
+    /// E.g. if a directory is determined to be untracked, and the entries in question are ignored,
+    /// they will be emitted.
+    ///
+    /// Entries that have the same status will essentially be 'merged' into the collapsing directory
+    /// and won't be observable anymore.
+    #[default]
+    OnStatusMismatch,
+    /// Emit all entries inside of a collapsed directory to make them observable.
+    All,
 }
 
 /// When the walk is for deletion, assure that we don't collapse directories that have precious files in
@@ -151,6 +169,8 @@ pub struct Options {
     /// subdirectories, as long as none of them includes a file.
     /// Thus, this makes leaf-level empty directories visible, as those don't have any content.
     pub emit_empty_directories: bool,
+    /// If `None`, no entries inside of collapsed directories are emitted. Otherwise, act as specified by `Some(mode)`.
+    pub emit_collapsed: Option<CollapsedEntriesEmissionMode>,
 }
 
 /// All information that is required to perform a dirwalk, and classify paths properly.
