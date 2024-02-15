@@ -6,10 +6,22 @@
 //! * find untracked files
 //!
 //! While also being able to check check if the working tree is dirty, quickly.
+//!
+//! ### Feature Flags
+#![cfg_attr(
+    all(doc, feature = "document-features"),
+    doc = ::document_features::document_features!()
+)]
+#![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 pub mod index_as_worktree;
 pub use index_as_worktree::function::index_as_worktree;
+
+#[cfg(feature = "worktree-rewrites")]
+pub mod index_as_worktree_with_renames;
+#[cfg(feature = "worktree-rewrites")]
+pub use index_as_worktree_with_renames::function::index_as_worktree_with_renames;
 
 /// A stack that validates we are not going through a symlink in a way that is read-only.
 ///

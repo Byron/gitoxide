@@ -17,10 +17,15 @@ path = "worktree.rs"
 gix-features-parallel = ["gix-features/parallel"]
 
 [dev-dependencies]
-gix-status = { path = ".." }
+gix-status = { path = "..", features = ["worktree-rewrites"] }
 gix-testtools = { path = "../../tests/tools" }
 gix-index = { path = "../../gix-index" }
 gix-fs = { path = "../../gix-fs" }
+gix-diff = { path = "../../gix-diff" }
+gix-filter = { path = "../../gix-filter" }
+gix-path = { path = "../../gix-path" }
+gix-dir = { path = "../../gix-dir" }
+gix-odb = { path = "../../gix-odb" }
 gix-hash = { path = "../../gix-hash" }
 gix-object = { path = "../../gix-object" }
 gix-features = { path = "../../gix-features" }
@@ -28,4 +33,4 @@ gix-pathspec = { path = "../../gix-pathspec" }
 gix-worktree = { path = "../../gix-worktree" }
 filetime = "0.2.15"
 bstr = { version = "1.3.0", default-features = false }
-
+pretty_assertions = "1.4.0"

@@ -151,7 +151,7 @@ fn copy_by_id() -> crate::Result {
                 let id = hex_to_id("2e65efe2a145dda7ee51d1741299f848e5bf752e");
                 let source_a = Source {
                     entry_mode: EntryKind::Blob.into(),
-                    id: id,
+                    id,
                     kind: SourceKind::Copy,
                     location: "a".into(),
                     change: &Change {
@@ -303,7 +303,7 @@ fn copy_by_50_percent_similarity() -> crate::Result {
             let id = hex_to_id("78981922613b2afb6025042ff6bd878ac1994e85");
             let source_a = Source {
                 entry_mode: EntryKind::Blob.into(),
-                id: id,
+                id,
                 kind: SourceKind::Copy,
                 location: "a".into(),
                 change: &Change {
@@ -480,7 +480,7 @@ fn rename_by_50_percent_similarity() -> crate::Result {
                         src.unwrap(),
                         Source {
                             entry_mode: EntryKind::Blob.into(),
-                            id: id,
+                            id,
                             kind: SourceKind::Rename,
                             location: "a".into(),
                             change: &Change {

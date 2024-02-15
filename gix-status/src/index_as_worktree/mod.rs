@@ -6,6 +6,6 @@ pub use types::{Change, Conflict, Context, EntryStatus, Error, Options, Outcome,
 mod recorder;
 pub use recorder::{Record, Recorder};
 
-pub(crate) mod function;
+pub(super) mod function;
 ///
 pub mod traits;

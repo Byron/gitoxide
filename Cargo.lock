@@ -2511,7 +2511,10 @@ name = "gix-status"
 version = "0.6.0"
 dependencies = [
  "bstr",
+ "document-features",
  "filetime",
+ "gix-diff",
+ "gix-dir",
  "gix-features 0.38.0",
  "gix-filter",
  "gix-fs 0.10.0",
@@ -2530,15 +2533,21 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "filetime",
+ "gix-diff",
+ "gix-dir",
  "gix-features 0.38.0",
+ "gix-filter",
  "gix-fs 0.10.0",
  "gix-hash 0.14.1",
  "gix-index 0.30.0",
  "gix-object 0.41.1",
+ "gix-odb",
+ "gix-path 0.10.6",
  "gix-pathspec",
  "gix-status",
  "gix-testtools",
  "gix-worktree 0.31.0",
+ "pretty_assertions",
 ]
 
 [[package]]

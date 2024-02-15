@@ -552,12 +552,12 @@ Make it the best-performing implementation and the most convenient one.
  
 ### gix-status
 * [x] differences between index and worktree to turn index into worktree
-    - [ ] rename tracking
+    - [x] rename tracking
+    - [x] untracked files
+    - [ ] support for fs-monitor for modification checks
 * [ ] differences between index and index to learn what changed
     - [ ] rename tracking
-* [ ] untracked files
-* [ ] fast answer to 'is it dirty'.
-* 
+ 
 ### gix-worktree-state
 * handle the working **tree/checkout**
     - [x] checkout an index of files, executables and symlinks just as fast as git
