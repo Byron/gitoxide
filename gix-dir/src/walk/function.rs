@@ -83,7 +83,6 @@ pub fn walk(
         &mut out,
         &mut state,
     )?;
-    assert_eq!(state.on_hold.len(), 0, "BUG: must be fully consumed");
     gix_trace::debug!(statistics = ?out);
     Ok(out)
 }

@@ -68,7 +68,7 @@ pub(super) fn recursive(
                 recursive(false, current, current_bstr, info, ctx, opts, delegate, out, state)?;
             prevent_collapse |= subdir_prevent_collapse;
             if action != Action::Continue {
-                break;
+                return Ok((action, prevent_collapse));
             }
         } else if !state.held_for_directory_collapse(current_bstr.as_bstr(), info, &opts) {
             let action = emit_entry(Cow::Borrowed(current_bstr.as_bstr()), info, None, opts, out, delegate);

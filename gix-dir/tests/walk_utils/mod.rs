@@ -169,15 +169,27 @@ pub fn try_collect_filtered(
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
 ) -> Result<(walk::Outcome, Entries), walk::Error> {
-    try_collect_filtered_opts(worktree_root, cb, patterns, Default::default())
+    try_collect_filtered_opts_collect(worktree_root, cb, patterns, Default::default())
+}
+
+pub fn try_collect_filtered_opts_collect(
+    worktree_root: &Path,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
+    patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+    options: Options<'_>,
+) -> Result<(walk::Outcome, Entries), walk::Error> {
+    let mut dlg = gix_dir::walk::delegate::Collect::default();
+    let outcome = try_collect_filtered_opts(worktree_root, cb, patterns, &mut dlg, options)?;
+    Ok((outcome, dlg.into_entries_by_path()))
 }
 
 pub fn try_collect_filtered_opts(
     worktree_root: &Path,
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+    delegate: &mut dyn gix_dir::walk::Delegate,
     Options { fresh_index, git_dir }: Options<'_>,
-) -> Result<(walk::Outcome, Entries), walk::Error> {
+) -> Result<walk::Outcome, walk::Error> {
     let git_dir = worktree_root.join(git_dir.unwrap_or(".git"));
     let mut index = std::fs::read(git_dir.join("index")).ok().map_or_else(
         || gix_index::State::new(gix_index::hash::Kind::Sha1),
@@ -229,10 +241,9 @@ pub fn try_collect_filtered_opts(
 
     let cwd = gix_fs::current_dir(false).expect("valid cwd");
     let git_dir_realpath = gix_path::realpath_opts(&git_dir, &cwd, gix_path::realpath::MAX_SYMLINKS).unwrap();
-    let mut dlg = gix_dir::walk::delegate::Collect::default();
     let lookup = index.prepare_icase_backing();
-    let outcome = cb(
-        &mut dlg,
+    cb(
+        delegate,
         walk::Context {
             git_dir_realpath: &git_dir_realpath,
             current_dir: &cwd,
@@ -243,9 +254,7 @@ pub fn try_collect_filtered_opts(
             excludes: Some(&mut stack),
             objects: &gix_object::find::Never,
         },
-    )?;
-
-    Ok((outcome, dlg.into_entries_by_path()))
+    )
 }
 
 pub struct Options<'a> {

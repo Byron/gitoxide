@@ -1,10 +1,12 @@
-use gix_dir::walk;
+use gix_dir::{walk, EntryRef};
 use pretty_assertions::assert_eq;
 
 use crate::walk_utils::{
     collect, collect_filtered, entry, entry_dirstat, entry_nokind, entry_nomatch, entryps, entryps_dirstat, fixture,
-    fixture_in, options, options_emit_all, try_collect, try_collect_filtered_opts, EntryExt, Options,
+    fixture_in, options, options_emit_all, try_collect, try_collect_filtered_opts, try_collect_filtered_opts_collect,
+    EntryExt, Options,
 };
+use gix_dir::entry;
 use gix_dir::entry::Kind::*;
 use gix_dir::entry::PathspecMatch::*;
 use gix_dir::entry::Status::*;
@@ -1823,7 +1825,7 @@ fn root_may_not_go_through_dot_git() -> crate::Result {
 #[test]
 fn root_enters_directory_with_dot_git_in_reconfigured_worktree_tracked() -> crate::Result {
     let root = fixture("nonstandard-worktree");
-    let (out, entries) = try_collect_filtered_opts(
+    let (out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
@@ -1857,7 +1859,7 @@ fn root_enters_directory_with_dot_git_in_reconfigured_worktree_tracked() -> crat
         "everything is tracked, so it won't try to detect git repositories anyway"
     );
 
-    let (out, entries) = try_collect_filtered_opts(
+    let (out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
@@ -1891,7 +1893,7 @@ fn root_enters_directory_with_dot_git_in_reconfigured_worktree_tracked() -> crat
 #[test]
 fn root_enters_directory_with_dot_git_in_reconfigured_worktree_untracked() -> crate::Result {
     let root = fixture("nonstandard-worktree-untracked");
-    let (_out, entries) = try_collect_filtered_opts(
+    let (_out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
@@ -2088,6 +2090,69 @@ fn root_can_be_pruned_early_with_pathspec() -> crate::Result {
         &entry_nomatch("dir", Pruned, Directory),
         "the pathspec didn't match the root, early abort"
     );
+    Ok(())
+}
+
+#[test]
+fn cancel_with_collection_does_not_fail() -> crate::Result {
+    struct CancelDelegate {
+        emits_left_until_cancel: usize,
+    }
+
+    impl gix_dir::walk::Delegate for CancelDelegate {
+        fn emit(&mut self, _entry: EntryRef<'_>, _collapsed_directory_status: Option<entry::Status>) -> walk::Action {
+            if self.emits_left_until_cancel == 0 {
+                walk::Action::Cancel
+            } else {
+                self.emits_left_until_cancel -= 1;
+                dbg!(self.emits_left_until_cancel);
+                walk::Action::Continue
+            }
+        }
+    }
+
+    for (idx, fixture_name) in [
+        "nonstandard-worktree",
+        "nonstandard-worktree-untracked",
+        "dir-with-file",
+        "expendable-and-precious",
+        "subdir-untracked-and-ignored",
+        "empty-and-untracked-dir",
+        "complex-empty",
+        "type-mismatch-icase-clash-file-is-dir",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let root = fixture(fixture_name);
+        let mut dlg = CancelDelegate {
+            emits_left_until_cancel: idx,
+        };
+        let _out = try_collect_filtered_opts(
+            &root,
+            |keep, ctx| {
+                walk(
+                    &root,
+                    &root,
+                    ctx,
+                    walk::Options {
+                        emit_untracked: CollapseDirectory,
+                        emit_ignored: Some(CollapseDirectory),
+                        emit_empty_directories: true,
+                        emit_tracked: true,
+                        for_deletion: Some(Default::default()),
+                        emit_pruned: true,
+                        ..options()
+                    },
+                    keep,
+                )
+            },
+            None::<&str>,
+            &mut dlg,
+            Options::default(),
+        )?;
+        // Note that this also doesn't trigger an error - the caller has to deal with that.
+    }
     Ok(())
 }
 
@@ -2751,7 +2816,7 @@ fn partial_checkout_cone_and_non_one() -> crate::Result {
 #[test]
 fn type_mismatch() {
     let root = fixture("type-mismatch");
-    let (out, entries) = try_collect_filtered_opts(
+    let (out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
@@ -2794,7 +2859,7 @@ fn type_mismatch() {
          The typechange is visible only when there is an entry in the index, of course"
     );
 
-    let (out, entries) = try_collect_filtered_opts(
+    let (out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
@@ -2839,7 +2904,7 @@ fn type_mismatch() {
 #[test]
 fn type_mismatch_ignore_case() {
     let root = fixture("type-mismatch-icase");
-    let (out, entries) = try_collect_filtered_opts(
+    let (out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
@@ -2879,7 +2944,7 @@ fn type_mismatch_ignore_case() {
         "this is the same as in the non-icase version, which means that icase lookup works"
     );
 
-    let (out, entries) = try_collect_filtered_opts(
+    let (out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
@@ -2923,7 +2988,7 @@ fn type_mismatch_ignore_case() {
 #[test]
 fn type_mismatch_ignore_case_clash_dir_is_file() {
     let root = fixture("type-mismatch-icase-clash-dir-is-file");
-    let (out, entries) = try_collect_filtered_opts(
+    let (out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
@@ -2964,7 +3029,7 @@ fn type_mismatch_ignore_case_clash_dir_is_file() {
 #[test]
 fn type_mismatch_ignore_case_clash_file_is_dir() {
     let root = fixture("type-mismatch-icase-clash-file-is-dir");
-    let (out, entries) = try_collect_filtered_opts(
+    let (out, entries) = try_collect_filtered_opts_collect(
         &root,
         |keep, ctx| {
             walk(
