@@ -1,4 +1,4 @@
-use gix_dir::walk::{EmissionMode, ForDeletionMode};
+use gix_dir::walk::{CollapsedEntriesEmissionMode, EmissionMode, ForDeletionMode};
 
 /// Options for use in the [`Repository::dirwalk()`](crate::Repository::dirwalk()) function.
 ///
@@ -16,6 +16,7 @@ pub struct Options {
     emit_untracked: EmissionMode,
     emit_empty_directories: bool,
     classify_untracked_bare_repositories: bool,
+    emit_collapsed: Option<CollapsedEntriesEmissionMode>,
 }
 
 /// Construction
@@ -32,6 +33,7 @@ impl Options {
             emit_untracked: Default::default(),
             emit_empty_directories: false,
             classify_untracked_bare_repositories: false,
+            emit_collapsed: None,
         }
     }
 }
@@ -49,6 +51,7 @@ impl From<Options> for gix_dir::walk::Options {
             emit_untracked: v.emit_untracked,
             emit_empty_directories: v.emit_empty_directories,
             classify_untracked_bare_repositories: v.classify_untracked_bare_repositories,
+            emit_collapsed: v.emit_collapsed,
         }
     }
 }
@@ -104,6 +107,13 @@ impl Options {
     /// and they will be recursed into.
     pub fn classify_untracked_bare_repositories(mut self, toggle: bool) -> Self {
         self.classify_untracked_bare_repositories = toggle;
+        self
+    }
+
+    /// Control whether entries that are in an about-to-be collapsed directory will be emitted. The default is `None`,
+    /// so entries in a collapsed directory are not observable.
+    pub fn emit_collapsed(mut self, value: Option<CollapsedEntriesEmissionMode>) -> Self {
+        self.emit_collapsed = value;
         self
     }
 }
