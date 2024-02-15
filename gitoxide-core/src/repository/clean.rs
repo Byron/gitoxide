@@ -27,7 +27,9 @@ pub(crate) mod function {
     use gix::dir::entry::{Kind, Status};
     use gix::dir::walk::EmissionMode::CollapseDirectory;
     use gix::dir::walk::ForDeletionMode::*;
+    use gix::dir::{walk, EntryRef};
     use std::borrow::Cow;
+    use std::path::Path;
 
     pub fn clean(
         repo: gix::Repository,
@@ -37,7 +39,7 @@ pub(crate) mod function {
         Options {
             debug,
             format,
-            execute,
+            mut execute,
             ignored,
             precious,
             directories,
@@ -55,7 +57,7 @@ pub(crate) mod function {
 
         let index = repo.index()?;
         let has_patterns = !patterns.is_empty();
-        let mut collect = gix::dir::walk::delegate::Collect::default();
+        let mut collect = InterruptableCollect::default();
         let collapse_directories = CollapseDirectory;
         let options = repo
             .dirwalk_options()?
@@ -74,14 +76,14 @@ pub(crate) mod function {
             .emit_ignored(Some(collapse_directories))
             .emit_empty_directories(true);
         repo.dirwalk(&index, patterns, options, &mut collect)?;
-        let prefix = repo.prefix()?.expect("worktree and valid current dir");
+        let prefix = repo.prefix()?.unwrap_or(Path::new(""));
         let prefix_len = if prefix.as_os_str().is_empty() {
             0
         } else {
             prefix.to_str().map_or(0, |s| s.len() + 1 /* slash */)
         };
 
-        let entries = collect.into_entries_by_path();
+        let entries = collect.inner.into_entries_by_path();
         let mut entries_to_clean = 0;
         let mut skipped_directories = 0;
         let mut skipped_ignored = 0;
@@ -143,7 +145,7 @@ pub(crate) mod function {
                 && gix::discover::is_git(&workdir.join(gix::path::from_bstr(entry.rela_path.as_bstr()))).is_ok()
             {
                 if debug {
-                    writeln!(err, "DBG: upgraded directory '{}' to repository", entry.rela_path).ok();
+                    writeln!(err, "DBG: upgraded directory '{}' to bare repository", entry.rela_path).ok();
                 }
                 disk_kind = gix::dir::entry::Kind::Repository;
             }
@@ -215,6 +217,9 @@ pub(crate) mod function {
                 },
             )?;
 
+            if gix::interrupt::is_triggered() {
+                execute = false;
+            }
             if execute {
                 let path = workdir.join(gix::path::from_bstr(entry.rela_path));
                 if disk_kind.is_dir() {
@@ -286,7 +291,25 @@ pub(crate) mod function {
             } else {
                 writeln!(err, "Nothing to clean{}", wrap_in_parens(make_msg()))?;
             }
+            if gix::interrupt::is_triggered() {
+                writeln!(err, "Result may be incomplete as it was interrupted")?;
+            }
         }
         Ok(())
+    }
+
+    #[derive(Default)]
+    struct InterruptableCollect {
+        inner: gix::dir::walk::delegate::Collect,
+    }
+
+    impl gix::dir::walk::Delegate for InterruptableCollect {
+        fn emit(&mut self, entry: EntryRef<'_>, collapsed_directory_status: Option<Status>) -> walk::Action {
+            let res = self.inner.emit(entry, collapsed_directory_status);
+            if gix::interrupt::is_triggered() {
+                return walk::Action::Cancel;
+            }
+            res
+        }
     }
 }
