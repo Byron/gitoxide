@@ -46,30 +46,19 @@ pub fn show(
     }
     let mut index = repo.index_or_empty()?;
     let index = gix::threading::make_mut(&mut index);
-    let pathspec = repo.pathspec(
-        pathspecs.iter().map(|p| p.as_bstr()),
-        true,
-        index,
-        gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
-    )?;
     let mut progress = progress.add_child("traverse index");
     let start = std::time::Instant::now();
+    let stack = repo
+        .attributes_only(
+            index,
+            gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
+        )?
+        .detach();
+    let pathspec = gix::Pathspec::new(&repo, pathspecs.iter().map(|p| p.as_bstr()), true, || Ok(stack.clone()))?;
     let options = gix_status::index_as_worktree::Options {
         fs: repo.filesystem_options()?,
         thread_limit,
         stat: repo.stat_options()?,
-        attributes: match repo
-            .attributes_only(
-                index,
-                gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
-            )?
-            .detach()
-            .state_mut()
-        {
-            gix::worktree::stack::State::AttributesStack(attrs) => std::mem::take(attrs),
-            // TODO: this should be nicer by creating attributes directly, but it's a private API
-            _ => unreachable!("state must be attributes stack only"),
-        },
     };
     let mut printer = Printer {
         out,
@@ -80,7 +69,12 @@ pub fn show(
         .0
         .into_parts()
         .0;
-
+    let ctx = gix_status::index_as_worktree::Context {
+        pathspec: pathspec.into_parts().0,
+        stack,
+        filter: filter_pipeline,
+        should_interrupt: &gix::interrupt::IS_INTERRUPTED,
+    };
     let mut collect = gix::dir::walk::delegate::Collect::default();
     let (outcome, walk_outcome) = gix::features::parallel::threads(|scope| -> anyhow::Result<_> {
         // TODO: it's either this, or not running both in parallel and setting UPTODATE flags whereever
@@ -114,9 +108,7 @@ pub fn show(
             Submodule,
             repo.objects.clone().into_arc()?,
             &mut progress,
-            pathspec.detach()?,
-            filter_pipeline,
-            &gix::interrupt::IS_INTERRUPTED,
+            ctx,
             options,
         )?;
 
