@@ -60,6 +60,7 @@ macro_rules! min_num_traits {
     ($t : ty, from_u32 => $from_u32 : expr) => {
         impl MinNumTraits for $t {
             fn from_u32(n: u32) -> Option<$t> {
+                #[allow(clippy::redundant_closure_call)]
                 $from_u32(n)
             }
 
@@ -153,8 +154,7 @@ fn btou_assert() {
 pub fn btou_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result<I, ParseIntegerError> {
     assert!(
         (2..=36).contains(&radix),
-        "radix must lie in the range 2..=36, found {}",
-        radix
+        "radix must lie in the range 2..=36, found {radix}"
     );
 
     let base = I::from_u32(radix).expect("radix can be represented as integer");
@@ -286,8 +286,7 @@ fn btoi_assert() {
 fn btoi_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result<I, ParseIntegerError> {
     assert!(
         (2..=36).contains(&radix),
-        "radix must lie in the range 2..=36, found {}",
-        radix
+        "radix must lie in the range 2..=36, found {radix}"
     );
 
     let base = I::from_u32(radix).expect("radix can be represented as integer");
