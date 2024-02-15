@@ -164,10 +164,6 @@ pub fn path(
                 m.kind.into()
             }
         });
-    if let Some(status) = maybe_status {
-        return Ok(out.with_status(status).with_kind(kind, index_kind));
-    }
-    debug_assert!(maybe_status.is_none(), "It only communicates a single stae right now");
 
     let mut maybe_upgrade_to_repository = |current_kind, find_harder: bool| {
         if recurse_repositories {
@@ -202,7 +198,14 @@ pub fn path(
             current_kind
         }
     };
+    if let Some(status) = maybe_status {
+        if kind == Some(entry::Kind::Directory) && index_kind == Some(entry::Kind::Repository) {
+            kind = maybe_upgrade_to_repository(kind, false);
+        }
+        return Ok(out.with_status(status).with_kind(kind, index_kind));
+    }
 
+    debug_assert!(maybe_status.is_none(), "It only communicates a single stae right now");
     if let Some(excluded) = ctx
         .excludes
         .as_mut()

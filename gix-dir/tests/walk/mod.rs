@@ -2094,6 +2094,70 @@ fn root_can_be_pruned_early_with_pathspec() -> crate::Result {
 }
 
 #[test]
+fn submodules() -> crate::Result {
+    let root = fixture("multiple-submodules");
+    let (out, entries) = collect(&root, |keep, ctx| walk(&root, &root, ctx, options_emit_all(), keep));
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 5,
+        }
+    );
+    let expected_content = [
+        entry_nokind(".git", DotGit),
+        entry(".gitmodules", Tracked, File).with_index_kind(File),
+        entry("a/b", Tracked, Repository).with_index_kind(Repository),
+        entry("empty", Tracked, File).with_index_kind(File),
+        entry("submodule", Tracked, Repository).with_index_kind(Repository),
+    ];
+    assert_eq!(entries, expected_content, "submodules are detected as repositories");
+
+    let (out1, entries) = try_collect_filtered_opts_collect(
+        &root,
+        |keep, ctx| walk(&root, &root, ctx, options_emit_all(), keep),
+        None::<&str>,
+        Options {
+            fresh_index: false,
+            ..Default::default()
+        },
+    )?;
+    assert_eq!(out1, out, "the output matches precisely");
+    assert_eq!(
+        entries, expected_content,
+        "this is also the case if the index isn't considered fresh"
+    );
+
+    let (out2, entries) = try_collect_filtered_opts_collect(
+        &root,
+        |keep, ctx| {
+            walk(
+                &root,
+                &root,
+                ctx,
+                walk::Options {
+                    ignore_case: true,
+                    ..options_emit_all()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Options {
+            fresh_index: false,
+            ..Default::default()
+        },
+    )?;
+    assert_eq!(out2, out, "the output matches precisely, even with ignore-case");
+    assert_eq!(
+        entries, expected_content,
+        "ignore case doesn't change anything (even though our search is quite different)"
+    );
+    Ok(())
+}
+
+#[test]
 fn cancel_with_collection_does_not_fail() -> crate::Result {
     struct CancelDelegate {
         emits_left_until_cancel: usize,
@@ -2105,7 +2169,6 @@ fn cancel_with_collection_does_not_fail() -> crate::Result {
                 walk::Action::Cancel
             } else {
                 self.emits_left_until_cancel -= 1;
-                dbg!(self.emits_left_until_cancel);
                 walk::Action::Continue
             }
         }

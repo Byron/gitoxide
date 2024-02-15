@@ -318,3 +318,16 @@ cp -R type-mismatch-icase-clash-dir-is-file type-mismatch-icase-clash-file-is-di
 )
 mkdir empty
 touch just-a-file
+
+git init submodule
+(cd submodule
+  touch empty && git add empty
+  git commit -m upstream
+)
+
+git clone submodule multiple-submodules
+(cd multiple-submodules
+  git submodule add ../submodule submodule
+  git submodule add ../submodule a/b
+  git commit -m "add modules"
+)
