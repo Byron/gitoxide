@@ -10,7 +10,7 @@ rust-version = "1.65"
 include = ["src/**/*", "LICENSE-*"]
 
 [lib]
-doctest = false
+doctest = true
 
 [features]
 bstr = ["dep:bstr"]
