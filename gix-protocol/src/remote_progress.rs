@@ -75,7 +75,7 @@ impl<'a> RemoteProgress<'a> {
 
 fn parse_number(i: &mut &[u8]) -> PResult<usize, ()> {
     take_till(0.., |c: u8| !c.is_ascii_digit())
-        .try_map(btoi::btoi)
+        .try_map(gix_utils::btoi::to_signed)
         .parse_next(i)
 }
 

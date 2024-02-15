@@ -89,7 +89,8 @@ pub fn undo(input: &BStr) -> Result<(Cow<'_, BStr>, usize), undo::Error> {
                                     })?
                                     .read_exact(&mut buf[1..])
                                     .expect("impossible to fail as numbers match");
-                                let byte = btoi::btou_radix(&buf, 8).map_err(|e| undo::Error::new(e, original))?;
+                                let byte = gix_utils::btoi::to_unsigned_with_radix(&buf, 8)
+                                    .map_err(|e| undo::Error::new(e, original))?;
                                 out.push(byte);
                                 input = &input[2..];
                                 consumed += 2;

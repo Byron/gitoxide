@@ -358,7 +358,7 @@ pub mod decode {
     pub enum LooseHeaderDecodeError {
         #[error("{message}: {number:?}")]
         ParseIntegerError {
-            source: btoi::ParseIntegerError,
+            source: gix_utils::btoi::ParseIntegerError,
             message: &'static str,
             number: bstr::BString,
         },
@@ -383,7 +383,7 @@ pub mod decode {
             message: "Did not find 0 byte in header",
         })?;
         let size_bytes = &input[kind_end + 1..size_end];
-        let size = btoi::btoi(size_bytes).map_err(|source| ParseIntegerError {
+        let size = gix_utils::btoi::to_signed(size_bytes).map_err(|source| ParseIntegerError {
             source,
             message: "Object size in header could not be parsed",
             number: size_bytes.into(),

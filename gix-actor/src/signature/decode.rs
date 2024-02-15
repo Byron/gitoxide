@@ -1,7 +1,7 @@
 pub(crate) mod function {
     use bstr::ByteSlice;
-    use btoi::btoi;
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
+    use gix_utils::btoi::to_signed;
     use winnow::{
         combinator::{alt, separated_pair, terminated},
         error::{AddContext, ParserError, StrContext},
@@ -23,7 +23,7 @@ pub(crate) mod function {
             b" ",
             (
                 terminated(take_until(0.., SPACE), take(1usize))
-                    .verify_map(|v| btoi::<SecondsSinceUnixEpoch>(v).ok())
+                    .verify_map(|v| to_signed::<SecondsSinceUnixEpoch>(v).ok())
                     .context(StrContext::Expected("<timestamp>".into())),
                 alt((
                     take_while(1.., b'-').map(|_| Sign::Minus),
@@ -31,10 +31,10 @@ pub(crate) mod function {
                 ))
                 .context(StrContext::Expected("+|-".into())),
                 take_while(2, AsChar::is_dec_digit)
-                    .verify_map(|v| btoi::<OffsetInSeconds>(v).ok())
+                    .verify_map(|v| to_signed::<OffsetInSeconds>(v).ok())
                     .context(StrContext::Expected("HH".into())),
                 take_while(1..=2, AsChar::is_dec_digit)
-                    .verify_map(|v| btoi::<OffsetInSeconds>(v).ok())
+                    .verify_map(|v| to_signed::<OffsetInSeconds>(v).ok())
                     .context(StrContext::Expected("MM".into())),
             )
                 .map(|(time, sign, hours, minutes)| {
