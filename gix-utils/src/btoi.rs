@@ -196,6 +196,13 @@ pub fn btou<I: MinNumTraits>(bytes: &[u8]) -> Result<I, ParseIntegerError> {
     btou_radix(bytes, 10)
 }
 
+#[test]
+fn btou_assert() {
+    assert_eq!(Ok(12345), btou(b"12345"));
+    assert!(btou::<u8>(b"+1").is_err()); // only btoi allows signs
+    assert!(btou::<u8>(b"256").is_err()); // overflow
+}
+
 /// Converts a byte slice in a given base to an integer. Signs are not allowed.
 ///
 /// # Errors
@@ -266,6 +273,12 @@ pub fn btou_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result<I, ParseI
     Ok(result)
 }
 
+#[test]
+fn btou_radix_assert() {
+    assert_eq!(Ok(255), btou_radix(b"ff", 16));
+    assert_eq!(Ok(42), btou_radix(b"101010", 2));
+}
+
 /// Converts a byte slice to an integer.
 ///
 /// Like [`btou`], but numbers may optionally start with a sign (`-` or `+`).
@@ -302,6 +315,18 @@ pub fn btou_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result<I, ParseI
 /// [`ParseIntegerError`]: struct.ParseIntegerError.html
 pub fn btoi<I: MinNumTraits>(bytes: &[u8]) -> Result<I, ParseIntegerError> {
     btoi_radix(bytes, 10)
+}
+
+#[test]
+fn btoi_assert() {
+    assert_eq!(Ok(123), btoi(b"123"));
+    assert_eq!(Ok(123), btoi(b"+123"));
+    assert_eq!(Ok(-123), btoi(b"-123"));
+
+    assert!(btoi::<u8>(b"123456789").is_err()); // overflow
+    assert!(btoi::<u64>(b"-1").is_err()); // underflow
+
+    assert!(btoi::<i32>(b" 42").is_err()); // leading space
 }
 
 /// Converts a byte slice in a given base to an integer.
@@ -389,4 +414,11 @@ fn btoi_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result<I, ParseInteg
     }
 
     Ok(result)
+}
+
+#[test]
+fn btoi_radix_assert() {
+    assert_eq!(Ok(10), btoi_radix(b"a", 16));
+    assert_eq!(Ok(10), btoi_radix(b"+a", 16));
+    assert_eq!(Ok(-42), btoi_radix(b"-101010", 2));
 }
