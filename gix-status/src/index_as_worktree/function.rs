@@ -2,7 +2,7 @@ use std::{
     io,
     path::Path,
     slice::Chunks,
-    sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
+    sync::atomic::{AtomicU64, AtomicUsize, Ordering},
 };
 
 use bstr::BStr;
@@ -11,6 +11,7 @@ use gix_features::parallel::{in_parallel_if, Reduce};
 use gix_filter::pipeline::convert::ToGitOutcome;
 use gix_object::FindExt;
 
+use crate::index_as_worktree::Context;
 use crate::{
     index_as_worktree::{
         traits,
@@ -18,7 +19,7 @@ use crate::{
         types::{Error, Options},
         Change, Conflict, EntryStatus, Outcome, VisitEntry,
     },
-    Pathspec, SymlinkCheck,
+    SymlinkCheck,
 };
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them
@@ -26,15 +27,14 @@ use crate::{
 /// `submodule` which can take a look at submodules in detail to produce status information (BASE version if its conflicting).
 /// `options` are used to configure the operation.
 ///
+/// Note `worktree` must be the root path of the worktree, not a path inside of the worktree.
+///
 /// Note that `index` may require changes to be up-to-date with the working tree and avoid expensive computations by updating
 /// respective entries with stat information from the worktree, and its timestamp is adjusted to the current time for which it
 /// will be considered fresh. All changes that would be applied to the index are delegated to the caller, which receives these
 /// as [`EntryStatus`].
 /// The `pathspec` is used to determine which index entries to check for status in the first place.
 ///
-/// `should_interrupt` can be used to stop all processing.
-/// `filter` is used to convert worktree files back to their internal git representation. For this to be correct,
-/// [`Options::attributes`] must be configured as well.
 /// `objects` is used to access the version of an object in the object database for direct comparison.
 ///
 /// **It's important to note that the `index` should have its [timestamp updated](gix_index::State::set_timestamp()) with a timestamp
@@ -47,7 +47,7 @@ use crate::{
 /// stats like `git status` would if it had to determine the hash.
 /// If that happened, the index should be written back after updating the entries with these updated stats, see [Outcome::skipped].
 ///
-/// Thus some care has to be taken to do the right thing when letting the index match the worktree by evaluating the changes observed
+/// Thus, some care has to be taken to do the right thing when letting the index match the worktree by evaluating the changes observed
 /// by the `collector`.
 #[allow(clippy::too_many_arguments)]
 pub fn index_as_worktree<'index, T, U, Find, E>(
@@ -58,10 +58,13 @@ pub fn index_as_worktree<'index, T, U, Find, E>(
     submodule: impl SubmoduleStatus<Output = U, Error = E> + Send + Clone,
     objects: Find,
     progress: &mut dyn gix_features::progress::Progress,
-    pathspec: impl Pathspec + Send + Clone,
-    filter: gix_filter::Pipeline,
-    should_interrupt: &AtomicBool,
-    mut options: Options,
+    Context {
+        pathspec,
+        stack,
+        filter,
+        should_interrupt,
+    }: Context<'_>,
+    options: Options,
 ) -> Result<Outcome, Error>
 where
     T: Send,
@@ -84,20 +87,13 @@ where
         .prefixed_entries_range(pathspec.common_prefix())
         .unwrap_or(0..index.entries().len());
 
-    let stack = gix_worktree::Stack::from_state_and_ignore_case(
-        worktree,
-        options.fs.ignore_case,
-        gix_worktree::stack::State::AttributesStack(std::mem::take(&mut options.attributes)),
-        index,
-        index.path_backing(),
-    );
     let (entries, path_backing) = (index.entries(), index.path_backing());
     let mut num_entries = entries.len();
     let entry_index_offset = range.start;
     let entries = &entries[range];
 
     let _span = gix_features::trace::detail!("gix_status::index_as_worktree", 
-                                             num_entries = entries.len(), 
+                                             num_entries = entries.len(),
                                              chunk_size = chunk_size,
                                              thread_limit = ?thread_limit);
 
@@ -253,7 +249,7 @@ impl<'index> State<'_, 'index> {
         entries: &'index [gix_index::Entry],
         entry: &'index gix_index::Entry,
         entry_index: usize,
-        pathspec: &mut impl Pathspec,
+        pathspec: &mut gix_pathspec::Search,
         diff: &mut impl CompareBlobs<Output = T>,
         submodule: &mut impl SubmoduleStatus<Output = U, Error = E>,
         objects: &Find,
@@ -273,7 +269,20 @@ impl<'index> State<'_, 'index> {
             return None;
         }
         let path = entry.path_in(self.path_backing);
-        if !pathspec.is_included(path, Some(false)) {
+        let is_excluded = pathspec
+            .pattern_matching_relative_path(
+                path,
+                Some(entry.mode.is_submodule()),
+                &mut |relative_path, case, is_dir, out| {
+                    self.attr_stack
+                        .set_case(case)
+                        .at_entry(relative_path, Some(is_dir), objects)
+                        .map_or(false, |platform| platform.matching_attributes(out))
+                },
+            )
+            .map_or(true, |m| m.is_excluded());
+
+        if is_excluded {
             self.skipped_by_pathspec.fetch_add(1, Ordering::Relaxed);
             return None;
         }

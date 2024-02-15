@@ -1,4 +1,5 @@
 use bstr::{BStr, BString};
+use std::sync::atomic::AtomicBool;
 
 /// The error returned by [index_as_worktree()`](crate::index_as_worktree()).
 #[derive(Debug, thiserror::Error)]
@@ -30,11 +31,25 @@ pub struct Options {
     pub thread_limit: Option<usize>,
     /// Options that control how stat comparisons are made when checking if a file is fresh.
     pub stat: gix_index::entry::stat::Options,
-    /// Pre-configured state to allow processing attributes.
+}
+
+/// The context for [index_as_worktree()`](crate::index_as_worktree()).
+#[derive(Clone)]
+pub struct Context<'a> {
+    /// The pathspec to limit the amount of paths that are checked. Can be empty to allow all paths.
+    pub pathspec: gix_pathspec::Search,
+    /// A stack pre-configured to allow accessing attributes for each entry, as required for `filter`
+    /// and possibly pathspecs.
+    pub stack: gix_worktree::Stack,
+    /// A filter to be able to perform conversions from and to the worktree format.
     ///
-    /// These are needed to potentially refresh the index with data read from the worktree, which needs to be converted back
-    /// to the form stored in git.
-    pub attributes: gix_worktree::stack::state::Attributes,
+    /// It is needed to potentially refresh the index with data read from the worktree, which needs to be converted back
+    /// to the form stored in Git.
+    ///
+    /// Note that for this to be correct, the attribute `stack` must be configured correctly as well.
+    pub filter: gix_filter::Pipeline,
+    /// A flag to query to learn if cancellation is requested.
+    pub should_interrupt: &'a AtomicBool,
 }
 
 /// Provide additional information collected during the runtime of [`index_as_worktree()`](crate::index_as_worktree()).
