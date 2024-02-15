@@ -56,115 +56,37 @@ pub trait MinNumTraits: Sized + Copy {
     fn checked_sub(self, v: Self) -> Option<Self>;
 }
 
-impl MinNumTraits for i64 {
-    fn from_u32(n: u32) -> Option<i64> {
-        Some(n.into())
-    }
+macro_rules! min_num_traits {
+    ($t : ty, from_u32 => $from_u32 : expr) => {
+        impl MinNumTraits for $t {
+            fn from_u32(n: u32) -> Option<$t> {
+                $from_u32(n)
+            }
 
-    fn zero() -> Self {
-        0
-    }
+            fn zero() -> Self {
+                0
+            }
 
-    fn checked_mul(self, v: i64) -> Option<i64> {
-        i64::checked_mul(self, v)
-    }
+            fn checked_mul(self, v: $t) -> Option<$t> {
+                <$t>::checked_mul(self, v)
+            }
 
-    fn checked_add(self, v: i64) -> Option<i64> {
-        i64::checked_add(self, v)
-    }
+            fn checked_add(self, v: $t) -> Option<$t> {
+                <$t>::checked_add(self, v)
+            }
 
-    fn checked_sub(self, v: i64) -> Option<i64> {
-        i64::checked_sub(self, v)
-    }
+            fn checked_sub(self, v: $t) -> Option<$t> {
+                <$t>::checked_sub(self, v)
+            }
+        }
+    };
 }
 
-impl MinNumTraits for u64 {
-    fn from_u32(n: u32) -> Option<u64> {
-        Some(n.into())
-    }
-
-    fn zero() -> Self {
-        0
-    }
-
-    fn checked_mul(self, v: u64) -> Option<u64> {
-        u64::checked_mul(self, v)
-    }
-
-    fn checked_add(self, v: u64) -> Option<u64> {
-        u64::checked_add(self, v)
-    }
-
-    fn checked_sub(self, v: u64) -> Option<u64> {
-        u64::checked_sub(self, v)
-    }
-}
-
-impl MinNumTraits for usize {
-    fn from_u32(n: u32) -> Option<usize> {
-        n.try_into().ok()
-    }
-
-    fn zero() -> Self {
-        0
-    }
-
-    fn checked_mul(self, v: usize) -> Option<usize> {
-        usize::checked_mul(self, v)
-    }
-
-    fn checked_add(self, v: usize) -> Option<usize> {
-        usize::checked_add(self, v)
-    }
-
-    fn checked_sub(self, v: usize) -> Option<usize> {
-        usize::checked_sub(self, v)
-    }
-}
-
-impl MinNumTraits for i32 {
-    fn from_u32(n: u32) -> Option<Self> {
-        n.try_into().ok()
-    }
-
-    fn zero() -> Self {
-        0
-    }
-
-    fn checked_mul(self, v: i32) -> Option<i32> {
-        i32::checked_mul(self, v)
-    }
-
-    fn checked_add(self, v: i32) -> Option<i32> {
-        i32::checked_add(self, v)
-    }
-
-    fn checked_sub(self, v: i32) -> Option<i32> {
-        i32::checked_sub(self, v)
-    }
-}
-
-impl MinNumTraits for u8 {
-    fn from_u32(n: u32) -> Option<Self> {
-        n.try_into().ok()
-    }
-
-    fn zero() -> Self {
-        0
-    }
-
-    fn checked_mul(self, v: u8) -> Option<u8> {
-        u8::checked_mul(self, v)
-    }
-
-    fn checked_add(self, v: u8) -> Option<u8> {
-        u8::checked_add(self, v)
-    }
-
-    fn checked_sub(self, v: u8) -> Option<u8> {
-        u8::checked_sub(self, v)
-    }
-}
+min_num_traits!(i32, from_u32 => |n: u32| n.try_into().ok());
+min_num_traits!(i64, from_u32 => |n: u32| Some(n.into()));
+min_num_traits!(u64, from_u32 => |n: u32| Some(n.into()));
+min_num_traits!(u8, from_u32 => |n: u32| n.try_into().ok());
+min_num_traits!(usize, from_u32 => |n: u32| n.try_into().ok());
 
 /// Converts a byte slice to an integer. Signs are not allowed.
 ///
