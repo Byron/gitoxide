@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter};
 
-use crosstermion::crossterm::style::Stylize;
 use owo_colors::OwoColorize;
 
 #[derive(Clone)]
@@ -46,7 +45,7 @@ impl Display for Usage {
 impl Usage {
     pub fn icon(&self) -> &'static str {
         match self {
-            Puzzled => "?",
+            Puzzled => "❓",
             NotApplicable { .. } => "❌",
             Planned { .. } => "🕒",
             NotPlanned { .. } => "🤔",
@@ -546,11 +545,10 @@ pub fn show_progress() -> anyhow::Result<()> {
             "{icon} {config: <50}: {usage}",
             icon = usage.icon(),
             config = if let Some(config) = config.strip_prefix("gitoxide.") {
-                format!("{gitoxide}{config}", gitoxide = "gitoxide.".green())
+                format!("{gitoxide}{config}", gitoxide = "gitoxide.")
             } else {
                 config.to_string()
             }
-            .bold(),
         );
     }
 
