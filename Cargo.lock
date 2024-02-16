@@ -1309,7 +1309,6 @@ dependencies = [
  "gix-status",
  "gix-transport",
  "gix-url",
- "itertools 0.12.0",
  "jwalk",
  "layout-rs",
  "open",

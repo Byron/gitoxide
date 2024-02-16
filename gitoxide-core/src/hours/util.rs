@@ -1,7 +1,6 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use gix::bstr::{BStr, ByteSlice};
-use itertools::Itertools;
 
 use crate::hours::core::HOURS_PER_WORKDAY;
 
@@ -53,9 +52,23 @@ impl WorkByPerson {
     ) -> std::io::Result<()> {
         writeln!(
             out,
-            "{} <{}>",
-            self.name.iter().join(", "),
-            self.email.iter().join(", ")
+            "{names} <{mails}>",
+            names = self
+                .name
+                .iter()
+                // BStr does not impl slice::Join
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+                .as_slice()
+                .join(", "),
+            mails = self
+                .email
+                .iter()
+                // BStr does not impl slice::Join
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+                .as_slice()
+                .join(", ")
         )?;
         writeln!(out, "{} commits found", self.num_commits)?;
         writeln!(
