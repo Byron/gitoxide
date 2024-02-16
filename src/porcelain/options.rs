@@ -1,3 +1,4 @@
+use clap_complete::Shell;
 use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
@@ -39,6 +40,15 @@ pub enum Subcommands {
     /// A selection of useful tools
     #[clap(subcommand)]
     Tool(ToolCommands),
+    /// Generate shell completions to stdout or a directory.
+    #[clap(visible_alias = "generate-completions", visible_alias = "shell-completions")]
+    Completions {
+        /// The shell to generate completions for. Otherwise it's derived from the environment.
+        #[clap(long, short)]
+        shell: Option<Shell>,
+        /// The output directory in case multiple files are generated. If not provided, will write to stdout.
+        out_dir: Option<String>,
+    },
     #[cfg(debug_assertions)]
     Panic,
 }
