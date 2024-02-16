@@ -274,12 +274,20 @@ pub trait MinNumTraits: Sized + Copy {
     const ZERO: Self;
     ///
     fn from_u32(n: u32) -> Option<Self>;
-    ///
-    fn checked_mul(self, v: Self) -> Option<Self>;
-    ///
-    fn checked_add(self, v: Self) -> Option<Self>;
-    ///
+    /// the checked multiplication operation for this type
+    fn checked_mul(self, rhs: Self) -> Option<Self>;
+    /// the chekced addition operation for this type
+    fn checked_add(self, rhs: Self) -> Option<Self>;
+    /// the checked subtraction operation for this type
     fn checked_sub(self, v: Self) -> Option<Self>;
+}
+
+macro_rules! impl_checked {
+    ($f:ident) => {
+        fn $f(self, rhs: Self) -> Option<Self> {
+            Self::$f(self, rhs)
+        }
+    };
 }
 
 macro_rules! min_num_traits {
@@ -292,17 +300,9 @@ macro_rules! min_num_traits {
                 $from_u32(n)
             }
 
-            fn checked_mul(self, v: $t) -> Option<$t> {
-                <$t>::checked_mul(self, v)
-            }
-
-            fn checked_add(self, v: $t) -> Option<$t> {
-                <$t>::checked_add(self, v)
-            }
-
-            fn checked_sub(self, v: $t) -> Option<$t> {
-                <$t>::checked_sub(self, v)
-            }
+            impl_checked!(checked_add);
+            impl_checked!(checked_mul);
+            impl_checked!(checked_sub);
         }
     };
 }
