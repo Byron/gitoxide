@@ -18,7 +18,7 @@ default = []
 ## Discover all git repositories within a directory. Particularly useful with [skim](https://github.com/lotabout/skim).
 organize = ["dep:gix-url", "dep:jwalk"]
 ## Derive the amount of time invested into a git repository akin to [git-hours](https://github.com/kimmobrunfeldt/git-hours).
-estimate-hours = ["dep:itertools", "dep:fs-err", "dep:crossbeam-channel", "dep:smallvec"]
+estimate-hours = ["dep:fs-err", "dep:crossbeam-channel", "dep:smallvec"]
 ## Gather information about repositories and store it in a database for easy querying.
 query = ["dep:rusqlite"]
 ## Run algorithms on a corpus of repositories and store their results for later comparison and intelligence gathering.
@@ -29,7 +29,7 @@ corpus = [ "dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel", "
 archive = ["dep:gix-archive-for-configuration-only", "gix/worktree-archive"]
 
 ## The ability to clean a repository, similar to `git clean`.
-clean = [ "gix/dirwalk" ]
+clean = ["gix/dirwalk"]
 
 #! ### Mutually Exclusive Networking
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
@@ -72,7 +72,6 @@ gix-url = { version = "^0.27.0", path = "../gix-url", optional = true }
 jwalk = { version = "0.8.0", optional = true }
 
 # for 'hours'
-itertools = { version = "0.12.0", optional = true }
 fs-err = { version = "2.6.0", optional = true }
 crossbeam-channel = { version = "0.5.6", optional = true }
 smallvec = { version = "1.10.0", optional = true }

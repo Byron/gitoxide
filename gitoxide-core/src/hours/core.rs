@@ -7,7 +7,6 @@ use std::{
 };
 
 use gix::bstr::BStr;
-use itertools::Itertools;
 
 use crate::hours::{
     util::{add_lines, remove_lines},
@@ -25,17 +24,24 @@ pub fn estimate_hours(
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
 
-    let hours_for_commits = commits.iter().map(|t| &t.1).rev().tuple_windows().fold(
-        0_f32,
-        |hours, (cur, next): (&gix::actor::SignatureRef<'_>, &gix::actor::SignatureRef<'_>)| {
+    let hours_for_commits = {
+        let mut hours = 0.0;
+
+        let mut commits = commits.iter().map(|t| &t.1).rev();
+        let mut cur = commits.next().expect("at least one commit if we are here");
+
+        for next in commits {
             let change_in_minutes = (next.time.seconds.saturating_sub(cur.time.seconds)) as f32 / MINUTES_PER_HOUR;
             if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
-                hours + change_in_minutes / MINUTES_PER_HOUR
+                hours += change_in_minutes / MINUTES_PER_HOUR
             } else {
-                hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR)
+                hours += FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR
             }
-        },
-    );
+            cur = next;
+        }
+
+        hours
+    };
 
     let author = &commits[0].1;
     let (files, lines) = (!stats.is_empty())
