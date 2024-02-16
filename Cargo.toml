@@ -186,11 +186,7 @@ tracing-forest = { version = "0.1.5", features = ["serde"], optional = true }
 tracing-subscriber = { version = "0.3.17", optional = true }
 tracing = { version = "0.1.37", optional = true }
 
-# for progress
-owo-colors = "4.0.0"
-
 # for config-tree
-tabled = { version = "0.15.0", features = ["ansi"] }
 terminal_size = "0.3.0"
 
 # Avoid pre-compiled binaries, see https://github.com/serde-rs/serde/issues/2538 and https://github.com/serde-rs/serde/pull/2590

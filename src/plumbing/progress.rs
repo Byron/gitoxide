@@ -1,24 +1,16 @@
-use std::{
-    borrow::Cow,
-    fmt::{Display, Formatter},
-};
-
-use crosstermion::crossterm::style::Stylize;
-use owo_colors::OwoColorize;
-use tabled::settings::peaker::PriorityMax;
-use tabled::settings::{Extract, Style, Width};
-use tabled::Tabled;
+use std::fmt::{Display, Formatter};
+use std::io::StdoutLock;
 
 #[derive(Clone)]
 enum Usage {
     /// It's not reasonable to implement it as the prerequisites don't apply.
-    NotApplicable { reason: &'static str },
+    NotApplicable(&'static str),
     /// We have no intention to implement it, but that can change if there is demand.
-    NotPlanned { reason: &'static str },
+    NotPlanned(&'static str),
     /// We definitely want to implement this configuration value.
-    Planned { note: Option<&'static str> },
+    Planned(&'static str),
     /// The configuration is already used, possibly with a given `deviation`.
-    InUse { deviation: Option<&'static str> },
+    InUse(&'static str),
     /// Needs analysis, unclear how it works or what it does.
     Puzzled,
 }
@@ -28,20 +20,16 @@ impl Display for Usage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Puzzled => f.write_str("❓")?,
-            NotApplicable { reason } => write!(f, "not applicable: {reason}")?,
-            NotPlanned { reason } => {
-                write!(f, "{}", "not planned".blink())?;
-                write!(f, " ℹ {} ℹ", reason.bright_white())?;
-            }
-            Planned { note } => {
-                write!(f, "{}", "planned".blink())?;
-                if let Some(note) = note {
-                    write!(f, " ℹ {} ℹ", note.bright_white())?;
+            NotApplicable(reason) => write!(f, "not applicable because {reason}")?,
+            NotPlanned(reason) => write!(f, "not planned || {reason}")?,
+            Planned(note) => {
+                if !note.is_empty() {
+                    write!(f, "planned || {note}")?
                 }
             }
-            InUse { deviation } => {
-                if let Some(deviation) = deviation {
-                    write!(f, "{}", format!("❗️{deviation}❗️").bright_white())?
+            InUse(deviation) => {
+                if !deviation.is_empty() {
+                    write!(f, "❗️❗️❗️{deviation}")?
                 }
             }
         }
@@ -50,17 +38,17 @@ impl Display for Usage {
 }
 
 impl Usage {
-    pub fn icon(&self) -> &'static str {
+    pub const fn icon(&self) -> &'static str {
         match self {
-            Puzzled => "?",
-            NotApplicable { .. } => "❌",
-            Planned { .. } => "🕒",
-            NotPlanned { .. } => "🤔",
-            InUse { deviation, .. } => {
-                if deviation.is_some() {
-                    "👌️"
-                } else {
+            Puzzled => "❓",
+            NotApplicable(_) => "❌",
+            Planned(_) => "🕒",
+            NotPlanned(_) => "🤔",
+            InUse(deviation) => {
+                if deviation.is_empty() {
                     "✅"
+                } else {
+                    "👌️"
                 }
             }
         }
@@ -73,434 +61,390 @@ struct Record {
     usage: Usage,
 }
 
-impl Tabled for Record {
-    const LENGTH: usize = 3;
-
-    fn fields(&self) -> Vec<Cow<'_, str>> {
-        let mut tokens = self.config.split('.');
-        let mut buf = vec![{
-            let name = tokens.next().expect("present");
-            if name == "gitoxide" {
-                name.bold().green()
-            } else {
-                name.bold()
-            }
-            .to_string()
-        }];
-        buf.extend(tokens.map(ToOwned::to_owned));
-
-        vec![
-            Cow::Borrowed(self.usage.icon()),
-            buf.join(".").into(),
-            self.usage.to_string().into(),
-        ]
-    }
-
-    fn headers() -> Vec<Cow<'static, str>> {
-        vec!["icon".into(), "key".into(), "info".into()]
-    }
-}
-
 static GIT_CONFIG: &[Record] = &[
     Record {
         config: "core.symlinks",
-        usage: Planned {note: Some("needed to handle checkouts faithfully")}
+        usage: Planned("needed to handle checkouts faithfully")
     },
     Record {
         config: "core.hideDotFiles",
-        usage: Planned {note: Some("Seems useful, but needs demand from windows users")}
+        usage: Planned("Seems useful, but needs demand from windows users")
     },
     Record {
         config: "core.packedGitWindowSize",
-        usage: NotPlanned { reason: "an optimization for handling many large packs more efficiently seems unnecessary" }
+        usage: NotPlanned("an optimization for handling many large packs more efficiently seems unnecessary")
     },
     Record {
         config: "core.packedGitLimit",
-        usage: NotApplicable { reason: "we target 32bit systems only and don't use a windowing mechanism" }
+        usage: NotApplicable("we target 32bit systems only and don't use a windowing mechanism")
     },
     Record {
         config: "core.alternateRefsCommand",
-        usage: NotPlanned { reason: "there is no need as we can perform the required operation in-binary. This could happen though if there is a use-case and demand." }
+        usage: NotPlanned("there is no need as we can perform the required operation in-binary. This could happen though if there is a use-case and demand.")
     },
     Record {
         config: "core.alternateRefsPrefixes",
-        usage: NotPlanned { reason: "seems like a niche feature, but can be implemented if there is demand" }
+        usage: NotPlanned("seems like a niche feature, but can be implemented if there is demand")
     },
     Record {
         config: "core.compression",
-        usage: Planned { note: Some("Allow to remove similar hardcoded value - passing it through will be some effort") },
+        usage: Planned("Allow to remove similar hardcoded value - passing it through will be some effort")
     },
     Record {
         config: "core.loosecompression",
-        usage: Planned { note: None },
+        usage: Planned("")
     },
     Record {
         config: "core.protectHFS",
-        usage: Planned { note: Some("relevant for checkout on MacOS") },
+        usage: Planned("relevant for checkout on MacOS")
     },
     Record {
         config: "core.protectNTFS",
-        usage: NotPlanned { reason: "lack of demand"},
+        usage: NotPlanned("lack of demand")
     },
     Record {
         config: "core.sparseCheckout",
-        usage: Planned { note: Some("we want to support huge repos and be the fastest in doing so") },
+        usage: Planned("we want to support huge repos and be the fastest in doing so")
     },
     Record {
         config: "core.sparseCheckoutCone",
-        usage: Planned { note: Some("this is a nice improvement over spareCheckout alone and should one day be available too") },
+        usage: Planned("this is a nice improvement over spareCheckout alone and should one day be available too")
     },
     Record {
         config: "core.gitProxy",
-        usage: NotPlanned { reason: "the transport mechanism works differently enough to not support it for now, but of course it's possible to add support if there is demand" },
+        usage: NotPlanned("the transport mechanism works differently enough to not support it for now, but of course it's possible to add support if there is demand")
     },
     Record {
         config: "checkout.defaultRemote",
-        usage: Planned { note: Some("needed for correct checkout behaviour, similar to what git does") },
+        usage: Planned("needed for correct checkout behaviour, similar to what git does")
     },
     Record {
         config: "core.untrackedCache",
-        usage: Planned { note: Some("needed for fast worktree operation") },
+        usage: Planned("needed for fast worktree operation")
     },
     Record {
         config: "checkout.guess",
-        usage: Planned { note: None },
+        usage: Planned("")
     },
     Record {
         config: "checkout.thresholdForParallelism",
-        usage: NotApplicable {reason: "parallelism is efficient enough to always run with benefit"},
+        usage: NotApplicable("parallelism is efficient enough to always run with benefit")
     },
     Record {
         config: "feature.manyFiles",
-        usage: Planned {note: Some("big repositories are on the roadmap")},
+        usage: Planned("big repositories are on the roadmap")
     },
     Record {
         config: "core.preloadIndex",
-        usage: Planned {note: Some("it's enabled by default and allows parallel stat checks - it's using a lot of CPU for just minor performance boosts though")},
+        usage: Planned("it's enabled by default and allows parallel stat checks - it's using a lot of CPU for just minor performance boosts though")
     },
     Record {
         config: "commitGraph.generationVersion",
-        usage: NotPlanned { reason: "couldn't find a test that would require corrected generation numbers, even `git` has no test for this." },
+        usage: NotPlanned("couldn't find a test that would require corrected generation numbers, even `git` has no test for this.")
     },
     Record {
         config: "commitGraph.maxNewFilters",
-        usage: NotPlanned { reason: "can be considered when the underlying feature is actually used or needed" },
+        usage: NotPlanned("can be considered when the underlying feature is actually used or needed")
     },
     Record {
         config: "commitGraph.readChangedPaths",
-        usage: NotPlanned { reason: "can be considered when the underlying feature is actually used or needed" },
+        usage: NotPlanned("can be considered when the underlying feature is actually used or needed")
     },
     Record {
         config: "index.sparse",
-        usage: Planned {note: Some("we can read sparse indices and support for it will be added early on")},
+        usage: Planned("we can read sparse indices and support for it will be added early on")
     },
     Record {
         config: "merge.renormalize",
-        usage: Planned {note: Some("once merging is being implemented, renormalization should be respected")},
+        usage: Planned("once merging is being implemented, renormalization should be respected")
     },
     Record {
         config: "sparse.expectFilesOutsideOfPatterns",
-        usage: Planned {note: Some("a feature definitely worth having")},
+        usage: Planned("a feature definitely worth having")
     },
     Record {
         config: "submodule.recurse",
-        usage: Planned {note: Some("very relevant for doing the right thing during checkouts. Note that 'clone' isnt' affected by it, even though we could make it so for good measure.")},
+        usage: Planned("very relevant for doing the right thing during checkouts. Note that 'clone' isnt' affected by it, even though we could make it so for good measure.")
     },
     Record {
         config: "submodule.propagateBranches",
-        usage: NotPlanned {reason: "it is experimental, let's see how it pans out"}
+        usage: NotPlanned("it is experimental, let's see how it pans out")
     },
     Record {
         config: "submodule.alternateLocation",
-        usage: NotPlanned {reason: "not currently supported when we clone either"}
+        usage: NotPlanned("not currently supported when we clone either")
     },
     Record {
         config: "submodule.alternateErrorStrategy",
-        usage: NotPlanned {reason: "not currently supported when we clone either"}
+        usage: NotPlanned("not currently supported when we clone either")
     },
     Record {
         config: "submodule.fetchJobs",
-        usage: Planned {note: Some("relevant for fetching")},
+        usage: Planned("relevant for fetching")
     },
     Record {
         config: "branch.autoSetupRebase",
-        usage: Planned {
-            note: Some("for when we allow setting up upstream branches")
-        },
+        usage: Planned("for when we allow setting up upstream branches")
     },
     Record {
         config: "branch.<name>.rebase",
-        usage: Planned {
-            note: Some("for when we can merge, rebase should be supported")
-        },
+        usage: Planned("for when we can merge, rebase should be supported")
     },
     Record {
         config: "branch.<name>.description",
-        usage: NotPlanned {
-            reason: "no plan to implement format-patch or request-pull summary"
-        },
+        usage: NotPlanned("no plan to implement format-patch or request-pull summary")
+
     },
     Record {
         config: "core.fsync",
-        usage: Planned {note: Some("more safety for disk write operations is a good thing, definitely on the server")}
+        usage: Planned("more safety for disk write operations is a good thing, definitely on the server")
     },
     Record {
         config: "core.fsyncMethod",
-        usage: Planned {note: Some("needed to support `core.fsync`")}
+        usage: Planned("needed to support `core.fsync`")
     },
     Record {
         config: "core.sharedRepository",
-        usage: NotPlanned {reason: "on demand"}
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "core.createObject",
-        usage: NotPlanned {reason: "it's valuable not to do writes unless needed on the lowest level, but we hope to avoid issues by not writing duplicate objects in the first place"}
+        usage: NotPlanned("it's valuable not to do writes unless needed on the lowest level, but we hope to avoid issues by not writing duplicate objects in the first place")
     },
     Record {
-    config: "clone.filterSubmodules,",
-        usage: Planned {
-            note: Some("currently object filtering isn't support, a prerequisite for this, see --filter=blob:none for more"),
-        },
+        config: "clone.filterSubmodules,",
+        usage: Planned("currently object filtering isn't support, a prerequisite for this, see --filter=blob:none for more"),
+
     },
     Record {
         config: "clone.rejectShallow",
-        usage: Planned {
-            note: Some("probably trivial to implement once there is protocol support for shallow clones"),
-        },
+        usage: Planned("probably trivial to implement once there is protocol support for shallow clones")
     },
     Record {
         config: "receive.shallowUpdate",
-        usage: NotPlanned {
-            reason: "it looks like a server-only setting that allows boundaries to change if refs are pushed that are outside of the boundary.",
-        },
+        usage: NotPlanned("it looks like a server-only setting that allows boundaries to change if refs are pushed that are outside of the boundary.")
     },
     Record {
         config: "fetch.recurseSubmodules",
-        usage: Planned {
-            note: Some("Seems useful for cargo as well"),
-        },
+        usage: Planned("Seems useful for cargo as well"),
+
     },
     Record {
         config: "fetch.fsckObjects",
-        usage: Puzzled,
+        usage: Puzzled
     },
     Record {
         config: "fetch.fsck.<msg-id>",
-        usage: Puzzled,
+        usage: Puzzled
     },
     Record {
         config: "fetch.fsck.skipList",
-        usage: Puzzled,
+        usage: Puzzled
     },
     Record {
         config: "fetch.unpackLimit",
-        usage: Planned { note: None },
+        usage: Planned("")
     },
     Record {
         config: "fetch.prune",
-        usage: Planned { note: None },
+        usage: Planned("")
     },
     Record {
         config: "fetch.pruneTags",
-        usage: Planned { note: None },
+        usage: Planned("")
     },
     Record {
         config: "fetch.writeCommitGraph",
-        usage: Planned { note: None },
+        usage: Planned("")
     },
     Record {
         config: "fetch.parallel",
-        usage: Planned { note: None },
+        usage: Planned("")
     },
     Record {
         config: "fetch.showForcedUpdates",
-        usage: NotApplicable {reason: "we don't support advices"},
+        usage: NotApplicable("we don't support advices")
     },
     Record {
         config: "fetch.output",
-        usage: NotPlanned {reason: "'gix' might support it, but there is no intention on copying the 'git' CLI"},
+        usage: NotPlanned("'gix' might support it, but there is no intention on copying the 'git' CLI")
     },
     Record {
         config: "remotes.<group>",
-        usage: Planned {
-            note: Some("useful for multi-remote fetches as part of the standard API, maybe just `group(name) -> Option<Vec<Remote>>`"),
-        },
+        usage: Planned("useful for multi-remote fetches as part of the standard API, maybe just `group(name) -> Option<Vec<Remote>>`")
+
     },
     Record {
         config: "advice.updateSparsePath",
-        usage: NotApplicable { reason: "gitoxide does not yet have an 'advice' system" },
+        usage: NotApplicable("gitoxide does not yet have an 'advice' system")
     },
     Record {
         config: "core.sparseCheckout",
-        usage: Planned { note: Some("together with 'index.sparse' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not") },
+        usage: Planned("together with 'index.sparse' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not")
     },
     Record {
         config: "core.sparseCheckoutCone",
-        usage: Planned { note: Some("non-cone mode is deprecated but should still fail gracefully if encountered") },
+        usage: Planned("non-cone mode is deprecated but should still fail gracefully if encountered")
     },
     Record {
         config: "core.splitIndex",
-        usage: NotPlanned { reason: "we don't want to be able to create split indices, but we will read them. It's (somewhat) superseded by sparse indices" },
+        usage: NotPlanned("we don't want to be able to create split indices, but we will read them. It's (somewhat) superseded by sparse indices")
     },
     Record {
         config: "splitIndex.maxPercentageChange",
-        usage: NotPlanned { reason: "seems like it's superseded by sparse indices" },
+        usage: NotPlanned("seems like it's superseded by sparse indices")
     },
     Record {
         config: "splitIndex.sharedIndexExpire",
-        usage: NotPlanned { reason: "seems like it's superseded by sparse indices" },
+        usage: NotPlanned("seems like it's superseded by sparse indices")
     },
     Record {
         config: "index.sparse",
-        usage: Planned { note: Some("together with 'core.sparseCheckout' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not") },
+        usage: Planned("together with 'core.sparseCheckout' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not")
     },
     Record {
         config: "index.version",
-        usage: Planned { note: Some("once V4 indices can be written, we need to be able to set a desired version. For now we write the smallest possible index version only.") },
+        usage: Planned("once V4 indices can be written, we need to be able to set a desired version. For now we write the smallest possible index version only.")
     },
     Record {
         config: "http.<url>.*",
-        usage: Planned { note: Some("definitely needed for correctness, testing against baseline is a must") }
+        usage: Planned("definitely needed for correctness, testing against baseline is a must")
     },
     Record {
         config: "http.proxySSLCert",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.proxySSLKey",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.proxySSLCertPasswordProtected",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.proxySSLCAInfo",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.emptyAuth",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.delegation",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.cookieFile",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.saveCookies",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.curloptResolve",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslCipherList",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslCipherList",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslCert",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslKey",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslCertPasswordProtected",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslCertPasswordProtected",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslCAPath",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslBackend",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.pinnedPubkey",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.sslTry",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.maxRequests",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.minSessions",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.postBuffer",
-        usage: Planned { note: Some("relevant when implementing push, we should understand how memory allocation works when streaming") }
+        usage: Planned("relevant when implementing push, we should understand how memory allocation works when streaming")
     },
     Record {
         config: "http.noEPSV",
-        usage: NotPlanned { reason: "on demand" }
+        usage: NotPlanned("on demand")
     },
     Record {
         config: "http.<url>.*",
-        usage: Planned { note: Some("it's a vital part of git configuration. It's unclear how to get a baseline from git for this one.") }
+        usage: Planned("it's a vital part of git configuration. It's unclear how to get a baseline from git for this one.")
     },
     Record {
         config: "init.templateDir",
-        usage: NotPlanned { reason: "git expects this dir to be a valid git dir - I'd find additive template dirs more interesting, or changes done afterwards procedurally. Maybe this needs a 'init_or_open' semantic to be really useful" }
+        usage: NotPlanned("git expects this dir to be a valid git dir - I'd find additive template dirs more interesting, or changes done afterwards procedurally. Maybe this needs a 'init_or_open' semantic to be really useful")
     },
     Record {
         config: "sparse.expectFilesOutsideOfPatterns",
-        usage: NotPlanned { reason: "todo" },
+        usage: NotPlanned("todo")
     },
     Record {
         config: "remote.<name>.promisor",
-        usage: Planned {
-            note: Some("required for big monorepos, and typically used in conjunction with sparse indices")
-        }
+        usage: Planned("required for big monorepos, and typically used in conjunction with sparse indices")
     },
     Record {
         config: "remote.<name>.partialCloneFilter",
-        usage: Planned {
-            note: Some("required for big monorepos, and typically used in conjunction with sparse indices")
-        }
+        usage: Planned("required for big monorepos, and typically used in conjunction with sparse indices")
     },
     Record {
         config: "merge.renameLimit",
-        usage: Planned { note: Some("The same as diff.renameLimit") }
+        usage: Planned("The same as diff.renameLimit")
     },
     Record {
         config: "merge.renames",
-        usage: Planned { note: Some("The same as diff.renames") }
+        usage: Planned("The same as diff.renames")
     },
     Record {
         config: "status.renameLimit",
-        usage: Planned { note: Some("definitely needed to do status properly, even though it doesn't have to be there for day one. The same as diff.renameLimit") }
+        usage: Planned("definitely needed to do status properly, even though it doesn't have to be there for day one. The same as diff.renameLimit")
     },
     Record {
         config: "status.renames",
-        usage: Planned { note: Some("the same as diff.renames") }
+        usage: Planned("the same as diff.renames")
     },
     Record {
         config: "transfer.credentialsInUrl",
-        usage: Planned { note: Some("currently we are likely to expose passwords in errors or in other places, and it's better to by default not do that") }
+        usage: Planned("currently we are likely to expose passwords in errors or in other places, and it's better to by default not do that")
     },
     Record {
         config: "diff.*.cachetextconv",
-        usage: NotPlanned {reason: "It seems to slow to do that, and persisting results to save a relatively cheap computation doesn't seem right"}
+        usage: NotPlanned("It seems to slow to do that, and persisting results to save a relatively cheap computation doesn't seem right")
     },
 ];
 
@@ -515,18 +459,22 @@ pub fn show_progress() -> anyhow::Result<()> {
                     gix::config::tree::Note::Deviation(n) | gix::config::tree::Note::Informative(n) => n.to_string(),
                 });
                 let link = key.link().map(|link| match link {
-                    gix::config::tree::Link::FallbackKey(key) => format!("fallback is '{}'", key.logical_name()),
+                    gix::config::tree::Link::FallbackKey(key) => {
+                        format!("fallback is '{fallback}'", fallback = key.logical_name())
+                    }
                     gix::config::tree::Link::EnvironmentOverride(name) => format!("overridden by '{name}'"),
                 });
+
                 let deviation = match (note, link) {
-                    (Some(n), Some(l)) => Some(format!("{n}. {l}")),
-                    (Some(n), None) | (None, Some(n)) => Some(n),
-                    (None, None) => None,
-                }
-                .map(|d| &*Box::leak(d.into_boxed_str()));
+                    (Some(n), Some(l)) => format!("{n}. {l}"),
+                    (Some(n), None) | (None, Some(n)) => n,
+                    (None, None) => "".to_string(),
+                };
+
+                let deviation = &*Box::leak(deviation.into_boxed_str());
                 Record {
                     config: Box::leak(config.into_boxed_str()),
-                    usage: InUse { deviation },
+                    usage: InUse(deviation),
                 }
             }
             section
@@ -540,51 +488,75 @@ pub fn show_progress() -> anyhow::Result<()> {
         v
     };
 
-    let mut buf = String::new();
-    use std::fmt::Write;
-    writeln!(&mut buf,
-        "\nTotal records: {} ({perfect_icon} = {perfect}, {deviation_icon} = {deviation}, {planned_icon} = {planned}, {ondemand_icon} = {ondemand}, {not_applicable_icon} = {not_applicable})",
-        sorted.len(),
-        perfect_icon = InUse {
-            deviation: None
-        }
-        .icon(),
-        deviation_icon = InUse {
-            deviation: Some("")
-        }
-        .icon(),
-        planned_icon = Planned { note: None }.icon(),
-        planned = sorted.iter().filter(|e| matches!(e.usage, Planned { .. })).count(),
-        ondemand_icon = NotPlanned { reason: "" }.icon(),
-        not_applicable_icon = NotApplicable { reason: "" }.icon(),
-        perfect = sorted
-            .iter()
-            .filter(|e| matches!(e.usage, InUse { deviation, .. } if deviation.is_none()))
-            .count(),
-        deviation = sorted
-            .iter()
-            .filter(|e| matches!(e.usage, InUse { deviation, .. } if deviation.is_some()))
-            .count(),
-        ondemand = sorted
-            .iter()
-            .filter(|e| matches!(e.usage, NotPlanned { .. }))
-            .count(),
-        not_applicable = sorted
-            .iter()
-            .filter(|e| matches!(e.usage, NotApplicable { .. }))
-            .count()
-    )?;
+    let mut perfect = 0;
+    let mut deviation = 0;
+    let mut notplanned = 0;
+    let mut not_applicable = 0;
+    let mut planned = 0;
 
-    let mut table = tabled::Table::new(sorted);
-    let table = table.with(Style::blank()).with(Extract::rows(1..));
-    println!(
-        "{}",
-        if let Some((terminal_size::Width(w), _)) = terminal_size::terminal_size() {
-            table.with(Width::wrap(w as usize).keep_words().priority::<PriorityMax>())
-        } else {
-            table
+    for s in &sorted {
+        match s.usage {
+            NotApplicable(_) => not_applicable += 1,
+            NotPlanned(_) => notplanned += 1,
+            Planned(_) => planned += 1,
+            InUse(dev) => {
+                if dev.is_empty() {
+                    perfect += 1;
+                } else {
+                    deviation += 1;
+                }
+            }
+            Puzzled => {}
         }
+    }
+
+    let width: Option<usize> = terminal_size::terminal_size()
+        .map(|(width, _height)| width.0)
+        .map(std::convert::Into::into);
+
+    let mut stdout = std::io::stdout().lock();
+    for Record { config, usage } in &sorted {
+        use std::io::Write;
+        write!(stdout, "{icon} {config: <50}: ", icon = usage.icon())?;
+
+        if let Some(width) = width {
+            write_with_linewrap(&mut stdout, &usage.to_string(), width)?;
+        } else {
+            writeln!(stdout, "{usage}")?;
+        }
+    }
+
+    println!("\nTotal records: {nr_sorted} ({perfect_icon} = {perfect}, {deviation_icon} = {deviation}, {planned_icon} = {planned}, {ondemand_icon} = {notplanned}, {not_applicable_icon} = {not_applicable})",
+        nr_sorted = sorted.len(),
+        perfect_icon = InUse("").icon(),
+        deviation_icon = InUse("dev").icon(),
+        planned_icon = Planned("").icon(),
+        ondemand_icon = NotPlanned("").icon(),
+        not_applicable_icon = NotApplicable("").icon(),
     );
-    println!("{buf}");
+    Ok(())
+}
+
+fn write_with_linewrap(stdout: &mut StdoutLock<'_>, text: &str, width: usize) -> Result<(), std::io::Error> {
+    use std::io::Write;
+    let icon_and_config_width = 55;
+    let width_after_config = width.saturating_sub(icon_and_config_width);
+    let mut idx = 0;
+    for word in text.split(' ') {
+        // +1 for the space after each word
+        let word_len = word.chars().count() + 1;
+
+        if idx + word_len > width_after_config {
+            writeln!(stdout)?;
+            for _ in 0..icon_and_config_width {
+                write!(stdout, " ")?;
+            }
+            idx = 0;
+        }
+
+        write!(stdout, "{word} ")?;
+        idx += word_len;
+    }
+    writeln!(stdout)?;
     Ok(())
 }
