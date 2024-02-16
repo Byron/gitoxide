@@ -511,7 +511,7 @@ pub fn show_progress() -> anyhow::Result<()> {
 
     let width: Option<usize> = terminal_size::terminal_size()
         .map(|(width, _height)| width.0)
-        .map(|w| w.into());
+        .map(std::convert::Into::into);
 
     let mut stdout = std::io::stdout().lock();
     for Record { config, usage } in &sorted {
@@ -522,14 +522,13 @@ pub fn show_progress() -> anyhow::Result<()> {
             let icon_and_config_width = 55;
             let width_after_config = width - icon_and_config_width;
             let usage = usage.to_string();
-            let mut usage = usage.split(" ");
             let mut idx = 0;
-            while let Some(word) = usage.next() {
+            for word in usage.split(' ') {
                 // +1 for the space after each word
                 let word_len = word.chars().count() + 1;
 
                 if idx + word_len > width_after_config {
-                    write!(stdout, "\n")?;
+                    writeln!(stdout)?;
                     for _ in 0..icon_and_config_width {
                         write!(stdout, " ")?;
                     }
@@ -539,7 +538,7 @@ pub fn show_progress() -> anyhow::Result<()> {
                 write!(stdout, "{word} ")?;
                 idx += word_len;
             }
-            writeln!(stdout, "")?;
+            writeln!(stdout)?;
         } else {
             writeln!(stdout, "{usage}")?;
         }
