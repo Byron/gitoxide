@@ -5,9 +5,6 @@ use std::{
 
 use crosstermion::crossterm::style::Stylize;
 use owo_colors::OwoColorize;
-use tabled::settings::peaker::PriorityMax;
-use tabled::settings::{Extract, Style, Width};
-use tabled::Tabled;
 
 #[derive(Clone)]
 enum Usage {
@@ -73,33 +70,35 @@ struct Record {
     usage: Usage,
 }
 
-impl Tabled for Record {
-    const LENGTH: usize = 3;
+// TODO implement this without table, how hard is it?
 
-    fn fields(&self) -> Vec<Cow<'_, str>> {
-        let mut tokens = self.config.split('.');
-        let mut buf = vec![{
-            let name = tokens.next().expect("present");
-            if name == "gitoxide" {
-                name.bold().green()
-            } else {
-                name.bold()
-            }
-            .to_string()
-        }];
-        buf.extend(tokens.map(ToOwned::to_owned));
+// impl Tabled for Record {
+//     const LENGTH: usize = 3;
 
-        vec![
-            Cow::Borrowed(self.usage.icon()),
-            buf.join(".").into(),
-            self.usage.to_string().into(),
-        ]
-    }
+//     fn fields(&self) -> Vec<Cow<'_, str>> {
+//         let mut tokens = self.config.split('.');
+//         let mut buf = vec![{
+//             let name = tokens.next().expect("present");
+//             if name == "gitoxide" {
+//                 name.bold().green()
+//             } else {
+//                 name.bold()
+//             }
+//             .to_string()
+//         }];
+//         buf.extend(tokens.map(ToOwned::to_owned));
 
-    fn headers() -> Vec<Cow<'static, str>> {
-        vec!["icon".into(), "key".into(), "info".into()]
-    }
-}
+//         vec![
+//             Cow::Borrowed(self.usage.icon()),
+//             buf.join(".").into(),
+//             self.usage.to_string().into(),
+//         ]
+//     }
+
+//     fn headers() -> Vec<Cow<'static, str>> {
+//         vec!["icon".into(), "key".into(), "info".into()]
+//     }
+// }
 
 static GIT_CONFIG: &[Record] = &[
     Record {
@@ -575,16 +574,18 @@ pub fn show_progress() -> anyhow::Result<()> {
             .count()
     )?;
 
-    let mut table = tabled::Table::new(sorted);
-    let table = table.with(Style::blank()).with(Extract::rows(1..));
-    println!(
-        "{}",
-        if let Some((terminal_size::Width(w), _)) = terminal_size::terminal_size() {
-            table.with(Width::wrap(w as usize).keep_words().priority::<PriorityMax>())
-        } else {
-            table
-        }
-    );
+    // TODO implement this without table, how hard is it?
+
+    // let mut table = tabled::Table::new(sorted);
+    // let table = table.with(Style::blank()).with(Extract::rows(1..));
+    // println!(
+    //     "{}",
+    //     if let Some((terminal_size::Width(w), _)) = terminal_size::terminal_size() {
+    //         table.with(Width::wrap(w as usize).keep_words().priority::<PriorityMax>())
+    //     } else {
+    //         table
+    //     }
+    // );
     println!("{buf}");
     Ok(())
 }
