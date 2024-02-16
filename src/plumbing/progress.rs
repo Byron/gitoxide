@@ -67,36 +67,6 @@ struct Record {
     usage: Usage,
 }
 
-// TODO implement this without table, how hard is it?
-
-// impl Tabled for Record {
-//     const LENGTH: usize = 3;
-
-//     fn fields(&self) -> Vec<Cow<'_, str>> {
-//         let mut tokens = self.config.split('.');
-//         let mut buf = vec![{
-//             let name = tokens.next().expect("present");
-//             if name == "gitoxide" {
-//                 name.bold().green()
-//             } else {
-//                 name.bold()
-//             }
-//             .to_string()
-//         }];
-//         buf.extend(tokens.map(ToOwned::to_owned));
-
-//         vec![
-//             Cow::Borrowed(self.usage.icon()),
-//             buf.join(".").into(),
-//             self.usage.to_string().into(),
-//         ]
-//     }
-
-//     fn headers() -> Vec<Cow<'static, str>> {
-//         vec!["icon".into(), "key".into(), "info".into()]
-//     }
-// }
-
 static GIT_CONFIG: &[Record] = &[
     Record {
         config: "core.symlinks",
@@ -571,22 +541,17 @@ pub fn show_progress() -> anyhow::Result<()> {
             .count()
     )?;
 
-    // TODO implement this without table, how hard is it?
-
-    // let mut table = tabled::Table::new(sorted);
-    // let table = table.with(Style::blank()).with(Extract::rows(1..));
-    // println!(
-    //     "{}",
-    //     if let Some((terminal_size::Width(w), _)) = terminal_size::terminal_size() {
-    //         table.with(Width::wrap(w as usize).keep_words().priority::<PriorityMax>())
-    //     } else {
-    //         table
-    //     }
-    // );
-
-    // noted: reverted from https://github.com/Byron/gitoxide/commit/65e64964c7cd151e53e5a7d4b9ba8fabda1c0e16
     for Record { config, usage } in sorted {
-        println!("{} {}: {usage}", usage.icon(), config.bold(),);
+        println!(
+            "{icon} {config: <50}: {usage}",
+            icon = usage.icon(),
+            config = if let Some(config) = config.strip_prefix("gitoxide.") {
+                format!("{gitoxide}{config}", gitoxide = "gitoxide.".green())
+            } else {
+                config.to_string()
+            }
+            .bold(),
+        );
     }
 
     println!("{buf}");
