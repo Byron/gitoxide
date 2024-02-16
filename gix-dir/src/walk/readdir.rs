@@ -13,7 +13,7 @@ use crate::{entry, walk, Entry};
 /// Git mostly silently ignores IO errors and stops iterating seemingly quietly, while we error loudly.
 #[allow(clippy::too_many_arguments)]
 pub(super) fn recursive(
-    is_worktree_dir: bool,
+    is_top_level: bool,
     current: &mut PathBuf,
     current_bstr: &mut BString,
     current_info: classify::Outcome,
@@ -30,7 +30,7 @@ pub(super) fn recursive(
     })?;
 
     let mut num_entries = 0;
-    let mark = state.mark(is_worktree_dir);
+    let mark = state.mark(is_top_level);
     let mut prevent_collapse = false;
     for entry in entries {
         let entry = entry.map_err(|err| Error::DirEntry {
@@ -118,18 +118,18 @@ impl State {
     }
 
     /// Keep track of state we need to later resolve the state.
-    /// Worktree directories are special, as they don't fold.
-    fn mark(&self, is_worktree_dir: bool) -> Mark {
+    /// Top-level directories are special, as they don't fold.
+    fn mark(&self, is_top_level: bool) -> Mark {
         Mark {
             start_index: self.on_hold.len(),
-            is_worktree_dir,
+            is_top_level,
         }
     }
 }
 
 struct Mark {
     start_index: usize,
-    is_worktree_dir: bool,
+    is_top_level: bool,
 }
 
 impl Mark {
@@ -211,7 +211,7 @@ impl Mark {
         ctx: &mut Context<'_>,
         delegate: &mut dyn walk::Delegate,
     ) -> Option<Action> {
-        if self.is_worktree_dir {
+        if self.is_top_level {
             return None;
         }
         let (mut expendable, mut precious, mut untracked, mut entries, mut matching_entries) = (0, 0, 0, 0, 0);

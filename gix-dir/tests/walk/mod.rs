@@ -4,7 +4,7 @@ use pretty_assertions::assert_eq;
 use crate::walk_utils::{
     collect, collect_filtered, entry, entry_dirstat, entry_nokind, entry_nomatch, entryps, entryps_dirstat, fixture,
     fixture_in, options, options_emit_all, try_collect, try_collect_filtered_opts, try_collect_filtered_opts_collect,
-    EntryExt, Options,
+    try_collect_filtered_opts_collect_with_root, EntryExt, Options,
 };
 use gix_dir::entry;
 use gix_dir::entry::Kind::*;
@@ -24,9 +24,15 @@ fn root_may_not_lead_through_symlinks() -> crate::Result {
         ("breakout-symlink", "hide/../hide", 1),
     ] {
         let root = fixture_in("many-symlinks", name);
-        let err = try_collect(&root, |keep, ctx| {
-            walk(&root.join(intermediate).join("breakout"), &root, ctx, options(), keep)
-        })
+        let troot = root.join(intermediate).join("breakout");
+        let err = try_collect_filtered_opts_collect_with_root(
+            &root,
+            None,
+            Some(&troot),
+            |keep, ctx| walk(&root, ctx, options(), keep),
+            None::<&str>,
+            Default::default(),
+        )
         .unwrap_err();
         assert!(
             matches!(err, walk::Error::SymlinkInRoot { component_index, .. } if component_index == expected),
@@ -39,7 +45,7 @@ fn root_may_not_lead_through_symlinks() -> crate::Result {
 #[test]
 fn empty_root() -> crate::Result {
     let root = fixture("empty");
-    let (out, entries) = collect(&root, |keep, ctx| walk(&root, &root, ctx, options(), keep));
+    let (out, entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options(), keep));
     assert_eq!(
         out,
         walk::Outcome {
@@ -54,9 +60,8 @@ fn empty_root() -> crate::Result {
         "by default, nothing is shown as the directory is empty"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -74,10 +79,9 @@ fn empty_root() -> crate::Result {
             seen_entries: 1,
         }
     );
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry("", Untracked, EmptyDirectory),
+        entries,
+        [entry("", Untracked, EmptyDirectory)],
         "this is how we can indicate the worktree is entirely untracked"
     );
     Ok(())
@@ -86,7 +90,7 @@ fn empty_root() -> crate::Result {
 #[test]
 fn complex_empty() -> crate::Result {
     let root = fixture("complex-empty");
-    let (out, entries) = collect(&root, |keep, ctx| walk(&root, &root, ctx, options_emit_all(), keep));
+    let (out, entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
     assert_eq!(
         out,
         walk::Outcome {
@@ -107,9 +111,8 @@ fn complex_empty() -> crate::Result {
         "we see each and every directory, and get it classified as empty as it's set to be emitted"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -133,9 +136,8 @@ fn complex_empty() -> crate::Result {
         "by default, no empty directory shows up"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -169,7 +171,7 @@ fn complex_empty() -> crate::Result {
 #[test]
 fn only_untracked() -> crate::Result {
     let root = fixture("only-untracked");
-    let (out, entries) = collect(&root, |keep, ctx| walk(&root, &root, ctx, options(), keep));
+    let (out, entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options(), keep));
     assert_eq!(
         out,
         walk::Outcome {
@@ -179,8 +181,8 @@ fn only_untracked() -> crate::Result {
         }
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry("a", Untracked, File),
             entry("b", Untracked, File),
             entry("c", Untracked, File),
@@ -190,27 +192,26 @@ fn only_untracked() -> crate::Result {
         ]
     );
 
-    let (out, entries) = collect_filtered(&root, |keep, ctx| walk(&root, &root, ctx, options(), keep), Some("d/*"));
+    let (out, entries) = collect_filtered(&root, None, |keep, ctx| walk(&root, ctx, options(), keep), Some("d/*"));
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 3,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 7,
+            seen_entries: 3,
         }
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entryps("d/a", Untracked, File, WildcardMatch),
             entryps("d/b", Untracked, File, WildcardMatch),
             entryps("d/d/a", Untracked, File, WildcardMatch),
         ]
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -230,8 +231,8 @@ fn only_untracked() -> crate::Result {
         "There are 2 extra directories that we fold into, but ultimately discard"
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry("a", Untracked, File),
             entry("b", Untracked, File),
             entry("c", Untracked, File),
@@ -246,9 +247,9 @@ fn only_untracked_explicit_pathspec_selection() -> crate::Result {
     let root = fixture("only-untracked");
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -263,14 +264,14 @@ fn only_untracked_explicit_pathspec_selection() -> crate::Result {
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 3,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 7,
+            seen_entries: 3,
         },
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entryps("d/a", Untracked, File, Verbatim),
             entryps("d/d/a", Untracked, File, Verbatim)
         ],
@@ -279,9 +280,9 @@ fn only_untracked_explicit_pathspec_selection() -> crate::Result {
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -297,19 +298,15 @@ fn only_untracked_explicit_pathspec_selection() -> crate::Result {
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 3,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 7,
+            seen_entries: 3,
         },
         "no collapsing happens"
     );
     assert_eq!(
-        &entries,
-        &[
-            entry_nokind(".git", DotGit), 
-            entry_nokind("a", Pruned), 
-            entry_nokind("b", Pruned), 
-            entry_nokind("c", Pruned), 
+        entries,
+        [
             entryps("d/a", Untracked, File, Verbatim),
             entry_nokind("d/b", Pruned),
             entryps("d/d/a", Untracked, File, Verbatim)],
@@ -319,9 +316,9 @@ fn only_untracked_explicit_pathspec_selection() -> crate::Result {
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -336,16 +333,20 @@ fn only_untracked_explicit_pathspec_selection() -> crate::Result {
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 3,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 7 + 2,
+            seen_entries: 2 + 2,
         },
         "collapsing happens just like Git"
     );
     assert_eq!(
-        &entries,
-        &[entryps("d", Untracked, Directory, WildcardMatch)],
-        "wildcard matches allow collapsing directories because Git does"
+        entries,
+        [
+            entryps("d/a", Untracked, File, WildcardMatch),
+            entryps("d/b", Untracked, File, WildcardMatch),
+            entryps("d/d", Untracked, Directory, WildcardMatch),
+        ],
+        "wildcard matches on the top-level always show all matching entries. Collapsing of subdirs works as before"
     );
     Ok(())
 }
@@ -353,7 +354,7 @@ fn only_untracked_explicit_pathspec_selection() -> crate::Result {
 #[test]
 fn expendable_and_precious() {
     let root = fixture("expendable-and-precious");
-    let (out, entries) = collect(&root, |keep, ctx| walk(&root, &root, ctx, options_emit_all(), keep));
+    let (out, entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
     assert_eq!(
         out,
         walk::Outcome {
@@ -363,8 +364,8 @@ fn expendable_and_precious() {
         }
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry(".gitignore", Tracked, File),
             entry("a.o", Ignored(Expendable), File),
@@ -387,9 +388,8 @@ fn expendable_and_precious() {
         "listing everything is a 'matching' preset, which is among the most efficient."
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -410,8 +410,8 @@ fn expendable_and_precious() {
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry(".gitignore", Tracked, File),
             entry("a.o", Ignored(Expendable), File),
             entry("all-expendable", Ignored(Expendable), Directory),
@@ -432,9 +432,8 @@ fn expendable_and_precious() {
         those with all files of one type will be collapsed though"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -456,8 +455,8 @@ fn expendable_and_precious() {
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry("some-expendable/new", Untracked, File),
             entry("some-precious/new", Untracked, File),
         ],
@@ -468,7 +467,7 @@ fn expendable_and_precious() {
 #[test]
 fn subdir_untracked() -> crate::Result {
     let root = fixture("subdir-untracked");
-    let (out, entries) = collect(&root, |keep, ctx| walk(&root, &root, ctx, options(), keep));
+    let (out, entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options(), keep));
     assert_eq!(
         out,
         walk::Outcome {
@@ -477,13 +476,16 @@ fn subdir_untracked() -> crate::Result {
             seen_entries: 7,
         }
     );
-    assert_eq!(&entries, &[entry("d/d/a", Untracked, File)]);
+    assert_eq!(entries, [entry("d/d/a", Untracked, File)]);
 
-    let (out, entries) = collect_filtered(
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
         &root,
-        |keep, ctx| walk(&root, &root, ctx, options(), keep),
+        None,
+        Some(&root),
+        |keep, ctx| walk(&root, ctx, options(), keep),
         Some("d/d/*"),
-    );
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
@@ -493,11 +495,10 @@ fn subdir_untracked() -> crate::Result {
         },
         "pruning has no actual effect here as there is no extra directories that could be avoided"
     );
-    assert_eq!(&entries, &[entryps("d/d/a", Untracked, File, WildcardMatch)]);
+    assert_eq!(entries, &[entryps("d/d/a", Untracked, File, WildcardMatch)]);
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -516,16 +517,15 @@ fn subdir_untracked() -> crate::Result {
         },
         "there is a folded directory we added"
     );
-    assert_eq!(&entries, &[entry("d/d", Untracked, Directory)]);
+    assert_eq!(entries, [entry("d/d", Untracked, Directory)]);
     Ok(())
 }
 
 #[test]
 fn only_untracked_from_subdir() -> crate::Result {
     let root = fixture("only-untracked");
-    let (out, entries) = collect(&root, |keep, ctx| {
-        walk(&root.join("d").join("d"), &root, ctx, options(), keep)
-    });
+    let troot = root.join("d").join("d");
+    let (out, entries) = collect(&root, Some(&troot), |keep, ctx| walk(&root, ctx, options(), keep));
     assert_eq!(
         out,
         walk::Outcome {
@@ -535,8 +535,8 @@ fn only_untracked_from_subdir() -> crate::Result {
         }
     );
     assert_eq!(
-        &entries,
-        &[entry("d/d/a", Untracked, File)],
+        entries,
+        [entryps("d/d/a", Untracked, File, Prefix)],
         "even from subdirs, paths are worktree relative"
     );
     Ok(())
@@ -548,9 +548,9 @@ fn untracked_and_ignored_pathspec_guidance() -> crate::Result {
         let root = fixture("subdir-untracked-and-ignored");
         let (out, entries) = collect_filtered(
             &root,
+            None,
             |keep, ctx| {
                 walk(
-                    &root,
                     &root,
                     ctx,
                     walk::Options {
@@ -566,14 +566,15 @@ fn untracked_and_ignored_pathspec_guidance() -> crate::Result {
         assert_eq!(
             out,
             walk::Outcome {
-                read_dir_calls: 4,
+                read_dir_calls: 1,
                 returned_entries: entries.len(),
-                seen_entries: 19,
+                seen_entries: 1,
             },
+            "we have to read the parent directory, just like git, as we can't assume a directory"
         );
         assert_eq!(
-            &entries,
-            &[entryps("d/d/generated/b", Ignored(Expendable), File, Verbatim)],
+            entries,
+            [entryps("d/d/generated/b", Ignored(Expendable), File, Verbatim)],
             "pathspecs allow reaching into otherwise ignored directories, ignoring the flag to collapse"
         );
     }
@@ -585,9 +586,9 @@ fn untracked_and_ignored_for_deletion_negative_wildcard_spec() -> crate::Result 
     let root = fixture("subdir-untracked-and-ignored");
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -611,8 +612,8 @@ fn untracked_and_ignored_for_deletion_negative_wildcard_spec() -> crate::Result 
         },
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry(".gitignore", Untracked, File),
             entry("a.o", Ignored(Expendable), File),
@@ -640,9 +641,9 @@ fn untracked_and_ignored_for_deletion_positive_wildcard_spec() -> crate::Result 
     let root = fixture("subdir-untracked-and-ignored");
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -666,8 +667,8 @@ fn untracked_and_ignored_for_deletion_positive_wildcard_spec() -> crate::Result 
         },
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry_nomatch(".gitignore", Pruned, File),
             entry_nomatch("a.o", Ignored(Expendable), File),
@@ -693,9 +694,9 @@ fn untracked_and_ignored_for_deletion_nonmatching_wildcard_spec() -> crate::Resu
     let root = fixture("subdir-untracked-and-ignored");
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -719,8 +720,8 @@ fn untracked_and_ignored_for_deletion_nonmatching_wildcard_spec() -> crate::Resu
         },
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry_nomatch(".gitignore", Pruned, File),
             entry_nomatch("a.o", Ignored(Expendable), File),
@@ -744,9 +745,9 @@ fn nested_ignored_dirs_for_deletion_nonmatching_wildcard_spec() -> crate::Result
     let root = fixture("ignored-dir-nested-minimal");
     let (_out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -764,16 +765,16 @@ fn nested_ignored_dirs_for_deletion_nonmatching_wildcard_spec() -> crate::Result
     // NOTE: do not use `_out` as `.git` directory contents can change, it's controlled by Git, causing flakiness.
 
     assert_eq!(
-        &entries,
-        &[],
+        entries,
+        [],
         "it figures out that nothing actually matches, even though it has to check everything"
     );
 
     let (_out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -791,8 +792,8 @@ fn nested_ignored_dirs_for_deletion_nonmatching_wildcard_spec() -> crate::Result
     // NOTE: do not use `_out` as `.git` directory contents can change, it's controlled by Git, causing flakiness.
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry_nomatch(".gitignore", Pruned, File),
             entry_nomatch("bare/HEAD", Pruned, File),
@@ -809,9 +810,8 @@ fn nested_ignored_dirs_for_deletion_nonmatching_wildcard_spec() -> crate::Result
 #[test]
 fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
     let root = fixture("expendable-and-precious-nested-in-ignored-dir");
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -835,8 +835,8 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry(".gitignore", Tracked, File).with_index_kind(File),
             entry("ignored", Ignored(Expendable), Directory),
@@ -850,9 +850,9 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -877,8 +877,8 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry_nokind("ignored/d/.git", DotGit),
             entryps("ignored/d/.gitignore", Ignored(Expendable), File, WildcardMatch),
@@ -906,9 +906,8 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
 #[test]
 fn untracked_and_ignored() -> crate::Result {
     let root = fixture("subdir-untracked-and-ignored");
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -928,8 +927,8 @@ fn untracked_and_ignored() -> crate::Result {
         "some untracked ones are hidden by default"
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry(".gitignore", Untracked, File),
             entry("a.o", Ignored(Expendable), File),
             entry("b.o", Ignored(Expendable), File),
@@ -950,9 +949,9 @@ fn untracked_and_ignored() -> crate::Result {
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -975,8 +974,8 @@ fn untracked_and_ignored() -> crate::Result {
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry_nomatch(".gitignore", Pruned, File),
             entryps("d/d/a", Untracked, File, WildcardMatch),
@@ -984,9 +983,8 @@ fn untracked_and_ignored() -> crate::Result {
         "…but with different classification as the ignore file is pruned so it's not untracked anymore"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -1007,14 +1005,13 @@ fn untracked_and_ignored() -> crate::Result {
         "we still encounter the same amount of entries, and 1 folded directory"
     );
     assert_eq!(
-        &entries,
-        &[entry(".gitignore", Untracked, File), entry("d/d", Untracked, Directory)],
+        entries,
+        [entry(".gitignore", Untracked, File), entry("d/d", Untracked, Directory)],
         "aggregation kicks in here"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -1034,8 +1031,8 @@ fn untracked_and_ignored() -> crate::Result {
         "some untracked ones are hidden by default, folded directories"
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry(".gitignore", Untracked, File),
             entry("a.o", Ignored(Expendable), File),
             entry("b.o", Ignored(Expendable), File),
@@ -1053,9 +1050,8 @@ fn untracked_and_ignored() -> crate::Result {
         "objects are aggregated"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -1077,8 +1073,8 @@ fn untracked_and_ignored() -> crate::Result {
         "some untracked ones are hidden by default, and folded directories"
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry(".gitignore", Untracked, File),
             entry("a.o", Ignored(Expendable), File),
             entry("b.o", Ignored(Expendable), File),
@@ -1106,9 +1102,9 @@ fn untracked_and_ignored_collapse_handling_mixed() -> crate::Result {
     let root = fixture("subdir-untracked-and-ignored");
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -1125,24 +1121,26 @@ fn untracked_and_ignored_collapse_handling_mixed() -> crate::Result {
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 3,
+            read_dir_calls: 1,
             returned_entries: entries.len(),
-            seen_entries: 19,
+            seen_entries: 4,
         },
+        "it has to read 'd/d' as 'd/d/b.o' isn't a directory candidate"
     );
 
     assert_eq!(
-        &entries,
-        &[entryps("d/d/b.o", Ignored(Expendable), File, Verbatim)],
+        entries,
+        [entryps("d/d/b.o", Ignored(Expendable), File, Verbatim)],
         "when files are selected individually, they are never collapsed"
     );
 
     for (spec, pathspec_match) in [("d/d/*", WildcardMatch), ("d/d", Prefix), ("d/d/", Prefix)] {
-        let (out, entries) = collect_filtered(
+        let (out, entries) = try_collect_filtered_opts_collect_with_root(
             &root,
+            None,
+            Some(&root),
             |keep, ctx| {
                 walk(
-                    &root,
                     &root,
                     ctx,
                     walk::Options {
@@ -1156,7 +1154,8 @@ fn untracked_and_ignored_collapse_handling_mixed() -> crate::Result {
                 )
             },
             Some(spec),
-        );
+            Default::default(),
+        )?;
         assert_eq!(
             out,
             walk::Outcome {
@@ -1167,8 +1166,8 @@ fn untracked_and_ignored_collapse_handling_mixed() -> crate::Result {
         );
 
         assert_eq!(
-            &entries,
-            &[
+            entries,
+            [
                 entryps("d/d", Untracked, Directory, pathspec_match),
                 entryps_dirstat("d/d/a.o", Ignored(Expendable), File, pathspec_match, Untracked),
                 entryps_dirstat("d/d/b.o", Ignored(Expendable), File, pathspec_match, Untracked),
@@ -1187,13 +1186,99 @@ fn untracked_and_ignored_collapse_handling_mixed() -> crate::Result {
 }
 
 #[test]
+fn untracked_and_ignored_collapse_handling_mixed_with_prefix() -> crate::Result {
+    let root = fixture("subdir-untracked-and-ignored");
+    let (out, entries) = collect_filtered(
+        &root,
+        None,
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_untracked: CollapseDirectory,
+                    for_deletion: None,
+                    emit_collapsed: Some(OnStatusMismatch),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("d/d"),
+    );
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 3,
+            returned_entries: entries.len(),
+            seen_entries: 11
+        },
+        "this is not a directory, so the prefix is only 'd', not 'd/d'"
+    );
+
+    assert_eq!(
+        entries,
+        [
+            entryps("d/d", Untracked, Directory, Prefix),
+            entryps_dirstat("d/d/a.o", Ignored(Expendable), File, Prefix, Untracked),
+            entryps_dirstat("d/d/b.o", Ignored(Expendable), File, Prefix, Untracked),
+            entryps_dirstat("d/d/generated", Ignored(Expendable), Directory, Prefix, Untracked),
+        ],
+        "as it's not the top-level anymore (which is 'd', not 'd/d'), we will collapse"
+    );
+
+    for (spec, pathspec_match) in [("d/d/*", WildcardMatch), ("d/d/", Prefix)] {
+        let (out, entries) = collect_filtered(
+            &root,
+            None,
+            |keep, ctx| {
+                walk(
+                    &root,
+                    ctx,
+                    walk::Options {
+                        emit_ignored: Some(CollapseDirectory),
+                        emit_untracked: CollapseDirectory,
+                        for_deletion: None,
+                        emit_collapsed: Some(OnStatusMismatch),
+                        ..options()
+                    },
+                    keep,
+                )
+            },
+            Some(spec),
+        );
+        assert_eq!(
+            out,
+            walk::Outcome {
+                read_dir_calls: 2,
+                returned_entries: entries.len(),
+                seen_entries: 5,
+            },
+        );
+
+        assert_eq!(
+            entries,
+            [
+                entryps("d/d/a", Untracked, File, pathspec_match),
+                entryps("d/d/a.o", Ignored(Expendable), File, pathspec_match),
+                entryps("d/d/b.o", Ignored(Expendable), File, pathspec_match),
+                entryps("d/d/generated", Ignored(Expendable), Directory, pathspec_match),
+            ],
+            "{spec}: with wildcard matches, it's OK to collapse though"
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn untracked_and_ignored_collapse_handling_for_deletion_with_wildcards() -> crate::Result {
     let root = fixture("subdir-untracked-and-ignored");
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -1216,8 +1301,8 @@ fn untracked_and_ignored_collapse_handling_for_deletion_with_wildcards() -> crat
         },
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entryps("a.o", Ignored(Expendable), File, WildcardMatch),
             entryps("b.o", Ignored(Expendable), File, WildcardMatch),
             entryps("c.o", Ignored(Expendable), File, WildcardMatch),
@@ -1236,9 +1321,9 @@ fn untracked_and_ignored_collapse_handling_for_deletion_with_wildcards() -> crat
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -1262,8 +1347,8 @@ fn untracked_and_ignored_collapse_handling_for_deletion_with_wildcards() -> crat
         },
     );
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entryps(".gitignore", Untracked, File, WildcardMatch),
             entryps("a.o", Ignored(Expendable), File, WildcardMatch),
             entryps("b.o", Ignored(Expendable), File, WildcardMatch),
@@ -1294,9 +1379,9 @@ fn untracked_and_ignored_collapse_handling_for_deletion_with_prefix_wildcards() 
     let root = fixture("subdir-untracked-and-ignored");
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -1313,14 +1398,14 @@ fn untracked_and_ignored_collapse_handling_for_deletion_with_prefix_wildcards() 
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 2,
+            read_dir_calls: 1,
             returned_entries: entries.len(),
-            seen_entries: 12,
+            seen_entries: 2,
         },
     );
     assert_eq!(
-        &entries,
-        &[entryps("generated/a.o", Ignored(Expendable), File, WildcardMatch)],
+        entries,
+        [entryps("generated/a.o", Ignored(Expendable), File, WildcardMatch)],
         "this is the same result as '*.o', but limited to a subdirectory"
     );
     Ok(())
@@ -1329,9 +1414,8 @@ fn untracked_and_ignored_collapse_handling_for_deletion_with_prefix_wildcards() 
 #[test]
 fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result {
     let root = fixture("subdir-untracked-and-ignored");
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -1353,14 +1437,13 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
     );
 
     assert_eq!(
-        &entries,
-        &[entry(".gitignore", Untracked, File), entry("d/d/a", Untracked, File)],
+        entries,
+        [entry(".gitignore", Untracked, File), entry("d/d/a", Untracked, File)],
         "without ignored files, we only see untracked ones, without a chance to collapse. This actually is something Git fails to do."
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -1383,8 +1466,8 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry(".gitignore", Untracked, File),
             entry("a.o", Ignored(Expendable), File),
             entry("b.o", Ignored(Expendable), File),
@@ -1404,9 +1487,9 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -1424,34 +1507,28 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 4,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 21,
+            seen_entries: 5,
         },
     );
 
     assert_eq!(
-        &entries,
-        &[
-            entryps("d/d", Untracked, Directory, WildcardMatch),
-            entryps_dirstat("d/d/a.o", Ignored(Expendable), File, WildcardMatch, Untracked),
-            entryps_dirstat("d/d/b.o", Ignored(Expendable), File, WildcardMatch, Untracked),
-            entryps_dirstat(
-                "d/d/generated",
-                Ignored(Expendable),
-                Directory,
-                WildcardMatch,
-                Untracked
-            ),
+        entries,
+        [
+            entryps("d/d/a", Untracked, File, WildcardMatch),
+            entryps("d/d/a.o", Ignored(Expendable), File, WildcardMatch),
+            entryps("d/d/b.o", Ignored(Expendable), File, WildcardMatch),
+            entryps("d/d/generated", Ignored(Expendable), Directory, WildcardMatch),
         ],
-        "everything is filtered down to the pathspec, otherwise it's like before. Not how all-matching collapses"
+        "everything is filtered down to the pathspec, otherwise it's like before. Not how all-matching  'generated' collapses"
     );
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -1469,15 +1546,15 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 4,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 20,
+            seen_entries: 5,
         },
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entryps("d/d/a.o", Ignored(Expendable), File, WildcardMatch),
             entryps("d/d/b.o", Ignored(Expendable), File, WildcardMatch),
         ],
@@ -1486,9 +1563,9 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -1506,28 +1583,28 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 4,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 21,
+            seen_entries: 5,
         },
     );
 
     assert_eq!(
-        &entries,
-        &[
-            entryps("d/d", Untracked, Directory, Prefix),
-            entryps_dirstat("d/d/a.o", Ignored(Expendable), File, Prefix, Untracked),
-            entryps_dirstat("d/d/b.o", Ignored(Expendable), File, Prefix, Untracked),
-            entryps_dirstat("d/d/generated", Ignored(Expendable), Directory, Prefix, Untracked),
+        entries,
+        [
+            entryps("d/d/a", Untracked, File, Prefix),
+            entryps("d/d/a.o", Ignored(Expendable), File, Prefix),
+            entryps("d/d/b.o", Ignored(Expendable), File, Prefix),
+            entryps("d/d/generated", Ignored(Expendable), Directory, Prefix),
         ],
-        "a prefix match works similarly, while also listing the dropped content for good measure"
+        "a prefix match works similarly"
     );
 
     let (out, entries) = collect_filtered(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -1544,15 +1621,15 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 4,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 19,
+            seen_entries: 4,
         },
     );
 
     assert_eq!(
-        &entries,
-        &[entryps("d/d/a", Untracked, File, Prefix)],
+        entries,
+        [entryps("d/d/a", Untracked, File, Prefix)],
         "a prefix match works similarly"
     );
     Ok(())
@@ -1561,9 +1638,8 @@ fn untracked_and_ignored_collapse_handling_for_deletion_mixed() -> crate::Result
 #[test]
 fn precious_are_not_expendable() {
     let root = fixture("untracked-and-precious");
-    let (_out, entries) = collect(&root, |keep, ctx| {
+    let (_out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -1575,8 +1651,8 @@ fn precious_are_not_expendable() {
         )
     });
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry_nokind(".git", DotGit),
             entry(".gitignore", Tracked, File),
             entry("a.o", Ignored(Expendable), File),
@@ -1589,9 +1665,8 @@ fn precious_are_not_expendable() {
         ],
         "just to have an overview"
     );
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -1613,8 +1688,8 @@ fn precious_are_not_expendable() {
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry("a.o", Ignored(Expendable), File),
             entry("d/a.o", Ignored(Expendable), File),
             entry("d/b.o", Ignored(Expendable), File),
@@ -1626,12 +1701,51 @@ fn precious_are_not_expendable() {
             a collapsed precious file."
     );
 
-    for (equivalent_pathspec, expected_match) in [("d/*", WildcardMatch), ("d/", Prefix), ("d", Prefix)] {
+    let (out, entries) = collect_filtered(
+        &root,
+        None,
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_untracked: CollapseDirectory,
+                    emit_collapsed: Some(OnStatusMismatch),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("d"),
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 3,
+            returned_entries: entries.len(),
+            seen_entries: 10,
+        },
+        "'d' is assumed to be a file, hence it's stripped to its base '', yielding one more call."
+    );
+
+    assert_eq!(
+        entries,
+        [
+            entryps("d/a.o", Ignored(Expendable), File, Prefix),
+            entryps("d/b.o", Ignored(Expendable), File, Prefix),
+            entryps("d/d", Untracked, Directory, Prefix),
+            entryps_dirstat("d/d/a.precious", Ignored(Precious), File, Prefix, Untracked),
+        ],
+        "should yield the same entries - note how collapsed directories inherit the pathspec"
+    );
+    for (equivalent_pathspec, expected_match) in [("d/*", WildcardMatch), ("d/", Prefix)] {
         let (out, entries) = collect_filtered(
             &root,
+            None,
             |keep, ctx| {
                 walk(
-                    &root,
                     &root,
                     ctx,
                     walk::Options {
@@ -1648,16 +1762,16 @@ fn precious_are_not_expendable() {
         assert_eq!(
             out,
             walk::Outcome {
-                read_dir_calls: 3,
+                read_dir_calls: 2,
                 returned_entries: entries.len(),
-                seen_entries: 10,
+                seen_entries: 7,
             },
-            "{equivalent_pathspec}: should yield same result"
+            "{equivalent_pathspec}: should yield same result, they also see the 'd' prefix directory"
         );
 
         assert_eq!(
-            &entries,
-            &[
+            entries,
+            [
                 entryps("d/a.o", Ignored(Expendable), File, expected_match),
                 entryps("d/b.o", Ignored(Expendable), File, expected_match),
                 entryps("d/d", Untracked, Directory, expected_match),
@@ -1667,9 +1781,8 @@ fn precious_are_not_expendable() {
         );
     }
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -1691,8 +1804,8 @@ fn precious_are_not_expendable() {
     );
 
     assert_eq!(
-        &entries,
-        &[
+        entries,
+        [
             entry("a.o", Ignored(Expendable), File),
             entry("d/a.o", Ignored(Expendable), File),
             entry("d/b.o", Ignored(Expendable), File),
@@ -1717,9 +1830,8 @@ fn decomposed_unicode_in_directory_is_returned_precomposed() -> crate::Result {
     std::fs::create_dir(root.path().join(decomposed))?;
     std::fs::write(root.path().join(decomposed).join(decomposed), [])?;
 
-    let (out, entries) = collect(root.path(), |keep, ctx| {
+    let (out, entries) = collect(root.path(), None, |keep, ctx| {
         walk(
-            root.path(),
             root.path(),
             ctx,
             walk::Options {
@@ -1738,16 +1850,15 @@ fn decomposed_unicode_in_directory_is_returned_precomposed() -> crate::Result {
             seen_entries: 1,
         }
     );
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry(format!("{precomposed}/{precomposed}").as_str(), Untracked, File),
+        entries,
+        [entry(format!("{precomposed}/{precomposed}").as_str(), Untracked, File)],
         "even root paths are returned precomposed then"
     );
 
-    let (_out, entries) = collect(root.path(), |keep, ctx| {
+    let troot = root.path().join(decomposed);
+    let (out, entries) = collect(root.path(), Some(&troot), |keep, ctx| {
         walk(
-            &root.path().join(decomposed),
             root.path(),
             ctx,
             walk::Options {
@@ -1757,28 +1868,25 @@ fn decomposed_unicode_in_directory_is_returned_precomposed() -> crate::Result {
             keep,
         )
     });
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry(format!("{decomposed}/{decomposed}").as_str(), Untracked, File),
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 1,
+        },
+        "note how it starts directly in the right repository"
+    );
+    assert_eq!(
+        entries,
+        [entryps(
+            format!("{decomposed}/{decomposed}").as_str(),
+            Untracked,
+            File,
+            Prefix
+        )],
         "if disabled, it stays decomposed as provided"
     );
-    Ok(())
-}
-
-#[test]
-fn root_must_be_in_worktree() -> crate::Result {
-    let err = try_collect("worktree root does not matter here".as_ref(), |keep, ctx| {
-        walk(
-            "traversal".as_ref(),
-            "unrelated-worktree".as_ref(),
-            ctx,
-            options(),
-            keep,
-        )
-    })
-    .unwrap_err();
-    assert!(matches!(err, walk::Error::RootNotInWorktree { .. }));
     Ok(())
 }
 
@@ -1786,7 +1894,15 @@ fn root_must_be_in_worktree() -> crate::Result {
 #[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
 fn worktree_root_can_be_symlink() -> crate::Result {
     let root = fixture_in("many-symlinks", "symlink-to-breakout-symlink");
-    let (out, entries) = collect(&root, |keep, ctx| walk(&root.join("file"), &root, ctx, options(), keep));
+    let troot = root.join("file");
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| walk(&root, ctx, options(), keep),
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
@@ -1795,10 +1911,9 @@ fn worktree_root_can_be_symlink() -> crate::Result {
             seen_entries: 1,
         }
     );
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry("file", Untracked, File),
+        entries,
+        [entry("file", Untracked, File)],
         "it allows symlinks for the worktree itself"
     );
     Ok(())
@@ -1808,14 +1923,9 @@ fn worktree_root_can_be_symlink() -> crate::Result {
 fn root_may_not_go_through_dot_git() -> crate::Result {
     let root = fixture("with-nested-dot-git");
     for dir in ["", "subdir"] {
-        let (out, entries) = collect(&root, |keep, ctx| {
-            walk(
-                &root.join("dir").join(".git").join(dir),
-                &root,
-                ctx,
-                options_emit_all(),
-                keep,
-            )
+        let troot = root.join("dir").join(".git").join(dir);
+        let (out, entries) = collect(&root, Some(&troot), |keep, ctx| {
+            walk(&root, ctx, options_emit_all(), keep)
         });
         assert_eq!(
             out,
@@ -1825,8 +1935,11 @@ fn root_may_not_go_through_dot_git() -> crate::Result {
                 seen_entries: 1,
             }
         );
-        assert_eq!(entries.len(), 1, "no traversal happened as root passes though .git");
-        assert_eq!(&entries[0], &entry_nomatch("dir/.git", DotGit, Directory));
+        assert_eq!(
+            entries,
+            [entry_nomatch("dir/.git", DotGit, Directory)],
+            "no traversal happened as root passes though .git"
+        );
     }
     Ok(())
 }
@@ -1834,11 +1947,13 @@ fn root_may_not_go_through_dot_git() -> crate::Result {
 #[test]
 fn root_enters_directory_with_dot_git_in_reconfigured_worktree_tracked() -> crate::Result {
     let root = fixture("nonstandard-worktree");
-    let (out, entries) = try_collect_filtered_opts_collect(
+    let troot = root.join("dir-with-dot-git").join("inside");
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
         &root,
+        None,
+        Some(&troot),
         |keep, ctx| {
             walk(
-                &root.join("dir-with-dot-git").join("inside"),
                 &root,
                 ctx,
                 walk::Options {
@@ -1861,18 +1976,18 @@ fn root_enters_directory_with_dot_git_in_reconfigured_worktree_tracked() -> crat
         }
     );
 
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry("dir-with-dot-git/inside", Tracked, File),
+        entries,
+        [entry("dir-with-dot-git/inside", Tracked, File)],
         "everything is tracked, so it won't try to detect git repositories anyway"
     );
 
+    let troot = root.join("dir-with-dot-git").join("inside");
     let (out, entries) = try_collect_filtered_opts_collect(
         &root,
+        Some(&troot),
         |keep, ctx| {
             walk(
-                &root.join("dir-with-dot-git").join("inside"),
                 &root,
                 ctx,
                 walk::Options {
@@ -1902,24 +2017,18 @@ fn root_enters_directory_with_dot_git_in_reconfigured_worktree_tracked() -> crat
 #[test]
 fn root_enters_directory_with_dot_git_in_reconfigured_worktree_untracked() -> crate::Result {
     let root = fixture("nonstandard-worktree-untracked");
-    let (_out, entries) = try_collect_filtered_opts_collect(
+    let troot = root.join("dir-with-dot-git").join("inside");
+    let (_out, entries) = try_collect_filtered_opts_collect_with_root(
         &root,
-        |keep, ctx| {
-            walk(
-                &root.join("dir-with-dot-git").join("inside"),
-                &root,
-                ctx,
-                options(),
-                keep,
-            )
-        },
+        None,
+        Some(&troot),
+        |keep, ctx| walk(&root, ctx, options(), keep),
         None::<&str>,
         Options::git_dir("dir-with-dot-git/.git"),
     )?;
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry("dir-with-dot-git/inside", Untracked, File),
+        entries,
+        [entry("dir-with-dot-git/inside", Untracked, File)],
         "it can enter a dir and treat it as normal even if own .git is inside,\
          which otherwise would be a repository"
     );
@@ -1929,27 +2038,39 @@ fn root_enters_directory_with_dot_git_in_reconfigured_worktree_untracked() -> cr
 #[test]
 fn root_may_not_go_through_nested_repository_unless_enabled() -> crate::Result {
     let root = fixture("nested-repository");
-    let walk_root = root.join("nested").join("file");
-    let (_out, entries) = collect(&root, |keep, ctx| {
-        walk(
-            &walk_root,
-            &root,
-            ctx,
-            walk::Options {
-                recurse_repositories: true,
-                ..options()
-            },
-            keep,
-        )
-    });
-    assert_eq!(entries.len(), 1);
+    let troot = root.join("nested").join("file");
+    let (_out, entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    recurse_repositories: true,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
-        &entries[0],
-        &entry("nested/file", Untracked, File),
+        entries,
+        [entry("nested/file", Untracked, File)],
         "it happily enters the repository and lists the file"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| walk(&walk_root, &root, ctx, options(), keep));
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| walk(&root, ctx, options(), keep),
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
@@ -1958,10 +2079,9 @@ fn root_may_not_go_through_nested_repository_unless_enabled() -> crate::Result {
             seen_entries: 1,
         }
     );
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry("nested", Untracked, Repository),
+        entries,
+        [entry("nested", Untracked, Repository)],
         "thus it ends in the directory that is a repository"
     );
     Ok(())
@@ -1970,28 +2090,27 @@ fn root_may_not_go_through_nested_repository_unless_enabled() -> crate::Result {
 #[test]
 fn root_may_not_go_through_submodule() -> crate::Result {
     let root = fixture("with-submodule");
-    let (out, entries) = collect(&root, |keep, ctx| {
-        walk(
-            &root.join("submodule").join("dir").join("file"),
-            &root,
-            ctx,
-            options_emit_all(),
-            keep,
-        )
-    });
+    let troot = root.join("submodule").join("dir").join("file");
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| walk(&root, ctx, options_emit_all(), keep),
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
             read_dir_calls: 0,
             returned_entries: entries.len(),
             seen_entries: 1,
-        }
+        },
     );
-    assert_eq!(entries.len(), 1, "it refuses to start traversal in a submodule");
     assert_eq!(
-        &entries[0],
-        &entry("submodule", Tracked, Repository),
-        "thus it ends in the directory that is the submodule"
+        entries,
+        [entry("submodule", Tracked, Repository)],
+        "it refuses to start traversal in a submodule, thus it ends in the directory that is the submodule"
     );
     Ok(())
 }
@@ -1999,7 +2118,7 @@ fn root_may_not_go_through_submodule() -> crate::Result {
 #[test]
 fn walk_with_submodule() -> crate::Result {
     let root = fixture("with-submodule");
-    let (out, entries) = collect(&root, |keep, ctx| walk(&root, &root, ctx, options_emit_all(), keep));
+    let (out, entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
     assert_eq!(
         out,
         walk::Outcome {
@@ -2024,9 +2143,15 @@ fn walk_with_submodule() -> crate::Result {
 #[test]
 fn root_that_is_tracked_file_is_returned() -> crate::Result {
     let root = fixture("dir-with-tracked-file");
-    let (out, entries) = collect(&root, |keep, ctx| {
-        walk(&root.join("dir").join("file"), &root, ctx, options_emit_all(), keep)
-    });
+    let troot = &root.join("dir").join("file");
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(troot),
+        |keep, ctx| walk(&root, ctx, options_emit_all(), keep),
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
@@ -2036,10 +2161,9 @@ fn root_that_is_tracked_file_is_returned() -> crate::Result {
         }
     );
 
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry("dir/file", Tracked, File),
+        entries,
+        [entry("dir/file", Tracked, File)],
         "a tracked file as root just returns that file (even though no iteration is possible)"
     );
     Ok(())
@@ -2048,9 +2172,15 @@ fn root_that_is_tracked_file_is_returned() -> crate::Result {
 #[test]
 fn root_that_is_untracked_file_is_returned() -> crate::Result {
     let root = fixture("dir-with-file");
-    let (out, entries) = collect(&root, |keep, ctx| {
-        walk(&root.join("dir").join("file"), &root, ctx, options(), keep)
-    });
+    let troot = root.join("dir").join("file");
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| walk(&root, ctx, options(), keep),
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
@@ -2060,10 +2190,9 @@ fn root_that_is_untracked_file_is_returned() -> crate::Result {
         }
     );
 
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry("dir/file", Untracked, File),
+        entries,
+        [entry("dir/file", Untracked, File)],
         "an untracked file as root just returns that file (even though no iteration is possible)"
     );
     Ok(())
@@ -2072,18 +2201,22 @@ fn root_that_is_untracked_file_is_returned() -> crate::Result {
 #[test]
 fn top_level_root_that_is_a_file() {
     let root = fixture("just-a-file");
-    let err = try_collect(&root, |keep, ctx| walk(&root, &root, ctx, options(), keep)).unwrap_err();
+    let err = try_collect(&root, None, |keep, ctx| walk(&root, ctx, options(), keep)).unwrap_err();
     assert!(matches!(err, walk::Error::WorktreeRootIsFile { .. }));
 }
 
 #[test]
 fn root_can_be_pruned_early_with_pathspec() -> crate::Result {
     let root = fixture("dir-with-file");
-    let (out, entries) = collect_filtered(
+    let troot = root.join("dir");
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
         &root,
-        |keep, ctx| walk(&root.join("dir"), &root, ctx, options_emit_all(), keep),
+        None,
+        Some(&troot),
+        |keep, ctx| walk(&root, ctx, options_emit_all(), keep),
         Some("no-match/"),
-    );
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
@@ -2092,11 +2225,10 @@ fn root_can_be_pruned_early_with_pathspec() -> crate::Result {
             seen_entries: 1,
         }
     );
-    assert_eq!(entries.len(), 1);
 
     assert_eq!(
-        &entries[0],
-        &entry_nomatch("dir", Pruned, Directory),
+        entries,
+        [entry_nomatch("dir", Pruned, Directory)],
         "the pathspec didn't match the root, early abort"
     );
     Ok(())
@@ -2105,7 +2237,7 @@ fn root_can_be_pruned_early_with_pathspec() -> crate::Result {
 #[test]
 fn submodules() -> crate::Result {
     let root = fixture("multiple-submodules");
-    let (out, entries) = collect(&root, |keep, ctx| walk(&root, &root, ctx, options_emit_all(), keep));
+    let (out, entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
     assert_eq!(
         out,
         walk::Outcome {
@@ -2125,7 +2257,8 @@ fn submodules() -> crate::Result {
 
     let (out1, entries) = try_collect_filtered_opts_collect(
         &root,
-        |keep, ctx| walk(&root, &root, ctx, options_emit_all(), keep),
+        None,
+        |keep, ctx| walk(&root, ctx, options_emit_all(), keep),
         None::<&str>,
         Options {
             fresh_index: false,
@@ -2140,9 +2273,9 @@ fn submodules() -> crate::Result {
 
     let (out2, entries) = try_collect_filtered_opts_collect(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -2202,9 +2335,10 @@ fn cancel_with_collection_does_not_fail() -> crate::Result {
         };
         let _out = try_collect_filtered_opts(
             &root,
+            None,
+            None,
             |keep, ctx| {
                 walk(
-                    &root,
                     &root,
                     ctx,
                     walk::Options {
@@ -2231,24 +2365,27 @@ fn cancel_with_collection_does_not_fail() -> crate::Result {
 #[test]
 fn file_root_is_shown_if_pathspec_matches_exactly() -> crate::Result {
     let root = fixture("dir-with-file");
-    let (out, entries) = collect_filtered(
+    let troot = root.join("dir").join("file");
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
         &root,
-        |keep, ctx| walk(&root.join("dir").join("file"), &root, ctx, options(), keep),
+        None,
+        Some(&troot),
+        |keep, ctx| walk(&root, ctx, options(), keep),
         Some("*dir/*"),
-    );
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
             read_dir_calls: 0,
             returned_entries: entries.len(),
             seen_entries: 1,
-        }
+        },
     );
-    assert_eq!(entries.len(), 1);
 
     assert_eq!(
-        &entries[0],
-        &entryps("dir/file", Untracked, File, WildcardMatch),
+        entries,
+        [entryps("dir/file", Untracked, File, WildcardMatch)],
         "the pathspec matched the root precisely"
     );
     Ok(())
@@ -2258,9 +2395,15 @@ fn file_root_is_shown_if_pathspec_matches_exactly() -> crate::Result {
 fn root_that_is_tracked_and_ignored_is_considered_tracked() -> crate::Result {
     let root = fixture("tracked-is-ignored");
     let walk_root = "dir/file";
-    let (out, entries) = collect(&root, |keep, ctx| {
-        walk(&root.join(walk_root), &root, ctx, options_emit_all(), keep)
-    });
+    let troot = root.join(walk_root);
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| walk(&root, ctx, options_emit_all(), keep),
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
         out,
         walk::Outcome {
@@ -2269,11 +2412,10 @@ fn root_that_is_tracked_and_ignored_is_considered_tracked() -> crate::Result {
             seen_entries: 1,
         }
     );
-    assert_eq!(entries.len(), 1);
 
     assert_eq!(
-        &entries[0],
-        &entry(walk_root, Tracked, File),
+        entries,
+        [entry(walk_root, Tracked, File)],
         "tracking is checked first, so we can safe exclude checks for most entries"
     );
     Ok(())
@@ -2283,9 +2425,8 @@ fn root_that_is_tracked_and_ignored_is_considered_tracked() -> crate::Result {
 fn root_with_dir_that_is_tracked_and_ignored() -> crate::Result {
     let root = fixture("tracked-is-ignored");
     for emission in [Matching, CollapseDirectory] {
-        let (out, entries) = collect(&root, |keep, ctx| {
+        let (out, entries) = collect(&root, None, |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -2305,7 +2446,6 @@ fn root_with_dir_that_is_tracked_and_ignored() -> crate::Result {
                 seen_entries: 3,
             }
         );
-        assert_eq!(entries.len(), 3);
 
         assert_eq!(
             entries,
@@ -2326,9 +2466,8 @@ fn root_with_dir_that_is_tracked_and_ignored() -> crate::Result {
 fn empty_and_nested_untracked() -> crate::Result {
     let root = fixture("empty-and-untracked-dir");
     for for_deletion in [None, Some(Default::default())] {
-        let (out, entries) = collect(&root, |keep, ctx| {
+        let (out, entries) = collect(&root, None, |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -2357,9 +2496,8 @@ fn empty_and_nested_untracked() -> crate::Result {
             ],
             "we find all untracked entries, no matter the deletion mode"
         );
-        let (out, entries) = collect(&root, |keep, ctx| {
+        let (out, entries) = collect(&root, None, |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -2396,19 +2534,26 @@ fn empty_and_nested_untracked() -> crate::Result {
 fn root_that_is_ignored_is_listed_for_files_and_directories() -> crate::Result {
     let root = fixture("ignored-dir");
     for walk_root in ["dir", "dir/file"] {
+        let troot = root.join(walk_root);
         for emission in [Matching, CollapseDirectory] {
-            let (out, entries) = collect(&root, |keep, ctx| {
-                walk(
-                    &root.join(walk_root),
-                    &root,
-                    ctx,
-                    walk::Options {
-                        emit_ignored: Some(emission),
-                        ..options()
-                    },
-                    keep,
-                )
-            });
+            let (out, entries) = try_collect_filtered_opts_collect_with_root(
+                &root,
+                None,
+                Some(&troot),
+                |keep, ctx| {
+                    walk(
+                        &root,
+                        ctx,
+                        walk::Options {
+                            emit_ignored: Some(emission),
+                            ..options()
+                        },
+                        keep,
+                    )
+                },
+                None::<&str>,
+                Default::default(),
+            )?;
             assert_eq!(
                 out,
                 walk::Outcome {
@@ -2417,11 +2562,10 @@ fn root_that_is_ignored_is_listed_for_files_and_directories() -> crate::Result {
                     seen_entries: 1,
                 }
             );
-            assert_eq!(entries.len(), 1);
 
             assert_eq!(
-                &entries[0],
-                &entry("dir", Ignored(Expendable), Directory),
+                entries,
+                [entry("dir", Ignored(Expendable), Directory)],
                 "excluded directories or files that walkdir are listed without further recursion"
             );
         }
@@ -2432,9 +2576,8 @@ fn root_that_is_ignored_is_listed_for_files_and_directories() -> crate::Result {
 #[test]
 fn nested_bare_repos_in_ignored_directories() -> crate::Result {
     let root = fixture("ignored-dir-with-nested-bare-repository");
-    let (_out, entries) = collect(&root, |keep, ctx| {
+    let (_out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2459,9 +2602,8 @@ fn nested_bare_repos_in_ignored_directories() -> crate::Result {
         Note the nested bare repository isn't seen, while the bare repository is just collapsed, and not detected as repository"
     );
 
-    let (_out, entries) = collect(&root, |keep, ctx| {
+    let (_out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2484,9 +2626,8 @@ fn nested_bare_repos_in_ignored_directories() -> crate::Result {
         "When looking for non-bare repositories, we won't find bare ones, they just disappear as ignored collapsed directories"
     );
 
-    let (_out, entries) = collect(&root, |keep, ctx| {
+    let (_out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2515,9 +2656,8 @@ fn nested_bare_repos_in_ignored_directories() -> crate::Result {
 #[test]
 fn nested_repos_in_untracked_directories() -> crate::Result {
     let root = fixture("untracked-hidden-bare");
-    let (_out, entries) = collect(&root, |keep, ctx| {
+    let (_out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2535,9 +2675,8 @@ fn nested_repos_in_untracked_directories() -> crate::Result {
         "by default, the subdir is collapsed and we don't see the contained repository as it doesn't get classified"
     );
 
-    let (_out, entries) = collect(&root, |keep, ctx| {
+    let (_out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2564,9 +2703,8 @@ fn nested_repos_in_untracked_directories() -> crate::Result {
 #[test]
 fn nested_repos_in_ignored_directories() -> crate::Result {
     let root = fixture("ignored-dir-with-nested-repository");
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2596,9 +2734,8 @@ fn nested_repos_in_ignored_directories() -> crate::Result {
         "by default, only the directory is listed and recursion is stopped there, as it matches the ignore directives."
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2630,9 +2767,8 @@ fn nested_repos_in_ignored_directories() -> crate::Result {
         "in this mode, we will list repositories nested in ignored directories separately"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2678,18 +2814,25 @@ fn decomposed_unicode_in_root_is_returned_precomposed() -> crate::Result {
     let precomposed = "ä";
     std::fs::write(root.path().join(decomposed), [])?;
 
-    let (out, entries) = collect(root.path(), |keep, ctx| {
-        walk(
-            &root.path().join(decomposed),
-            root.path(),
-            ctx,
-            walk::Options {
-                precompose_unicode: true,
-                ..options()
-            },
-            keep,
-        )
-    });
+    let troot = root.path().join(decomposed);
+    let (out, entries) = try_collect_filtered_opts_collect_with_root(
+        root.path(),
+        None,
+        Some(&troot),
+        |keep, ctx| {
+            walk(
+                root.path(),
+                ctx,
+                walk::Options {
+                    precompose_unicode: true,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Default::default(),
+    )?;
 
     assert_eq!(
         out,
@@ -2699,29 +2842,34 @@ fn decomposed_unicode_in_root_is_returned_precomposed() -> crate::Result {
             seen_entries: 1,
         }
     );
-    assert_eq!(entries.len(), 1);
     assert_eq!(
-        &entries[0],
-        &entry(precomposed, Untracked, File),
+        entries,
+        [entry(precomposed, Untracked, File)],
         "even root paths are returned precomposed then"
     );
 
-    let (_out, entries) = collect(root.path(), |keep, ctx| {
-        walk(
-            &root.path().join(decomposed),
-            root.path(),
-            ctx,
-            walk::Options {
-                precompose_unicode: false,
-                ..options()
-            },
-            keep,
-        )
-    });
-    assert_eq!(entries.len(), 1);
+    let troot = root.path().join(decomposed);
+    let (_out, entries) = try_collect_filtered_opts_collect_with_root(
+        root.path(),
+        None,
+        Some(&troot),
+        |keep, ctx| {
+            walk(
+                root.path(),
+                ctx,
+                walk::Options {
+                    precompose_unicode: false,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
-        &entries[0],
-        &entry(decomposed, Untracked, File),
+        entries,
+        [entry(decomposed, Untracked, File)],
         "if disabled, it stays decomposed as provided"
     );
     Ok(())
@@ -2730,9 +2878,8 @@ fn decomposed_unicode_in_root_is_returned_precomposed() -> crate::Result {
 #[test]
 fn untracked_and_ignored_collapse_mix() {
     let root = fixture("untracked-and-ignored-for-collapse");
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2764,9 +2911,8 @@ fn untracked_and_ignored_collapse_mix() {
         "ignored collapses separately from untracked"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2799,9 +2945,8 @@ fn untracked_and_ignored_collapse_mix() {
         "untracked collapses separately from ignored, but note that matching directories are still emitted, i.e. ignored/"
     );
 
-    let (out, entries) = collect(&root, |keep, ctx| {
+    let (out, entries) = collect(&root, None, |keep, ctx| {
         walk(
-            &root,
             &root,
             ctx,
             walk::Options {
@@ -2838,12 +2983,12 @@ fn untracked_and_ignored_collapse_mix() {
 }
 
 #[test]
-fn root_cannot_pass_through_case_altered_capital_dot_git_if_case_insensitive() {
+fn root_cannot_pass_through_case_altered_capital_dot_git_if_case_insensitive() -> crate::Result {
     let root = fixture("with-nested-capitalized-dot-git");
     for dir in ["", "subdir"] {
-        let (out, entries) = collect(&root, |keep, ctx| {
+        let troot = root.join("dir").join(".GIT").join(dir);
+        let (out, entries) = collect(&root, Some(&troot), |keep, ctx| {
             walk(
-                &root.join("dir").join(".GIT").join(dir),
                 &root,
                 ctx,
                 walk::Options {
@@ -2861,32 +3006,38 @@ fn root_cannot_pass_through_case_altered_capital_dot_git_if_case_insensitive() {
                 seen_entries: 1,
             }
         );
-        assert_eq!(entries.len(), 1, "no traversal happened as root passes though .git");
         assert_eq!(
-            &entries[0],
-            &entry_nomatch("dir/.GIT", DotGit, Directory),
-            "it compares in a case-insensitive fashion"
+            entries,
+            [entry_nomatch("dir/.GIT", DotGit, Directory)],
+            "no traversal happened as root passes though .git, it compares in a case-insensitive fashion"
         );
     }
 
-    let (_out, entries) = collect(&root, |keep, ctx| {
-        walk(
-            &root.join("dir").join(".GIT").join("config"),
-            &root,
-            ctx,
-            walk::Options {
-                ignore_case: false,
-                ..options()
-            },
-            keep,
-        )
-    });
-    assert_eq!(entries.len(), 1,);
+    let troot = root.join("dir").join(".GIT").join("config");
+    let (_out, entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    ignore_case: false,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Default::default(),
+    )?;
     assert_eq!(
-        &entries[0],
-        &entry("dir/.GIT/config", Untracked, File),
+        entries,
+        [entry("dir/.GIT/config", Untracked, File)],
         "it passes right through what now seems like any other directory"
     );
+    Ok(())
 }
 
 #[test]
@@ -2894,15 +3045,15 @@ fn partial_checkout_cone_and_non_one() -> crate::Result {
     for fixture_name in ["partial-checkout-cone-mode", "partial-checkout-non-cone"] {
         let root = fixture(fixture_name);
         let not_in_cone_but_created_locally_by_hand = "d/file-created-manually";
-        let (out, entries) = collect(&root, |keep, ctx| {
-            walk(
-                &root.join(not_in_cone_but_created_locally_by_hand),
-                &root,
-                ctx,
-                options_emit_all(),
-                keep,
-            )
-        });
+        let troot = root.join(not_in_cone_but_created_locally_by_hand);
+        let (out, entries) = try_collect_filtered_opts_collect_with_root(
+            &root,
+            None,
+            Some(&troot),
+            |keep, ctx| walk(&root, ctx, options_emit_all(), keep),
+            None::<&str>,
+            Default::default(),
+        )?;
         assert_eq!(
             out,
             walk::Outcome {
@@ -2911,11 +3062,9 @@ fn partial_checkout_cone_and_non_one() -> crate::Result {
                 seen_entries: 1,
             }
         );
-        assert_eq!(entries.len(), 1);
-
         assert_eq!(
-            &entries[0],
-            &entry("d", TrackedExcluded, Directory),
+            entries,
+            [entry("d", TrackedExcluded, Directory)],
             "{fixture_name}: we avoid entering excluded sparse-checkout directories even if they are present on disk,\
             no matter with cone or without."
         );
@@ -2928,9 +3077,9 @@ fn type_mismatch() {
     let root = fixture("type-mismatch");
     let (out, entries) = try_collect_filtered_opts_collect(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -2956,7 +3105,6 @@ fn type_mismatch() {
             seen_entries: 3,
         }
     );
-    assert_eq!(entries.len(), 2);
 
     assert_eq!(
         entries,
@@ -2971,9 +3119,9 @@ fn type_mismatch() {
 
     let (out, entries) = try_collect_filtered_opts_collect(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -2999,7 +3147,6 @@ fn type_mismatch() {
             seen_entries: 3 + 1,
         }
     );
-    assert_eq!(entries.len(), 2);
 
     assert_eq!(
         entries,
@@ -3016,9 +3163,9 @@ fn type_mismatch_ignore_case() {
     let root = fixture("type-mismatch-icase");
     let (out, entries) = try_collect_filtered_opts_collect(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -3056,9 +3203,9 @@ fn type_mismatch_ignore_case() {
 
     let (out, entries) = try_collect_filtered_opts_collect(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -3100,9 +3247,9 @@ fn type_mismatch_ignore_case_clash_dir_is_file() {
     let root = fixture("type-mismatch-icase-clash-dir-is-file");
     let (out, entries) = try_collect_filtered_opts_collect(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {
@@ -3141,9 +3288,9 @@ fn type_mismatch_ignore_case_clash_file_is_dir() {
     let root = fixture("type-mismatch-icase-clash-file-is-dir");
     let (out, entries) = try_collect_filtered_opts_collect(
         &root,
+        None,
         |keep, ctx| {
             walk(
-                &root,
                 &root,
                 ctx,
                 walk::Options {

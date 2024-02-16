@@ -8,13 +8,13 @@ use crate::{entry, EntryRef};
 
 /// A function to perform a git-style, unsorted, directory walk.
 ///
-/// * `root` - the starting point of the walk and a readable directory.
-///     - Note that if the path leading to this directory or `root` itself is excluded, it will be provided to [`Delegate::emit()`]
-///       without further traversal.
-///     - If [`Options::precompose_unicode`] is enabled, this path must be precomposed.
-///     - Must be contained in `worktree_root`.
 /// * `worktree_root` - the top-most root of the worktree, which must be a prefix to `root`.
 ///     - If [`Options::precompose_unicode`] is enabled, this path must be precomposed.
+///     - The starting point of the traversal (traversal root) is calculated from by doing `worktree_root + pathspec.common_prefix()`.
+///     - Note that if the traversal root leading to this directory or it itself is excluded, it will be provided to [`Delegate::emit()`]
+///       without further traversal.
+///     - If [`Options::precompose_unicode`] is enabled, all involved paths must be precomposed.
+///     - Must be contained in `worktree_root`.
 /// * `ctx` - everything needed to classify the paths seen during the traversal.
 /// * `delegate` - an implementation of [`Delegate`] to control details of the traversal and receive its results.
 ///
@@ -36,14 +36,24 @@ use crate::{entry, EntryRef};
 /// or 0.25s for optimal multi-threaded performance, all in the WebKit directory with 388k items to traverse.
 /// Thus, the speedup could easily be 2x or more and thus worth investigating in due time.
 pub fn walk(
-    root: &Path,
     worktree_root: &Path,
     mut ctx: Context<'_>,
     options: Options,
     delegate: &mut dyn Delegate,
 ) -> Result<Outcome, Error> {
+    let root = match ctx.explicit_traversal_root {
+        Some(root) => root.to_owned(),
+        None => ctx
+            .pathspec
+            .longest_common_directory()
+            .and_then(|candidate| {
+                let candidate = worktree_root.join(candidate);
+                candidate.is_dir().then_some(candidate)
+            })
+            .unwrap_or_else(|| worktree_root.join(ctx.pathspec.prefix_directory())),
+    };
     let _span = gix_trace::coarse!("walk", root = ?root, worktree_root = ?worktree_root, options = ?options);
-    let (mut current, worktree_root_relative) = assure_no_symlink_in_root(worktree_root, root)?;
+    let (mut current, worktree_root_relative) = assure_no_symlink_in_root(worktree_root, &root)?;
     let mut out = Outcome::default();
     let mut buf = BString::default();
     let root_info = classify::root(
@@ -73,7 +83,7 @@ pub fn walk(
 
     let mut state = readdir::State::default();
     let _ = readdir::recursive(
-        root == worktree_root,
+        true,
         &mut current,
         &mut buf,
         root_info,
@@ -95,10 +105,9 @@ fn assure_no_symlink_in_root<'root>(
     root: &'root Path,
 ) -> Result<(PathBuf, Cow<'root, Path>), Error> {
     let mut current = worktree_root.to_owned();
-    let worktree_relative = root.strip_prefix(worktree_root).map_err(|_| Error::RootNotInWorktree {
-        worktree_root: worktree_root.to_owned(),
-        root: root.to_owned(),
-    })?;
+    let worktree_relative = root
+        .strip_prefix(worktree_root)
+        .expect("BUG: root was created from worktree_root + prefix");
     let worktree_relative = gix_path::normalize(worktree_relative.into(), Path::new(""))
         .ok_or(Error::NormalizeRoot { root: root.to_owned() })?;
 

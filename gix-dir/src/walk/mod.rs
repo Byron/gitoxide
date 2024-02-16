@@ -200,7 +200,7 @@ pub struct Context<'a> {
     /// in case-sensitive mode. It does, however, skip the directory hash creation (for looking
     /// up directories) unless `core.ignoreCase` is enabled.
     ///
-    /// We only use the hashmap when when available and when [`ignore_case`](Options::ignore_case) is enabled in the options.
+    /// We only use the hashmap when available and when [`ignore_case`](Options::ignore_case) is enabled in the options.
     pub ignore_case_index_lookup: Option<&'a gix_index::AccelerateLookup<'a>>,
     /// A pathspec to use as filter - we only traverse into directories if it matches.
     /// Note that the `ignore_case` setting it uses should match our [Options::ignore_case].
@@ -221,6 +221,15 @@ pub struct Context<'a> {
     pub excludes: Option<&'a mut gix_worktree::Stack>,
     /// Access to the object database for use with `excludes` - it's possible to access `.gitignore` files in the index if configured.
     pub objects: &'a dyn gix_object::Find,
+    /// If not `None`, override the traversal root that is computed and use this one instead.
+    ///
+    /// This can be useful if the traversal root may be a file, in which case the traversal will
+    /// still be returning possibly matching root entries.
+    ///
+    /// ### Panics
+    ///
+    /// If the `traversal_root` is not in the `worktree_root` passed to [walk()](crate::walk()).
+    pub explicit_traversal_root: Option<&'a std::path::Path>,
 }
 
 /// Additional information collected as outcome of [`walk()`](function::walk()).
@@ -242,8 +251,6 @@ pub enum Error {
     WorktreeRootIsFile { root: PathBuf },
     #[error("Traversal root '{}' contains relative path components and could not be normalized", root.display())]
     NormalizeRoot { root: PathBuf },
-    #[error("Traversal root '{}' must be literally contained in worktree root '{}'", root.display(), worktree_root.display())]
-    RootNotInWorktree { root: PathBuf, worktree_root: PathBuf },
     #[error("A symlink was found at component {component_index} of traversal root '{}' as seen from worktree root '{}'", root.display(), worktree_root.display())]
     SymlinkInRoot {
         root: PathBuf,

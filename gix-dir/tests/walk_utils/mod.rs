@@ -145,47 +145,75 @@ impl EntryExt for (Entry, Option<entry::Status>) {
 
 pub fn collect(
     worktree_root: &Path,
+    root: Option<&Path>,
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
 ) -> (walk::Outcome, Entries) {
-    try_collect(worktree_root, cb).unwrap()
+    try_collect(worktree_root, root, cb).unwrap()
 }
 
 pub fn collect_filtered(
     worktree_root: &Path,
+    root: Option<&Path>,
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
 ) -> (walk::Outcome, Entries) {
-    try_collect_filtered(worktree_root, cb, patterns).unwrap()
+    try_collect_filtered(worktree_root, root, cb, patterns).unwrap()
 }
 
 pub fn try_collect(
     worktree_root: &Path,
+    root: Option<&Path>,
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
 ) -> Result<(walk::Outcome, Entries), walk::Error> {
-    try_collect_filtered(worktree_root, cb, None::<&str>)
+    try_collect_filtered(worktree_root, root, cb, None::<&str>)
 }
 
 pub fn try_collect_filtered(
     worktree_root: &Path,
+    root: Option<&Path>,
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
 ) -> Result<(walk::Outcome, Entries), walk::Error> {
-    try_collect_filtered_opts_collect(worktree_root, cb, patterns, Default::default())
+    try_collect_filtered_opts_collect(worktree_root, root, cb, patterns, Default::default())
 }
 
 pub fn try_collect_filtered_opts_collect(
     worktree_root: &Path,
+    root: Option<&Path>,
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
     options: Options<'_>,
 ) -> Result<(walk::Outcome, Entries), walk::Error> {
     let mut dlg = gix_dir::walk::delegate::Collect::default();
-    let outcome = try_collect_filtered_opts(worktree_root, cb, patterns, &mut dlg, options)?;
+    let outcome = try_collect_filtered_opts(worktree_root, root, None, cb, patterns, &mut dlg, options)?;
+    Ok((outcome, dlg.into_entries_by_path()))
+}
+
+pub fn try_collect_filtered_opts_collect_with_root(
+    worktree_root: &Path,
+    root: Option<&Path>,
+    explicit_traversal_root: Option<&Path>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
+    patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+    options: Options<'_>,
+) -> Result<(walk::Outcome, Entries), walk::Error> {
+    let mut dlg = gix_dir::walk::delegate::Collect::default();
+    let outcome = try_collect_filtered_opts(
+        worktree_root,
+        root,
+        explicit_traversal_root,
+        cb,
+        patterns,
+        &mut dlg,
+        options,
+    )?;
     Ok((outcome, dlg.into_entries_by_path()))
 }
 
 pub fn try_collect_filtered_opts(
     worktree_root: &Path,
+    root: Option<&Path>,
+    explicit_traversal_root: Option<&Path>,
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
     delegate: &mut dyn gix_dir::walk::Delegate,
@@ -223,7 +251,7 @@ pub fn try_collect_filtered_opts(
         patterns.into_iter().map(|spec| {
             gix_pathspec::parse(spec.as_ref(), gix_pathspec::Defaults::default()).expect("tests use valid pattern")
         }),
-        None,
+        root.map(|root| root.strip_prefix(worktree_root).expect("root is within worktree root")),
         "we don't provide absolute pathspecs, thus need no worktree root".as_ref(),
     )
     .expect("search creation can't fail");
@@ -254,6 +282,7 @@ pub fn try_collect_filtered_opts(
             pathspec_attributes: &mut |_, _, _, _| panic!("we do not use pathspecs that require attributes access."),
             excludes: Some(&mut stack),
             objects: &gix_object::find::Never,
+            explicit_traversal_root,
         },
     )
 }
