@@ -25,3 +25,10 @@ git init non-bare-repo-without-index
   git add this && git commit -m "init"
   rm .git/index
 )
+
+git init all-untracked
+(cd all-untracked
+  >a
+  mkdir d
+  >d/a
+)

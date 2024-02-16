@@ -1,6 +1,6 @@
 use crate::bstr::BStr;
 use crate::{config, dirwalk, Repository};
-use std::path::Path;
+use std::path::PathBuf;
 
 /// The error returned by [dirwalk()](Repository::dirwalk()).
 #[derive(Debug, thiserror::Error)]
@@ -42,7 +42,8 @@ impl Repository {
         patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
         options: dirwalk::Options,
         delegate: &mut dyn gix_dir::walk::Delegate,
-    ) -> Result<gix_dir::walk::Outcome, Error> {
+    ) -> Result<(gix_dir::walk::Outcome, PathBuf), Error> {
+        let _span = gix_trace::coarse!("gix::dirwalk");
         let workdir = self.work_dir().ok_or(Error::MissinWorkDir)?;
         let mut excludes = self
             .excludes(
@@ -59,14 +60,13 @@ impl Repository {
                 crate::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
             )?
             .into_parts();
+        gix_trace::debug!(patterns = ?pathspec.patterns().map(|p| p.path()).collect::<Vec<_>>());
 
-        let prefix = self.prefix()?.unwrap_or(Path::new(""));
         let git_dir_realpath =
             crate::path::realpath_opts(self.git_dir(), self.current_dir(), crate::path::realpath::MAX_SYMLINKS)?;
         let fs_caps = self.filesystem_options()?;
         let accelerate_lookup = fs_caps.ignore_case.then(|| index.prepare_icase_backing());
         gix_dir::walk(
-            &workdir.join(prefix),
             workdir,
             gix_dir::walk::Context {
                 git_dir_realpath: git_dir_realpath.as_ref(),
@@ -85,6 +85,7 @@ impl Repository {
                 },
                 excludes: Some(&mut excludes),
                 objects: &self.objects,
+                explicit_traversal_root: None,
             },
             options.into(),
             delegate,

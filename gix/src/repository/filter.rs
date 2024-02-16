@@ -52,7 +52,7 @@ impl Repository {
             let cache = self.attributes_only(&index, gix_worktree::stack::state::attributes::Source::IdMapping)?;
             (cache, IndexPersistedOrInMemory::InMemory(index))
         } else {
-            let index = self.index()?;
+            let index = self.index_or_empty()?;
             let cache = self.attributes_only(
                 &index,
                 gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping,

@@ -55,7 +55,7 @@ pub(crate) mod function {
             bail!("Need a worktree to clean, this is a bare repository");
         };
 
-        let index = repo.index()?;
+        let index = repo.index_or_empty()?;
         let has_patterns = !patterns.is_empty();
         let mut collect = InterruptableCollect::default();
         let collapse_directories = CollapseDirectory;
