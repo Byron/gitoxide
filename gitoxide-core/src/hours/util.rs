@@ -55,10 +55,10 @@ where
             // estimate lower bound of capacity needed
             let (lower, _) = iter.size_hint();
             let mut result = String::with_capacity(sep.len() * lower);
-            write!(&mut result, "{first_elt}").unwrap();
+            write!(&mut result, "{first_elt}").expect("enough memory");
             iter.for_each(|elt| {
                 result.push_str(sep);
-                write!(&mut result, "{elt}").unwrap();
+                write!(&mut result, "{elt}").expect("enough memory");
             });
             result
         }

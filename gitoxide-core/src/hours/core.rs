@@ -28,7 +28,7 @@ pub fn estimate_hours(
         let mut hours = 0.0;
 
         let mut commits = commits.iter().map(|t| &t.1).rev();
-        let mut cur = commits.next().expect("not a single commit found");
+        let mut cur = commits.next().expect("at least one commit if we are here");
 
         for next in commits {
             let change_in_minutes = (next.time.seconds.saturating_sub(cur.time.seconds)) as f32 / MINUTES_PER_HOUR;
@@ -37,7 +37,6 @@ pub fn estimate_hours(
             } else {
                 hours += FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR
             }
-
             cur = next;
         }
 
