@@ -118,7 +118,7 @@ pub fn to_unsigned_with_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Resu
         return Err(ParseIntegerError { kind: ErrorKind::Empty });
     }
 
-    let mut result = I::zero();
+    let mut result = I::ZERO;
 
     for &digit in bytes {
         let x = match char::from(digit).to_digit(radix).and_then(I::from_u32) {
@@ -236,7 +236,7 @@ pub fn to_signed_with_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result
         return Err(ParseIntegerError { kind: ErrorKind::Empty });
     }
 
-    let mut result = I::zero();
+    let mut result = I::ZERO;
 
     for &digit in digits {
         let x = match char::from(digit).to_digit(radix).and_then(I::from_u32) {
@@ -270,10 +270,10 @@ pub fn to_signed_with_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result
 
 /// minimal subset of traits used by [`to_signed_with_radix`] and [`to_unsigned_with_radix`]
 pub trait MinNumTraits: Sized + Copy {
+    /// the 0 value for this type
+    const ZERO: Self;
     ///
     fn from_u32(n: u32) -> Option<Self>;
-    ///
-    fn zero() -> Self;
     ///
     fn checked_mul(self, v: Self) -> Option<Self>;
     ///
@@ -285,13 +285,11 @@ pub trait MinNumTraits: Sized + Copy {
 macro_rules! min_num_traits {
     ($t : ty, from_u32 => $from_u32 : expr) => {
         impl MinNumTraits for $t {
+            const ZERO: Self = 0;
+
             fn from_u32(n: u32) -> Option<$t> {
                 #[allow(clippy::redundant_closure_call)]
                 $from_u32(n)
-            }
-
-            fn zero() -> Self {
-                0
             }
 
             fn checked_mul(self, v: $t) -> Option<$t> {
