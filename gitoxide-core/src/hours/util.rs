@@ -42,6 +42,12 @@ impl<'a> From<&'a WorkByEmail> for WorkByPerson {
     }
 }
 
+/// Combine all iterator elements into one String, separated by `sep`.
+///
+/// Use the `Display` implementation of each element.
+///
+/// extracted from
+/// https://github.com/rust-itertools/itertools/blob/762643f1be2217140a972745cf4d6ed69435f722/src/lib.rs#L2295-L2324
 fn join<I>(mut iter: I, sep: &str) -> String
 where
     I: Iterator,
