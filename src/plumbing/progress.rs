@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::io::StdoutLock;
 
 #[derive(Clone)]
 enum Usage {
@@ -519,26 +520,7 @@ pub fn show_progress() -> anyhow::Result<()> {
         write!(stdout, "{icon} {config: <50}: ", icon = usage.icon())?;
 
         if let Some(width) = width {
-            let icon_and_config_width = 55;
-            let width_after_config = width - icon_and_config_width;
-            let usage = usage.to_string();
-            let mut idx = 0;
-            for word in usage.split(' ') {
-                // +1 for the space after each word
-                let word_len = word.chars().count() + 1;
-
-                if idx + word_len > width_after_config {
-                    writeln!(stdout)?;
-                    for _ in 0..icon_and_config_width {
-                        write!(stdout, " ")?;
-                    }
-                    idx = 0;
-                }
-
-                write!(stdout, "{word} ")?;
-                idx += word_len;
-            }
-            writeln!(stdout)?;
+            write_with_linewrap(&mut stdout, &usage.to_string(), width)?;
         } else {
             writeln!(stdout, "{usage}")?;
         }
@@ -552,5 +534,29 @@ pub fn show_progress() -> anyhow::Result<()> {
         ondemand_icon = NotPlanned("").icon(),
         not_applicable_icon = NotApplicable("").icon(),
     );
+    Ok(())
+}
+
+fn write_with_linewrap(stdout: &mut StdoutLock<'_>, text: &str, width: usize) -> Result<(), std::io::Error> {
+    use std::io::Write;
+    let icon_and_config_width = 55;
+    let width_after_config = width.saturating_sub(icon_and_config_width);
+    let mut idx = 0;
+    for word in text.split(' ') {
+        // +1 for the space after each word
+        let word_len = word.chars().count() + 1;
+
+        if idx + word_len > width_after_config {
+            writeln!(stdout)?;
+            for _ in 0..icon_and_config_width {
+                write!(stdout, " ")?;
+            }
+            idx = 0;
+        }
+
+        write!(stdout, "{word} ")?;
+        idx += word_len;
+    }
+    writeln!(stdout)?;
     Ok(())
 }
