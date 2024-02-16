@@ -269,11 +269,13 @@ pub fn to_signed_with_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result
 }
 
 /// minimal subset of traits used by [`to_signed_with_radix`] and [`to_unsigned_with_radix`]
-pub trait MinNumTraits: Sized + Copy {
+pub trait MinNumTraits: Sized + Copy + TryFrom<u32> {
     /// the 0 value for this type
     const ZERO: Self;
-    ///
-    fn from_u32(n: u32) -> Option<Self>;
+    /// convert from a unsinged 32-bit word
+    fn from_u32(n: u32) -> Option<Self> {
+        Self::try_from(n).ok()
+    }
     /// the checked multiplication operation for this type
     fn checked_mul(self, rhs: Self) -> Option<Self>;
     /// the chekced addition operation for this type
@@ -291,15 +293,9 @@ macro_rules! impl_checked {
 }
 
 macro_rules! min_num_traits {
-    ($t : ty, from_u32 => $from_u32 : expr) => {
+    ($t:ty) => {
         impl MinNumTraits for $t {
             const ZERO: Self = 0;
-
-            fn from_u32(n: u32) -> Option<$t> {
-                #[allow(clippy::redundant_closure_call)]
-                $from_u32(n)
-            }
-
             impl_checked!(checked_add);
             impl_checked!(checked_mul);
             impl_checked!(checked_sub);
@@ -307,8 +303,8 @@ macro_rules! min_num_traits {
     };
 }
 
-min_num_traits!(i32, from_u32 => |n: u32| n.try_into().ok());
-min_num_traits!(i64, from_u32 => |n: u32| Some(n.into()));
-min_num_traits!(u64, from_u32 => |n: u32| Some(n.into()));
-min_num_traits!(u8, from_u32 => |n: u32| n.try_into().ok());
-min_num_traits!(usize, from_u32 => |n: u32| n.try_into().ok());
+min_num_traits!(i32);
+min_num_traits!(i64);
+min_num_traits!(u64);
+min_num_traits!(u8);
+min_num_traits!(usize);
