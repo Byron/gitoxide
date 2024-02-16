@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    fmt::{Display, Formatter},
-};
+use std::fmt::{Display, Formatter};
 
 use crosstermion::crossterm::style::Stylize;
 use owo_colors::OwoColorize;
@@ -586,6 +583,12 @@ pub fn show_progress() -> anyhow::Result<()> {
     //         table
     //     }
     // );
+
+    // noted: reverted from https://github.com/Byron/gitoxide/commit/65e64964c7cd151e53e5a7d4b9ba8fabda1c0e16
+    for Record { config, usage } in sorted {
+        println!("{} {}: {usage}", usage.icon(), config.bold(),);
+    }
+
     println!("{buf}");
     Ok(())
 }

@@ -1248,7 +1248,6 @@ dependencies = [
  "owo-colors",
  "prodash 28.0.0",
  "serde_derive",
- "terminal_size",
  "time",
  "tracing",
  "tracing-forest",
@@ -4591,16 +4590,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff1bc3d3f05aff0403e8ac0d92ced918ec05b666a43f83297ccef5bea8a3d449"
 dependencies = [
  "winapi-util",
-]
-
-[[package]]
-name = "terminal_size"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21bebf2b7c9e0a515f6e0f8c51dc0f8e4696391e6f1ff30379559f8365fb0df7"
-dependencies = [
- "rustix 0.38.31",
- "windows-sys 0.48.0",
 ]
 
 [[package]]
