@@ -331,6 +331,40 @@ fn simplified_search_handles_nil() -> crate::Result {
 }
 
 #[test]
+fn longest_common_directory_no_prefix() -> crate::Result {
+    let search = gix_pathspec::Search::from_specs(pathspecs(&["tests/a/", "tests/b/", ":!*.sh"]), None, Path::new(""))?;
+    assert_eq!(search.common_prefix(), "tests/");
+    assert_eq!(search.prefix_directory(), Path::new(""));
+    assert_eq!(
+        search.longest_common_directory().expect("present").to_string_lossy(),
+        "tests/",
+        "trailing slashes are not stripped"
+    );
+    Ok(())
+}
+
+#[test]
+fn longest_common_directory_with_prefix() -> crate::Result {
+    let search = gix_pathspec::Search::from_specs(
+        pathspecs(&["tests/a/", "tests/b/", ":!*.sh"]),
+        Some(Path::new("a/b")),
+        Path::new(""),
+    )?;
+    assert_eq!(search.common_prefix(), "a/b/tests/");
+    assert_eq!(
+        search.prefix_directory().to_string_lossy(),
+        "a/b",
+        "trailing slashes are not contained"
+    );
+    assert_eq!(
+        search.longest_common_directory().expect("present").to_string_lossy(),
+        "a/b/tests/",
+        "trailing slashes are present, they don't matter"
+    );
+    Ok(())
+}
+
+#[test]
 fn init_with_exclude() -> crate::Result {
     let search = gix_pathspec::Search::from_specs(pathspecs(&["tests/", ":!*.sh"]), None, Path::new(""))?;
     assert_eq!(search.patterns().count(), 2, "nothing artificial is added");
@@ -339,6 +373,16 @@ fn init_with_exclude() -> crate::Result {
         "re-orded so that excluded are first"
     );
     assert_eq!(search.common_prefix(), "tests");
+    assert_eq!(
+        search.prefix_directory(),
+        Path::new(""),
+        "there was no prefix during initialization"
+    );
+    assert_eq!(
+        search.longest_common_directory(),
+        Some(Path::new("tests").into()),
+        "but this works here, and it should be tested"
+    );
     assert!(
         search.can_match_relative_path("tests".into(), Some(true)),
         "prefix matches"
@@ -388,15 +432,21 @@ fn prefixes_are_always_case_sensitive() -> crate::Result {
     let path = gix_testtools::scripted_fixture_read_only("match_baseline_files.sh")?.join("paths");
     let items = baseline::parse_paths(path)?;
 
-    for (spec, prefix, common_prefix, expected) in [
-        (":(icase)bar", "FOO", "FOO", &["FOO/BAR", "FOO/bAr", "FOO/bar"] as &[_]),
-        (":(icase)bar", "F", "F", &[]),
-        (":(icase)bar", "FO", "FO", &[]),
-        (":(icase)../bar", "fOo", "", &["BAR", "bAr", "bar"]),
-        ("../bar", "fOo", "bar", &["bar"]),
-        ("    ", "", "    ", &["    "]),    // whitespace can match verbatim
-        ("  hi*", "", "  hi", &["  hi  "]), // whitespace can match with globs as well
-        (":(icase)../bar", "fO", "", &["BAR", "bAr", "bar"]), // prefixes are virtual, and don't have to exist at all.
+    for (spec, prefix, common_prefix, expected, expected_common_dir) in [
+        (
+            ":(icase)bar",
+            "FOO",
+            "FOO",
+            &["FOO/BAR", "FOO/bAr", "FOO/bar"] as &[_],
+            "FOO",
+        ),
+        (":(icase)bar", "F", "F", &[], "F"),
+        (":(icase)bar", "FO", "FO", &[], "FO"),
+        (":(icase)../bar", "fOo", "", &["BAR", "bAr", "bar"], ""),
+        ("../bar", "fOo", "bar", &["bar"], ""),
+        ("    ", "", "    ", &["    "], ""),    // whitespace can match verbatim
+        ("  hi*", "", "  hi", &["  hi  "], ""), // whitespace can match with globs as well
+        (":(icase)../bar", "fO", "", &["BAR", "bAr", "bar"], ""), // prefixes are virtual, and don't have to exist at all.
         (
             ":(icase)../foo/bar",
             "FOO",
@@ -404,8 +454,9 @@ fn prefixes_are_always_case_sensitive() -> crate::Result {
             &[
                 "FOO/BAR", "FOO/bAr", "FOO/bar", "fOo/BAR", "fOo/bAr", "fOo/bar", "foo/BAR", "foo/bAr", "foo/bar",
             ],
+            "",
         ),
-        ("../foo/bar", "FOO", "foo/bar", &["foo/bar"]),
+        ("../foo/bar", "FOO", "foo/bar", &["foo/bar"], ""),
         (
             ":(icase)../foo/../fOo/bar",
             "FOO",
@@ -413,8 +464,9 @@ fn prefixes_are_always_case_sensitive() -> crate::Result {
             &[
                 "FOO/BAR", "FOO/bAr", "FOO/bar", "fOo/BAR", "fOo/bAr", "fOo/bar", "foo/BAR", "foo/bAr", "foo/bar",
             ],
+            "",
         ),
-        ("../foo/../fOo/BAR", "FOO", "fOo/BAR", &["fOo/BAR"]),
+        ("../foo/../fOo/BAR", "FOO", "fOo/BAR", &["fOo/BAR"], ""),
     ] {
         let mut search = gix_pathspec::Search::from_specs(
             gix_pathspec::parse(spec.as_bytes(), Default::default()),
@@ -422,6 +474,7 @@ fn prefixes_are_always_case_sensitive() -> crate::Result {
             Path::new(""),
         )?;
         assert_eq!(search.common_prefix(), common_prefix, "{spec} {prefix}");
+        assert_eq!(search.prefix_directory(), Path::new(expected_common_dir));
         let actual: Vec<_> = items
             .iter()
             .filter(|relative_path| {
@@ -453,13 +506,13 @@ fn prefixes_are_always_case_sensitive() -> crate::Result {
 
 #[test]
 fn common_prefix() -> crate::Result {
-    for (specs, prefix, expected) in [
-        (&["foo/bar", ":(icase)foo/bar"] as &[_], None, ""),
-        (&["foo/bar", "foo"], None, "foo"),
-        (&["foo/bar/baz", "foo/bar/"], None, "foo/bar"), // directory trailing slashes are ignored, but that prefix shouldn't care anyway
-        (&[":(icase)bar", ":(icase)bart"], Some("foo"), "foo"), // only case-sensitive portions count
-        (&["bar", "bart"], Some("foo"), "foo/bar"),      // otherwise everything that matches counts
-        (&["bar", "bart", "ba"], Some("foo"), "foo/ba"),
+    for (specs, prefix, expected_common_prefix, expected_common_dir) in [
+        (&["foo/bar", ":(icase)foo/bar"] as &[_], None, "", ""),
+        (&["foo/bar", "foo"], None, "foo", ""),
+        (&["foo/bar/baz", "foo/bar/"], None, "foo/bar", ""), // directory trailing slashes are ignored, but that prefix shouldn't care anyway
+        (&[":(icase)bar", ":(icase)bart"], Some("foo"), "foo", "foo"), // only case-sensitive portions count
+        (&["bar", "bart"], Some("foo"), "foo/bar", "foo"),   // otherwise everything that matches counts
+        (&["bar", "bart", "ba"], Some("foo"), "foo/ba", "foo"),
     ] {
         let search = gix_pathspec::Search::from_specs(
             specs
@@ -468,7 +521,12 @@ fn common_prefix() -> crate::Result {
             prefix.map(Path::new),
             Path::new(""),
         )?;
-        assert_eq!(search.common_prefix(), expected, "{specs:?} {prefix:?}");
+        assert_eq!(search.common_prefix(), expected_common_prefix, "{specs:?} {prefix:?}");
+        assert_eq!(
+            search.prefix_directory(),
+            Path::new(expected_common_dir),
+            "{specs:?} {prefix:?}"
+        );
     }
     Ok(())
 }
