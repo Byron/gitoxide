@@ -110,6 +110,7 @@ impl Pattern {
         };
 
         self.path = if path == Path::new(".") {
+            self.nil = true;
             BString::from(".")
         } else {
             let cleaned = PathBuf::from_iter(path.components().filter(|c| !matches!(c, Component::CurDir)));
