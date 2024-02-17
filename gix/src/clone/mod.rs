@@ -55,7 +55,7 @@ pub enum Error {
 
 /// Instantiation
 impl PrepareFetch {
-    /// Create a new repository at `path` with `crate_opts` which is ready to clone from `url`, possibly after making additional adjustments to
+    /// Create a new repository at `path` with `create_opts` which is ready to clone from `url`, possibly after making additional adjustments to
     /// configuration and settings.
     ///
     /// Note that this is merely a handle to perform the actual connection to the remote, and if any of it fails the freshly initialized repository
