@@ -182,6 +182,8 @@ pub struct Context<'a> {
     pub git_dir_realpath: &'a std::path::Path,
     /// The current working directory as returned by `gix_fs::current_dir()` to assure it respects `core.precomposeUnicode`.
     /// It's used to produce the realpath of the git-dir of a repository candidate to assure it's not our own repository.
+    ///
+    /// It is also used to assure that when the walk is for deletion, that the current working dir will not be collapsed.
     pub current_dir: &'a std::path::Path,
     /// The index to quickly understand if a file or directory is tracked or not.
     ///
@@ -233,7 +235,7 @@ pub struct Context<'a> {
 }
 
 /// Additional information collected as outcome of [`walk()`](function::walk()).
-#[derive(Default, Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Outcome {
     /// The amount of calls to read the directory contents.
     pub read_dir_calls: u32,

@@ -18,6 +18,10 @@ use crate::{entry, EntryRef};
 /// * `ctx` - everything needed to classify the paths seen during the traversal.
 /// * `delegate` - an implementation of [`Delegate`] to control details of the traversal and receive its results.
 ///
+/// Returns `(outcome, traversal_root)`, with the `traversal_root` actually being used for the traversal,
+/// useful to transform the paths returned for the user. It's always within the `worktree_root`, or the same,
+/// but is hard to guess due to additional logic affecting it.
+///
 /// ### Performance Notes
 ///
 /// In theory, parallel directory traversal can be significantly faster, and what's possible for our current
@@ -40,7 +44,7 @@ pub fn walk(
     mut ctx: Context<'_>,
     options: Options,
     delegate: &mut dyn Delegate,
-) -> Result<Outcome, Error> {
+) -> Result<(Outcome, PathBuf), Error> {
     let root = match ctx.explicit_traversal_root {
         Some(root) => root.to_owned(),
         None => ctx
@@ -78,12 +82,13 @@ pub fn walk(
             &mut out,
             delegate,
         );
-        return Ok(out);
+        return Ok((out, root.to_owned()));
     }
 
-    let mut state = readdir::State::default();
-    let _ = readdir::recursive(
-        true,
+    let mut state = readdir::State::new(worktree_root, ctx.current_dir, options.for_deletion.is_some());
+    let may_collapse = root != worktree_root && state.may_collapse(&current);
+    let (action, _) = readdir::recursive(
+        may_collapse,
         &mut current,
         &mut buf,
         root_info,
@@ -93,8 +98,12 @@ pub fn walk(
         &mut out,
         &mut state,
     )?;
+    if action != Action::Cancel {
+        state.emit_remaining(may_collapse, options, &mut out, delegate);
+        assert_eq!(state.on_hold.len(), 0, "BUG: after emission, on hold must be empty");
+    }
     gix_trace::debug!(statistics = ?out);
-    Ok(out)
+    Ok((out, root.to_owned()))
 }
 
 /// Note that we only check symlinks on the way from `worktree_root` to `root`,

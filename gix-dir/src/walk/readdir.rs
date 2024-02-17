@@ -1,6 +1,6 @@
 use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::entry::{PathspecMatch, Status};
 use crate::walk::function::{can_recurse, emit_entry};
@@ -13,7 +13,7 @@ use crate::{entry, walk, Entry};
 /// Git mostly silently ignores IO errors and stops iterating seemingly quietly, while we error loudly.
 #[allow(clippy::too_many_arguments)]
 pub(super) fn recursive(
-    is_top_level: bool,
+    may_collapse: bool,
     current: &mut PathBuf,
     current_bstr: &mut BString,
     current_info: classify::Outcome,
@@ -30,7 +30,7 @@ pub(super) fn recursive(
     })?;
 
     let mut num_entries = 0;
-    let mark = state.mark(is_top_level);
+    let mark = state.mark(may_collapse);
     let mut prevent_collapse = false;
     for entry in entries {
         let entry = entry.map_err(|err| Error::DirEntry {
@@ -64,8 +64,18 @@ pub(super) fn recursive(
         )?;
 
         if can_recurse(current_bstr.as_bstr(), info, opts.for_deletion, delegate) {
-            let (action, subdir_prevent_collapse) =
-                recursive(false, current, current_bstr, info, ctx, opts, delegate, out, state)?;
+            let subdir_may_collapse = state.may_collapse(current);
+            let (action, subdir_prevent_collapse) = recursive(
+                subdir_may_collapse,
+                current,
+                current_bstr,
+                info,
+                ctx,
+                opts,
+                delegate,
+                out,
+                state,
+            )?;
             prevent_collapse |= subdir_prevent_collapse;
             if action != Action::Continue {
                 return Ok((action, prevent_collapse));
@@ -94,10 +104,11 @@ pub(super) fn recursive(
     Ok((res, prevent_collapse))
 }
 
-#[derive(Default)]
 pub(super) struct State {
     /// The entries to hold back until it's clear what to do with them.
     pub on_hold: Vec<Entry>,
+    /// The path the user is currently in, as seen from the workdir root.
+    worktree_relative_current_dir: Option<PathBuf>,
 }
 
 impl State {
@@ -119,17 +130,58 @@ impl State {
 
     /// Keep track of state we need to later resolve the state.
     /// Top-level directories are special, as they don't fold.
-    fn mark(&self, is_top_level: bool) -> Mark {
+    fn mark(&self, may_collapse: bool) -> Mark {
         Mark {
             start_index: self.on_hold.len(),
-            is_top_level,
+            may_collapse,
         }
+    }
+
+    pub(super) fn new(worktree_root: &Path, current_dir: &Path, is_delete_mode: bool) -> Self {
+        let worktree_relative_current_dir = if is_delete_mode {
+            gix_path::realpath_opts(worktree_root, current_dir, gix_path::realpath::MAX_SYMLINKS)
+                .ok()
+                .and_then(|real_worktree_root| current_dir.strip_prefix(real_worktree_root).ok().map(ToOwned::to_owned))
+                .map(|relative_cwd| worktree_root.join(relative_cwd))
+        } else {
+            None
+        };
+        Self {
+            on_hold: Vec::new(),
+            worktree_relative_current_dir,
+        }
+    }
+
+    /// Returns `true` if the worktree-relative `directory_to_traverse` is not the current working directory.
+    /// This is only the case when
+    pub(super) fn may_collapse(&self, directory_to_traverse: &Path) -> bool {
+        self.worktree_relative_current_dir
+            .as_ref()
+            .map_or(true, |cwd| cwd != directory_to_traverse)
+    }
+
+    pub(super) fn emit_remaining(
+        &mut self,
+        is_top_level: bool,
+        opts: Options,
+        out: &mut walk::Outcome,
+        delegate: &mut dyn walk::Delegate,
+    ) {
+        if self.on_hold.is_empty() {
+            return;
+        }
+
+        _ = Mark {
+            start_index: 0,
+            may_collapse: is_top_level,
+        }
+        .emit_all_held(self, opts, out, delegate);
     }
 }
 
 struct Mark {
     start_index: usize,
-    is_top_level: bool,
+    may_collapse: bool,
 }
 
 impl Mark {
@@ -211,7 +263,7 @@ impl Mark {
         ctx: &mut Context<'_>,
         delegate: &mut dyn walk::Delegate,
     ) -> Option<Action> {
-        if self.is_top_level {
+        if !self.may_collapse {
             return None;
         }
         let (mut expendable, mut precious, mut untracked, mut entries, mut matching_entries) = (0, 0, 0, 0, 0);
