@@ -17,6 +17,7 @@ pub struct Options {
     emit_empty_directories: bool,
     classify_untracked_bare_repositories: bool,
     emit_collapsed: Option<CollapsedEntriesEmissionMode>,
+    pub(crate) use_prefix: bool,
 }
 
 /// Construction
@@ -34,6 +35,7 @@ impl Options {
             emit_empty_directories: false,
             classify_untracked_bare_repositories: false,
             emit_collapsed: None,
+            use_prefix: false,
         }
     }
 }
@@ -57,6 +59,14 @@ impl From<Options> for gix_dir::walk::Options {
 }
 
 impl Options {
+    /// If `true`, default `false`, pathspecs and the directory walk itself will be setup to use the [prefix](crate::Repository::prefix).
+    ///
+    /// This means that the directory walk will be limited to only what's inside the [repository prefix](crate::Repository::prefix).
+    /// By default, the directory walk will see everything.
+    pub fn use_prefix(mut self, toggle: bool) -> Self {
+        self.use_prefix = toggle;
+        self
+    }
     /// If `toggle` is `true`, we will stop figuring out if any directory that is a candidate for recursion is also a nested repository,
     /// which saves time but leads to recurse into it. If `false`, nested repositories will not be traversed.
     pub fn recurse_repositories(mut self, toggle: bool) -> Self {
