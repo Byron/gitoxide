@@ -1,3 +1,4 @@
+use std::path::Component;
 use std::{
     borrow::Cow,
     ffi::{OsStr, OsString},
@@ -287,4 +288,49 @@ pub fn normalize<'a>(path: Cow<'a, Path>, current_dir: &Path) -> Option<Cow<'a, 
         path.into()
     }
     .into()
+}
+
+/// Rebuild the worktree-relative `relative_path` to be relative to `prefix`, which is the worktree-relative
+/// path equivalent to the position of the user, or current working directory.
+/// This is a no-op if `prefix` is empty.
+///
+/// Note that both `relative_path` and `prefix` are assumed to be [normalized](normalize()), and failure to do so
+/// will lead to incorrect results.
+///
+/// Note that both input paths are expected to be equal in terms of case too, as comparisons will be case-sensitive.
+pub fn relativize_with_prefix<'a>(relative_path: &'a Path, prefix: &Path) -> Cow<'a, Path> {
+    if prefix.as_os_str().is_empty() {
+        return Cow::Borrowed(relative_path);
+    }
+    debug_assert!(
+        relative_path.components().all(|c| matches!(c, Component::Normal(_))),
+        "BUG: all input is expected to be normalized, but relative_path was not"
+    );
+    debug_assert!(
+        prefix.components().all(|c| matches!(c, Component::Normal(_))),
+        "BUG: all input is expected to be normalized, but prefix was not"
+    );
+
+    let mut buf = PathBuf::new();
+    let mut rpc = relative_path.components().peekable();
+    let mut equal_thus_far = true;
+    for pcomp in prefix.components() {
+        if equal_thus_far {
+            if let (Component::Normal(pname), Some(Component::Normal(rpname))) = (pcomp, rpc.peek()) {
+                if &pname == rpname {
+                    rpc.next();
+                    continue;
+                } else {
+                    equal_thus_far = false;
+                }
+            }
+        }
+        buf.push(Component::ParentDir);
+    }
+    buf.extend(rpc);
+    if buf.as_os_str().is_empty() {
+        Cow::Borrowed(Path::new("."))
+    } else {
+        Cow::Owned(buf)
+    }
 }
