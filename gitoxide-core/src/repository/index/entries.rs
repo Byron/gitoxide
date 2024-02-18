@@ -256,6 +256,7 @@ pub(crate) mod function {
     )> {
         let index = repo.index_or_load_from_head()?;
         let pathspec = repo.pathspec(
+            true,
             pathspecs,
             false,
             &index,

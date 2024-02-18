@@ -74,14 +74,10 @@ pub(crate) mod function {
             .classify_untracked_bare_repositories(matches!(find_untracked_repositories, FindRepository::All))
             .emit_untracked(collapse_directories)
             .emit_ignored(Some(collapse_directories))
+            .empty_patterns_match_prefix(true)
             .emit_empty_directories(true);
         repo.dirwalk(&index, patterns, options, &mut collect)?;
         let prefix = repo.prefix()?.unwrap_or(Path::new(""));
-        let prefix_len = if prefix.as_os_str().is_empty() {
-            0
-        } else {
-            prefix.to_str().map_or(0, |s| s.len() + 1 /* slash */)
-        };
 
         let entries = collect.inner.into_entries_by_path();
         let mut entries_to_clean = 0;
@@ -173,7 +169,8 @@ pub(crate) mod function {
             };
 
             let is_ignored = matches!(entry.status, gix::dir::entry::Status::Ignored(_));
-            let display_path = entry.rela_path[prefix_len..].as_bstr();
+            let entry_path = gix::path::from_bstr(entry.rela_path);
+            let display_path = gix::path::relativize_with_prefix(&entry_path, prefix);
             if disk_kind == gix::dir::entry::Kind::Directory {
                 saw_ignored_directory |= is_ignored;
                 saw_untracked_directory |= entry.status == gix::dir::entry::Status::Untracked;
@@ -181,7 +178,7 @@ pub(crate) mod function {
             writeln!(
                 out,
                 "{maybe}{suffix} {}{} {status}",
-                display_path,
+                display_path.display(),
                 disk_kind.is_dir().then_some("/").unwrap_or_default(),
                 status = match entry.status {
                     Status::Ignored(kind) => {
@@ -221,7 +218,7 @@ pub(crate) mod function {
                 execute = false;
             }
             if execute {
-                let path = workdir.join(gix::path::from_bstr(entry.rela_path));
+                let path = workdir.join(entry_path);
                 if disk_kind.is_dir() {
                     std::fs::remove_dir_all(path)?;
                 } else {

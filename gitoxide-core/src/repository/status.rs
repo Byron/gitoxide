@@ -6,6 +6,7 @@ use gix::{
     Progress,
 };
 use gix_status::index_as_worktree::{traits::FastEq, Change, Conflict, EntryStatus};
+use std::path::{Path, PathBuf};
 
 use crate::OutputFormat;
 
@@ -54,15 +55,19 @@ pub fn show(
             gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
         )?
         .detach();
-    let pathspec = gix::Pathspec::new(&repo, pathspecs.iter().map(|p| p.as_bstr()), true, || Ok(stack.clone()))?;
+    let pathspec = gix::Pathspec::new(&repo, false, pathspecs.iter().map(|p| p.as_bstr()), true, || {
+        Ok(stack.clone())
+    })?;
     let options = gix_status::index_as_worktree::Options {
         fs: repo.filesystem_options()?,
         thread_limit,
         stat: repo.stat_options()?,
     };
+    let prefix = repo.prefix()?.unwrap_or(Path::new(""));
     let mut printer = Printer {
         out,
         changes: Vec::new(),
+        prefix: prefix.to_owned(),
     };
     let filter_pipeline = repo
         .filter_pipeline(Some(gix::hash::ObjectId::empty_tree(repo.object_hash())))?
@@ -87,15 +92,16 @@ pub fn show(
                 let repo = repo.clone().into_sync();
                 let index = &index;
                 let collect = &mut collect;
-                move || {
+                move || -> anyhow::Result<_> {
                     let repo = repo.to_thread_local();
-                    repo.dirwalk(
+                    let outcome = repo.dirwalk(
                         index,
                         pathspecs,
                         repo.dirwalk_options()?
                             .emit_untracked(gix::dir::walk::EmissionMode::CollapseDirectory),
                         collect,
-                    )
+                    )?;
+                    Ok(outcome.dirwalk)
                 }
             })?;
 
@@ -125,7 +131,7 @@ pub fn show(
             printer.out,
             "{status: >3} {rela_path}",
             status = "?",
-            rela_path = entry.rela_path
+            rela_path = gix::path::relativize_with_prefix(&gix::path::from_bstr(entry.rela_path), prefix).display()
         )?;
     }
 
@@ -175,6 +181,7 @@ impl gix_status::index_as_worktree::traits::SubmoduleStatus for Submodule {
 struct Printer<W> {
     out: W,
     changes: Vec<(usize, ApplyChange)>,
+    prefix: PathBuf,
 }
 
 enum ApplyChange {
@@ -226,7 +233,9 @@ impl<W: std::io::Write> Printer<W> {
             EntryStatus::IntentToAdd => "A",
         };
 
-        writeln!(&mut self.out, "{status: >3} {rela_path}")
+        let rela_path = gix::path::from_bstr(rela_path);
+        let display_path = gix::path::relativize_with_prefix(&rela_path, &self.prefix);
+        writeln!(&mut self.out, "{status: >3} {}", display_path.display())
     }
 }
 

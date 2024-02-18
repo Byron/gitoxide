@@ -10,7 +10,7 @@ pub struct Options {
 pub(crate) mod function {
     use std::{borrow::Cow, io, path::Path};
 
-    use anyhow::{anyhow, bail};
+    use anyhow::bail;
     use gix::bstr::BStr;
 
     use crate::{
@@ -52,6 +52,7 @@ pub(crate) mod function {
             }
             PathsOrPatterns::Patterns(patterns) => {
                 let mut pathspec = repo.pathspec(
+                    true,
                     patterns.iter(),
                     true,
                     &index,
@@ -59,36 +60,37 @@ pub(crate) mod function {
                         .adjust_for_bare(repo.is_bare()),
                 )?;
                 let mut pathspec_matched_entry = false;
-                for (path, _entry) in pathspec
-                    .index_entries_with_paths(&index)
-                    .ok_or_else(|| anyhow!("Pathspec didn't match a single path in the index"))?
-                {
-                    pathspec_matched_entry = true;
-                    let entry = cache.at_entry(path, Some(false))?;
-                    if !entry.matching_attributes(&mut matches) {
-                        continue;
+                if let Some(it) = pathspec.index_entries_with_paths(&index) {
+                    for (path, _entry) in it {
+                        pathspec_matched_entry = true;
+                        let entry = cache.at_entry(path, Some(false))?;
+                        if !entry.matching_attributes(&mut matches) {
+                            continue;
+                        }
+                        print_match(&matches, path, &mut out)?;
                     }
-                    print_match(&matches, path, &mut out)?;
                 }
 
                 if !pathspec_matched_entry {
                     // TODO(borrowchk): this shouldn't be necessary at all, but `pathspec` stays borrowed mutably for some reason.
                     //                  It's probably due to the strange lifetimes of `index_entries_with_paths()`.
                     let pathspec = repo.pathspec(
+                        true,
                         patterns.iter(),
                         true,
                         &index,
                         gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping
                             .adjust_for_bare(repo.is_bare()),
                     )?;
+                    let workdir = repo.work_dir();
                     for pattern in pathspec.search().patterns() {
                         let path = pattern.path();
                         let entry = cache.at_entry(
                             path,
-                            pattern
-                                .signature
-                                .contains(gix::pathspec::MagicSignature::MUST_BE_DIR)
-                                .into(),
+                            Some(
+                                workdir.map_or(false, |wd| wd.join(gix::path::from_bstr(path)).is_dir())
+                                    || pattern.signature.contains(gix::pathspec::MagicSignature::MUST_BE_DIR),
+                            ),
                         )?;
                         if !entry.matching_attributes(&mut matches) {
                             continue;
