@@ -1,4 +1,4 @@
-use gix_dir::walk::{EmissionMode, ForDeletionMode};
+use gix_dir::walk::{CollapsedEntriesEmissionMode, EmissionMode, ForDeletionMode};
 
 /// Options for use in the [`Repository::dirwalk()`](crate::Repository::dirwalk()) function.
 ///
@@ -16,6 +16,8 @@ pub struct Options {
     emit_untracked: EmissionMode,
     emit_empty_directories: bool,
     classify_untracked_bare_repositories: bool,
+    emit_collapsed: Option<CollapsedEntriesEmissionMode>,
+    pub(crate) empty_patterns_match_prefix: bool,
 }
 
 /// Construction
@@ -32,6 +34,8 @@ impl Options {
             emit_untracked: Default::default(),
             emit_empty_directories: false,
             classify_untracked_bare_repositories: false,
+            emit_collapsed: None,
+            empty_patterns_match_prefix: false,
         }
     }
 }
@@ -49,11 +53,21 @@ impl From<Options> for gix_dir::walk::Options {
             emit_untracked: v.emit_untracked,
             emit_empty_directories: v.emit_empty_directories,
             classify_untracked_bare_repositories: v.classify_untracked_bare_repositories,
+            emit_collapsed: v.emit_collapsed,
         }
     }
 }
 
 impl Options {
+    /// If `true`, default `false`, pathspecs and the directory walk itself will be setup to use the [prefix](crate::Repository::prefix)
+    /// if patterns are empty.
+    ///
+    /// This means that the directory walk will be limited to only what's inside the [repository prefix](crate::Repository::prefix).
+    /// By default, the directory walk will see everything.
+    pub fn empty_patterns_match_prefix(mut self, toggle: bool) -> Self {
+        self.empty_patterns_match_prefix = toggle;
+        self
+    }
     /// If `toggle` is `true`, we will stop figuring out if any directory that is a candidate for recursion is also a nested repository,
     /// which saves time but leads to recurse into it. If `false`, nested repositories will not be traversed.
     pub fn recurse_repositories(mut self, toggle: bool) -> Self {
@@ -104,6 +118,13 @@ impl Options {
     /// and they will be recursed into.
     pub fn classify_untracked_bare_repositories(mut self, toggle: bool) -> Self {
         self.classify_untracked_bare_repositories = toggle;
+        self
+    }
+
+    /// Control whether entries that are in an about-to-be collapsed directory will be emitted. The default is `None`,
+    /// so entries in a collapsed directory are not observable.
+    pub fn emit_collapsed(mut self, value: Option<CollapsedEntriesEmissionMode>) -> Self {
+        self.emit_collapsed = value;
         self
     }
 }

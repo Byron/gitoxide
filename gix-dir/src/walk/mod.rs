@@ -58,8 +58,9 @@ pub trait Delegate {
     /// item isn't yet known. Pruned entries are also only emitted if [`Options::emit_pruned`] is `true`.
     ///
     /// `collapsed_directory_status` is `Some(dir_status)` if this entry was part of a directory with the given
-    /// `dir_status` that wasn't the same as the one of `entry`. Depending on the operation, these then want to be
-    /// used or discarded.
+    /// `dir_status` that wasn't the same as the one of `entry` and if [Options::emit_collapsed] was
+    /// [CollapsedEntriesEmissionMode::OnStatusMismatch]. It will also be `Some(dir_status)` if that option
+    /// was [CollapsedEntriesEmissionMode::All].
     fn emit(&mut self, entry: EntryRef<'_>, collapsed_directory_status: Option<entry::Status>) -> Action;
 
     /// Return `true` if the given entry can be recursed into. Will only be called if the entry is a physical directory.
@@ -92,6 +93,23 @@ pub enum EmissionMode {
     /// Note that doing so is more expensive as it requires us to keep track of all entries in the directory structure
     /// until it's clear what to finally emit.
     CollapseDirectory,
+}
+
+/// The way entries that are contained in collapsed directories are emitted using the [Delegate].
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
+pub enum CollapsedEntriesEmissionMode {
+    /// Emit only entries if their status does not match the one of the parent directory that is
+    /// going to be collapsed.
+    ///
+    /// E.g. if a directory is determined to be untracked, and the entries in question are ignored,
+    /// they will be emitted.
+    ///
+    /// Entries that have the same status will essentially be 'merged' into the collapsing directory
+    /// and won't be observable anymore.
+    #[default]
+    OnStatusMismatch,
+    /// Emit all entries inside of a collapsed directory to make them observable.
+    All,
 }
 
 /// When the walk is for deletion, assure that we don't collapse directories that have precious files in
@@ -151,6 +169,8 @@ pub struct Options {
     /// subdirectories, as long as none of them includes a file.
     /// Thus, this makes leaf-level empty directories visible, as those don't have any content.
     pub emit_empty_directories: bool,
+    /// If `None`, no entries inside of collapsed directories are emitted. Otherwise, act as specified by `Some(mode)`.
+    pub emit_collapsed: Option<CollapsedEntriesEmissionMode>,
 }
 
 /// All information that is required to perform a dirwalk, and classify paths properly.
@@ -162,6 +182,8 @@ pub struct Context<'a> {
     pub git_dir_realpath: &'a std::path::Path,
     /// The current working directory as returned by `gix_fs::current_dir()` to assure it respects `core.precomposeUnicode`.
     /// It's used to produce the realpath of the git-dir of a repository candidate to assure it's not our own repository.
+    ///
+    /// It is also used to assure that when the walk is for deletion, that the current working dir will not be collapsed.
     pub current_dir: &'a std::path::Path,
     /// The index to quickly understand if a file or directory is tracked or not.
     ///
@@ -180,7 +202,7 @@ pub struct Context<'a> {
     /// in case-sensitive mode. It does, however, skip the directory hash creation (for looking
     /// up directories) unless `core.ignoreCase` is enabled.
     ///
-    /// We only use the hashmap when when available and when [`ignore_case`](Options::ignore_case) is enabled in the options.
+    /// We only use the hashmap when available and when [`ignore_case`](Options::ignore_case) is enabled in the options.
     pub ignore_case_index_lookup: Option<&'a gix_index::AccelerateLookup<'a>>,
     /// A pathspec to use as filter - we only traverse into directories if it matches.
     /// Note that the `ignore_case` setting it uses should match our [Options::ignore_case].
@@ -201,10 +223,19 @@ pub struct Context<'a> {
     pub excludes: Option<&'a mut gix_worktree::Stack>,
     /// Access to the object database for use with `excludes` - it's possible to access `.gitignore` files in the index if configured.
     pub objects: &'a dyn gix_object::Find,
+    /// If not `None`, override the traversal root that is computed and use this one instead.
+    ///
+    /// This can be useful if the traversal root may be a file, in which case the traversal will
+    /// still be returning possibly matching root entries.
+    ///
+    /// ### Panics
+    ///
+    /// If the `traversal_root` is not in the `worktree_root` passed to [walk()](crate::walk()).
+    pub explicit_traversal_root: Option<&'a std::path::Path>,
 }
 
 /// Additional information collected as outcome of [`walk()`](function::walk()).
-#[derive(Default, Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Outcome {
     /// The amount of calls to read the directory contents.
     pub read_dir_calls: u32,
@@ -222,8 +253,6 @@ pub enum Error {
     WorktreeRootIsFile { root: PathBuf },
     #[error("Traversal root '{}' contains relative path components and could not be normalized", root.display())]
     NormalizeRoot { root: PathBuf },
-    #[error("Traversal root '{}' must be literally contained in worktree root '{}'", root.display(), worktree_root.display())]
-    RootNotInWorktree { root: PathBuf, worktree_root: PathBuf },
     #[error("A symlink was found at component {component_index} of traversal root '{}' as seen from worktree root '{}'", root.display(), worktree_root.display())]
     SymlinkInRoot {
         root: PathBuf,

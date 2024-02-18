@@ -62,3 +62,39 @@ mod join_bstr_unix_pathsep {
         assert_eq!(join_bstr_unix_pathsep(b(""), "/hi"), b("/hi"));
     }
 }
+
+mod relativize_with_prefix {
+    fn r(path: &str, prefix: &str) -> String {
+        gix_path::to_unix_separators_on_windows(
+            gix_path::os_str_into_bstr(gix_path::relativize_with_prefix(path.as_ref(), prefix.as_ref()).as_os_str())
+                .expect("no illformed UTF-8"),
+        )
+        .to_string()
+    }
+
+    #[test]
+    fn basics() {
+        assert_eq!(
+            r("a", "a"),
+            ".",
+            "reaching the prefix is signalled by a '.', the current dir"
+        );
+        assert_eq!(r("a/b/c", "a/b"), "c", "'c' is clearly within the current directory");
+        assert_eq!(
+            r("c/b/c", "a/b"),
+            "../../c/b/c",
+            "when there is a complete disjoint prefix, we have to get out of it with ../"
+        );
+        assert_eq!(
+            r("a/a", "a/b"),
+            "../a",
+            "when there is mismatch, we have to get out of the CWD"
+        );
+        assert_eq!(
+            r("a/a", ""),
+            "a/a",
+            "empty prefix means nothing happens (and no work is done)"
+        );
+        assert_eq!(r("", ""), "", "empty stays empty");
+    }
+}

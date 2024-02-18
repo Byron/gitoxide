@@ -1,10 +1,12 @@
 use anyhow::{bail, Context};
+use gix::bstr::ByteSlice;
 use gix::{
     bstr::{BStr, BString},
     index::Entry,
     Progress,
 };
 use gix_status::index_as_worktree::{traits::FastEq, Change, Conflict, EntryStatus};
+use std::path::{Path, PathBuf};
 
 use crate::OutputFormat;
 
@@ -45,52 +47,93 @@ pub fn show(
     }
     let mut index = repo.index_or_empty()?;
     let index = gix::threading::make_mut(&mut index);
-    let pathspec = repo.pathspec(
-        pathspecs,
-        true,
-        index,
-        gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
-    )?;
     let mut progress = progress.add_child("traverse index");
     let start = std::time::Instant::now();
+    let stack = repo
+        .attributes_only(
+            index,
+            gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
+        )?
+        .detach();
+    let pathspec = gix::Pathspec::new(&repo, false, pathspecs.iter().map(|p| p.as_bstr()), true, || {
+        Ok(stack.clone())
+    })?;
     let options = gix_status::index_as_worktree::Options {
         fs: repo.filesystem_options()?,
         thread_limit,
         stat: repo.stat_options()?,
-        attributes: match repo
-            .attributes_only(
-                index,
-                gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
-            )?
-            .detach()
-            .state_mut()
-        {
-            gix::worktree::stack::State::AttributesStack(attrs) => std::mem::take(attrs),
-            // TODO: this should be nicer by creating attributes directly, but it's a private API
-            _ => unreachable!("state must be attributes stack only"),
-        },
     };
+    let prefix = repo.prefix()?.unwrap_or(Path::new(""));
     let mut printer = Printer {
         out,
         changes: Vec::new(),
+        prefix: prefix.to_owned(),
     };
-    let outcome = gix_status::index_as_worktree(
-        index,
-        repo.work_dir()
-            .context("This operation cannot be run on a bare repository")?,
-        &mut printer,
-        FastEq,
-        Submodule,
-        repo.objects.clone().into_arc()?,
-        &mut progress,
-        pathspec.detach()?,
-        repo.filter_pipeline(Some(gix::hash::ObjectId::empty_tree(repo.object_hash())))?
-            .0
-            .into_parts()
-            .0,
-        &gix::interrupt::IS_INTERRUPTED,
-        options,
-    )?;
+    let filter_pipeline = repo
+        .filter_pipeline(Some(gix::hash::ObjectId::empty_tree(repo.object_hash())))?
+        .0
+        .into_parts()
+        .0;
+    let ctx = gix_status::index_as_worktree::Context {
+        pathspec: pathspec.into_parts().0,
+        stack,
+        filter: filter_pipeline,
+        should_interrupt: &gix::interrupt::IS_INTERRUPTED,
+    };
+    let mut collect = gix::dir::walk::delegate::Collect::default();
+    let (outcome, walk_outcome) = gix::features::parallel::threads(|scope| -> anyhow::Result<_> {
+        // TODO: it's either this, or not running both in parallel and setting UPTODATE flags whereever
+        //       there is no modification. This can save disk queries as dirwalk can then trust what's in
+        //       the index regarding the type.
+        // NOTE: collect here as rename-tracking needs that anyway.
+        let walk_outcome = gix::features::parallel::build_thread()
+            .name("gix status::dirwalk".into())
+            .spawn_scoped(scope, {
+                let repo = repo.clone().into_sync();
+                let index = &index;
+                let collect = &mut collect;
+                move || -> anyhow::Result<_> {
+                    let repo = repo.to_thread_local();
+                    let outcome = repo.dirwalk(
+                        index,
+                        pathspecs,
+                        repo.dirwalk_options()?
+                            .emit_untracked(gix::dir::walk::EmissionMode::CollapseDirectory),
+                        collect,
+                    )?;
+                    Ok(outcome.dirwalk)
+                }
+            })?;
+
+        let outcome = gix_status::index_as_worktree(
+            index,
+            repo.work_dir()
+                .context("This operation cannot be run on a bare repository")?,
+            &mut printer,
+            FastEq,
+            Submodule,
+            repo.objects.clone().into_arc()?,
+            &mut progress,
+            ctx,
+            options,
+        )?;
+
+        let walk_outcome = walk_outcome.join().expect("no panic")?;
+        Ok((outcome, walk_outcome))
+    })?;
+
+    for entry in collect
+        .into_entries_by_path()
+        .into_iter()
+        .filter_map(|(entry, dir_status)| dir_status.is_none().then_some(entry))
+    {
+        writeln!(
+            printer.out,
+            "{status: >3} {rela_path}",
+            status = "?",
+            rela_path = gix::path::relativize_with_prefix(&gix::path::from_bstr(entry.rela_path), prefix).display()
+        )?;
+    }
 
     if outcome.entries_to_update != 0 && allow_write {
         {
@@ -115,6 +158,7 @@ pub fn show(
 
     if statistics {
         writeln!(err, "{outcome:#?}").ok();
+        writeln!(err, "{walk_outcome:#?}").ok();
     }
 
     writeln!(err, "\nhead -> index and untracked files aren't implemented yet")?;
@@ -137,6 +181,7 @@ impl gix_status::index_as_worktree::traits::SubmoduleStatus for Submodule {
 struct Printer<W> {
     out: W,
     changes: Vec<(usize, ApplyChange)>,
+    prefix: PathBuf,
 }
 
 enum ApplyChange {
@@ -188,7 +233,9 @@ impl<W: std::io::Write> Printer<W> {
             EntryStatus::IntentToAdd => "A",
         };
 
-        writeln!(&mut self.out, "{status: >3} {rela_path}")
+        let rela_path = gix::path::from_bstr(rela_path);
+        let display_path = gix::path::relativize_with_prefix(&rela_path, &self.prefix);
+        writeln!(&mut self.out, "{status: >3} {}", display_path.display())
     }
 }
 

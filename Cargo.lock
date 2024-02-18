@@ -2518,6 +2518,7 @@ dependencies = [
  "gix-index 0.30.0",
  "gix-object 0.41.0",
  "gix-path 0.10.5",
+ "gix-pathspec",
  "gix-worktree 0.31.0",
  "thiserror",
 ]
@@ -2536,6 +2537,7 @@ dependencies = [
  "gix-pathspec",
  "gix-status",
  "gix-testtools",
+ "gix-worktree 0.31.0",
 ]
 
 [[package]]

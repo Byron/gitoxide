@@ -7,6 +7,7 @@ use bstr::BStr;
 use filetime::{set_file_mtime, FileTime};
 use gix_index as index;
 use gix_index::Entry;
+use gix_status::index_as_worktree::Context;
 use gix_status::{
     index_as_worktree,
     index_as_worktree::{
@@ -93,6 +94,13 @@ fn fixture_filtered_detailed(
     let mut recorder = Recorder::default();
     let search = gix_pathspec::Search::from_specs(to_pathspecs(pathspecs), None, std::path::Path::new(""))
         .expect("valid specs can be normalized");
+    let stack = gix_worktree::Stack::from_state_and_ignore_case(
+        worktree.clone(),
+        false,
+        gix_worktree::stack::State::AttributesStack(Default::default()),
+        &index,
+        index.path_backing(),
+    );
     let outcome = index_as_worktree(
         &index,
         &worktree,
@@ -101,9 +109,12 @@ fn fixture_filtered_detailed(
         SubmoduleStatusMock { dirty: submodule_dirty },
         gix_object::find::Never,
         &mut gix_features::progress::Discard,
-        Pathspec(search),
-        Default::default(),
-        &AtomicBool::default(),
+        Context {
+            pathspec: search,
+            stack,
+            filter: Default::default(),
+            should_interrupt: &AtomicBool::default(),
+        },
         Options {
             fs: gix_fs::Capabilities::probe(&git_dir),
             stat: TEST_OPTIONS,
@@ -606,6 +617,19 @@ fn racy_git() {
 
     let count = Arc::new(AtomicUsize::new(0));
     let counter = CountCalls(count.clone(), FastEq);
+    let stack = gix_worktree::Stack::from_state_and_ignore_case(
+        worktree,
+        false,
+        gix_worktree::stack::State::AttributesStack(Default::default()),
+        &index,
+        index.path_backing(),
+    );
+    let ctx = Context {
+        pathspec: default_pathspec(),
+        stack,
+        filter: Default::default(),
+        should_interrupt: &AtomicBool::default(),
+    };
     let out = index_as_worktree(
         &index,
         worktree,
@@ -614,9 +638,7 @@ fn racy_git() {
         SubmoduleStatusMock { dirty: false },
         gix_object::find::Never,
         &mut gix_features::progress::Discard,
-        Pathspec::default(),
-        Default::default(),
-        &AtomicBool::default(),
+        ctx.clone(),
         Options {
             fs,
             stat: TEST_OPTIONS,
@@ -653,9 +675,7 @@ fn racy_git() {
         SubmoduleStatusMock { dirty: false },
         gix_object::find::Never,
         &mut gix_features::progress::Discard,
-        Pathspec::default(),
-        Default::default(),
-        &AtomicBool::default(),
+        ctx,
         Options {
             fs,
             stat: TEST_OPTIONS,
@@ -696,27 +716,6 @@ fn racy_git() {
     );
 }
 
-#[derive(Clone)]
-struct Pathspec(gix_pathspec::Search);
-
-impl Default for Pathspec {
-    fn default() -> Self {
-        let search = gix_pathspec::Search::from_specs(to_pathspecs(&[]), None, std::path::Path::new(""))
-            .expect("empty is always valid");
-        Self(search)
-    }
-}
-
-impl gix_status::Pathspec for Pathspec {
-    fn common_prefix(&self) -> &BStr {
-        self.0.common_prefix()
-    }
-
-    fn is_included(&mut self, relative_path: &BStr, is_dir: Option<bool>) -> bool {
-        self.0
-            .pattern_matching_relative_path(relative_path, is_dir, &mut |_, _, _, _| {
-                unreachable!("we don't use attributes in our pathspecs")
-            })
-            .map_or(false, |m| !m.is_excluded())
-    }
+fn default_pathspec() -> gix_pathspec::Search {
+    gix_pathspec::Search::from_specs(to_pathspecs(&[]), None, std::path::Path::new("")).expect("empty is always valid")
 }

@@ -30,6 +30,7 @@ pub fn options_emit_all() -> walk::Options {
         emit_tracked: true,
         emit_untracked: walk::EmissionMode::Matching,
         emit_empty_directories: true,
+        emit_collapsed: None,
     }
 }
 
@@ -144,40 +145,105 @@ impl EntryExt for (Entry, Option<entry::Status>) {
 
 pub fn collect(
     worktree_root: &Path,
-    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
-) -> (walk::Outcome, Entries) {
-    try_collect(worktree_root, cb).unwrap()
+    root: Option<&Path>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
+) -> ((walk::Outcome, PathBuf), Entries) {
+    try_collect(worktree_root, root, cb).unwrap()
 }
 
 pub fn collect_filtered(
     worktree_root: &Path,
-    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
+    root: Option<&Path>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
-) -> (walk::Outcome, Entries) {
-    try_collect_filtered(worktree_root, cb, patterns).unwrap()
+) -> ((walk::Outcome, PathBuf), Entries) {
+    try_collect_filtered(worktree_root, root, cb, patterns).unwrap()
 }
 
 pub fn try_collect(
     worktree_root: &Path,
-    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
-) -> Result<(walk::Outcome, Entries), walk::Error> {
-    try_collect_filtered(worktree_root, cb, None::<&str>)
+    root: Option<&Path>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
+) -> Result<((walk::Outcome, PathBuf), Entries), walk::Error> {
+    try_collect_filtered(worktree_root, root, cb, None::<&str>)
 }
 
 pub fn try_collect_filtered(
     worktree_root: &Path,
-    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
+    root: Option<&Path>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
-) -> Result<(walk::Outcome, Entries), walk::Error> {
-    try_collect_filtered_opts(worktree_root, cb, patterns, Default::default())
+) -> Result<((walk::Outcome, PathBuf), Entries), walk::Error> {
+    try_collect_filtered_opts_collect(worktree_root, root, cb, patterns, Default::default())
 }
 
+pub fn try_collect_filtered_opts_collect(
+    worktree_root: &Path,
+    root: Option<&Path>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
+    patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+    options: Options<'_>,
+) -> Result<((walk::Outcome, PathBuf), Entries), walk::Error> {
+    let mut dlg = gix_dir::walk::delegate::Collect::default();
+    let outcome = try_collect_filtered_opts(worktree_root, root, None, None, cb, patterns, &mut dlg, options)?;
+    Ok((outcome, dlg.into_entries_by_path()))
+}
+
+pub fn try_collect_filtered_opts_collect_with_root(
+    worktree_root: &Path,
+    root: Option<&Path>,
+    explicit_traversal_root: Option<&Path>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
+    patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+    options: Options<'_>,
+) -> Result<((walk::Outcome, PathBuf), Entries), walk::Error> {
+    let mut dlg = gix_dir::walk::delegate::Collect::default();
+    let outcome = try_collect_filtered_opts(
+        worktree_root,
+        root,
+        explicit_traversal_root,
+        None,
+        cb,
+        patterns,
+        &mut dlg,
+        options,
+    )?;
+    Ok((outcome, dlg.into_entries_by_path()))
+}
+
+pub fn collect_filtered_with_cwd(
+    worktree_root: &Path,
+    root: Option<&Path>,
+    cwd_suffix: Option<&str>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
+    patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+) -> ((walk::Outcome, PathBuf), Entries) {
+    let mut dlg = gix_dir::walk::delegate::Collect::default();
+    let outcome = try_collect_filtered_opts(
+        worktree_root,
+        root,
+        None,
+        cwd_suffix,
+        cb,
+        patterns,
+        &mut dlg,
+        Default::default(),
+    )
+    .expect("success");
+    (outcome, dlg.into_entries_by_path())
+}
+
+#[allow(clippy::too_many_arguments)]
 pub fn try_collect_filtered_opts(
     worktree_root: &Path,
-    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<walk::Outcome, walk::Error>,
+    root: Option<&Path>,
+    explicit_traversal_root: Option<&Path>,
+    append_to_cwd: Option<&str>,
+    cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+    delegate: &mut dyn gix_dir::walk::Delegate,
     Options { fresh_index, git_dir }: Options<'_>,
-) -> Result<(walk::Outcome, Entries), walk::Error> {
+) -> Result<(walk::Outcome, PathBuf), walk::Error> {
     let git_dir = worktree_root.join(git_dir.unwrap_or(".git"));
     let mut index = std::fs::read(git_dir.join("index")).ok().map_or_else(
         || gix_index::State::new(gix_index::hash::Kind::Sha1),
@@ -210,7 +276,8 @@ pub fn try_collect_filtered_opts(
         patterns.into_iter().map(|spec| {
             gix_pathspec::parse(spec.as_ref(), gix_pathspec::Defaults::default()).expect("tests use valid pattern")
         }),
-        None,
+        root.map(|root| root.strip_prefix(worktree_root).expect("root is within worktree root"))
+            .or_else(|| append_to_cwd.map(Path::new)),
         "we don't provide absolute pathspecs, thus need no worktree root".as_ref(),
     )
     .expect("search creation can't fail");
@@ -227,12 +294,18 @@ pub fn try_collect_filtered_opts(
         index.path_backing(),
     );
 
-    let cwd = gix_fs::current_dir(false).expect("valid cwd");
+    let mut cwd = worktree_root.to_owned();
+    if let Some(suffix) = append_to_cwd {
+        assert!(
+            worktree_root.is_absolute(),
+            "BUG: need absolute worktree root for CWD checks to work"
+        );
+        cwd.push(suffix)
+    }
     let git_dir_realpath = gix_path::realpath_opts(&git_dir, &cwd, gix_path::realpath::MAX_SYMLINKS).unwrap();
-    let mut dlg = gix_dir::walk::delegate::Collect::default();
     let lookup = index.prepare_icase_backing();
-    let outcome = cb(
-        &mut dlg,
+    cb(
+        delegate,
         walk::Context {
             git_dir_realpath: &git_dir_realpath,
             current_dir: &cwd,
@@ -242,10 +315,9 @@ pub fn try_collect_filtered_opts(
             pathspec_attributes: &mut |_, _, _, _| panic!("we do not use pathspecs that require attributes access."),
             excludes: Some(&mut stack),
             objects: &gix_object::find::Never,
+            explicit_traversal_root,
         },
-    )?;
-
-    Ok((outcome, dlg.into_entries_by_path()))
+    )
 }
 
 pub struct Options<'a> {

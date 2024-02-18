@@ -1,8 +1,25 @@
 use std::path::Path;
 
 #[test]
+fn consuming_the_entire_prefix_does_not_lead_to_a_single_dot() -> crate::Result {
+    let spec = normalized_spec("..", "a", "")?;
+    assert_eq!(
+        spec.path(),
+        ".",
+        "the top-level of the worktree can take the special value '.' to mean 'everything'"
+    );
+    assert!(
+        spec.is_nil(),
+        "single is for the worktree top-level, and since it wouldn't match anything we make it nil so it does"
+    );
+    assert_eq!(spec.prefix_directory(), "", "there is no prefix left");
+    Ok(())
+}
+
+#[test]
 fn removes_relative_path_components() -> crate::Result {
     for (input_path, expected_path, expected_prefix) in [
+        ("..", "a", ""),
         ("c", "a/b/c", "a/b"),
         ("../c", "a/c", "a"),
         ("../b/c", "a/b/c", "a"), // this is a feature - prefix components once consumed by .. are lost. Important as paths can contain globs
@@ -33,6 +50,7 @@ fn single_dot_is_special_and_directory_is_implied_without_trailing_slash() -> cr
     for (input_path, expected) in [(".", "."), ("./", ".")] {
         let spec = normalized_spec(input_path, "", "/repo")?;
         assert_eq!(spec.path(), expected);
+        assert!(spec.is_nil(), "such a spec has to match everything");
         assert_eq!(spec.prefix_directory(), "");
     }
     Ok(())

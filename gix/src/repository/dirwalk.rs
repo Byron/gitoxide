@@ -1,6 +1,6 @@
 use crate::bstr::BStr;
-use crate::{config, dirwalk, Repository};
-use std::path::Path;
+use crate::{config, dirwalk, AttributeStack, Pathspec, Repository};
+use std::path::PathBuf;
 
 /// The error returned by [dirwalk()](Repository::dirwalk()).
 #[derive(Debug, thiserror::Error)]
@@ -18,6 +18,19 @@ pub enum Error {
     Prefix(#[from] gix_path::realpath::Error),
     #[error(transparent)]
     FilesystemOptions(#[from] config::boolean::Error),
+}
+
+/// The outcome of the [dirwalk()](Repository::dirwalk).
+pub struct Outcome<'repo> {
+    /// The excludes stack used for the dirwalk, for access of `.gitignore` information.
+    pub excludes: AttributeStack<'repo>,
+    /// The pathspecs used to guide the operation,
+    pub pathspec: Pathspec<'repo>,
+    /// The root actually being used for the traversal, and useful to transform the paths returned for the user.
+    /// It's always within the [`work-dir`](Repository::work_dir).
+    pub traversal_root: PathBuf,
+    /// The actual result of the dirwalk.
+    pub dirwalk: gix_dir::walk::Outcome,
 }
 
 impl Repository {
@@ -42,40 +55,42 @@ impl Repository {
         patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
         options: dirwalk::Options,
         delegate: &mut dyn gix_dir::walk::Delegate,
-    ) -> Result<gix_dir::walk::Outcome, Error> {
+    ) -> Result<Outcome<'_>, Error> {
+        let _span = gix_trace::coarse!("gix::dirwalk");
         let workdir = self.work_dir().ok_or(Error::MissinWorkDir)?;
-        let mut excludes = self
-            .excludes(
-                index,
-                None,
-                crate::worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
-            )?
-            .detach();
-        let (mut pathspec, mut maybe_attributes) = self
-            .pathspec(
-                patterns,
-                true, /* inherit ignore case */
-                index,
-                crate::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
-            )?
-            .into_parts();
+        let mut excludes = self.excludes(
+            index,
+            None,
+            crate::worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
+        )?;
+        let mut pathspec = self.pathspec(
+            options.empty_patterns_match_prefix, /* empty patterns match prefix */
+            patterns,
+            true, /* inherit ignore case */
+            index,
+            crate::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
+        )?;
+        gix_trace::debug!(
+            longest_prefix = ?pathspec.search.longest_common_directory(),
+            prefix_dir = ?pathspec.search.prefix_directory(),
+            patterns = ?pathspec.search.patterns().map(gix_pathspec::Pattern::path).collect::<Vec<_>>()
+        );
 
-        let prefix = self.prefix()?.unwrap_or(Path::new(""));
         let git_dir_realpath =
             crate::path::realpath_opts(self.git_dir(), self.current_dir(), crate::path::realpath::MAX_SYMLINKS)?;
         let fs_caps = self.filesystem_options()?;
         let accelerate_lookup = fs_caps.ignore_case.then(|| index.prepare_icase_backing());
-        gix_dir::walk(
-            &workdir.join(prefix),
+        let (outcome, traversal_root) = gix_dir::walk(
             workdir,
             gix_dir::walk::Context {
                 git_dir_realpath: git_dir_realpath.as_ref(),
                 current_dir: self.current_dir(),
                 index,
                 ignore_case_index_lookup: accelerate_lookup.as_ref(),
-                pathspec: &mut pathspec,
+                pathspec: &mut pathspec.search,
                 pathspec_attributes: &mut |relative_path, case, is_dir, out| {
-                    let stack = maybe_attributes
+                    let stack = pathspec
+                        .stack
                         .as_mut()
                         .expect("can only be called if attributes are used in patterns");
                     stack
@@ -83,12 +98,19 @@ impl Repository {
                         .at_entry(relative_path, Some(is_dir), &self.objects)
                         .map_or(false, |platform| platform.matching_attributes(out))
                 },
-                excludes: Some(&mut excludes),
+                excludes: Some(&mut excludes.inner),
                 objects: &self.objects,
+                explicit_traversal_root: (!options.empty_patterns_match_prefix).then_some(workdir),
             },
             options.into(),
             delegate,
-        )
-        .map_err(Into::into)
+        )?;
+
+        Ok(Outcome {
+            dirwalk: outcome,
+            traversal_root,
+            excludes,
+            pathspec,
+        })
     }
 }

@@ -23,6 +23,7 @@ impl query::Engine {
                 let relpath = self
                     .repo
                     .pathspec(
+                        true,
                         Some(spec.to_bstring()),
                         false,
                         &gix::index::State::new(self.repo.object_hash()),

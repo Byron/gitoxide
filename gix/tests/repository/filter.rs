@@ -1,9 +1,16 @@
 use std::path::Path;
 
+#[test]
+fn pipeline_in_nonbare_repo_without_index() -> crate::Result {
+    let repo = named_subrepo_opts("make_basic_repo.sh", "all-untracked", Default::default())?;
+    let _ = repo.filter_pipeline(None).expect("does not fail due to missing index");
+    Ok(())
+}
+
 use gix::bstr::ByteSlice;
 use gix_filter::driver::apply::Delay;
 
-use crate::util::named_repo;
+use crate::util::{named_repo, named_subrepo_opts};
 
 #[test]
 fn pipeline_in_repo_without_special_options() -> crate::Result {

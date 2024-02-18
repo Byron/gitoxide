@@ -1,7 +1,9 @@
-use crate::walk_utils::{collect, entry, fixture, options};
+use crate::walk_utils::{collect, entryps, fixture, options};
 use gix_dir::entry::Kind::File;
+use gix_dir::entry::PathspecMatch::Prefix;
 use gix_dir::entry::Status::Untracked;
 use gix_dir::walk;
+use pretty_assertions::assert_eq;
 use std::path::Path;
 
 pub mod walk_utils;
@@ -10,8 +12,9 @@ pub mod walk_utils;
 fn prefixes_work_as_expected() -> gix_testtools::Result {
     let root = fixture("only-untracked");
     std::env::set_current_dir(root.join("d"))?;
-    let (out, entries) = collect(&root, |keep, ctx| {
-        walk(&Path::new("..").join("d"), Path::new(".."), ctx, options(), keep)
+    let troot = Path::new("..").join("d");
+    let ((out, _root), entries) = collect(Path::new(".."), Some(&troot), |keep, ctx| {
+        walk(Path::new(".."), ctx, options(), keep)
     });
     assert_eq!(
         out,
@@ -24,9 +27,9 @@ fn prefixes_work_as_expected() -> gix_testtools::Result {
     assert_eq!(
         &entries,
         &[
-            entry("d/a", Untracked, File),
-            entry("d/b", Untracked, File),
-            entry("d/d/a", Untracked, File),
+            entryps("d/a", Untracked, File, Prefix),
+            entryps("d/b", Untracked, File, Prefix),
+            entryps("d/d/a", Untracked, File, Prefix),
         ]
     );
     Ok(())

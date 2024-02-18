@@ -34,6 +34,7 @@ mod dirwalk {
                 .map(|e| (e.0.rela_path.to_string(), e.0.disk_kind.expect("kind is known")))
                 .collect::<Vec<_>>(),
             [
+                ("all-untracked".to_string(), Repository),
                 ("bare-repo-with-index.git".to_string(), Directory),
                 ("bare.git".into(), Directory),
                 ("non-bare-repo-without-index".into(), Repository),
