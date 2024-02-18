@@ -219,6 +219,8 @@ pub mod pathspec {
         /// Configure pathspecs `patterns` to be matched against, with pathspec attributes read from the worktree and then from the index
         /// if needed.
         ///
+        /// Note that the `empty_patterns_match_prefix` flag of the [parent method](crate::Repository::pathspec()) defaults to `true`.
+        ///
         /// ### Deviation
         ///
         /// Pathspec attributes match case-insensitively by default if the underlying filesystem is configured that way.
@@ -244,6 +246,7 @@ pub mod pathspec {
                 .map_err(|err| Error::Init(crate::pathspec::init::Error::Defaults(err.into())))?
                 .unwrap_or(gitoxide::Pathspec::INHERIT_IGNORE_CASE_DEFAULT);
             Ok(self.parent.pathspec(
+                true, /* empty patterns match prefix */
                 patterns,
                 inherit_ignore_case,
                 &index,

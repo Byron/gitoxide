@@ -9,7 +9,9 @@ fn defaults_are_taken_from_repo_config() -> crate::Result {
     repo.config_snapshot_mut()
         .set_value(&gitoxide::Pathspec::ICASE, "true")?;
     let inherit_ignore_case = true;
+    let empty_pathspecs_match_prefix = true;
     let mut pathspec = repo.pathspec(
+        empty_pathspecs_match_prefix,
         [
             "hi",
             ":!hip",

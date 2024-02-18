@@ -64,6 +64,7 @@ impl Repository {
             crate::worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
         )?;
         let mut pathspec = self.pathspec(
+            options.empty_patterns_match_prefix, /* empty patterns match prefix */
             patterns,
             true, /* inherit ignore case */
             index,
@@ -99,7 +100,7 @@ impl Repository {
                 },
                 excludes: Some(&mut excludes.inner),
                 objects: &self.objects,
-                explicit_traversal_root: (!options.use_prefix).then_some(workdir),
+                explicit_traversal_root: (!options.empty_patterns_match_prefix).then_some(workdir),
             },
             options.into(),
             delegate,

@@ -32,6 +32,8 @@ impl<'repo> Pathspec<'repo> {
     /// be used to control where attributes are coming from.
     /// If `inherit_ignore_case` is `true`, the pathspecs may have their ignore-case default overridden to be case-insensitive by default.
     /// This only works towards turning ignore-case for pathspecs on, but won't ever turn that setting off if.
+    /// If `empty_patterns_match_prefix` is `true`, then even empty patterns will match only what's inside of the prefix. Otherwise
+    /// they will match everything.
     ///
     /// ### Deviation
     ///
@@ -39,6 +41,7 @@ impl<'repo> Pathspec<'repo> {
     /// queries as well.
     pub fn new(
         repo: &'repo Repository,
+        empty_patterns_match_prefix: bool,
         patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
         inherit_ignore_case: bool,
         make_attributes: impl FnOnce() -> Result<gix_worktree::Stack, Box<dyn std::error::Error + Send + Sync + 'static>>,
@@ -49,9 +52,14 @@ impl<'repo> Pathspec<'repo> {
             .map(move |p| parse(p.as_ref(), defaults))
             .collect::<Result<Vec<_>, _>>()?;
         let needs_cache = patterns.iter().any(|p| !p.attributes.is_empty());
+        let prefix = if patterns.is_empty() && !empty_patterns_match_prefix {
+            None
+        } else {
+            repo.prefix()?
+        };
         let search = Search::from_specs(
             patterns,
-            repo.prefix()?,
+            prefix,
             &gix_path::realpath_opts(
                 repo.work_dir().unwrap_or_else(|| repo.git_dir()),
                 repo.options.current_dir_or_empty(),

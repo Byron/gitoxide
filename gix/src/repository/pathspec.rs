@@ -8,18 +8,21 @@ impl Repository {
     /// (but also note that `git` does not do that).
     /// `index` may be needed to load attributes which is required only if `patterns` refer to attributes via `:(attr:…)` syntax.
     /// In the same vein, `attributes_source` affects where `.gitattributes` files are read from if pathspecs need to match against attributes.
+    /// If `empty_patterns_match_prefix` is `true`, then even empty patterns will match only what's inside of the prefix. Otherwise
+    /// they will match everything.
     ///
     /// It will be initialized exactly how it would, and attribute matching will be conducted by reading the worktree first if available.
     /// If that is not desirable, consider calling [`Pathspec::new()`] directly.
     #[doc(alias = "Pathspec", alias = "git2")]
     pub fn pathspec(
         &self,
+        empty_patterns_match_prefix: bool,
         patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
         inherit_ignore_case: bool,
         index: &gix_index::State,
         attributes_source: gix_worktree::stack::state::attributes::Source,
     ) -> Result<Pathspec<'_>, crate::pathspec::init::Error> {
-        Pathspec::new(self, patterns, inherit_ignore_case, || {
+        Pathspec::new(self, empty_patterns_match_prefix, patterns, inherit_ignore_case, || {
             self.attributes_only(index, attributes_source)
                 .map(AttributeStack::detach)
                 .map_err(Into::into)
