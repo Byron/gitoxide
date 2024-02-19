@@ -146,14 +146,7 @@ pub(super) fn can_recurse(
     if info.disk_kind.map_or(true, |k| !k.is_dir()) {
         return false;
     }
-    let entry = EntryRef {
-        rela_path: Cow::Borrowed(rela_path),
-        status: info.status,
-        disk_kind: info.disk_kind,
-        index_kind: info.index_kind,
-        pathspec_match: info.pathspec_match,
-    };
-    delegate.can_recurse(entry, for_deletion)
+    delegate.can_recurse(EntryRef::from_outcome(Cow::Borrowed(rela_path), info), for_deletion)
 }
 
 /// Possibly emit an entry to `for_each` in case the provided information makes that possible.
@@ -174,7 +167,7 @@ pub(super) fn emit_entry(
 ) -> Action {
     out.seen_entries += 1;
 
-    if (!emit_empty_directories && info.disk_kind == Some(entry::Kind::EmptyDirectory)
+    if (!emit_empty_directories && info.property == Some(entry::Property::EmptyDirectory)
         || !emit_tracked && info.status == entry::Status::Tracked)
         || emit_ignored.is_none() && matches!(info.status, entry::Status::Ignored(_))
         || !emit_pruned
@@ -187,14 +180,5 @@ pub(super) fn emit_entry(
     }
 
     out.returned_entries += 1;
-    delegate.emit(
-        EntryRef {
-            rela_path,
-            status: info.status,
-            disk_kind: info.disk_kind,
-            index_kind: info.index_kind,
-            pathspec_match: info.pathspec_match,
-        },
-        dir_status,
-    )
+    delegate.emit(EntryRef::from_outcome(rela_path, info), dir_status)
 }

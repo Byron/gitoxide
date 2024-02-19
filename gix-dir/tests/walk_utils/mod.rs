@@ -51,6 +51,7 @@ pub fn entry_nomatch(
         Entry {
             rela_path: rela_path.as_ref().to_owned(),
             status,
+            property: None,
             disk_kind: Some(disk_kind),
             index_kind: index_kind_from_status(status, disk_kind),
             pathspec_match: None,
@@ -64,6 +65,7 @@ pub fn entry_nokind(rela_path: impl AsRef<BStr>, status: entry::Status) -> (Entr
         Entry {
             rela_path: rela_path.as_ref().to_owned(),
             status,
+            property: None,
             disk_kind: None,
             index_kind: None,
             pathspec_match: None,
@@ -82,6 +84,7 @@ pub fn entryps(
         Entry {
             rela_path: rela_path.as_ref().to_owned(),
             status,
+            property: None,
             disk_kind: Some(disk_kind),
             index_kind: index_kind_from_status(status, disk_kind),
             pathspec_match: Some(pathspec_match),
@@ -100,6 +103,7 @@ pub fn entry_dirstat(
         Entry {
             rela_path: rela_path.as_ref().to_owned(),
             status,
+            property: None,
             disk_kind: Some(disk_kind),
             index_kind: index_kind_from_status(status, disk_kind),
             pathspec_match: Some(entry::PathspecMatch::Always),
@@ -120,6 +124,7 @@ pub fn entryps_dirstat(
         Entry {
             rela_path: rela_path.as_ref().to_owned(),
             status,
+            property: None,
             disk_kind: Some(disk_kind),
             index_kind: index_kind_from_status(status, disk_kind),
             pathspec_match: Some(pathspec_match),
@@ -129,16 +134,37 @@ pub fn entryps_dirstat(
 }
 
 fn index_kind_from_status(status: entry::Status, disk_kind: entry::Kind) -> Option<entry::Kind> {
-    matches!(status, entry::Status::Tracked | entry::Status::TrackedExcluded).then_some(disk_kind)
+    matches!(status, entry::Status::Tracked).then_some(disk_kind)
 }
 
 pub trait EntryExt {
     fn with_index_kind(self, index_kind: entry::Kind) -> Self;
+    fn with_property(self, flags: entry::Property) -> Self;
+    fn with_match(self, m: entry::PathspecMatch) -> Self;
+    fn no_match(self) -> Self;
+    fn no_kind(self) -> Self;
 }
 
 impl EntryExt for (Entry, Option<entry::Status>) {
     fn with_index_kind(mut self, index_kind: entry::Kind) -> Self {
         self.0.index_kind = index_kind.into();
+        self
+    }
+    fn with_property(mut self, property: entry::Property) -> Self {
+        self.0.property = property.into();
+        self
+    }
+    fn with_match(mut self, m: entry::PathspecMatch) -> Self {
+        self.0.pathspec_match = Some(m);
+        self
+    }
+
+    fn no_match(mut self) -> Self {
+        self.0.pathspec_match = None;
+        self
+    }
+    fn no_kind(mut self) -> Self {
+        self.0.disk_kind = None;
         self
     }
 }

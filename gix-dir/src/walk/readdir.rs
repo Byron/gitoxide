@@ -6,7 +6,7 @@ use crate::entry::{PathspecMatch, Status};
 use crate::walk::function::{can_recurse, emit_entry};
 use crate::walk::EmissionMode::CollapseDirectory;
 use crate::walk::{classify, Action, CollapsedEntriesEmissionMode, Context, Delegate, Error, Options, Outcome};
-use crate::{entry, walk, Entry};
+use crate::{entry, walk, Entry, EntryRef};
 
 /// ### Deviation
 ///
@@ -115,13 +115,8 @@ impl State {
     /// Hold the entry with the given `status` if it's a candidate for collapsing the containing directory.
     fn held_for_directory_collapse(&mut self, rela_path: &BStr, info: classify::Outcome, opts: &Options) -> bool {
         if opts.should_hold(info.status) {
-            self.on_hold.push(Entry {
-                rela_path: rela_path.to_owned(),
-                status: info.status,
-                disk_kind: info.disk_kind,
-                index_kind: info.index_kind,
-                pathspec_match: info.pathspec_match,
-            });
+            self.on_hold
+                .push(EntryRef::from_outcome(Cow::Borrowed(rela_path), info).into_owned());
             true
         } else {
             false
@@ -200,15 +195,19 @@ impl Mark {
     ) -> walk::Action {
         if num_entries == 0 {
             let empty_info = classify::Outcome {
-                disk_kind: if num_entries == 0 {
+                property: if num_entries == 0 {
                     assert_ne!(
                         dir_info.disk_kind,
                         Some(entry::Kind::Repository),
                         "BUG: it shouldn't be possible to classify an empty dir as repository"
                     );
-                    Some(entry::Kind::EmptyDirectory)
+                    if dir_info.property.is_none() {
+                        entry::Property::EmptyDirectory.into()
+                    } else {
+                        dir_info.property
+                    }
                 } else {
-                    dir_info.disk_kind
+                    dir_info.property
                 },
                 pathspec_match: ctx
                     .pathspec
@@ -217,13 +216,9 @@ impl Mark {
                 ..dir_info
             };
             if opts.should_hold(empty_info.status) {
-                state.on_hold.push(Entry {
-                    rela_path: dir_rela_path.to_owned(),
-                    status: empty_info.status,
-                    disk_kind: empty_info.disk_kind,
-                    index_kind: empty_info.index_kind,
-                    pathspec_match: empty_info.pathspec_match,
-                });
+                state
+                    .on_hold
+                    .push(EntryRef::from_outcome(Cow::Borrowed(dir_rela_path), empty_info).into_owned());
                 Action::Continue
             } else {
                 emit_entry(Cow::Borrowed(dir_rela_path), empty_info, None, opts, out, delegate)
@@ -285,7 +280,7 @@ impl Mark {
             }
             matching_entries += usize::from(pathspec_match.map_or(false, |m| !m.should_ignore()));
             match status {
-                Status::DotGit | Status::Pruned | Status::TrackedExcluded => {
+                Status::Pruned => {
                     unreachable!("BUG: pruned aren't ever held, check `should_hold()`")
                 }
                 Status::Tracked => { /* causes the folder not to be collapsed */ }
@@ -359,13 +354,17 @@ impl Mark {
         }
         out.seen_entries += removed_without_emitting as u32;
 
-        state.on_hold.push(Entry {
-            rela_path: dir_rela_path.to_owned(),
-            status: dir_status,
-            disk_kind: dir_info.disk_kind,
-            index_kind: dir_info.index_kind,
-            pathspec_match: dir_pathspec_match,
-        });
+        state.on_hold.push(
+            EntryRef::from_outcome(
+                Cow::Borrowed(dir_rela_path),
+                classify::Outcome {
+                    status: dir_status,
+                    pathspec_match: dir_pathspec_match,
+                    ..dir_info
+                },
+            )
+            .into_owned(),
+        );
         Some(action)
     }
 }
