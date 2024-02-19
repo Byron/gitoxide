@@ -66,10 +66,10 @@ pub(crate) mod function {
                 match skip_hidden_repositories {
                     Some(FindRepository::NonBare) => Some(FindNonBareRepositoriesInIgnoredDirectories),
                     Some(FindRepository::All) => Some(FindRepositoriesInIgnoredDirectories),
-                    None => None,
+                    None => Some(Default::default()),
                 }
             } else {
-                Some(IgnoredDirectoriesCanHideNestedRepositories)
+                Some(Default::default())
             })
             .classify_untracked_bare_repositories(matches!(find_untracked_repositories, FindRepository::All))
             .emit_untracked(collapse_directories)
@@ -88,7 +88,7 @@ pub(crate) mod function {
         let mut pruned_entries = 0;
         let mut saw_ignored_directory = false;
         let mut saw_untracked_directory = false;
-        for (entry, dir_status) in entries.into_iter() {
+        for (mut entry, dir_status) in entries.into_iter() {
             if dir_status.is_some() {
                 if debug {
                     writeln!(
@@ -106,16 +106,15 @@ pub(crate) mod function {
                 .map_or(false, |m| m != gix::dir::entry::PathspecMatch::Excluded);
             pruned_entries += usize::from(!pathspec_includes_entry);
             if !pathspec_includes_entry && debug {
-                writeln!(err, "DBG: prune '{}' as it is excluded by pathspec", entry.rela_path).ok();
+                writeln!(err, "DBG: prune '{}'", entry.rela_path).ok();
             }
             if entry.status.is_pruned() || !pathspec_includes_entry {
                 continue;
             }
 
-            let mut disk_kind = entry.disk_kind.expect("present if not pruned");
             let keep = match entry.status {
-                Status::DotGit | Status::Pruned | Status::TrackedExcluded => {
-                    unreachable!("BUG: Pruned are skipped already as their pathspec is always None")
+                Status::Pruned => {
+                    unreachable!("BUG: assumption that pruned entries have no pathspec match, but probably not")
                 }
                 Status::Tracked => {
                     unreachable!("BUG: tracked aren't emitted")
@@ -130,6 +129,14 @@ pub(crate) mod function {
                 }
                 Status::Untracked => true,
             };
+            if entry.disk_kind.is_none() {
+                entry.disk_kind = workdir
+                    .join(gix::path::from_bstr(entry.rela_path.as_bstr()))
+                    .metadata()
+                    .ok()
+                    .map(|e| e.file_type().into());
+            }
+            let mut disk_kind = entry.disk_kind.expect("present if not pruned");
             if !keep {
                 if debug {
                     writeln!(err, "DBG: prune '{}' as -x or -p is missing", entry.rela_path).ok();
@@ -148,7 +155,7 @@ pub(crate) mod function {
 
             match disk_kind {
                 Kind::File | Kind::Symlink => {}
-                Kind::EmptyDirectory | Kind::Directory => {
+                Kind::Directory => {
                     if !directories {
                         skipped_directories += 1;
                         if debug {
@@ -202,14 +209,14 @@ pub(crate) mod function {
                 },
                 maybe = if execute { "removing" } else { "WOULD remove" },
                 suffix = match disk_kind {
-                    Kind::File | Kind::Symlink | Kind::Directory => {
-                        ""
-                    }
-                    Kind::EmptyDirectory => {
+                    Kind::Directory if entry.property == Some(gix::dir::entry::Property::EmptyDirectory) => {
                         " empty"
                     }
                     Kind::Repository => {
                         " repository"
+                    }
+                    Kind::File | Kind::Symlink | Kind::Directory => {
+                        ""
                     }
                 },
             )?;
@@ -256,7 +263,7 @@ pub(crate) mod function {
             }));
             messages.extend((pruned_entries > 0 && has_patterns).then(|| {
                 format!(
-                    "try to adjust your pathspec to reveal some of the {pruned_entries} pruned {entries}",
+                    "try to adjust your pathspec to reveal some of the {pruned_entries} pruned {entries} - show with --debug",
                     entries = plural("entry", "entries", pruned_entries)
                 )
             }));
