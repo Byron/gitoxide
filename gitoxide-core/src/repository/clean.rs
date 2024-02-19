@@ -230,24 +230,36 @@ pub(crate) mod function {
         }
         if !execute {
             let mut messages = Vec::new();
-            messages.extend(
-                (skipped_directories > 0).then(|| format!("Skipped {skipped_directories} directories - show with -d")),
-            );
-            messages.extend(
-                (skipped_repositories > 0)
-                    .then(|| format!("Skipped {skipped_repositories} repositories - show with -r")),
-            );
-            messages.extend(
-                (skipped_ignored > 0).then(|| format!("Skipped {skipped_ignored} expendable entries - show with -x")),
-            );
-            messages.extend(
-                (skipped_precious > 0).then(|| format!("Skipped {skipped_precious} precious entries - show with -p")),
-            );
-            messages.extend(
-                (pruned_entries > 0 && has_patterns).then(|| {
-                    format!("try to adjust your pathspec to reveal some of the {pruned_entries} pruned entries")
-                }),
-            );
+            messages.extend((skipped_directories > 0).then(|| {
+                format!(
+                    "Skipped {skipped_directories} {directories} - show with -d",
+                    directories = plural("directory", "directories", skipped_directories)
+                )
+            }));
+            messages.extend((skipped_repositories > 0).then(|| {
+                format!(
+                    "Skipped {skipped_repositories} {repositories} - show with -r",
+                    repositories = plural("repository", "repositories", skipped_repositories)
+                )
+            }));
+            messages.extend((skipped_ignored > 0).then(|| {
+                format!(
+                    "Skipped {skipped_ignored} expendable {entries} - show with -x",
+                    entries = plural("entry", "entries", skipped_ignored)
+                )
+            }));
+            messages.extend((skipped_precious > 0).then(|| {
+                format!(
+                    "Skipped {skipped_precious} precious {entries} - show with -p",
+                    entries = plural("entry", "entries", skipped_precious)
+                )
+            }));
+            messages.extend((pruned_entries > 0 && has_patterns).then(|| {
+                format!(
+                    "try to adjust your pathspec to reveal some of the {pruned_entries} pruned {entries}",
+                    entries = plural("entry", "entries", pruned_entries)
+                )
+            }));
             let make_msg = || -> String {
                 if messages.is_empty() {
                     return String::new();
@@ -293,6 +305,14 @@ pub(crate) mod function {
             }
         }
         Ok(())
+    }
+
+    fn plural<'a>(one: &'a str, many: &'a str, number: usize) -> &'a str {
+        if number == 1 {
+            one
+        } else {
+            many
+        }
     }
 
     #[derive(Default)]
