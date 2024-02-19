@@ -210,7 +210,10 @@ impl Mark {
                 } else {
                     dir_info.disk_kind
                 },
-                pathspec_match: filter_dir_pathspec(dir_info.pathspec_match),
+                pathspec_match: ctx
+                    .pathspec
+                    .pattern_matching_relative_path(dir_rela_path, Some(true), ctx.pathspec_attributes)
+                    .map(|m| m.kind.into()),
                 ..dir_info
             };
             if opts.should_hold(empty_info.status) {

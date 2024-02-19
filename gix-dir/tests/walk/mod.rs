@@ -169,6 +169,80 @@ fn complex_empty() -> crate::Result {
 }
 
 #[test]
+fn ignored_with_prefix_pathspec_collapses_just_like_untracked() -> crate::Result {
+    let root = fixture("untracked-and-ignored-for-collapse");
+    let ((out, _root), entries) = collect_filtered(
+        &root,
+        None,
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_untracked: CollapseDirectory,
+                    emit_ignored: Some(CollapseDirectory),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        ["untracked", "no-match"],
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 6,
+        }
+    );
+    assert_eq!(
+        entries,
+        [entryps("untracked", Untracked, Directory, Prefix)],
+        "prefix matches allow untracked directories to collapse"
+    );
+
+    let ((out, _root), entries) = collect_filtered(
+        &root,
+        None,
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_untracked: CollapseDirectory,
+                    emit_ignored: Some(CollapseDirectory),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        ["ignored", "ignored-inside"],
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 4,
+            returned_entries: entries.len(),
+            seen_entries: 8,
+        }
+    );
+    assert_eq!(
+        entries,
+        [
+            entryps("ignored", Ignored(Expendable), Directory, Prefix),
+            entryps("ignored-inside", Ignored(Expendable), Directory, Prefix)
+        ],
+        "prefix matches allow ignored directories to collapse as well"
+    );
+    Ok(())
+}
+
+#[test]
 fn only_untracked_with_cwd_handling() -> crate::Result {
     let root = fixture("only-untracked");
     let ((out, _root), entries) = collect_filtered_with_cwd(

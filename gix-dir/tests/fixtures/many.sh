@@ -201,7 +201,7 @@ mkdir untracked-and-ignored-for-collapse
   echo "ignored/" >> .gitignore
   echo "*.o" >> .gitignore
 
-  mkdir untracked ignored mixed ignored-inside
+  mkdir -p untracked ignored/empty mixed ignored-inside
   touch untracked/a ignored/b mixed/c mixed/c.o ignored-inside/d.o
 )
 
