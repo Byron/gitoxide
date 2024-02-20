@@ -521,6 +521,12 @@ pub mod clean {
         /// Remove nested repositories.
         #[arg(long, short = 'r')]
         pub repositories: bool,
+        /// Pathspec patterns are used to match the result of the dirwalk, not the dirwalk itself.
+        ///
+        /// Use this if there is trouble using wildcard pathspecs, which affect the directory walk
+        /// in reasonable, but often unexpected ways.
+        #[arg(long, short = 'm')]
+        pub pathspec_matches_result: bool,
         /// Enter ignored directories to skip repositories contained within.
         #[arg(long)]
         pub skip_hidden_repositories: Option<FindRepository>,

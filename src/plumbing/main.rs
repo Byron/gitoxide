@@ -155,6 +155,7 @@ pub fn main() -> Result<()> {
             directories,
             pathspec,
             repositories,
+            pathspec_matches_result,
             skip_hidden_repositories,
             find_untracked_repositories,
         }) => prepare_and_run(
@@ -178,6 +179,7 @@ pub fn main() -> Result<()> {
                         precious,
                         directories,
                         repositories,
+                        pathspec_matches_result,
                         skip_hidden_repositories: skip_hidden_repositories.map(Into::into),
                         find_untracked_repositories: find_untracked_repositories.into(),
                     },

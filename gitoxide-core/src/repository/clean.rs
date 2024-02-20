@@ -15,6 +15,7 @@ pub struct Options {
     pub precious: bool,
     pub directories: bool,
     pub repositories: bool,
+    pub pathspec_matches_result: bool,
     pub skip_hidden_repositories: Option<FindRepository>,
     pub find_untracked_repositories: FindRepository,
 }
@@ -46,6 +47,7 @@ pub(crate) mod function {
             repositories,
             skip_hidden_repositories,
             find_untracked_repositories,
+            pathspec_matches_result,
         }: Options,
     ) -> anyhow::Result<()> {
         if format != OutputFormat::Human {
@@ -56,6 +58,7 @@ pub(crate) mod function {
         };
 
         let index = repo.index_or_empty()?;
+        let pathspec_for_dirwalk = !pathspec_matches_result;
         let has_patterns = !patterns.is_empty();
         let mut collect = InterruptableCollect::default();
         let collapse_directories = CollapseDirectory;
@@ -76,9 +79,29 @@ pub(crate) mod function {
             .emit_ignored(Some(collapse_directories))
             .empty_patterns_match_prefix(true)
             .emit_empty_directories(true);
-        repo.dirwalk(&index, patterns, options, &mut collect)?;
-        let prefix = repo.prefix()?.unwrap_or(Path::new(""));
+        repo.dirwalk(
+            &index,
+            if pathspec_for_dirwalk {
+                patterns.clone()
+            } else {
+                Vec::new()
+            },
+            options,
+            &mut collect,
+        )?;
 
+        let mut pathspec = pathspec_matches_result
+            .then(|| {
+                repo.pathspec(
+                    true,
+                    patterns,
+                    true,
+                    &index,
+                    gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
+                )
+            })
+            .transpose()?;
+        let prefix = repo.prefix()?.unwrap_or(Path::new(""));
         let entries = collect.inner.into_entries_by_path();
         let mut entries_to_clean = 0;
         let mut skipped_directories = 0;
@@ -101,9 +124,14 @@ pub(crate) mod function {
                 continue;
             }
 
-            let pathspec_includes_entry = entry
-                .pathspec_match
-                .map_or(false, |m| m != gix::dir::entry::PathspecMatch::Excluded);
+            let pathspec_includes_entry = match pathspec.as_mut() {
+                None => entry
+                    .pathspec_match
+                    .map_or(false, |m| m != gix::dir::entry::PathspecMatch::Excluded),
+                Some(pathspec) => pathspec
+                    .pattern_matching_relative_path(entry.rela_path.as_bstr(), entry.disk_kind.map(|k| k.is_dir()))
+                    .map_or(false, |m| !m.is_excluded()),
+            };
             pruned_entries += usize::from(!pathspec_includes_entry);
             if !pathspec_includes_entry && debug {
                 writeln!(err, "DBG: prune '{}'", entry.rela_path).ok();
@@ -114,7 +142,7 @@ pub(crate) mod function {
 
             let keep = match entry.status {
                 Status::Pruned => {
-                    unreachable!("BUG: assumption that pruned entries have no pathspec match, but probably not")
+                    unreachable!("BUG: we skipped these above")
                 }
                 Status::Tracked => {
                     unreachable!("BUG: tracked aren't emitted")
