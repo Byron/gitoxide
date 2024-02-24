@@ -159,6 +159,13 @@ git init partial-checkout-non-cone
   mkdir d && touch d/file-created-manually
 )
 
+git init precious-nested-repository
+(cd precious-nested-repository
+  echo '$precious*/' > .gitignore
+  git init precious-repo
+  git add .gitignore && git commit -m "init"
+)
+
 git init only-untracked
 (cd only-untracked
   >a

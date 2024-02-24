@@ -253,13 +253,6 @@ pub fn path(
         .map_err(Error::ExcludesAccess)?
     {
         if emit_ignored.is_some() {
-            if kind.map_or(false, |d| d.is_dir()) && out.pathspec_match.is_none() {
-                // we have patterns that didn't match at all. Try harder.
-                out.pathspec_match = ctx
-                    .pathspec
-                    .directory_matches_prefix(rela_path.as_bstr(), true)
-                    .then_some(PathspecMatch::Prefix);
-            }
             if matches!(
                 for_deletion,
                 Some(
@@ -274,6 +267,10 @@ pub fn path(
                         Some(ForDeletionMode::FindRepositoriesInIgnoredDirectories)
                     ),
                 );
+            }
+            if kind.map_or(false, |d| d.is_recursable_dir()) && out.pathspec_match.is_none() {
+                // we have patterns that didn't match at all, *yet*. We want to look inside.
+                out.pathspec_match = Some(PathspecMatch::Prefix);
             }
         }
         return Ok(out

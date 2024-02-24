@@ -1208,6 +1208,38 @@ fn untracked_and_ignored_for_deletion_nonmatching_wildcard_spec() -> crate::Resu
     );
     Ok(())
 }
+#[test]
+fn nested_precious_repo_respects_wildcards() -> crate::Result {
+    let root = fixture("precious-nested-repository");
+    for for_deletion in [
+        Some(ForDeletionMode::FindNonBareRepositoriesInIgnoredDirectories),
+        Some(ForDeletionMode::FindRepositoriesInIgnoredDirectories),
+    ] {
+        let (_out, entries) = collect_filtered(
+            &root,
+            None,
+            |keep, ctx| {
+                walk(
+                    &root,
+                    ctx,
+                    walk::Options {
+                        emit_ignored: Some(CollapseDirectory),
+                        emit_untracked: CollapseDirectory,
+                        emit_pruned: false,
+                        for_deletion,
+                        ..options()
+                    },
+                    keep,
+                )
+            },
+            Some("*foo/"),
+        );
+        // NOTE: do not use `_out` as `.git` directory contents can change, it's controlled by Git, causing flakiness.
+
+        assert_eq!(entries, [], "nothing matches, of course");
+    }
+    Ok(())
+}
 
 #[test]
 fn nested_ignored_dirs_for_deletion_nonmatching_wildcard_spec() -> crate::Result {

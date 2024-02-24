@@ -191,7 +191,7 @@ impl Status {
 }
 
 impl Kind {
-    fn is_recursable_dir(&self) -> bool {
+    pub(super) fn is_recursable_dir(&self) -> bool {
         matches!(self, Kind::Directory)
     }
 
