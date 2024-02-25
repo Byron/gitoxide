@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-ec37db42f0c22268cf400ae193cfb04466f45b0e/> Provide information about whether or not EOIE and IEOT extensions were available.
+   These are only relevant when reading, and have to be regenerated after writing.
+   During reading, they can speed up performance by allowing multi-threading.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-cbda06d7673c3461b82f5999295d3b00a7c273ef/> refactor ignore-case functionality to actually work.
+   The new implementation does the same as Git, and initializes
+   an alternative lookup location.
+   
+   All previous implementations with `_icase` suffix were removed
+   without replacement.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 19 calendar days.
+ - 36 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'btoi' ([`5fc379d`](https://github.com/Byron/gitoxide/commit/5fc379d1dc867d15a50cb086e30beefde2b42d86))
+    - Refactor ([`c5c69bd`](https://github.com/Byron/gitoxide/commit/c5c69bd355771a6fb3e4f6db0c5f49aa2bf7f42f))
+    - Inline btoi code to reduce compile times ([`f26f298`](https://github.com/Byron/gitoxide/commit/f26f2988f51f6c419ec7eff4ae6f4df0f4011663))
+    - Merge branch 'dirwalk' ([`face359`](https://github.com/Byron/gitoxide/commit/face359443ba33e8985ec1525d5ec38b743ea7a9))
+    - Provide information about whether or not EOIE and IEOT extensions were available. ([`ec37db4`](https://github.com/Byron/gitoxide/commit/ec37db42f0c22268cf400ae193cfb04466f45b0e))
+    - Refactor ignore-case functionality to actually work. ([`cbda06d`](https://github.com/Byron/gitoxide/commit/cbda06d7673c3461b82f5999295d3b00a7c273ef))
+    - Merge branch 'tempfile-permissions' ([`7b44c7f`](https://github.com/Byron/gitoxide/commit/7b44c7ff1dc0b8875214d2673c7f52948cf04ff0))
+    - Release gix-tempfile v13.1.0, gix-lock v13.1.0, safety bump 12 crates ([`8430442`](https://github.com/Byron/gitoxide/commit/84304427dfe4d170c7732161b126961719f70059))
+    - Merge branch 'chunks_exact' ([`d4d478b`](https://github.com/Byron/gitoxide/commit/d4d478ba6a70fce34717e2164f8b3aa7a1521a2d))
+    - Use chunks_exact where possible ([`2482023`](https://github.com/Byron/gitoxide/commit/24820232f07ae55c80d95470228cc9e874830487))
+</details>
+
 ## 0.29.0 (2024-01-20)
 
 A maintenance release without user-facing changes.
@@ -13,7 +58,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 4 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +70,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
 </details>
 

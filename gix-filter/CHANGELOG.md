@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-fc6814024215441a9cea331f81a823a360d3f622/> allow buffer operations to fail gracefully on out-of-memory.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 30 calendar days.
+ - 36 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'entryoom' ([`684fa5c`](https://github.com/Byron/gitoxide/commit/684fa5caf82fc38dd238361d6482e77901ca0265))
+    - Allow buffer operations to fail gracefully on out-of-memory. ([`fc68140`](https://github.com/Byron/gitoxide/commit/fc6814024215441a9cea331f81a823a360d3f622))
+    - Refactor ([`2a9ef4e`](https://github.com/Byron/gitoxide/commit/2a9ef4e3299a28df8f9648e62eaec1ecb0011b99))
+    - Handle OOM when copying to buffers ([`0be338f`](https://github.com/Byron/gitoxide/commit/0be338fdf80a11877599545cfa1b215092ce9afb))
+    - Release gix-command v0.3.4 ([`8a62fb5`](https://github.com/Byron/gitoxide/commit/8a62fb57f7751d3d57273d9430517487e555f999))
+    - Release gix-path v0.10.5 ([`b8cba96`](https://github.com/Byron/gitoxide/commit/b8cba96ce57f8b6b0067d6a8cf3e37eaf280a238))
+</details>
+
 ## 0.9.0 (2024-01-20)
 
 A maintenance release without user-facing changes.
@@ -13,7 +43,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 5 calendar days.
+ - 5 commits contributed to the release over the course of 5 calendar days.
  - 20 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +55,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
     - Release gix-trace v0.1.7, gix-features v0.37.2, gix-commitgraph v0.23.2, gix-traverse v0.36.2, gix-index v0.28.2 ([`b6c04c8`](https://github.com/Byron/gitoxide/commit/b6c04c87b426bf36a059df8dc52b56d384b27b79))
     - Merge pull request #1248 from joshtriplett/tyop ([`39f35da`](https://github.com/Byron/gitoxide/commit/39f35da390bc46005d0374b9bf4e7106fc1bd0ec))

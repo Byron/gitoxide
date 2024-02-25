@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-9e3acde9c98537c7c8ee58f632ce21fcca5b066d/> add `str::precompose_bstr()` for convenience
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 16 calendar days.
+ - 36 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #1297 from fbstj/main ([`f458966`](https://github.com/Byron/gitoxide/commit/f45896615c25fad8476a889305c25301d9c9f521))
+    - Replace manual impl with TryFrom bounds & default method ([`a0deb06`](https://github.com/Byron/gitoxide/commit/a0deb0631a2160c7076e884144646c26aec12914))
+    - Cleanup checked method impls with macro ([`91b1855`](https://github.com/Byron/gitoxide/commit/91b18552417d3b1b73343b1e2afb299ee1c7c667))
+    - Replace method with ZERO constant ([`598d7a2`](https://github.com/Byron/gitoxide/commit/598d7a2755f89dfdc1d8b6d7b48b474388ae4968))
+    - Merge branch 'btoi' ([`5fc379d`](https://github.com/Byron/gitoxide/commit/5fc379d1dc867d15a50cb086e30beefde2b42d86))
+    - Refactor ([`c5c69bd`](https://github.com/Byron/gitoxide/commit/c5c69bd355771a6fb3e4f6db0c5f49aa2bf7f42f))
+    - Fix clippy ([`3a5a229`](https://github.com/Byron/gitoxide/commit/3a5a2296dc923db105db6ae212fd9e37484e44e9))
+    - Add min_num_traits to reduce noise ([`fceed92`](https://github.com/Byron/gitoxide/commit/fceed92d193414f01b6be83d0e2e0a58a92707ba))
+    - Add basic tests ([`b40af1d`](https://github.com/Byron/gitoxide/commit/b40af1d55f43a23ce8ffdf7d54732291e5997daa))
+    - Inline btoi code to reduce compile times ([`f26f298`](https://github.com/Byron/gitoxide/commit/f26f2988f51f6c419ec7eff4ae6f4df0f4011663))
+    - Merge branch 'dirwalk' ([`face359`](https://github.com/Byron/gitoxide/commit/face359443ba33e8985ec1525d5ec38b743ea7a9))
+    - Add `str::precompose_bstr()` for convenience ([`9e3acde`](https://github.com/Byron/gitoxide/commit/9e3acde9c98537c7c8ee58f632ce21fcca5b066d))
+</details>
+
 ## 0.1.9 (2024-01-20)
 
 ### New Features
@@ -15,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 3 calendar days.
+ - 4 commits contributed to the release over the course of 3 calendar days.
  - 20 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
     - Merge branch 'dirwalk' ([`5d176fc`](https://github.com/Byron/gitoxide/commit/5d176fc5ab82bfc7c194b4d929e73da9659ae8b8))
     - Add `str::to_precomposed_unicode()`, effective on apple devices only. ([`eace8bf`](https://github.com/Byron/gitoxide/commit/eace8bf238caaa1e30ce5d541e2790f84a923c57))

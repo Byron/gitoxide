@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-57f0a24d78ce43b69631e05688cc7ac900cfe1cb/> Add `Search::prefix_directory()` and `Search::longest_common_directory()`.
+   That way it's possible to use the common-prefix safely in a situation
+   where a directory is required, while offering the ability to maximize
+   the common prefix at the expense of an additional check to see if
+   the longest possible directory is actually accessible.
+ - <csr-id-9e3acde9c98537c7c8ee58f632ce21fcca5b066d/> add `str::precompose_bstr()` for convenience
+ - <csr-id-f520a516e712566cba47ff983cd0f2f3faf6286a/> Add `Search::directory_matches_prefix()` to see if the prefix of a pathspec matches.
+   That way it's possible to see if some paths can never match.
+ - <csr-id-e409e8d35075721f57dedca5e65ecd110bd2a5ec/> add `Search::can_match_relative_path()`.
+   This way it's possible to match partial input against a pathspec
+   to see if this root would have a chance to actually match.
+
+### Bug Fixes
+
+ - <csr-id-5f21e24a3d8c98e726d822d2961978d729e66e43/> assure that `..` patterns don't end up being `.` that matches nothing
+   ...if the current-dir is one level in.
+   
+   Now such `.` is special and means to match everything.
+ - <csr-id-ea2e5bbc4657aba5d2209d9f22fa076148d5df6f/> Return `ExactSizeIterator` where applicable.
+   That way, the caller can obtain the amount of patterns more easily.
+
+### New Features (BREAKING)
+
+ - <csr-id-021d4c185525e9b289462bf23811fcaa283d8bef/> add `search::MatchKind`, which is available for any `search::Match`.
+   With it the caller can learn how or why the pathspec matched,
+   which allows to make decisions based on it that are relevant
+   to the user interface.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 30 calendar days.
+ - 36 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'status' ([`bb48c4c`](https://github.com/Byron/gitoxide/commit/bb48c4ce22650b8c76af3b147e252ebe7cedb205))
+    - Assure that `..` patterns don't end up being `.` that matches nothing ([`5f21e24`](https://github.com/Byron/gitoxide/commit/5f21e24a3d8c98e726d822d2961978d729e66e43))
+    - Add `Search::prefix_directory()` and `Search::longest_common_directory()`. ([`57f0a24`](https://github.com/Byron/gitoxide/commit/57f0a24d78ce43b69631e05688cc7ac900cfe1cb))
+    - Merge branch 'dirwalk' ([`face359`](https://github.com/Byron/gitoxide/commit/face359443ba33e8985ec1525d5ec38b743ea7a9))
+    - Adjust gitignore files with precious declarations ([`ae86a6a`](https://github.com/Byron/gitoxide/commit/ae86a6a206074b85ff1eba32aea9c8b40c087b17))
+    - Add `str::precompose_bstr()` for convenience ([`9e3acde`](https://github.com/Byron/gitoxide/commit/9e3acde9c98537c7c8ee58f632ce21fcca5b066d))
+    - Return `ExactSizeIterator` where applicable. ([`ea2e5bb`](https://github.com/Byron/gitoxide/commit/ea2e5bbc4657aba5d2209d9f22fa076148d5df6f))
+    - Add `Search::directory_matches_prefix()` to see if the prefix of a pathspec matches. ([`f520a51`](https://github.com/Byron/gitoxide/commit/f520a516e712566cba47ff983cd0f2f3faf6286a))
+    - Add `search::MatchKind`, which is available for any `search::Match`. ([`021d4c1`](https://github.com/Byron/gitoxide/commit/021d4c185525e9b289462bf23811fcaa283d8bef))
+    - Add `Search::can_match_relative_path()`. ([`e409e8d`](https://github.com/Byron/gitoxide/commit/e409e8d35075721f57dedca5e65ecd110bd2a5ec))
+    - Release gix-path v0.10.5 ([`b8cba96`](https://github.com/Byron/gitoxide/commit/b8cba96ce57f8b6b0067d6a8cf3e37eaf280a238))
+</details>
+
 ## 0.6.0 (2024-01-20)
 
 A maintenance release without user-facing changes.
@@ -13,7 +74,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 20 calendar days.
+ - 6 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +86,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
     - Merge pull request #1248 from joshtriplett/tyop ([`39f35da`](https://github.com/Byron/gitoxide/commit/39f35da390bc46005d0374b9bf4e7106fc1bd0ec))
     - Typo fixes ([`3ef3bc2`](https://github.com/Byron/gitoxide/commit/3ef3bc20a1b90799e5ac26858f898bc7a7c96901))

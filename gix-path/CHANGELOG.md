@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-9ba8bcab07f4b3d0048b5a125b632bd70fe788d9/> add `relativize_with_prefix()`.
+   With it, a path 'a' with prefix 'b' will be '../a'.
+ - <csr-id-c8ccbe58cbafd70936b4143db01687e5bf9f7cf4/> add `try_os_str_into_bstr()`, with `Cow<OsStr>` as input.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 16 calendar days.
+ - 30 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'status' ([`bb48c4c`](https://github.com/Byron/gitoxide/commit/bb48c4ce22650b8c76af3b147e252ebe7cedb205))
+    - Add `relativize_with_prefix()`. ([`9ba8bca`](https://github.com/Byron/gitoxide/commit/9ba8bcab07f4b3d0048b5a125b632bd70fe788d9))
+    - Merge branch 'dirwalk' ([`face359`](https://github.com/Byron/gitoxide/commit/face359443ba33e8985ec1525d5ec38b743ea7a9))
+    - Add `try_os_str_into_bstr()`, with `Cow<OsStr>` as input. ([`c8ccbe5`](https://github.com/Byron/gitoxide/commit/c8ccbe58cbafd70936b4143db01687e5bf9f7cf4))
+</details>
+
 ## 0.10.5 (2024-01-26)
 
 ### Bug Fixes
@@ -16,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 1 calendar day.
+ - 4 commits contributed to the release over the course of 1 calendar day.
  - 6 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.10.5 ([`b8cba96`](https://github.com/Byron/gitoxide/commit/b8cba96ce57f8b6b0067d6a8cf3e37eaf280a238))
     - Merge branch 'fix-home' ([`e40352c`](https://github.com/Byron/gitoxide/commit/e40352cd2f7b74da84fc8095c8cad917d07910a1))
     - Always try `HOME` environment variable first when obtaining the home directory. ([`8ba04e0`](https://github.com/Byron/gitoxide/commit/8ba04e0d3525fc290d9ef24836c5ba88c022e8b7))
     - Assure time-based test doesn't spuriously fail on slow windows machines (CI) ([`74704c7`](https://github.com/Byron/gitoxide/commit/74704c78276bd8bc9bdf3950e05a79bbc7d41309))

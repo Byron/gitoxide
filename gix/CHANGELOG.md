@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-6914d1a7195d869ea776f30bbf29edb300f460be/> add `Repository::dirwalk_with_delegate()`.
+   That way it's possible to perform arbitrary directory walks,
+   useful for status, clean, and add.
+ - <csr-id-d8bd45eb4dba4aca2ef009b1594f244c669625b8/> add `open::Options::current_dir()`.
+   That way it's possible to obtain the current working directory
+   with which the repository was opened.
+
+### New Features (BREAKING)
+
+ - <csr-id-0b1b44fa79a60ed40a9da154f7487408e6436941/> empty pathspecs with prefix now are optionally matching the prefix.
+   Otherwise it's not possible to have the 'no pattern matches everything' case
+   which is important in conjunction with prefixes and the requirement to
+   still see everything outside of the prefix.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-1e853961b0254893e277a0e14ee89099bac097f3/> leave more control to the user when creating pathspecs
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release over the course of 30 calendar days.
+ - 36 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'status' ([`bb48c4c`](https://github.com/Byron/gitoxide/commit/bb48c4ce22650b8c76af3b147e252ebe7cedb205))
+    - Empty pathspecs with prefix now are optionally matching the prefix. ([`0b1b44f`](https://github.com/Byron/gitoxide/commit/0b1b44fa79a60ed40a9da154f7487408e6436941))
+    - Leave more control to the user when creating pathspecs ([`1e85396`](https://github.com/Byron/gitoxide/commit/1e853961b0254893e277a0e14ee89099bac097f3))
+    - Adapt to changes in `gix-dir` ([`ab0f63a`](https://github.com/Byron/gitoxide/commit/ab0f63aa5ab90c3a18a62e72d486a889b540d804))
+    - Merge pull request #1300 from DianaNites/patch-1 ([`e186199`](https://github.com/Byron/gitoxide/commit/e186199cca96fccb82ac0b759fe5149ef1a9acf6))
+    - Fix a typo in `gix::clone::PrepareFetch::new`, crate_opts -> create_opts ([`adbf8e8`](https://github.com/Byron/gitoxide/commit/adbf8e8dd8a112ece7fe6c1167892297f73ea325))
+    - Adapt to changes in `gix-status` ([`366dfb3`](https://github.com/Byron/gitoxide/commit/366dfb375d1c4844e4b0edb934fa8c7a5c10b9b3))
+    - Adapt to changes in `gix-dir` ([`e91accc`](https://github.com/Byron/gitoxide/commit/e91accc8a1e03b04f0ae50c161201e53273f6e03))
+    - Merge branch 'panic-msg-fix' ([`a86a5c0`](https://github.com/Byron/gitoxide/commit/a86a5c053745660f7e130bdfcd7ae1fca7a9f3b2))
+    - Fix into_{blob,tag} panic messages ([`b81d8ae`](https://github.com/Byron/gitoxide/commit/b81d8aead1bb0c3e1186d035c88982889178e3f1))
+    - Merge branch 'dirwalk' ([`face359`](https://github.com/Byron/gitoxide/commit/face359443ba33e8985ec1525d5ec38b743ea7a9))
+    - Add `Repository::dirwalk_with_delegate()`. ([`6914d1a`](https://github.com/Byron/gitoxide/commit/6914d1a7195d869ea776f30bbf29edb300f460be))
+    - Add `open::Options::current_dir()`. ([`d8bd45e`](https://github.com/Byron/gitoxide/commit/d8bd45eb4dba4aca2ef009b1594f244c669625b8))
+    - Merge branch 'tempfile-permissions' ([`7b44c7f`](https://github.com/Byron/gitoxide/commit/7b44c7ff1dc0b8875214d2673c7f52948cf04ff0))
+    - Release gix-tempfile v13.1.0, gix-lock v13.1.0, safety bump 12 crates ([`8430442`](https://github.com/Byron/gitoxide/commit/84304427dfe4d170c7732161b126961719f70059))
+    - Release gix-command v0.3.4 ([`8a62fb5`](https://github.com/Byron/gitoxide/commit/8a62fb57f7751d3d57273d9430517487e555f999))
+    - Release gix-path v0.10.5 ([`b8cba96`](https://github.com/Byron/gitoxide/commit/b8cba96ce57f8b6b0067d6a8cf3e37eaf280a238))
+</details>
+
 ## 0.58.0 (2024-01-20)
 
 ### New Features
@@ -16,9 +73,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    This also adds the following performance features:
    
    - `zlib-ng`
-- `zlib-ng-compat`
-- `zlib-stock`
-- `parallel-walkdir`
 
 ### Bug Fixes
 
@@ -30,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 13 commits contributed to the release over the course of 18 calendar days.
+ - 14 commits contributed to the release over the course of 18 calendar days.
  - 20 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#670](https://github.com/Byron/gitoxide/issues/670)
@@ -44,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#670](https://github.com/Byron/gitoxide/issues/670)**
     - `object::tree::diff::Platform::for_each_to_obtain_tree(callback)` errors are more convenient to use. ([`e3c5a0f`](https://github.com/Byron/gitoxide/commit/e3c5a0feaeef5ca1683da0adee25154c9e868b3e))
  * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
     - Merge branch 'finegrained-features' ([`d8570d0`](https://github.com/Byron/gitoxide/commit/d8570d08c72a977b22ff44d4c8b49af6c3017885))
     - Add `max-control` feature for fine-grained performance control. ([`8847676`](https://github.com/Byron/gitoxide/commit/8847676ddd1aefb3610d384245ec6d692d5258de))
@@ -59,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 <csr-unknown>
- add env::args_os_opt() which takes an argument to determine input unicode-decompositionThis allows for the possibility to respect core.precomposeUnicode should one already have that value. max-performance-zlib-ng-compat flagThis allows users to use zlib-ng-compat without having to add a dependency on gix-features, and without having to keep track of which options max-performance depends on other than max-performance-safe.Essentially it’s for use in projects that also include zlib in their builds, which would fail to build with max-performance, but who otherwise don’t need max-performance-safe.<csr-unknown/>
+zlib-ng-compatzlib-stockparallel-walkdir<csr-unknown/>
 
 ## 0.57.1 (2023-12-30)
 

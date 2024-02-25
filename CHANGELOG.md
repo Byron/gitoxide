@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-9863d75147445d3a598fe1339d88c353850a5984/> add `gix clean --patterns-for-entries|-m` to help with wildcards.
+ - <csr-id-e8597f3559187fc8add294e72eb33403cdff0e09/> basic `gix clean`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 20 commits contributed to the release over the course of 42 calendar days.
+ - 58 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'status' ([`d53504a`](https://github.com/Byron/gitoxide/commit/d53504a1fad41cec7b6ca2a4abb7f185d8941e3f))
+    - Allow the `-n` argument as no-op to make them more compatible. ([`8959b21`](https://github.com/Byron/gitoxide/commit/8959b2153f32c2fba599e3dfa1720e155b462b94))
+    - Add `gix clean --patterns-for-entries|-m` to help with wildcards. ([`9863d75`](https://github.com/Byron/gitoxide/commit/9863d75147445d3a598fe1339d88c353850a5984))
+    - Merge branch 'tabled' ([`ed79aa7`](https://github.com/Byron/gitoxide/commit/ed79aa7b410b9e5a013c4f204b20abd51d270559))
+    - Refactor ([`e25d7eb`](https://github.com/Byron/gitoxide/commit/e25d7eb443d9e1fde8d16422251ee0d288ff4a51))
+    - Merge branch 'ein-completions' ([`cebeedf`](https://github.com/Byron/gitoxide/commit/cebeedf572d7086c9959754c873312a183d575e3))
+    - Fix clippy lints ([`454e6b9`](https://github.com/Byron/gitoxide/commit/454e6b9de86def27c811cc93fd80f4eb169dda52))
+    - Add back line wrapping simplify Usage Variants ([`4ac597a`](https://github.com/Byron/gitoxide/commit/4ac597a0e9ccb8ed1e1864afcffdc55abc37260c))
+    - Tell clap that ein is named ein ([`4fd6ab8`](https://github.com/Byron/gitoxide/commit/4fd6ab89753f9b947034806fecb60ad77380334c))
+    - Copy over code from gix to generate completions for ein as well ([`abe0043`](https://github.com/Byron/gitoxide/commit/abe004372c6a0027339563a88162ca1aca320a1d))
+    - Fix indenting by removing formatting on the config str ([`c0c4d59`](https://github.com/Byron/gitoxide/commit/c0c4d59bbae688074184b186e08c6bf8e23c5705))
+    - Reserve 50 characters for the config name ([`cc8d008`](https://github.com/Byron/gitoxide/commit/cc8d008843a4e4567301c14ce5f25855417cf898))
+    - Bring back old implementation from https://github.com/Byron/gitoxide/commit/65e64964c7cd151e53e5a7d4b9ba8fabda1c0e16 this also removes terminal_size, although its not large ([`1ecc96d`](https://github.com/Byron/gitoxide/commit/1ecc96d319bc60cb9dbabcf17211aa7057134fd6))
+    - Remove tabled ([`fcd585b`](https://github.com/Byron/gitoxide/commit/fcd585bb6dc27bbf5bf74b422b36614241b59eb4))
+    - Merge branch 'dirwalk' ([`face359`](https://github.com/Byron/gitoxide/commit/face359443ba33e8985ec1525d5ec38b743ea7a9))
+    - Basic `gix clean` ([`e8597f3`](https://github.com/Byron/gitoxide/commit/e8597f3559187fc8add294e72eb33403cdff0e09))
+    - Merge branch 'chunks_exact' ([`d4d478b`](https://github.com/Byron/gitoxide/commit/d4d478ba6a70fce34717e2164f8b3aa7a1521a2d))
+    - Use chunks_exact where possible ([`2482023`](https://github.com/Byron/gitoxide/commit/24820232f07ae55c80d95470228cc9e874830487))
+    - Merge pull request #1248 from joshtriplett/tyop ([`39f35da`](https://github.com/Byron/gitoxide/commit/39f35da390bc46005d0374b9bf4e7106fc1bd0ec))
+    - Typo fixes ([`3ef3bc2`](https://github.com/Byron/gitoxide/commit/3ef3bc20a1b90799e5ac26858f898bc7a7c96901))
+</details>
+
 ## 0.33.0 (2023-12-29)
 
 ### New Features

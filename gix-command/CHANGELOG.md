@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-74631d4171cdfd4f97d61203c2b65ef02da7b2c4/> Add test to assure `echo "$@" >&2` works as expected
+   Previously it would print the arguments twice, now it only prints
+   it once as we avoid adding the 'trick' to the script if it's already
+   present.
+   
+   This helps with custom git credential helpers who endorse to
+   to call them like `!credential-helper $@`, in which case the
+   added arguments are already part of the script.
+   
+   See https://github.com/languitar/pass-git-helper for detailed
+   documentation on how that should usually work.
+   
+   Git seems to manage to not automatically add '$@' when calling
+   credential helpers, but it's something that is done by `gix-command`
+   automatically when a command should be invoked that receives arguments
+   *and* has to be evaluated by a shell.
+   
+   The current implementation is very naive, but should also work
+   for 99.9% of the cases out there.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release over the course of 12 calendar days.
+ - 21 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1284](https://github.com/Byron/gitoxide/issues/1284)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1284](https://github.com/Byron/gitoxide/issues/1284)**
+    - Add test to assure `echo "$@" >&2` works as expected ([`74631d4`](https://github.com/Byron/gitoxide/commit/74631d4171cdfd4f97d61203c2b65ef02da7b2c4))
+</details>
+
 ## 0.3.4 (2024-02-03)
 
 ### New Features
@@ -20,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 8 calendar days.
+ - 5 commits contributed to the release over the course of 8 calendar days.
  - 14 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -32,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-command v0.3.4 ([`8a62fb5`](https://github.com/Byron/gitoxide/commit/8a62fb57f7751d3d57273d9430517487e555f999))
     - Merge branch 'parse-interpreter' ([`7503e5f`](https://github.com/Byron/gitoxide/commit/7503e5f730a5e18455ecd09773c5f25a1fc7b256))
     - On windows, try to parse the interpreter out of files. ([`33517d0`](https://github.com/Byron/gitoxide/commit/33517d08105287c264ceffd7d3d3ce9733051947))
     - Facilities to parse interpreters out of executables (windows compatible). ([`5708fee`](https://github.com/Byron/gitoxide/commit/5708fee845bf872aa53db8df6f1e8d78dfea3ef9))
