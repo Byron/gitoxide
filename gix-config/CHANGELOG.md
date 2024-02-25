@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.35.0 (2024-02-25)
 
 A maintenance release without user-facing changes.
 
@@ -13,16 +13,16 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 14 commits contributed to the release over the course of 33 calendar days.
-- 36 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 15 commits contributed to the release over the course of 33 calendar days.
+ - 36 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -30,7 +30,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge pull request #1290 from epage/winnow ([`a663e9f`](https://github.com/Byron/gitoxide/commit/a663e9fcdb5a3aedc9200da77ebae17d5c3e7135))
     - Update winnow to 0.6 ([`e175b20`](https://github.com/Byron/gitoxide/commit/e175b20d431faa6859fbcc52f78400e50f91cad1))
     - Update winnow to 0.5.40 ([`516e105`](https://github.com/Byron/gitoxide/commit/516e105db5f22e1483b4b8a886cc4f3929ad7f6a))
@@ -45,51 +46,50 @@ A maintenance release without user-facing changes.
     - Update from winnow 0.5.31 to 0.5.36 ([`9470554`](https://github.com/Byron/gitoxide/commit/94705546cf0e4c8e38bcc96999cfa79cd8ee1acd))
     - Release gix-path v0.10.5 ([`b8cba96`](https://github.com/Byron/gitoxide/commit/b8cba96ce57f8b6b0067d6a8cf3e37eaf280a238))
     - Assure the fuzzer can't construct expensive values ([`3edf0fe`](https://github.com/Byron/gitoxide/commit/3edf0fe0e5e35aca8859e3f57bdc164ff20c780b))
-
 </details>
 
 ## 0.34.0 (2024-01-20)
 
 ### Bug Fixes
 
-- <csr-id-b382f76a4ace08a6e743b292c4f2c383dfd94e8f/> assure excessive amounts of newlines can't lead to amplification.
-  Now we won't read more than 1024 newlines in a row, which leads to
-  a protection from specifically crafted configuration files which
-  can amplify themselves when large amounts of edits happen on them.
-
-  If somebody where to create a lot of sections based on one that
-  has a huge amount of newlines before it, this whitespace would
-  be retained with each new section, causing huge files to be created
-  in memory that cause great delays when writing the file back
-  and re-reading it.
-
-  Maybe there would have been a way to avoid copying excessive amounts
-  of whitespace when altering a section, or maybe one could also
-  have adjusted the fuzz-test that found it [1].
-  This would, however, have been much harder and time-consuming to
-  implement for dubious value.
+ - <csr-id-b382f76a4ace08a6e743b292c4f2c383dfd94e8f/> assure excessive amounts of newlines can't lead to amplification.
+   Now we won't read more than 1024 newlines in a row, which leads to
+   a protection from specifically crafted configuration files which
+   can amplify themselves when large amounts of edits happen on them.
+   
+   If somebody where to create a lot of sections based on one that
+   has a huge amount of newlines before it, this whitespace would
+   be retained with each new section, causing huge files to be created
+   in memory that cause great delays when writing the file back
+   and re-reading it.
+   
+   Maybe there would have been a way to avoid copying excessive amounts
+   of whitespace when altering a section, or maybe one could also
+   have adjusted the fuzz-test that found it [1].
+   This would, however, have been much harder and time-consuming to
+   implement for dubious value.
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-c71d16e45ea4ed68b76a43a7ed653d73f3672878/> greatly reduce peak memory usage when reading files.
-  Previously it was possible to cause a memory consumption of 2.5GB
-  by merely reading a specifically tuned configuration file sized a little
-  less than 1MB, a massive 2500x amplification.
-
-  Data structures have been optimized and premature optimizations removed
-  in favor of much more efficient memory usage.
-
-  Now the same file causes a 36MB peak memory usage, still quite a lot,
-  but also ~70x less than before.
+ - <csr-id-c71d16e45ea4ed68b76a43a7ed653d73f3672878/> greatly reduce peak memory usage when reading files.
+   Previously it was possible to cause a memory consumption of 2.5GB
+   by merely reading a specifically tuned configuration file sized a little
+   less than 1MB, a massive 2500x amplification.
+   
+   Data structures have been optimized and premature optimizations removed
+   in favor of much more efficient memory usage.
+   
+   Now the same file causes a 36MB peak memory usage, still quite a lot,
+   but also ~70x less than before.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 12 commits contributed to the release over the course of 20 calendar days.
-- 20 days passed between releases.
-- 2 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 12 commits contributed to the release over the course of 20 calendar days.
+ - 20 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -97,9 +97,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0,
-      gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
+ * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
     - Limit the amount of work done to avoid the creation of huge file when fuzzing the section API ([`4138902`](https://github.com/Byron/gitoxide/commit/4138902242affac8a61b6b650417401d1f18f34e))
     - Release gix-trace v0.1.7, gix-features v0.37.2, gix-commitgraph v0.23.2, gix-traverse v0.36.2, gix-index v0.28.2 ([`b6c04c8`](https://github.com/Byron/gitoxide/commit/b6c04c87b426bf36a059df8dc52b56d384b27b79))
@@ -111,7 +110,6 @@ A maintenance release without user-facing changes.
     - Merge branch 'fuzz-gix-config' ([`34e4a16`](https://github.com/Byron/gitoxide/commit/34e4a16949710aa10dd5ab6c253016d14109d541))
     - Add gix_config::File fuzzer dictionary ([`2420547`](https://github.com/Byron/gitoxide/commit/242054716f825fd33ae1bbb6553f5975c42c7bee))
     - Fuzz more of mutable gix_config::File API ([`9cdb461`](https://github.com/Byron/gitoxide/commit/9cdb461deaf736e39f34551a447c3a280b32f003))
-
 </details>
 
 ## 0.33.1 (2023-12-30)
@@ -131,9 +129,9 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 5 commits contributed to the release.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 5 commits contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -141,14 +139,12 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.8.3, gix-hash v0.14.1, gix-trace v0.1.6, gix-features v0.37.1, gix-actor v0.29.1, gix-validate v0.8.3, gix-object v0.40.1, gix-path v0.10.3, gix-glob v0.15.1, gix-quote v0.4.10, gix-attributes v0.21.1, gix-command v0.3.2, gix-packetline-blocking v0.17.2, gix-utils v0.1.8, gix-filter v0.8.1, gix-fs v0.9.1, gix-chunk v0.4.7, gix-commitgraph v0.23.1, gix-hashtable v0.5.1, gix-revwalk v0.11.1, gix-traverse v0.36.1, gix-worktree-stream v0.8.1, gix-archive v0.8.1, gix-config-value v0.14.3, gix-tempfile v12.0.1, gix-lock v12.0.1, gix-ref v0.40.1, gix-sec v0.10.3, gix-config v0.33.1, gix-prompt v0.8.2, gix-url v0.26.1, gix-credentials v0.23.1, gix-ignore v0.10.1, gix-bitmap v0.2.10, gix-index v0.28.1, gix-worktree v0.29.1, gix-diff v0.39.1, gix-discover v0.28.1, gix-macros v0.1.3, gix-mailmap v0.21.1, gix-negotiate v0.11.1, gix-pack v0.46.1, gix-odb v0.56.1,
-      gix-pathspec v0.5.1, gix-packetline v0.17.2, gix-transport v0.40.1, gix-protocol v0.43.1, gix-revision v0.25.1, gix-refspec v0.21.1, gix-status v0.4.1, gix-submodule v0.7.1, gix-worktree-state v0.6.1, gix v0.57.1 ([`972241f`](https://github.com/Byron/gitoxide/commit/972241f1904944e8b6e84c6aa1649a49be7a85c3))
+ * **Uncategorized**
+    - Release gix-date v0.8.3, gix-hash v0.14.1, gix-trace v0.1.6, gix-features v0.37.1, gix-actor v0.29.1, gix-validate v0.8.3, gix-object v0.40.1, gix-path v0.10.3, gix-glob v0.15.1, gix-quote v0.4.10, gix-attributes v0.21.1, gix-command v0.3.2, gix-packetline-blocking v0.17.2, gix-utils v0.1.8, gix-filter v0.8.1, gix-fs v0.9.1, gix-chunk v0.4.7, gix-commitgraph v0.23.1, gix-hashtable v0.5.1, gix-revwalk v0.11.1, gix-traverse v0.36.1, gix-worktree-stream v0.8.1, gix-archive v0.8.1, gix-config-value v0.14.3, gix-tempfile v12.0.1, gix-lock v12.0.1, gix-ref v0.40.1, gix-sec v0.10.3, gix-config v0.33.1, gix-prompt v0.8.2, gix-url v0.26.1, gix-credentials v0.23.1, gix-ignore v0.10.1, gix-bitmap v0.2.10, gix-index v0.28.1, gix-worktree v0.29.1, gix-diff v0.39.1, gix-discover v0.28.1, gix-macros v0.1.3, gix-mailmap v0.21.1, gix-negotiate v0.11.1, gix-pack v0.46.1, gix-odb v0.56.1, gix-pathspec v0.5.1, gix-packetline v0.17.2, gix-transport v0.40.1, gix-protocol v0.43.1, gix-revision v0.25.1, gix-refspec v0.21.1, gix-status v0.4.1, gix-submodule v0.7.1, gix-worktree-state v0.6.1, gix v0.57.1 ([`972241f`](https://github.com/Byron/gitoxide/commit/972241f1904944e8b6e84c6aa1649a49be7a85c3))
     - Merge branch 'msrv' ([`8c492d7`](https://github.com/Byron/gitoxide/commit/8c492d7b7e6e5d520b1e3ffeb489eeb88266aa75))
     - Change `rust-version` manifest field back to 1.65. ([`3bd09ef`](https://github.com/Byron/gitoxide/commit/3bd09ef120945a9669321ea856db4079a5dab930))
     - Merge branch 'fuzz-gix-config' ([`ce44fe3`](https://github.com/Byron/gitoxide/commit/ce44fe3f04fdcd01ba1d98165194431c918a80b1))
     - Refactor gix-config fuzzer ([`fee6bde`](https://github.com/Byron/gitoxide/commit/fee6bde224ea6ee668fa5816642b767c80879985))
-
 </details>
 
 ## 0.33.0 (2023-12-29)
@@ -164,13 +160,13 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-8053710e2940ced8ab8a7805de3bb94408352a9e/> Fuzz more of the gix-config api
+ - <csr-id-8053710e2940ced8ab8a7805de3bb94408352a9e/> Fuzz more of the gix-config api
 
 ### Bug Fixes
 
-- <csr-id-1fe600e72911c2f27b20be312b2e805451e7d58c/> assure that `GIT_CONFIG_NOSYTEM` is treated as boolean.
-  That way, it can also be deactivated, which is exactly what `git`
-  does.
+ - <csr-id-1fe600e72911c2f27b20be312b2e805451e7d58c/> assure that `GIT_CONFIG_NOSYTEM` is treated as boolean.
+   That way, it can also be deactivated, which is exactly what `git`
+   does.
 
 ### Other
 
@@ -181,16 +177,16 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 25 commits contributed to the release over the course of 21 calendar days.
-- 22 days passed between releases.
-- 5 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 25 commits contributed to the release over the course of 21 calendar days.
+ - 22 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -198,9 +194,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.8.2, gix-hash v0.14.0, gix-trace v0.1.5, gix-features v0.37.0, gix-actor v0.29.0, gix-validate v0.8.2, gix-object v0.40.0, gix-path v0.10.2, gix-glob v0.15.0, gix-quote v0.4.9, gix-attributes v0.21.0, gix-command v0.3.1, gix-packetline-blocking v0.17.1, gix-utils v0.1.7, gix-filter v0.8.0, gix-fs v0.9.0, gix-chunk v0.4.6, gix-commitgraph v0.23.0, gix-hashtable v0.5.0, gix-revwalk v0.11.0, gix-traverse v0.36.0, gix-worktree-stream v0.8.0, gix-archive v0.8.0, gix-config-value v0.14.2, gix-tempfile v12.0.0, gix-lock v12.0.0, gix-ref v0.40.0, gix-sec v0.10.2, gix-config v0.33.0, gix-prompt v0.8.1, gix-url v0.26.0, gix-credentials v0.23.0, gix-ignore v0.10.0, gix-bitmap v0.2.9, gix-index v0.28.0, gix-worktree v0.29.0, gix-diff v0.39.0, gix-discover v0.28.0, gix-macros v0.1.2, gix-mailmap v0.21.0, gix-negotiate v0.11.0, gix-pack v0.46.0, gix-odb v0.56.0, gix-pathspec
-      v0.5.0, gix-packetline v0.17.1, gix-transport v0.40.0, gix-protocol v0.43.0, gix-revision v0.25.0, gix-refspec v0.21.0, gix-status v0.4.0, gix-submodule v0.7.0, gix-worktree-state v0.6.0, gix v0.57.0, gix-fsck v0.2.0, gitoxide-core v0.35.0, gitoxide v0.33.0, safety bump 40 crates ([`e1aae19`](https://github.com/Byron/gitoxide/commit/e1aae191d7421c748913c92e2c5883274331dd20))
+ * **Uncategorized**
+    - Release gix-date v0.8.2, gix-hash v0.14.0, gix-trace v0.1.5, gix-features v0.37.0, gix-actor v0.29.0, gix-validate v0.8.2, gix-object v0.40.0, gix-path v0.10.2, gix-glob v0.15.0, gix-quote v0.4.9, gix-attributes v0.21.0, gix-command v0.3.1, gix-packetline-blocking v0.17.1, gix-utils v0.1.7, gix-filter v0.8.0, gix-fs v0.9.0, gix-chunk v0.4.6, gix-commitgraph v0.23.0, gix-hashtable v0.5.0, gix-revwalk v0.11.0, gix-traverse v0.36.0, gix-worktree-stream v0.8.0, gix-archive v0.8.0, gix-config-value v0.14.2, gix-tempfile v12.0.0, gix-lock v12.0.0, gix-ref v0.40.0, gix-sec v0.10.2, gix-config v0.33.0, gix-prompt v0.8.1, gix-url v0.26.0, gix-credentials v0.23.0, gix-ignore v0.10.0, gix-bitmap v0.2.9, gix-index v0.28.0, gix-worktree v0.29.0, gix-diff v0.39.0, gix-discover v0.28.0, gix-macros v0.1.2, gix-mailmap v0.21.0, gix-negotiate v0.11.0, gix-pack v0.46.0, gix-odb v0.56.0, gix-pathspec v0.5.0, gix-packetline v0.17.1, gix-transport v0.40.0, gix-protocol v0.43.0, gix-revision v0.25.0, gix-refspec v0.21.0, gix-status v0.4.0, gix-submodule v0.7.0, gix-worktree-state v0.6.0, gix v0.57.0, gix-fsck v0.2.0, gitoxide-core v0.35.0, gitoxide v0.33.0, safety bump 40 crates ([`e1aae19`](https://github.com/Byron/gitoxide/commit/e1aae191d7421c748913c92e2c5883274331dd20))
     - Prepare changelogs of next release ([`e78a92b`](https://github.com/Byron/gitoxide/commit/e78a92bfeda168b2f35bb7ba9a94175cdece12f2))
     - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
     - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
@@ -225,26 +220,25 @@ A maintenance release without user-facing changes.
     - Check all git-lfs managed files into the repository ([`35439de`](https://github.com/Byron/gitoxide/commit/35439defd2d71779d4b3795b7652cde18ff11150))
     - Merge branch '32bit' ([`ff1542c`](https://github.com/Byron/gitoxide/commit/ff1542cedf3072a8c7c493d454aef5cc61de6d4c))
     - Assure that `GIT_CONFIG_NOSYTEM` is treated as boolean. ([`1fe600e`](https://github.com/Byron/gitoxide/commit/1fe600e72911c2f27b20be312b2e805451e7d58c))
-
 </details>
 
 ## 0.32.1 (2023-12-07)
 
 ### New Features
 
-- <csr-id-6738955949d82a66c070dcb65e368652898bd1d2/> `GIT_CONFIG_NOSYSTEM` now also affects the installation directory.
-  It makes sense to consider it part of the 'system', and allows for proper
-  isolation of `gix` operations, for example in tests.
-
-  This is also a fix, as previously it checked for `...NO_SYSTEM`, instead of `NOSYSTEM`.
+ - <csr-id-6738955949d82a66c070dcb65e368652898bd1d2/> `GIT_CONFIG_NOSYSTEM` now also affects the installation directory.
+   It makes sense to consider it part of the 'system', and allows for proper
+   isolation of `gix` operations, for example in tests.
+   
+   This is also a fix, as previously it checked for `...NO_SYSTEM`, instead of `NOSYSTEM`.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -252,11 +246,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-config v0.32.1 ([`cd26fd8`](https://github.com/Byron/gitoxide/commit/cd26fd8babb023286ed9f6a6c71a06575de8d246))
     - Merge branch 'adjustments-for-cargo' ([`56588a9`](https://github.com/Byron/gitoxide/commit/56588a9b3e97665f1dd4c11dc74a692f35abba60))
     - `GIT_CONFIG_NOSYSTEM` now also affects the installation directory. ([`6738955`](https://github.com/Byron/gitoxide/commit/6738955949d82a66c070dcb65e368652898bd1d2))
-
 </details>
 
 ## 0.32.0 (2023-12-06)
@@ -267,10 +260,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 8 commits contributed to the release over the course of 46 calendar days.
-- 54 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 8 commits contributed to the release over the course of 46 calendar days.
+ - 54 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -278,9 +271,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec
-      v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
+ * **Uncategorized**
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
     - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - Upgrade to `winnow` 0.5.24 ([`abcfb65`](https://github.com/Byron/gitoxide/commit/abcfb659786425ec09eff6b644cd2ad36b7d6bc4))
     - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
@@ -288,7 +280,6 @@ A maintenance release without user-facing changes.
     - Replace all docsrs config by the document-features feature ([`bb3224c`](https://github.com/Byron/gitoxide/commit/bb3224c25abf6df50286b3bbdf2cdef01e9eeca1))
     - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
     - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
-
 </details>
 
 ## 0.31.0 (2023-10-12)
@@ -299,16 +290,16 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release over the course of 6 calendar days.
-- 17 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release over the course of 6 calendar days.
+ - 17 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -316,12 +307,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37
-      crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
+ * **Uncategorized**
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Thanks clippy ([`345712d`](https://github.com/Byron/gitoxide/commit/345712dcdfddcccc630bbfef2ed4f461b21550d3))
-
 </details>
 
 ## 0.30.0 (2023-09-24)
@@ -341,10 +330,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 4 commits contributed to the release over the course of 15 calendar days.
-- 16 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 4 commits contributed to the release over the course of 15 calendar days.
+ - 16 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -352,40 +341,38 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-features v0.35.0, gix-actor v0.27.0, gix-object v0.37.0, gix-glob v0.13.0, gix-attributes v0.19.0, gix-filter v0.5.0, gix-fs v0.7.0, gix-commitgraph v0.21.0, gix-revwalk v0.8.0, gix-traverse v0.33.0, gix-worktree-stream v0.5.0, gix-archive v0.5.0, gix-tempfile v10.0.0, gix-lock v10.0.0, gix-ref v0.37.0, gix-config v0.30.0, gix-url v0.24.0, gix-credentials v0.20.0, gix-diff v0.36.0, gix-discover v0.25.0, gix-ignore v0.8.0, gix-index v0.25.0, gix-mailmap v0.19.0, gix-negotiate v0.8.0, gix-pack v0.43.0, gix-odb v0.53.0, gix-pathspec v0.3.0, gix-transport v0.37.0, gix-protocol v0.40.0, gix-revision v0.22.0, gix-refspec v0.18.0, gix-status v0.1.0, gix-submodule v0.4.0, gix-worktree v0.26.0, gix-worktree-state v0.3.0, gix v0.54.0, gitoxide-core v0.32.0, gitoxide v0.30.0, safety bump 37
-      crates ([`7891fb1`](https://github.com/Byron/gitoxide/commit/7891fb17348ec2f4c997665f9a25be36e2713da4))
+ * **Uncategorized**
+    - Release gix-features v0.35.0, gix-actor v0.27.0, gix-object v0.37.0, gix-glob v0.13.0, gix-attributes v0.19.0, gix-filter v0.5.0, gix-fs v0.7.0, gix-commitgraph v0.21.0, gix-revwalk v0.8.0, gix-traverse v0.33.0, gix-worktree-stream v0.5.0, gix-archive v0.5.0, gix-tempfile v10.0.0, gix-lock v10.0.0, gix-ref v0.37.0, gix-config v0.30.0, gix-url v0.24.0, gix-credentials v0.20.0, gix-diff v0.36.0, gix-discover v0.25.0, gix-ignore v0.8.0, gix-index v0.25.0, gix-mailmap v0.19.0, gix-negotiate v0.8.0, gix-pack v0.43.0, gix-odb v0.53.0, gix-pathspec v0.3.0, gix-transport v0.37.0, gix-protocol v0.40.0, gix-revision v0.22.0, gix-refspec v0.18.0, gix-status v0.1.0, gix-submodule v0.4.0, gix-worktree v0.26.0, gix-worktree-state v0.3.0, gix v0.54.0, gitoxide-core v0.32.0, gitoxide v0.30.0, safety bump 37 crates ([`7891fb1`](https://github.com/Byron/gitoxide/commit/7891fb17348ec2f4c997665f9a25be36e2713da4))
     - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
     - Merge branch 'path-config' ([`9c528dc`](https://github.com/Byron/gitoxide/commit/9c528dc8282c8b2f3a023e523dccdd0f7a711e61))
     - Add more test cases to pin behaviour around string and path handling. ([`db0c401`](https://github.com/Byron/gitoxide/commit/db0c4017142fd25d26d1c6860972b1ac84b24a6e))
-
 </details>
 
 ## 0.29.0 (2023-09-08)
 
 ### New Features
 
-- <csr-id-2b8d09f785f471aa12fc6793f0ea40c1f8d9ea4a/> remove `log` dependency in favor of `gix-trace`
+ - <csr-id-2b8d09f785f471aa12fc6793f0ea40c1f8d9ea4a/> remove `log` dependency in favor of `gix-trace`
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
-  This reduces compile time due to avoiding duplication.
+ - <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
+   This reduces compile time due to avoiding duplication.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 9 commits contributed to the release over the course of 17 calendar days.
-- 17 days passed between releases.
-- 2 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 9 commits contributed to the release over the course of 17 calendar days.
+ - 17 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -393,9 +380,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.8.0, gix-hash v0.13.0, gix-features v0.34.0, gix-actor v0.26.0, gix-object v0.36.0, gix-path v0.10.0, gix-glob v0.12.0, gix-attributes v0.18.0, gix-packetline-blocking v0.16.6, gix-filter v0.4.0, gix-fs v0.6.0, gix-commitgraph v0.20.0, gix-hashtable v0.4.0, gix-revwalk v0.7.0, gix-traverse v0.32.0, gix-worktree-stream v0.4.0, gix-archive v0.4.0, gix-config-value v0.14.0, gix-tempfile v9.0.0, gix-lock v9.0.0, gix-ref v0.36.0, gix-sec v0.10.0, gix-config v0.29.0, gix-prompt v0.7.0, gix-url v0.23.0, gix-credentials v0.19.0, gix-diff v0.35.0, gix-discover v0.24.0, gix-ignore v0.7.0, gix-index v0.24.0, gix-macros v0.1.0, gix-mailmap v0.18.0, gix-negotiate v0.7.0, gix-pack v0.42.0, gix-odb v0.52.0, gix-pathspec v0.2.0, gix-packetline v0.16.6, gix-transport v0.36.0, gix-protocol v0.39.0, gix-revision v0.21.0, gix-refspec v0.17.0, gix-submodule v0.3.0, gix-worktree
-      v0.25.0, gix-worktree-state v0.2.0, gix v0.53.0, safety bump 39 crates ([`8bd0456`](https://github.com/Byron/gitoxide/commit/8bd045676bb2cdc02624ab93e73ff8518064ca38))
+ * **Uncategorized**
+    - Release gix-date v0.8.0, gix-hash v0.13.0, gix-features v0.34.0, gix-actor v0.26.0, gix-object v0.36.0, gix-path v0.10.0, gix-glob v0.12.0, gix-attributes v0.18.0, gix-packetline-blocking v0.16.6, gix-filter v0.4.0, gix-fs v0.6.0, gix-commitgraph v0.20.0, gix-hashtable v0.4.0, gix-revwalk v0.7.0, gix-traverse v0.32.0, gix-worktree-stream v0.4.0, gix-archive v0.4.0, gix-config-value v0.14.0, gix-tempfile v9.0.0, gix-lock v9.0.0, gix-ref v0.36.0, gix-sec v0.10.0, gix-config v0.29.0, gix-prompt v0.7.0, gix-url v0.23.0, gix-credentials v0.19.0, gix-diff v0.35.0, gix-discover v0.24.0, gix-ignore v0.7.0, gix-index v0.24.0, gix-macros v0.1.0, gix-mailmap v0.18.0, gix-negotiate v0.7.0, gix-pack v0.42.0, gix-odb v0.52.0, gix-pathspec v0.2.0, gix-packetline v0.16.6, gix-transport v0.36.0, gix-protocol v0.39.0, gix-revision v0.21.0, gix-refspec v0.17.0, gix-submodule v0.3.0, gix-worktree v0.25.0, gix-worktree-state v0.2.0, gix v0.53.0, safety bump 39 crates ([`8bd0456`](https://github.com/Byron/gitoxide/commit/8bd045676bb2cdc02624ab93e73ff8518064ca38))
     - Prepare changelogs for release ([`375db06`](https://github.com/Byron/gitoxide/commit/375db06a8442378c3f7a922fae38e2a6694d9d04))
     - Merge branch 'optimizations' ([`6135a5e`](https://github.com/Byron/gitoxide/commit/6135a5ea8709646f01da62939a59dd3a9750e007))
     - Optimize internal `gix` usage for faster compile time ([`9d33e2f`](https://github.com/Byron/gitoxide/commit/9d33e2f5c6a1c370654ef0db90b29c0a023dcf3d))
@@ -404,7 +390,6 @@ A maintenance release without user-facing changes.
     - Use `dyn` trait where possible. ([`072ee32`](https://github.com/Byron/gitoxide/commit/072ee32f693a31161cd6a843da6582d13efbb20b))
     - Thanks clippy ([`5044c3b`](https://github.com/Byron/gitoxide/commit/5044c3b87456cf58ebfbbd00f23c9ba671cb290c))
     - Merge branch 'gix-submodule' ([`363ee77`](https://github.com/Byron/gitoxide/commit/363ee77400805f473c9ad66eadad9214e7ab66f4))
-
 </details>
 
 ## 0.28.0 (2023-08-22)
@@ -419,22 +404,22 @@ A maintenance release without user-facing changes.
 
 ### Bug Fixes
 
-- <csr-id-c51c8daee1ab54130ae3ed83ce67d08f01c4881a/> fix incorrect s/git-config/gix-config/
-  3a861c8f049f6502d3bcbdac752659aa1aeda46a just blindly replaced any
-  occurence of "git-config" or "git_config" with "gix-config"/"gix_config".
-
-  There is no such thing as a gix-config file.
-  gix-config is a git-config file parser.
-- <csr-id-66dadf807f41aa9e828639c52a7d220bf4f3df72/> regression that could cause non-linear parsing behaviour.
+ - <csr-id-c51c8daee1ab54130ae3ed83ce67d08f01c4881a/> fix incorrect s/git-config/gix-config/
+   3a861c8f049f6502d3bcbdac752659aa1aeda46a just blindly replaced any
+   occurence of "git-config" or "git_config" with "gix-config"/"gix_config".
+   
+   There is no such thing as a gix-config file.
+   gix-config is a git-config file parser.
+ - <csr-id-66dadf807f41aa9e828639c52a7d220bf4f3df72/> regression that could cause non-linear parsing behaviour.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 17 commits contributed to the release over the course of 4 calendar days.
-- 15 days passed between releases.
-- 3 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 17 commits contributed to the release over the course of 4 calendar days.
+ - 15 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -442,9 +427,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0,
-      gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
+ * **Uncategorized**
+    - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
     - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
     - Merge branch 'gix-submodule' ([`8f3f358`](https://github.com/Byron/gitoxide/commit/8f3f358800f1fe77d7ba7ebd396a90b692d3c0c1))
     - More cleanup of test crates ([`73c685a`](https://github.com/Byron/gitoxide/commit/73c685a67debcfa26a940f37bbca69cb3a4af57e))
@@ -461,24 +445,23 @@ A maintenance release without user-facing changes.
     - Upgrade to Winnow 0.5 ([`3f8c91f`](https://github.com/Byron/gitoxide/commit/3f8c91fa463fbb53d54b2bf359e0dee7387afa00))
     - Switch gix to winnow 0.3 ([`ee75de1`](https://github.com/Byron/gitoxide/commit/ee75de1e6035305fc23bdef2522ae5081272ac82))
     - Add fuzz-issue for reproduction ([`510192e`](https://github.com/Byron/gitoxide/commit/510192e0e5750bdfe461d701b3e124c03f22b7d9))
-
 </details>
 
 ## 0.27.0 (2023-08-07)
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-d091c78aa863180ea304cd4e0b60a2193a82a546/> `File::push_section()` is now infallible.
-  Previously it used a `Result` even though it couldn't fail anywhere.
+ - <csr-id-d091c78aa863180ea304cd4e0b60a2193a82a546/> `File::push_section()` is now infallible.
+   Previously it used a `Result` even though it couldn't fail anywhere.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 6 commits contributed to the release over the course of 3 calendar days.
-- 4 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 6 commits contributed to the release over the course of 3 calendar days.
+ - 4 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -486,14 +469,13 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-glob v0.10.2, gix-date v0.7.2, gix-validate v0.8.0, gix-object v0.34.0, gix-ref v0.34.0, gix-config v0.27.0, gix-commitgraph v0.18.2, gix-revwalk v0.5.0, gix-revision v0.19.0, gix-refspec v0.15.0, gix-submodule v0.1.0, safety bump 18 crates ([`4604f83`](https://github.com/Byron/gitoxide/commit/4604f83ef238dc07c85aaeae097399b67f3cfd0c))
     - Prepare changelogs prior to release of `gix-submodule` ([`f3c4311`](https://github.com/Byron/gitoxide/commit/f3c43110e8d5f16cf87e50821044d8b3edbae235))
     - Merge branch 'submodules' ([`b629f8a`](https://github.com/Byron/gitoxide/commit/b629f8a774931d58c0a9b124fa75f85807c6c5d1))
     - `File::push_section()` is now infallible. ([`d091c78`](https://github.com/Byron/gitoxide/commit/d091c78aa863180ea304cd4e0b60a2193a82a546))
     - Merge branch 'dev-on-linux' ([`6b4a303`](https://github.com/Byron/gitoxide/commit/6b4a30330fe49fc97daa73f55bf56580cc0597aa))
     - Fix various tests to run properly on linux ([`ef8ccd9`](https://github.com/Byron/gitoxide/commit/ef8ccd9d16143d37155d063747c69cade80f162d))
-
 </details>
 
 ## 0.26.2 (2023-08-02)
@@ -504,10 +486,10 @@ The parsing switches from `nom` to `winnow`, which eases maintenance and improve
 
 <csr-read-only-do-not-edit/>
 
-- 28 commits contributed to the release over the course of 7 calendar days.
-- 10 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 28 commits contributed to the release over the course of 7 calendar days.
+ - 10 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -515,7 +497,7 @@ The parsing switches from `nom` to `winnow`, which eases maintenance and improve
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-actor v0.24.2, gix-object v0.33.2, gix-ref v0.33.3, gix-config v0.26.2, gix-prompt v0.5.5, gix-odb v0.50.2, gix-transport v0.34.2, gix-protocol v0.37.0, gix-worktree v0.23.1, gix v0.51.0, safety bump 3 crates ([`231ac1c`](https://github.com/Byron/gitoxide/commit/231ac1c6ad5ca9a84dbeb0dee14bfbf2fef1ae1e))
     - Prepare additional changelogs ([`db63815`](https://github.com/Byron/gitoxide/commit/db6381522395a0de047118e81df5cd3cbeb862b9))
     - Prepare changelogs ([`e4d2890`](https://github.com/Byron/gitoxide/commit/e4d2890a85bf60e9cdb4016dddfab3c4dccbe75e))
@@ -544,7 +526,6 @@ The parsing switches from `nom` to `winnow`, which eases maintenance and improve
     - Switch to Parser inherent parsers ([`6ac1b37`](https://github.com/Byron/gitoxide/commit/6ac1b377a0d0c1b0ddabc13f3dbe5db3716a4234))
     - Switch to type-native winnow parsers ([`5b3ae94`](https://github.com/Byron/gitoxide/commit/5b3ae94503151d33e1bae60dd82fc32bad7154b0))
     - Switch gix-config to winnow 0.3 ([`3d9ae21`](https://github.com/Byron/gitoxide/commit/3d9ae21f97e50129576473a2682a10b793b356de))
-
 </details>
 
 ## 0.26.1 (2023-07-22)
@@ -555,10 +536,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 2 commits contributed to the release.
-- 3 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 2 commits contributed to the release.
+ - 3 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -566,10 +547,9 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-config v0.26.1, gix v0.50.0 ([`d34a4ea`](https://github.com/Byron/gitoxide/commit/d34a4ea27cd83b916c84cf15e1c05da35576db5e))
     - Fix gix-config dependency versions ([`dbeb68d`](https://github.com/Byron/gitoxide/commit/dbeb68da2348bf555cc959fc60d255da9f50eda5))
-
 </details>
 
 ## 0.26.0 (2023-07-19)
@@ -580,16 +560,16 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 4 commits contributed to the release over the course of 4 calendar days.
-- 19 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 4 commits contributed to the release over the course of 4 calendar days.
+ - 19 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -597,12 +577,11 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-features v0.32.0, gix-actor v0.24.0, gix-glob v0.10.0, gix-attributes v0.15.0, gix-commitgraph v0.18.0, gix-config-value v0.12.4, gix-fs v0.4.0, gix-object v0.33.0, gix-ref v0.33.0, gix-config v0.26.0, gix-command v0.2.7, gix-url v0.21.0, gix-credentials v0.17.0, gix-diff v0.33.0, gix-discover v0.22.0, gix-filter v0.1.0, gix-ignore v0.5.0, gix-revwalk v0.4.0, gix-traverse v0.30.0, gix-index v0.21.0, gix-mailmap v0.16.0, gix-negotiate v0.5.0, gix-pack v0.40.0, gix-odb v0.50.0, gix-transport v0.34.0, gix-protocol v0.36.0, gix-revision v0.18.0, gix-refspec v0.14.0, gix-worktree v0.22.0, gix v0.49.0 ([`68ae3ff`](https://github.com/Byron/gitoxide/commit/68ae3ff9d642ec56f088a6a682a073dc16f4e8ca))
     - Adjust package versions (by cargo-smart-release) ([`c70e54f`](https://github.com/Byron/gitoxide/commit/c70e54f163c312c87753a506eeaad462e8579bfb))
     - Prepare changelogs prior to release ([`e4dded0`](https://github.com/Byron/gitoxide/commit/e4dded05138562f9737a7dcfb60570c55769486d))
     - Thanks clippy ([`3ef32af`](https://github.com/Byron/gitoxide/commit/3ef32af9bf477cbc60d24da8bb3f15d20976e9e0))
-
 </details>
 
 ## 0.25.1 (2023-06-29)
@@ -613,9 +592,9 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -623,11 +602,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-glob v0.9.1, gix-attributes v0.14.1, gix-config-value v0.12.3, gix-ref v0.32.1, gix-sec v0.8.3, gix-config v0.25.1, gix-url v0.20.1, gix-credentials v0.16.1, gix-discover v0.21.1, gix-ignore v0.4.1, gix-pack v0.39.1, gix-odb v0.49.1, gix-worktree v0.21.1, gix v0.48.0 ([`69c6a36`](https://github.com/Byron/gitoxide/commit/69c6a36ba14cbef129deebda9fd8870005fefa17))
     - Prepare changelogs prior to release ([`c143cf4`](https://github.com/Byron/gitoxide/commit/c143cf48ee1885467e3e9262a3f8823a1247bfe0))
     - Align usage of `gix-path` across all crates ([`73c1292`](https://github.com/Byron/gitoxide/commit/73c1292be393986c4a1adde1400abf551e850da0))
-
 </details>
 
 ## 0.25.0 (2023-06-29)
@@ -638,10 +616,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release over the course of 6 calendar days.
-- 6 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release over the course of 6 calendar days.
+ - 6 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -649,11 +627,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-date v0.7.0, gix-trace v0.1.2, gix-actor v0.23.0, gix-commitgraph v0.17.1, gix-utils v0.1.4, gix-object v0.32.0, gix-ref v0.32.0, gix-config v0.25.0, gix-diff v0.32.0, gix-discover v0.21.0, gix-hashtable v0.2.3, gix-revwalk v0.3.0, gix-traverse v0.29.0, gix-index v0.20.0, gix-mailmap v0.15.0, gix-negotiate v0.4.0, gix-pack v0.39.0, gix-odb v0.49.0, gix-protocol v0.35.0, gix-revision v0.17.0, gix-refspec v0.13.0, gix-worktree v0.21.0, gix v0.48.0, safety bump 20 crates ([`27e8c18`](https://github.com/Byron/gitoxide/commit/27e8c18db5a9a21843381c116a8ed6d9f681b3f8))
     - Prepare changelogs prior to release ([`00f96fb`](https://github.com/Byron/gitoxide/commit/00f96fb3110a8f81a1bd0d74c757c15b8773c6f6))
     - Upgrade criterion ([`285ce12`](https://github.com/Byron/gitoxide/commit/285ce12c5564db3917923791729641383789fe89))
-
 </details>
 
 ## 0.24.0 (2023-06-22)
@@ -668,10 +645,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 6 commits contributed to the release over the course of 10 calendar days.
-- 15 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 6 commits contributed to the release over the course of 10 calendar days.
+ - 15 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -679,15 +656,13 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.6.0, gix-hash v0.11.3, gix-trace v0.1.1, gix-features v0.31.0, gix-actor v0.22.0, gix-path v0.8.2, gix-glob v0.9.0, gix-quote v0.4.5, gix-attributes v0.14.0, gix-chunk v0.4.3, gix-commitgraph v0.17.0, gix-config-value v0.12.2, gix-fs v0.3.0, gix-tempfile v7.0.0, gix-utils v0.1.3, gix-lock v7.0.0, gix-validate v0.7.6, gix-object v0.31.0, gix-ref v0.31.0, gix-sec v0.8.2, gix-config v0.24.0, gix-command v0.2.6, gix-prompt v0.5.2, gix-url v0.20.0, gix-credentials v0.16.0, gix-diff v0.31.0, gix-discover v0.20.0, gix-hashtable v0.2.2, gix-ignore v0.4.0, gix-bitmap v0.2.5, gix-revwalk v0.2.0, gix-traverse v0.28.0, gix-index v0.19.0, gix-mailmap v0.14.0, gix-negotiate v0.3.0, gix-pack v0.38.0, gix-odb v0.48.0, gix-packetline v0.16.3, gix-transport v0.33.0, gix-protocol v0.34.0, gix-revision v0.16.0, gix-refspec v0.12.0, gix-worktree v0.20.0, gix v0.47.0, gitoxide-core
-      v0.29.0, gitoxide v0.27.0, safety bump 30 crates ([`ea9f942`](https://github.com/Byron/gitoxide/commit/ea9f9424e777f10da0e33bb9ffbbefd01c4c5a74))
+ * **Uncategorized**
+    - Release gix-date v0.6.0, gix-hash v0.11.3, gix-trace v0.1.1, gix-features v0.31.0, gix-actor v0.22.0, gix-path v0.8.2, gix-glob v0.9.0, gix-quote v0.4.5, gix-attributes v0.14.0, gix-chunk v0.4.3, gix-commitgraph v0.17.0, gix-config-value v0.12.2, gix-fs v0.3.0, gix-tempfile v7.0.0, gix-utils v0.1.3, gix-lock v7.0.0, gix-validate v0.7.6, gix-object v0.31.0, gix-ref v0.31.0, gix-sec v0.8.2, gix-config v0.24.0, gix-command v0.2.6, gix-prompt v0.5.2, gix-url v0.20.0, gix-credentials v0.16.0, gix-diff v0.31.0, gix-discover v0.20.0, gix-hashtable v0.2.2, gix-ignore v0.4.0, gix-bitmap v0.2.5, gix-revwalk v0.2.0, gix-traverse v0.28.0, gix-index v0.19.0, gix-mailmap v0.14.0, gix-negotiate v0.3.0, gix-pack v0.38.0, gix-odb v0.48.0, gix-packetline v0.16.3, gix-transport v0.33.0, gix-protocol v0.34.0, gix-revision v0.16.0, gix-refspec v0.12.0, gix-worktree v0.20.0, gix v0.47.0, gitoxide-core v0.29.0, gitoxide v0.27.0, safety bump 30 crates ([`ea9f942`](https://github.com/Byron/gitoxide/commit/ea9f9424e777f10da0e33bb9ffbbefd01c4c5a74))
     - Prepare changelogs prior to release ([`18b0a37`](https://github.com/Byron/gitoxide/commit/18b0a371941aa2d4d62512437d5daa351ba99ffd))
     - Merge branch 'corpus' ([`aa16c8c`](https://github.com/Byron/gitoxide/commit/aa16c8ce91452a3e3063cf1cf0240b6014c4743f))
     - Change MSRV to 1.65 ([`4f635fc`](https://github.com/Byron/gitoxide/commit/4f635fc4429350bae2582d25de86429969d28f30))
     - Merge branch 'help-874-redundant-closures' ([`fe59956`](https://github.com/Byron/gitoxide/commit/fe59956ad667303a923d7cfd9ffd72283df41d78))
     - Add `clippy::redundant-closure-for-method-calls` lint ([`bcad5c2`](https://github.com/Byron/gitoxide/commit/bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d))
-
 </details>
 
 ## 0.23.0 (2023-06-06)
@@ -702,10 +677,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 10 commits contributed to the release over the course of 38 calendar days.
-- 40 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 10 commits contributed to the release over the course of 38 calendar days.
+ - 40 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -713,9 +688,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.5.1, gix-hash v0.11.2, gix-features v0.30.0, gix-actor v0.21.0, gix-path v0.8.1, gix-glob v0.8.0, gix-quote v0.4.4, gix-attributes v0.13.0, gix-chunk v0.4.2, gix-commitgraph v0.16.0, gix-config-value v0.12.1, gix-fs v0.2.0, gix-tempfile v6.0.0, gix-utils v0.1.2, gix-lock v6.0.0, gix-validate v0.7.5, gix-object v0.30.0, gix-ref v0.30.0, gix-sec v0.8.1, gix-config v0.23.0, gix-command v0.2.5, gix-prompt v0.5.1, gix-url v0.19.0, gix-credentials v0.15.0, gix-diff v0.30.0, gix-discover v0.19.0, gix-hashtable v0.2.1, gix-ignore v0.3.0, gix-bitmap v0.2.4, gix-traverse v0.26.0, gix-index v0.17.0, gix-mailmap v0.13.0, gix-revision v0.15.0, gix-negotiate v0.2.0, gix-pack v0.36.0, gix-odb v0.46.0, gix-packetline v0.16.2, gix-transport v0.32.0, gix-protocol v0.33.0, gix-refspec v0.11.0, gix-worktree v0.18.0, gix v0.45.0, safety bump 29
-      crates ([`9a9fa96`](https://github.com/Byron/gitoxide/commit/9a9fa96fa8a722bddc5c3b2270b0edf8f6615141))
+ * **Uncategorized**
+    - Release gix-date v0.5.1, gix-hash v0.11.2, gix-features v0.30.0, gix-actor v0.21.0, gix-path v0.8.1, gix-glob v0.8.0, gix-quote v0.4.4, gix-attributes v0.13.0, gix-chunk v0.4.2, gix-commitgraph v0.16.0, gix-config-value v0.12.1, gix-fs v0.2.0, gix-tempfile v6.0.0, gix-utils v0.1.2, gix-lock v6.0.0, gix-validate v0.7.5, gix-object v0.30.0, gix-ref v0.30.0, gix-sec v0.8.1, gix-config v0.23.0, gix-command v0.2.5, gix-prompt v0.5.1, gix-url v0.19.0, gix-credentials v0.15.0, gix-diff v0.30.0, gix-discover v0.19.0, gix-hashtable v0.2.1, gix-ignore v0.3.0, gix-bitmap v0.2.4, gix-traverse v0.26.0, gix-index v0.17.0, gix-mailmap v0.13.0, gix-revision v0.15.0, gix-negotiate v0.2.0, gix-pack v0.36.0, gix-odb v0.46.0, gix-packetline v0.16.2, gix-transport v0.32.0, gix-protocol v0.33.0, gix-refspec v0.11.0, gix-worktree v0.18.0, gix v0.45.0, safety bump 29 crates ([`9a9fa96`](https://github.com/Byron/gitoxide/commit/9a9fa96fa8a722bddc5c3b2270b0edf8f6615141))
     - Prepare changelogs prior to release ([`8f15cec`](https://github.com/Byron/gitoxide/commit/8f15cec1ec7d5a9d56bb158f155011ef2bb3539b))
     - Merge branch 'fix-docs' ([`420553a`](https://github.com/Byron/gitoxide/commit/420553a10d780e0b2dc466cac120989298a5f187))
     - Cleaning up documentation ([`2578e57`](https://github.com/Byron/gitoxide/commit/2578e576bfa365d194a23a1fb0bf09be230873de))
@@ -725,7 +699,6 @@ A maintenance release without user-facing changes.
     - Merge pull request #864 from nyurik/lint-fmt ([`279dc09`](https://github.com/Byron/gitoxide/commit/279dc09446f41d7f1d76350fbfafb444e53cd7da))
     - Inline format args ([`dbc6cbb`](https://github.com/Byron/gitoxide/commit/dbc6cbb4363c2532f81b0bd6e351c4577bb9e9a3))
     - Release gix-ref v0.29.1 ([`13e01f5`](https://github.com/Byron/gitoxide/commit/13e01f5742ed2121f00f4b16c1df0cce5e7708ef))
-
 </details>
 
 ## 0.22.0 (2023-04-27)
@@ -736,9 +709,9 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -746,39 +719,38 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-path v0.8.0, gix-glob v0.7.0, gix-attributes v0.12.0, gix-config-value v0.12.0, gix-ref v0.29.0, gix-sec v0.8.0, gix-config v0.22.0, gix-prompt v0.5.0, gix-url v0.18.0, gix-credentials v0.14.0, gix-discover v0.18.0, gix-ignore v0.2.0, gix-pack v0.35.0, gix-odb v0.45.0, gix-transport v0.31.0, gix-protocol v0.32.0, gix-refspec v0.10.1, gix-worktree v0.17.0, gix v0.44.1 ([`7ebc9f7`](https://github.com/Byron/gitoxide/commit/7ebc9f734ec4371dd27daa568c0244185bb49eb5))
     - Prepare changelogs prior to release ([`0135158`](https://github.com/Byron/gitoxide/commit/013515897215400539bfd53c25548bd054186ba6))
     - Bump gix-path v0.8.0, safety bump 20 crates (gix set to 0.44.1 manually) ([`43ebaf2`](https://github.com/Byron/gitoxide/commit/43ebaf267557218865862538ffc7bdf00558492f))
-
 </details>
 
 ## 0.21.0 (2023-04-26)
 
 ### Bug Fixes
 
-- <csr-id-13edfe96696636c30040ec81ebc4e235ac689429/> use `home` in `env::home_dir()`
-- <csr-id-da9009f807acfe50000724589853a112fc5ab9a4/> Use `gix-path` for obtaining some shared directories as base for path generation.
-  This will make system wide configuration available on windows at least when using the migw builds.
+ - <csr-id-13edfe96696636c30040ec81ebc4e235ac689429/> use `home` in `env::home_dir()`
+ - <csr-id-da9009f807acfe50000724589853a112fc5ab9a4/> Use `gix-path` for obtaining some shared directories as base for path generation.
+   This will make system wide configuration available on windows at least when using the migw builds.
 
 ### New Features (BREAKING)
 
-- <csr-id-b83ee366a3c65c717beb587ad809268f1c54b8ad/> Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability.
-  With it it's possible to not automatically declare all optional dependencies externally visible
-  features, and thus re-use feature names that oterwise are also a crate name.
-
-  Previously I thought that `serde1` is for future-proofing and supporting multiple serde versions
-  at the same time. However, it's most definitely a burden I wouldn't want anyway, so using
-  `serde` seems to be the way to go into the future.
+ - <csr-id-b83ee366a3c65c717beb587ad809268f1c54b8ad/> Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability.
+   With it it's possible to not automatically declare all optional dependencies externally visible
+   features, and thus re-use feature names that oterwise are also a crate name.
+   
+   Previously I thought that `serde1` is for future-proofing and supporting multiple serde versions
+   at the same time. However, it's most definitely a burden I wouldn't want anyway, so using
+   `serde` seems to be the way to go into the future.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 14 commits contributed to the release over the course of 23 calendar days.
-- 27 days passed between releases.
-- 3 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 1 unique issue was worked on: [#814](https://github.com/Byron/gitoxide/issues/814)
+ - 14 commits contributed to the release over the course of 23 calendar days.
+ - 27 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#814](https://github.com/Byron/gitoxide/issues/814)
 
 ### Commit Details
 
@@ -786,9 +758,9 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **[#814](https://github.com/Byron/gitoxide/issues/814)**
+ * **[#814](https://github.com/Byron/gitoxide/issues/814)**
     - Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability. ([`b83ee36`](https://github.com/Byron/gitoxide/commit/b83ee366a3c65c717beb587ad809268f1c54b8ad))
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-hash v0.11.1, gix-path v0.7.4, gix-glob v0.6.0, gix-attributes v0.11.0, gix-config-value v0.11.0, gix-fs v0.1.1, gix-tempfile v5.0.3, gix-utils v0.1.1, gix-lock v5.0.1, gix-object v0.29.1, gix-ref v0.28.0, gix-sec v0.7.0, gix-config v0.21.0, gix-prompt v0.4.0, gix-url v0.17.0, gix-credentials v0.13.0, gix-diff v0.29.0, gix-discover v0.17.0, gix-hashtable v0.2.0, gix-ignore v0.1.0, gix-bitmap v0.2.3, gix-traverse v0.25.0, gix-index v0.16.0, gix-mailmap v0.12.0, gix-pack v0.34.0, gix-odb v0.44.0, gix-packetline v0.16.0, gix-transport v0.30.0, gix-protocol v0.31.0, gix-revision v0.13.0, gix-refspec v0.10.0, gix-worktree v0.16.0, gix v0.44.0, safety bump 7 crates ([`91134a1`](https://github.com/Byron/gitoxide/commit/91134a11c8ba0e942f692488ec9bce9fa1086324))
     - Prepare changelogs prior to release ([`30a1a71`](https://github.com/Byron/gitoxide/commit/30a1a71f36f24faac0e0b362ffdfedea7f9cdbf1))
     - Merge branch 'utkarshgupta137/main' ([`74cb5ee`](https://github.com/Byron/gitoxide/commit/74cb5ee03d7a5fbba312c0a5c782489a6fc039a7))
@@ -802,28 +774,27 @@ A maintenance release without user-facing changes.
     - Merge branch 'patch-1' ([`d0052c1`](https://github.com/Byron/gitoxide/commit/d0052c13cabcde8058177d2439053b50ea5adbfc))
     - Upgrade various dependencies ([`f9ad837`](https://github.com/Byron/gitoxide/commit/f9ad83712deb53e0f8ac2be3cd35df8edcc5253c))
     - Upgrade serial-test to v2 ([`6932017`](https://github.com/Byron/gitoxide/commit/69320174685e72940cd0fe600c94abb948a62bdd))
-
 </details>
 
 ## 0.20.1 (2023-03-30)
 
 ### Documentation
 
-- <csr-id-02c4659984fa6423bc76cc4980a143edaba8ace0/> fix minor typos
-- <csr-id-cc48c35d0ecf35824910c5b6ecc62fe9b2aff1b5/> fix minor typos
+ - <csr-id-02c4659984fa6423bc76cc4980a143edaba8ace0/> fix minor typos
+ - <csr-id-cc48c35d0ecf35824910c5b6ecc62fe9b2aff1b5/> fix minor typos
 
 ### Bug Fixes
 
-- <csr-id-d1bd513f27e17787eb223f7b0521f954c518153e/> $HOME detection on windows
+ - <csr-id-d1bd513f27e17787eb223f7b0521f954c518153e/> $HOME detection on windows
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 8 commits contributed to the release over the course of 3 calendar days.
-- 4 days passed between releases.
-- 3 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 8 commits contributed to the release over the course of 3 calendar days.
+ - 4 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -831,7 +802,7 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-path v0.7.3, gix-config-value v0.10.2, gix-config v0.20.1, gix-discover v0.16.2, gix-index v0.15.1, gix-odb v0.43.1, gix-packetline v0.15.1, gix-protocol v0.30.2, gix-worktree v0.15.2, gix v0.43.1 ([`38eed1d`](https://github.com/Byron/gitoxide/commit/38eed1d06e7cbb8fbcd54b2cad3163ca45e0baf1))
     - Merge branch 'pascalkuthe/main' ([`d47cebe`](https://github.com/Byron/gitoxide/commit/d47cebe3b23080c45829cb307b867220e3af20db))
     - Refactor ([`d1e5e12`](https://github.com/Byron/gitoxide/commit/d1e5e12d54f79c030325860838c1cfadac1a7ac5))
@@ -840,38 +811,37 @@ A maintenance release without user-facing changes.
     - Fix minor typos ([`cc48c35`](https://github.com/Byron/gitoxide/commit/cc48c35d0ecf35824910c5b6ecc62fe9b2aff1b5))
     - Release gix-ref v0.27.2 ([`e965b18`](https://github.com/Byron/gitoxide/commit/e965b18aedcf13ec4538bc7bc700269a56ca615e))
     - Be sure to clear the buffer after an intermediate read error happened and we ignore it. ([`877951a`](https://github.com/Byron/gitoxide/commit/877951aa0009ab5e2a814c95f4c5d3662305cb27))
-
 </details>
 
 ## 0.20.0 (2023-03-26)
 
 ### Bug Fixes
 
-- <csr-id-603776ecf487ef087d25774d74e49465177aa370/> binary config output parsing can now deal with quotes on windows.
-  Previously we would return paths that contained quotes.
-  Note that we don't properly unquote C-style strings
-  (which this is: https://github.com/git/git/blob/d9d677b2d8cc5f70499db04e633ba7a400f64cbf/builtin/config.c#L197)
-  thinking that the git-binary configuration paths are well-known and don't need the complete decoding.
-  If so, this is already implemented in `gix_quote::ansi_c::undo()`.
+ - <csr-id-603776ecf487ef087d25774d74e49465177aa370/> binary config output parsing can now deal with quotes on windows.
+   Previously we would return paths that contained quotes.
+   Note that we don't properly unquote C-style strings
+   (which this is: https://github.com/git/git/blob/d9d677b2d8cc5f70499db04e633ba7a400f64cbf/builtin/config.c#L197)
+   thinking that the git-binary configuration paths are well-known and don't need the complete decoding.
+   If so, this is already implemented in `gix_quote::ansi_c::undo()`.
 
 ### New Features (BREAKING)
 
-- <csr-id-e55f4ee230ed3164df5145c7a2b212464bb9db99/> allow to ignore IO errors when reading configuration files.
-  Sometimes, IO errors can occour consistently when reading from certain
-  paths (on Windows, really), and it should be possible to not only see
-  which path that is but also to ignore them entirely.
-
-  Now IO errors contain the path of the failed configuration file.
-  There is also a new option flag to ignore errors (off by default).
+ - <csr-id-e55f4ee230ed3164df5145c7a2b212464bb9db99/> allow to ignore IO errors when reading configuration files.
+   Sometimes, IO errors can occour consistently when reading from certain
+   paths (on Windows, really), and it should be possible to not only see
+   which path that is but also to ignore them entirely.
+   
+   Now IO errors contain the path of the failed configuration file.
+   There is also a new option flag to ignore errors (off by default).
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 8 commits contributed to the release over the course of 15 calendar days.
-- 15 days passed between releases.
-- 2 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 1 unique issue was worked on: [#790](https://github.com/Byron/gitoxide/issues/790)
+ - 8 commits contributed to the release over the course of 15 calendar days.
+ - 15 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#790](https://github.com/Byron/gitoxide/issues/790)
 
 ### Commit Details
 
@@ -879,17 +849,16 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **[#790](https://github.com/Byron/gitoxide/issues/790)**
+ * **[#790](https://github.com/Byron/gitoxide/issues/790)**
     - Binary config output parsing can now deal with quotes on windows. ([`603776e`](https://github.com/Byron/gitoxide/commit/603776ecf487ef087d25774d74e49465177aa370))
     - Allow to ignore IO errors when reading configuration files. ([`e55f4ee`](https://github.com/Byron/gitoxide/commit/e55f4ee230ed3164df5145c7a2b212464bb9db99))
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-tempfile v5.0.2, gix-validate v0.7.4, gix-config v0.20.0, gix-prompt v0.3.3, gix-diff v0.28.1, gix-discover v0.16.1, gix-pack v0.33.2, gix-transport v0.29.1, gix-protocol v0.30.1, gix-revision v0.12.1, gix-worktree v0.15.1, gix v0.43.0, safety bump gix v0.43.0 ([`5dc1f9f`](https://github.com/Byron/gitoxide/commit/5dc1f9f2bcb8b3e147115fcb6f76558e8f48ffef))
     - Prepare changelogs prior to release ([`3016a28`](https://github.com/Byron/gitoxide/commit/3016a285f566bdfe7de2774fa6f2254c1b1a2c51))
     - Merge branch 'fix-790' ([`ee36e5b`](https://github.com/Byron/gitoxide/commit/ee36e5bb985e9ad90bc382cdd051a8b5295ca18c))
     - Less dependencies for tests (via `serial_test` no default features) ([`8f2accd`](https://github.com/Byron/gitoxide/commit/8f2accdf738def9aa4abdf08fc299d0e9807bc3e))
     - Correct more typos with `typos` tool. ([`2321eb9`](https://github.com/Byron/gitoxide/commit/2321eb971c2b89551506e2016a3495fafd15b47d))
     - Merge branch 'fix-cred-helper' ([`01277a6`](https://github.com/Byron/gitoxide/commit/01277a681e4997896e04567490c572b5af606f35))
-
 </details>
 
 ## 0.19.0 (2023-03-10)
@@ -900,10 +869,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 2 commits contributed to the release.
-- 6 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 2 commits contributed to the release.
+ - 6 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -911,10 +880,9 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-tempfile v5.0.0, gix-lock v5.0.0, gix-ref v0.27.0, gix-config v0.19.0, gix-url v0.16.0, gix-credentials v0.12.0, gix-discover v0.16.0, gix-index v0.15.0, gix-pack v0.33.0, gix-odb v0.43.0, gix-transport v0.28.0, gix-protocol v0.29.0, gix-worktree v0.15.0, gix v0.41.0, safety bump 12 crates ([`29a0870`](https://github.com/Byron/gitoxide/commit/29a087043d1feb2f127b065341c8028d0bd0301e))
     - Prepare changelogs prior to release ([`e06f5f5`](https://github.com/Byron/gitoxide/commit/e06f5f523e83f4da390eddbebcb9a2d58674587b))
-
 </details>
 
 ## 0.18.0 (2023-03-04)
@@ -925,10 +893,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 3 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 3 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -936,11 +904,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-attributes v0.10.0, gix-ref v0.26.0, gix-config v0.18.0, gix-url v0.15.0, gix-credentials v0.11.0, gix-discover v0.15.0, gix-index v0.14.0, gix-mailmap v0.11.0, gix-odb v0.42.0, gix-transport v0.27.0, gix-protocol v0.28.0, gix-revision v0.12.0, gix-refspec v0.9.0, gix-worktree v0.14.0, gix v0.39.0 ([`93e75fe`](https://github.com/Byron/gitoxide/commit/93e75fed454ed8b342231bde4638db90e407ce52))
     - Prepare changelogs prior to release ([`895e482`](https://github.com/Byron/gitoxide/commit/895e482badf01e953bb9144001eebd5e1b1c4d84))
     - Release gix-features v0.28.0, gix-actor v0.19.0, gix-object v0.28.0, gix-diff v0.28.0, gix-traverse v0.24.0, gix-pack v0.32.0, safety bump 20 crates ([`0f411e9`](https://github.com/Byron/gitoxide/commit/0f411e93ec812592bb9d3a52b751399dd86f76f7))
-
 </details>
 
 ## 0.17.0 (2023-03-01)
@@ -951,10 +918,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 6 commits contributed to the release over the course of 3 calendar days.
-- 8 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 6 commits contributed to the release over the course of 3 calendar days.
+ - 8 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -962,14 +929,13 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-tempfile v4.1.0, gix-lock v4.0.0, gix-ref v0.25.0, gix-config v0.17.0, gix-url v0.14.0, gix-credentials v0.10.0, gix-diff v0.27.0, gix-discover v0.14.0, gix-hashtable v0.1.2, gix-bitmap v0.2.2, gix-traverse v0.23.0, gix-index v0.13.0, gix-mailmap v0.10.0, gix-pack v0.31.0, gix-odb v0.41.0, gix-transport v0.26.0, gix-protocol v0.27.0, gix-revision v0.11.0, gix-refspec v0.8.0, gix-worktree v0.13.0, gix v0.38.0, safety bump 6 crates ([`ea9fd1d`](https://github.com/Byron/gitoxide/commit/ea9fd1d9b60e1e9e17042e9e37c06525823c40a5))
     - Release gix-features v0.27.0, gix-actor v0.18.0, gix-quote v0.4.3, gix-attributes v0.9.0, gix-object v0.27.0, gix-ref v0.25.0, gix-config v0.17.0, gix-url v0.14.0, gix-credentials v0.10.0, gix-diff v0.27.0, gix-discover v0.14.0, gix-hashtable v0.1.2, gix-bitmap v0.2.2, gix-traverse v0.23.0, gix-index v0.13.0, gix-mailmap v0.10.0, gix-pack v0.31.0, gix-odb v0.41.0, gix-transport v0.26.0, gix-protocol v0.27.0, gix-revision v0.11.0, gix-refspec v0.8.0, gix-worktree v0.13.0, gix v0.38.0 ([`e6cc618`](https://github.com/Byron/gitoxide/commit/e6cc6184a7a49dbc2503c1c1bdd3688ca5cec5fe))
     - Adjust manifests prior to release ([`addd789`](https://github.com/Byron/gitoxide/commit/addd78958fdd1e54eb702854e96079539d01965a))
     - Prepare changelogs prior to release ([`94c99c7`](https://github.com/Byron/gitoxide/commit/94c99c71520f33269cc8dbc26f82a74747cc7e16))
     - Prepare for git-tempfile release ([`56c005b`](https://github.com/Byron/gitoxide/commit/56c005b13c44376f71e61781e73c0bf93416d0e4))
     - Make fmt ([`8ef1cb2`](https://github.com/Byron/gitoxide/commit/8ef1cb293434c7b9e1fda4a6963368e0435920a9))
-
 </details>
 
 ## 0.16.3 (2023-02-21)
@@ -980,9 +946,9 @@ A maintenance release to restore MSRV (1.64) support.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -990,50 +956,49 @@ A maintenance release to restore MSRV (1.64) support.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-config v0.16.3, gix v0.37.1 ([`a3c283f`](https://github.com/Byron/gitoxide/commit/a3c283ff0e3f21cedb3ba7cd464fdfa0f5133af0))
     - Prepare changelogs prior to release ([`362d659`](https://github.com/Byron/gitoxide/commit/362d659f946ca1ff2cbf915766113a34a9df97b3))
     - Restore msrv compatibility by removing sole `if let ... else` ([`9160659`](https://github.com/Byron/gitoxide/commit/91606597b714a6e9b3a2c071bdb08baeacd6056b))
-
 </details>
 
 ## 0.16.2 (2023-02-20)
 
 ### New Features
 
-- <csr-id-4b424ab73d20833deb0c674eeeeaaa8cc2358932/> add `File::write_to_filter()` to have a filter select the section to write.
-  This way, one can selectively write sections to a file, based on the section's origin
-  or other meta-data.
-
-  For convenience sake, most mutating methods on `SectionMut` can now be chained as well.
-- <csr-id-3fa86e1d01a75688cd8948a39ba415bcebfef02d/> add `File::set_meta()` to affect what metadata new sections receive.
-  That way it's possible to better control the metadata associated with new sections,
-  given that the config file metadata may not truly reflect its identity anymore since it
-  can be a combination from many different files with various sources.
+ - <csr-id-4b424ab73d20833deb0c674eeeeaaa8cc2358932/> add `File::write_to_filter()` to have a filter select the section to write.
+   This way, one can selectively write sections to a file, based on the section's origin
+   or other meta-data.
+   
+   For convenience sake, most mutating methods on `SectionMut` can now be chained as well.
+ - <csr-id-3fa86e1d01a75688cd8948a39ba415bcebfef02d/> add `File::set_meta()` to affect what metadata new sections receive.
+   That way it's possible to better control the metadata associated with new sections,
+   given that the config file metadata may not truly reflect its identity anymore since it
+   can be a combination from many different files with various sources.
 
 ### Bug Fixes
 
-- <csr-id-e14dc7d475373d2c266e84ff8f1826c68a34ab92/> note that crates have been renamed from `git-*` to `gix-*`.
-  This also means that the `git-*` prefixed crates of the `gitoxide` project
-  are effectively unmaintained.
-  Use the crates with the `gix-*` prefix instead.
-
-  If you were using `git-repository`, then `gix` is its substitute.
-- <csr-id-8836f5ada0078febf8aeb0e6b59d0fc4c588bc28/> `File::section(...)` could panic due to invlid expectation.
-  This has been fixed to prevent panics.
-- <csr-id-135d317065aae87af302beb6c26bb6ca8e30b6aa/> compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`.
-  `as_ref()` relies on a known target type which isn't always present. However, once
-  there is only one implementation, that's no problem, but when that changes compilation
-  fails due to ambiguity.
+ - <csr-id-e14dc7d475373d2c266e84ff8f1826c68a34ab92/> note that crates have been renamed from `git-*` to `gix-*`.
+   This also means that the `git-*` prefixed crates of the `gitoxide` project
+   are effectively unmaintained.
+   Use the crates with the `gix-*` prefix instead.
+   
+   If you were using `git-repository`, then `gix` is its substitute.
+ - <csr-id-8836f5ada0078febf8aeb0e6b59d0fc4c588bc28/> `File::section(...)` could panic due to invlid expectation.
+   This has been fixed to prevent panics.
+ - <csr-id-135d317065aae87af302beb6c26bb6ca8e30b6aa/> compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`.
+   `as_ref()` relies on a known target type which isn't always present. However, once
+   there is only one implementation, that's no problem, but when that changes compilation
+   fails due to ambiguity.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 3 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 3 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1041,11 +1006,10 @@ A maintenance release to restore MSRV (1.64) support.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-date v0.4.3, gix-hash v0.10.3, gix-features v0.26.5, gix-actor v0.17.2, gix-glob v0.5.5, gix-path v0.7.2, gix-quote v0.4.2, gix-attributes v0.8.3, gix-validate v0.7.3, gix-object v0.26.2, gix-ref v0.24.1, gix-config v0.16.2, gix-command v0.2.4, gix-url v0.13.3, gix-credentials v0.9.2, gix-discover v0.13.1, gix-index v0.12.4, gix-mailmap v0.9.3, gix-pack v0.30.3, gix-packetline v0.14.3, gix-transport v0.25.6, gix-protocol v0.26.4, gix-revision v0.10.4, gix-refspec v0.7.3, gix-worktree v0.12.3, gix v0.36.1 ([`9604783`](https://github.com/Byron/gitoxide/commit/96047839a20a657a559376b0b14c65aeab96acbd))
     - Compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`. ([`135d317`](https://github.com/Byron/gitoxide/commit/135d317065aae87af302beb6c26bb6ca8e30b6aa))
     - Release gix-glob v0.5.4 ([`c56d336`](https://github.com/Byron/gitoxide/commit/c56d3365fde21120cf6101cf34f8b5669804977c))
-
 </details>
 
 ## 0.16.1 (2023-02-17)
@@ -1075,204 +1039,204 @@ A maintenance release without user-facing changes.
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-0c98ec8fc7d8cc3195472a04fde4a681f620725f/> subsections are identified as `&BStr` in entire API.
-  Technically they can be any value (except for newlines and unescaped double quotes),
-  and these values might be paths and everything that comes with it, like
-  illformed UTF8. In order to be able to represent everything that
-  git can represent, we don't enforce UTF8 anymore for subsection names.
-
-  Note that section names and key names are required to be valid UTF8
-  (and even alphanumeric ascii), which makes illformed UTF8 very unlikely
-  there.
-- <csr-id-a93a156655d640ae63ff7c35b0a1f5d67a5ca20f/> Simplify specifying keys when mutating config values.
-- <csr-id-895ce40aabbe6d6af5b681a0d0942303fd6549a2/> `File::rename_section()` with validation of input arguments.
-- <csr-id-4a01d983f54a7713dea523f6032cbf5bb2b9dde8/> improve normalization; assure no extra copies are made on query.
-  We now return our own content, rather than the originals with their
-  lifetimes, meaning we bind lifetimes of returned values to our own
-  `File` instance. This allows them to be referenced more often, and
-  smarter normalization assures we don't copy in the simple cases
-  either.
-
-  More tests were added as well.
-  This is breaking as lifetime changes can cause distruptions, and
-  `values?_as()` was removed as well as it's somewhat duplicate
-  to higher-level APIs and it wasn't tested at all.
-- <csr-id-c9933c0b0f51d21dc8244b2acc33d7dc8a33f6ce/> Remove `git-config` test utilities from `git-path`.
+ - <csr-id-0c98ec8fc7d8cc3195472a04fde4a681f620725f/> subsections are identified as `&BStr` in entire API.
+   Technically they can be any value (except for newlines and unescaped double quotes),
+   and these values might be paths and everything that comes with it, like
+   illformed UTF8. In order to be able to represent everything that
+   git can represent, we don't enforce UTF8 anymore for subsection names.
+   
+   Note that section names and key names are required to be valid UTF8
+   (and even alphanumeric ascii), which makes illformed UTF8 very unlikely
+   there.
+ - <csr-id-a93a156655d640ae63ff7c35b0a1f5d67a5ca20f/> Simplify specifying keys when mutating config values.
+ - <csr-id-895ce40aabbe6d6af5b681a0d0942303fd6549a2/> `File::rename_section()` with validation of input arguments.
+ - <csr-id-4a01d983f54a7713dea523f6032cbf5bb2b9dde8/> improve normalization; assure no extra copies are made on query.
+   We now return our own content, rather than the originals with their
+   lifetimes, meaning we bind lifetimes of returned values to our own
+   `File` instance. This allows them to be referenced more often, and
+   smarter normalization assures we don't copy in the simple cases
+   either.
+   
+   More tests were added as well.
+   This is breaking as lifetime changes can cause distruptions, and
+   `values?_as()` was removed as well as it's somewhat duplicate
+   to higher-level APIs and it wasn't tested at all.
+ - <csr-id-c9933c0b0f51d21dc8244b2acc33d7dc8a33f6ce/> Remove `git-config` test utilities from `git-path`.
 
 ### New Features (BREAKING)
 
-- <csr-id-2faad43d11283ff06381c51d2466307cfb8736ff/> transfer knowledge about configuration and its usage into the type system.
-  That way it's possible to use configuration overrides, even though ultimately being strings,
-  in a type-safe manner and leverage code-completion while at it.
-
-  In that process, we also change `Repository::(committer|Author)()` to return
-  `Option<Result<...>>` to be able to account for date parse errors.
-- <csr-id-2b36d99eaf3ed24ce4cb736a3dd48440dc0c73b7/> `File::new_section()` and related now returns their `id` as well.
-  That way it's possible to more easily interact with it later, for instance
-  when one wants to delete it.
-- <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
-  MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
-  This isn't more than a patch release as it should break nobody
-  who is adhering to the MSRV, but let's be careful and mark it
-  breaking.
-
-  Note that `git-features` and `git-pack` are still on edition 2018
-  as they make use of a workaround to support (safe) mutable access
-  to non-overlapping entries in a slice which doesn't work anymore
-  in edition 2021.
-- <csr-id-b6cd6ace412b0c0df4bacbe7ed7ef6608f27909c/> `file::SectionMut::push()` now supports values without key-value separator.
-  These make a difference as those without `=` are considered boolean
-  true.
-  Currently pushing onto a section is the only way to write them.
-- <csr-id-d003c0f139d61e3bd998a0283a9c7af25a60db02/> Support for `lossy` load mode.
-  There is a lot of breaking changes as `file::from_paths::Options` now
-  became `file::init::Options`, and the same goes for the error type.
-- <csr-id-1ea26d80f392114349d25ebf88a7b260ee822aa1/> add `_filter()` versions to most access methods.
-  That way it's possible to filter values by their origin.
-
-  Note that the `remove_section()` methods now return the entire
-  removed section, not just the body, which yields more information
-  than before including section metadata.
-- <csr-id-cfd974f46d2cbb99e7784a05f5e358fed0d4bcab/> section names are now validated.
-- <csr-id-6ba2f8060768978ad7204e162fb2253ca8843879/> filtering supportort for `parse::Events`.
-  That way it's possible to construct Files which are not destined to be
-  written back as they only keep events necessary for value access,
-  greatly reducing allocations.
-- <csr-id-311d4b447daf8d4364670382a20901468748d34d/> change mostily internal uses of [u8] to BString/BStr
-- <csr-id-edd226719cd04a480274cb7d983b6d5d8bfdbb13/> Path-interpolation makes `home-dir` configurable.
-  That way the caller has full control over how the environment is used,
-  which also allows more fine-grained control over which config files
-  can be included.
-- <csr-id-266d4379e9132fd7dd21e6c8fccb36e125069d6e/> Make `realpath()` easier to use by introducing `realpath_opt()`.
-  That way there is consistency about how many symlinks to follow.
+ - <csr-id-2faad43d11283ff06381c51d2466307cfb8736ff/> transfer knowledge about configuration and its usage into the type system.
+   That way it's possible to use configuration overrides, even though ultimately being strings,
+   in a type-safe manner and leverage code-completion while at it.
+   
+   In that process, we also change `Repository::(committer|Author)()` to return
+   `Option<Result<...>>` to be able to account for date parse errors.
+ - <csr-id-2b36d99eaf3ed24ce4cb736a3dd48440dc0c73b7/> `File::new_section()` and related now returns their `id` as well.
+   That way it's possible to more easily interact with it later, for instance
+   when one wants to delete it.
+ - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
+   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
+   This isn't more than a patch release as it should break nobody
+   who is adhering to the MSRV, but let's be careful and mark it
+   breaking.
+   
+   Note that `git-features` and `git-pack` are still on edition 2018
+   as they make use of a workaround to support (safe) mutable access
+   to non-overlapping entries in a slice which doesn't work anymore
+   in edition 2021.
+ - <csr-id-b6cd6ace412b0c0df4bacbe7ed7ef6608f27909c/> `file::SectionMut::push()` now supports values without key-value separator.
+   These make a difference as those without `=` are considered boolean
+   true.
+   Currently pushing onto a section is the only way to write them.
+ - <csr-id-d003c0f139d61e3bd998a0283a9c7af25a60db02/> Support for `lossy` load mode.
+   There is a lot of breaking changes as `file::from_paths::Options` now
+   became `file::init::Options`, and the same goes for the error type.
+ - <csr-id-1ea26d80f392114349d25ebf88a7b260ee822aa1/> add `_filter()` versions to most access methods.
+   That way it's possible to filter values by their origin.
+   
+   Note that the `remove_section()` methods now return the entire
+   removed section, not just the body, which yields more information
+   than before including section metadata.
+ - <csr-id-cfd974f46d2cbb99e7784a05f5e358fed0d4bcab/> section names are now validated.
+ - <csr-id-6ba2f8060768978ad7204e162fb2253ca8843879/> filtering supportort for `parse::Events`.
+   That way it's possible to construct Files which are not destined to be
+   written back as they only keep events necessary for value access,
+   greatly reducing allocations.
+ - <csr-id-311d4b447daf8d4364670382a20901468748d34d/> change mostily internal uses of [u8] to BString/BStr
+ - <csr-id-edd226719cd04a480274cb7d983b6d5d8bfdbb13/> Path-interpolation makes `home-dir` configurable.
+   That way the caller has full control over how the environment is used,
+   which also allows more fine-grained control over which config files
+   can be included.
+ - <csr-id-266d4379e9132fd7dd21e6c8fccb36e125069d6e/> Make `realpath()` easier to use by introducing `realpath_opt()`.
+   That way there is consistency about how many symlinks to follow.
 
 ### Changed (BREAKING)
 
-- <csr-id-27fb1ce27d2985eb1ee8bee5fffaf759902571fb/> Add `Kind::GitInstallation` for a way to obtain special git-installation configuration paths.
-  Note that these are lazily cached as they call the `git` binary.
-- <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
-- <csr-id-2b2357e9cc54539e0dbe7c0e22802f2b884160d8/> Add `File::set_raw_value()` to unconditionally set single values, and make the value itself easier to provide.
-- <csr-id-17c83d55f8942788aac5eb1bea22a48daa045bf4/> add `File::resolve_includes()` and move its error type to `file::includes`.
-- <csr-id-5221676e28f2b6cc1a7ef1bdd5654b880965f38c/> add `File::from_bytes_owned()` and remove `File::from_path_with_buf()`
-- <csr-id-98d45c2f59863fdee033b38e757cec09593f6892/> remove `File::from_env_paths()`.
-  It's replaced by its more comfortable `new_globals()`.
-- <csr-id-230a523593afcfb8720db965ff56265aaceea772/> untangle `file::init::…` `Option` and `Error` types.
-  This moves types to where they belong which is more specific instead
-  of having a catch-all `Error` and `Options` type.
-- <csr-id-3f3ff11a6ebe9775ee5ae7fc0ec18a94b5b46d61/> rename `parse::Comment::(comment_tag|comment)` to `::tag|text` and `parse::Section::section_header` to `::header`.
-- <csr-id-6f4eea936d64fb9827277c160f989168e7b1dba2/> Associate `file::Metadata` with each `File`.
-  This is the first step towards knowing more about the source of each
-  value to filter them based on some properties.
-
-  This breaks various methods handling the instantiation of configuration
-  files as `file::Metadata` typically has to be provided by the caller
-  now or be associated with each path to read configuration from.
-- <csr-id-b672ed7667a334be3d45c59f4727f12797b340da/> rename `file::SectionBody` to `file::section::Body`.
-- <csr-id-3bea26d7d2a9b5751c6c15e1fa9a924b67e0159e/> Remove `File::sections_by_name_with_header()` as `::sections_by_name()` now returns entire sections.
-- <csr-id-41b3e622ee71943c285eadc518150fc7b6c92361/> create `resolve_includes` options to make space for more options when loading paths.
-- <csr-id-cabc8ef0e31c954642525e7693009a7fe4b4c465/> rename `path::Options` into `path::Context`.
-  It's not an option if it's required context to perform a certain
-  operation.
-- <csr-id-3de0cfd81523e4ba7cc362d8625f85ebf8fd9172/> All accessors in `File` are now using `impl AsRef<str>` where possible for added comfort.
-- <csr-id-3d25fe6c7a52529488fab19c927d64a1bc75838f/> Much more comfortable API `file::*Mut` types thanks to `impl Into/AsRef`.
-- <csr-id-393b392d515661e5c3e60629319fdab771c3d3f0/> Rename `Mutable*` into `$1Mut` for consistency.
-- <csr-id-0a7391a6575f4035c51a46d34fa20c69e9d078e9/> conform APIs of `file::MutableValue` and `file::MutableMultiValue`.
-  There are more renames and removals than worth mentioning here given the
-  current adoption of the crate.
-- <csr-id-83a0922f06081312b79908835dac2b7f4e849bb3/> rename `file::MutableSection::set_leading_space()` to `set_leading_whitespace()`.
-  The corresponding getter was renamed as well to `leading_whitespace()`.
-- <csr-id-219cf7ae0b35b3ac92f97974be52cd022698e01f/> Enforce `parse::section::Header::new()` by making its fields private.
-- <csr-id-4f6cd8cf65c2d8698bffe327a19031c342b229a6/> Add `File::write_to()` and `File::to_bstring()`; remove some `TryFrom` impls.
-  Now `File` can be serialized in a streaming fashion and without the
-  possibility for UTF8 conversion issues.
-
-  Note that `Display` is still imlpemented with the usual caveats.
-- <csr-id-0e392f81e99c8c0ff29f41b9b86afd57cd99c245/> remove `Integer::to_bstring()` as well as some `TryFrom` impls.
-  Note that it can still display itself like before via
-  `std::fmt::Display`.
-- <csr-id-b22732a2ab17213c4a1020859ec41f25ccabfbfc/> remove `Boolean::to_bstring()` along with a few `From` impls.
-  These were superfluous and aren't useful in practice.
-  Note that serialization is still implemented via `Display`.
-- <csr-id-65c520c4de8187884f87059adf5cef9cbdcd90a2/> allocation free `File::sections_by_name()` and `File::sections_by_name_with_header()`.
-- <csr-id-ac57c4479e7b6867e8b8e71f7cf76de759dc64a2/> `Path::interpolate()` now takes `path::interpolate::Options` instead of three parameters.
-- <csr-id-0915051798dd782b40617a1aa16abd71f6db1175/> remove `String` type in favor of referring to the `File::string()` method.
-  The wrapper had no effect whatsoever except for adding complexity.
-- <csr-id-9cadc6f0cbaad0ac23f5469db2f040aecfbfb82c/> Simplify `Boolean` to be a wrapper around `bool`.
-  Previously it tried hard not to degenerate information, making it a
-  complicated type.
-
-  However, in practice nobody cares about the exact makeup of the boolean,
-  and there is no need to serialize a boolean faithfully either.
-
-  Instead, those who want to set a value just set any value as a string,
-  no need for type safety there, and we take care of escaping values
-  properly on write.
-- <csr-id-703922dd4e1e5b27835298217ff4eb8ef1dc57ce/> Use bitflags for `color::Attribute` instead of `Vec` of enums.
-  This is less wasteful and sufficient for git, so it should be sufficient
-  for us, especially since attributes are indeed a set and declaring
-  one twice has no effect.
-- <csr-id-3fc4ac04f46f869c6e3a94ce4bb8a5737aa0c524/> simplify `Color` API.
-  For now we only parse and serialize for display, but more uses are
-  enabled when needed and trivially.
-- <csr-id-14149eea54e2e8a25ac0ccdb2f6efe624f6eaa22/> remove `parse::Events::from_path` and `File::at`
-  The latter has been replaced with `File::from_path_with_buf(…)` and
-  is a low-level way to load just a single config file, purposefully
-  uncomfortable as it will not resolve includes.
-
-  The initialization API will need some time to stabilize.
-- <csr-id-73adceeae12270c0d470d4b7271c1fd6089d5c2d/> Slim down API surface of `parse::Events`.
-  It's more of a 'dumb' structure now than before, merely present
-  to facilitate typical parsing than something special on its own.
-- <csr-id-2e47167e4a963743494b2df6b0c15800cb876dd0/> remove `File::new()` method in favor of `File::default()`.
-- <csr-id-ea6765093b5475912ba1aa81d4440cbf5dd49fb6/> rename `parse::event::List` to `parse::Events`
-- <csr-id-89f5fca843d999c5bea35fb3fe2a03dc3588f74e/> rename `parse::State` to `parse::event::List`
-- <csr-id-3cdb0890b71e62cfa92b1ed1760c88cb547ec729/> move `value::*` into the crate root, except for `Error` and `normalize_*()`.
-- <csr-id-748d921efd7469d5c19e40ddcb9099e2462e3bbc/> rename `value::parse::Error` to `value::Error`.
-- <csr-id-7e8a22590297f2f4aab76b53be512353637fb651/> rename `value::TrueVariant` to `value::boolean::True`
-- <csr-id-8bcaec0599cf085a73b344f4f53fc023f6e31430/> rename `IntegerSuffix` to `integer::Suffix`
-- <csr-id-d085037ad9c067af7ce3ba3ab6e5d5ddb45b4057/> rename `value::Color(Attribute|Value)` to `value::color::Attribute` and `value::color::Name`.
-- <csr-id-a0f6252343a62b0b55eef02888ac00c09100687a/> Turn `parse::ParseOrIoError` into `parse::state::from_path::Error`
-- <csr-id-b6b31e9c8dd8b3dc4860431069bb1cf5eacd1702/> rename `parse::ParsedComment` into `parse::Comment`
-- <csr-id-239cbfb450a8cddfc5bec1de21f3dc54fab914ce/> rename `parse::Section*` related types.
-  These are now located in `section::*`.
-- <csr-id-60af4c9ecb1b99f21df0e8facc33e5f6fc70c424/> rename `parse::Parser` to `parse::State`.
-  Furthermore, make `State` the entry point for all parsing, removing
-  all free-standing functions that returned a `State`.
-- <csr-id-3724850e0411f1f76e52c6c767fd8cebe8aea0f6/> rename `parser` module to `parse`
-- <csr-id-58b22152a0295998935abb43563e9096589ef53e/> rename `normalize_cow()` to `normalize()` and move all `normalize*` functions from `values` to the `value` module
-- <csr-id-767bedccdae1f3e6faf853d59ecf884a06cc3827/> move `Path` from `values` to `value` module
-- <csr-id-6033f3f93d2356399a661567353a83a044662699/> Move `Boolean` and `String` from `values` into `value` module
-- <csr-id-d4444e18042891b0fe5b9c6e6813fed26df6c560/> move `values::Integer` into `value` module
-- <csr-id-38f31174e8c117af675cdfbc21926133b821ec38/> move `Color` to own `value` module
-- <csr-id-aa630ad6ec2c6306d3307d5c77e272cb24b00ddd/> remove `values::Bytes` - use `values::String` instead.
-  Note that these values are always normalized and it's only possible
-  to get a raw values using the `raw_value()` API.
-- <csr-id-553f87225363903e6acdb3e7eaa8cc66a91110f1/> `File::len()` -> `File::num_values()`
-  The same is true for `Section::len()` which now is
-  `Section::num_values()`.
-- <csr-id-c7fcb5e1db225aefc3eeab4f29f3fb85c670894a/> `GitConfig::from_paths(…, <option>)` is now owned.
-  The type is `Copy`, so no need to pass it by reference.
-- <csr-id-38dfdcf80f9b7368ccaa10f4b78b2129849848d0/> remove `values::*Error` in favor of `value::parse::Error`.
-  This makes it easier to work with errors in practice, we are either
-  interested in the value that failed to parse to try something else
-  or want a nice user message.
-
-  Having one decode error type facilitates that.
-- <csr-id-a98a7a7af69482e9ef63f106184049049939459d/> switch from quickerror to thiserror.
-  This allows for generic types for sources of errors and allows to
-  workaround a limitation with associated type constraints in the MSRV
-  of 1.54.
-
-  Using thiserror makes this work and brings the crate more closely
-  to the rest of the gitoxide crates (which now prefer thiserror over
-  quickerror).
-- <csr-id-a86b2541561674df5dbef4120d3e03483cb80117/> remove all `get_` prefixes from methods
-  That way the API is more idiomatic and fits better into the
-  existing `gitoxide` crates.
-- <csr-id-f9aaac11f0734afbd791132369eb5601bfc7efe9/> use `lookup::Error` and `lookup::existing::Error`
-  Use the newly introduced structured error to replace the 'catch-all'
-  `GitConfigError` while getting closer to naming conventions in other
-  `gitoxide` crates.
+ - <csr-id-27fb1ce27d2985eb1ee8bee5fffaf759902571fb/> Add `Kind::GitInstallation` for a way to obtain special git-installation configuration paths.
+   Note that these are lazily cached as they call the `git` binary.
+ - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
+ - <csr-id-2b2357e9cc54539e0dbe7c0e22802f2b884160d8/> Add `File::set_raw_value()` to unconditionally set single values, and make the value itself easier to provide.
+ - <csr-id-17c83d55f8942788aac5eb1bea22a48daa045bf4/> add `File::resolve_includes()` and move its error type to `file::includes`.
+ - <csr-id-5221676e28f2b6cc1a7ef1bdd5654b880965f38c/> add `File::from_bytes_owned()` and remove `File::from_path_with_buf()`
+ - <csr-id-98d45c2f59863fdee033b38e757cec09593f6892/> remove `File::from_env_paths()`.
+   It's replaced by its more comfortable `new_globals()`.
+ - <csr-id-230a523593afcfb8720db965ff56265aaceea772/> untangle `file::init::…` `Option` and `Error` types.
+   This moves types to where they belong which is more specific instead
+   of having a catch-all `Error` and `Options` type.
+ - <csr-id-3f3ff11a6ebe9775ee5ae7fc0ec18a94b5b46d61/> rename `parse::Comment::(comment_tag|comment)` to `::tag|text` and `parse::Section::section_header` to `::header`.
+ - <csr-id-6f4eea936d64fb9827277c160f989168e7b1dba2/> Associate `file::Metadata` with each `File`.
+   This is the first step towards knowing more about the source of each
+   value to filter them based on some properties.
+   
+   This breaks various methods handling the instantiation of configuration
+   files as `file::Metadata` typically has to be provided by the caller
+   now or be associated with each path to read configuration from.
+ - <csr-id-b672ed7667a334be3d45c59f4727f12797b340da/> rename `file::SectionBody` to `file::section::Body`.
+ - <csr-id-3bea26d7d2a9b5751c6c15e1fa9a924b67e0159e/> Remove `File::sections_by_name_with_header()` as `::sections_by_name()` now returns entire sections.
+ - <csr-id-41b3e622ee71943c285eadc518150fc7b6c92361/> create `resolve_includes` options to make space for more options when loading paths.
+ - <csr-id-cabc8ef0e31c954642525e7693009a7fe4b4c465/> rename `path::Options` into `path::Context`.
+   It's not an option if it's required context to perform a certain
+   operation.
+ - <csr-id-3de0cfd81523e4ba7cc362d8625f85ebf8fd9172/> All accessors in `File` are now using `impl AsRef<str>` where possible for added comfort.
+ - <csr-id-3d25fe6c7a52529488fab19c927d64a1bc75838f/> Much more comfortable API `file::*Mut` types thanks to `impl Into/AsRef`.
+ - <csr-id-393b392d515661e5c3e60629319fdab771c3d3f0/> Rename `Mutable*` into `$1Mut` for consistency.
+ - <csr-id-0a7391a6575f4035c51a46d34fa20c69e9d078e9/> conform APIs of `file::MutableValue` and `file::MutableMultiValue`.
+   There are more renames and removals than worth mentioning here given the
+   current adoption of the crate.
+ - <csr-id-83a0922f06081312b79908835dac2b7f4e849bb3/> rename `file::MutableSection::set_leading_space()` to `set_leading_whitespace()`.
+   The corresponding getter was renamed as well to `leading_whitespace()`.
+ - <csr-id-219cf7ae0b35b3ac92f97974be52cd022698e01f/> Enforce `parse::section::Header::new()` by making its fields private.
+ - <csr-id-4f6cd8cf65c2d8698bffe327a19031c342b229a6/> Add `File::write_to()` and `File::to_bstring()`; remove some `TryFrom` impls.
+   Now `File` can be serialized in a streaming fashion and without the
+   possibility for UTF8 conversion issues.
+   
+   Note that `Display` is still imlpemented with the usual caveats.
+ - <csr-id-0e392f81e99c8c0ff29f41b9b86afd57cd99c245/> remove `Integer::to_bstring()` as well as some `TryFrom` impls.
+   Note that it can still display itself like before via
+   `std::fmt::Display`.
+ - <csr-id-b22732a2ab17213c4a1020859ec41f25ccabfbfc/> remove `Boolean::to_bstring()` along with a few `From` impls.
+   These were superfluous and aren't useful in practice.
+   Note that serialization is still implemented via `Display`.
+ - <csr-id-65c520c4de8187884f87059adf5cef9cbdcd90a2/> allocation free `File::sections_by_name()` and `File::sections_by_name_with_header()`.
+ - <csr-id-ac57c4479e7b6867e8b8e71f7cf76de759dc64a2/> `Path::interpolate()` now takes `path::interpolate::Options` instead of three parameters.
+ - <csr-id-0915051798dd782b40617a1aa16abd71f6db1175/> remove `String` type in favor of referring to the `File::string()` method.
+   The wrapper had no effect whatsoever except for adding complexity.
+ - <csr-id-9cadc6f0cbaad0ac23f5469db2f040aecfbfb82c/> Simplify `Boolean` to be a wrapper around `bool`.
+   Previously it tried hard not to degenerate information, making it a
+   complicated type.
+   
+   However, in practice nobody cares about the exact makeup of the boolean,
+   and there is no need to serialize a boolean faithfully either.
+   
+   Instead, those who want to set a value just set any value as a string,
+   no need for type safety there, and we take care of escaping values
+   properly on write.
+ - <csr-id-703922dd4e1e5b27835298217ff4eb8ef1dc57ce/> Use bitflags for `color::Attribute` instead of `Vec` of enums.
+   This is less wasteful and sufficient for git, so it should be sufficient
+   for us, especially since attributes are indeed a set and declaring
+   one twice has no effect.
+ - <csr-id-3fc4ac04f46f869c6e3a94ce4bb8a5737aa0c524/> simplify `Color` API.
+   For now we only parse and serialize for display, but more uses are
+   enabled when needed and trivially.
+ - <csr-id-14149eea54e2e8a25ac0ccdb2f6efe624f6eaa22/> remove `parse::Events::from_path` and `File::at`
+   The latter has been replaced with `File::from_path_with_buf(…)` and
+   is a low-level way to load just a single config file, purposefully
+   uncomfortable as it will not resolve includes.
+   
+   The initialization API will need some time to stabilize.
+ - <csr-id-73adceeae12270c0d470d4b7271c1fd6089d5c2d/> Slim down API surface of `parse::Events`.
+   It's more of a 'dumb' structure now than before, merely present
+   to facilitate typical parsing than something special on its own.
+ - <csr-id-2e47167e4a963743494b2df6b0c15800cb876dd0/> remove `File::new()` method in favor of `File::default()`.
+ - <csr-id-ea6765093b5475912ba1aa81d4440cbf5dd49fb6/> rename `parse::event::List` to `parse::Events`
+ - <csr-id-89f5fca843d999c5bea35fb3fe2a03dc3588f74e/> rename `parse::State` to `parse::event::List`
+ - <csr-id-3cdb0890b71e62cfa92b1ed1760c88cb547ec729/> move `value::*` into the crate root, except for `Error` and `normalize_*()`.
+ - <csr-id-748d921efd7469d5c19e40ddcb9099e2462e3bbc/> rename `value::parse::Error` to `value::Error`.
+ - <csr-id-7e8a22590297f2f4aab76b53be512353637fb651/> rename `value::TrueVariant` to `value::boolean::True`
+ - <csr-id-8bcaec0599cf085a73b344f4f53fc023f6e31430/> rename `IntegerSuffix` to `integer::Suffix`
+ - <csr-id-d085037ad9c067af7ce3ba3ab6e5d5ddb45b4057/> rename `value::Color(Attribute|Value)` to `value::color::Attribute` and `value::color::Name`.
+ - <csr-id-a0f6252343a62b0b55eef02888ac00c09100687a/> Turn `parse::ParseOrIoError` into `parse::state::from_path::Error`
+ - <csr-id-b6b31e9c8dd8b3dc4860431069bb1cf5eacd1702/> rename `parse::ParsedComment` into `parse::Comment`
+ - <csr-id-239cbfb450a8cddfc5bec1de21f3dc54fab914ce/> rename `parse::Section*` related types.
+   These are now located in `section::*`.
+ - <csr-id-60af4c9ecb1b99f21df0e8facc33e5f6fc70c424/> rename `parse::Parser` to `parse::State`.
+   Furthermore, make `State` the entry point for all parsing, removing
+   all free-standing functions that returned a `State`.
+ - <csr-id-3724850e0411f1f76e52c6c767fd8cebe8aea0f6/> rename `parser` module to `parse`
+ - <csr-id-58b22152a0295998935abb43563e9096589ef53e/> rename `normalize_cow()` to `normalize()` and move all `normalize*` functions from `values` to the `value` module
+ - <csr-id-767bedccdae1f3e6faf853d59ecf884a06cc3827/> move `Path` from `values` to `value` module
+ - <csr-id-6033f3f93d2356399a661567353a83a044662699/> Move `Boolean` and `String` from `values` into `value` module
+ - <csr-id-d4444e18042891b0fe5b9c6e6813fed26df6c560/> move `values::Integer` into `value` module
+ - <csr-id-38f31174e8c117af675cdfbc21926133b821ec38/> move `Color` to own `value` module
+ - <csr-id-aa630ad6ec2c6306d3307d5c77e272cb24b00ddd/> remove `values::Bytes` - use `values::String` instead.
+   Note that these values are always normalized and it's only possible
+   to get a raw values using the `raw_value()` API.
+ - <csr-id-553f87225363903e6acdb3e7eaa8cc66a91110f1/> `File::len()` -> `File::num_values()`
+   The same is true for `Section::len()` which now is
+   `Section::num_values()`.
+ - <csr-id-c7fcb5e1db225aefc3eeab4f29f3fb85c670894a/> `GitConfig::from_paths(…, <option>)` is now owned.
+   The type is `Copy`, so no need to pass it by reference.
+ - <csr-id-38dfdcf80f9b7368ccaa10f4b78b2129849848d0/> remove `values::*Error` in favor of `value::parse::Error`.
+   This makes it easier to work with errors in practice, we are either
+   interested in the value that failed to parse to try something else
+   or want a nice user message.
+   
+   Having one decode error type facilitates that.
+ - <csr-id-a98a7a7af69482e9ef63f106184049049939459d/> switch from quickerror to thiserror.
+   This allows for generic types for sources of errors and allows to
+   workaround a limitation with associated type constraints in the MSRV
+   of 1.54.
+   
+   Using thiserror makes this work and brings the crate more closely
+   to the rest of the gitoxide crates (which now prefer thiserror over
+   quickerror).
+ - <csr-id-a86b2541561674df5dbef4120d3e03483cb80117/> remove all `get_` prefixes from methods
+   That way the API is more idiomatic and fits better into the
+   existing `gitoxide` crates.
+ - <csr-id-f9aaac11f0734afbd791132369eb5601bfc7efe9/> use `lookup::Error` and `lookup::existing::Error`
+   Use the newly introduced structured error to replace the 'catch-all'
+   `GitConfigError` while getting closer to naming conventions in other
+   `gitoxide` crates.
 
 ### Refactor
 
@@ -1293,182 +1257,182 @@ A maintenance release without user-facing changes.
 
 ### Bug Fixes
 
-- <csr-id-8836f5ada0078febf8aeb0e6b59d0fc4c588bc28/> `File::section(...)` could panic due to invlid expectation.
-  This has been fixed to prevent panics.
-- <csr-id-839f776454d7a8522c0f2887c90fc41b20576bd9/> `File::boolean()` now correctly handles implicit bools across sections.
-  This means it will return the last implicit value as true, instead of
-  ignoring it to fall back onto an explicit boolean value that might be
-  false.
-- <csr-id-7d92c61abc2c54f4a64c35b37bcd1843a8d1da9c/> `file::SectionMut::push()` now properly creates empty values.
-  Previously, when calling `.push("key", None)`, the resulting internal
-  state would be slighly wrong causing certain invariants and expectations
-  to be unfulfilled even though it might have looked OK to most users.
-
-  Now it will uphold the invariant for empty values, those without an
-  `=` character.
-- <csr-id-9c1e639979a9615fd8334ce0e3a809df137776f6/> greatly improve whitespace handling when removing values.
-  Previously, newlines would remain past a value, and whitespace could
-  remain before one.
-
-  Now both are removed to simulate removing an actual line.
-- <csr-id-e533993e8f861ba7a6600aab114ddfecc8a85ee2/> `File::remove_section()` was fixed to allow re-adding a similarly named section.
-  We also add `File::remove_section_by_id()` to make it possible to remove
-  specific sections.
-- <csr-id-08c50a47fa901457194539c7db74ad47ab2f8b60/> Properly handle boolean values such that `a` is true but `a=` is false.
-  This is even consistent when no booleans are used, such that `a` has no
-  value as if it is not present, it's only available for booleans which
-  must be specified.
-- <csr-id-7c585162454c476fe93f032c8a2329cffd7c054f/> Keep track of a severe limitation and prepare tests for fixing it.
-  This also changes behaviour, but merely removes a hack in `Boolean`
-  which considered empty strings true, even though they are supposed to be
-  false.
-- <csr-id-6c1588fd1a2fa80fd866787cbf4bcc6e5b51abe6/> maintain insertion order of includes on per-section basis at least.
-  Note that git inserts values right after the include directive,
-  'splitting' the section, but we don't do that and insert new values
-  after the section. Probably no issue in practice while keeping
-  our implementation simple.
-- <csr-id-f7bd2caceb87a179288030e0771da2e4ed6bd1e4/> maintain newline format depending on what's present or use platform default.
-  Previously implicit newlines when adding new sections or keys to
-  sections was always `\n` which isn't correct on windows.
-
-  Now the newline style is detected and used according to what's present,
-  or in the lack of content, defaults to what's correct for the platform.
-- <csr-id-0d07ef1aa4a9e238c20249d4ae2ed19e6740308a/> validate incoming conifguration keys when interpreting envirnoment variables.
-- <csr-id-6b901843cb18b3d31f8b0b84bb9ebbae279aff19/> `Boolean` can use numbers to indicate true or false, drops support for `one` and `zero`.
-- <csr-id-94dde44e8dd1a0b8d4e11f2627a3f6b345a15989/> `file::MutableSection::remove()` now actually removes keys _and_ values.
-- <csr-id-048b92531eb877a5a128e702504891bf1e31becf/> `file::MutableMultiValue` escapes input values and maintains key separator specific whitespace.
-- <csr-id-f911707b455ba6f3800b85f667f91e4d56027b91/> value normalization (via `value::normalize()` handles escape sequences.
-  The latter ones are `\n`, `\t` and `\b` which are the only supported
-  ones in values of git-config files.
-- <csr-id-44dfec07480cc2ac6fd01674b748cc03af51fed1/> stable sort order for `File::sections_by_name_with_header()`
-- <csr-id-1ea919d5ff81ab7b01b8201386ef63c7e081b537/> count newlines (for error display) in multi-line values as well
-- <csr-id-1e71e71c984289f0d7e0a39379ee6728918b7dc5/> auto-normalize string values to support quote removal in case of strings.
-  Related to https://github.com/starship/starship/pull/3883 .
-- <csr-id-36e2fc0aff4e6aaa35335da90108918882d4cd16/> Use `std::env::var_os()` to avoid potential decode errors
-- <csr-id-469406dc0d9fece4a06230ef0d8018846202f0ad/> fix usage example in README.md
+ - <csr-id-8836f5ada0078febf8aeb0e6b59d0fc4c588bc28/> `File::section(...)` could panic due to invlid expectation.
+   This has been fixed to prevent panics.
+ - <csr-id-839f776454d7a8522c0f2887c90fc41b20576bd9/> `File::boolean()` now correctly handles implicit bools across sections.
+   This means it will return the last implicit value as true, instead of
+   ignoring it to fall back onto an explicit boolean value that might be
+   false.
+ - <csr-id-7d92c61abc2c54f4a64c35b37bcd1843a8d1da9c/> `file::SectionMut::push()` now properly creates empty values.
+   Previously, when calling `.push("key", None)`, the resulting internal
+   state would be slighly wrong causing certain invariants and expectations
+   to be unfulfilled even though it might have looked OK to most users.
+   
+   Now it will uphold the invariant for empty values, those without an
+   `=` character.
+ - <csr-id-9c1e639979a9615fd8334ce0e3a809df137776f6/> greatly improve whitespace handling when removing values.
+   Previously, newlines would remain past a value, and whitespace could
+   remain before one.
+   
+   Now both are removed to simulate removing an actual line.
+ - <csr-id-e533993e8f861ba7a6600aab114ddfecc8a85ee2/> `File::remove_section()` was fixed to allow re-adding a similarly named section.
+   We also add `File::remove_section_by_id()` to make it possible to remove
+   specific sections.
+ - <csr-id-08c50a47fa901457194539c7db74ad47ab2f8b60/> Properly handle boolean values such that `a` is true but `a=` is false.
+   This is even consistent when no booleans are used, such that `a` has no
+   value as if it is not present, it's only available for booleans which
+   must be specified.
+ - <csr-id-7c585162454c476fe93f032c8a2329cffd7c054f/> Keep track of a severe limitation and prepare tests for fixing it.
+   This also changes behaviour, but merely removes a hack in `Boolean`
+   which considered empty strings true, even though they are supposed to be
+   false.
+ - <csr-id-6c1588fd1a2fa80fd866787cbf4bcc6e5b51abe6/> maintain insertion order of includes on per-section basis at least.
+   Note that git inserts values right after the include directive,
+   'splitting' the section, but we don't do that and insert new values
+   after the section. Probably no issue in practice while keeping
+   our implementation simple.
+ - <csr-id-f7bd2caceb87a179288030e0771da2e4ed6bd1e4/> maintain newline format depending on what's present or use platform default.
+   Previously implicit newlines when adding new sections or keys to
+   sections was always `\n` which isn't correct on windows.
+   
+   Now the newline style is detected and used according to what's present,
+   or in the lack of content, defaults to what's correct for the platform.
+ - <csr-id-0d07ef1aa4a9e238c20249d4ae2ed19e6740308a/> validate incoming conifguration keys when interpreting envirnoment variables.
+ - <csr-id-6b901843cb18b3d31f8b0b84bb9ebbae279aff19/> `Boolean` can use numbers to indicate true or false, drops support for `one` and `zero`.
+ - <csr-id-94dde44e8dd1a0b8d4e11f2627a3f6b345a15989/> `file::MutableSection::remove()` now actually removes keys _and_ values.
+ - <csr-id-048b92531eb877a5a128e702504891bf1e31becf/> `file::MutableMultiValue` escapes input values and maintains key separator specific whitespace.
+ - <csr-id-f911707b455ba6f3800b85f667f91e4d56027b91/> value normalization (via `value::normalize()` handles escape sequences.
+   The latter ones are `\n`, `\t` and `\b` which are the only supported
+   ones in values of git-config files.
+ - <csr-id-44dfec07480cc2ac6fd01674b748cc03af51fed1/> stable sort order for `File::sections_by_name_with_header()`
+ - <csr-id-1ea919d5ff81ab7b01b8201386ef63c7e081b537/> count newlines (for error display) in multi-line values as well
+ - <csr-id-1e71e71c984289f0d7e0a39379ee6728918b7dc5/> auto-normalize string values to support quote removal in case of strings.
+   Related to https://github.com/starship/starship/pull/3883 .
+ - <csr-id-36e2fc0aff4e6aaa35335da90108918882d4cd16/> Use `std::env::var_os()` to avoid potential decode errors
+ - <csr-id-469406dc0d9fece4a06230ef0d8018846202f0ad/> fix usage example in README.md
 
 ### New Features
 
 <csr-id-61af06b905926849abce19677ff4b9ac05d625a3/>
 
-- <csr-id-4b424ab73d20833deb0c674eeeeaaa8cc2358932/> add `File::write_to_filter()` to have a filter select the section to write.
-  This way, one can selectively write sections to a file, based on the section's origin
-  or other meta-data.
-
-  For convenience sake, most mutating methods on `SectionMut` can now be chained as well.
-- <csr-id-3fa86e1d01a75688cd8948a39ba415bcebfef02d/> add `File::set_meta()` to affect what metadata new sections receive.
-  That way it's possible to better control the metadata associated with new sections,
-  given that the config file metadata may not truly reflect its identity anymore since it
-  can be a combination from many different files with various sources.
-- <csr-id-5b9bffe8a5eec738e892224a7e18f98c8430d8a4/> `SectionMut::push_with_comment(key, comment)` to add a new variable with a comment.
-  This is useful for providing more information about a value at hand, especially if it was
-  added programmatically and then shows up in the configuration.
-- <csr-id-e4bf8f0072e60a7a2df94690c8d0b13b1f3038bb/> Add the `Source::EnvOverride` to have a place for 'terminal' overrides.
-  That way environment variables represented via git-configuration
-  can be integrated into git configuration, making clearer what's
-  going to happen even when looking at the configuration via
-  `gix config`.
-
-  The implementation has to be careful though about assureing there
-  is no more specific configuration key, like `http.<URL>.proxy` that
-  would override the one from the environment, which always has
-  the final word.
-- <csr-id-5fa95460db843f7dcfe68002b303b8b7649846dd/> comfort API like `string_by_key(key)` takes a key like `"remote.origin.url"`, add `section_by_key("remote.origin")` as well.
-  That way it's the most comfortable way to query values and very
-  similar to how git does it, too.
-
-  Additionally, sections can be obtained by section key, both mutably and immutably for completeness.
-- <csr-id-7d7bd02d4e0678565f58c5da83fd1ad88c60e911/> read worktree specific configuration of main worktrees.
-  Supporting this is useful when interacting with worktrees that have been
-  created with sparse worktree support, which moves some configuration
-  values into those for the worktree at hand.
-
-  Note that linked worktrees are not supported - for that use
-  `git-repository` instead.
-- <csr-id-aa5d66f60bd6c9ef404ebc120b613e0cf055b2c9/> add `parse::section::header::is_valid_subsection()` function.
-  It can be useful to validate subsection names without having to
-  construct an entire `Header` (which also includes a name).
-- <csr-id-5df2a2a5a9addbda7dcc68b2f8f7f4a48d9720c6/> Add various methods to iterate sections along with their id, and mutate them.
-  As section names are not unique, it was previously not possible to
-  iterate sections and then mutate them as one wouldn't be able to refer
-  to the exact section that was just traversed, after all, there can be
-  many sections named `remote "origin"`.
-
-  With the new methods it's possible to uniquely refer to each section
-  for mutation and removal.
-- <csr-id-9937d0e00df3a523484c7ae2850be2712a1a4c9a/> `File::set_raw_value_filter()` to set values only in sections passing a filter.
-- <csr-id-17455c9d93ad38bfee2560f5a4e60324dee3b4e5/> `File::section_mut_or_create_new_filter()` to allow chosing which sections to add values to.
-- <csr-id-5902f54b93101a6290fcf89f9f13fdbea3678e00/> `File::section_mut_or_create_new(…)` to obtain an existing or new section for mutation.
-- <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
-- <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
-- <csr-id-1bc96bf378d198b012efce9ec9e5b244a91f62bc/> following includes is now non-fatal by default
-  Otherwise it would be relatively easy to fail gitoxide startup,
-  and we want to be closer to the behaviour in git which ignores
-  most of the errors.
-- <csr-id-f9ce1b5411f1ac788f71060ecf785dda9dfd87bf/> `File::from_git_dir()` as comfortable way to instantiate most complete git configuration.
-- <csr-id-14a68a6a78a09f8ae56e30e3b7501de66ef31fdc/> `File` now compares actual content, ignoring whitespace and comments.
-- <csr-id-7dadfd82494d47e36d3f570988eaf3c6b628977f/> `File::new_environment_overrides()` to easily instantiate overrides from the environment.
-- <csr-id-146eeb064822839bc46fd37a247a1b9a84f64e40/> `File::new_globals()` can instantiate non-local configuration with zero-configuration.
-- <csr-id-e701e053fd05850973930be0cefe73e8f3604d40/> `Source::storage_location()` to know where files should be located.
-- <csr-id-fff088485dd5067976cc93d525903b39aafea76a/> `file::ValueMut::(section|into_section_mut)()` to go from value to the owning section.
-  This can be useful if the value was obtained using `raw_value_mut()`.
-- <csr-id-f5f2d9b3fef98d9100d713f9291510fa4aa27867/> `Source::is_in_repository()` to find out if a source is in the repository.
-- <csr-id-91e718f0e116052b64ca436d7c74cea79529e696/> `parse::key` to parse a `remote.origin.url`-like key to identify a value
-- <csr-id-26147a7a61a695eda680808ee4aab44a890b2964/> Add `File::detect_newline_style()`, which does at it says.
-- <csr-id-0ad1c9a5280cc172432b5258e0f79898721bac68/> `File::frontmatter()` and `File::sections_and_postmatter()`.
-- <csr-id-fc7e311b423c5fffb8240d9d0f917ae7139a6133/> `parse::Event::to_bstr_lossy()` to get a glimpse at event content.
-- <csr-id-09966a8ea4eaa3e0805e04188de86dd1bac9f388/> `File::append()` can append one file to another rather losslessly.
-  The loss happens as we, maybe for the wrong reasons, automatically
-  insert newlines where needed which can only be done while we still know
-  the file boundaries.
-- <csr-id-56ae5744e8957e617f3a0ebc4d725846b18d93f8/> `file::Section::meta()` to access a section's metadata.
-- <csr-id-6f97bf0c3e7164855cf5aa53462dbc39c430e03f/> `File::sections()` to obtain an iterator over all sections, in order.
-- <csr-id-5418bc70e67476f8778656f2d577f1f9aa65ffbe/> place spaces around `key = value` pairs, or whatever is used in the source configuration.
-- <csr-id-8118644625dc25b616e5f33c85f5100d600766e4/> proper escaping of value bytes to allow round-tripping after mutation
-- <csr-id-9f59356b4f6a1f5f7f35a62c9fbe4859bf8e8e5f/> whitespace in newly pushed keys is derived from first section value.
-  That way, newly added key-value pairs look like they should assuming
-  all keys have the same indentation as the first key in the section.
-
-  If there is no key, then the default whitespace will be double-tabs
-  like what's commmon in git.
-- <csr-id-db1f34dfb855058ac08e97d4715876b5db712f61/> `File::from_str()` implementation, to support `let config: File = "[core]".parse()?`
-- <csr-id-9157717c2fb143b5decbdf60d18cc2bd99dde775/> whitespace in mutable sections can be finely controlled, and is derived from existing sections
-- <csr-id-ae3895c7882e0a543a44693faee5f760b49b54d7/> `parse::Header::new(…)` with sub-section name validation
-- <csr-id-d087f12eec73626eb327eaacef8ebb3836b02381/> Add `parse::(Event|section::Header|Comment)::write_to(…)`.
-  Now it's possible to serialize these types in a streaming fashion and
-  without arbitrarily enforcing UTF-8 on it
-- <csr-id-5a8f242ee98793e2467e7bc9806f8780b9d320ce/> `serde1` feature to add limited serde support
-- <csr-id-4726bb524c1b0935d35770c907d40a0a16dbb8b5/> `GitConfig::integers()`
-  Get multiple fully validated integer values, with their suffix
-  interpreted and checked for overflow.
-- <csr-id-ae22a4de486676f11469cec84be403903758b48b/> add `GitConfig::integer()`
-  A way to quickly obtain a valid integer with suffixes resolved
-  and overflow checked.
-- <csr-id-bfc263797226d027e04daaf6426e57183773d7c3/> `GitConfig::strings()` for multi-value strings.
-- <csr-id-7c75eac149c6ecb99c3dd7355d76d8d3e8b59cd0/> `GitConfig::path()` for direct access to paths.
-  Very similar to `string()`, but as path, whose query can never fail.
-- <csr-id-dc3dc3b41b5de3ec17429769747bf99bb2bdd03d/> support for `try_value()`, `boolean()` and `string()` access`.
-  Support for a convenient way of knowing if a value does or doesn't exist
-  via `try_value()`, which can only fail if the conversion fails.
-
-  Lastly, `string()` is a special case which doesn't fail as there is
-  no conversion, and `boolean()` allows to obtain a plain boolean value
-  if it was a valid boolean representation.
-- <csr-id-13554f8d21beb241e0fbdeb56b8414957cbee28a/> new hierarchical errors for value lookup
-- <csr-id-031bd2f401199a05d6465c0260ceed3cc849c7ac/> add suppport for android
-  Do not interpolate `~user/` on Android (Termux).
-  There is no meaning of it. It is single user system.
-- <csr-id-e4d6685064ad2b433f8acd3a74b320bf0169a994/> Add `git_config::values::Path` for a typesafe git path
-  Add a `Path` type to the `git_config::values` which
-  can be interpolated according to gits own path interpolation
-  rules.
-- <csr-id-e822f566dcff3f6c784c206dff2fbc5f82d543be/> implement a draft for subsection fetching
-  - introduce method `sections_by_name_with_header` to allow iterating over tuples of
-  section header and section body
+ - <csr-id-4b424ab73d20833deb0c674eeeeaaa8cc2358932/> add `File::write_to_filter()` to have a filter select the section to write.
+   This way, one can selectively write sections to a file, based on the section's origin
+   or other meta-data.
+   
+   For convenience sake, most mutating methods on `SectionMut` can now be chained as well.
+ - <csr-id-3fa86e1d01a75688cd8948a39ba415bcebfef02d/> add `File::set_meta()` to affect what metadata new sections receive.
+   That way it's possible to better control the metadata associated with new sections,
+   given that the config file metadata may not truly reflect its identity anymore since it
+   can be a combination from many different files with various sources.
+ - <csr-id-5b9bffe8a5eec738e892224a7e18f98c8430d8a4/> `SectionMut::push_with_comment(key, comment)` to add a new variable with a comment.
+   This is useful for providing more information about a value at hand, especially if it was
+   added programmatically and then shows up in the configuration.
+ - <csr-id-e4bf8f0072e60a7a2df94690c8d0b13b1f3038bb/> Add the `Source::EnvOverride` to have a place for 'terminal' overrides.
+   That way environment variables represented via git-configuration
+   can be integrated into git configuration, making clearer what's
+   going to happen even when looking at the configuration via
+   `gix config`.
+   
+   The implementation has to be careful though about assureing there
+   is no more specific configuration key, like `http.<URL>.proxy` that
+   would override the one from the environment, which always has
+   the final word.
+ - <csr-id-5fa95460db843f7dcfe68002b303b8b7649846dd/> comfort API like `string_by_key(key)` takes a key like `"remote.origin.url"`, add `section_by_key("remote.origin")` as well.
+   That way it's the most comfortable way to query values and very
+   similar to how git does it, too.
+   
+   Additionally, sections can be obtained by section key, both mutably and immutably for completeness.
+ - <csr-id-7d7bd02d4e0678565f58c5da83fd1ad88c60e911/> read worktree specific configuration of main worktrees.
+   Supporting this is useful when interacting with worktrees that have been
+   created with sparse worktree support, which moves some configuration
+   values into those for the worktree at hand.
+   
+   Note that linked worktrees are not supported - for that use
+   `git-repository` instead.
+ - <csr-id-aa5d66f60bd6c9ef404ebc120b613e0cf055b2c9/> add `parse::section::header::is_valid_subsection()` function.
+   It can be useful to validate subsection names without having to
+   construct an entire `Header` (which also includes a name).
+ - <csr-id-5df2a2a5a9addbda7dcc68b2f8f7f4a48d9720c6/> Add various methods to iterate sections along with their id, and mutate them.
+   As section names are not unique, it was previously not possible to
+   iterate sections and then mutate them as one wouldn't be able to refer
+   to the exact section that was just traversed, after all, there can be
+   many sections named `remote "origin"`.
+   
+   With the new methods it's possible to uniquely refer to each section
+   for mutation and removal.
+ - <csr-id-9937d0e00df3a523484c7ae2850be2712a1a4c9a/> `File::set_raw_value_filter()` to set values only in sections passing a filter.
+ - <csr-id-17455c9d93ad38bfee2560f5a4e60324dee3b4e5/> `File::section_mut_or_create_new_filter()` to allow chosing which sections to add values to.
+ - <csr-id-5902f54b93101a6290fcf89f9f13fdbea3678e00/> `File::section_mut_or_create_new(…)` to obtain an existing or new section for mutation.
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+ - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+ - <csr-id-1bc96bf378d198b012efce9ec9e5b244a91f62bc/> following includes is now non-fatal by default
+   Otherwise it would be relatively easy to fail gitoxide startup,
+   and we want to be closer to the behaviour in git which ignores
+   most of the errors.
+ - <csr-id-f9ce1b5411f1ac788f71060ecf785dda9dfd87bf/> `File::from_git_dir()` as comfortable way to instantiate most complete git configuration.
+ - <csr-id-14a68a6a78a09f8ae56e30e3b7501de66ef31fdc/> `File` now compares actual content, ignoring whitespace and comments.
+ - <csr-id-7dadfd82494d47e36d3f570988eaf3c6b628977f/> `File::new_environment_overrides()` to easily instantiate overrides from the environment.
+ - <csr-id-146eeb064822839bc46fd37a247a1b9a84f64e40/> `File::new_globals()` can instantiate non-local configuration with zero-configuration.
+ - <csr-id-e701e053fd05850973930be0cefe73e8f3604d40/> `Source::storage_location()` to know where files should be located.
+ - <csr-id-fff088485dd5067976cc93d525903b39aafea76a/> `file::ValueMut::(section|into_section_mut)()` to go from value to the owning section.
+   This can be useful if the value was obtained using `raw_value_mut()`.
+ - <csr-id-f5f2d9b3fef98d9100d713f9291510fa4aa27867/> `Source::is_in_repository()` to find out if a source is in the repository.
+ - <csr-id-91e718f0e116052b64ca436d7c74cea79529e696/> `parse::key` to parse a `remote.origin.url`-like key to identify a value
+ - <csr-id-26147a7a61a695eda680808ee4aab44a890b2964/> Add `File::detect_newline_style()`, which does at it says.
+ - <csr-id-0ad1c9a5280cc172432b5258e0f79898721bac68/> `File::frontmatter()` and `File::sections_and_postmatter()`.
+ - <csr-id-fc7e311b423c5fffb8240d9d0f917ae7139a6133/> `parse::Event::to_bstr_lossy()` to get a glimpse at event content.
+ - <csr-id-09966a8ea4eaa3e0805e04188de86dd1bac9f388/> `File::append()` can append one file to another rather losslessly.
+   The loss happens as we, maybe for the wrong reasons, automatically
+   insert newlines where needed which can only be done while we still know
+   the file boundaries.
+ - <csr-id-56ae5744e8957e617f3a0ebc4d725846b18d93f8/> `file::Section::meta()` to access a section's metadata.
+ - <csr-id-6f97bf0c3e7164855cf5aa53462dbc39c430e03f/> `File::sections()` to obtain an iterator over all sections, in order.
+ - <csr-id-5418bc70e67476f8778656f2d577f1f9aa65ffbe/> place spaces around `key = value` pairs, or whatever is used in the source configuration.
+ - <csr-id-8118644625dc25b616e5f33c85f5100d600766e4/> proper escaping of value bytes to allow round-tripping after mutation
+ - <csr-id-9f59356b4f6a1f5f7f35a62c9fbe4859bf8e8e5f/> whitespace in newly pushed keys is derived from first section value.
+   That way, newly added key-value pairs look like they should assuming
+   all keys have the same indentation as the first key in the section.
+   
+   If there is no key, then the default whitespace will be double-tabs
+   like what's commmon in git.
+ - <csr-id-db1f34dfb855058ac08e97d4715876b5db712f61/> `File::from_str()` implementation, to support `let config: File = "[core]".parse()?`
+ - <csr-id-9157717c2fb143b5decbdf60d18cc2bd99dde775/> whitespace in mutable sections can be finely controlled, and is derived from existing sections
+ - <csr-id-ae3895c7882e0a543a44693faee5f760b49b54d7/> `parse::Header::new(…)` with sub-section name validation
+ - <csr-id-d087f12eec73626eb327eaacef8ebb3836b02381/> Add `parse::(Event|section::Header|Comment)::write_to(…)`.
+   Now it's possible to serialize these types in a streaming fashion and
+   without arbitrarily enforcing UTF-8 on it
+ - <csr-id-5a8f242ee98793e2467e7bc9806f8780b9d320ce/> `serde1` feature to add limited serde support
+ - <csr-id-4726bb524c1b0935d35770c907d40a0a16dbb8b5/> `GitConfig::integers()`
+   Get multiple fully validated integer values, with their suffix
+   interpreted and checked for overflow.
+ - <csr-id-ae22a4de486676f11469cec84be403903758b48b/> add `GitConfig::integer()`
+   A way to quickly obtain a valid integer with suffixes resolved
+   and overflow checked.
+ - <csr-id-bfc263797226d027e04daaf6426e57183773d7c3/> `GitConfig::strings()` for multi-value strings.
+ - <csr-id-7c75eac149c6ecb99c3dd7355d76d8d3e8b59cd0/> `GitConfig::path()` for direct access to paths.
+   Very similar to `string()`, but as path, whose query can never fail.
+ - <csr-id-dc3dc3b41b5de3ec17429769747bf99bb2bdd03d/> support for `try_value()`, `boolean()` and `string()` access`.
+   Support for a convenient way of knowing if a value does or doesn't exist
+   via `try_value()`, which can only fail if the conversion fails.
+   
+   Lastly, `string()` is a special case which doesn't fail as there is
+   no conversion, and `boolean()` allows to obtain a plain boolean value
+   if it was a valid boolean representation.
+ - <csr-id-13554f8d21beb241e0fbdeb56b8414957cbee28a/> new hierarchical errors for value lookup
+ - <csr-id-031bd2f401199a05d6465c0260ceed3cc849c7ac/> add suppport for android
+   Do not interpolate `~user/` on Android (Termux).
+   There is no meaning of it. It is single user system.
+ - <csr-id-e4d6685064ad2b433f8acd3a74b320bf0169a994/> Add `git_config::values::Path` for a typesafe git path
+   Add a `Path` type to the `git_config::values` which
+   can be interpolated according to gits own path interpolation
+   rules.
+ - <csr-id-e822f566dcff3f6c784c206dff2fbc5f82d543be/> implement a draft for subsection fetching
+   - introduce method `sections_by_name_with_header` to allow iterating over tuples of
+   section header and section body
 
 ### Documentation
 
-- <csr-id-39ed9eda62b7718d5109135e5ad406fb1fe2978c/> fix typos
+ - <csr-id-39ed9eda62b7718d5109135e5ad406fb1fe2978c/> fix typos
 
 ### Chore
 
@@ -1476,18 +1440,17 @@ A maintenance release without user-facing changes.
 
 ### Changed
 
-- <csr-id-5ad296577d837b0699b4718fa2be3d0978c4e342/> `git-config` now uses `git-config-value`.
-- <csr-id-b04a3465ed20d8f3088e5d3faf11e98e5595f219/> `GitConfig::from_paths(<paths>, …)` accepts more inputs
-  `<paths>` is more flexible and is easier to use.
+ - <csr-id-5ad296577d837b0699b4718fa2be3d0978c4e342/> `git-config` now uses `git-config-value`.
+ - <csr-id-b04a3465ed20d8f3088e5d3faf11e98e5595f219/> `GitConfig::from_paths(<paths>, …)` accepts more inputs
+   `<paths>` is more flexible and is easier to use.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 952 commits contributed to the release over the course of 865 calendar days.
-- 149 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 18 unique issues were worked
-  on: [#198](https://github.com/Byron/gitoxide/issues/198), [#213](https://github.com/Byron/gitoxide/issues/213), [#241](https://github.com/Byron/gitoxide/issues/241), [#254](https://github.com/Byron/gitoxide/issues/254), [#266](https://github.com/Byron/gitoxide/issues/266), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#319](https://github.com/Byron/gitoxide/issues/319), [#331](https://github.com/Byron/gitoxide/issues/331), [#386](https://github.com/Byron/gitoxide/issues/386), [#404](https://github.com/Byron/gitoxide/issues/404), [#436](https://github.com/Byron/gitoxide/issues/436), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#482](https://github.com/Byron/gitoxide/issues/482), [#691](https://github.com/Byron/gitoxide/issues/691), [#737](https://github.com/Byron/gitoxide/issues/737), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
+ - 952 commits contributed to the release over the course of 865 calendar days.
+ - 149 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 18 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#213](https://github.com/Byron/gitoxide/issues/213), [#241](https://github.com/Byron/gitoxide/issues/241), [#254](https://github.com/Byron/gitoxide/issues/254), [#266](https://github.com/Byron/gitoxide/issues/266), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#319](https://github.com/Byron/gitoxide/issues/319), [#331](https://github.com/Byron/gitoxide/issues/331), [#386](https://github.com/Byron/gitoxide/issues/386), [#404](https://github.com/Byron/gitoxide/issues/404), [#436](https://github.com/Byron/gitoxide/issues/436), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#482](https://github.com/Byron/gitoxide/issues/482), [#691](https://github.com/Byron/gitoxide/issues/691), [#737](https://github.com/Byron/gitoxide/issues/737), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
 ### Commit Details
 
@@ -1495,25 +1458,25 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **[#198](https://github.com/Byron/gitoxide/issues/198)**
+ * **[#198](https://github.com/Byron/gitoxide/issues/198)**
     - Maintenance release note to avoid being fully generated ([`56ef363`](https://github.com/Byron/gitoxide/commit/56ef363f0e7a8b9106765d96d0636e38b2bed550))
     - Changlog for git-config ([`abdfe58`](https://github.com/Byron/gitoxide/commit/abdfe588030b0fbdd4d69a73c5739ef4a83e3616))
     - Use correct title for github release to match name of tag ([`90f39ad`](https://github.com/Byron/gitoxide/commit/90f39ad693e0998bc3307bf553fccdc37c8dc0c8))
-* **[#213](https://github.com/Byron/gitoxide/issues/213)**
+ * **[#213](https://github.com/Byron/gitoxide/issues/213)**
     - Refactor ([`e906d37`](https://github.com/Byron/gitoxide/commit/e906d37e0b4e088b7973728db386a23ea7645fc9))
     - Remove environment variable after test passed ([`7a3ff29`](https://github.com/Byron/gitoxide/commit/7a3ff293048dd6bebec492bd79b12d7889fee3a1))
-* **[#241](https://github.com/Byron/gitoxide/issues/241)**
+ * **[#241](https://github.com/Byron/gitoxide/issues/241)**
     - Improve usability of the pack-cache environment variable ([`47d8162`](https://github.com/Byron/gitoxide/commit/47d81629a0bfa2eccf75cbe081de55d80d0abd59))
-* **[#254](https://github.com/Byron/gitoxide/issues/254)**
+ * **[#254](https://github.com/Byron/gitoxide/issues/254)**
     - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
-* **[#266](https://github.com/Byron/gitoxide/issues/266)**
+ * **[#266](https://github.com/Byron/gitoxide/issues/266)**
     - Upgrade dependencies ([`8adf0d8`](https://github.com/Byron/gitoxide/commit/8adf0d80bbd5c4e81ccd0b5363dbce6609a6c90a))
-* **[#298](https://github.com/Byron/gitoxide/issues/298)**
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - Upgrade dependencies ([`b039d39`](https://github.com/Byron/gitoxide/commit/b039d39613bb14d49670c4d8b586f76ffb420d03))
     - Prepare changelog prior to release ([`fc8f52d`](https://github.com/Byron/gitoxide/commit/fc8f52d91c89fdc1130990e4392f151a30d1899c))
     - Support for simple BString powered string values ([`2381c5d`](https://github.com/Byron/gitoxide/commit/2381c5d3b91e3a071c887d9e1e166625977d5830))
     - Minor refactor ([`2f0234c`](https://github.com/Byron/gitoxide/commit/2f0234c05d1a3e1e3b96dff9680189c67cb6c9ff))
-* **[#301](https://github.com/Byron/gitoxide/issues/301)**
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
     - Update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
     - Finished refactoring ([`4163c7f`](https://github.com/Byron/gitoxide/commit/4163c7fe0a98b77998fa263458d06bdeb435996d))
     - Refactor ([`a359cfd`](https://github.com/Byron/gitoxide/commit/a359cfd86ffae9feab11b45e3167fe28f22dbac8))
@@ -1545,11 +1508,11 @@ A maintenance release without user-facing changes.
     - Use `git-path` crate instead of `git_features::path` ([`47e607d`](https://github.com/Byron/gitoxide/commit/47e607dc256a43a3411406c645eb7ff04239dd3a))
     - Make fmt ([`5fc5459`](https://github.com/Byron/gitoxide/commit/5fc5459b17b623726f99846c432a70106464e970))
     - Make fmt ([`50ff7aa`](https://github.com/Byron/gitoxide/commit/50ff7aa7fa86e5e2a94fb15aab86470532ac3f51))
-* **[#319](https://github.com/Byron/gitoxide/issues/319)**
+ * **[#319](https://github.com/Byron/gitoxide/issues/319)**
     - Update changelog prior to release ([`858ec8c`](https://github.com/Byron/gitoxide/commit/858ec8cc25f18c435465baee762def3013743f0b))
     - Adjust docs ([`38c201c`](https://github.com/Byron/gitoxide/commit/38c201c505ce2ea4257cdd0255713154745a330c))
     - An example to illustrate the problem ([`c47e8f8`](https://github.com/Byron/gitoxide/commit/c47e8f8ee8ea79f8f654f6c28e54e0b0b1fff1b6))
-* **[#331](https://github.com/Byron/gitoxide/issues/331)**
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
     - Final documentation review + adjustments prior to release candidate ([`06b86e0`](https://github.com/Byron/gitoxide/commit/06b86e05dd9a712d26456b43c8da0a11870f08df))
     - Refactor ([`4dc6594`](https://github.com/Byron/gitoxide/commit/4dc6594686478d9d6cd09e2ba02048624c3577e7))
     - Exclude particular assertion which fails on the linux CI. ([`5e0f889`](https://github.com/Byron/gitoxide/commit/5e0f889c1edb862d698a2d344a61f12ab3b6ade7))
@@ -1815,13 +1778,13 @@ A maintenance release without user-facing changes.
     - Don't interpolate on Path creation due to missing context ([`a071ce8`](https://github.com/Byron/gitoxide/commit/a071ce8f49cd70802776effbd25777a4e65d036c))
     - Add AsRef and Deref for values::Path; additional assertions ([`0666a35`](https://github.com/Byron/gitoxide/commit/0666a358b3b7aadda504979e543cc2058b478bfe))
     - Add `git_config::values::Path` for a typesafe git path ([`e4d6685`](https://github.com/Byron/gitoxide/commit/e4d6685064ad2b433f8acd3a74b320bf0169a994))
-* **[#386](https://github.com/Byron/gitoxide/issues/386)**
+ * **[#386](https://github.com/Byron/gitoxide/issues/386)**
     - Sketch `Permissions` for git-config ([`8443330`](https://github.com/Byron/gitoxide/commit/8443330b051c109742fe55928e2afd36fc0172fd))
-* **[#404](https://github.com/Byron/gitoxide/issues/404)**
+ * **[#404](https://github.com/Byron/gitoxide/issues/404)**
     - Add test to clarify underscores in sections headers aren't allowed ([`47079d4`](https://github.com/Byron/gitoxide/commit/47079d470e44b1adf515ae4df2bed945b7e91108))
-* **[#436](https://github.com/Byron/gitoxide/issues/436)**
+ * **[#436](https://github.com/Byron/gitoxide/issues/436)**
     - Remove outdated examples ([`cb9529e`](https://github.com/Byron/gitoxide/commit/cb9529e18b222b9fd9f8c1bb0dba8038a6ea1d4b))
-* **[#450](https://github.com/Byron/gitoxide/issues/450)**
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
     - `File::boolean()` now correctly handles implicit bools across sections. ([`839f776`](https://github.com/Byron/gitoxide/commit/839f776454d7a8522c0f2887c90fc41b20576bd9))
     - Be sure to globally order section ids when traversed by name. ([`21a5229`](https://github.com/Byron/gitoxide/commit/21a522902257efb82eeea277d31e0b5ca67d6ef4))
     - `file::SectionMut::push()` now properly creates empty values. ([`7d92c61`](https://github.com/Byron/gitoxide/commit/7d92c61abc2c54f4a64c35b37bcd1843a8d1da9c))
@@ -1841,19 +1804,19 @@ A maintenance release without user-facing changes.
     - Add `File::set_raw_value()` to unconditionally set single values, and make the value itself easier to provide. ([`2b2357e`](https://github.com/Byron/gitoxide/commit/2b2357e9cc54539e0dbe7c0e22802f2b884160d8))
     - `File::section_mut_or_create_new(…)` to obtain an existing or new section for mutation. ([`5902f54`](https://github.com/Byron/gitoxide/commit/5902f54b93101a6290fcf89f9f13fdbea3678e00))
     - `File::set_raw_[multi_]value()` to `::set_existing_raw_[multi_]value`. ([`69ec594`](https://github.com/Byron/gitoxide/commit/69ec5940d3f37eb4dace8f1ed7616b5988984d15))
-* **[#470](https://github.com/Byron/gitoxide/issues/470)**
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
     - Update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
-* **[#482](https://github.com/Byron/gitoxide/issues/482)**
+ * **[#482](https://github.com/Byron/gitoxide/issues/482)**
     - Refactor ([`1ee9918`](https://github.com/Byron/gitoxide/commit/1ee991847a5adeaaeb6e80ae626c28b0ba89e0af))
-* **[#691](https://github.com/Byron/gitoxide/issues/691)**
+ * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - Set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
-* **[#737](https://github.com/Byron/gitoxide/issues/737)**
+ * **[#737](https://github.com/Byron/gitoxide/issues/737)**
     - Add `File::write_to_filter()` to have a filter select the section to write. ([`4b424ab`](https://github.com/Byron/gitoxide/commit/4b424ab73d20833deb0c674eeeeaaa8cc2358932))
     - Add `File::set_meta()` to affect what metadata new sections receive. ([`3fa86e1`](https://github.com/Byron/gitoxide/commit/3fa86e1d01a75688cd8948a39ba415bcebfef02d))
     - `File::section(...)` could panic due to invlid expectation. ([`8836f5a`](https://github.com/Byron/gitoxide/commit/8836f5ada0078febf8aeb0e6b59d0fc4c588bc28))
-* **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
+ * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - Prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`41d57b9`](https://github.com/Byron/gitoxide/commit/41d57b98964094fc1528adb09f69ca824229bf25))
     - Release gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`e313112`](https://github.com/Byron/gitoxide/commit/e31311257bd138b52042dea5fc40c3abab7f269b))
     - Release gix-features v0.26.4, gix-actor v0.17.1, gix-glob v0.5.3, gix-path v0.7.1, gix-quote v0.4.1, gix-attributes v0.8.2, gix-config-value v0.10.1, gix-tempfile v3.0.2, gix-lock v3.0.2, gix-validate v0.7.2, gix-object v0.26.1, gix-ref v0.24.0, gix-sec v0.6.2, gix-config v0.16.1, gix-command v0.2.3, gix-prompt v0.3.2, gix-url v0.13.2, gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`6efd0d3`](https://github.com/Byron/gitoxide/commit/6efd0d31fbeca31ab7319aa2ac97bb31dc4ce055))
@@ -1943,8 +1906,7 @@ A maintenance release without user-facing changes.
     - Comfort API like `string_by_key(key)` takes a key like `"remote.origin.url"`, add `section_by_key("remote.origin")` as well. ([`5fa9546`](https://github.com/Byron/gitoxide/commit/5fa95460db843f7dcfe68002b303b8b7649846dd))
     - Subsections are identified as `&BStr` in entire API. ([`0c98ec8`](https://github.com/Byron/gitoxide/commit/0c98ec8fc7d8cc3195472a04fde4a681f620725f))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
-    - Release git-hash v0.10.0, git-features v0.24.0, git-date v0.3.0, git-actor v0.14.0, git-glob v0.5.0, git-path v0.6.0, git-quote v0.4.0, git-attributes v0.6.0, git-config-value v0.9.0, git-tempfile v3.0.0, git-lock v3.0.0, git-validate v0.7.0, git-object v0.23.0, git-ref v0.20.0, git-sec v0.5.0, git-config v0.12.0, git-command v0.2.0, git-prompt v0.2.0, git-url v0.11.0, git-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, git-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, git-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28
-      crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
+    - Release git-hash v0.10.0, git-features v0.24.0, git-date v0.3.0, git-actor v0.14.0, git-glob v0.5.0, git-path v0.6.0, git-quote v0.4.0, git-attributes v0.6.0, git-config-value v0.9.0, git-tempfile v3.0.0, git-lock v3.0.0, git-validate v0.7.0, git-object v0.23.0, git-ref v0.20.0, git-sec v0.5.0, git-config v0.12.0, git-command v0.2.0, git-prompt v0.2.0, git-url v0.11.0, git-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, git-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, git-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
     - Prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'version2021' ([`0e4462d`](https://github.com/Byron/gitoxide/commit/0e4462df7a5166fe85c23a779462cdca8ee013e8))
     - Read worktree specific configuration of main worktrees. ([`7d7bd02`](https://github.com/Byron/gitoxide/commit/7d7bd02d4e0678565f58c5da83fd1ad88c60e911))
@@ -2091,7 +2053,7 @@ A maintenance release without user-facing changes.
     - Refactor ([`0eb7ced`](https://github.com/Byron/gitoxide/commit/0eb7ced6ec49fe6303659bdcab29952c5cea41bd))
     - Path-interpolation makes `home-dir` configurable. ([`edd2267`](https://github.com/Byron/gitoxide/commit/edd226719cd04a480274cb7d983b6d5d8bfdbb13))
     - Refactor ([`aab9865`](https://github.com/Byron/gitoxide/commit/aab98656ee5c4abf65f79d403c1f0cb36fd0ee88))
-    - Change last test to new simplified symlink setup ([`a40e3c9`](https://github.com/Byron/gitoxide/commit/a40e3c999baf203c92d0e5e53ee61c0032e32e51))
+    - Change last test to new simplified symlink  setup ([`a40e3c9`](https://github.com/Byron/gitoxide/commit/a40e3c999baf203c92d0e5e53ee61c0032e32e51))
     - Refactor ([`67677b0`](https://github.com/Byron/gitoxide/commit/67677b0edfa1faa0c011a225d41d78dbde3c5f15))
     - Assure the IDE doesn't confuse a module with a test ([`7be0b05`](https://github.com/Byron/gitoxide/commit/7be0b05ff3a5bbea9d9712e4d13ee08cf9979861))
     - Refactor ([`1203a14`](https://github.com/Byron/gitoxide/commit/1203a14eba79d335137c96d4ee573739df30b067))
@@ -2467,23 +2429,22 @@ A maintenance release without user-facing changes.
     - Refactor ([`3846bab`](https://github.com/Byron/gitoxide/commit/3846bab8c7ae53e5528388522bf4571260ec4ae6))
     - Very first sketch of types for read-only git config ([`e2a39c9`](https://github.com/Byron/gitoxide/commit/e2a39c96a96b3ec9de519c685fe9caddeb89342c))
     - Stub for git-config crate ([`3539531`](https://github.com/Byron/gitoxide/commit/3539531adb06e8f59609f0a83e8ed94d0864c0a1))
-
 </details>
 
 ## 0.16.0 (2023-02-09)
 
 ### Documentation
 
-- <csr-id-39ed9eda62b7718d5109135e5ad406fb1fe2978c/> fix typos
+ - <csr-id-39ed9eda62b7718d5109135e5ad406fb1fe2978c/> fix typos
 
 ### New Features (BREAKING)
 
-- <csr-id-2faad43d11283ff06381c51d2466307cfb8736ff/> transfer knowledge about configuration and its usage into the type system.
-  That way it's possible to use configuration overrides, even though ultimately being strings,
-  in a type-safe manner and leverage code-completion while at it.
-
-  In that process, we also change `Repository::(committer|Author)()` to return
-  `Option<Result<...>>` to be able to account for date parse errors.
+ - <csr-id-2faad43d11283ff06381c51d2466307cfb8736ff/> transfer knowledge about configuration and its usage into the type system.
+   That way it's possible to use configuration overrides, even though ultimately being strings,
+   in a type-safe manner and leverage code-completion while at it.
+   
+   In that process, we also change `Repository::(committer|Author)()` to return
+   `Option<Result<...>>` to be able to account for date parse errors.
 
 ## 0.15.1 (2023-01-10)
 
@@ -2501,67 +2462,67 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-5b9bffe8a5eec738e892224a7e18f98c8430d8a4/> `SectionMut::push_with_comment(key, comment)` to add a new variable with a comment.
-  This is useful for providing more information about a value at hand, especially if it was
-  added programmatically and then shows up in the configuration.
-- <csr-id-e4bf8f0072e60a7a2df94690c8d0b13b1f3038bb/> Add the `Source::EnvOverride` to have a place for 'terminal' overrides.
-  That way environment variables represented via git-configuration
-  can be integrated into git configuration, making clearer what's
-  going to happen even when looking at the configuration via
-  `gix config`.
-
-  The implementation has to be careful though about assuring there
-  is no more specific configuration key, like `http.<URL>.proxy` that
-  would override the one from the environment, which always has
-  the final word.
-- <csr-id-5fa95460db843f7dcfe68002b303b8b7649846dd/> comfort API like `string_by_key(key)` takes a key like `"remote.origin.url"`, add `section_by_key("remote.origin")` as well.
-  That way it's the most comfortable way to query values and very
-  similar to how git does it, too.
-
-  Additionally, sections can be obtained by section key, both mutably and immutably for completeness.
+ - <csr-id-5b9bffe8a5eec738e892224a7e18f98c8430d8a4/> `SectionMut::push_with_comment(key, comment)` to add a new variable with a comment.
+   This is useful for providing more information about a value at hand, especially if it was
+   added programmatically and then shows up in the configuration.
+ - <csr-id-e4bf8f0072e60a7a2df94690c8d0b13b1f3038bb/> Add the `Source::EnvOverride` to have a place for 'terminal' overrides.
+   That way environment variables represented via git-configuration
+   can be integrated into git configuration, making clearer what's
+   going to happen even when looking at the configuration via
+   `gix config`.
+   
+   The implementation has to be careful though about assuring there
+   is no more specific configuration key, like `http.<URL>.proxy` that
+   would override the one from the environment, which always has
+   the final word.
+ - <csr-id-5fa95460db843f7dcfe68002b303b8b7649846dd/> comfort API like `string_by_key(key)` takes a key like `"remote.origin.url"`, add `section_by_key("remote.origin")` as well.
+   That way it's the most comfortable way to query values and very
+   similar to how git does it, too.
+   
+   Additionally, sections can be obtained by section key, both mutably and immutably for completeness.
 
 ### New Features (BREAKING)
 
-- <csr-id-2b36d99eaf3ed24ce4cb736a3dd48440dc0c73b7/> `File::new_section()` and related now returns their `id` as well.
-  That way it's possible to more easily interact with it later, for instance
-  when one wants to delete it.
+ - <csr-id-2b36d99eaf3ed24ce4cb736a3dd48440dc0c73b7/> `File::new_section()` and related now returns their `id` as well.
+   That way it's possible to more easily interact with it later, for instance
+   when one wants to delete it.
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-0c98ec8fc7d8cc3195472a04fde4a681f620725f/> subsections are identified as `&BStr` in entire API.
-  Technically they can be any value (except for newlines and unescaped double quotes),
-  and these values might be paths and everything that comes with it, like
-  illformed UTF8. In order to be able to represent everything that
-  git can represent, we don't enforce UTF8 anymore for subsection names.
-
-  Note that section names and key names are required to be valid UTF8
-  (and even alphanumeric ascii), which makes illformed UTF8 very unlikely
-  there.
+ - <csr-id-0c98ec8fc7d8cc3195472a04fde4a681f620725f/> subsections are identified as `&BStr` in entire API.
+   Technically they can be any value (except for newlines and unescaped double quotes),
+   and these values might be paths and everything that comes with it, like
+   illformed UTF8. In order to be able to represent everything that
+   git can represent, we don't enforce UTF8 anymore for subsection names.
+   
+   Note that section names and key names are required to be valid UTF8
+   (and even alphanumeric ascii), which makes illformed UTF8 very unlikely
+   there.
 
 ## 0.12.0 (2022-11-21)
 
 ### New Features
 
-- <csr-id-7d7bd02d4e0678565f58c5da83fd1ad88c60e911/> read worktree specific configuration of main worktrees.
-  Supporting this is useful when interacting with worktrees that have been
-  created with sparse worktree support, which moves some configuration
-  values into those for the worktree at hand.
-
-  Note that linked worktrees are not supported - for that use
-  `gix` instead.
+ - <csr-id-7d7bd02d4e0678565f58c5da83fd1ad88c60e911/> read worktree specific configuration of main worktrees.
+   Supporting this is useful when interacting with worktrees that have been
+   created with sparse worktree support, which moves some configuration
+   values into those for the worktree at hand.
+   
+   Note that linked worktrees are not supported - for that use
+   `gix` instead.
 
 ### New Features (BREAKING)
 
-- <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
-  MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
-  This isn't more than a patch release as it should break nobody
-  who is adhering to the MSRV, but let's be careful and mark it
-  breaking.
-
-  Note that `gix-features` and `gix-pack` are still on edition 2018
-  as they make use of a workaround to support (safe) mutable access
-  to non-overlapping entries in a slice which doesn't work anymore
-  in edition 2021.
+ - <csr-id-3d8fa8fef9800b1576beab8a5bc39b821157a5ed/> upgrade edition to 2021 in most crates.
+   MSRV for this is 1.56, and we are now at 1.60 so should be compatible.
+   This isn't more than a patch release as it should break nobody
+   who is adhering to the MSRV, but let's be careful and mark it
+   breaking.
+   
+   Note that `gix-features` and `gix-pack` are still on edition 2018
+   as they make use of a workaround to support (safe) mutable access
+   to non-overlapping entries in a slice which doesn't work anymore
+   in edition 2021.
 
 ## 0.11.0 (2022-11-17)
 
@@ -2571,56 +2532,56 @@ A maintenance release without user-facing changes.
 
 ### Bug Fixes
 
-- <csr-id-839f776454d7a8522c0f2887c90fc41b20576bd9/> `File::boolean()` now correctly handles implicit bools across sections.
-  This means it will return the last implicit value as true, instead of
-  ignoring it to fall back onto an explicit boolean value that might be
-  false.
-- <csr-id-7d92c61abc2c54f4a64c35b37bcd1843a8d1da9c/> `file::SectionMut::push()` now properly creates empty values.
-  Previously, when calling `.push("key", None)`, the resulting internal
-  state would be slightly wrong causing certain invariants and expectations
-  to be unfulfilled even though it might have looked OK to most users.
-
-  Now it will uphold the invariant for empty values, those without an
-  `=` character.
+ - <csr-id-839f776454d7a8522c0f2887c90fc41b20576bd9/> `File::boolean()` now correctly handles implicit bools across sections.
+   This means it will return the last implicit value as true, instead of
+   ignoring it to fall back onto an explicit boolean value that might be
+   false.
+ - <csr-id-7d92c61abc2c54f4a64c35b37bcd1843a8d1da9c/> `file::SectionMut::push()` now properly creates empty values.
+   Previously, when calling `.push("key", None)`, the resulting internal
+   state would be slightly wrong causing certain invariants and expectations
+   to be unfulfilled even though it might have looked OK to most users.
+   
+   Now it will uphold the invariant for empty values, those without an
+   `=` character.
 
 ## 0.9.0 (2022-10-10)
 
 ### New Features
 
-- <csr-id-aa5d66f60bd6c9ef404ebc120b613e0cf055b2c9/> add `parse::section::header::is_valid_subsection()` function.
-  It can be useful to validate subsection names without having to
-  construct an entire `Header` (which also includes a name).
-- <csr-id-5df2a2a5a9addbda7dcc68b2f8f7f4a48d9720c6/> Add various methods to iterate sections along with their id, and mutate them.
-  As section names are not unique, it was previously not possible to
-  iterate sections and then mutate them as one wouldn't be able to refer
-  to the exact section that was just traversed, after all, there can be
-  many sections named `remote "origin"`.
-
-  With the new methods it's possible to uniquely refer to each section
-  for mutation and removal.
+ - <csr-id-aa5d66f60bd6c9ef404ebc120b613e0cf055b2c9/> add `parse::section::header::is_valid_subsection()` function.
+   It can be useful to validate subsection names without having to
+   construct an entire `Header` (which also includes a name).
+ - <csr-id-5df2a2a5a9addbda7dcc68b2f8f7f4a48d9720c6/> Add various methods to iterate sections along with their id, and mutate them.
+   As section names are not unique, it was previously not possible to
+   iterate sections and then mutate them as one wouldn't be able to refer
+   to the exact section that was just traversed, after all, there can be
+   many sections named `remote "origin"`.
+   
+   With the new methods it's possible to uniquely refer to each section
+   for mutation and removal.
 
 ### Bug Fixes
 
-- <csr-id-9c1e639979a9615fd8334ce0e3a809df137776f6/> greatly improve whitespace handling when removing values.
-  Previously, newlines would remain past a value, and whitespace could
-  remain before one.
-
-  Now both are removed to simulate removing an actual line.
-- <csr-id-e533993e8f861ba7a6600aab114ddfecc8a85ee2/> `File::remove_section()` was fixed to allow re-adding a similarly named section.
-  We also add `File::remove_section_by_id()` to make it possible to remove
-  specific sections.
+ - <csr-id-9c1e639979a9615fd8334ce0e3a809df137776f6/> greatly improve whitespace handling when removing values.
+   Previously, newlines would remain past a value, and whitespace could
+   remain before one.
+   
+   Now both are removed to simulate removing an actual line.
+ - <csr-id-e533993e8f861ba7a6600aab114ddfecc8a85ee2/> `File::remove_section()` was fixed to allow re-adding a similarly named section.
+   We also add `File::remove_section_by_id()` to make it possible to remove
+   specific sections.
 
 ## 0.8.0 (2022-09-20)
 
 ### Changed
 
-- <csr-id-5ad296577d837b0699b4718fa2be3d0978c4e342/> `gix-config` now uses `gix-config-value`.
+ - <csr-id-5ad296577d837b0699b4718fa2be3d0978c4e342/> `gix-config` now uses `gix-config-value`.
 
 ### Changed (BREAKING)
 
-- <csr-id-27fb1ce27d2985eb1ee8bee5fffaf759902571fb/> Add `Kind::GitInstallation` for a way to obtain special git-installation configuration paths.
-  Note that these are lazily cached as they call the `git` binary.
-- <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
+ - <csr-id-27fb1ce27d2985eb1ee8bee5fffaf759902571fb/> Add `Kind::GitInstallation` for a way to obtain special git-installation configuration paths.
+   Note that these are lazily cached as they call the `git` binary.
+ - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
 
 ## 0.7.1 (2022-08-28)
 
@@ -2637,33 +2598,33 @@ Maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-9937d0e00df3a523484c7ae2850be2712a1a4c9a/> `File::set_raw_value_filter()` to set values only in sections passing a filter.
-- <csr-id-17455c9d93ad38bfee2560f5a4e60324dee3b4e5/> `File::section_mut_or_create_new_filter()` to allow choosing which sections to add values to.
-- <csr-id-5902f54b93101a6290fcf89f9f13fdbea3678e00/> `File::section_mut_or_create_new(…)` to obtain an existing or new section for mutation.
-- <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
-- <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+ - <csr-id-9937d0e00df3a523484c7ae2850be2712a1a4c9a/> `File::set_raw_value_filter()` to set values only in sections passing a filter.
+ - <csr-id-17455c9d93ad38bfee2560f5a4e60324dee3b4e5/> `File::section_mut_or_create_new_filter()` to allow choosing which sections to add values to.
+ - <csr-id-5902f54b93101a6290fcf89f9f13fdbea3678e00/> `File::section_mut_or_create_new(…)` to obtain an existing or new section for mutation.
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+ - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
 
 ### Bug Fixes
 
-- <csr-id-08c50a47fa901457194539c7db74ad47ab2f8b60/> Properly handle boolean values such that `a` is true but `a=` is false.
-  This is even consistent when no booleans are used, such that `a` has no
-  value as if it is not present, it's only available for booleans which
-  must be specified.
-- <csr-id-7c585162454c476fe93f032c8a2329cffd7c054f/> Keep track of a severe limitation and prepare tests for fixing it.
-  This also changes behaviour, but merely removes a hack in `Boolean`
-  which considered empty strings true, even though they are supposed to be
-  false.
+ - <csr-id-08c50a47fa901457194539c7db74ad47ab2f8b60/> Properly handle boolean values such that `a` is true but `a=` is false.
+   This is even consistent when no booleans are used, such that `a` has no
+   value as if it is not present, it's only available for booleans which
+   must be specified.
+ - <csr-id-7c585162454c476fe93f032c8a2329cffd7c054f/> Keep track of a severe limitation and prepare tests for fixing it.
+   This also changes behaviour, but merely removes a hack in `Boolean`
+   which considered empty strings true, even though they are supposed to be
+   false.
 
 ### Changed (BREAKING)
 
-- <csr-id-2b2357e9cc54539e0dbe7c0e22802f2b884160d8/> Add `File::set_raw_value()` to unconditionally set single values, and make the value itself easier to provide.
+ - <csr-id-2b2357e9cc54539e0dbe7c0e22802f2b884160d8/> Add `File::set_raw_value()` to unconditionally set single values, and make the value itself easier to provide.
 
 ### New Features (BREAKING)
 
-- <csr-id-b6cd6ace412b0c0df4bacbe7ed7ef6608f27909c/> `file::SectionMut::push()` now supports values without key-value separator.
-  These make a difference as those without `=` are considered boolean
-  true.
-  Currently pushing onto a section is the only way to write them.
+ - <csr-id-b6cd6ace412b0c0df4bacbe7ed7ef6608f27909c/> `file::SectionMut::push()` now supports values without key-value separator.
+   These make a difference as those without `=` are considered boolean
+   true.
+   Currently pushing onto a section is the only way to write them.
 
 ### Other (BREAKING)
 
@@ -2684,68 +2645,68 @@ A maintenance release without user facing changes.
 
 ### New Features
 
-- <csr-id-1bc96bf378d198b012efce9ec9e5b244a91f62bc/> following includes is now non-fatal by default
-  Otherwise it would be relatively easy to fail gitoxide startup,
-  and we want to be closer to the behaviour in git which ignores
-  most of the errors.
-- <csr-id-f9ce1b5411f1ac788f71060ecf785dda9dfd87bf/> `File::from_git_dir()` as comfortable way to instantiate most complete git configuration.
-- <csr-id-14a68a6a78a09f8ae56e30e3b7501de66ef31fdc/> `File` now compares actual content, ignoring whitespace and comments.
-- <csr-id-7dadfd82494d47e36d3f570988eaf3c6b628977f/> `File::new_environment_overrides()` to easily instantiate overrides from the environment.
-- <csr-id-146eeb064822839bc46fd37a247a1b9a84f64e40/> `File::new_globals()` can instantiate non-local configuration with zero-configuration.
-- <csr-id-e701e053fd05850973930be0cefe73e8f3604d40/> `Source::storage_location()` to know where files should be located.
-- <csr-id-fff088485dd5067976cc93d525903b39aafea76a/> `file::ValueMut::(section|into_section_mut)()` to go from value to the owning section.
-  This can be useful if the value was obtained using `raw_value_mut()`.
-- <csr-id-f5f2d9b3fef98d9100d713f9291510fa4aa27867/> `Source::is_in_repository()` to find out if a source is in the repository.
-- <csr-id-91e718f0e116052b64ca436d7c74cea79529e696/> `parse::key` to parse a `remote.origin.url`-like key to identify a value
-- <csr-id-26147a7a61a695eda680808ee4aab44a890b2964/> Add `File::detect_newline_style()`, which does at it says.
-- <csr-id-0ad1c9a5280cc172432b5258e0f79898721bac68/> `File::frontmatter()` and `File::sections_and_postmatter()`.
-- <csr-id-fc7e311b423c5fffb8240d9d0f917ae7139a6133/> `parse::Event::to_bstr_lossy()` to get a glimpse at event content.
-- <csr-id-09966a8ea4eaa3e0805e04188de86dd1bac9f388/> `File::append()` can append one file to another rather losslessly.
-  The loss happens as we, maybe for the wrong reasons, automatically
-  insert newlines where needed which can only be done while we still know
-  the file boundaries.
-- <csr-id-56ae5744e8957e617f3a0ebc4d725846b18d93f8/> `file::Section::meta()` to access a section's metadata.
-- <csr-id-6f97bf0c3e7164855cf5aa53462dbc39c430e03f/> `File::sections()` to obtain an iterator over all sections, in order.
-- <csr-id-5418bc70e67476f8778656f2d577f1f9aa65ffbe/> place spaces around `key = value` pairs, or whatever is used in the source configuration.
-- <csr-id-8118644625dc25b616e5f33c85f5100d600766e4/> proper escaping of value bytes to allow round-tripping after mutation
-- <csr-id-9f59356b4f6a1f5f7f35a62c9fbe4859bf8e8e5f/> whitespace in newly pushed keys is derived from first section value.
-  That way, newly added key-value pairs look like they should assuming
-  all keys have the same indentation as the first key in the section.
-
-  If there is no key, then the default whitespace will be double-tabs
-  like what's common in git.
-- <csr-id-db1f34dfb855058ac08e97d4715876b5db712f61/> `File::from_str()` implementation, to support `let config: File = "[core]".parse()?`
-- <csr-id-9157717c2fb143b5decbdf60d18cc2bd99dde775/> whitespace in mutable sections can be finely controlled, and is derived from existing sections
-- <csr-id-ae3895c7882e0a543a44693faee5f760b49b54d7/> `parse::Header::new(…)` with sub-section name validation
-- <csr-id-d087f12eec73626eb327eaacef8ebb3836b02381/> Add `parse::(Event|section::Header|Comment)::write_to(…)`.
-  Now it's possible to serialize these types in a streaming fashion and
-  without arbitrarily enforcing UTF-8 on it
-- <csr-id-5a8f242ee98793e2467e7bc9806f8780b9d320ce/> `serde1` feature to add limited serde support
+ - <csr-id-1bc96bf378d198b012efce9ec9e5b244a91f62bc/> following includes is now non-fatal by default
+   Otherwise it would be relatively easy to fail gitoxide startup,
+   and we want to be closer to the behaviour in git which ignores
+   most of the errors.
+ - <csr-id-f9ce1b5411f1ac788f71060ecf785dda9dfd87bf/> `File::from_git_dir()` as comfortable way to instantiate most complete git configuration.
+ - <csr-id-14a68a6a78a09f8ae56e30e3b7501de66ef31fdc/> `File` now compares actual content, ignoring whitespace and comments.
+ - <csr-id-7dadfd82494d47e36d3f570988eaf3c6b628977f/> `File::new_environment_overrides()` to easily instantiate overrides from the environment.
+ - <csr-id-146eeb064822839bc46fd37a247a1b9a84f64e40/> `File::new_globals()` can instantiate non-local configuration with zero-configuration.
+ - <csr-id-e701e053fd05850973930be0cefe73e8f3604d40/> `Source::storage_location()` to know where files should be located.
+ - <csr-id-fff088485dd5067976cc93d525903b39aafea76a/> `file::ValueMut::(section|into_section_mut)()` to go from value to the owning section.
+   This can be useful if the value was obtained using `raw_value_mut()`.
+ - <csr-id-f5f2d9b3fef98d9100d713f9291510fa4aa27867/> `Source::is_in_repository()` to find out if a source is in the repository.
+ - <csr-id-91e718f0e116052b64ca436d7c74cea79529e696/> `parse::key` to parse a `remote.origin.url`-like key to identify a value
+ - <csr-id-26147a7a61a695eda680808ee4aab44a890b2964/> Add `File::detect_newline_style()`, which does at it says.
+ - <csr-id-0ad1c9a5280cc172432b5258e0f79898721bac68/> `File::frontmatter()` and `File::sections_and_postmatter()`.
+ - <csr-id-fc7e311b423c5fffb8240d9d0f917ae7139a6133/> `parse::Event::to_bstr_lossy()` to get a glimpse at event content.
+ - <csr-id-09966a8ea4eaa3e0805e04188de86dd1bac9f388/> `File::append()` can append one file to another rather losslessly.
+   The loss happens as we, maybe for the wrong reasons, automatically
+   insert newlines where needed which can only be done while we still know
+   the file boundaries.
+ - <csr-id-56ae5744e8957e617f3a0ebc4d725846b18d93f8/> `file::Section::meta()` to access a section's metadata.
+ - <csr-id-6f97bf0c3e7164855cf5aa53462dbc39c430e03f/> `File::sections()` to obtain an iterator over all sections, in order.
+ - <csr-id-5418bc70e67476f8778656f2d577f1f9aa65ffbe/> place spaces around `key = value` pairs, or whatever is used in the source configuration.
+ - <csr-id-8118644625dc25b616e5f33c85f5100d600766e4/> proper escaping of value bytes to allow round-tripping after mutation
+ - <csr-id-9f59356b4f6a1f5f7f35a62c9fbe4859bf8e8e5f/> whitespace in newly pushed keys is derived from first section value.
+   That way, newly added key-value pairs look like they should assuming
+   all keys have the same indentation as the first key in the section.
+   
+   If there is no key, then the default whitespace will be double-tabs
+   like what's common in git.
+ - <csr-id-db1f34dfb855058ac08e97d4715876b5db712f61/> `File::from_str()` implementation, to support `let config: File = "[core]".parse()?`
+ - <csr-id-9157717c2fb143b5decbdf60d18cc2bd99dde775/> whitespace in mutable sections can be finely controlled, and is derived from existing sections
+ - <csr-id-ae3895c7882e0a543a44693faee5f760b49b54d7/> `parse::Header::new(…)` with sub-section name validation
+ - <csr-id-d087f12eec73626eb327eaacef8ebb3836b02381/> Add `parse::(Event|section::Header|Comment)::write_to(…)`.
+   Now it's possible to serialize these types in a streaming fashion and
+   without arbitrarily enforcing UTF-8 on it
+ - <csr-id-5a8f242ee98793e2467e7bc9806f8780b9d320ce/> `serde1` feature to add limited serde support
 
 ### Bug Fixes
 
-- <csr-id-6c1588fd1a2fa80fd866787cbf4bcc6e5b51abe6/> maintain insertion order of includes on per-section basis at least.
-  Note that git inserts values right after the include directive,
-  'splitting' the section, but we don't do that and insert new values
-  after the section. Probably no issue in practice while keeping
-  our implementation simple.
-- <csr-id-f7bd2caceb87a179288030e0771da2e4ed6bd1e4/> maintain newline format depending on what's present or use platform default.
-  Previously implicit newlines when adding new sections or keys to
-  sections was always `\n` which isn't correct on windows.
-
-  Now the newline style is detected and used according to what's present,
-  or in the lack of content, defaults to what's correct for the platform.
-- <csr-id-0d07ef1aa4a9e238c20249d4ae2ed19e6740308a/> validate incoming configuration keys when interpreting environment variables.
-- <csr-id-6b901843cb18b3d31f8b0b84bb9ebbae279aff19/> `Boolean` can use numbers to indicate true or false, drops support for `one` and `zero`.
-- <csr-id-94dde44e8dd1a0b8d4e11f2627a3f6b345a15989/> `file::MutableSection::remove()` now actually removes keys _and_ values.
-- <csr-id-048b92531eb877a5a128e702504891bf1e31becf/> `file::MutableMultiValue` escapes input values and maintains key separator specific whitespace.
-- <csr-id-f911707b455ba6f3800b85f667f91e4d56027b91/> value normalization (via `value::normalize()` handles escape sequences.
-  The latter ones are `\n`, `\t` and `\b` which are the only supported
-  ones in values of gix-config files.
-- <csr-id-44dfec07480cc2ac6fd01674b748cc03af51fed1/> stable sort order for `File::sections_by_name_with_header()`
-- <csr-id-1ea919d5ff81ab7b01b8201386ef63c7e081b537/> count newlines (for error display) in multi-line values as well
-- <csr-id-1e71e71c984289f0d7e0a39379ee6728918b7dc5/> auto-normalize string values to support quote removal in case of strings.
-  Related to https://github.com/starship/starship/pull/3883 .
+ - <csr-id-6c1588fd1a2fa80fd866787cbf4bcc6e5b51abe6/> maintain insertion order of includes on per-section basis at least.
+   Note that git inserts values right after the include directive,
+   'splitting' the section, but we don't do that and insert new values
+   after the section. Probably no issue in practice while keeping
+   our implementation simple.
+ - <csr-id-f7bd2caceb87a179288030e0771da2e4ed6bd1e4/> maintain newline format depending on what's present or use platform default.
+   Previously implicit newlines when adding new sections or keys to
+   sections was always `\n` which isn't correct on windows.
+   
+   Now the newline style is detected and used according to what's present,
+   or in the lack of content, defaults to what's correct for the platform.
+ - <csr-id-0d07ef1aa4a9e238c20249d4ae2ed19e6740308a/> validate incoming configuration keys when interpreting environment variables.
+ - <csr-id-6b901843cb18b3d31f8b0b84bb9ebbae279aff19/> `Boolean` can use numbers to indicate true or false, drops support for `one` and `zero`.
+ - <csr-id-94dde44e8dd1a0b8d4e11f2627a3f6b345a15989/> `file::MutableSection::remove()` now actually removes keys _and_ values.
+ - <csr-id-048b92531eb877a5a128e702504891bf1e31becf/> `file::MutableMultiValue` escapes input values and maintains key separator specific whitespace.
+ - <csr-id-f911707b455ba6f3800b85f667f91e4d56027b91/> value normalization (via `value::normalize()` handles escape sequences.
+   The latter ones are `\n`, `\t` and `\b` which are the only supported
+   ones in values of gix-config files.
+ - <csr-id-44dfec07480cc2ac6fd01674b748cc03af51fed1/> stable sort order for `File::sections_by_name_with_header()`
+ - <csr-id-1ea919d5ff81ab7b01b8201386ef63c7e081b537/> count newlines (for error display) in multi-line values as well
+ - <csr-id-1e71e71c984289f0d7e0a39379ee6728918b7dc5/> auto-normalize string values to support quote removal in case of strings.
+   Related to https://github.com/starship/starship/pull/3883 .
 
 ### Other
 
@@ -2753,140 +2714,140 @@ A maintenance release without user facing changes.
 
 ### Changed (BREAKING)
 
-- <csr-id-17c83d55f8942788aac5eb1bea22a48daa045bf4/> add `File::resolve_includes()` and move its error type to `file::includes`.
-- <csr-id-5221676e28f2b6cc1a7ef1bdd5654b880965f38c/> add `File::from_bytes_owned()` and remove `File::from_path_with_buf()`
-- <csr-id-98d45c2f59863fdee033b38e757cec09593f6892/> remove `File::from_env_paths()`.
-  It's replaced by its more comfortable `new_globals()`.
-- <csr-id-230a523593afcfb8720db965ff56265aaceea772/> untangle `file::init::…` `Option` and `Error` types.
-  This moves types to where they belong which is more specific instead
-  of having a catch-all `Error` and `Options` type.
-- <csr-id-3f3ff11a6ebe9775ee5ae7fc0ec18a94b5b46d61/> rename `parse::Comment::(comment_tag|comment)` to `::tag|text` and `parse::Section::section_header` to `::header`.
-- <csr-id-6f4eea936d64fb9827277c160f989168e7b1dba2/> Associate `file::Metadata` with each `File`.
-  This is the first step towards knowing more about the source of each
-  value to filter them based on some properties.
-
-  This breaks various methods handling the instantiation of configuration
-  files as `file::Metadata` typically has to be provided by the caller
-  now or be associated with each path to read configuration from.
-- <csr-id-b672ed7667a334be3d45c59f4727f12797b340da/> rename `file::SectionBody` to `file::section::Body`.
-- <csr-id-3bea26d7d2a9b5751c6c15e1fa9a924b67e0159e/> Remove `File::sections_by_name_with_header()` as `::sections_by_name()` now returns entire sections.
-- <csr-id-41b3e622ee71943c285eadc518150fc7b6c92361/> create `resolve_includes` options to make space for more options when loading paths.
-- <csr-id-cabc8ef0e31c954642525e7693009a7fe4b4c465/> rename `path::Options` into `path::Context`.
-  It's not an option if it's required context to perform a certain
-  operation.
-- <csr-id-3de0cfd81523e4ba7cc362d8625f85ebf8fd9172/> All accessors in `File` are now using `impl AsRef<str>` where possible for added comfort.
-- <csr-id-3d25fe6c7a52529488fab19c927d64a1bc75838f/> Much more comfortable API `file::*Mut` types thanks to `impl Into/AsRef`.
-- <csr-id-393b392d515661e5c3e60629319fdab771c3d3f0/> Rename `Mutable*` into `$1Mut` for consistency.
-- <csr-id-0a7391a6575f4035c51a46d34fa20c69e9d078e9/> conform APIs of `file::MutableValue` and `file::MutableMultiValue`.
-  There are more renames and removals than worth mentioning here given the
-  current adoption of the crate.
-- <csr-id-83a0922f06081312b79908835dac2b7f4e849bb3/> rename `file::MutableSection::set_leading_space()` to `set_leading_whitespace()`.
-  The corresponding getter was renamed as well to `leading_whitespace()`.
-- <csr-id-219cf7ae0b35b3ac92f97974be52cd022698e01f/> Enforce `parse::section::Header::new()` by making its fields private.
-- <csr-id-4f6cd8cf65c2d8698bffe327a19031c342b229a6/> Add `File::write_to()` and `File::to_bstring()`; remove some `TryFrom` impls.
-  Now `File` can be serialized in a streaming fashion and without the
-  possibility for UTF8 conversion issues.
-
-  Note that `Display` is still implemented with the usual caveats.
-- <csr-id-0e392f81e99c8c0ff29f41b9b86afd57cd99c245/> remove `Integer::to_bstring()` as well as some `TryFrom` impls.
-  Note that it can still display itself like before via
-  `std::fmt::Display`.
-- <csr-id-b22732a2ab17213c4a1020859ec41f25ccabfbfc/> remove `Boolean::to_bstring()` along with a few `From` impls.
-  These were superfluous and aren't useful in practice.
-  Note that serialization is still implemented via `Display`.
-- <csr-id-65c520c4de8187884f87059adf5cef9cbdcd90a2/> allocation free `File::sections_by_name()` and `File::sections_by_name_with_header()`.
-- <csr-id-ac57c4479e7b6867e8b8e71f7cf76de759dc64a2/> `Path::interpolate()` now takes `path::interpolate::Options` instead of three parameters.
-- <csr-id-0915051798dd782b40617a1aa16abd71f6db1175/> remove `String` type in favor of referring to the `File::string()` method.
-  The wrapper had no effect whatsoever except for adding complexity.
-- <csr-id-9cadc6f0cbaad0ac23f5469db2f040aecfbfb82c/> Simplify `Boolean` to be a wrapper around `bool`.
-  Previously it tried hard not to degenerate information, making it a
-  complicated type.
-
-  However, in practice nobody cares about the exact makeup of the boolean,
-  and there is no need to serialize a boolean faithfully either.
-
-  Instead, those who want to set a value just set any value as a string,
-  no need for type safety there, and we take care of escaping values
-  properly on write.
-- <csr-id-703922dd4e1e5b27835298217ff4eb8ef1dc57ce/> Use bitflags for `color::Attribute` instead of `Vec` of enums.
-  This is less wasteful and sufficient for git, so it should be sufficient
-  for us, especially since attributes are indeed a set and declaring
-  one twice has no effect.
-- <csr-id-3fc4ac04f46f869c6e3a94ce4bb8a5737aa0c524/> simplify `Color` API.
-  For now we only parse and serialize for display, but more uses are
-  enabled when needed and trivially.
-- <csr-id-14149eea54e2e8a25ac0ccdb2f6efe624f6eaa22/> remove `parse::Events::from_path` and `File::at`
-  The latter has been replaced with `File::from_path_with_buf(…)` and
-  is a low-level way to load just a single config file, purposefully
-  uncomfortable as it will not resolve includes.
-
-  The initialization API will need some time to stabilize.
-- <csr-id-73adceeae12270c0d470d4b7271c1fd6089d5c2d/> Slim down API surface of `parse::Events`.
-  It's more of a 'dumb' structure now than before, merely present
-  to facilitate typical parsing than something special on its own.
-- <csr-id-2e47167e4a963743494b2df6b0c15800cb876dd0/> remove `File::new()` method in favor of `File::default()`.
-- <csr-id-ea6765093b5475912ba1aa81d4440cbf5dd49fb6/> rename `parse::event::List` to `parse::Events`
-- <csr-id-89f5fca843d999c5bea35fb3fe2a03dc3588f74e/> rename `parse::State` to `parse::event::List`
-- <csr-id-3cdb0890b71e62cfa92b1ed1760c88cb547ec729/> move `value::*` into the crate root, except for `Error` and `normalize_*()`.
-- <csr-id-748d921efd7469d5c19e40ddcb9099e2462e3bbc/> rename `value::parse::Error` to `value::Error`.
-- <csr-id-7e8a22590297f2f4aab76b53be512353637fb651/> rename `value::TrueVariant` to `value::boolean::True`
-- <csr-id-8bcaec0599cf085a73b344f4f53fc023f6e31430/> rename `IntegerSuffix` to `integer::Suffix`
-- <csr-id-d085037ad9c067af7ce3ba3ab6e5d5ddb45b4057/> rename `value::Color(Attribute|Value)` to `value::color::Attribute` and `value::color::Name`.
-- <csr-id-a0f6252343a62b0b55eef02888ac00c09100687a/> Turn `parse::ParseOrIoError` into `parse::state::from_path::Error`
-- <csr-id-b6b31e9c8dd8b3dc4860431069bb1cf5eacd1702/> rename `parse::ParsedComment` into `parse::Comment`
-- <csr-id-239cbfb450a8cddfc5bec1de21f3dc54fab914ce/> rename `parse::Section*` related types.
-  These are now located in `section::*`.
-- <csr-id-60af4c9ecb1b99f21df0e8facc33e5f6fc70c424/> rename `parse::Parser` to `parse::State`.
-  Furthermore, make `State` the entry point for all parsing, removing
-  all free-standing functions that returned a `State`.
-- <csr-id-3724850e0411f1f76e52c6c767fd8cebe8aea0f6/> rename `parser` module to `parse`
-- <csr-id-58b22152a0295998935abb43563e9096589ef53e/> rename `normalize_cow()` to `normalize()` and move all `normalize*` functions from `values` to the `value` module
-- <csr-id-767bedccdae1f3e6faf853d59ecf884a06cc3827/> move `Path` from `values` to `value` module
-- <csr-id-6033f3f93d2356399a661567353a83a044662699/> Move `Boolean` and `String` from `values` into `value` module
-- <csr-id-d4444e18042891b0fe5b9c6e6813fed26df6c560/> move `values::Integer` into `value` module
-- <csr-id-38f31174e8c117af675cdfbc21926133b821ec38/> move `Color` to own `value` module
-- <csr-id-aa630ad6ec2c6306d3307d5c77e272cb24b00ddd/> remove `values::Bytes` - use `values::String` instead.
-  Note that these values are always normalized and it's only possible
-  to get a raw values using the `raw_value()` API.
+ - <csr-id-17c83d55f8942788aac5eb1bea22a48daa045bf4/> add `File::resolve_includes()` and move its error type to `file::includes`.
+ - <csr-id-5221676e28f2b6cc1a7ef1bdd5654b880965f38c/> add `File::from_bytes_owned()` and remove `File::from_path_with_buf()`
+ - <csr-id-98d45c2f59863fdee033b38e757cec09593f6892/> remove `File::from_env_paths()`.
+   It's replaced by its more comfortable `new_globals()`.
+ - <csr-id-230a523593afcfb8720db965ff56265aaceea772/> untangle `file::init::…` `Option` and `Error` types.
+   This moves types to where they belong which is more specific instead
+   of having a catch-all `Error` and `Options` type.
+ - <csr-id-3f3ff11a6ebe9775ee5ae7fc0ec18a94b5b46d61/> rename `parse::Comment::(comment_tag|comment)` to `::tag|text` and `parse::Section::section_header` to `::header`.
+ - <csr-id-6f4eea936d64fb9827277c160f989168e7b1dba2/> Associate `file::Metadata` with each `File`.
+   This is the first step towards knowing more about the source of each
+   value to filter them based on some properties.
+   
+   This breaks various methods handling the instantiation of configuration
+   files as `file::Metadata` typically has to be provided by the caller
+   now or be associated with each path to read configuration from.
+ - <csr-id-b672ed7667a334be3d45c59f4727f12797b340da/> rename `file::SectionBody` to `file::section::Body`.
+ - <csr-id-3bea26d7d2a9b5751c6c15e1fa9a924b67e0159e/> Remove `File::sections_by_name_with_header()` as `::sections_by_name()` now returns entire sections.
+ - <csr-id-41b3e622ee71943c285eadc518150fc7b6c92361/> create `resolve_includes` options to make space for more options when loading paths.
+ - <csr-id-cabc8ef0e31c954642525e7693009a7fe4b4c465/> rename `path::Options` into `path::Context`.
+   It's not an option if it's required context to perform a certain
+   operation.
+ - <csr-id-3de0cfd81523e4ba7cc362d8625f85ebf8fd9172/> All accessors in `File` are now using `impl AsRef<str>` where possible for added comfort.
+ - <csr-id-3d25fe6c7a52529488fab19c927d64a1bc75838f/> Much more comfortable API `file::*Mut` types thanks to `impl Into/AsRef`.
+ - <csr-id-393b392d515661e5c3e60629319fdab771c3d3f0/> Rename `Mutable*` into `$1Mut` for consistency.
+ - <csr-id-0a7391a6575f4035c51a46d34fa20c69e9d078e9/> conform APIs of `file::MutableValue` and `file::MutableMultiValue`.
+   There are more renames and removals than worth mentioning here given the
+   current adoption of the crate.
+ - <csr-id-83a0922f06081312b79908835dac2b7f4e849bb3/> rename `file::MutableSection::set_leading_space()` to `set_leading_whitespace()`.
+   The corresponding getter was renamed as well to `leading_whitespace()`.
+ - <csr-id-219cf7ae0b35b3ac92f97974be52cd022698e01f/> Enforce `parse::section::Header::new()` by making its fields private.
+ - <csr-id-4f6cd8cf65c2d8698bffe327a19031c342b229a6/> Add `File::write_to()` and `File::to_bstring()`; remove some `TryFrom` impls.
+   Now `File` can be serialized in a streaming fashion and without the
+   possibility for UTF8 conversion issues.
+   
+   Note that `Display` is still implemented with the usual caveats.
+ - <csr-id-0e392f81e99c8c0ff29f41b9b86afd57cd99c245/> remove `Integer::to_bstring()` as well as some `TryFrom` impls.
+   Note that it can still display itself like before via
+   `std::fmt::Display`.
+ - <csr-id-b22732a2ab17213c4a1020859ec41f25ccabfbfc/> remove `Boolean::to_bstring()` along with a few `From` impls.
+   These were superfluous and aren't useful in practice.
+   Note that serialization is still implemented via `Display`.
+ - <csr-id-65c520c4de8187884f87059adf5cef9cbdcd90a2/> allocation free `File::sections_by_name()` and `File::sections_by_name_with_header()`.
+ - <csr-id-ac57c4479e7b6867e8b8e71f7cf76de759dc64a2/> `Path::interpolate()` now takes `path::interpolate::Options` instead of three parameters.
+ - <csr-id-0915051798dd782b40617a1aa16abd71f6db1175/> remove `String` type in favor of referring to the `File::string()` method.
+   The wrapper had no effect whatsoever except for adding complexity.
+ - <csr-id-9cadc6f0cbaad0ac23f5469db2f040aecfbfb82c/> Simplify `Boolean` to be a wrapper around `bool`.
+   Previously it tried hard not to degenerate information, making it a
+   complicated type.
+   
+   However, in practice nobody cares about the exact makeup of the boolean,
+   and there is no need to serialize a boolean faithfully either.
+   
+   Instead, those who want to set a value just set any value as a string,
+   no need for type safety there, and we take care of escaping values
+   properly on write.
+ - <csr-id-703922dd4e1e5b27835298217ff4eb8ef1dc57ce/> Use bitflags for `color::Attribute` instead of `Vec` of enums.
+   This is less wasteful and sufficient for git, so it should be sufficient
+   for us, especially since attributes are indeed a set and declaring
+   one twice has no effect.
+ - <csr-id-3fc4ac04f46f869c6e3a94ce4bb8a5737aa0c524/> simplify `Color` API.
+   For now we only parse and serialize for display, but more uses are
+   enabled when needed and trivially.
+ - <csr-id-14149eea54e2e8a25ac0ccdb2f6efe624f6eaa22/> remove `parse::Events::from_path` and `File::at`
+   The latter has been replaced with `File::from_path_with_buf(…)` and
+   is a low-level way to load just a single config file, purposefully
+   uncomfortable as it will not resolve includes.
+   
+   The initialization API will need some time to stabilize.
+ - <csr-id-73adceeae12270c0d470d4b7271c1fd6089d5c2d/> Slim down API surface of `parse::Events`.
+   It's more of a 'dumb' structure now than before, merely present
+   to facilitate typical parsing than something special on its own.
+ - <csr-id-2e47167e4a963743494b2df6b0c15800cb876dd0/> remove `File::new()` method in favor of `File::default()`.
+ - <csr-id-ea6765093b5475912ba1aa81d4440cbf5dd49fb6/> rename `parse::event::List` to `parse::Events`
+ - <csr-id-89f5fca843d999c5bea35fb3fe2a03dc3588f74e/> rename `parse::State` to `parse::event::List`
+ - <csr-id-3cdb0890b71e62cfa92b1ed1760c88cb547ec729/> move `value::*` into the crate root, except for `Error` and `normalize_*()`.
+ - <csr-id-748d921efd7469d5c19e40ddcb9099e2462e3bbc/> rename `value::parse::Error` to `value::Error`.
+ - <csr-id-7e8a22590297f2f4aab76b53be512353637fb651/> rename `value::TrueVariant` to `value::boolean::True`
+ - <csr-id-8bcaec0599cf085a73b344f4f53fc023f6e31430/> rename `IntegerSuffix` to `integer::Suffix`
+ - <csr-id-d085037ad9c067af7ce3ba3ab6e5d5ddb45b4057/> rename `value::Color(Attribute|Value)` to `value::color::Attribute` and `value::color::Name`.
+ - <csr-id-a0f6252343a62b0b55eef02888ac00c09100687a/> Turn `parse::ParseOrIoError` into `parse::state::from_path::Error`
+ - <csr-id-b6b31e9c8dd8b3dc4860431069bb1cf5eacd1702/> rename `parse::ParsedComment` into `parse::Comment`
+ - <csr-id-239cbfb450a8cddfc5bec1de21f3dc54fab914ce/> rename `parse::Section*` related types.
+   These are now located in `section::*`.
+ - <csr-id-60af4c9ecb1b99f21df0e8facc33e5f6fc70c424/> rename `parse::Parser` to `parse::State`.
+   Furthermore, make `State` the entry point for all parsing, removing
+   all free-standing functions that returned a `State`.
+ - <csr-id-3724850e0411f1f76e52c6c767fd8cebe8aea0f6/> rename `parser` module to `parse`
+ - <csr-id-58b22152a0295998935abb43563e9096589ef53e/> rename `normalize_cow()` to `normalize()` and move all `normalize*` functions from `values` to the `value` module
+ - <csr-id-767bedccdae1f3e6faf853d59ecf884a06cc3827/> move `Path` from `values` to `value` module
+ - <csr-id-6033f3f93d2356399a661567353a83a044662699/> Move `Boolean` and `String` from `values` into `value` module
+ - <csr-id-d4444e18042891b0fe5b9c6e6813fed26df6c560/> move `values::Integer` into `value` module
+ - <csr-id-38f31174e8c117af675cdfbc21926133b821ec38/> move `Color` to own `value` module
+ - <csr-id-aa630ad6ec2c6306d3307d5c77e272cb24b00ddd/> remove `values::Bytes` - use `values::String` instead.
+   Note that these values are always normalized and it's only possible
+   to get a raw values using the `raw_value()` API.
 
 ### New Features (BREAKING)
 
-- <csr-id-d003c0f139d61e3bd998a0283a9c7af25a60db02/> Support for `lossy` load mode.
-  There is a lot of breaking changes as `file::from_paths::Options` now
-  became `file::init::Options`, and the same goes for the error type.
-- <csr-id-1ea26d80f392114349d25ebf88a7b260ee822aa1/> add `_filter()` versions to most access methods.
-  That way it's possible to filter values by their origin.
-
-  Note that the `remove_section()` methods now return the entire
-  removed section, not just the body, which yields more information
-  than before including section metadata.
-- <csr-id-cfd974f46d2cbb99e7784a05f5e358fed0d4bcab/> section names are now validated.
-- <csr-id-6ba2f8060768978ad7204e162fb2253ca8843879/> filtering support for `parse::Events`.
-  That way it's possible to construct Files which are not destined to be
-  written back as they only keep events necessary for value access,
-  greatly reducing allocations.
-- <csr-id-311d4b447daf8d4364670382a20901468748d34d/> change mostly internal uses of [u8] to BString/BStr
-- <csr-id-edd226719cd04a480274cb7d983b6d5d8bfdbb13/> Path-interpolation makes `home-dir` configurable.
-  That way the caller has full control over how the environment is used,
-  which also allows more fine-grained control over which config files
-  can be included.
+ - <csr-id-d003c0f139d61e3bd998a0283a9c7af25a60db02/> Support for `lossy` load mode.
+   There is a lot of breaking changes as `file::from_paths::Options` now
+   became `file::init::Options`, and the same goes for the error type.
+ - <csr-id-1ea26d80f392114349d25ebf88a7b260ee822aa1/> add `_filter()` versions to most access methods.
+   That way it's possible to filter values by their origin.
+   
+   Note that the `remove_section()` methods now return the entire
+   removed section, not just the body, which yields more information
+   than before including section metadata.
+ - <csr-id-cfd974f46d2cbb99e7784a05f5e358fed0d4bcab/> section names are now validated.
+ - <csr-id-6ba2f8060768978ad7204e162fb2253ca8843879/> filtering support for `parse::Events`.
+   That way it's possible to construct Files which are not destined to be
+   written back as they only keep events necessary for value access,
+   greatly reducing allocations.
+ - <csr-id-311d4b447daf8d4364670382a20901468748d34d/> change mostly internal uses of [u8] to BString/BStr
+ - <csr-id-edd226719cd04a480274cb7d983b6d5d8bfdbb13/> Path-interpolation makes `home-dir` configurable.
+   That way the caller has full control over how the environment is used,
+   which also allows more fine-grained control over which config files
+   can be included.
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-a93a156655d640ae63ff7c35b0a1f5d67a5ca20f/> Simplify specifying keys when mutating config values.
-- <csr-id-895ce40aabbe6d6af5b681a0d0942303fd6549a2/> `File::rename_section()` with validation of input arguments.
-- <csr-id-4a01d983f54a7713dea523f6032cbf5bb2b9dde8/> improve normalization; assure no extra copies are made on query.
-  We now return our own content, rather than the originals with their
-  lifetimes, meaning we bind lifetimes of returned values to our own
-  `File` instance. This allows them to be referenced more often, and
-  smarter normalization assures we don't copy in the simple cases
-  either.
-
-  More tests were added as well.
-  This is breaking as lifetime changes can cause disruptions, and
-  `values?_as()` was removed as well as it's somewhat duplicate
-  to higher-level APIs and it wasn't tested at all.
-- <csr-id-c9933c0b0f51d21dc8244b2acc33d7dc8a33f6ce/> Remove `gix-config` test utilities from `gix-path`.
+ - <csr-id-a93a156655d640ae63ff7c35b0a1f5d67a5ca20f/> Simplify specifying keys when mutating config values.
+ - <csr-id-895ce40aabbe6d6af5b681a0d0942303fd6549a2/> `File::rename_section()` with validation of input arguments.
+ - <csr-id-4a01d983f54a7713dea523f6032cbf5bb2b9dde8/> improve normalization; assure no extra copies are made on query.
+   We now return our own content, rather than the originals with their
+   lifetimes, meaning we bind lifetimes of returned values to our own
+   `File` instance. This allows them to be referenced more often, and
+   smarter normalization assures we don't copy in the simple cases
+   either.
+   
+   More tests were added as well.
+   This is breaking as lifetime changes can cause disruptions, and
+   `values?_as()` was removed as well as it's somewhat duplicate
+   to higher-level APIs and it wasn't tested at all.
+ - <csr-id-c9933c0b0f51d21dc8244b2acc33d7dc8a33f6ce/> Remove `gix-config` test utilities from `gix-path`.
 
 ### Other (BREAKING)
 
@@ -2899,76 +2860,76 @@ A maintenance release without user facing changes.
 
 ### New Features (BREAKING)
 
-- <csr-id-266d4379e9132fd7dd21e6c8fccb36e125069d6e/> Make `realpath()` easier to use by introducing `realpath_opt()`.
-  That way there is consistency about how many symlinks to follow.
+ - <csr-id-266d4379e9132fd7dd21e6c8fccb36e125069d6e/> Make `realpath()` easier to use by introducing `realpath_opt()`.
+   That way there is consistency about how many symlinks to follow.
 
 ## 0.4.0 (2022-05-21)
 
 ### Changed (BREAKING)
 
-- <csr-id-553f87225363903e6acdb3e7eaa8cc66a91110f1/> `File::len()` -> `File::num_values()`
-  The same is true for `Section::len()` which now is
-  `Section::num_values()`.
+ - <csr-id-553f87225363903e6acdb3e7eaa8cc66a91110f1/> `File::len()` -> `File::num_values()`
+   The same is true for `Section::len()` which now is
+   `Section::num_values()`.
 
 ## 0.3.0 (2022-05-18)
 
 ### Bug Fixes
 
-- <csr-id-36e2fc0aff4e6aaa35335da90108918882d4cd16/> Use `std::env::var_os()` to avoid potential decode errors
+ - <csr-id-36e2fc0aff4e6aaa35335da90108918882d4cd16/> Use `std::env::var_os()` to avoid potential decode errors
 
 ### Changed
 
-- <csr-id-b04a3465ed20d8f3088e5d3faf11e98e5595f219/> `GitConfig::from_paths(<paths>, …)` accepts more inputs
-  `<paths>` is more flexible and is easier to use.
+ - <csr-id-b04a3465ed20d8f3088e5d3faf11e98e5595f219/> `GitConfig::from_paths(<paths>, …)` accepts more inputs
+   `<paths>` is more flexible and is easier to use.
 
 ### New Features
 
-- <csr-id-7c75eac149c6ecb99c3dd7355d76d8d3e8b59cd0/> `GitConfig::path()` for direct access to paths.
-  Very similar to `string()`, but as path, whose query can never fail.
-- <csr-id-031bd2f401199a05d6465c0260ceed3cc849c7ac/> add support for android
-  Do not interpolate `~user/` on Android (Termux).
-  There is no meaning of it. It is single user system.
-- <csr-id-dc3dc3b41b5de3ec17429769747bf99bb2bdd03d/> support for `try_value()`, `boolean()` and `string()` access`.
-  Support for a convenient way of knowing if a value does or doesn't exist
-  via `try_value()`, which can only fail if the conversion fails.
-
-  Lastly, `string()` is a special case which doesn't fail as there is
-  no conversion, and `boolean()` allows to obtain a plain boolean value
-  if it was a valid boolean representation.
-- <csr-id-13554f8d21beb241e0fbdeb56b8414957cbee28a/> new hierarchical errors for value lookup
-- <csr-id-4726bb524c1b0935d35770c907d40a0a16dbb8b5/> `GitConfig::integers()`
-  Get multiple fully validated integer values, with their suffix
-  interpreted and checked for overflow.
-- <csr-id-ae22a4de486676f11469cec84be403903758b48b/> add `GitConfig::integer()`
-  A way to quickly obtain a valid integer with suffixes resolved
-  and overflow checked.
-- <csr-id-bfc263797226d027e04daaf6426e57183773d7c3/> `GitConfig::strings()` for multi-value strings.
+ - <csr-id-7c75eac149c6ecb99c3dd7355d76d8d3e8b59cd0/> `GitConfig::path()` for direct access to paths.
+   Very similar to `string()`, but as path, whose query can never fail.
+ - <csr-id-031bd2f401199a05d6465c0260ceed3cc849c7ac/> add support for android
+   Do not interpolate `~user/` on Android (Termux).
+   There is no meaning of it. It is single user system.
+ - <csr-id-dc3dc3b41b5de3ec17429769747bf99bb2bdd03d/> support for `try_value()`, `boolean()` and `string()` access`.
+   Support for a convenient way of knowing if a value does or doesn't exist
+   via `try_value()`, which can only fail if the conversion fails.
+   
+   Lastly, `string()` is a special case which doesn't fail as there is
+   no conversion, and `boolean()` allows to obtain a plain boolean value
+   if it was a valid boolean representation.
+ - <csr-id-13554f8d21beb241e0fbdeb56b8414957cbee28a/> new hierarchical errors for value lookup
+ - <csr-id-4726bb524c1b0935d35770c907d40a0a16dbb8b5/> `GitConfig::integers()`
+   Get multiple fully validated integer values, with their suffix
+   interpreted and checked for overflow.
+ - <csr-id-ae22a4de486676f11469cec84be403903758b48b/> add `GitConfig::integer()`
+   A way to quickly obtain a valid integer with suffixes resolved
+   and overflow checked.
+ - <csr-id-bfc263797226d027e04daaf6426e57183773d7c3/> `GitConfig::strings()` for multi-value strings.
 
 ### Changed (BREAKING)
 
-- <csr-id-38dfdcf80f9b7368ccaa10f4b78b2129849848d0/> remove `values::*Error` in favor of `value::parse::Error`.
-  This makes it easier to work with errors in practice, we are either
-  interested in the value that failed to parse to try something else
-  or want a nice user message.
-
-  Having one decode error type facilitates that.
-- <csr-id-a98a7a7af69482e9ef63f106184049049939459d/> switch from quickerror to thiserror.
-  This allows for generic types for sources of errors and allows to
-  workaround a limitation with associated type constraints in the MSRV
-  of 1.54.
-
-  Using thiserror makes this work and brings the crate more closely
-  to the rest of the gitoxide crates (which now prefer thiserror over
-  quickerror).
-- <csr-id-a86b2541561674df5dbef4120d3e03483cb80117/> remove all `get_` prefixes from methods
-  That way the API is more idiomatic and fits better into the
-  existing `gitoxide` crates.
-- <csr-id-f9aaac11f0734afbd791132369eb5601bfc7efe9/> use `lookup::Error` and `lookup::existing::Error`
-  Use the newly introduced structured error to replace the 'catch-all'
-  `GitConfigError` while getting closer to naming conventions in other
-  `gitoxide` crates.
-- <csr-id-c7fcb5e1db225aefc3eeab4f29f3fb85c670894a/> `GitConfig::from_paths(…, <option>)` is now owned.
-  The type is `Copy`, so no need to pass it by reference.
+ - <csr-id-38dfdcf80f9b7368ccaa10f4b78b2129849848d0/> remove `values::*Error` in favor of `value::parse::Error`.
+   This makes it easier to work with errors in practice, we are either
+   interested in the value that failed to parse to try something else
+   or want a nice user message.
+   
+   Having one decode error type facilitates that.
+ - <csr-id-a98a7a7af69482e9ef63f106184049049939459d/> switch from quickerror to thiserror.
+   This allows for generic types for sources of errors and allows to
+   workaround a limitation with associated type constraints in the MSRV
+   of 1.54.
+   
+   Using thiserror makes this work and brings the crate more closely
+   to the rest of the gitoxide crates (which now prefer thiserror over
+   quickerror).
+ - <csr-id-a86b2541561674df5dbef4120d3e03483cb80117/> remove all `get_` prefixes from methods
+   That way the API is more idiomatic and fits better into the
+   existing `gitoxide` crates.
+ - <csr-id-f9aaac11f0734afbd791132369eb5601bfc7efe9/> use `lookup::Error` and `lookup::existing::Error`
+   Use the newly introduced structured error to replace the 'catch-all'
+   `GitConfigError` while getting closer to naming conventions in other
+   `gitoxide` crates.
+ - <csr-id-c7fcb5e1db225aefc3eeab4f29f3fb85c670894a/> `GitConfig::from_paths(…, <option>)` is now owned.
+   The type is `Copy`, so no need to pass it by reference.
 
 ## 0.2.1 (2022-04-05)
 
@@ -2983,11 +2944,11 @@ A maintenance release without user facing changes.
 
 ### New Features
 
-- <csr-id-e4d6685064ad2b433f8acd3a74b320bf0169a994/> Add `gix_config::values::Path` for a typesafe git path
-  Add a `Path` type to the `gix_config::values` which
-  can be interpolated according to gits own path interpolation
-  rules.
-- <csr-id-61af06b905926849abce19677ff4b9ac05d625a3/> compatibility with Rust <1.53
+ - <csr-id-e4d6685064ad2b433f8acd3a74b320bf0169a994/> Add `gix_config::values::Path` for a typesafe git path
+   Add a `Path` type to the `gix_config::values` which
+   can be interpolated according to gits own path interpolation
+   rules.
+ - <csr-id-61af06b905926849abce19677ff4b9ac05d625a3/> compatibility with Rust <1.53
 - Respect `include.path` when reading configuration files
 - Support for path interpolation
 
@@ -2999,20 +2960,20 @@ A maintenance release without user facing changes.
 
 ### New Features
 
-- <csr-id-e822f566dcff3f6c784c206dff2fbc5f82d543be/> subsection iteration.
-
-  introduce method `sections_by_name_with_header` to allow iterating over tuples of
-  section header and section body.
+ - <csr-id-e822f566dcff3f6c784c206dff2fbc5f82d543be/> subsection iteration.
+   
+   introduce method `sections_by_name_with_header` to allow iterating over tuples of
+   section header and section body.
 
 ### Bug Fixes
 
-- <csr-id-469406dc0d9fece4a06230ef0d8018846202f0ad/> fix usage example in README.md
+ - <csr-id-469406dc0d9fece4a06230ef0d8018846202f0ad/> fix usage example in README.md
 
 ## 0.1.10 (2022-01-23)
 
 ### New Features
 
-- <csr-id-61af06b905926849abce19677ff4b9ac05d625a3/> compatibility with Rust <1.53
+ - <csr-id-61af06b905926849abce19677ff4b9ac05d625a3/> compatibility with Rust <1.53
 
 ## 0.1.9 (2021-11-29)
 
@@ -3045,9 +3006,9 @@ This is a maintenance release without functional changes.
     - `len`
     - `from_env`
     - `open`
-- `len`
-- `from_env`
-- `open`
+  - `len`
+  - `from_env`
+  - `open`
 
 ### Changed
 
@@ -3060,7 +3021,7 @@ This is a maintenance release without functional changes.
 - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)

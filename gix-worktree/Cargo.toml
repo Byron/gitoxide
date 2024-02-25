@@ -24,11 +24,11 @@ serde = [ "dep:serde", "bstr/serde", "gix-index/serde", "gix-hash/serde", "gix-o
 gix-index = { version = "^0.30.0", path = "../gix-index" }
 gix-fs = { version = "^0.10.0", path = "../gix-fs" }
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
-gix-object = { version = "^0.41.0", path = "../gix-object" }
-gix-glob = { version = "^0.16.0", path = "../gix-glob" }
-gix-path = { version = "^0.10.5", path = "../gix-path" }
-gix-attributes = { version = "^0.22.0", path = "../gix-attributes", optional = true }
-gix-ignore = { version = "^0.11.0", path = "../gix-ignore" }
+gix-object = { version = "^0.41.1", path = "../gix-object" }
+gix-glob = { version = "^0.16.1", path = "../gix-glob" }
+gix-path = { version = "^0.10.6", path = "../gix-path" }
+gix-attributes = { version = "^0.22.1", path = "../gix-attributes", optional = true }
+gix-ignore = { version = "^0.11.1", path = "../gix-ignore" }
 gix-features = { version = "^0.38.0", path = "../gix-features" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

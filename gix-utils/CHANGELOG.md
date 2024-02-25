@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.10 (2024-02-25)
 
 ### New Features
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 16 calendar days.
+ - 13 commits contributed to the release over the course of 16 calendar days.
  - 36 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge pull request #1297 from fbstj/main ([`f458966`](https://github.com/Byron/gitoxide/commit/f45896615c25fad8476a889305c25301d9c9f521))
     - Replace manual impl with TryFrom bounds & default method ([`a0deb06`](https://github.com/Byron/gitoxide/commit/a0deb0631a2160c7076e884144646c26aec12914))
     - Cleanup checked method impls with macro ([`91b1855`](https://github.com/Byron/gitoxide/commit/91b18552417d3b1b73343b1e2afb299ee1c7c667))

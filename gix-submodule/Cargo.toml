@@ -13,11 +13,11 @@ include = ["src/**/*", "LICENSE-*"]
 doctest = false
 
 [dependencies]
-gix-pathspec = { version = "^0.6.0", path = "../gix-pathspec" }
-gix-refspec = { version = "^0.22.0", path = "../gix-refspec" }
+gix-pathspec = { version = "^0.7.0", path = "../gix-pathspec" }
+gix-refspec = { version = "^0.22.1", path = "../gix-refspec" }
 gix-config = { version = "^0.35.0", path = "../gix-config" }
-gix-path = { version = "^0.10.5", path = "../gix-path" }
-gix-url = { version = "^0.27.0", path = "../gix-url" }
+gix-path = { version = "^0.10.6", path = "../gix-path" }
+gix-url = { version = "^0.27.1", path = "../gix-url" }
 
 bstr = { version = "1.5.0", default-features = false }
 thiserror = "1.0.44"

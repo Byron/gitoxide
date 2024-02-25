@@ -16,12 +16,12 @@ gix-trace = { version = "^0.1.7", path = "../gix-trace" }
 gix-index = { version = "^0.30.0", path = "../gix-index" }
 gix-discover = { version = "^0.30.0", path = "../gix-discover" }
 gix-fs = { version = "^0.10.0", path = "../gix-fs" }
-gix-path = { version = "^0.10.4", path = "../gix-path" }
-gix-pathspec = { version = "^0.6.0", path = "../gix-pathspec" }
+gix-path = { version = "^0.10.6", path = "../gix-path" }
+gix-pathspec = { version = "^0.7.0", path = "../gix-pathspec" }
 gix-worktree = { version = "^0.31.0", path = "../gix-worktree", default-features = false }
-gix-object = { version = "^0.41.0", path = "../gix-object" }
-gix-ignore = { version = "^0.11.0", path = "../gix-ignore" }
-gix-utils = { version = "^0.1.9", path = "../gix-utils", features = ["bstr"] }
+gix-object = { version = "^0.41.1", path = "../gix-object" }
+gix-ignore = { version = "^0.11.1", path = "../gix-ignore" }
+gix-utils = { version = "^0.1.10", path = "../gix-utils", features = ["bstr"] }
 
 bstr = { version = "1.5.0", default-features = false }
 thiserror = "1.0.56"

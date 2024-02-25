@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.59.0 (2024-02-25)
 
 ### New Features
 
@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 30 calendar days.
+ - 18 commits contributed to the release over the course of 30 calendar days.
  - 36 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'status' ([`bb48c4c`](https://github.com/Byron/gitoxide/commit/bb48c4ce22650b8c76af3b147e252ebe7cedb205))
     - Empty pathspecs with prefix now are optionally matching the prefix. ([`0b1b44f`](https://github.com/Byron/gitoxide/commit/0b1b44fa79a60ed40a9da154f7487408e6436941))
     - Leave more control to the user when creating pathspecs ([`1e85396`](https://github.com/Byron/gitoxide/commit/1e853961b0254893e277a0e14ee89099bac097f3))
@@ -112,9 +113,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `max-performance-zlib-ng-compat` flag ([`1ba9488`](https://github.com/Byron/gitoxide/commit/1ba9488a7c3737a4b5a15a871108924095c061b2))
     - Add a max-performance-zlib-ng-compat flag ([`cfb06ec`](https://github.com/Byron/gitoxide/commit/cfb06ec695f1926778c78362cc6cd6a8f48f7e84))
 </details>
-
-<csr-unknown>
-zlib-ng-compatzlib-stockparallel-walkdir<csr-unknown/>
 
 ## 0.57.1 (2023-12-30)
 

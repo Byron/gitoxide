@@ -20,10 +20,10 @@ serde= ["dep:serde", "gix-hash/serde", "gix-object/serde", "gix-pack/serde"]
 [dependencies]
 gix-features = { version = "^0.38.0", path = "../gix-features", features = ["rustsha1", "walkdir", "zlib", "crc32" ] }
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
-gix-date = { version = "^0.8.3", path = "../gix-date" }
-gix-path = { version = "^0.10.5", path = "../gix-path" }
-gix-quote = { version = "^0.4.10", path = "../gix-quote" }
-gix-object = { version = "^0.41.0", path = "../gix-object" }
+gix-date = { version = "^0.8.4", path = "../gix-date" }
+gix-path = { version = "^0.10.6", path = "../gix-path" }
+gix-quote = { version = "^0.4.11", path = "../gix-quote" }
+gix-object = { version = "^0.41.1", path = "../gix-object" }
 gix-pack = { version = "^0.48.0", path = "../gix-pack", default-features = false }
 gix-fs = { version = "^0.10.0", path = "../gix-fs" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

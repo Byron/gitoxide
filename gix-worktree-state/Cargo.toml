@@ -18,11 +18,11 @@ gix-worktree = { version = "^0.31.0", path = "../gix-worktree", default-features
 gix-index = { version = "^0.30.0", path = "../gix-index" }
 gix-fs = { version = "^0.10.0", path = "../gix-fs" }
 gix-hash = { version = "^0.14.1", path = "../gix-hash" }
-gix-object = { version = "^0.41.0", path = "../gix-object" }
-gix-glob = { version = "^0.16.0", path = "../gix-glob" }
-gix-path = { version = "^0.10.5", path = "../gix-path" }
+gix-object = { version = "^0.41.1", path = "../gix-object" }
+gix-glob = { version = "^0.16.1", path = "../gix-glob" }
+gix-path = { version = "^0.10.6", path = "../gix-path" }
 gix-features = { version = "^0.38.0", path = "../gix-features" }
-gix-filter = { version = "^0.9.0", path = "../gix-filter" }
+gix-filter = { version = "^0.10.0", path = "../gix-filter" }
 
 io-close = "0.3.7"
 thiserror = "1.0.26"

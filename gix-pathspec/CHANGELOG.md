@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.7.0 (2024-02-25)
 
 ### New Features
 
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 30 calendar days.
+ - 12 commits contributed to the release over the course of 30 calendar days.
  - 36 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'status' ([`bb48c4c`](https://github.com/Byron/gitoxide/commit/bb48c4ce22650b8c76af3b147e252ebe7cedb205))
     - Assure that `..` patterns don't end up being `.` that matches nothing ([`5f21e24`](https://github.com/Byron/gitoxide/commit/5f21e24a3d8c98e726d822d2961978d729e66e43))
     - Add `Search::prefix_directory()` and `Search::longest_common_directory()`. ([`57f0a24`](https://github.com/Byron/gitoxide/commit/57f0a24d78ce43b69631e05688cc7ac900cfe1cb))

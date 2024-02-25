@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.36.0 (2024-02-25)
 
 ### New Features
 
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 28 commits contributed to the release over the course of 57 calendar days.
+ - 29 commits contributed to the release over the course of 57 calendar days.
  - 58 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'status' ([`d53504a`](https://github.com/Byron/gitoxide/commit/d53504a1fad41cec7b6ca2a4abb7f185d8941e3f))
     - Adapt to changes in `gix-dir` ([`aa7c190`](https://github.com/Byron/gitoxide/commit/aa7c1908b82e3e23859a4c663faa40ec54611919))
     - Add `gix clean --patterns-for-entries|-m` to help with wildcards. ([`9863d75`](https://github.com/Byron/gitoxide/commit/9863d75147445d3a598fe1339d88c353850a5984))

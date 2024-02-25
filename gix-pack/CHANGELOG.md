@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.48.0 (2024-02-25)
 
 A maintenance release without user-facing changes.
 
@@ -13,16 +13,16 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 9 commits contributed to the release over the course of 30 calendar days.
-- 36 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 10 commits contributed to the release over the course of 30 calendar days.
+ - 36 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -30,7 +30,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Thanks clippy ([`13d5602`](https://github.com/Byron/gitoxide/commit/13d5602faa58aa6f520ebc6003ed54bc9c844f2b))
     - Merge branch 'tempfile-permissions' ([`7b44c7f`](https://github.com/Byron/gitoxide/commit/7b44c7ff1dc0b8875214d2673c7f52948cf04ff0))
     - Release gix-tempfile v13.1.0, gix-lock v13.1.0, safety bump 12 crates ([`8430442`](https://github.com/Byron/gitoxide/commit/84304427dfe4d170c7732161b126961719f70059))
@@ -40,7 +41,6 @@ A maintenance release without user-facing changes.
     - Use chunks_exact where possible ([`2482023`](https://github.com/Byron/gitoxide/commit/24820232f07ae55c80d95470228cc9e874830487))
     - Handle OOM when copying to buffers ([`0be338f`](https://github.com/Byron/gitoxide/commit/0be338fdf80a11877599545cfa1b215092ce9afb))
     - Release gix-path v0.10.5 ([`b8cba96`](https://github.com/Byron/gitoxide/commit/b8cba96ce57f8b6b0067d6a8cf3e37eaf280a238))
-
 </details>
 
 ## 0.47.0 (2024-01-20)
@@ -51,10 +51,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 11 commits contributed to the release over the course of 16 calendar days.
-- 20 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 1 unique issue was worked on: [#1231](https://github.com/Byron/gitoxide/issues/1231)
+ - 11 commits contributed to the release over the course of 16 calendar days.
+ - 20 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1231](https://github.com/Byron/gitoxide/issues/1231)
 
 ### Commit Details
 
@@ -62,11 +62,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **[#1231](https://github.com/Byron/gitoxide/issues/1231)**
+ * **[#1231](https://github.com/Byron/gitoxide/issues/1231)**
     - Improve usage of `unsafe` ([`4017e69`](https://github.com/Byron/gitoxide/commit/4017e6934f7a68456c62bca78ecabc9c9151e843))
-* **Uncategorized**
-    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0,
-      gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
+ * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
     - Release gix-trace v0.1.7, gix-features v0.37.2, gix-commitgraph v0.23.2, gix-traverse v0.36.2, gix-index v0.28.2 ([`b6c04c8`](https://github.com/Byron/gitoxide/commit/b6c04c87b426bf36a059df8dc52b56d384b27b79))
     - Merge pull request #1248 from joshtriplett/tyop ([`39f35da`](https://github.com/Byron/gitoxide/commit/39f35da390bc46005d0374b9bf4e7106fc1bd0ec))
@@ -76,7 +75,6 @@ A maintenance release without user-facing changes.
     - Properly track safety invariants ([`6587eea`](https://github.com/Byron/gitoxide/commit/6587eea0043423320d64c806ed226dba1e1c32f0))
     - Demote `ItemSliceMut::get_mut()` bound-check to debug-code only. ([`911c05f`](https://github.com/Byron/gitoxide/commit/911c05f7c714511a5eb4228ba41096ff1047cf71))
     - Make ItemSliceSync::get_mut() check that the index is in range ([`ef21617`](https://github.com/Byron/gitoxide/commit/ef21617941d9faa6679269fb9bafd6ac097fefb9))
-
 </details>
 
 ## 0.46.1 (2023-12-30)
@@ -96,9 +94,9 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -106,12 +104,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.8.3, gix-hash v0.14.1, gix-trace v0.1.6, gix-features v0.37.1, gix-actor v0.29.1, gix-validate v0.8.3, gix-object v0.40.1, gix-path v0.10.3, gix-glob v0.15.1, gix-quote v0.4.10, gix-attributes v0.21.1, gix-command v0.3.2, gix-packetline-blocking v0.17.2, gix-utils v0.1.8, gix-filter v0.8.1, gix-fs v0.9.1, gix-chunk v0.4.7, gix-commitgraph v0.23.1, gix-hashtable v0.5.1, gix-revwalk v0.11.1, gix-traverse v0.36.1, gix-worktree-stream v0.8.1, gix-archive v0.8.1, gix-config-value v0.14.3, gix-tempfile v12.0.1, gix-lock v12.0.1, gix-ref v0.40.1, gix-sec v0.10.3, gix-config v0.33.1, gix-prompt v0.8.2, gix-url v0.26.1, gix-credentials v0.23.1, gix-ignore v0.10.1, gix-bitmap v0.2.10, gix-index v0.28.1, gix-worktree v0.29.1, gix-diff v0.39.1, gix-discover v0.28.1, gix-macros v0.1.3, gix-mailmap v0.21.1, gix-negotiate v0.11.1, gix-pack v0.46.1, gix-odb v0.56.1,
-      gix-pathspec v0.5.1, gix-packetline v0.17.2, gix-transport v0.40.1, gix-protocol v0.43.1, gix-revision v0.25.1, gix-refspec v0.21.1, gix-status v0.4.1, gix-submodule v0.7.1, gix-worktree-state v0.6.1, gix v0.57.1 ([`972241f`](https://github.com/Byron/gitoxide/commit/972241f1904944e8b6e84c6aa1649a49be7a85c3))
+ * **Uncategorized**
+    - Release gix-date v0.8.3, gix-hash v0.14.1, gix-trace v0.1.6, gix-features v0.37.1, gix-actor v0.29.1, gix-validate v0.8.3, gix-object v0.40.1, gix-path v0.10.3, gix-glob v0.15.1, gix-quote v0.4.10, gix-attributes v0.21.1, gix-command v0.3.2, gix-packetline-blocking v0.17.2, gix-utils v0.1.8, gix-filter v0.8.1, gix-fs v0.9.1, gix-chunk v0.4.7, gix-commitgraph v0.23.1, gix-hashtable v0.5.1, gix-revwalk v0.11.1, gix-traverse v0.36.1, gix-worktree-stream v0.8.1, gix-archive v0.8.1, gix-config-value v0.14.3, gix-tempfile v12.0.1, gix-lock v12.0.1, gix-ref v0.40.1, gix-sec v0.10.3, gix-config v0.33.1, gix-prompt v0.8.2, gix-url v0.26.1, gix-credentials v0.23.1, gix-ignore v0.10.1, gix-bitmap v0.2.10, gix-index v0.28.1, gix-worktree v0.29.1, gix-diff v0.39.1, gix-discover v0.28.1, gix-macros v0.1.3, gix-mailmap v0.21.1, gix-negotiate v0.11.1, gix-pack v0.46.1, gix-odb v0.56.1, gix-pathspec v0.5.1, gix-packetline v0.17.2, gix-transport v0.40.1, gix-protocol v0.43.1, gix-revision v0.25.1, gix-refspec v0.21.1, gix-status v0.4.1, gix-submodule v0.7.1, gix-worktree-state v0.6.1, gix v0.57.1 ([`972241f`](https://github.com/Byron/gitoxide/commit/972241f1904944e8b6e84c6aa1649a49be7a85c3))
     - Merge branch 'msrv' ([`8c492d7`](https://github.com/Byron/gitoxide/commit/8c492d7b7e6e5d520b1e3ffeb489eeb88266aa75))
     - Change `rust-version` manifest field back to 1.65. ([`3bd09ef`](https://github.com/Byron/gitoxide/commit/3bd09ef120945a9669321ea856db4079a5dab930))
-
 </details>
 
 ## 0.46.0 (2023-12-29)
@@ -127,10 +123,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 9 commits contributed to the release over the course of 19 calendar days.
-- 22 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 9 commits contributed to the release over the course of 19 calendar days.
+ - 22 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -138,9 +134,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.8.2, gix-hash v0.14.0, gix-trace v0.1.5, gix-features v0.37.0, gix-actor v0.29.0, gix-validate v0.8.2, gix-object v0.40.0, gix-path v0.10.2, gix-glob v0.15.0, gix-quote v0.4.9, gix-attributes v0.21.0, gix-command v0.3.1, gix-packetline-blocking v0.17.1, gix-utils v0.1.7, gix-filter v0.8.0, gix-fs v0.9.0, gix-chunk v0.4.6, gix-commitgraph v0.23.0, gix-hashtable v0.5.0, gix-revwalk v0.11.0, gix-traverse v0.36.0, gix-worktree-stream v0.8.0, gix-archive v0.8.0, gix-config-value v0.14.2, gix-tempfile v12.0.0, gix-lock v12.0.0, gix-ref v0.40.0, gix-sec v0.10.2, gix-config v0.33.0, gix-prompt v0.8.1, gix-url v0.26.0, gix-credentials v0.23.0, gix-ignore v0.10.0, gix-bitmap v0.2.9, gix-index v0.28.0, gix-worktree v0.29.0, gix-diff v0.39.0, gix-discover v0.28.0, gix-macros v0.1.2, gix-mailmap v0.21.0, gix-negotiate v0.11.0, gix-pack v0.46.0, gix-odb v0.56.0, gix-pathspec
-      v0.5.0, gix-packetline v0.17.1, gix-transport v0.40.0, gix-protocol v0.43.0, gix-revision v0.25.0, gix-refspec v0.21.0, gix-status v0.4.0, gix-submodule v0.7.0, gix-worktree-state v0.6.0, gix v0.57.0, gix-fsck v0.2.0, gitoxide-core v0.35.0, gitoxide v0.33.0, safety bump 40 crates ([`e1aae19`](https://github.com/Byron/gitoxide/commit/e1aae191d7421c748913c92e2c5883274331dd20))
+ * **Uncategorized**
+    - Release gix-date v0.8.2, gix-hash v0.14.0, gix-trace v0.1.5, gix-features v0.37.0, gix-actor v0.29.0, gix-validate v0.8.2, gix-object v0.40.0, gix-path v0.10.2, gix-glob v0.15.0, gix-quote v0.4.9, gix-attributes v0.21.0, gix-command v0.3.1, gix-packetline-blocking v0.17.1, gix-utils v0.1.7, gix-filter v0.8.0, gix-fs v0.9.0, gix-chunk v0.4.6, gix-commitgraph v0.23.0, gix-hashtable v0.5.0, gix-revwalk v0.11.0, gix-traverse v0.36.0, gix-worktree-stream v0.8.0, gix-archive v0.8.0, gix-config-value v0.14.2, gix-tempfile v12.0.0, gix-lock v12.0.0, gix-ref v0.40.0, gix-sec v0.10.2, gix-config v0.33.0, gix-prompt v0.8.1, gix-url v0.26.0, gix-credentials v0.23.0, gix-ignore v0.10.0, gix-bitmap v0.2.9, gix-index v0.28.0, gix-worktree v0.29.0, gix-diff v0.39.0, gix-discover v0.28.0, gix-macros v0.1.2, gix-mailmap v0.21.0, gix-negotiate v0.11.0, gix-pack v0.46.0, gix-odb v0.56.0, gix-pathspec v0.5.0, gix-packetline v0.17.1, gix-transport v0.40.0, gix-protocol v0.43.0, gix-revision v0.25.0, gix-refspec v0.21.0, gix-status v0.4.0, gix-submodule v0.7.0, gix-worktree-state v0.6.0, gix v0.57.0, gix-fsck v0.2.0, gitoxide-core v0.35.0, gitoxide v0.33.0, safety bump 40 crates ([`e1aae19`](https://github.com/Byron/gitoxide/commit/e1aae191d7421c748913c92e2c5883274331dd20))
     - Prepare changelogs of next release ([`e78a92b`](https://github.com/Byron/gitoxide/commit/e78a92bfeda168b2f35bb7ba9a94175cdece12f2))
     - Merge branch 'maintenance' ([`4454c9d`](https://github.com/Byron/gitoxide/commit/4454c9d66c32a1de75a66639016c73edbda3bd34))
     - Upgrade MSRV to v1.70 ([`aea89c3`](https://github.com/Byron/gitoxide/commit/aea89c3ad52f1a800abb620e9a4701bdf904ff7d))
@@ -149,29 +144,28 @@ A maintenance release without user-facing changes.
     - Merge branch 'archive-handling' ([`7549559`](https://github.com/Byron/gitoxide/commit/7549559fcbf42249939f41fd7aa34b4449eb1fec))
     - Check all git-lfs managed files into the repository ([`35439de`](https://github.com/Byron/gitoxide/commit/35439defd2d71779d4b3795b7652cde18ff11150))
     - Release gix-hash v0.13.3, gix-index v0.27.1 ([`98b08f4`](https://github.com/Byron/gitoxide/commit/98b08f4d0d9237be0e0c2caa9bf5c13ae8bbf9d8))
-
 </details>
 
 ## 0.45.0 (2023-12-06)
 
 ### Changed (BREAKING)
 
-- <csr-id-d6e720146c633bdc5400425b6097a3f5de93a51b/> Use `gix-object::Find` trait
+ - <csr-id-d6e720146c633bdc5400425b6097a3f5de93a51b/> Use `gix-object::Find` trait
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 29 commits contributed to the release over the course of 46 calendar days.
-- 54 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 29 commits contributed to the release over the course of 46 calendar days.
+ - 54 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -179,10 +173,9 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0 ([`d3fd11e`](https://github.com/Byron/gitoxide/commit/d3fd11ec3783843d4e49081e1d14359ed9714b5f))
-    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec
-      v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
+    - Release gix-date v0.8.1, gix-hash v0.13.2, gix-trace v0.1.4, gix-features v0.36.1, gix-actor v0.28.1, gix-validate v0.8.1, gix-object v0.39.0, gix-path v0.10.1, gix-glob v0.14.1, gix-quote v0.4.8, gix-attributes v0.20.1, gix-command v0.3.0, gix-packetline-blocking v0.17.0, gix-utils v0.1.6, gix-filter v0.7.0, gix-fs v0.8.1, gix-chunk v0.4.5, gix-commitgraph v0.22.1, gix-hashtable v0.4.1, gix-revwalk v0.10.0, gix-traverse v0.35.0, gix-worktree-stream v0.7.0, gix-archive v0.7.0, gix-config-value v0.14.1, gix-tempfile v11.0.1, gix-lock v11.0.1, gix-ref v0.39.0, gix-sec v0.10.1, gix-config v0.32.0, gix-prompt v0.8.0, gix-url v0.25.2, gix-credentials v0.22.0, gix-ignore v0.9.1, gix-bitmap v0.2.8, gix-index v0.27.0, gix-worktree v0.28.0, gix-diff v0.38.0, gix-discover v0.27.0, gix-macros v0.1.1, gix-mailmap v0.20.1, gix-negotiate v0.10.0, gix-pack v0.45.0, gix-odb v0.55.0, gix-pathspec v0.4.1, gix-packetline v0.17.0, gix-transport v0.39.0, gix-protocol v0.42.0, gix-revision v0.24.0, gix-refspec v0.20.0, gix-status v0.3.0, gix-submodule v0.6.0, gix-worktree-state v0.5.0, gix v0.56.0, gix-fsck v0.1.0, gitoxide-core v0.34.0, gitoxide v0.32.0, safety bump 27 crates ([`55d386a`](https://github.com/Byron/gitoxide/commit/55d386a2448aba1dd22c73fb63b3fd5b3a8401c9))
     - Prepare changelogs prior to release ([`d3dcbe5`](https://github.com/Byron/gitoxide/commit/d3dcbe5c4e3a004360d02fbfb74a8fad52f19b5e))
     - J fmt ([`51c7abc`](https://github.com/Byron/gitoxide/commit/51c7abc65f368b1b2bd3d82473793d3cd4fcbad5))
     - Merge pull request #1137 from martinvonz/push-mruzqpwzzwmy ([`115c993`](https://github.com/Byron/gitoxide/commit/115c993f7919b4f7edcf04e92bb8293957c028a5))
@@ -210,7 +203,6 @@ A maintenance release without user-facing changes.
     - Use `gix-object::Find` trait ([`d6e7201`](https://github.com/Byron/gitoxide/commit/d6e720146c633bdc5400425b6097a3f5de93a51b))
     - Merge branch 'size-optimization' ([`c0e72fb`](https://github.com/Byron/gitoxide/commit/c0e72fbadc0a494f47a110aebb46462d7b9f5664))
     - Remove CHANGELOG.md from all packages ([`b65a80b`](https://github.com/Byron/gitoxide/commit/b65a80b05c9372e752e7e67fcc5c073f71da164a))
-
 </details>
 
 ## 0.44.0 (2023-10-12)
@@ -221,16 +213,16 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 5 commits contributed to the release over the course of 13 calendar days.
-- 17 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 5 commits contributed to the release over the course of 13 calendar days.
+ - 17 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -238,14 +230,12 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37
-      crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
+ * **Uncategorized**
+    - Release gix-hash v0.13.1, gix-features v0.36.0, gix-actor v0.28.0, gix-object v0.38.0, gix-glob v0.14.0, gix-attributes v0.20.0, gix-command v0.2.10, gix-filter v0.6.0, gix-fs v0.8.0, gix-commitgraph v0.22.0, gix-revwalk v0.9.0, gix-traverse v0.34.0, gix-worktree-stream v0.6.0, gix-archive v0.6.0, gix-tempfile v11.0.0, gix-lock v11.0.0, gix-ref v0.38.0, gix-config v0.31.0, gix-url v0.25.0, gix-credentials v0.21.0, gix-diff v0.37.0, gix-discover v0.26.0, gix-ignore v0.9.0, gix-index v0.26.0, gix-mailmap v0.20.0, gix-negotiate v0.9.0, gix-pack v0.44.0, gix-odb v0.54.0, gix-pathspec v0.4.0, gix-packetline v0.16.7, gix-transport v0.37.0, gix-protocol v0.41.0, gix-revision v0.23.0, gix-refspec v0.19.0, gix-worktree v0.27.0, gix-status v0.2.0, gix-submodule v0.5.0, gix-worktree-state v0.4.0, gix v0.55.0, safety bump 37 crates ([`68e5432`](https://github.com/Byron/gitoxide/commit/68e54326e527a55dd5b5079921fc251615833040))
     - Prepare changelogs prior to release ([`1347a54`](https://github.com/Byron/gitoxide/commit/1347a54f84599d8f0aa935d6e64b16c2298d25cf))
     - Thanks clippy ([`345712d`](https://github.com/Byron/gitoxide/commit/345712dcdfddcccc630bbfef2ed4f461b21550d3))
     - Merge branch 'reset' ([`b842691`](https://github.com/Byron/gitoxide/commit/b8426919a491dc3a7df01ee3f258fc0d8a3a327c))
     - Adapt to `gix-features` ([`9e7c3e1`](https://github.com/Byron/gitoxide/commit/9e7c3e12528833023bf37ada4e2e90989d848e99))
-
 </details>
 
 ## 0.43.0 (2023-09-24)
@@ -256,10 +246,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 2 commits contributed to the release.
-- 16 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 2 commits contributed to the release.
+ - 16 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -267,11 +257,9 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-features v0.35.0, gix-actor v0.27.0, gix-object v0.37.0, gix-glob v0.13.0, gix-attributes v0.19.0, gix-filter v0.5.0, gix-fs v0.7.0, gix-commitgraph v0.21.0, gix-revwalk v0.8.0, gix-traverse v0.33.0, gix-worktree-stream v0.5.0, gix-archive v0.5.0, gix-tempfile v10.0.0, gix-lock v10.0.0, gix-ref v0.37.0, gix-config v0.30.0, gix-url v0.24.0, gix-credentials v0.20.0, gix-diff v0.36.0, gix-discover v0.25.0, gix-ignore v0.8.0, gix-index v0.25.0, gix-mailmap v0.19.0, gix-negotiate v0.8.0, gix-pack v0.43.0, gix-odb v0.53.0, gix-pathspec v0.3.0, gix-transport v0.37.0, gix-protocol v0.40.0, gix-revision v0.22.0, gix-refspec v0.18.0, gix-status v0.1.0, gix-submodule v0.4.0, gix-worktree v0.26.0, gix-worktree-state v0.3.0, gix v0.54.0, gitoxide-core v0.32.0, gitoxide v0.30.0, safety bump 37
-      crates ([`7891fb1`](https://github.com/Byron/gitoxide/commit/7891fb17348ec2f4c997665f9a25be36e2713da4))
+ * **Uncategorized**
+    - Release gix-features v0.35.0, gix-actor v0.27.0, gix-object v0.37.0, gix-glob v0.13.0, gix-attributes v0.19.0, gix-filter v0.5.0, gix-fs v0.7.0, gix-commitgraph v0.21.0, gix-revwalk v0.8.0, gix-traverse v0.33.0, gix-worktree-stream v0.5.0, gix-archive v0.5.0, gix-tempfile v10.0.0, gix-lock v10.0.0, gix-ref v0.37.0, gix-config v0.30.0, gix-url v0.24.0, gix-credentials v0.20.0, gix-diff v0.36.0, gix-discover v0.25.0, gix-ignore v0.8.0, gix-index v0.25.0, gix-mailmap v0.19.0, gix-negotiate v0.8.0, gix-pack v0.43.0, gix-odb v0.53.0, gix-pathspec v0.3.0, gix-transport v0.37.0, gix-protocol v0.40.0, gix-revision v0.22.0, gix-refspec v0.18.0, gix-status v0.1.0, gix-submodule v0.4.0, gix-worktree v0.26.0, gix-worktree-state v0.3.0, gix v0.54.0, gitoxide-core v0.32.0, gitoxide v0.30.0, safety bump 37 crates ([`7891fb1`](https://github.com/Byron/gitoxide/commit/7891fb17348ec2f4c997665f9a25be36e2713da4))
     - Prepare changelogs prior to release ([`8a60d5b`](https://github.com/Byron/gitoxide/commit/8a60d5b80877c213c3b646d3061e8a33e0e433ec))
-
 </details>
 
 ## 0.42.0 (2023-09-08)
@@ -280,17 +268,17 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-0357b6cdb11b098fd54cd0c3df6c617d0b44a1c2/> Add `generate` and `streaming-input` feature toggles.
-  That way, it's possible to not compile a bunch of code in `gix` if
-  the writing of packs isn't required.
+ - <csr-id-0357b6cdb11b098fd54cd0c3df6c617d0b44a1c2/> Add `generate` and `streaming-input` feature toggles.
+   That way, it's possible to not compile a bunch of code in `gix` if
+   the writing of packs isn't required.
 
 ### Bug Fixes
 
-- <csr-id-96a07e08e6090222cf398b46aa8d46b56f81f14d/> Use `Vec::resize()` instead of set_len()
-  Otherwise it's possible for uninitialized memory to be used as if it was initialized,
-  which can lead to strange behaviour.
-
-  As the buffer is re-used, it's not actually zeroing that much memory either.
+ - <csr-id-96a07e08e6090222cf398b46aa8d46b56f81f14d/> Use `Vec::resize()` instead of set_len()
+   Otherwise it's possible for uninitialized memory to be used as if it was initialized,
+   which can lead to strange behaviour.
+   
+   As the buffer is re-used, it's not actually zeroing that much memory either.
 
 ### Chore (BREAKING)
 
@@ -300,26 +288,26 @@ A maintenance release without user-facing changes.
 
 ### New Features (BREAKING)
 
-- <csr-id-24dd870919ba444aa8099c63a78ea120d47ec28e/> use `prodash::Count` to indicate that nothing more than counting is performed, in place of `prodash::Progress`
-- <csr-id-4b74996b19176cb0f00860b3db5a27819d63e7d0/> Make usage of decompression context explicit.
-  That way, the context can be reused which is more efficient than recreating
-  it from scratch for every little delta to decompress.
-
-  This leads to a performance gain of 1.3%.
+ - <csr-id-24dd870919ba444aa8099c63a78ea120d47ec28e/> use `prodash::Count` to indicate that nothing more than counting is performed, in place of `prodash::Progress`
+ - <csr-id-4b74996b19176cb0f00860b3db5a27819d63e7d0/> Make usage of decompression context explicit.
+   That way, the context can be reused which is more efficient than recreating
+   it from scratch for every little delta to decompress.
+   
+   This leads to a performance gain of 1.3%.
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
-  This reduces compile time due to avoiding duplication.
+ - <csr-id-072ee32f693a31161cd6a843da6582d13efbb20b/> use `dyn` trait where possible.
+   This reduces compile time due to avoiding duplication.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 13 commits contributed to the release over the course of 17 calendar days.
-- 17 days passed between releases.
-- 6 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 13 commits contributed to the release over the course of 17 calendar days.
+ - 17 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -327,9 +315,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.8.0, gix-hash v0.13.0, gix-features v0.34.0, gix-actor v0.26.0, gix-object v0.36.0, gix-path v0.10.0, gix-glob v0.12.0, gix-attributes v0.18.0, gix-packetline-blocking v0.16.6, gix-filter v0.4.0, gix-fs v0.6.0, gix-commitgraph v0.20.0, gix-hashtable v0.4.0, gix-revwalk v0.7.0, gix-traverse v0.32.0, gix-worktree-stream v0.4.0, gix-archive v0.4.0, gix-config-value v0.14.0, gix-tempfile v9.0.0, gix-lock v9.0.0, gix-ref v0.36.0, gix-sec v0.10.0, gix-config v0.29.0, gix-prompt v0.7.0, gix-url v0.23.0, gix-credentials v0.19.0, gix-diff v0.35.0, gix-discover v0.24.0, gix-ignore v0.7.0, gix-index v0.24.0, gix-macros v0.1.0, gix-mailmap v0.18.0, gix-negotiate v0.7.0, gix-pack v0.42.0, gix-odb v0.52.0, gix-pathspec v0.2.0, gix-packetline v0.16.6, gix-transport v0.36.0, gix-protocol v0.39.0, gix-revision v0.21.0, gix-refspec v0.17.0, gix-submodule v0.3.0, gix-worktree
-      v0.25.0, gix-worktree-state v0.2.0, gix v0.53.0, safety bump 39 crates ([`8bd0456`](https://github.com/Byron/gitoxide/commit/8bd045676bb2cdc02624ab93e73ff8518064ca38))
+ * **Uncategorized**
+    - Release gix-date v0.8.0, gix-hash v0.13.0, gix-features v0.34.0, gix-actor v0.26.0, gix-object v0.36.0, gix-path v0.10.0, gix-glob v0.12.0, gix-attributes v0.18.0, gix-packetline-blocking v0.16.6, gix-filter v0.4.0, gix-fs v0.6.0, gix-commitgraph v0.20.0, gix-hashtable v0.4.0, gix-revwalk v0.7.0, gix-traverse v0.32.0, gix-worktree-stream v0.4.0, gix-archive v0.4.0, gix-config-value v0.14.0, gix-tempfile v9.0.0, gix-lock v9.0.0, gix-ref v0.36.0, gix-sec v0.10.0, gix-config v0.29.0, gix-prompt v0.7.0, gix-url v0.23.0, gix-credentials v0.19.0, gix-diff v0.35.0, gix-discover v0.24.0, gix-ignore v0.7.0, gix-index v0.24.0, gix-macros v0.1.0, gix-mailmap v0.18.0, gix-negotiate v0.7.0, gix-pack v0.42.0, gix-odb v0.52.0, gix-pathspec v0.2.0, gix-packetline v0.16.6, gix-transport v0.36.0, gix-protocol v0.39.0, gix-revision v0.21.0, gix-refspec v0.17.0, gix-submodule v0.3.0, gix-worktree v0.25.0, gix-worktree-state v0.2.0, gix v0.53.0, safety bump 39 crates ([`8bd0456`](https://github.com/Byron/gitoxide/commit/8bd045676bb2cdc02624ab93e73ff8518064ca38))
     - Prepare changelogs for release ([`375db06`](https://github.com/Byron/gitoxide/commit/375db06a8442378c3f7a922fae38e2a6694d9d04))
     - Merge branch 'optimizations' ([`6135a5e`](https://github.com/Byron/gitoxide/commit/6135a5ea8709646f01da62939a59dd3a9750e007))
     - Add `generate` and `streaming-input` feature toggles. ([`0357b6c`](https://github.com/Byron/gitoxide/commit/0357b6cdb11b098fd54cd0c3df6c617d0b44a1c2))
@@ -342,7 +329,6 @@ A maintenance release without user-facing changes.
     - Use `Vec::resize()` instead of set_len() ([`96a07e0`](https://github.com/Byron/gitoxide/commit/96a07e08e6090222cf398b46aa8d46b56f81f14d))
     - Make usage of decompression context explicit. ([`4b74996`](https://github.com/Byron/gitoxide/commit/4b74996b19176cb0f00860b3db5a27819d63e7d0))
     - Merge branch 'gix-submodule' ([`363ee77`](https://github.com/Byron/gitoxide/commit/363ee77400805f473c9ad66eadad9214e7ab66f4))
-
 </details>
 
 ## 0.41.0 (2023-08-22)
@@ -360,10 +346,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 7 commits contributed to the release over the course of 15 calendar days.
-- 29 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 7 commits contributed to the release over the course of 15 calendar days.
+ - 29 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -371,16 +357,14 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0 ([`6c62e74`](https://github.com/Byron/gitoxide/commit/6c62e748240ac0980fc23fdf30f8477dea8b9bc3))
-    - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0,
-      gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
+    - Release gix-date v0.7.3, gix-hash v0.12.0, gix-features v0.33.0, gix-actor v0.25.0, gix-object v0.35.0, gix-path v0.9.0, gix-glob v0.11.0, gix-quote v0.4.7, gix-attributes v0.17.0, gix-command v0.2.9, gix-packetline-blocking v0.16.5, gix-filter v0.3.0, gix-fs v0.5.0, gix-commitgraph v0.19.0, gix-hashtable v0.3.0, gix-revwalk v0.6.0, gix-traverse v0.31.0, gix-worktree-stream v0.3.0, gix-archive v0.3.0, gix-config-value v0.13.0, gix-tempfile v8.0.0, gix-lock v8.0.0, gix-ref v0.35.0, gix-sec v0.9.0, gix-config v0.28.0, gix-prompt v0.6.0, gix-url v0.22.0, gix-credentials v0.18.0, gix-diff v0.34.0, gix-discover v0.23.0, gix-ignore v0.6.0, gix-bitmap v0.2.7, gix-index v0.22.0, gix-mailmap v0.17.0, gix-negotiate v0.6.0, gix-pack v0.41.0, gix-odb v0.51.0, gix-pathspec v0.1.0, gix-packetline v0.16.5, gix-transport v0.35.0, gix-protocol v0.38.0, gix-revision v0.20.0, gix-refspec v0.16.0, gix-submodule v0.2.0, gix-worktree v0.24.0, gix-worktree-state v0.1.0, gix v0.52.0, gitoxide-core v0.31.0, gitoxide v0.29.0, safety bump 41 crates ([`30b2761`](https://github.com/Byron/gitoxide/commit/30b27615047692d3ced1b2d9c2ac15a80f79fbee))
     - Update changelogs prior to release ([`f23ea88`](https://github.com/Byron/gitoxide/commit/f23ea8828f2d9ba7559973daca388c9591bcc5fc))
     - Merge branch 'gix-submodule' ([`8f3f358`](https://github.com/Byron/gitoxide/commit/8f3f358800f1fe77d7ba7ebd396a90b692d3c0c1))
     - More cleanup of test crates ([`73c685a`](https://github.com/Byron/gitoxide/commit/73c685a67debcfa26a940f37bbca69cb3a4af57e))
     - Split tests off into their own crate to allow feature toggles. ([`93feea2`](https://github.com/Byron/gitoxide/commit/93feea269eebd114e866e6f29f4a73c0096df9e0))
     - Release gix-glob v0.10.2, gix-date v0.7.2, gix-validate v0.8.0, gix-object v0.34.0, gix-ref v0.34.0, gix-config v0.27.0, gix-commitgraph v0.18.2, gix-revwalk v0.5.0, gix-revision v0.19.0, gix-refspec v0.15.0, gix-submodule v0.1.0, safety bump 18 crates ([`4604f83`](https://github.com/Byron/gitoxide/commit/4604f83ef238dc07c85aaeae097399b67f3cfd0c))
-
 </details>
 
 ## 0.40.2 (2023-07-24)
@@ -391,10 +375,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 1 day passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 1 day passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -402,11 +386,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-archive v0.2.1, gix-ref v0.33.2, gix-pack v0.40.2, gix v0.50.1 ([`13883e5`](https://github.com/Byron/gitoxide/commit/13883e5528385f892ee402e911298121e0c297c0))
     - Prepare changelogs ([`735c206`](https://github.com/Byron/gitoxide/commit/735c2062625aaeffbdbca3c1395dbcf075661e3a))
     - Does this fix CI? ([`a4e6e28`](https://github.com/Byron/gitoxide/commit/a4e6e28cf18766c625bfb03ed2eb607694b1371a))
-
 </details>
 
 ## 0.40.1 (2023-07-22)
@@ -417,10 +400,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 7 commits contributed to the release over the course of 1 calendar day.
-- 3 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 7 commits contributed to the release over the course of 1 calendar day.
+ - 3 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -428,17 +411,14 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-diff v0.33.1, gix-discover v0.22.1, gix-ignore v0.5.1, gix-bitmap v0.2.6, gix-index v0.21.1, gix-mailmap v0.16.1, gix-negotiate v0.5.1, gix-pack v0.40.1, gix-odb v0.50.1, gix-packetline v0.16.4, gix-transport v0.34.1, gix-protocol v0.36.1, gix-revision v0.18.1, gix-refspec v0.14.1, gix-worktree v0.23.0, gix v0.50.0 ([`0062971`](https://github.com/Byron/gitoxide/commit/00629710dffeb10fda340665530353703cf5d129))
     - Release gix-tempfile v7.0.2, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.1, gix-sec v0.8.4, gix-prompt v0.5.4, gix-url v0.21.1, gix-credentials v0.17.1, gix-diff v0.33.1, gix-discover v0.22.1, gix-ignore v0.5.1, gix-bitmap v0.2.6, gix-index v0.21.1, gix-mailmap v0.16.1, gix-negotiate v0.5.1, gix-pack v0.40.1, gix-odb v0.50.1, gix-packetline v0.16.4, gix-transport v0.34.1, gix-protocol v0.36.1, gix-revision v0.18.1, gix-refspec v0.14.1, gix-worktree v0.23.0, gix v0.50.0 ([`107a64e`](https://github.com/Byron/gitoxide/commit/107a64e734580ad9e2c4142db96394529d8072df))
-    - Release gix-features v0.32.1, gix-actor v0.24.1, gix-validate v0.7.7, gix-object v0.33.1, gix-path v0.8.4, gix-glob v0.10.1, gix-quote v0.4.6, gix-attributes v0.16.0, gix-command v0.2.8, gix-packetline-blocking v0.16.4, gix-filter v0.2.0, gix-fs v0.4.1, gix-chunk v0.4.4, gix-commitgraph v0.18.1, gix-hashtable v0.2.4, gix-revwalk v0.4.1, gix-traverse v0.30.1, gix-worktree-stream v0.2.0, gix-archive v0.2.0, gix-config-value v0.12.5, gix-tempfile v7.0.1, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.1, gix-sec v0.8.4, gix-prompt v0.5.4, gix-url v0.21.1, gix-credentials v0.17.1, gix-diff v0.33.1, gix-discover v0.22.1, gix-ignore v0.5.1, gix-bitmap v0.2.6, gix-index v0.21.1, gix-mailmap v0.16.1, gix-negotiate v0.5.1, gix-pack v0.40.1, gix-odb v0.50.1, gix-packetline v0.16.4, gix-transport v0.34.1, gix-protocol v0.36.1, gix-revision v0.18.1, gix-refspec v0.14.1, gix-worktree v0.23.0,
-      gix v0.50.0, safety bump 5 crates ([`16295b5`](https://github.com/Byron/gitoxide/commit/16295b58e2581d2e8b8b762816f52baabe871c75))
+    - Release gix-features v0.32.1, gix-actor v0.24.1, gix-validate v0.7.7, gix-object v0.33.1, gix-path v0.8.4, gix-glob v0.10.1, gix-quote v0.4.6, gix-attributes v0.16.0, gix-command v0.2.8, gix-packetline-blocking v0.16.4, gix-filter v0.2.0, gix-fs v0.4.1, gix-chunk v0.4.4, gix-commitgraph v0.18.1, gix-hashtable v0.2.4, gix-revwalk v0.4.1, gix-traverse v0.30.1, gix-worktree-stream v0.2.0, gix-archive v0.2.0, gix-config-value v0.12.5, gix-tempfile v7.0.1, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.1, gix-sec v0.8.4, gix-prompt v0.5.4, gix-url v0.21.1, gix-credentials v0.17.1, gix-diff v0.33.1, gix-discover v0.22.1, gix-ignore v0.5.1, gix-bitmap v0.2.6, gix-index v0.21.1, gix-mailmap v0.16.1, gix-negotiate v0.5.1, gix-pack v0.40.1, gix-odb v0.50.1, gix-packetline v0.16.4, gix-transport v0.34.1, gix-protocol v0.36.1, gix-revision v0.18.1, gix-refspec v0.14.1, gix-worktree v0.23.0, gix v0.50.0, safety bump 5 crates ([`16295b5`](https://github.com/Byron/gitoxide/commit/16295b58e2581d2e8b8b762816f52baabe871c75))
     - Prepare more changelogs ([`c4cc5f2`](https://github.com/Byron/gitoxide/commit/c4cc5f261d29f712a101033a18293a97a9d4ae85))
-    - Release gix-date v0.7.1, gix-hash v0.11.4, gix-trace v0.1.3, gix-features v0.32.0, gix-actor v0.24.0, gix-validate v0.7.7, gix-object v0.33.0, gix-path v0.8.4, gix-glob v0.10.0, gix-quote v0.4.6, gix-attributes v0.15.0, gix-command v0.2.7, gix-packetline-blocking v0.16.3, gix-filter v0.1.0, gix-fs v0.4.0, gix-chunk v0.4.4, gix-commitgraph v0.18.0, gix-hashtable v0.2.4, gix-revwalk v0.4.0, gix-traverse v0.30.0, gix-worktree-stream v0.2.0, gix-archive v0.2.0, gix-config-value v0.12.4, gix-tempfile v7.0.1, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.0, gix-sec v0.8.4, gix-prompt v0.5.3, gix-url v0.21.0, gix-credentials v0.17.0, gix-diff v0.33.0, gix-discover v0.22.0, gix-ignore v0.5.0, gix-bitmap v0.2.6, gix-index v0.21.0, gix-mailmap v0.16.0, gix-negotiate v0.5.0, gix-pack v0.40.0, gix-odb v0.50.0, gix-packetline v0.16.4, gix-transport v0.34.0, gix-protocol v0.36.0, gix-revision
-      v0.18.0, gix-refspec v0.14.0, gix-worktree v0.22.0, gix v0.49.1 ([`5cb3589`](https://github.com/Byron/gitoxide/commit/5cb3589b74fc5376e02cbfe151e71344e1c417fe))
+    - Release gix-date v0.7.1, gix-hash v0.11.4, gix-trace v0.1.3, gix-features v0.32.0, gix-actor v0.24.0, gix-validate v0.7.7, gix-object v0.33.0, gix-path v0.8.4, gix-glob v0.10.0, gix-quote v0.4.6, gix-attributes v0.15.0, gix-command v0.2.7, gix-packetline-blocking v0.16.3, gix-filter v0.1.0, gix-fs v0.4.0, gix-chunk v0.4.4, gix-commitgraph v0.18.0, gix-hashtable v0.2.4, gix-revwalk v0.4.0, gix-traverse v0.30.0, gix-worktree-stream v0.2.0, gix-archive v0.2.0, gix-config-value v0.12.4, gix-tempfile v7.0.1, gix-utils v0.1.5, gix-lock v7.0.2, gix-ref v0.33.0, gix-sec v0.8.4, gix-prompt v0.5.3, gix-url v0.21.0, gix-credentials v0.17.0, gix-diff v0.33.0, gix-discover v0.22.0, gix-ignore v0.5.0, gix-bitmap v0.2.6, gix-index v0.21.0, gix-mailmap v0.16.0, gix-negotiate v0.5.0, gix-pack v0.40.0, gix-odb v0.50.0, gix-packetline v0.16.4, gix-transport v0.34.0, gix-protocol v0.36.0, gix-revision v0.18.0, gix-refspec v0.14.0, gix-worktree v0.22.0, gix v0.49.1 ([`5cb3589`](https://github.com/Byron/gitoxide/commit/5cb3589b74fc5376e02cbfe151e71344e1c417fe))
     - Update changelogs prior to release ([`2fc66b5`](https://github.com/Byron/gitoxide/commit/2fc66b55097ed494b72d1af939ba5561f71fde97))
     - Update license field following SPDX 2.1 license expression standard ([`9064ea3`](https://github.com/Byron/gitoxide/commit/9064ea31fae4dc59a56bdd3a06c0ddc990ee689e))
-
 </details>
 
 ## 0.40.0 (2023-07-19)
@@ -449,16 +429,16 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 9 commits contributed to the release over the course of 10 calendar days.
-- 19 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 9 commits contributed to the release over the course of 10 calendar days.
+ - 19 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -466,7 +446,7 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-filter v0.1.0, gix-ignore v0.5.0, gix-revwalk v0.4.0, gix-traverse v0.30.0, gix-index v0.21.0, gix-mailmap v0.16.0, gix-negotiate v0.5.0, gix-pack v0.40.0, gix-odb v0.50.0, gix-transport v0.34.0, gix-protocol v0.36.0, gix-revision v0.18.0, gix-refspec v0.14.0, gix-worktree v0.22.0, gix v0.49.0 ([`4aca8c2`](https://github.com/Byron/gitoxide/commit/4aca8c2ae2ec588fb65ec4faa0c07c19d219569f))
     - Release gix-features v0.32.0, gix-actor v0.24.0, gix-glob v0.10.0, gix-attributes v0.15.0, gix-commitgraph v0.18.0, gix-config-value v0.12.4, gix-fs v0.4.0, gix-object v0.33.0, gix-ref v0.33.0, gix-config v0.26.0, gix-command v0.2.7, gix-url v0.21.0, gix-credentials v0.17.0, gix-diff v0.33.0, gix-discover v0.22.0, gix-filter v0.1.0, gix-ignore v0.5.0, gix-revwalk v0.4.0, gix-traverse v0.30.0, gix-index v0.21.0, gix-mailmap v0.16.0, gix-negotiate v0.5.0, gix-pack v0.40.0, gix-odb v0.50.0, gix-transport v0.34.0, gix-protocol v0.36.0, gix-revision v0.18.0, gix-refspec v0.14.0, gix-worktree v0.22.0, gix v0.49.0 ([`68ae3ff`](https://github.com/Byron/gitoxide/commit/68ae3ff9d642ec56f088a6a682a073dc16f4e8ca))
     - Adjust package versions (by cargo-smart-release) ([`c70e54f`](https://github.com/Byron/gitoxide/commit/c70e54f163c312c87753a506eeaad462e8579bfb))
@@ -476,7 +456,6 @@ A maintenance release without user-facing changes.
     - Thanks clippy ([`3ef32af`](https://github.com/Byron/gitoxide/commit/3ef32af9bf477cbc60d24da8bb3f15d20976e9e0))
     - Merge branch 'integrate-filtering' ([`b19a56d`](https://github.com/Byron/gitoxide/commit/b19a56dcfa9bea86332a84aa4e8fad445e7d1724))
     - Assure we run all tests in nextest ([`3821089`](https://github.com/Byron/gitoxide/commit/3821089b6b02c933770705b19fc3126d61beb5a7))
-
 </details>
 
 ## 0.39.1 (2023-06-29)
@@ -487,9 +466,9 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -497,11 +476,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-glob v0.9.1, gix-attributes v0.14.1, gix-config-value v0.12.3, gix-ref v0.32.1, gix-sec v0.8.3, gix-config v0.25.1, gix-url v0.20.1, gix-credentials v0.16.1, gix-discover v0.21.1, gix-ignore v0.4.1, gix-pack v0.39.1, gix-odb v0.49.1, gix-worktree v0.21.1, gix v0.48.0 ([`69c6a36`](https://github.com/Byron/gitoxide/commit/69c6a36ba14cbef129deebda9fd8870005fefa17))
     - Prepare changelogs prior to release ([`c143cf4`](https://github.com/Byron/gitoxide/commit/c143cf48ee1885467e3e9262a3f8823a1247bfe0))
     - Align usage of `gix-path` across all crates ([`73c1292`](https://github.com/Byron/gitoxide/commit/73c1292be393986c4a1adde1400abf551e850da0))
-
 </details>
 
 ## 0.39.0 (2023-06-29)
@@ -512,10 +490,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release over the course of 6 calendar days.
-- 6 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release over the course of 6 calendar days.
+ - 6 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -523,11 +501,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-date v0.7.0, gix-trace v0.1.2, gix-actor v0.23.0, gix-commitgraph v0.17.1, gix-utils v0.1.4, gix-object v0.32.0, gix-ref v0.32.0, gix-config v0.25.0, gix-diff v0.32.0, gix-discover v0.21.0, gix-hashtable v0.2.3, gix-revwalk v0.3.0, gix-traverse v0.29.0, gix-index v0.20.0, gix-mailmap v0.15.0, gix-negotiate v0.4.0, gix-pack v0.39.0, gix-odb v0.49.0, gix-protocol v0.35.0, gix-revision v0.17.0, gix-refspec v0.13.0, gix-worktree v0.21.0, gix v0.48.0, safety bump 20 crates ([`27e8c18`](https://github.com/Byron/gitoxide/commit/27e8c18db5a9a21843381c116a8ed6d9f681b3f8))
     - Prepare changelogs prior to release ([`00f96fb`](https://github.com/Byron/gitoxide/commit/00f96fb3110a8f81a1bd0d74c757c15b8773c6f6))
     - Upgrade memmap2 and fastrand dependencies ([`6fc7497`](https://github.com/Byron/gitoxide/commit/6fc74971ac6838cbfd9c869ba3746713001d7a38))
-
 </details>
 
 ## 0.38.0 (2023-06-22)
@@ -540,32 +517,32 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-3cffa268460eb2d41bd6a30d45778b88db4ec602/> provide basic `tracing` spans for common operations.
-  This is just the beginning and more crates will integrate with it over time.
+ - <csr-id-3cffa268460eb2d41bd6a30d45778b88db4ec602/> provide basic `tracing` spans for common operations.
+   This is just the beginning and more crates will integrate with it over time.
 
 ### Bug Fixes
 
-- <csr-id-b9eb40730b53f788d2e4bffe4ef6d9028440782e/> revert 3a2d5286084597d4c68549903709cda77dda4357 to fix 'incorrect data check' error.
-  This error could occour in heavily threaded code for unknown reason.
-  But maybe it's due to threads somehow not cleaning up their reused decompressor properly
-  (maybe related to the zlib-ng version). It's strange and sad as this really costs performnace
-  for no good reason.
-- <csr-id-8817c248dd7c6453ced654d4df304f98ff18ecda/> don't crash when object validation failed during verification.
-  When objects can't be serialized, they will trigger an error that manifests as IO error.
-  Previously we didn't think of the possibility that writing to an im-memory buffer could fail
-  would indeed panic during verification.
-
-  This is now fixed.
-- <csr-id-cd747f9292fb034e7fd5ee6c5a94a4e53df42e86/> ScopedJoinHandle is not always available
+ - <csr-id-b9eb40730b53f788d2e4bffe4ef6d9028440782e/> revert 3a2d5286084597d4c68549903709cda77dda4357 to fix 'incorrect data check' error.
+   This error could occour in heavily threaded code for unknown reason.
+   But maybe it's due to threads somehow not cleaning up their reused decompressor properly
+   (maybe related to the zlib-ng version). It's strange and sad as this really costs performnace
+   for no good reason.
+ - <csr-id-8817c248dd7c6453ced654d4df304f98ff18ecda/> don't crash when object validation failed during verification.
+   When objects can't be serialized, they will trigger an error that manifests as IO error.
+   Previously we didn't think of the possibility that writing to an im-memory buffer could fail
+   would indeed panic during verification.
+   
+   This is now fixed.
+ - <csr-id-cd747f9292fb034e7fd5ee6c5a94a4e53df42e86/> ScopedJoinHandle is not always available
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 12 commits contributed to the release over the course of 10 calendar days.
-- 12 days passed between releases.
-- 5 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 12 commits contributed to the release over the course of 10 calendar days.
+ - 12 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -573,9 +550,8 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
-    - Release gix-date v0.6.0, gix-hash v0.11.3, gix-trace v0.1.1, gix-features v0.31.0, gix-actor v0.22.0, gix-path v0.8.2, gix-glob v0.9.0, gix-quote v0.4.5, gix-attributes v0.14.0, gix-chunk v0.4.3, gix-commitgraph v0.17.0, gix-config-value v0.12.2, gix-fs v0.3.0, gix-tempfile v7.0.0, gix-utils v0.1.3, gix-lock v7.0.0, gix-validate v0.7.6, gix-object v0.31.0, gix-ref v0.31.0, gix-sec v0.8.2, gix-config v0.24.0, gix-command v0.2.6, gix-prompt v0.5.2, gix-url v0.20.0, gix-credentials v0.16.0, gix-diff v0.31.0, gix-discover v0.20.0, gix-hashtable v0.2.2, gix-ignore v0.4.0, gix-bitmap v0.2.5, gix-revwalk v0.2.0, gix-traverse v0.28.0, gix-index v0.19.0, gix-mailmap v0.14.0, gix-negotiate v0.3.0, gix-pack v0.38.0, gix-odb v0.48.0, gix-packetline v0.16.3, gix-transport v0.33.0, gix-protocol v0.34.0, gix-revision v0.16.0, gix-refspec v0.12.0, gix-worktree v0.20.0, gix v0.47.0, gitoxide-core
-      v0.29.0, gitoxide v0.27.0, safety bump 30 crates ([`ea9f942`](https://github.com/Byron/gitoxide/commit/ea9f9424e777f10da0e33bb9ffbbefd01c4c5a74))
+ * **Uncategorized**
+    - Release gix-date v0.6.0, gix-hash v0.11.3, gix-trace v0.1.1, gix-features v0.31.0, gix-actor v0.22.0, gix-path v0.8.2, gix-glob v0.9.0, gix-quote v0.4.5, gix-attributes v0.14.0, gix-chunk v0.4.3, gix-commitgraph v0.17.0, gix-config-value v0.12.2, gix-fs v0.3.0, gix-tempfile v7.0.0, gix-utils v0.1.3, gix-lock v7.0.0, gix-validate v0.7.6, gix-object v0.31.0, gix-ref v0.31.0, gix-sec v0.8.2, gix-config v0.24.0, gix-command v0.2.6, gix-prompt v0.5.2, gix-url v0.20.0, gix-credentials v0.16.0, gix-diff v0.31.0, gix-discover v0.20.0, gix-hashtable v0.2.2, gix-ignore v0.4.0, gix-bitmap v0.2.5, gix-revwalk v0.2.0, gix-traverse v0.28.0, gix-index v0.19.0, gix-mailmap v0.14.0, gix-negotiate v0.3.0, gix-pack v0.38.0, gix-odb v0.48.0, gix-packetline v0.16.3, gix-transport v0.33.0, gix-protocol v0.34.0, gix-revision v0.16.0, gix-refspec v0.12.0, gix-worktree v0.20.0, gix v0.47.0, gitoxide-core v0.29.0, gitoxide v0.27.0, safety bump 30 crates ([`ea9f942`](https://github.com/Byron/gitoxide/commit/ea9f9424e777f10da0e33bb9ffbbefd01c4c5a74))
     - Prepare changelogs prior to release ([`18b0a37`](https://github.com/Byron/gitoxide/commit/18b0a371941aa2d4d62512437d5daa351ba99ffd))
     - Try tree-traversal without thread_local! ([`5a9a7a3`](https://github.com/Byron/gitoxide/commit/5a9a7a31c1537aa54cd81a5145ca319a040b9951))
     - Revert 3a2d5286084597d4c68549903709cda77dda4357 to fix 'incorrect data check' error. ([`b9eb407`](https://github.com/Byron/gitoxide/commit/b9eb40730b53f788d2e4bffe4ef6d9028440782e))
@@ -587,7 +563,6 @@ A maintenance release without user-facing changes.
     - Merge branch 'help-874-redundant-closures' ([`fe59956`](https://github.com/Byron/gitoxide/commit/fe59956ad667303a923d7cfd9ffd72283df41d78))
     - ScopedJoinHandle is not always available ([`cd747f9`](https://github.com/Byron/gitoxide/commit/cd747f9292fb034e7fd5ee6c5a94a4e53df42e86))
     - Add `clippy::redundant-closure-for-method-calls` lint ([`bcad5c2`](https://github.com/Byron/gitoxide/commit/bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d))
-
 </details>
 
 ## 0.37.0 (2023-06-10)
@@ -598,10 +573,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 4 commits contributed to the release.
-- 3 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 4 commits contributed to the release.
+ - 3 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -609,84 +584,83 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-attributes v0.13.1, gix-diff v0.30.1, gix-revwalk v0.1.0, gix-traverse v0.27.0, gix-index v0.18.0, gix-revision v0.15.2, gix-negotiate v0.2.1, gix-pack v0.37.0, gix-odb v0.47.0, gix-protocol v0.33.2, gix-worktree v0.19.0, gix v0.46.0, safety bump 7 crates ([`2560a2c`](https://github.com/Byron/gitoxide/commit/2560a2cc3e1d8c60cd812e15696fa4761d036e19))
     - Prepare changelogs prior to release ([`298f3d7`](https://github.com/Byron/gitoxide/commit/298f3d7359c5b183314d8c584e45dcdd559d88b3))
     - Merge branch 'walk-with-commitgraph' ([`fdee9a2`](https://github.com/Byron/gitoxide/commit/fdee9a22873a13ae644d3dc92f8fe93f8f0266c0))
     - Adapt to changes in `gix-traverse` ([`1f682fd`](https://github.com/Byron/gitoxide/commit/1f682fd991b9b76a8d37e6852567ff239c0ac0db))
-
 </details>
 
 ## 0.36.0 (2023-06-06)
 
 ### New Features
 
-- <csr-id-3a2d5286084597d4c68549903709cda77dda4357/> improve performance by reducing the trashing of `zlib::Inflate`.
-  Previously, for every zlib inflate operation, we would allocate memory
-  due to the creation of a decompressor.
-
-  This is now avoided by reusing thread-local copies of such a decompressor,
-  which is reused and reset instead.
-- <csr-id-14e7ea0217af8a04ed2b50ff7b13c28335c29022/> improve performance by avoiding zeroying buffers.
-  Previously we would use `resize(new_len, 0)` to resize buffers, even though
-  these values would then be overwritten (or the buffer isn't available).
-
-  Now we use `set_len(new_len)` after calling `reserve` to do the same, but safe
-  a memset.
+ - <csr-id-3a2d5286084597d4c68549903709cda77dda4357/> improve performance by reducing the trashing of `zlib::Inflate`.
+   Previously, for every zlib inflate operation, we would allocate memory
+   due to the creation of a decompressor.
+   
+   This is now avoided by reusing thread-local copies of such a decompressor,
+   which is reused and reset instead.
+ - <csr-id-14e7ea0217af8a04ed2b50ff7b13c28335c29022/> improve performance by avoiding zeroying buffers.
+   Previously we would use `resize(new_len, 0)` to resize buffers, even though
+   these values would then be overwritten (or the buffer isn't available).
+   
+   Now we use `set_len(new_len)` after calling `reserve` to do the same, but safe
+   a memset.
 
 ### Bug Fixes
 
-- <csr-id-977e135bfa00bdbc1a8f8324f85347ec9078c84f/> static linked list delta cache with memory cap
-  Previously, the 64 slot big LRU cache for pack deltas didn't
-  use any memory limit which could lead to memory exhaustion in the
-  face of untypical, large objects.
-
-  Now we add a generous default limit to do *better* in such situations.
-  It's worth noting though that that even without any cache, the working
-  set of buffers to do delta resolution takes considerable memory, despite
-  trying to keep it minimal.
-
-  Note that for bigger objects, the cache is now not used at all, which probably
-  leads to terrible performance as not even the base object can be cached.
-- <csr-id-f89cbc675b0acc67322e289e7b3a17288b9eae27/> check for interrupt more often
-  Previously when traversing a pack it could appear to hang as checks
-  were only performed on chunk or base (of a delta-tree) level.
-
-  Now interrupt checks are performed more often to stop all work much quicker.
-- <csr-id-923692bcda698b45d3d1ad518b29f6d30b23fbc0/> memory capped hashmap as pack delta cache won't trash memory as much.
-  Previously it would take a buffer from the free-list, copy data into it, and
-  when exceeding the capacity loose it entirely.
-  Now the freelist is handled correctly.
+ - <csr-id-977e135bfa00bdbc1a8f8324f85347ec9078c84f/> static linked list delta cache with memory cap
+   Previously, the 64 slot big LRU cache for pack deltas didn't
+   use any memory limit which could lead to memory exhaustion in the
+   face of untypical, large objects.
+   
+   Now we add a generous default limit to do *better* in such situations.
+   It's worth noting though that that even without any cache, the working
+   set of buffers to do delta resolution takes considerable memory, despite
+   trying to keep it minimal.
+   
+   Note that for bigger objects, the cache is now not used at all, which probably
+   leads to terrible performance as not even the base object can be cached.
+ - <csr-id-f89cbc675b0acc67322e289e7b3a17288b9eae27/> check for interrupt more often
+   Previously when traversing a pack it could appear to hang as checks
+   were only performed on chunk or base (of a delta-tree) level.
+   
+   Now interrupt checks are performed more often to stop all work much quicker.
+ - <csr-id-923692bcda698b45d3d1ad518b29f6d30b23fbc0/> memory capped hashmap as pack delta cache won't trash memory as much.
+   Previously it would take a buffer from the free-list, copy data into it, and
+   when exceeding the capacity loose it entirely.
+   Now the freelist is handled correctly.
 
 ### New Features (BREAKING)
 
-- <csr-id-d22dd8fcc22e8dbe30524a1bdddc09bc841db341/> index-backed tree traversal with a form of work-stealing.
-  When delta-trees are unbalanced, in pathological cases it's possible that that one thread
-  ends up with more than half of the work. In this case it's required that it manages to
-  spawn its own threads to parallelize the work it has.
-- <csr-id-0fa04bcbdf3102c5435e64cfef894a1bfc8d6e7b/> make current thread-count accessible in slice-workers.
-  Threads started for working on an entry in a slice can now see the amount
-  of threads left for use (and manipulate that variable) which effectively
-  allows them to implement their own parallelization on top of the current one.
-
-  This is useful if there is there is very imbalanced work within the slice itself.
-
-  While at it, we also make consumer functions mutable as they exsit per thread.
+ - <csr-id-d22dd8fcc22e8dbe30524a1bdddc09bc841db341/> index-backed tree traversal with a form of work-stealing.
+   When delta-trees are unbalanced, in pathological cases it's possible that that one thread
+   ends up with more than half of the work. In this case it's required that it manages to
+   spawn its own threads to parallelize the work it has.
+ - <csr-id-0fa04bcbdf3102c5435e64cfef894a1bfc8d6e7b/> make current thread-count accessible in slice-workers.
+   Threads started for working on an entry in a slice can now see the amount
+   of threads left for use (and manipulate that variable) which effectively
+   allows them to implement their own parallelization on top of the current one.
+   
+   This is useful if there is there is very imbalanced work within the slice itself.
+   
+   While at it, we also make consumer functions mutable as they exsit per thread.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 29 commits contributed to the release over the course of 25 calendar days.
-- 40 days passed between releases.
-- 7 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 1 unique issue was worked on: [#851](https://github.com/Byron/gitoxide/issues/851)
+ - 29 commits contributed to the release over the course of 25 calendar days.
+ - 40 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#851](https://github.com/Byron/gitoxide/issues/851)
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -694,7 +668,7 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **[#851](https://github.com/Byron/gitoxide/issues/851)**
+ * **[#851](https://github.com/Byron/gitoxide/issues/851)**
     - Fix performance regression in pack traversal ([`de1f6c2`](https://github.com/Byron/gitoxide/commit/de1f6c22dfccf22f34e2c2c1b4890ca095ced7ac))
     - Index-backed tree traversal with a form of work-stealing. ([`d22dd8f`](https://github.com/Byron/gitoxide/commit/d22dd8fcc22e8dbe30524a1bdddc09bc841db341))
     - Improve performance by avoiding zeroying buffers. ([`14e7ea0`](https://github.com/Byron/gitoxide/commit/14e7ea0217af8a04ed2b50ff7b13c28335c29022))
@@ -703,9 +677,8 @@ A maintenance release without user-facing changes.
     - Static linked list delta cache with memory cap ([`977e135`](https://github.com/Byron/gitoxide/commit/977e135bfa00bdbc1a8f8324f85347ec9078c84f))
     - Check for interrupt more often ([`f89cbc6`](https://github.com/Byron/gitoxide/commit/f89cbc675b0acc67322e289e7b3a17288b9eae27))
     - Memory capped hashmap as pack delta cache won't trash memory as much. ([`923692b`](https://github.com/Byron/gitoxide/commit/923692bcda698b45d3d1ad518b29f6d30b23fbc0))
-* **Uncategorized**
-    - Release gix-date v0.5.1, gix-hash v0.11.2, gix-features v0.30.0, gix-actor v0.21.0, gix-path v0.8.1, gix-glob v0.8.0, gix-quote v0.4.4, gix-attributes v0.13.0, gix-chunk v0.4.2, gix-commitgraph v0.16.0, gix-config-value v0.12.1, gix-fs v0.2.0, gix-tempfile v6.0.0, gix-utils v0.1.2, gix-lock v6.0.0, gix-validate v0.7.5, gix-object v0.30.0, gix-ref v0.30.0, gix-sec v0.8.1, gix-config v0.23.0, gix-command v0.2.5, gix-prompt v0.5.1, gix-url v0.19.0, gix-credentials v0.15.0, gix-diff v0.30.0, gix-discover v0.19.0, gix-hashtable v0.2.1, gix-ignore v0.3.0, gix-bitmap v0.2.4, gix-traverse v0.26.0, gix-index v0.17.0, gix-mailmap v0.13.0, gix-revision v0.15.0, gix-negotiate v0.2.0, gix-pack v0.36.0, gix-odb v0.46.0, gix-packetline v0.16.2, gix-transport v0.32.0, gix-protocol v0.33.0, gix-refspec v0.11.0, gix-worktree v0.18.0, gix v0.45.0, safety bump 29
-      crates ([`9a9fa96`](https://github.com/Byron/gitoxide/commit/9a9fa96fa8a722bddc5c3b2270b0edf8f6615141))
+ * **Uncategorized**
+    - Release gix-date v0.5.1, gix-hash v0.11.2, gix-features v0.30.0, gix-actor v0.21.0, gix-path v0.8.1, gix-glob v0.8.0, gix-quote v0.4.4, gix-attributes v0.13.0, gix-chunk v0.4.2, gix-commitgraph v0.16.0, gix-config-value v0.12.1, gix-fs v0.2.0, gix-tempfile v6.0.0, gix-utils v0.1.2, gix-lock v6.0.0, gix-validate v0.7.5, gix-object v0.30.0, gix-ref v0.30.0, gix-sec v0.8.1, gix-config v0.23.0, gix-command v0.2.5, gix-prompt v0.5.1, gix-url v0.19.0, gix-credentials v0.15.0, gix-diff v0.30.0, gix-discover v0.19.0, gix-hashtable v0.2.1, gix-ignore v0.3.0, gix-bitmap v0.2.4, gix-traverse v0.26.0, gix-index v0.17.0, gix-mailmap v0.13.0, gix-revision v0.15.0, gix-negotiate v0.2.0, gix-pack v0.36.0, gix-odb v0.46.0, gix-packetline v0.16.2, gix-transport v0.32.0, gix-protocol v0.33.0, gix-refspec v0.11.0, gix-worktree v0.18.0, gix v0.45.0, safety bump 29 crates ([`9a9fa96`](https://github.com/Byron/gitoxide/commit/9a9fa96fa8a722bddc5c3b2270b0edf8f6615141))
     - `just fmt` ([`ffc1276`](https://github.com/Byron/gitoxide/commit/ffc1276e0c991ac33ce842f5dca0b45ac69680c0))
     - Prepare changelogs prior to release ([`8f15cec`](https://github.com/Byron/gitoxide/commit/8f15cec1ec7d5a9d56bb158f155011ef2bb3539b))
     - Merge branch 'integrate-gix-negotiate' ([`ae845de`](https://github.com/Byron/gitoxide/commit/ae845dea6cee6523c88a23d7a14293589cf8092f))
@@ -726,7 +699,6 @@ A maintenance release without user-facing changes.
     - Merge branch 'fix-851' ([`2f275d5`](https://github.com/Byron/gitoxide/commit/2f275d5d3cb49b3b8ba53b30e4b4386fac32662b))
     - Adjust to changes in `gix-features` ([`c48bbe3`](https://github.com/Byron/gitoxide/commit/c48bbe330e5e99fa357a87a4aa210317ab7c8143))
     - Release gix-object v0.29.2 ([`4f879bf`](https://github.com/Byron/gitoxide/commit/4f879bf35653bdc8f9729d524c6e8e1fb3c6886b))
-
 </details>
 
 ## 0.35.0 (2023-04-27)
@@ -737,9 +709,9 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -747,39 +719,38 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-path v0.8.0, gix-glob v0.7.0, gix-attributes v0.12.0, gix-config-value v0.12.0, gix-ref v0.29.0, gix-sec v0.8.0, gix-config v0.22.0, gix-prompt v0.5.0, gix-url v0.18.0, gix-credentials v0.14.0, gix-discover v0.18.0, gix-ignore v0.2.0, gix-pack v0.35.0, gix-odb v0.45.0, gix-transport v0.31.0, gix-protocol v0.32.0, gix-refspec v0.10.1, gix-worktree v0.17.0, gix v0.44.1 ([`7ebc9f7`](https://github.com/Byron/gitoxide/commit/7ebc9f734ec4371dd27daa568c0244185bb49eb5))
     - Prepare changelogs prior to release ([`0135158`](https://github.com/Byron/gitoxide/commit/013515897215400539bfd53c25548bd054186ba6))
     - Bump gix-path v0.8.0, safety bump 20 crates (gix set to 0.44.1 manually) ([`43ebaf2`](https://github.com/Byron/gitoxide/commit/43ebaf267557218865862538ffc7bdf00558492f))
-
 </details>
 
 ## 0.34.0 (2023-04-26)
 
 ### New Features (BREAKING)
 
-- <csr-id-b83ee366a3c65c717beb587ad809268f1c54b8ad/> Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability.
-  With it it's possible to not automatically declare all optional dependencies externally visible
-  features, and thus re-use feature names that oterwise are also a crate name.
-
-  Previously I thought that `serde1` is for future-proofing and supporting multiple serde versions
-  at the same time. However, it's most definitely a burden I wouldn't want anyway, so using
-  `serde` seems to be the way to go into the future.
+ - <csr-id-b83ee366a3c65c717beb587ad809268f1c54b8ad/> Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability.
+   With it it's possible to not automatically declare all optional dependencies externally visible
+   features, and thus re-use feature names that oterwise are also a crate name.
+   
+   Previously I thought that `serde1` is for future-proofing and supporting multiple serde versions
+   at the same time. However, it's most definitely a burden I wouldn't want anyway, so using
+   `serde` seems to be the way to go into the future.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 13 commits contributed to the release over the course of 14 calendar days.
-- 31 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 1 unique issue was worked on: [#814](https://github.com/Byron/gitoxide/issues/814)
+ - 13 commits contributed to the release over the course of 14 calendar days.
+ - 31 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#814](https://github.com/Byron/gitoxide/issues/814)
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -787,9 +758,9 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **[#814](https://github.com/Byron/gitoxide/issues/814)**
+ * **[#814](https://github.com/Byron/gitoxide/issues/814)**
     - Rename `serde1` cargo feature to `serde` and use the weak-deps cargo capability. ([`b83ee36`](https://github.com/Byron/gitoxide/commit/b83ee366a3c65c717beb587ad809268f1c54b8ad))
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-index v0.16.0, gix-mailmap v0.12.0, gix-pack v0.34.0, gix-odb v0.44.0, gix-packetline v0.16.0, gix-transport v0.30.0, gix-protocol v0.31.0, gix-revision v0.13.0, gix-refspec v0.10.0, gix-worktree v0.16.0, gix v0.44.0 ([`d7173b2`](https://github.com/Byron/gitoxide/commit/d7173b2d2cb79685fdf7f618c31c576db24fa648))
     - Release gix-index v0.16.0, gix-mailmap v0.12.0, gix-pack v0.34.0, gix-odb v0.44.0, gix-packetline v0.16.0, gix-transport v0.30.0, gix-protocol v0.31.0, gix-revision v0.13.0, gix-refspec v0.10.0, gix-worktree v0.16.0, gix v0.44.0 ([`e4df557`](https://github.com/Byron/gitoxide/commit/e4df5574c0813a0236319fa6e8b3b41bab179fc8))
     - Release gix-hash v0.11.1, gix-path v0.7.4, gix-glob v0.6.0, gix-attributes v0.11.0, gix-config-value v0.11.0, gix-fs v0.1.1, gix-tempfile v5.0.3, gix-utils v0.1.1, gix-lock v5.0.1, gix-object v0.29.1, gix-ref v0.28.0, gix-sec v0.7.0, gix-config v0.21.0, gix-prompt v0.4.0, gix-url v0.17.0, gix-credentials v0.13.0, gix-diff v0.29.0, gix-discover v0.17.0, gix-hashtable v0.2.0, gix-ignore v0.1.0, gix-bitmap v0.2.3, gix-traverse v0.25.0, gix-index v0.16.0, gix-mailmap v0.12.0, gix-pack v0.34.0, gix-odb v0.44.0, gix-packetline v0.16.0, gix-transport v0.30.0, gix-protocol v0.31.0, gix-revision v0.13.0, gix-refspec v0.10.0, gix-worktree v0.16.0, gix v0.44.0, safety bump 7 crates ([`91134a1`](https://github.com/Byron/gitoxide/commit/91134a11c8ba0e942f692488ec9bce9fa1086324))
@@ -802,7 +773,6 @@ A maintenance release without user-facing changes.
     - Merge branch 'main' into dev ([`cdef398`](https://github.com/Byron/gitoxide/commit/cdef398c4a3bd01baf0be2c27a3f77a400172b0d))
     - Rename the serde1 feature to serde ([`19338d9`](https://github.com/Byron/gitoxide/commit/19338d934b6712b7d6bd3fa3b2e4189bf7e6c8a1))
     - Release gix-hash v0.10.4, gix-hashtable v0.1.3 ([`b574a39`](https://github.com/Byron/gitoxide/commit/b574a3904203762a6b9e475e16a7c358d7616599))
-
 </details>
 
 ## 0.33.2 (2023-03-26)
@@ -813,10 +783,10 @@ A maintenance release without any user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release over the course of 3 calendar days.
-- 11 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release over the course of 3 calendar days.
+ - 11 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -824,11 +794,10 @@ A maintenance release without any user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-tempfile v5.0.2, gix-validate v0.7.4, gix-config v0.20.0, gix-prompt v0.3.3, gix-diff v0.28.1, gix-discover v0.16.1, gix-pack v0.33.2, gix-transport v0.29.1, gix-protocol v0.30.1, gix-revision v0.12.1, gix-worktree v0.15.1, gix v0.43.0, safety bump gix v0.43.0 ([`5dc1f9f`](https://github.com/Byron/gitoxide/commit/5dc1f9f2bcb8b3e147115fcb6f76558e8f48ffef))
     - Prepare changelogs prior to release ([`3016a28`](https://github.com/Byron/gitoxide/commit/3016a285f566bdfe7de2774fa6f2254c1b1a2c51))
     - Finally fix typos detected by `typos` tool. ([`a69f873`](https://github.com/Byron/gitoxide/commit/a69f873ea53b073a0b86ade095596f21709b233b))
-
 </details>
 
 ## 0.33.1 (2023-03-14)
@@ -839,10 +808,10 @@ A maintenance release without any user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 4 commits contributed to the release over the course of 3 calendar days.
-- 3 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 4 commits contributed to the release over the course of 3 calendar days.
+ - 3 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -850,12 +819,11 @@ A maintenance release without any user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-features v0.28.1, gix-tempfile v5.0.1, gix-ref v0.27.1, gix-pack v0.33.1, gix-packetline v0.15.0, gix-transport v0.29.0, gix-protocol v0.30.0, gix v0.42.0, safety bump 3 crates ([`c1f1bfb`](https://github.com/Byron/gitoxide/commit/c1f1bfb8dc0e73993678353e4492d0614b642ed1))
     - Prepare changelogs prior to release ([`c66e298`](https://github.com/Byron/gitoxide/commit/c66e2982577e4cd9faef63798986b8cf8ece93a2))
     - Make fmt ([`3836cc0`](https://github.com/Byron/gitoxide/commit/3836cc0c9c3e1158b56142b924483c8a77217d53))
     - Merge branch 'fix-cred-helper' ([`01277a6`](https://github.com/Byron/gitoxide/commit/01277a681e4997896e04567490c572b5af606f35))
-
 </details>
 
 ## 0.33.0 (2023-03-10)
@@ -866,10 +834,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
-- 2 commits contributed to the release.
-- 6 days passed between releases.
-- 0 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 2 commits contributed to the release.
+ - 6 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -877,33 +845,32 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-tempfile v5.0.0, gix-lock v5.0.0, gix-ref v0.27.0, gix-config v0.19.0, gix-url v0.16.0, gix-credentials v0.12.0, gix-discover v0.16.0, gix-index v0.15.0, gix-pack v0.33.0, gix-odb v0.43.0, gix-transport v0.28.0, gix-protocol v0.29.0, gix-worktree v0.15.0, gix v0.41.0, safety bump 12 crates ([`29a0870`](https://github.com/Byron/gitoxide/commit/29a087043d1feb2f127b065341c8028d0bd0301e))
     - Prepare changelogs prior to release ([`e06f5f5`](https://github.com/Byron/gitoxide/commit/e06f5f523e83f4da390eddbebcb9a2d58674587b))
-
 </details>
 
 ## 0.32.0 (2023-03-04)
 
 ### Bug Fixes
 
-- <csr-id-ce182d6dae7e277d104893f0eec3285709946233/> don't over-estimate the number of objects to be received in the indexing phase.
-  Previously, it would work with a number that is pessimistically duplicated as each object
-  could in theory be a ref-delta, which then causes another base to be added to the stream,
-  duplicating the amount of objects we need to account for in the acceleration data structure,
-  which unfortunatelly cannot actually grow dynamically without violating invariants.
-
-  Now we simply don't try to estimata the number of ref-deltas (which don't exist here anymore)
-  at this stage.
+ - <csr-id-ce182d6dae7e277d104893f0eec3285709946233/> don't over-estimate the number of objects to be received in the indexing phase.
+   Previously, it would work with a number that is pessimistically duplicated as each object
+   could in theory be a ref-delta, which then causes another base to be added to the stream,
+   duplicating the amount of objects we need to account for in the acceleration data structure,
+   which unfortunatelly cannot actually grow dynamically without violating invariants.
+   
+   Now we simply don't try to estimata the number of ref-deltas (which don't exist here anymore)
+   at this stage.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 3 commits contributed to the release.
-- 3 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 3 commits contributed to the release.
+ - 3 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -911,11 +878,10 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-features v0.28.0, gix-actor v0.19.0, gix-object v0.28.0, gix-diff v0.28.0, gix-traverse v0.24.0, gix-pack v0.32.0, safety bump 20 crates ([`0f411e9`](https://github.com/Byron/gitoxide/commit/0f411e93ec812592bb9d3a52b751399dd86f76f7))
     - Prepare changelogs prior to release of `gix-pack` ([`6db30ef`](https://github.com/Byron/gitoxide/commit/6db30ef6b5e931bbf12135507a3d922051de4d4b))
     - Don't over-estimate the number of objects to be received in the indexing phase. ([`ce182d6`](https://github.com/Byron/gitoxide/commit/ce182d6dae7e277d104893f0eec3285709946233))
-
 </details>
 
 ## 0.31.0 (2023-03-01)
@@ -934,41 +900,41 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-f0e40ecddaf1211f76ed60ef30cf03dcfd53a7ab/> add `wasm` feature toggle to allow compilation to wasm32-unknown-unknown
-- <csr-id-3ba25202240d13fdda998581297616afe06422ca/> remove `dashmap` in favor of own sharded concurrent hashmap.
-  This speeds up multi-threaded counting greatly, and despite it
-  using shared memory which makes it quite wasteful, it is possible to
-  outperform `git` with it if enough cores are thrown at the problem.
-
-  Single-threaded performance is still lacking though, ultimately it needs
-  caches to accelerate the counting stage to hopefully be competitive.
+ - <csr-id-f0e40ecddaf1211f76ed60ef30cf03dcfd53a7ab/> add `wasm` feature toggle to allow compilation to wasm32-unknown-unknown
+ - <csr-id-3ba25202240d13fdda998581297616afe06422ca/> remove `dashmap` in favor of own sharded concurrent hashmap.
+   This speeds up multi-threaded counting greatly, and despite it
+   using shared memory which makes it quite wasteful, it is possible to
+   outperform `git` with it if enough cores are thrown at the problem.
+   
+   Single-threaded performance is still lacking though, ultimately it needs
+   caches to accelerate the counting stage to hopefully be competitive.
 
 ### Bug Fixes
 
-- <csr-id-e14dc7d475373d2c266e84ff8f1826c68a34ab92/> note that crates have been renamed from `git-*` to `gix-*`.
-  This also means that the `git-*` prefixed crates of the `gitoxide` project
-  are effectively unmaintained.
-  Use the crates with the `gix-*` prefix instead.
-
-  If you were using `git-repository`, then `gix` is its substitute.
+ - <csr-id-e14dc7d475373d2c266e84ff8f1826c68a34ab92/> note that crates have been renamed from `git-*` to `gix-*`.
+   This also means that the `git-*` prefixed crates of the `gitoxide` project
+   are effectively unmaintained.
+   Use the crates with the `gix-*` prefix instead.
+   
+   If you were using `git-repository`, then `gix` is its substitute.
 
 ### New Features (BREAKING)
 
-- <csr-id-6c4c196c9bc6c2171dc4dc58b69bd5ef53226e29/> add `wasm` feature toggle to let parts of `git-pack` build on wasm32.
-  It's a breaking change because we also start using the `dep:` syntax for declaring
-  references to optional dependencies, which will prevent them from being automatically
-  available as features.
-
-  Besides that, it adds the `wasm` feature toggle to allow compiling to `wasm32` targets.
+ - <csr-id-6c4c196c9bc6c2171dc4dc58b69bd5ef53226e29/> add `wasm` feature toggle to let parts of `git-pack` build on wasm32.
+   It's a breaking change because we also start using the `dep:` syntax for declaring
+   references to optional dependencies, which will prevent them from being automatically
+   available as features.
+   
+   Besides that, it adds the `wasm` feature toggle to allow compiling to `wasm32` targets.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 11 commits contributed to the release over the course of 2 calendar days.
-- 8 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 11 commits contributed to the release over the course of 2 calendar days.
+ - 8 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -976,7 +942,7 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-tempfile v4.1.0, gix-lock v4.0.0, gix-ref v0.25.0, gix-config v0.17.0, gix-url v0.14.0, gix-credentials v0.10.0, gix-diff v0.27.0, gix-discover v0.14.0, gix-hashtable v0.1.2, gix-bitmap v0.2.2, gix-traverse v0.23.0, gix-index v0.13.0, gix-mailmap v0.10.0, gix-pack v0.31.0, gix-odb v0.41.0, gix-transport v0.26.0, gix-protocol v0.27.0, gix-revision v0.11.0, gix-refspec v0.8.0, gix-worktree v0.13.0, gix v0.38.0, safety bump 6 crates ([`ea9fd1d`](https://github.com/Byron/gitoxide/commit/ea9fd1d9b60e1e9e17042e9e37c06525823c40a5))
     - Release gix-features v0.27.0, gix-actor v0.18.0, gix-quote v0.4.3, gix-attributes v0.9.0, gix-object v0.27.0, gix-ref v0.25.0, gix-config v0.17.0, gix-url v0.14.0, gix-credentials v0.10.0, gix-diff v0.27.0, gix-discover v0.14.0, gix-hashtable v0.1.2, gix-bitmap v0.2.2, gix-traverse v0.23.0, gix-index v0.13.0, gix-mailmap v0.10.0, gix-pack v0.31.0, gix-odb v0.41.0, gix-transport v0.26.0, gix-protocol v0.27.0, gix-revision v0.11.0, gix-refspec v0.8.0, gix-worktree v0.13.0, gix v0.38.0 ([`e6cc618`](https://github.com/Byron/gitoxide/commit/e6cc6184a7a49dbc2503c1c1bdd3688ca5cec5fe))
     - Remove versions from dev-dependencies to workspace crates. ([`3cfbf89`](https://github.com/Byron/gitoxide/commit/3cfbf89f8630dfc71c9085eee6ca286a5c96ad84))
@@ -988,26 +954,25 @@ A maintenance release without user-facing changes.
     - Adapt to changes in `gix-features` ([`a0ed614`](https://github.com/Byron/gitoxide/commit/a0ed6142c9a7ce7ed9fb6576117bb46e5497839c))
     - Adjust to changes in `gix-features`, use `process::count_with_decimals()` ([`3968133`](https://github.com/Byron/gitoxide/commit/3968133f60609d75806783234253fb8b3972f10e))
     - Prepare for git-tempfile release ([`56c005b`](https://github.com/Byron/gitoxide/commit/56c005b13c44376f71e61781e73c0bf93416d0e4))
-
 </details>
 
 ## 0.30.3 (2023-02-20)
 
 ### Bug Fixes
 
-- <csr-id-135d317065aae87af302beb6c26bb6ca8e30b6aa/> compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`.
-  `as_ref()` relies on a known target type which isn't always present. However, once
-  there is only one implementation, that's no problem, but when that changes compilation
-  fails due to ambiguity.
+ - <csr-id-135d317065aae87af302beb6c26bb6ca8e30b6aa/> compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`.
+   `as_ref()` relies on a known target type which isn't always present. However, once
+   there is only one implementation, that's no problem, but when that changes compilation
+   fails due to ambiguity.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 2 commits contributed to the release.
-- 3 days passed between releases.
-- 1 commit was understood as [conventional](https://www.conventionalcommits.org).
-- 0 issues like '(#ID)' were seen in commit messages
+ - 2 commits contributed to the release.
+ - 3 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1015,10 +980,9 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-date v0.4.3, gix-hash v0.10.3, gix-features v0.26.5, gix-actor v0.17.2, gix-glob v0.5.5, gix-path v0.7.2, gix-quote v0.4.2, gix-attributes v0.8.3, gix-validate v0.7.3, gix-object v0.26.2, gix-ref v0.24.1, gix-config v0.16.2, gix-command v0.2.4, gix-url v0.13.3, gix-credentials v0.9.2, gix-discover v0.13.1, gix-index v0.12.4, gix-mailmap v0.9.3, gix-pack v0.30.3, gix-packetline v0.14.3, gix-transport v0.25.6, gix-protocol v0.26.4, gix-revision v0.10.4, gix-refspec v0.7.3, gix-worktree v0.12.3, gix v0.36.1 ([`9604783`](https://github.com/Byron/gitoxide/commit/96047839a20a657a559376b0b14c65aeab96acbd))
     - Compatibility with `bstr` v1.3, use `*.as_bytes()` instead of `.as_ref()`. ([`135d317`](https://github.com/Byron/gitoxide/commit/135d317065aae87af302beb6c26bb6ca8e30b6aa))
-
 </details>
 
 ## 0.30.2 (2023-02-17)
@@ -1057,77 +1021,77 @@ A maintenance release without user-facing changes.
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-5a75afe0467e4a84323ea10172eed835cc7fae4c/> Reading and writing empty packs is explicitly allowed.
-  This can happen when sending packs that don't actually contain changes,
-  but need to be sent to conform to the protocol.
+ - <csr-id-5a75afe0467e4a84323ea10172eed835cc7fae4c/> Reading and writing empty packs is explicitly allowed.
+   This can happen when sending packs that don't actually contain changes,
+   but need to be sent to conform to the protocol.
 
 ### New Features (BREAKING)
 
-- <csr-id-6c4c196c9bc6c2171dc4dc58b69bd5ef53226e29/> add `wasm` feature toggle to let parts of `git-pack` build on wasm32.
-  It's a breaking change because we also start using the `dep:` syntax for declaring
-  references to optional dependencies, which will prevent them from being automatically
-  available as features.
-
-  Besides that, it adds the `wasm` feature toggle to allow compiling to `wasm32` targets.
-- <csr-id-95210cb2ba85f75148b4ef48ccea9d9f8a0a0114/> Provide optional `candidates` for ambigious entries during `lookup_prefix()`
-  The candidate entries are all entries matching a given prefix.
+ - <csr-id-6c4c196c9bc6c2171dc4dc58b69bd5ef53226e29/> add `wasm` feature toggle to let parts of `git-pack` build on wasm32.
+   It's a breaking change because we also start using the `dep:` syntax for declaring
+   references to optional dependencies, which will prevent them from being automatically
+   available as features.
+   
+   Besides that, it adds the `wasm` feature toggle to allow compiling to `wasm32` targets.
+ - <csr-id-95210cb2ba85f75148b4ef48ccea9d9f8a0a0114/> Provide optional `candidates` for ambigious entries during `lookup_prefix()`
+   The candidate entries are all entries matching a given prefix.
 
 ### Changed (BREAKING)
 
-- <csr-id-37f3a675d7fa931f5d3f38e91df74ec0b517422b/> move `data::ResolveBase` into `data::decode_entry::`; unify `decode_entry|decode_header::Error` into `decode::Error`.
-- <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
-- <csr-id-8c5ae77f06a64c57df9a9ad1190266896a223dbe/> Remove deprecated compound and linked object databases
-  The dynamic/general store is the only maintained can-do-it-all
-  DB now.
-- <csr-id-a79a7fb638b45df88af0d0d5fc9ada6d824bc328/> Improve method signatures of `cache::Tree::*`
-- <csr-id-91d047658b114f372735116c9d8e6962a3873137/> cleanup and unify `verify_integrity()` method signature
-  Previously they used many different ways of handling their parameters
-  despite all boiling down to calling the same 'index::File::traverse()`
-  method.
-
-  This allows for more reuse of `Options` structs and generally makes
-  clearer how these optinos are used.
-- <csr-id-2cf7727228e1d8094ffd2eec6746006348c39eab/> `index::File::traverse()` now returns an `Outcome` struct instead of tuple of 3 fields
-- <csr-id-bf04644ab75ed1969507f957dc8d4868790d462d/> remove `Option<impl Progress>` in favor of `impl Progress`
-- <csr-id-6829e5e5d6aed1e6c87647144e2dd76a1e4b9f1f/> multi-index integrity check; use `integrity::Outcome` for various integrity checks
-- <csr-id-d851bede97801096d188ff6af06c98a79fe276db/> remove unnecessary `Arc` around `should_interrupt` flag
-- <csr-id-c2679a03358b9c19d63ed1af1cd57324c6381447/> remove Sha1 mentions in `index::verify::Mode::*` variants
-  The hash is repository defined and not hard-coded
-- <csr-id-80b120d3278e46429f848df7af3db13413c36649/> introduce `index::File::verify_integrity(…, pack: Option<PackContext>, …)`, replacing tuple
-  This allows for more documentation on what input is required there and
-  generally makes for an easier to use API.
-- <csr-id-79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded/> rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()`
-  This change was done in the name of consistency, as `from_bytes()` is
-  used in many other git-* crates
-- <csr-id-2ef9a8424af51310db8c1e6df31dde9953ed3d21/> Change accessors named `hash_kind()` to `object_hash()` for consistency
-- <csr-id-b76f6be6c5baa6cf613a174241f007e92bf5ba36/> consistently use `object_hash` instead of `hash_kind`
-- <csr-id-629412b4cb192614b7eff08dbf203e3448c902c1/> data::Entry::from_read() now takes a hash lengths as parameter
-  That way ref-deltas can be interepreted without hard-coding SHA1
-- <csr-id-851dc2c52fa8e204ba2d5ced8fb0959a889869d8/> data::Entry::from_bytes(…, hash_len) takes new parameter
-  The hash-len tells it how to interpret ref-delta objects, which
-  store the complete hash of the base object.
-
-  This is now entirely configurable.
-- <csr-id-db8c8c41b4ced0fc296d3877883d801e77d550ae/> `index::File::at()` with git_hash::Kind parameter
-  It will allow to assume different hashes even in the index file format
-  which isn't yet capable of storing this information.
-- <csr-id-e6a3c9f72332b524b143bc94ee9df0a6db11e864/> `data::File::at()` and `Bundle::at()` now have `hash_kind` parameter
-  It's used to configure the kind of hash to assume when reading packs and
-  indices.
-- <csr-id-82b9b33bd5f4c3c1721a5093de2cedc62cb10565/> move `bundle::Location` to `data::entry::Location`
-  The latter place best describes its purpose.
-- <csr-id-3f05fea55dc8acce1ed62ecbe4e0a1394f2720b7/> remove `make_object_cache` parameter from `git_pack::data::output::count::objects()`
-  It now is an implementation detail of the Find trait.
-- <csr-id-e7526b2a7b51cbac4018e1ab3b623a85987fadc2/> parallel utilities now use `Send + Clone` insted of `Send + Sync`
-  This helps to assure that thread-local computations always work with the
-  kind of types we provide. The ones that are carrying out actions are
-  notably not `Sync` anymore.
-
-  We cater to that by defining our bounds accordingly, but for those
-  who want to use other utilities that need Sync, using types like
-  `Repository` and `thread_local!()` is the only way to make this
-  work.
-- <csr-id-e8b091943f0c9a26317da0003f7fcdf5a56ef21a/> Rename gix->ein and gixp->gix
+ - <csr-id-37f3a675d7fa931f5d3f38e91df74ec0b517422b/> move `data::ResolveBase` into `data::decode_entry::`; unify `decode_entry|decode_header::Error` into `decode::Error`.
+ - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
+ - <csr-id-8c5ae77f06a64c57df9a9ad1190266896a223dbe/> Remove deprecated compound and linked object databases
+   The dynamic/general store is the only maintained can-do-it-all
+   DB now.
+ - <csr-id-a79a7fb638b45df88af0d0d5fc9ada6d824bc328/> Improve method signatures of `cache::Tree::*`
+ - <csr-id-91d047658b114f372735116c9d8e6962a3873137/> cleanup and unify `verify_integrity()` method signature
+   Previously they used many different ways of handling their parameters
+   despite all boiling down to calling the same 'index::File::traverse()`
+   method.
+   
+   This allows for more reuse of `Options` structs and generally makes
+   clearer how these optinos are used.
+ - <csr-id-2cf7727228e1d8094ffd2eec6746006348c39eab/> `index::File::traverse()` now returns an `Outcome` struct instead of tuple of 3 fields
+ - <csr-id-bf04644ab75ed1969507f957dc8d4868790d462d/> remove `Option<impl Progress>` in favor of `impl Progress`
+ - <csr-id-6829e5e5d6aed1e6c87647144e2dd76a1e4b9f1f/> multi-index integrity check; use `integrity::Outcome` for various integrity checks
+ - <csr-id-d851bede97801096d188ff6af06c98a79fe276db/> remove unnecessary `Arc` around `should_interrupt` flag
+ - <csr-id-c2679a03358b9c19d63ed1af1cd57324c6381447/> remove Sha1 mentions in `index::verify::Mode::*` variants
+   The hash is repository defined and not hard-coded
+ - <csr-id-80b120d3278e46429f848df7af3db13413c36649/> introduce `index::File::verify_integrity(…, pack: Option<PackContext>, …)`, replacing tuple
+   This allows for more documentation on what input is required there and
+   generally makes for an easier to use API.
+ - <csr-id-79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded/> rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()`
+   This change was done in the name of consistency, as `from_bytes()` is
+   used in many other git-* crates
+ - <csr-id-2ef9a8424af51310db8c1e6df31dde9953ed3d21/> Change accessors named `hash_kind()` to `object_hash()` for consistency
+ - <csr-id-b76f6be6c5baa6cf613a174241f007e92bf5ba36/> consistently use `object_hash` instead of `hash_kind`
+ - <csr-id-629412b4cb192614b7eff08dbf203e3448c902c1/> data::Entry::from_read() now takes a hash lengths as parameter
+   That way ref-deltas can be interepreted without hard-coding SHA1
+ - <csr-id-851dc2c52fa8e204ba2d5ced8fb0959a889869d8/> data::Entry::from_bytes(…, hash_len) takes new parameter
+   The hash-len tells it how to interpret ref-delta objects, which
+   store the complete hash of the base object.
+   
+   This is now entirely configurable.
+ - <csr-id-db8c8c41b4ced0fc296d3877883d801e77d550ae/> `index::File::at()` with git_hash::Kind parameter
+   It will allow to assume different hashes even in the index file format
+   which isn't yet capable of storing this information.
+ - <csr-id-e6a3c9f72332b524b143bc94ee9df0a6db11e864/> `data::File::at()` and `Bundle::at()` now have `hash_kind` parameter
+   It's used to configure the kind of hash to assume when reading packs and
+   indices.
+ - <csr-id-82b9b33bd5f4c3c1721a5093de2cedc62cb10565/> move `bundle::Location` to `data::entry::Location`
+   The latter place best describes its purpose.
+ - <csr-id-3f05fea55dc8acce1ed62ecbe4e0a1394f2720b7/> remove `make_object_cache` parameter from `git_pack::data::output::count::objects()`
+   It now is an implementation detail of the Find trait.
+ - <csr-id-e7526b2a7b51cbac4018e1ab3b623a85987fadc2/> parallel utilities now use `Send + Clone` insted of `Send + Sync`
+   This helps to assure that thread-local computations always work with the
+   kind of types we provide. The ones that are carrying out actions are
+   notably not `Sync` anymore.
+   
+   We cater to that by defining our bounds accordingly, but for those
+   who want to use other utilities that need Sync, using types like
+   `Repository` and `thread_local!()` is the only way to make this
+   work.
+ - <csr-id-e8b091943f0c9a26317da0003f7fcdf5a56ef21a/> Rename gix->ein and gixp->gix
 
 ### Refactor
 
@@ -1140,7 +1104,7 @@ A maintenance release without user-facing changes.
 
 ### Performance
 
-- <csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> ObjectID specific hashers, using the fact that object ids are hashes
+ - <csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> ObjectID specific hashers, using the fact that object ids are hashes
 
 ### Other
 
@@ -1149,67 +1113,67 @@ A maintenance release without user-facing changes.
 
 ### Bug Fixes
 
-- <csr-id-ec58bef84d620360dc52e34e173ace1310f74c85/> reduce memory usage for pack resolution by 18%…
-  …compared to where it started out before.
-
-  This is the result of using u32 intead of usize where possible,
-  leveraging the object limit of u32 in packs.
-
-  This change makes the biggest difference by not keeping the decompressed
-  memory of leaf nodes alive for longer than needed, at the cost of
-  some code duplication which could be extracted into a function if one
-  was inclined to deal with the boilerplate and lots of generics.
-- <csr-id-49d168a8859c6b5a9e7ef58cd836093212c2c7ad/> Allow verification of empty packs and indices.
-  Empty packs are fine, even though the implementation should probably
-  assure to not write them, or remove them after having been written.
-- <csr-id-a745512185fb0a46e35daaa6d28829aec05edb55/> increase pack-receive performance using a BufWriter
-  Previously the NamedTempFile would receive every little write request
-  for millions of objects, consuming considerable amounts of time.
-
-  Now a buf writer alleviates this issue entirely.
-- <csr-id-0b6ed60f842f0a36f61f187651080540a358758e/> `bundle::write::Error` is now publicly available
-- <csr-id-d9451e8d7fc39c252042f9d2447061262c16ae7a/> downgrade dashmap to 4.0 to avoid unsoundness.
-  See https://github.com/xacrimon/dashmap/issues/167 for tracking
-  progress on resolving the issue.
-- <csr-id-42e0487286c1f745837c0ce337ed7c9d86b14516/> support Rust 1.52
-- <csr-id-84ade1d23060f10bf6c8529f8f693d06660b4f4e/> Allow resolution of in-pack ref-deltas
-  This finally allows delta tree caches to be used on typical small packs
-  returned by GitHub.
-- <csr-id-ba92cc09ba41fe4c9a9097bfeb8d18016408fcdf/> don't try to short-cut detection of large offsets when writing index files
-  The code incorrectly assumed that the input is sorted by offsets, with
-  the largest offset being last, even though by all means that's not the
-  case.
-- <csr-id-6d3f52dc13d7243a6bce6dab89a985114a75d94b/> Avoid the dashmap being cloned for each thread
-  Intead, share it by reference, it's sync after all.
-
-  This issue was introduced when switching to a `Send + Clone` model,
-  instead of `Send + Sync`, to allow thread-local caches in database
-  handles of all kinds.
-- <csr-id-b605c1fa0494b10872d3c2e6ecce0e39f1a90a9e/> linked::Store now assures unique IDs across compound stores
-- <csr-id-20b3994206aa5bc5e35cbbc9c8f8f99187077f79/> Adjust size-hints of resolving entries iterator and use the upper bound in delta tree
-  The delta-tree is a data structure that actually heavily relies on
-  favorable allocation and a known amount of objects in order to
-  provide front and back buffers. However, this is an implementation
-  detail and they don't have to stay consistent at all especially
-  after growing the buffer by pushing to it.
-
-  Interestingly, the VecDeque internally over-allocates as well which
-  definitely helps the example of `as_mut_slices()`, otherwise
-  it could also suffer from the assertions that trigger here.
-- <csr-id-d8fe8141e80a9e9a433b5e1a072b850325c806c8/> don't put more objects into the pack cache than needed
-  Previously when accessing a packed object, it would store the base
-  object into the pack cache (if it wasn't retrieved from there)
-  which is great if that operation is free.
-
-  Since it isn't, it's better not to stress the cache with puts
-  and trash more objects than necessary.
-
-  Now only the last decompressed object will be put into the LRU cache.
-- <csr-id-faf6f813927720c5adf62102f9ce46606ff2617c/> don't include submodules in count…
-  …to avoid dealing with missing objects.
-
-  It's still a good idea to handle these gracefully though, git itself
-  seems to ignore them.
+ - <csr-id-ec58bef84d620360dc52e34e173ace1310f74c85/> reduce memory usage for pack resolution by 18%…
+   …compared to where it started out before.
+   
+   This is the result of using u32 intead of usize where possible,
+   leveraging the object limit of u32 in packs.
+   
+   This change makes the biggest difference by not keeping the decompressed
+   memory of leaf nodes alive for longer than needed, at the cost of
+   some code duplication which could be extracted into a function if one
+   was inclined to deal with the boilerplate and lots of generics.
+ - <csr-id-49d168a8859c6b5a9e7ef58cd836093212c2c7ad/> Allow verification of empty packs and indices.
+   Empty packs are fine, even though the implementation should probably
+   assure to not write them, or remove them after having been written.
+ - <csr-id-a745512185fb0a46e35daaa6d28829aec05edb55/> increase pack-receive performance using a BufWriter
+   Previously the NamedTempFile would receive every little write request
+   for millions of objects, consuming considerable amounts of time.
+   
+   Now a buf writer alleviates this issue entirely.
+ - <csr-id-0b6ed60f842f0a36f61f187651080540a358758e/> `bundle::write::Error` is now publicly available
+ - <csr-id-d9451e8d7fc39c252042f9d2447061262c16ae7a/> downgrade dashmap to 4.0 to avoid unsoundness.
+   See https://github.com/xacrimon/dashmap/issues/167 for tracking
+   progress on resolving the issue.
+ - <csr-id-42e0487286c1f745837c0ce337ed7c9d86b14516/> support Rust 1.52
+ - <csr-id-84ade1d23060f10bf6c8529f8f693d06660b4f4e/> Allow resolution of in-pack ref-deltas
+   This finally allows delta tree caches to be used on typical small packs
+   returned by GitHub.
+ - <csr-id-ba92cc09ba41fe4c9a9097bfeb8d18016408fcdf/> don't try to short-cut detection of large offsets when writing index files
+   The code incorrectly assumed that the input is sorted by offsets, with
+   the largest offset being last, even though by all means that's not the
+   case.
+ - <csr-id-6d3f52dc13d7243a6bce6dab89a985114a75d94b/> Avoid the dashmap being cloned for each thread
+   Intead, share it by reference, it's sync after all.
+   
+   This issue was introduced when switching to a `Send + Clone` model,
+   instead of `Send + Sync`, to allow thread-local caches in database
+   handles of all kinds.
+ - <csr-id-b605c1fa0494b10872d3c2e6ecce0e39f1a90a9e/> linked::Store now assures unique IDs across compound stores
+ - <csr-id-20b3994206aa5bc5e35cbbc9c8f8f99187077f79/> Adjust size-hints of resolving entries iterator and use the upper bound in delta tree
+   The delta-tree is a data structure that actually heavily relies on
+   favorable allocation and a known amount of objects in order to
+   provide front and back buffers. However, this is an implementation
+   detail and they don't have to stay consistent at all especially
+   after growing the buffer by pushing to it.
+   
+   Interestingly, the VecDeque internally over-allocates as well which
+   definitely helps the example of `as_mut_slices()`, otherwise
+   it could also suffer from the assertions that trigger here.
+ - <csr-id-d8fe8141e80a9e9a433b5e1a072b850325c806c8/> don't put more objects into the pack cache than needed
+   Previously when accessing a packed object, it would store the base
+   object into the pack cache (if it wasn't retrieved from there)
+   which is great if that operation is free.
+   
+   Since it isn't, it's better not to stress the cache with puts
+   and trash more objects than necessary.
+   
+   Now only the last decompressed object will be put into the LRU cache.
+ - <csr-id-faf6f813927720c5adf62102f9ce46606ff2617c/> don't include submodules in count…
+   …to avoid dealing with missing objects.
+   
+   It's still a good idea to handle these gracefully though, git itself
+   seems to ignore them.
 
 ### Chore
 
@@ -1219,74 +1183,73 @@ A maintenance release without user-facing changes.
 
 ### Documentation
 
-- <csr-id-39ed9eda62b7718d5109135e5ad406fb1fe2978c/> fix typos
+ - <csr-id-39ed9eda62b7718d5109135e5ad406fb1fe2978c/> fix typos
 
 ### New Features
 
-- <csr-id-d792ea543246632bf1ca8d0e1d239bbe7f07e219/> use enumerations to advertise progress ids publicly.
-  Previously these were an implementation detail which also means they
-  couldn't be relied upon.
-
-  Thanks to an intermediate enumeration, they become part of the public API
-  and their actual value is not exposed.
-- <csr-id-f0e40ecddaf1211f76ed60ef30cf03dcfd53a7ab/> add `wasm` feature toggle to allow compilation to wasm32-unknown-unknown
-- <csr-id-a85dcddba29a453bbea87ac865b8aedc97f41aed/> add `data::File::resolve_header()` to obtain object information without decompressing it.
-- <csr-id-c8835c6edae784c9ffcb69a674c0a6545dbb2af3/> upgrade to `prodash 21.1` and add `Ids` to all progress instances.
-  That way callers can identify progress they are interested in, say, for
-  selective visualizations.
-- <csr-id-450257eb596465352fb363a5c8c514f544e7f9ac/> `Bundle::write…` also produces a `.keep` file
-  These files are placed before moving the coresponding pack and index
-  files into place to prevent them from being picked up for collection
-  while their refs are still being placed.
-
-  The caller is responsible for deleting them once refs integrate the
-  contained objects into the commit graph.
-- <csr-id-6836cb148cbadf919bdac2e0e77bdec34caa9307/> more efficient distribution of tasks to threads during pack resolution.
-  This clearly is a peak-performance optimization as it will now
-  efficiently distribut tree-root nodes to threads one at a time by
-  means of shared memory, which is accessed mutably yet safely.
-
-  This change can also further reduce peak memory usage as it will not
-  keep buffers of more resolved deltas then necessary, as it only handles
-  one at a time per thread.
-- <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
-- <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
-- <csr-id-503b1a1f8d4f39b44c166209d7a8ba8d74137859/> `index::File::lookup_prefix(…)`
-- <csr-id-cb83beedd1aa389f6774e2296f79273e8c8f14f4/> git-hash::Prefix::from_id()
-  A way to obtain a prefix of an object id, with all non-prefix
-  bytes set to zero.
-- <csr-id-16208306ab49ade30d8ffd6b067ebd8eefd84cd4/> in-manifest and in-lib documentation of feature toggles
-- <csr-id-b80dec2323b81fb2172df76c7d897a4b5e6bdfea/> zero-objects check for index and multi-index integrity validation
-- <csr-id-56fc99fb9c1cab61abd03c10e1b4af0d6e491bbf/> support for fan-checking in index and multi-index integrity verification
-- <csr-id-28e3ea8612112f6a04cfaff591565eca5a1ffba2/> introduce type for entry indices within an index or multi-index
-  That way it's a littl emore descriptive than a bare u32.
-- <csr-id-58c2edb76755ab71e10eef4cd9a51533825c291f/> git_pack::Find::try_find_cached(…, pack_cache)
-  With this method it's easier to bypass local caches and control
-  the cache oneself entirely.
-- <csr-id-e25f4eadec679406aad6df10026e27e4832c2482/> A simplified version of the `Find` trait
-  It's meant for the next generation of object db handles which keep a
-  local cache of all the details of the actual object database.
-- <csr-id-60c9fad8002b4e3f6b9607bba6361871752f4d3d/> control pack and object cache size in megabytes
-- <csr-id-50cf610e8939812c3d2268c48835e2dac67d0c31/> cache::Object trait for caching and retrieving whole objects
-- <csr-id-5a8c2da6cb1e2accf7cfdccc16bc3a1d0b2a7dbc/> object cache size is configurable
-- <csr-id-d6c44e6ab8f436020d4fb235e423b018fd1e7a9f/> dynamically sized full-object speeds up diff-based object counting…
-  …which is what happens when counting objects for fetches where only
-  changed objects should be sent.
+ - <csr-id-d792ea543246632bf1ca8d0e1d239bbe7f07e219/> use enumerations to advertise progress ids publicly.
+   Previously these were an implementation detail which also means they
+   couldn't be relied upon.
+   
+   Thanks to an intermediate enumeration, they become part of the public API
+   and their actual value is not exposed.
+ - <csr-id-f0e40ecddaf1211f76ed60ef30cf03dcfd53a7ab/> add `wasm` feature toggle to allow compilation to wasm32-unknown-unknown
+ - <csr-id-a85dcddba29a453bbea87ac865b8aedc97f41aed/> add `data::File::resolve_header()` to obtain object information without decompressing it.
+ - <csr-id-c8835c6edae784c9ffcb69a674c0a6545dbb2af3/> upgrade to `prodash 21.1` and add `Ids` to all progress instances.
+   That way callers can identify progress they are interested in, say, for
+   selective visualizations.
+ - <csr-id-450257eb596465352fb363a5c8c514f544e7f9ac/> `Bundle::write…` also produces a `.keep` file
+   These files are placed before moving the coresponding pack and index
+   files into place to prevent them from being picked up for collection
+   while their refs are still being placed.
+   
+   The caller is responsible for deleting them once refs integrate the
+   contained objects into the commit graph.
+ - <csr-id-6836cb148cbadf919bdac2e0e77bdec34caa9307/> more efficient distribution of tasks to threads during pack resolution.
+   This clearly is a peak-performance optimization as it will now
+   efficiently distribut tree-root nodes to threads one at a time by
+   means of shared memory, which is accessed mutably yet safely.
+   
+   This change can also further reduce peak memory usage as it will not
+   keep buffers of more resolved deltas then necessary, as it only handles
+   one at a time per thread.
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+ - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+ - <csr-id-503b1a1f8d4f39b44c166209d7a8ba8d74137859/> `index::File::lookup_prefix(…)`
+ - <csr-id-cb83beedd1aa389f6774e2296f79273e8c8f14f4/> git-hash::Prefix::from_id()
+   A way to obtain a prefix of an object id, with all non-prefix
+   bytes set to zero.
+ - <csr-id-16208306ab49ade30d8ffd6b067ebd8eefd84cd4/> in-manifest and in-lib documentation of feature toggles
+ - <csr-id-b80dec2323b81fb2172df76c7d897a4b5e6bdfea/> zero-objects check for index and multi-index integrity validation
+ - <csr-id-56fc99fb9c1cab61abd03c10e1b4af0d6e491bbf/> support for fan-checking in index and multi-index integrity verification
+ - <csr-id-28e3ea8612112f6a04cfaff591565eca5a1ffba2/> introduce type for entry indices within an index or multi-index
+   That way it's a littl emore descriptive than a bare u32.
+ - <csr-id-58c2edb76755ab71e10eef4cd9a51533825c291f/> git_pack::Find::try_find_cached(…, pack_cache)
+   With this method it's easier to bypass local caches and control
+   the cache oneself entirely.
+ - <csr-id-e25f4eadec679406aad6df10026e27e4832c2482/> A simplified version of the `Find` trait
+   It's meant for the next generation of object db handles which keep a
+   local cache of all the details of the actual object database.
+ - <csr-id-60c9fad8002b4e3f6b9607bba6361871752f4d3d/> control pack and object cache size in megabytes
+ - <csr-id-50cf610e8939812c3d2268c48835e2dac67d0c31/> cache::Object trait for caching and retrieving whole objects
+ - <csr-id-5a8c2da6cb1e2accf7cfdccc16bc3a1d0b2a7dbc/> object cache size is configurable
+ - <csr-id-d6c44e6ab8f436020d4fb235e423b018fd1e7a9f/> dynamically sized full-object speeds up diff-based object counting…
+   …which is what happens when counting objects for fetches where only
+   changed objects should be sent.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
-- 717 commits contributed to the release over the course of 634 calendar days.
-- 75 commits were understood as [conventional](https://www.conventionalcommits.org).
-- 27 unique issues were worked
-  on: [#164](https://github.com/Byron/gitoxide/issues/164), [#198](https://github.com/Byron/gitoxide/issues/198), [#222](https://github.com/Byron/gitoxide/issues/222), [#247](https://github.com/Byron/gitoxide/issues/247), [#250](https://github.com/Byron/gitoxide/issues/250), [#254](https://github.com/Byron/gitoxide/issues/254), [#259](https://github.com/Byron/gitoxide/issues/259), [#260](https://github.com/Byron/gitoxide/issues/260), [#263](https://github.com/Byron/gitoxide/issues/263), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364), [#384](https://github.com/Byron/gitoxide/issues/384), [#422](https://github.com/Byron/gitoxide/issues/422), [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#67](https://github.com/Byron/gitoxide/issues/67), [#691](https://github.com/Byron/gitoxide/issues/691), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
+ - 717 commits contributed to the release over the course of 634 calendar days.
+ - 75 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 27 unique issues were worked on: [#164](https://github.com/Byron/gitoxide/issues/164), [#198](https://github.com/Byron/gitoxide/issues/198), [#222](https://github.com/Byron/gitoxide/issues/222), [#247](https://github.com/Byron/gitoxide/issues/247), [#250](https://github.com/Byron/gitoxide/issues/250), [#254](https://github.com/Byron/gitoxide/issues/254), [#259](https://github.com/Byron/gitoxide/issues/259), [#260](https://github.com/Byron/gitoxide/issues/260), [#263](https://github.com/Byron/gitoxide/issues/263), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364), [#384](https://github.com/Byron/gitoxide/issues/384), [#422](https://github.com/Byron/gitoxide/issues/422), [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#67](https://github.com/Byron/gitoxide/issues/67), [#691](https://github.com/Byron/gitoxide/issues/691), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 26 times to make code idiomatic.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 26 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -1294,9 +1257,9 @@ A maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
-* **[#164](https://github.com/Byron/gitoxide/issues/164)**
+ * **[#164](https://github.com/Byron/gitoxide/issues/164)**
     - Avoid duplicate module paths in 'tree' and 'commit' ([`2f2d856`](https://github.com/Byron/gitoxide/commit/2f2d856efe733d3cf81110c0e0607d2e7c40d968))
-* **[#198](https://github.com/Byron/gitoxide/issues/198)**
+ * **[#198](https://github.com/Byron/gitoxide/issues/198)**
     - Fix stop-release-for-changelog logic and fix all affected changelogs ([`52b38bc`](https://github.com/Byron/gitoxide/commit/52b38bc4856be5ba8b5372a3dd20f5d06504e7ed))
     - Deduplicate conventional message ids ([`e695eda`](https://github.com/Byron/gitoxide/commit/e695eda8cd183f703d9a3e59b7c3c7fa496ea1d2))
     - Regenerate all changelogs to get links ([`0c81769`](https://github.com/Byron/gitoxide/commit/0c817690bd444f52bed2936b2b451cafd87dde92))
@@ -1314,31 +1277,31 @@ A maintenance release without user-facing changes.
     - Fix section headline level ([`9d6f263`](https://github.com/Byron/gitoxide/commit/9d6f263beef289d227dec1acc2d4240087cb9be6))
     - Write first version of changlogs thus far… ([`719b6bd`](https://github.com/Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
     - Parse more user generated section content, adapt existing changelogs to work correctly ([`2f43a54`](https://github.com/Byron/gitoxide/commit/2f43a54298e7ecfff2334627df149fe0882b5d1d))
-* **[#222](https://github.com/Byron/gitoxide/issues/222)**
+ * **[#222](https://github.com/Byron/gitoxide/issues/222)**
     - Update changelogs prior to release ([`9a493d0`](https://github.com/Byron/gitoxide/commit/9a493d0651b0b6d71cf230dc510a658be7f8cb19))
     - Stabilize changelogs ([`920e832`](https://github.com/Byron/gitoxide/commit/920e83219911df1c440d3fe42fd5ec3a295b0bb8))
     - Update changelogs prior to release ([`b3e2252`](https://github.com/Byron/gitoxide/commit/b3e2252f7461a003d9a4612da60ba931dd8c0bef))
-* **[#247](https://github.com/Byron/gitoxide/issues/247)**
+ * **[#247](https://github.com/Byron/gitoxide/issues/247)**
     - Rename gix->ein and gixp->gix ([`e8b0919`](https://github.com/Byron/gitoxide/commit/e8b091943f0c9a26317da0003f7fcdf5a56ef21a))
-* **[#250](https://github.com/Byron/gitoxide/issues/250)**
+ * **[#250](https://github.com/Byron/gitoxide/issues/250)**
     - Address FIXME related to git_pack::data::Object ([`96386fd`](https://github.com/Byron/gitoxide/commit/96386fd1379b32ce2333baf34f81133cb9817364))
     - Move loose header manipulation from git-pack to git-object ([`598698b`](https://github.com/Byron/gitoxide/commit/598698b88c194bc0e6ef69539f9fa7246ebfab70))
-* **[#254](https://github.com/Byron/gitoxide/issues/254)**
+ * **[#254](https://github.com/Byron/gitoxide/issues/254)**
     - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
     - Minor refactor ([`227c8b1`](https://github.com/Byron/gitoxide/commit/227c8b1859a6cbf96d48fd8564e575ef7e201db1))
     - Adjust size-hints of resolving entries iterator and use the upper bound in delta tree ([`20b3994`](https://github.com/Byron/gitoxide/commit/20b3994206aa5bc5e35cbbc9c8f8f99187077f79))
-* **[#259](https://github.com/Byron/gitoxide/issues/259)**
+ * **[#259](https://github.com/Byron/gitoxide/issues/259)**
     - Sketch a little more how packs could be accessed ([`3fce8f2`](https://github.com/Byron/gitoxide/commit/3fce8f2b35ec6c2076f66fdde16a5f99a68326ac))
     - Unify trait bounds for parallel code: prefer Clone over Sync ([`c805d0b`](https://github.com/Byron/gitoxide/commit/c805d0b231cf4d2f51dae7705bfbbc6562f86c32))
     - Remove trait bounds to allow single-threaded applications to exist ([`3c790e0`](https://github.com/Byron/gitoxide/commit/3c790e01de0dbd3ffa2683d5cf060723d11d64a5))
     - Turns out the new `PolicyStore` can co-exist with existing one… ([`5e9250f`](https://github.com/Byron/gitoxide/commit/5e9250f5027e4b2c701ceae72a6038ac2a4a2093))
-* **[#260](https://github.com/Byron/gitoxide/issues/260)**
+ * **[#260](https://github.com/Byron/gitoxide/issues/260)**
     - Linked::Store now assures unique IDs across compound stores ([`b605c1f`](https://github.com/Byron/gitoxide/commit/b605c1fa0494b10872d3c2e6ecce0e39f1a90a9e))
-* **[#263](https://github.com/Byron/gitoxide/issues/263)**
+ * **[#263](https://github.com/Byron/gitoxide/issues/263)**
     - Fmt ([`fbeddeb`](https://github.com/Byron/gitoxide/commit/fbeddebcab999f4898f768a3184906091f8ce0b8))
     - Parallel utilities now use `Send + Clone` insted of `Send + Sync` ([`e7526b2`](https://github.com/Byron/gitoxide/commit/e7526b2a7b51cbac4018e1ab3b623a85987fadc2))
     - A mad attempt to use thread-local everywhere and avoid Sync… ([`0af5077`](https://github.com/Byron/gitoxide/commit/0af5077e1f028c1c69bbdc098bb567e486282c37))
-* **[#266](https://github.com/Byron/gitoxide/issues/266)**
+ * **[#266](https://github.com/Byron/gitoxide/issues/266)**
     - Remove unused dependencies ([`c800fdd`](https://github.com/Byron/gitoxide/commit/c800fdd331e6d7a0b8d756ba822915259f26e9e8))
     - Upgrade dashmap to latest version ([`52d4fe5`](https://github.com/Byron/gitoxide/commit/52d4fe55b6dd88f72479abd4015cab063ddaaf97))
     - Refactor ([`b88f253`](https://github.com/Byron/gitoxide/commit/b88f253e46e7ad0a50b670b96c1bfa09eaaecaef))
@@ -1362,7 +1325,7 @@ A maintenance release without user-facing changes.
     - Move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait ([`2290d00`](https://github.com/Byron/gitoxide/commit/2290d006705ff47ad780b009fe58ee422b3285af))
     - A simplified version of the `Find` trait ([`e25f4ea`](https://github.com/Byron/gitoxide/commit/e25f4eadec679406aad6df10026e27e4832c2482))
     - Add 'contains()' method to Find ([`dfdd6fb`](https://github.com/Byron/gitoxide/commit/dfdd6fb2c83e5d09c3a56936723bc6749ac4b99a))
-* **[#279](https://github.com/Byron/gitoxide/issues/279)**
+ * **[#279](https://github.com/Byron/gitoxide/issues/279)**
     - Add a less thorough and faster way of verifying multi-indices ([`7517482`](https://github.com/Byron/gitoxide/commit/75174825e1012cfb4c34c18391c681b49c2f0d29))
     - Refactor ([`91e6d38`](https://github.com/Byron/gitoxide/commit/91e6d382bb2e2430d5d3325a390b7d9bdc0034d6))
     - Allow interrupting multi-index creation more often ([`f223ecb`](https://github.com/Byron/gitoxide/commit/f223ecb6c69358ed8e38d796aca9bef21173cc92))
@@ -1444,7 +1407,7 @@ A maintenance release without user-facing changes.
     - Basic midx header parsing ([`edf02ae`](https://github.com/Byron/gitoxide/commit/edf02ae46ce6f3f981acd99310878e1d4a00d23b))
     - First pieces of header parsing; allow to respect multi-index desired hash kind in git-odb ([`1a2a049`](https://github.com/Byron/gitoxide/commit/1a2a04930ab56ba778091e10b15cecf415f5058d))
     - Frame for instantiation of multi-pack-index ([`5e085ec`](https://github.com/Byron/gitoxide/commit/5e085ecbea913e0b0191d8267e548fe859bdd5d9))
-* **[#287](https://github.com/Byron/gitoxide/issues/287)**
+ * **[#287](https://github.com/Byron/gitoxide/issues/287)**
     - Way nicer progress messages for repo verification ([`4b4f9f8`](https://github.com/Byron/gitoxide/commit/4b4f9f81879ad181744022eb0d7dc02392a5e91e))
     - Upgrade to prodash 17 ([`47860b7`](https://github.com/Byron/gitoxide/commit/47860b7e2769260cfb8522ae455c491605093423))
     - Refactor ([`831397c`](https://github.com/Byron/gitoxide/commit/831397c99fee9f2d6758124d993386cca5534f7b))
@@ -1455,7 +1418,7 @@ A maintenance release without user-facing changes.
     - Refactor ([`6c06659`](https://github.com/Byron/gitoxide/commit/6c066597f310b1bd5eb5611c1147b48846bc0ac0))
     - Improve method signatures of `cache::Tree::*` ([`a79a7fb`](https://github.com/Byron/gitoxide/commit/a79a7fb638b45df88af0d0d5fc9ada6d824bc328))
     - Cleanup and unify `verify_integrity()` method signature ([`91d0476`](https://github.com/Byron/gitoxide/commit/91d047658b114f372735116c9d8e6962a3873137))
-* **[#293](https://github.com/Byron/gitoxide/issues/293)**
+ * **[#293](https://github.com/Byron/gitoxide/issues/293)**
     - Fix docs, again ([`7b2ab26`](https://github.com/Byron/gitoxide/commit/7b2ab263b9dbb2ad33a4dddfe82f4cd7f3187271))
     - Fix build ([`e3977fe`](https://github.com/Byron/gitoxide/commit/e3977fe033550bfd3297cdd674934e40476aa38b))
     - Use InOrderIter from git-features ([`7721b5f`](https://github.com/Byron/gitoxide/commit/7721b5fc7cba86d785e0936fdfab2ea41163219f))
@@ -1464,7 +1427,7 @@ A maintenance release without user-facing changes.
     - Adapt to changes in git-features: use var-int decoding from there ([`52e3c6f`](https://github.com/Byron/gitoxide/commit/52e3c6f6f4cd1bf677c9189fb59db16173954669))
     - Remove byteorder from git-pack ([`4122306`](https://github.com/Byron/gitoxide/commit/41223061a2b919fd190066315b419ea17cabfde3))
     - Git-pack uses `memmap2` instead of `filebuffer` ([`d9011c7`](https://github.com/Byron/gitoxide/commit/d9011c71048ff34201917b0693586290c23b3ddf))
-* **[#298](https://github.com/Byron/gitoxide/issues/298)**
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - Restrict signature changes to 'Ancestores::sorting()` ([`d71bd9d`](https://github.com/Byron/gitoxide/commit/d71bd9ded1e5e5a61a27be3d55f4b85ee4049bcf))
     - Adjust to changes in git-traverse ([`8240622`](https://github.com/Byron/gitoxide/commit/824062215865e6ec12afeb2d51b3c63f15291244))
     - `index::File::lookup_prefix(…)` ([`503b1a1`](https://github.com/Byron/gitoxide/commit/503b1a1f8d4f39b44c166209d7a8ba8d74137859))
@@ -1479,33 +1442,33 @@ A maintenance release without user-facing changes.
     - Sketch for abbreviated method lookup ([`467453a`](https://github.com/Byron/gitoxide/commit/467453a7e625a3bc8e3e381ce50f24f1be8ba605))
     - Use hash_hasher based hash state for better keys/less collisions ([`814de07`](https://github.com/Byron/gitoxide/commit/814de079f4226f42efa49ad334a348bce67184e4))
     - Upgrade parking_lot and cargo_toml ([`f95c1a0`](https://github.com/Byron/gitoxide/commit/f95c1a0d9c19bcc6feb9b8739a09d86f9970a0e0))
-* **[#301](https://github.com/Byron/gitoxide/issues/301)**
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
     - Update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
     - Adapt to changes in git-path ([`cc2d810`](https://github.com/Byron/gitoxide/commit/cc2d81012d107da7a61bf4de5b28342dea5083b7))
     - Use `git-path` crate instead of `git_features::path` ([`47e607d`](https://github.com/Byron/gitoxide/commit/47e607dc256a43a3411406c645eb7ff04239dd3a))
     - Salvage an alternative parallelization approach which might be good for index-creation ([`7e76796`](https://github.com/Byron/gitoxide/commit/7e76796d5c2956961bd998286bec05fca1ba8fc4))
     - Refactor ([`f86eacc`](https://github.com/Byron/gitoxide/commit/f86eacc5cfaf6d88ead4f8dbd65989d32674c213))
     - Switch index checkout to chunk-based operation ([`e5f6943`](https://github.com/Byron/gitoxide/commit/e5f69433e4a6cc7866b666e0baccfa32efb92a7f))
-* **[#329](https://github.com/Byron/gitoxide/issues/329)**
+ * **[#329](https://github.com/Byron/gitoxide/issues/329)**
     - In-manifest and in-lib documentation of feature toggles ([`1620830`](https://github.com/Byron/gitoxide/commit/16208306ab49ade30d8ffd6b067ebd8eefd84cd4))
     - Document all features related to serde1 ([`72b97f2`](https://github.com/Byron/gitoxide/commit/72b97f2ae4dc7642b160f183c6d5df4502dc186f))
-* **[#331](https://github.com/Byron/gitoxide/issues/331)**
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
     - Adapt to changes in git_features::path to deal with Result ([`bba4c68`](https://github.com/Byron/gitoxide/commit/bba4c680c627a418efbd25f14bd168df19b8dedd))
-* **[#333](https://github.com/Byron/gitoxide/issues/333)**
+ * **[#333](https://github.com/Byron/gitoxide/issues/333)**
     - Use git_features::path everywhere where there is a path conversion ([`2e1437c`](https://github.com/Byron/gitoxide/commit/2e1437cb0b5dc77f2317881767f71eaf9b009ebf))
     - Gitoxide-core without os-str-bytes ([`909aa14`](https://github.com/Byron/gitoxide/commit/909aa1402c82c3128052023613a297b213716e3d))
     - Remove os_str_bytes from git-pack ([`86f6e50`](https://github.com/Byron/gitoxide/commit/86f6e5054ea11b7aeb9c85321913de090f71e3a1))
-* **[#364](https://github.com/Byron/gitoxide/issues/364)**
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
     - Add some precaution to avoid strange interactions with packs ([`b052a9a`](https://github.com/Byron/gitoxide/commit/b052a9a3e9127fd9a4029594ea9de6e436db03c6))
     - Fix build ([`9c8e449`](https://github.com/Byron/gitoxide/commit/9c8e449e928b3190e5845606f79b12c529dede55))
-* **[#384](https://github.com/Byron/gitoxide/issues/384)**
+ * **[#384](https://github.com/Byron/gitoxide/issues/384)**
     - Prevent line-ending conversions for shell scripts on windows ([`96bb4d4`](https://github.com/Byron/gitoxide/commit/96bb4d460db420e18dfd0f925109c740e971820d))
     - No need to isolate archives by crate name ([`19d46f3`](https://github.com/Byron/gitoxide/commit/19d46f35440419b9911b6e2bca2cfc975865dce9))
     - Add archive files via git-lfs ([`7202a1c`](https://github.com/Byron/gitoxide/commit/7202a1c4734ad904c026ee3e4e2143c0461d51a2))
     - Auto-set commit.gpgsign=false when executing git ([`c23feb6`](https://github.com/Byron/gitoxide/commit/c23feb64ad157180cfba8a11c882b829733ea8f6))
-* **[#422](https://github.com/Byron/gitoxide/issues/422)**
+ * **[#422](https://github.com/Byron/gitoxide/issues/422)**
     - Prepare changelog ([`de2d587`](https://github.com/Byron/gitoxide/commit/de2d5874b8d75c53165a9fc3ed35e2b37142bf52))
-* **[#427](https://github.com/Byron/gitoxide/issues/427)**
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
     - Make fmt ([`4b320e7`](https://github.com/Byron/gitoxide/commit/4b320e773368ac5e8c38dd8a779ef3d6d2d024ec))
     - Refactor ([`c28404b`](https://github.com/Byron/gitoxide/commit/c28404b3656ba6714db6898ce8151c0bcf4448e0))
     - Assure index ambiguous object range can represent 'none found' ([`5ffe54f`](https://github.com/Byron/gitoxide/commit/5ffe54ff88f026139474658fb470742751126119))
@@ -1515,7 +1478,7 @@ A maintenance release without user-facing changes.
     - Properly order ambiguous entries, ascending ([`0340896`](https://github.com/Byron/gitoxide/commit/0340896b49fe4f40a9dba1c947ec9a2050d8f9b8))
     - Provide optional `candidates` for ambigious entries during `lookup_prefix()` ([`95210cb`](https://github.com/Byron/gitoxide/commit/95210cb2ba85f75148b4ef48ccea9d9f8a0a0114))
     - Refactor ([`a2f9fa4`](https://github.com/Byron/gitoxide/commit/a2f9fa431a820093cb34158e71cb30dc21db1151))
-* **[#450](https://github.com/Byron/gitoxide/issues/450)**
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
     - Less noisy way of writing trait bounds ([`b593806`](https://github.com/Byron/gitoxide/commit/b593806ca3571d680801130ad528f266d3eab83e))
     - Upgrade to `prodash` v21 ([`a0655dc`](https://github.com/Byron/gitoxide/commit/a0655dc7bc5dff388bc69a648e7f16b44fd1abd9))
     - Prefix created pack files with `pack-` ([`e489b10`](https://github.com/Byron/gitoxide/commit/e489b10878c85289e0a9869804abee2418de6989))
@@ -1525,9 +1488,9 @@ A maintenance release without user-facing changes.
     - `bundle::write::Error` is now publicly available ([`0b6ed60`](https://github.com/Byron/gitoxide/commit/0b6ed60f842f0a36f61f187651080540a358758e))
     - `bundle::write::Options::index_kind` -> `::index_version`. ([`591afd5`](https://github.com/Byron/gitoxide/commit/591afd56d9862a6348ef8b3af61798004b36aa19))
     - Upgrade `bstr` to `1.0.1` ([`99905ba`](https://github.com/Byron/gitoxide/commit/99905bacace8aed42b16d43f0f04cae996cb971c))
-* **[#470](https://github.com/Byron/gitoxide/issues/470)**
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
     - Update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
-* **[#67](https://github.com/Byron/gitoxide/issues/67)**
+ * **[#67](https://github.com/Byron/gitoxide/issues/67)**
     - Use an even faster way of counting ([`3877920`](https://github.com/Byron/gitoxide/commit/387792085542ebc8277ac0dcaf9e3dc3b522a69a))
     - Avoid the dashmap being cloned for each thread ([`6d3f52d`](https://github.com/Byron/gitoxide/commit/6d3f52dc13d7243a6bce6dab89a985114a75d94b))
     - Properly count total objects during pack creation ([`bcb3d37`](https://github.com/Byron/gitoxide/commit/bcb3d37a900a40fd70b7be7bad8b2d5db292d2af))
@@ -1542,11 +1505,11 @@ A maintenance release without user-facing changes.
     - Dynamically sized full-object speeds up diff-based object counting… ([`d6c44e6`](https://github.com/Byron/gitoxide/commit/d6c44e6ab8f436020d4fb235e423b018fd1e7a9f))
     - Count ref-deltas in thin packs as well ([`80c6994`](https://github.com/Byron/gitoxide/commit/80c6994149d19917c25e36e1bdf0dc8c9678365e))
     - Add '--thin' flag to pack-create and pass it on ([`2664d73`](https://github.com/Byron/gitoxide/commit/2664d73f531a4b1f4bc784c1fe3a991711c86475))
-* **[#691](https://github.com/Byron/gitoxide/issues/691)**
+ * **[#691](https://github.com/Byron/gitoxide/issues/691)**
     - Set `rust-version` to 1.64 ([`55066ce`](https://github.com/Byron/gitoxide/commit/55066ce5fd71209abb5d84da2998b903504584bb))
-* **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
+ * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - Prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
-* **Uncategorized**
+ * **Uncategorized**
     - Release gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`59e9fac`](https://github.com/Byron/gitoxide/commit/59e9fac67d1b353e124300435b55f6b5468d7deb))
     - Release gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`48f5bd2`](https://github.com/Byron/gitoxide/commit/48f5bd2014fa3dda6fbd60d091065c5537f69453))
     - Release gix-credentials v0.9.1, gix-diff v0.26.1, gix-discover v0.13.0, gix-hashtable v0.1.1, gix-bitmap v0.2.1, gix-traverse v0.22.1, gix-index v0.12.3, gix-mailmap v0.9.2, gix-chunk v0.4.1, gix-pack v0.30.2, gix-odb v0.40.2, gix-packetline v0.14.2, gix-transport v0.25.4, gix-protocol v0.26.3, gix-revision v0.10.3, gix-refspec v0.7.2, gix-worktree v0.12.2, gix v0.36.0 ([`a5869e0`](https://github.com/Byron/gitoxide/commit/a5869e0b223406820bca836e3e3a7fae2bfd9b04))
@@ -1641,8 +1604,7 @@ A maintenance release without user-facing changes.
     - Release git-features v0.24.1, git-actor v0.14.1, git-index v0.9.1 ([`7893502`](https://github.com/Byron/gitoxide/commit/789350208efc9d5fc6f9bc4f113f77f9cb445156))
     - Upgrade to `prodash 21.1` and add `Ids` to all progress instances. ([`c8835c6`](https://github.com/Byron/gitoxide/commit/c8835c6edae784c9ffcb69a674c0a6545dbb2af3))
     - Merge branch 'main' into http-config ([`bcd9654`](https://github.com/Byron/gitoxide/commit/bcd9654e56169799eb706646da6ee1f4ef2021a9))
-    - Release git-hash v0.10.0, git-features v0.24.0, git-date v0.3.0, git-actor v0.14.0, git-glob v0.5.0, git-path v0.6.0, git-quote v0.4.0, git-attributes v0.6.0, git-config-value v0.9.0, git-tempfile v3.0.0, git-lock v3.0.0, git-validate v0.7.0, git-object v0.23.0, git-ref v0.20.0, git-sec v0.5.0, git-config v0.12.0, git-command v0.2.0, git-prompt v0.2.0, git-url v0.11.0, git-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, git-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, git-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28
-      crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
+    - Release git-hash v0.10.0, git-features v0.24.0, git-date v0.3.0, git-actor v0.14.0, git-glob v0.5.0, git-path v0.6.0, git-quote v0.4.0, git-attributes v0.6.0, git-config-value v0.9.0, git-tempfile v3.0.0, git-lock v3.0.0, git-validate v0.7.0, git-object v0.23.0, git-ref v0.20.0, git-sec v0.5.0, git-config v0.12.0, git-command v0.2.0, git-prompt v0.2.0, git-url v0.11.0, git-credentials v0.7.0, git-diff v0.23.0, git-discover v0.9.0, git-bitmap v0.2.0, git-traverse v0.19.0, git-index v0.9.0, git-mailmap v0.6.0, git-chunk v0.4.0, git-pack v0.27.0, git-odb v0.37.0, git-packetline v0.14.0, git-transport v0.23.0, git-protocol v0.24.0, git-revision v0.7.0, git-refspec v0.4.0, git-worktree v0.9.0, git-repository v0.29.0, git-commitgraph v0.11.0, gitoxide-core v0.21.0, gitoxide v0.19.0, safety bump 28 crates ([`b2c301e`](https://github.com/Byron/gitoxide/commit/b2c301ef131ffe1871314e19f387cf10a8d2ac16))
     - Prepare changelogs prior to release ([`e4648f8`](https://github.com/Byron/gitoxide/commit/e4648f827c97e9d13636d1bbdc83dd63436e6e5c))
     - Merge branch 'main' into http-config ([`7c5b37d`](https://github.com/Byron/gitoxide/commit/7c5b37d28e98f59a6847368a0d0166d2dbb4acc1))
     - Release git-diff v0.22.0, git-index v0.7.1, git-pack v0.26.0, git-odb v0.36.0, git-transport v0.21.2, git-repository v0.27.0, safety bump 6 crates ([`f0cab31`](https://github.com/Byron/gitoxide/commit/f0cab317bb0c2799fa80d16f3ae1b89d6aee4284))
@@ -2040,7 +2002,6 @@ A maintenance release without user-facing changes.
     - [git-pack] refactor ([`1b2a245`](https://github.com/Byron/gitoxide/commit/1b2a245aa494c0f9cacc2ad6b8ca02e9891fdb4c))
     - [git-pack] move hash-writer to git-features as it's quite general purpose ([`80e5640`](https://github.com/Byron/gitoxide/commit/80e5640169363910b4189fda58bb495c6677eaaa))
     - [git-pack] the very first version… ([`8c06cdb`](https://github.com/Byron/gitoxide/commit/8c06cdb14269e798b7ff771ea3864f85fa673ed7))
-
 </details>
 
 ## 0.30.1 (2023-01-10)
@@ -2059,14 +2020,14 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-a85dcddba29a453bbea87ac865b8aedc97f41aed/> add `data::File::resolve_header()` to obtain object information without decompressing it.
-- <csr-id-c8835c6edae784c9ffcb69a674c0a6545dbb2af3/> upgrade to `prodash 21.1` and add `Ids` to all progress instances.
-  That way callers can identify progress they are interested in, say, for
-  selective visualizations.
+ - <csr-id-a85dcddba29a453bbea87ac865b8aedc97f41aed/> add `data::File::resolve_header()` to obtain object information without decompressing it.
+ - <csr-id-c8835c6edae784c9ffcb69a674c0a6545dbb2af3/> upgrade to `prodash 21.1` and add `Ids` to all progress instances.
+   That way callers can identify progress they are interested in, say, for
+   selective visualizations.
 
 ### Changed (BREAKING)
 
-- <csr-id-37f3a675d7fa931f5d3f38e91df74ec0b517422b/> move `data::ResolveBase` into `data::decode_entry::`; unify `decode_entry|decode_header::Error` into `decode::Error`.
+ - <csr-id-37f3a675d7fa931f5d3f38e91df74ec0b517422b/> move `data::ResolveBase` into `data::decode_entry::`; unify `decode_entry|decode_header::Error` into `decode::Error`.
 
 ## 0.27.0 (2022-11-21)
 
@@ -2080,13 +2041,13 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-450257eb596465352fb363a5c8c514f544e7f9ac/> `Bundle::write…` also produces a `.keep` file
-  These files are placed before moving the corresponding pack and index
-  files into place to prevent them from being picked up for collection
-  while their refs are still being placed.
-
-  The caller is responsible for deleting them once refs integrate the
-  contained objects into the commit graph.
+ - <csr-id-450257eb596465352fb363a5c8c514f544e7f9ac/> `Bundle::write…` also produces a `.keep` file
+   These files are placed before moving the corresponding pack and index
+   files into place to prevent them from being picked up for collection
+   while their refs are still being placed.
+   
+   The caller is responsible for deleting them once refs integrate the
+   contained objects into the commit graph.
 
 ## 0.24.0 (2022-10-10)
 
@@ -2095,42 +2056,42 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-6836cb148cbadf919bdac2e0e77bdec34caa9307/> more efficient distribution of tasks to threads during pack resolution.
-  This clearly is a peak-performance optimization as it will now
-  efficiently distribute tree-root nodes to threads one at a time by
-  means of shared memory, which is accessed mutably yet safely.
-
-  This change can also further reduce peak memory usage as it will not
-  keep buffers of more resolved deltas then necessary, as it only handles
-  one at a time per thread.
+ - <csr-id-6836cb148cbadf919bdac2e0e77bdec34caa9307/> more efficient distribution of tasks to threads during pack resolution.
+   This clearly is a peak-performance optimization as it will now
+   efficiently distribute tree-root nodes to threads one at a time by
+   means of shared memory, which is accessed mutably yet safely.
+   
+   This change can also further reduce peak memory usage as it will not
+   keep buffers of more resolved deltas then necessary, as it only handles
+   one at a time per thread.
 
 ### Bug Fixes
 
-- <csr-id-ec58bef84d620360dc52e34e173ace1310f74c85/> reduce memory usage for pack resolution by 18%…
-  …compared to where it started out before.
-
-  This is the result of using u32 instead of usize where possible,
-  leveraging the object limit of u32 in packs.
-
-  This change makes the biggest difference by not keeping the decompressed
-  memory of leaf nodes alive for longer than needed, at the cost of
-  some code duplication which could be extracted into a function if one
-  was inclined to deal with the boilerplate and lots of generics.
-- <csr-id-49d168a8859c6b5a9e7ef58cd836093212c2c7ad/> Allow verification of empty packs and indices.
-  Empty packs are fine, even though the implementation should probably
-  assure to not write them, or remove them after having been written.
-- <csr-id-a745512185fb0a46e35daaa6d28829aec05edb55/> increase pack-receive performance using a BufWriter
-  Previously the NamedTempFile would receive every little write request
-  for millions of objects, consuming considerable amounts of time.
-
-  Now a buf writer alleviates this issue entirely.
-- <csr-id-0b6ed60f842f0a36f61f187651080540a358758e/> `bundle::write::Error` is now publicly available
+ - <csr-id-ec58bef84d620360dc52e34e173ace1310f74c85/> reduce memory usage for pack resolution by 18%…
+   …compared to where it started out before.
+   
+   This is the result of using u32 instead of usize where possible,
+   leveraging the object limit of u32 in packs.
+   
+   This change makes the biggest difference by not keeping the decompressed
+   memory of leaf nodes alive for longer than needed, at the cost of
+   some code duplication which could be extracted into a function if one
+   was inclined to deal with the boilerplate and lots of generics.
+ - <csr-id-49d168a8859c6b5a9e7ef58cd836093212c2c7ad/> Allow verification of empty packs and indices.
+   Empty packs are fine, even though the implementation should probably
+   assure to not write them, or remove them after having been written.
+ - <csr-id-a745512185fb0a46e35daaa6d28829aec05edb55/> increase pack-receive performance using a BufWriter
+   Previously the NamedTempFile would receive every little write request
+   for millions of objects, consuming considerable amounts of time.
+   
+   Now a buf writer alleviates this issue entirely.
+ - <csr-id-0b6ed60f842f0a36f61f187651080540a358758e/> `bundle::write::Error` is now publicly available
 
 ### Bug Fixes (BREAKING)
 
-- <csr-id-5a75afe0467e4a84323ea10172eed835cc7fae4c/> Reading and writing empty packs is explicitly allowed.
-  This can happen when sending packs that don't actually contain changes,
-  but need to be sent to conform to the protocol.
+ - <csr-id-5a75afe0467e4a84323ea10172eed835cc7fae4c/> Reading and writing empty packs is explicitly allowed.
+   This can happen when sending packs that don't actually contain changes,
+   but need to be sent to conform to the protocol.
 
 ### Other (BREAKING)
 
@@ -2141,7 +2102,7 @@ A maintenance release without user-facing changes.
 
 ### Changed (BREAKING)
 
-- <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
+ - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
 
 ## 0.22.0 (2022-08-28)
 
@@ -2157,8 +2118,8 @@ Maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
-- <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+ - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
 
 ## 0.21.1 (2022-08-17)
 
@@ -2170,8 +2131,8 @@ This is a maintenance release with no functional changes.
 
 ### New Features (BREAKING)
 
-- <csr-id-95210cb2ba85f75148b4ef48ccea9d9f8a0a0114/> Provide optional `candidates` for ambiguous entries during `lookup_prefix()`
-  The candidate entries are all entries matching a given prefix.
+ - <csr-id-95210cb2ba85f75148b4ef48ccea9d9f8a0a0114/> Provide optional `candidates` for ambiguous entries during `lookup_prefix()`
+   The candidate entries are all entries matching a given prefix.
 
 ## 0.20.0 (2022-06-13)
 
@@ -2189,9 +2150,9 @@ A maintenance release without user-facing changes.
 
 ### Changed (BREAKING)
 
-- <csr-id-8c5ae77f06a64c57df9a9ad1190266896a223dbe/> Remove deprecated compound and linked object databases
-  The dynamic/general store is the only maintained can-do-it-all
-  DB now.
+ - <csr-id-8c5ae77f06a64c57df9a9ad1190266896a223dbe/> Remove deprecated compound and linked object databases
+   The dynamic/general store is the only maintained can-do-it-all
+   DB now.
 
 ## 0.17.0 (2022-04-03)
 
@@ -2204,15 +2165,15 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-503b1a1f8d4f39b44c166209d7a8ba8d74137859/> `index::File::lookup_prefix(…)`
-- <csr-id-cb83beedd1aa389f6774e2296f79273e8c8f14f4/> gix-hash::Prefix::from_id()
-  A way to obtain a prefix of an object id, with all non-prefix
-  bytes set to zero.
-- <csr-id-16208306ab49ade30d8ffd6b067ebd8eefd84cd4/> in-manifest and in-lib documentation of feature toggles
+ - <csr-id-503b1a1f8d4f39b44c166209d7a8ba8d74137859/> `index::File::lookup_prefix(…)`
+ - <csr-id-cb83beedd1aa389f6774e2296f79273e8c8f14f4/> gix-hash::Prefix::from_id()
+   A way to obtain a prefix of an object id, with all non-prefix
+   bytes set to zero.
+ - <csr-id-16208306ab49ade30d8ffd6b067ebd8eefd84cd4/> in-manifest and in-lib documentation of feature toggles
 
 ### Bug Fixes
 
-- <csr-id-42e0487286c1f745837c0ce337ed7c9d86b14516/> support Rust 1.52
+ - <csr-id-42e0487286c1f745837c0ce337ed7c9d86b14516/> support Rust 1.52
 
 ### Refactor
 
@@ -2224,9 +2185,9 @@ A maintenance release without user-facing changes.
 
 ### Bug Fixes
 
-- <csr-id-d9451e8d7fc39c252042f9d2447061262c16ae7a/> downgrade dashmap to 4.0 to avoid unsoundness.
-  See https://github.com/xacrimon/dashmap/issues/167 for tracking
-  progress on resolving the issue.
+ - <csr-id-d9451e8d7fc39c252042f9d2447061262c16ae7a/> downgrade dashmap to 4.0 to avoid unsoundness.
+   See https://github.com/xacrimon/dashmap/issues/167 for tracking
+   progress on resolving the issue.
 
 ## 0.16.0 (2022-01-23)
 
@@ -2252,76 +2213,76 @@ A maintenance release without user-facing changes.
 
 ### New Features
 
-- <csr-id-b80dec2323b81fb2172df76c7d897a4b5e6bdfea/> zero-objects check for index and multi-index integrity validation
-- <csr-id-56fc99fb9c1cab61abd03c10e1b4af0d6e491bbf/> support for fan-checking in index and multi-index integrity verification
-- <csr-id-28e3ea8612112f6a04cfaff591565eca5a1ffba2/> introduce type for entry indices within an index or multi-index
-  That way it's a little more descriptive than a bare u32.
-- <csr-id-58c2edb76755ab71e10eef4cd9a51533825c291f/> gix_pack::Find::try_find_cached(…, pack_cache)
-  With this method it's easier to bypass local caches and control
-  the cache oneself entirely.
-- <csr-id-e25f4eadec679406aad6df10026e27e4832c2482/> A simplified version of the `Find` trait
-  It's meant for the next generation of object db handles which keep a
-  local cache of all the details of the actual object database.
+ - <csr-id-b80dec2323b81fb2172df76c7d897a4b5e6bdfea/> zero-objects check for index and multi-index integrity validation
+ - <csr-id-56fc99fb9c1cab61abd03c10e1b4af0d6e491bbf/> support for fan-checking in index and multi-index integrity verification
+ - <csr-id-28e3ea8612112f6a04cfaff591565eca5a1ffba2/> introduce type for entry indices within an index or multi-index
+   That way it's a little more descriptive than a bare u32.
+ - <csr-id-58c2edb76755ab71e10eef4cd9a51533825c291f/> gix_pack::Find::try_find_cached(…, pack_cache)
+   With this method it's easier to bypass local caches and control
+   the cache oneself entirely.
+ - <csr-id-e25f4eadec679406aad6df10026e27e4832c2482/> A simplified version of the `Find` trait
+   It's meant for the next generation of object db handles which keep a
+   local cache of all the details of the actual object database.
 
 ### Bug Fixes
 
-- <csr-id-42e0487286c1f745837c0ce337ed7c9d86b14516/> support Rust 1.52
-- <csr-id-84ade1d23060f10bf6c8529f8f693d06660b4f4e/> Allow resolution of in-pack ref-deltas
-  This finally allows delta tree caches to be used on typical small packs
-  returned by GitHub.
-- <csr-id-ba92cc09ba41fe4c9a9097bfeb8d18016408fcdf/> don't try to short-cut detection of large offsets when writing index files
-  The code incorrectly assumed that the input is sorted by offsets, with
-  the largest offset being last, even though by all means that's not the
-  case.
-- <csr-id-6d3f52dc13d7243a6bce6dab89a985114a75d94b/> Avoid the dashmap being cloned for each thread
-  Instead, share it by reference, it's sync after all.
-
-  This issue was introduced when switching to a `Send + Clone` model,
-  instead of `Send + Sync`, to allow thread-local caches in database
-  handles of all kinds.
-- <csr-id-b605c1fa0494b10872d3c2e6ecce0e39f1a90a9e/> linked::Store now assures unique IDs across compound stores
+ - <csr-id-42e0487286c1f745837c0ce337ed7c9d86b14516/> support Rust 1.52
+ - <csr-id-84ade1d23060f10bf6c8529f8f693d06660b4f4e/> Allow resolution of in-pack ref-deltas
+   This finally allows delta tree caches to be used on typical small packs
+   returned by GitHub.
+ - <csr-id-ba92cc09ba41fe4c9a9097bfeb8d18016408fcdf/> don't try to short-cut detection of large offsets when writing index files
+   The code incorrectly assumed that the input is sorted by offsets, with
+   the largest offset being last, even though by all means that's not the
+   case.
+ - <csr-id-6d3f52dc13d7243a6bce6dab89a985114a75d94b/> Avoid the dashmap being cloned for each thread
+   Instead, share it by reference, it's sync after all.
+   
+   This issue was introduced when switching to a `Send + Clone` model,
+   instead of `Send + Sync`, to allow thread-local caches in database
+   handles of all kinds.
+ - <csr-id-b605c1fa0494b10872d3c2e6ecce0e39f1a90a9e/> linked::Store now assures unique IDs across compound stores
 
 ### Changed (BREAKING)
 
-- <csr-id-a79a7fb638b45df88af0d0d5fc9ada6d824bc328/> Improve method signatures of `cache::Tree::*`
-- <csr-id-91d047658b114f372735116c9d8e6962a3873137/> cleanup and unify `verify_integrity()` method signature
-  Previously they used many different ways of handling their parameters
-  despite all boiling down to calling the same 'index::File::traverse()`
-  method.
-
-  This allows for more reuse of `Options` structs and generally makes
-  clearer how these options are used.
-- <csr-id-2cf7727228e1d8094ffd2eec6746006348c39eab/> `index::File::traverse()` now returns an `Outcome` struct instead of tuple of 3 fields
-- <csr-id-bf04644ab75ed1969507f957dc8d4868790d462d/> remove `Option<impl Progress>` in favor of `impl Progress`
-- <csr-id-6829e5e5d6aed1e6c87647144e2dd76a1e4b9f1f/> multi-index integrity check; use `integrity::Outcome` for various integrity checks
-- <csr-id-d851bede97801096d188ff6af06c98a79fe276db/> remove unnecessary `Arc` around `should_interrupt` flag
-- <csr-id-c2679a03358b9c19d63ed1af1cd57324c6381447/> remove Sha1 mentions in `index::verify::Mode::*` variants
-  The hash is repository defined and not hard-coded
-- <csr-id-80b120d3278e46429f848df7af3db13413c36649/> introduce `index::File::verify_integrity(…, pack: Option<PackContext>, …)`, replacing tuple
-  This allows for more documentation on what input is required there and
-  generally makes for an easier to use API.
-- <csr-id-79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded/> rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()`
-  This change was done in the name of consistency, as `from_bytes()` is
-  used in many other git-* crates
-- <csr-id-2ef9a8424af51310db8c1e6df31dde9953ed3d21/> Change accessors named `hash_kind()` to `object_hash()` for consistency
-- <csr-id-b76f6be6c5baa6cf613a174241f007e92bf5ba36/> consistently use `object_hash` instead of `hash_kind`
-- <csr-id-629412b4cb192614b7eff08dbf203e3448c902c1/> data::Entry::from_read() now takes a hash lengths as parameter
-  That way ref-deltas can be interpreted without hard-coding SHA1
-- <csr-id-851dc2c52fa8e204ba2d5ced8fb0959a889869d8/> data::Entry::from_bytes(…, hash_len) takes new parameter
-  The hash-len tells it how to interpret ref-delta objects, which
-  store the complete hash of the base object.
-
-  This is now entirely configurable.
-- <csr-id-db8c8c41b4ced0fc296d3877883d801e77d550ae/> `index::File::at()` with gix_hash::Kind parameter
-  It will allow to assume different hashes even in the index file format
-  which isn't yet capable of storing this information.
-- <csr-id-e6a3c9f72332b524b143bc94ee9df0a6db11e864/> `data::File::at()` and `Bundle::at()` now have `hash_kind` parameter
-  It's used to configure the kind of hash to assume when reading packs and
-  indices.
-- <csr-id-3f05fea55dc8acce1ed62ecbe4e0a1394f2720b7/> remove `make_object_cache` parameter from `gix_pack::data::output::count::objects()`
-  It now is an implementation detail of the Find trait.
-- <csr-id-82b9b33bd5f4c3c1721a5093de2cedc62cb10565/> move `bundle::Location` to `data::entry::Location`
-  The latter place best describes its purpose.
+ - <csr-id-a79a7fb638b45df88af0d0d5fc9ada6d824bc328/> Improve method signatures of `cache::Tree::*`
+ - <csr-id-91d047658b114f372735116c9d8e6962a3873137/> cleanup and unify `verify_integrity()` method signature
+   Previously they used many different ways of handling their parameters
+   despite all boiling down to calling the same 'index::File::traverse()`
+   method.
+   
+   This allows for more reuse of `Options` structs and generally makes
+   clearer how these options are used.
+ - <csr-id-2cf7727228e1d8094ffd2eec6746006348c39eab/> `index::File::traverse()` now returns an `Outcome` struct instead of tuple of 3 fields
+ - <csr-id-bf04644ab75ed1969507f957dc8d4868790d462d/> remove `Option<impl Progress>` in favor of `impl Progress`
+ - <csr-id-6829e5e5d6aed1e6c87647144e2dd76a1e4b9f1f/> multi-index integrity check; use `integrity::Outcome` for various integrity checks
+ - <csr-id-d851bede97801096d188ff6af06c98a79fe276db/> remove unnecessary `Arc` around `should_interrupt` flag
+ - <csr-id-c2679a03358b9c19d63ed1af1cd57324c6381447/> remove Sha1 mentions in `index::verify::Mode::*` variants
+   The hash is repository defined and not hard-coded
+ - <csr-id-80b120d3278e46429f848df7af3db13413c36649/> introduce `index::File::verify_integrity(…, pack: Option<PackContext>, …)`, replacing tuple
+   This allows for more documentation on what input is required there and
+   generally makes for an easier to use API.
+ - <csr-id-79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded/> rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()`
+   This change was done in the name of consistency, as `from_bytes()` is
+   used in many other git-* crates
+ - <csr-id-2ef9a8424af51310db8c1e6df31dde9953ed3d21/> Change accessors named `hash_kind()` to `object_hash()` for consistency
+ - <csr-id-b76f6be6c5baa6cf613a174241f007e92bf5ba36/> consistently use `object_hash` instead of `hash_kind`
+ - <csr-id-629412b4cb192614b7eff08dbf203e3448c902c1/> data::Entry::from_read() now takes a hash lengths as parameter
+   That way ref-deltas can be interpreted without hard-coding SHA1
+ - <csr-id-851dc2c52fa8e204ba2d5ced8fb0959a889869d8/> data::Entry::from_bytes(…, hash_len) takes new parameter
+   The hash-len tells it how to interpret ref-delta objects, which
+   store the complete hash of the base object.
+   
+   This is now entirely configurable.
+ - <csr-id-db8c8c41b4ced0fc296d3877883d801e77d550ae/> `index::File::at()` with gix_hash::Kind parameter
+   It will allow to assume different hashes even in the index file format
+   which isn't yet capable of storing this information.
+ - <csr-id-e6a3c9f72332b524b143bc94ee9df0a6db11e864/> `data::File::at()` and `Bundle::at()` now have `hash_kind` parameter
+   It's used to configure the kind of hash to assume when reading packs and
+   indices.
+ - <csr-id-3f05fea55dc8acce1ed62ecbe4e0a1394f2720b7/> remove `make_object_cache` parameter from `gix_pack::data::output::count::objects()`
+   It now is an implementation detail of the Find trait.
+ - <csr-id-82b9b33bd5f4c3c1721a5093de2cedc62cb10565/> move `bundle::Location` to `data::entry::Location`
+   The latter place best describes its purpose.
 - remove pack-cache from `Find::try_find(…)`
   With the new architecture this can be an implementation detail without
   forcing it to be Sync.
@@ -2335,16 +2296,16 @@ A maintenance release without user-facing changes.
 
 ### Changed (BREAKING)
 
-- <csr-id-e7526b2a7b51cbac4018e1ab3b623a85987fadc2/> parallel utilities now use `Send + Clone` instead of `Send + Sync`.
-
-  This helps to assure that thread-local computations always work with the
-  kind of types we provide. The ones that are carrying out actions are
-  notably not `Sync` anymore.
-
-  We cater to that by defining our bounds accordingly, but for those
-  who want to use other utilities that need Sync, using types like
-  `Repository` and `thread_local!()` is the only way to make this
-  work.
+ - <csr-id-e7526b2a7b51cbac4018e1ab3b623a85987fadc2/> parallel utilities now use `Send + Clone` instead of `Send + Sync`.
+   
+   This helps to assure that thread-local computations always work with the
+   kind of types we provide. The ones that are carrying out actions are
+   notably not `Sync` anymore.
+   
+   We cater to that by defining our bounds accordingly, but for those
+   who want to use other utilities that need Sync, using types like
+   `Repository` and `thread_local!()` is the only way to make this
+   work.
 
 ## 0.14.0 (2021-11-16)
 
@@ -2354,17 +2315,17 @@ An important bugfix to prevent assertion failures when writing thin packs.
 
 ### Bug Fixes
 
-- <csr-id-20b3994206aa5bc5e35cbbc9c8f8f99187077f79/> Adjust size-hints of resolving entries iterator and use the upper bound in delta tree.
-
-  The delta-tree is a data structure that actually heavily relies on
-  favorable allocation and a known amount of objects in order to
-  provide front and back buffers. However, this is an implementation
-  detail and they don't have to stay consistent at all especially
-  after growing the buffer by pushing to it.
-
-  Interestingly, the VecDeque internally over-allocates as well which
-  definitely helps the example of `as_mut_slices()`, otherwise
-  it could also suffer from the assertions that trigger here.
+ - <csr-id-20b3994206aa5bc5e35cbbc9c8f8f99187077f79/> Adjust size-hints of resolving entries iterator and use the upper bound in delta tree.
+   
+   The delta-tree is a data structure that actually heavily relies on
+   favorable allocation and a known amount of objects in order to
+   provide front and back buffers. However, this is an implementation
+   detail and they don't have to stay consistent at all especially
+   after growing the buffer by pushing to it.
+   
+   Interestingly, the VecDeque internally over-allocates as well which
+   definitely helps the example of `as_mut_slices()`, otherwise
+   it could also suffer from the assertions that trigger here.
 
 ## v0.13.0 (2021-10-19)
 
@@ -2388,33 +2349,33 @@ signalled a breaking change which is one of our dependencies.
 
 ### New Features
 
-- <csr-id-d6c44e6ab8f436020d4fb235e423b018fd1e7a9f/> dynamically sized full-object speeds up diff-based object counting
-  which is what happens when counting objects for fetches where only changed objects should be sent.
-- <csr-id-50cf610e8939812c3d2268c48835e2dac67d0c31/> `cache::Object` trait for caching and retrieving whole objects
-- <csr-id-60c9fad8002b4e3f6b9607bba6361871752f4d3d/> control pack and object cache size in megabytes
-- <csr-id-5a8c2da6cb1e2accf7cfdccc16bc3a1d0b2a7dbc/> object cache size is configurable
+ - <csr-id-d6c44e6ab8f436020d4fb235e423b018fd1e7a9f/> dynamically sized full-object speeds up diff-based object counting
+   which is what happens when counting objects for fetches where only changed objects should be sent.
+ - <csr-id-50cf610e8939812c3d2268c48835e2dac67d0c31/> `cache::Object` trait for caching and retrieving whole objects
+ - <csr-id-60c9fad8002b4e3f6b9607bba6361871752f4d3d/> control pack and object cache size in megabytes
+ - <csr-id-5a8c2da6cb1e2accf7cfdccc16bc3a1d0b2a7dbc/> object cache size is configurable
 
 ### Bug Fixes
 
-- <csr-id-d8fe8141e80a9e9a433b5e1a072b850325c806c8/> don't put more objects into the pack cache than needed.
-
-  Previously when accessing a packed object, it would store the base
-  object into the pack cache (if it wasn't retrieved from there)
-  which is great if that operation is free.
-
-  Since it isn't, it's better not to stress the cache with puts
-  and trash more objects than necessary.
-
-  Now only the last decompressed object will be put into the LRU cache.
-- <csr-id-faf6f813927720c5adf62102f9ce46606ff2617c/> don't include submodules in count,
-  which avoids dealing with missing objects entirely. Those ominous missing objects where just git submodules after all.
-
-  It's still a good idea to handle these gracefully though, git itself
-  seems to ignore them, too, and so do we at least for now.
+ - <csr-id-d8fe8141e80a9e9a433b5e1a072b850325c806c8/> don't put more objects into the pack cache than needed.
+   
+   Previously when accessing a packed object, it would store the base
+   object into the pack cache (if it wasn't retrieved from there)
+   which is great if that operation is free.
+   
+   Since it isn't, it's better not to stress the cache with puts
+   and trash more objects than necessary.
+   
+   Now only the last decompressed object will be put into the LRU cache.
+ - <csr-id-faf6f813927720c5adf62102f9ce46606ff2617c/> don't include submodules in count,
+   which avoids dealing with missing objects entirely. Those ominous missing objects where just git submodules after all.
+   
+   It's still a good idea to handle these gracefully though, git itself
+   seems to ignore them, too, and so do we at least for now.
 
 ### Performance
 
-- <csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> ObjectID specific hashers, using the fact that object ids are hashes
+ - <csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> ObjectID specific hashers, using the fact that object ids are hashes
 
 ## v0.11.0 (2021-09-08)
 

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.10.0 (2024-02-25)
 
 ### Bug Fixes (BREAKING)
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 30 calendar days.
+ - 7 commits contributed to the release over the course of 30 calendar days.
  - 36 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'entryoom' ([`684fa5c`](https://github.com/Byron/gitoxide/commit/684fa5caf82fc38dd238361d6482e77901ca0265))
     - Allow buffer operations to fail gracefully on out-of-memory. ([`fc68140`](https://github.com/Byron/gitoxide/commit/fc6814024215441a9cea331f81a823a360d3f622))
     - Refactor ([`2a9ef4e`](https://github.com/Byron/gitoxide/commit/2a9ef4e3299a28df8f9648e62eaec1ecb0011b99))

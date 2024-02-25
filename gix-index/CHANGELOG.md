@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.30.0 (2024-02-25)
 
 ### New Features
 
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 19 calendar days.
+ - 11 commits contributed to the release over the course of 19 calendar days.
  - 36 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'btoi' ([`5fc379d`](https://github.com/Byron/gitoxide/commit/5fc379d1dc867d15a50cb086e30beefde2b42d86))
     - Refactor ([`c5c69bd`](https://github.com/Byron/gitoxide/commit/c5c69bd355771a6fb3e4f6db0c5f49aa2bf7f42f))
     - Inline btoi code to reduce compile times ([`f26f298`](https://github.com/Byron/gitoxide/commit/f26f2988f51f6c419ec7eff4ae6f4df0f4011663))

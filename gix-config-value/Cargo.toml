@@ -1,6 +1,6 @@
 [package]
 name = "gix-config-value"
-version = "0.14.4"
+version = "0.14.5"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project providing git-config value parsing"
@@ -17,7 +17,7 @@ doctest = false
 serde = ["dep:serde", "bstr/serde"]
 
 [dependencies]
-gix-path = { version = "^0.10.5", path = "../gix-path" }
+gix-path = { version = "^0.10.6", path = "../gix-path" }
 
 thiserror = "1.0.32"
 bstr = { version = "1.0.1", default-features = false, features = ["std"] }

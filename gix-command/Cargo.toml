@@ -1,6 +1,6 @@
 [package]
 name = "gix-command"
-version = "0.3.4"
+version = "0.3.5"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project handling internal git command execution"
@@ -14,7 +14,7 @@ doctest = false
 
 [dependencies]
 gix-trace = { version = "^0.1.7", path = "../gix-trace" }
-gix-path = { version = "^0.10.5", path = "../gix-path" }
+gix-path = { version = "^0.10.6", path = "../gix-path" }
 
 bstr = { version = "1.5.0", default-features = false, features = ["std", "unicode"] }
 shell-words = "1.0"

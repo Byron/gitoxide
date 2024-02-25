@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.5 (2024-02-25)
 
 ### Bug Fixes
 
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 12 calendar days.
+ - 2 commits contributed to the release over the course of 12 calendar days.
  - 21 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1284](https://github.com/Byron/gitoxide/issues/1284)
@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **[#1284](https://github.com/Byron/gitoxide/issues/1284)**
     - Add test to assure `echo "$@" >&2` works as expected ([`74631d4`](https://github.com/Byron/gitoxide/commit/74631d4171cdfd4f97d61203c2b65ef02da7b2c4))
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
 </details>
 
 ## 0.3.4 (2024-02-03)
