@@ -94,6 +94,7 @@ pub(super) fn recursive(
         num_entries,
         state,
         &mut prevent_collapse,
+        current,
         current_bstr.as_bstr(),
         current_info,
         opts,
@@ -157,7 +158,7 @@ impl State {
 
     pub(super) fn emit_remaining(
         &mut self,
-        is_top_level: bool,
+        may_collapse: bool,
         opts: Options,
         out: &mut walk::Outcome,
         delegate: &mut dyn walk::Delegate,
@@ -168,7 +169,7 @@ impl State {
 
         _ = Mark {
             start_index: 0,
-            may_collapse: is_top_level,
+            may_collapse,
         }
         .emit_all_held(self, opts, out, delegate);
     }
@@ -186,6 +187,7 @@ impl Mark {
         num_entries: usize,
         state: &mut State,
         prevent_collapse: &mut bool,
+        dir_path: &Path,
         dir_rela_path: &BStr,
         dir_info: classify::Outcome,
         opts: Options,
@@ -195,19 +197,20 @@ impl Mark {
     ) -> walk::Action {
         if num_entries == 0 {
             let empty_info = classify::Outcome {
-                property: if num_entries == 0 {
+                property: {
                     assert_ne!(
                         dir_info.disk_kind,
                         Some(entry::Kind::Repository),
                         "BUG: it shouldn't be possible to classify an empty dir as repository"
                     );
-                    if dir_info.property.is_none() {
+                    if !state.may_collapse(dir_path) {
+                        *prevent_collapse = true;
+                        entry::Property::EmptyDirectoryAndCWD.into()
+                    } else if dir_info.property.is_none() {
                         entry::Property::EmptyDirectory.into()
                     } else {
                         dir_info.property
                     }
-                } else {
-                    dir_info.property
                 },
                 pathspec_match: ctx
                     .pathspec

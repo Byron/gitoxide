@@ -358,6 +358,86 @@ fn ignored_dir_with_cwd_handling() -> crate::Result {
 }
 
 #[test]
+fn ignored_with_cwd_handling() -> crate::Result {
+    let root = gix_path::realpath(fixture("ignored-with-empty"))?;
+    let ((out, _root), entries) = collect_filtered_with_cwd(
+        &root,
+        None,
+        None,
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_empty_directories: true,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 3,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [entry("target", Ignored(Expendable), Directory),],
+        "the baseline shows the content"
+    );
+
+    let ((out, _root), entries) = collect_filtered_with_cwd(
+        &root,
+        Some(&root),
+        Some("target/empty"),
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_empty_directories: true,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("target"),
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 5,
+            returned_entries: entries.len(),
+            seen_entries: 7,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [
+            entryps("target/debug", Ignored(Expendable), Directory, Prefix),
+            entryps("target/empty", Ignored(Expendable), Directory, Prefix).with_property(EmptyDirectoryAndCWD),
+            entryps("target/release", Ignored(Expendable), Directory, Prefix),
+        ],
+        "it detects empty as CWD (very special case) and lists it as usual, while also preventing collapse to assure \
+         to not accidentally end up trying to delete a parent directory"
+    );
+    Ok(())
+}
+
+#[test]
 fn only_untracked_with_cwd_handling() -> crate::Result {
     let root = fixture("only-untracked");
     let ((out, _root), entries) = collect_filtered_with_cwd(

@@ -178,6 +178,14 @@ git init only-untracked
   >c
 )
 
+git init ignored-with-empty
+(cd ignored-with-empty
+  echo "/target/" >> .gitignore
+  git add .gitignore && git commit -m "init"
+  mkdir -p target/empty target/debug target/release
+  touch target/debug/a target/release/b
+)
+
 cp -R only-untracked subdir-untracked
 (cd subdir-untracked
   git add .

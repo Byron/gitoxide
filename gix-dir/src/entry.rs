@@ -9,6 +9,12 @@ pub enum Property {
     DotGit,
     /// The entry is a directory, and that directory is empty.
     EmptyDirectory,
+    /// The entry is a directory, it is empty and the current working directory.
+    ///
+    /// The caller should pay special attention to this very special case, as it is indeed only possible to run into it
+    /// while traversing the directory for deletion.
+    /// Non-empty directory will never be collapsed, hence if they are working directories, they naturally become unobservable.
+    EmptyDirectoryAndCWD,
     /// Always in conjunction with a directory on disk that is also known as cone-mode sparse-checkout exclude marker
     /// - i.e. a directory that is excluded, so its whole content is excluded and not checked out nor is part of the index.
     ///
