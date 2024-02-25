@@ -210,6 +210,11 @@ pub(crate) mod function {
                 saw_ignored_directory |= is_ignored;
                 saw_untracked_directory |= entry.status == gix::dir::entry::Status::Untracked;
             }
+
+            if gix::interrupt::is_triggered() {
+                execute = false;
+            }
+            let mut may_remove_this_entry = execute;
             writeln!(
                 out,
                 "{maybe}{suffix} {}{} {status}",
@@ -235,7 +240,18 @@ pub(crate) mod function {
                             "".into()
                         },
                 },
-                maybe = if execute { "removing" } else { "WOULD remove" },
+                maybe = if entry.property == Some(gix::dir::entry::Property::EmptyDirectoryAndCWD) {
+                    may_remove_this_entry = false;
+                    if execute {
+                        "Refusing to remove empty current working directory"
+                    } else {
+                        "Would refuse to remove empty current working directory"
+                    }
+                } else if execute {
+                    "removing"
+                } else {
+                    "WOULD remove"
+                },
                 suffix = match disk_kind {
                     Kind::Directory if entry.property == Some(gix::dir::entry::Property::EmptyDirectory) => {
                         " empty"
@@ -249,10 +265,7 @@ pub(crate) mod function {
                 },
             )?;
 
-            if gix::interrupt::is_triggered() {
-                execute = false;
-            }
-            if execute {
+            if may_remove_this_entry {
                 let path = workdir.join(entry_path);
                 if disk_kind.is_dir() {
                     std::fs::remove_dir_all(path)?;
