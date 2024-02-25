@@ -9,6 +9,7 @@ use crate::walk_utils::{
 use gix_dir::entry;
 use gix_dir::entry::Kind::*;
 use gix_dir::entry::PathspecMatch::*;
+use gix_dir::entry::Property::*;
 use gix_dir::entry::Status::*;
 use gix_dir::walk::CollapsedEntriesEmissionMode::{All, OnStatusMismatch};
 use gix_dir::walk::EmissionMode::*;
@@ -81,7 +82,7 @@ fn empty_root() -> crate::Result {
     );
     assert_eq!(
         entries,
-        [entry("", Untracked, EmptyDirectory)],
+        [entry("", Untracked, Directory).with_property(EmptyDirectory)],
         "this is how we can indicate the worktree is entirely untracked"
     );
     Ok(())
@@ -103,10 +104,10 @@ fn complex_empty() -> crate::Result {
         entries,
         &[
             entry("dirs-and-files/dir/file", Untracked, File),
-            entry("dirs-and-files/sub", Untracked, EmptyDirectory),
-            entry("empty-toplevel", Untracked, EmptyDirectory),
-            entry("only-dirs/other", Untracked, EmptyDirectory),
-            entry("only-dirs/sub/subsub", Untracked, EmptyDirectory),
+            entry("dirs-and-files/sub", Untracked, Directory).with_property(EmptyDirectory),
+            entry("empty-toplevel", Untracked, Directory).with_property(EmptyDirectory),
+            entry("only-dirs/other", Untracked, Directory).with_property(EmptyDirectory),
+            entry("only-dirs/sub/subsub", Untracked, Directory).with_property(EmptyDirectory),
         ],
         "we see each and every directory, and get it classified as empty as it's set to be emitted"
     );
@@ -160,7 +161,7 @@ fn complex_empty() -> crate::Result {
         entries,
         &[
             entry("dirs-and-files", Untracked, Directory),
-            entry("empty-toplevel", Untracked, EmptyDirectory),
+            entry("empty-toplevel", Untracked, Directory).with_property(EmptyDirectory),
             entry("only-dirs", Untracked, Directory),
         ],
         "empty directories collapse just fine"
@@ -243,6 +244,200 @@ fn ignored_with_prefix_pathspec_collapses_just_like_untracked() -> crate::Result
 }
 
 #[test]
+fn ignored_dir_with_cwd_handling() -> crate::Result {
+    let root = fixture("untracked-and-ignored-for-collapse");
+    let ((out, _root), entries) = collect_filtered_with_cwd(
+        &root,
+        Some(&root.join("ignored")),
+        None,
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_ignored: Some(CollapseDirectory),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 3,
+        }
+    );
+    assert_eq!(
+        entries,
+        [entryps("ignored", Ignored(Expendable), Directory, Prefix)],
+        "even if the traversal root is for deletion, unless the CWD is set it will be collapsed (no special cases)"
+    );
+
+    let real_root = gix_path::realpath(&root)?;
+    let ((out, _root), entries) = collect_filtered_with_cwd(
+        &real_root,
+        Some(&real_root.join("ignored")),
+        Some("ignored"),
+        |keep, ctx| {
+            walk(
+                &real_root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_ignored: Some(CollapseDirectory),
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 2,
+        }
+    );
+    assert_eq!(
+        entries,
+        [
+            entryps("ignored/b", Ignored(Expendable), File, Prefix),
+        ],
+        "the traversal starts from the top, but we automatically prevent the 'd' directory from being deleted by stopping its collapse."
+    );
+
+    let real_root = gix_path::realpath(fixture("subdir-untracked-and-ignored"))?;
+    let ((out, _root), entries) = collect_filtered_with_cwd(
+        &real_root,
+        None,
+        Some("d/d/generated"),
+        |keep, ctx| {
+            walk(
+                &real_root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_pruned: false,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some(":/*generated/*"),
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 8,
+            returned_entries: entries.len(),
+            seen_entries: 26
+        }
+    );
+    assert_eq!(
+        entries,
+        [
+            entryps("d/d/generated/b", Ignored(Expendable), File, WildcardMatch),
+            entryps("d/generated", Ignored(Expendable), Directory, WildcardMatch),
+            entryps("generated", Ignored(Expendable), Directory, WildcardMatch),
+        ],
+        "'d/d/generated/b' is there because the parent directory isn't allowed to fold due to the CWD rule."
+    );
+
+    Ok(())
+}
+
+#[test]
+fn ignored_with_cwd_handling() -> crate::Result {
+    let root = gix_path::realpath(fixture("ignored-with-empty"))?;
+    let ((out, _root), entries) = collect_filtered_with_cwd(
+        &root,
+        None,
+        None,
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_empty_directories: true,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 3,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [entry("target", Ignored(Expendable), Directory),],
+        "the baseline shows the content"
+    );
+
+    let ((out, _root), entries) = collect_filtered_with_cwd(
+        &root,
+        Some(&root),
+        Some("target/empty"),
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(Default::default()),
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_empty_directories: true,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("target"),
+    );
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 5,
+            returned_entries: entries.len(),
+            seen_entries: 7,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [
+            entryps("target/debug", Ignored(Expendable), Directory, Prefix),
+            entryps("target/empty", Ignored(Expendable), Directory, Prefix).with_property(EmptyDirectoryAndCWD),
+            entryps("target/release", Ignored(Expendable), Directory, Prefix),
+        ],
+        "it detects empty as CWD (very special case) and lists it as usual, while also preventing collapse to assure \
+         to not accidentally end up trying to delete a parent directory"
+    );
+    Ok(())
+}
+
+#[test]
 fn only_untracked_with_cwd_handling() -> crate::Result {
     let root = fixture("only-untracked");
     let ((out, _root), entries) = collect_filtered_with_cwd(
@@ -316,7 +511,6 @@ fn only_untracked_with_cwd_handling() -> crate::Result {
         "even if the traversal root is for deletion, unless the CWD is set it will be collapsed (no special cases)"
     );
 
-    // Needs real-root to assure
     let real_root = gix_path::realpath(&root)?;
     let ((out, _root), entries) = collect_filtered_with_cwd(
         &real_root,
@@ -374,15 +568,15 @@ fn only_untracked_with_cwd_handling() -> crate::Result {
                 keep,
             )
         },
-        Some("../d"),
+        Some("../d/"),
     );
 
     assert_eq!(
         out,
         walk::Outcome {
-            read_dir_calls: 3,
+            read_dir_calls: 2,
             returned_entries: entries.len(),
-            seen_entries: 8,
+            seen_entries: 4,
         }
     );
     assert_eq!(
@@ -429,7 +623,7 @@ fn only_untracked_with_pathspec() -> crate::Result {
     );
     assert_eq!(
         entries,
-        [entryps("d", Untracked, Directory, Prefix),],
+        [entryps("d", Untracked, Directory, Prefix)],
         "this is equivalent as if we use a prefix, as we end up starting the traversal from 'd'"
     );
 
@@ -720,7 +914,7 @@ fn expendable_and_precious() {
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
             entry(".gitignore", Tracked, File),
             entry("a.o", Ignored(Expendable), File),
             entry("all-expendable", Ignored(Expendable), Directory),
@@ -969,7 +1163,7 @@ fn untracked_and_ignored_for_deletion_negative_wildcard_spec() -> crate::Result 
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
             entry(".gitignore", Untracked, File),
             entry("a.o", Ignored(Expendable), File),
             entry("b.o", Ignored(Expendable), File),
@@ -1024,7 +1218,7 @@ fn untracked_and_ignored_for_deletion_positive_wildcard_spec() -> crate::Result 
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).no_kind().with_property(DotGit),
             entry_nomatch(".gitignore", Pruned, File),
             entry_nomatch("a.o", Ignored(Expendable), File),
             entry_nomatch("b.o", Ignored(Expendable), File),
@@ -1077,7 +1271,7 @@ fn untracked_and_ignored_for_deletion_nonmatching_wildcard_spec() -> crate::Resu
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).no_match().with_property(DotGit),
             entry_nomatch(".gitignore", Pruned, File),
             entry_nomatch("a.o", Ignored(Expendable), File),
             entry_nomatch("b.o", Ignored(Expendable), File),
@@ -1092,6 +1286,38 @@ fn untracked_and_ignored_for_deletion_nonmatching_wildcard_spec() -> crate::Resu
         ],
         "'generated' folders are included, and collapsing is done where possible"
     );
+    Ok(())
+}
+#[test]
+fn nested_precious_repo_respects_wildcards() -> crate::Result {
+    let root = fixture("precious-nested-repository");
+    for for_deletion in [
+        Some(ForDeletionMode::FindNonBareRepositoriesInIgnoredDirectories),
+        Some(ForDeletionMode::FindRepositoriesInIgnoredDirectories),
+    ] {
+        let (_out, entries) = collect_filtered(
+            &root,
+            None,
+            |keep, ctx| {
+                walk(
+                    &root,
+                    ctx,
+                    walk::Options {
+                        emit_ignored: Some(CollapseDirectory),
+                        emit_untracked: CollapseDirectory,
+                        emit_pruned: false,
+                        for_deletion,
+                        ..options()
+                    },
+                    keep,
+                )
+            },
+            Some("*foo/"),
+        );
+        // NOTE: do not use `_out` as `.git` directory contents can change, it's controlled by Git, causing flakiness.
+
+        assert_eq!(entries, [], "nothing matches, of course");
+    }
     Ok(())
 }
 
@@ -1149,7 +1375,7 @@ fn nested_ignored_dirs_for_deletion_nonmatching_wildcard_spec() -> crate::Result
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).with_property(DotGit),
             entry_nomatch(".gitignore", Pruned, File),
             entry_nomatch("bare/HEAD", Pruned, File),
             entry_nomatch("bare/info/exclude", Pruned, File),
@@ -1192,7 +1418,7 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
             entry(".gitignore", Tracked, File).with_index_kind(File),
             entry("ignored", Ignored(Expendable), Directory),
             entry("other", Ignored(Expendable), Directory),
@@ -1234,8 +1460,8 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
-            entry_nokind("ignored/d/.git", DotGit),
+            entry_nokind(".git", Pruned).with_property(DotGit).no_match(),
+            entry_nokind("ignored/d/.git", Ignored(Expendable) ).with_property(DotGit).with_match(WildcardMatch),
             entryps("ignored/d/.gitignore", Ignored(Expendable), File, WildcardMatch),
             entryps("ignored/d/a.o", Ignored(Expendable), File, WildcardMatch),
             entryps(
@@ -1253,7 +1479,59 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
          It seems strange that 'precious' isn't precious, while 'all-precious' is. However, the ignore-search is special
          as it goes backward through directories (using directory-declarations), and aborts if it matched. Thus it finds
          that '$/all-precious/' matched, but in the other cases it maches 'ignored/'.
-        'other' gets folded and inherits, just like before."
+        'other' gets folded and inherits, just like before.
+        Also, look how the ignore-state overrides the prune-default for DotGit kinds, to have more finegrained classification."
+    );
+
+    let ((out, _root), entries) = collect_filtered(
+        &root,
+        None,
+        |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    emit_ignored: Some(CollapseDirectory),
+                    emit_untracked: CollapseDirectory,
+                    emit_pruned: true,
+                    for_deletion: None,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        Some("*ignored*"),
+    );
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 9,
+            returned_entries: entries.len(),
+            seen_entries: 19,
+        },
+    );
+
+    assert_eq!(
+        entries,
+        [
+            entry_nokind(".git", Pruned).with_property(DotGit).no_match(),
+            entry_nokind("ignored/d/.git", Pruned)
+                .with_property(DotGit)
+                .with_match(WildcardMatch),
+            entryps("ignored/d/.gitignore", Ignored(Expendable), File, WildcardMatch),
+            entryps("ignored/d/a.o", Ignored(Expendable), File, WildcardMatch),
+            entryps(
+                "ignored/d/all-expendable",
+                Ignored(Expendable),
+                Directory,
+                WildcardMatch
+            ),
+            entryps("ignored/d/all-precious", Ignored(Precious), Directory, WildcardMatch),
+            entryps("ignored/d/mixed", Ignored(Expendable), Directory, WildcardMatch),
+            entryps("ignored/d/precious", Ignored(Expendable), File, WildcardMatch),
+            entryps("other", Ignored(Expendable), Directory, WildcardMatch),
+        ],
+        "The same as above, but without delete mode, we don't upgrade the status of ignored dot-git entries"
     );
     Ok(())
 }
@@ -1331,7 +1609,7 @@ fn untracked_and_ignored() -> crate::Result {
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).with_property(DotGit).no_match(),
             entry_nomatch(".gitignore", Pruned, File),
             entryps("d/d/a", Untracked, File, WildcardMatch),
         ],
@@ -2058,7 +2336,7 @@ fn precious_are_not_expendable() {
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
             entry(".gitignore", Tracked, File),
             entry("a.o", Ignored(Expendable), File),
             entry("d/a", Tracked, File),
@@ -2327,7 +2605,7 @@ fn worktree_root_can_be_symlink() -> crate::Result {
 #[test]
 fn root_may_not_go_through_dot_git() -> crate::Result {
     let root = fixture("with-nested-dot-git");
-    for dir in ["", "subdir"] {
+    for (dir, expected_pathspec) in [("", Some(Verbatim)), ("subdir", None)] {
         let troot = root.join("dir").join(".git").join(dir);
         let ((out, _root), entries) = collect(&root, Some(&troot), |keep, ctx| {
             walk(&root, ctx, options_emit_all(), keep)
@@ -2342,7 +2620,11 @@ fn root_may_not_go_through_dot_git() -> crate::Result {
         );
         assert_eq!(
             entries,
-            [entry_nomatch("dir/.git", DotGit, Directory)],
+            [{
+                let mut e = entry("dir/.git", Pruned, Directory).with_property(DotGit);
+                e.0.pathspec_match = expected_pathspec;
+                e
+            }],
             "no traversal happened as root passes though .git"
         );
     }
@@ -2535,7 +2817,7 @@ fn walk_with_submodule() -> crate::Result {
     assert_eq!(
         entries,
         [
-            entry_nokind(".git", DotGit),
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
             entry(".gitmodules", Tracked, File),
             entry("dir/file", Tracked, File),
             entry("submodule", Tracked, Repository)
@@ -2652,7 +2934,7 @@ fn submodules() -> crate::Result {
         }
     );
     let expected_content = [
-        entry_nokind(".git", DotGit),
+        entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
         entry(".gitmodules", Tracked, File).with_index_kind(File),
         entry("a/b", Tracked, Repository).with_index_kind(Repository),
         entry("empty", Tracked, File).with_index_kind(File),
@@ -2857,7 +3139,7 @@ fn root_with_dir_that_is_tracked_and_ignored() -> crate::Result {
         assert_eq!(
             entries,
             [
-                entry_nokind(".git", DotGit),
+                entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
                 entry(".gitignore", Tracked, File),
                 entry("dir/file", Tracked, File)
             ],
@@ -2898,7 +3180,7 @@ fn empty_and_nested_untracked() -> crate::Result {
         assert_eq!(
             entries,
             [
-                entry("empty", Untracked, EmptyDirectory),
+                entry("empty", Untracked, Directory).with_property(EmptyDirectory),
                 entry("untracked/file", Untracked, File)
             ],
             "we find all untracked entries, no matter the deletion mode"
@@ -2928,7 +3210,7 @@ fn empty_and_nested_untracked() -> crate::Result {
         assert_eq!(
             entries,
             [
-                entry("empty", Untracked, EmptyDirectory),
+                entry("empty", Untracked, Directory).with_property(EmptyDirectory),
                 entry("untracked", Untracked, Directory)
             ],
             "we find all untracked directories, no matter the deletion mode"
@@ -3395,7 +3677,7 @@ fn untracked_and_ignored_collapse_mix() {
 #[test]
 fn root_cannot_pass_through_case_altered_capital_dot_git_if_case_insensitive() -> crate::Result {
     let root = fixture("with-nested-capitalized-dot-git");
-    for dir in ["", "subdir"] {
+    for (dir, expected_pathspec) in [("", Some(Verbatim)), ("subdir", None)] {
         let troot = root.join("dir").join(".GIT").join(dir);
         let ((out, _root), entries) = collect(&root, Some(&troot), |keep, ctx| {
             walk(
@@ -3418,7 +3700,11 @@ fn root_cannot_pass_through_case_altered_capital_dot_git_if_case_insensitive() -
         );
         assert_eq!(
             entries,
-            [entry_nomatch("dir/.GIT", DotGit, Directory)],
+            [{
+                let mut e = entry("dir/.GIT", Pruned, Directory).with_property(DotGit);
+                e.0.pathspec_match = expected_pathspec;
+                e
+            }],
             "no traversal happened as root passes though .git, it compares in a case-insensitive fashion"
         );
     }
@@ -3476,7 +3762,9 @@ fn partial_checkout_cone_and_non_one() -> crate::Result {
         );
         assert_eq!(
             entries,
-            [entry("d", TrackedExcluded, Directory)],
+            [entry("d", Pruned, Directory)
+                .with_index_kind(Directory)
+                .with_property(TrackedExcluded)],
             "{fixture_name}: we avoid entering excluded sparse-checkout directories even if they are present on disk,\
             no matter with cone or without."
         );

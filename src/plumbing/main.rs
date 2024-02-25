@@ -149,12 +149,14 @@ pub fn main() -> Result<()> {
         #[cfg(feature = "gitoxide-core-tools-clean")]
         Subcommands::Clean(crate::plumbing::options::clean::Command {
             debug,
+            dry_run: _,
             execute,
             ignored,
             precious,
             directories,
             pathspec,
             repositories,
+            pathspec_matches_result,
             skip_hidden_repositories,
             find_untracked_repositories,
         }) => prepare_and_run(
@@ -178,6 +180,7 @@ pub fn main() -> Result<()> {
                         precious,
                         directories,
                         repositories,
+                        pathspec_matches_result,
                         skip_hidden_repositories: skip_hidden_repositories.map(Into::into),
                         find_untracked_repositories: find_untracked_repositories.into(),
                     },

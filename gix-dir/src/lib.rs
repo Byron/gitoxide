@@ -29,14 +29,14 @@ pub struct EntryRef<'a> {
     /// Note that many entries with status `Pruned` will not show up as their kind hasn't yet been determined when they were
     /// pruned very early on.
     pub status: entry::Status,
-    /// Further specify the what the entry is on disk, similar to a file mode.
-    /// This is `None` if the entry was pruned by a pathspec that could not match, as we then won't invest the time to obtain
-    /// the kind of the entry on disk.
+    /// Additional properties of the entry.
+    pub property: Option<entry::Property>,
+    /// Further specify what the entry is on disk, similar to a file mode.
+    /// This is `None` if we decided it's not worth it to exit early and avoid trying to obtain this information.
     pub disk_kind: Option<entry::Kind>,
     /// The kind of entry according to the index, if tracked. *Usually* the same as `disk_kind`.
     pub index_kind: Option<entry::Kind>,
     /// Determines how the pathspec matched.
-    /// Can also be `None` if no pathspec matched, or if the status check stopped prior to checking for pathspec matches which is the case for [`entry::Status::DotGit`].
     /// Note that it can also be `Some(PathspecMatch::Excluded)` if a negative pathspec matched.
     pub pathspec_match: Option<entry::PathspecMatch>,
 }
@@ -48,7 +48,9 @@ pub struct Entry {
     pub rela_path: BString,
     /// The status of entry, most closely related to what we know from `git status`, but not the same.
     pub status: entry::Status,
-    /// Further specify the what the entry is on disk, similar to a file mode.
+    /// Additional flags that further clarify properties of the entry.
+    pub property: Option<entry::Property>,
+    /// Further specify what the entry is on disk, similar to a file mode.
     pub disk_kind: Option<entry::Kind>,
     /// The kind of entry according to the index, if tracked. *Usually* the same as `disk_kind`.
     pub index_kind: Option<entry::Kind>,

@@ -1,4 +1,5 @@
-use crate::{entry, Entry};
+use crate::{entry, Entry, EntryRef};
+use std::borrow::Cow;
 
 use crate::entry::PathspecMatch;
 use crate::walk::{Context, Error, ForDeletionMode, Options};
@@ -61,7 +62,10 @@ pub fn root(
 pub struct Outcome {
     /// The computed status of an entry. It can be seen as aggregate of things we know about an entry.
     pub status: entry::Status,
-    /// What the entry is on disk, or `None` if we aborted the classification early.
+    /// An additional property.
+    pub property: Option<entry::Property>,
+    /// What the entry is on disk, or `None` if we aborted the classification early or an IO-error occurred
+    /// when querying the disk.
     ///
     /// Note that the index is used to avoid disk access provided its entries are marked uptodate
     /// (possibly by a prior call to update the status).
@@ -89,9 +93,23 @@ impl From<&Entry> for Outcome {
     fn from(e: &Entry) -> Self {
         Outcome {
             status: e.status,
+            property: e.property,
             disk_kind: e.disk_kind,
             index_kind: e.index_kind,
             pathspec_match: e.pathspec_match,
+        }
+    }
+}
+
+impl<'a> EntryRef<'a> {
+    pub(super) fn from_outcome(rela_path: Cow<'a, BStr>, info: crate::walk::classify::Outcome) -> Self {
+        EntryRef {
+            rela_path,
+            property: info.property,
+            status: info.status,
+            disk_kind: info.disk_kind,
+            index_kind: info.index_kind,
+            pathspec_match: info.pathspec_match,
         }
     }
 }
@@ -123,12 +141,36 @@ pub fn path(
     ctx: &mut Context<'_>,
 ) -> Result<Outcome, Error> {
     let mut out = Outcome {
-        status: entry::Status::DotGit,
+        status: entry::Status::Pruned,
+        property: None,
         disk_kind,
         index_kind: None,
         pathspec_match: None,
     };
     if is_eq(rela_path[filename_start_idx..].as_bstr(), ".git", ignore_case) {
+        out.pathspec_match = ctx
+            .pathspec
+            .pattern_matching_relative_path(
+                rela_path.as_bstr(),
+                disk_kind.map(|ft| ft.is_dir()),
+                ctx.pathspec_attributes,
+            )
+            .map(Into::into);
+        if for_deletion.is_some() {
+            if let Some(excluded) = ctx
+                .excludes
+                .as_mut()
+                .map_or(Ok(None), |stack| {
+                    stack
+                        .at_entry(rela_path.as_bstr(), disk_kind.map(|ft| ft.is_dir()), ctx.objects)
+                        .map(|platform| platform.excluded_kind())
+                })
+                .map_err(Error::ExcludesAccess)?
+            {
+                out.status = entry::Status::Ignored(excluded);
+            }
+        }
+        out.property = entry::Property::DotGit.into();
         return Ok(out);
     }
     let pathspec_could_match = rela_path.is_empty()
@@ -139,31 +181,25 @@ pub fn path(
         return Ok(out.with_status(entry::Status::Pruned));
     }
 
-    let (uptodate_index_kind, index_kind, mut maybe_status) = resolve_file_type_with_index(
+    let (uptodate_index_kind, index_kind, property) = resolve_file_type_with_index(
         rela_path,
         ctx.index,
         ctx.ignore_case_index_lookup.filter(|_| ignore_case),
     );
     let mut kind = uptodate_index_kind.or(disk_kind).or_else(on_demand_disk_kind);
 
-    maybe_status = maybe_status
-        .or_else(|| (index_kind.map(|k| k.is_dir()) == kind.map(|k| k.is_dir())).then_some(entry::Status::Tracked));
+    let maybe_status = if property.is_none() {
+        (index_kind.map(|k| k.is_dir()) == kind.map(|k| k.is_dir())).then_some(entry::Status::Tracked)
+    } else {
+        out.property = property;
+        Some(entry::Status::Pruned)
+    };
 
     // We always check the pathspec to have the value filled in reliably.
     out.pathspec_match = ctx
         .pathspec
-        .pattern_matching_relative_path(
-            rela_path.as_bstr(),
-            disk_kind.map(|ft| ft.is_dir()),
-            ctx.pathspec_attributes,
-        )
-        .map(|m| {
-            if m.is_excluded() {
-                PathspecMatch::Excluded
-            } else {
-                m.kind.into()
-            }
-        });
+        .pattern_matching_relative_path(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.pathspec_attributes)
+        .map(Into::into);
 
     let mut maybe_upgrade_to_repository = |current_kind, find_harder: bool| {
         if recurse_repositories {
@@ -217,13 +253,6 @@ pub fn path(
         .map_err(Error::ExcludesAccess)?
     {
         if emit_ignored.is_some() {
-            if kind.map_or(false, |d| d.is_dir()) && out.pathspec_match.is_none() {
-                // we have patterns that didn't match at all. Try harder.
-                out.pathspec_match = ctx
-                    .pathspec
-                    .directory_matches_prefix(rela_path.as_bstr(), true)
-                    .then_some(PathspecMatch::Prefix);
-            }
             if matches!(
                 for_deletion,
                 Some(
@@ -238,6 +267,10 @@ pub fn path(
                         Some(ForDeletionMode::FindRepositoriesInIgnoredDirectories)
                     ),
                 );
+            }
+            if kind.map_or(false, |d| d.is_recursable_dir()) && out.pathspec_match.is_none() {
+                // we have patterns that didn't match at all, *yet*. We want to look inside.
+                out.pathspec_match = Some(PathspecMatch::Prefix);
             }
         }
         return Ok(out
@@ -258,8 +291,7 @@ pub fn path(
 
 /// Note that `rela_path` is used as buffer for convenience, but will be left as is when this function returns.
 /// Also note `maybe_file_type` will be `None` for entries that aren't up-to-date and files, for directories at least one entry must be uptodate.
-/// Returns `(maybe_file_type, Option<index_file_type>, Option(TrackedExcluded)`, with the last option being set only for sparse directories.
-/// `tracked_exclued` indicates it's a sparse directory was found.
+/// Returns `(maybe_file_type, Option<index_file_type>, flags)`, with the last option being a flag set only for sparse directories in the index.
 /// `index_file_type` is the type of `rela_path` as available in the index.
 ///
 /// ### Shortcoming
@@ -271,9 +303,9 @@ fn resolve_file_type_with_index(
     rela_path: &mut BString,
     index: &gix_index::State,
     ignore_case: Option<&gix_index::AccelerateLookup<'_>>,
-) -> (Option<entry::Kind>, Option<entry::Kind>, Option<entry::Status>) {
+) -> (Option<entry::Kind>, Option<entry::Kind>, Option<entry::Property>) {
     // TODO: either get this to work for icase as well, or remove the need for it. Logic is different in both branches.
-    let mut special_status = None;
+    let mut special_property = None;
 
     fn entry_to_kinds(entry: &gix_index::Entry) -> (Option<entry::Kind>, Option<entry::Kind>) {
         let kind = if entry.mode.is_submodule() {
@@ -352,14 +384,14 @@ fn resolve_file_type_with_index(
                         .filter(|_| kind.is_none())
                         .map_or(false, |idx| index.entries()[idx].mode.is_sparse())
                 {
-                    special_status = Some(entry::Status::TrackedExcluded);
+                    special_property = Some(entry::Property::TrackedExcluded);
                 }
                 (kind, is_tracked.then_some(entry::Kind::Directory))
             }
             Some(entry) => entry_to_kinds(entry),
         }
     };
-    (uptodate_kind, index_kind, special_status)
+    (uptodate_kind, index_kind, special_property)
 }
 
 fn is_eq(lhs: &BStr, rhs: impl AsRef<BStr>, ignore_case: bool) -> bool {

@@ -274,7 +274,6 @@ pub mod corpus {
 }
 
 pub mod config {
-
     use gix::bstr::BString;
 
     /// Print all entries in a configuration file or access other sub-commands
@@ -506,6 +505,9 @@ pub mod clean {
         /// Print additional debug information to help understand decisions it made.
         #[arg(long)]
         pub debug: bool,
+        /// A dummy to easy with muscle-memory. This flag is assumed if provided or not, and has no effect.
+        #[arg(short = 'n', long)]
+        pub dry_run: bool,
         /// Actually perform the operation, which deletes files on disk without chance of recovery.
         #[arg(long, short = 'e')]
         pub execute: bool,
@@ -521,6 +523,12 @@ pub mod clean {
         /// Remove nested repositories.
         #[arg(long, short = 'r')]
         pub repositories: bool,
+        /// Pathspec patterns are used to match the result of the dirwalk, not the dirwalk itself.
+        ///
+        /// Use this if there is trouble using wildcard pathspecs, which affect the directory walk
+        /// in reasonable, but often unexpected ways.
+        #[arg(long, short = 'm')]
+        pub pathspec_matches_result: bool,
         /// Enter ignored directories to skip repositories contained within.
         #[arg(long)]
         pub skip_hidden_repositories: Option<FindRepository>,
@@ -683,6 +691,7 @@ pub mod revision {
             DiffOrGit,
         }
     }
+
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "rev", visible_alias = "r")]
     pub enum Subcommands {
@@ -853,7 +862,6 @@ pub mod index {
 }
 
 pub mod submodule {
-
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
         #[clap(subcommand)]

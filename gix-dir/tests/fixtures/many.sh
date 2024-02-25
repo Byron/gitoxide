@@ -159,6 +159,13 @@ git init partial-checkout-non-cone
   mkdir d && touch d/file-created-manually
 )
 
+git init precious-nested-repository
+(cd precious-nested-repository
+  echo '$precious*/' > .gitignore
+  git init precious-repo
+  git add .gitignore && git commit -m "init"
+)
+
 git init only-untracked
 (cd only-untracked
   >a
@@ -169,6 +176,14 @@ git init only-untracked
   mkdir d/d
   >d/d/a
   >c
+)
+
+git init ignored-with-empty
+(cd ignored-with-empty
+  echo "/target/" >> .gitignore
+  git add .gitignore && git commit -m "init"
+  mkdir -p target/empty target/debug target/release
+  touch target/debug/a target/release/b
 )
 
 cp -R only-untracked subdir-untracked

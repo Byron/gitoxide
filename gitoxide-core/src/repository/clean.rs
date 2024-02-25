@@ -15,6 +15,7 @@ pub struct Options {
     pub precious: bool,
     pub directories: bool,
     pub repositories: bool,
+    pub pathspec_matches_result: bool,
     pub skip_hidden_repositories: Option<FindRepository>,
     pub find_untracked_repositories: FindRepository,
 }
@@ -46,6 +47,7 @@ pub(crate) mod function {
             repositories,
             skip_hidden_repositories,
             find_untracked_repositories,
+            pathspec_matches_result,
         }: Options,
     ) -> anyhow::Result<()> {
         if format != OutputFormat::Human {
@@ -56,6 +58,7 @@ pub(crate) mod function {
         };
 
         let index = repo.index_or_empty()?;
+        let pathspec_for_dirwalk = !pathspec_matches_result;
         let has_patterns = !patterns.is_empty();
         let mut collect = InterruptableCollect::default();
         let collapse_directories = CollapseDirectory;
@@ -66,19 +69,39 @@ pub(crate) mod function {
                 match skip_hidden_repositories {
                     Some(FindRepository::NonBare) => Some(FindNonBareRepositoriesInIgnoredDirectories),
                     Some(FindRepository::All) => Some(FindRepositoriesInIgnoredDirectories),
-                    None => None,
+                    None => Some(Default::default()),
                 }
             } else {
-                Some(IgnoredDirectoriesCanHideNestedRepositories)
+                Some(Default::default())
             })
             .classify_untracked_bare_repositories(matches!(find_untracked_repositories, FindRepository::All))
             .emit_untracked(collapse_directories)
             .emit_ignored(Some(collapse_directories))
             .empty_patterns_match_prefix(true)
             .emit_empty_directories(true);
-        repo.dirwalk(&index, patterns, options, &mut collect)?;
-        let prefix = repo.prefix()?.unwrap_or(Path::new(""));
+        repo.dirwalk(
+            &index,
+            if pathspec_for_dirwalk {
+                patterns.clone()
+            } else {
+                Vec::new()
+            },
+            options,
+            &mut collect,
+        )?;
 
+        let mut pathspec = pathspec_matches_result
+            .then(|| {
+                repo.pathspec(
+                    true,
+                    patterns,
+                    true,
+                    &index,
+                    gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
+                )
+            })
+            .transpose()?;
+        let prefix = repo.prefix()?.unwrap_or(Path::new(""));
         let entries = collect.inner.into_entries_by_path();
         let mut entries_to_clean = 0;
         let mut skipped_directories = 0;
@@ -88,7 +111,7 @@ pub(crate) mod function {
         let mut pruned_entries = 0;
         let mut saw_ignored_directory = false;
         let mut saw_untracked_directory = false;
-        for (entry, dir_status) in entries.into_iter() {
+        for (mut entry, dir_status) in entries.into_iter() {
             if dir_status.is_some() {
                 if debug {
                     writeln!(
@@ -101,21 +124,25 @@ pub(crate) mod function {
                 continue;
             }
 
-            let pathspec_includes_entry = entry
-                .pathspec_match
-                .map_or(false, |m| m != gix::dir::entry::PathspecMatch::Excluded);
+            let pathspec_includes_entry = match pathspec.as_mut() {
+                None => entry
+                    .pathspec_match
+                    .map_or(false, |m| m != gix::dir::entry::PathspecMatch::Excluded),
+                Some(pathspec) => pathspec
+                    .pattern_matching_relative_path(entry.rela_path.as_bstr(), entry.disk_kind.map(|k| k.is_dir()))
+                    .map_or(false, |m| !m.is_excluded()),
+            };
             pruned_entries += usize::from(!pathspec_includes_entry);
             if !pathspec_includes_entry && debug {
-                writeln!(err, "DBG: prune '{}' as it is excluded by pathspec", entry.rela_path).ok();
+                writeln!(err, "DBG: prune '{}'", entry.rela_path).ok();
             }
             if entry.status.is_pruned() || !pathspec_includes_entry {
                 continue;
             }
 
-            let mut disk_kind = entry.disk_kind.expect("present if not pruned");
             let keep = match entry.status {
-                Status::DotGit | Status::Pruned | Status::TrackedExcluded => {
-                    unreachable!("BUG: Pruned are skipped already as their pathspec is always None")
+                Status::Pruned => {
+                    unreachable!("BUG: we skipped these above")
                 }
                 Status::Tracked => {
                     unreachable!("BUG: tracked aren't emitted")
@@ -130,6 +157,14 @@ pub(crate) mod function {
                 }
                 Status::Untracked => true,
             };
+            if entry.disk_kind.is_none() {
+                entry.disk_kind = workdir
+                    .join(gix::path::from_bstr(entry.rela_path.as_bstr()))
+                    .metadata()
+                    .ok()
+                    .map(|e| e.file_type().into());
+            }
+            let mut disk_kind = entry.disk_kind.expect("present if not pruned");
             if !keep {
                 if debug {
                     writeln!(err, "DBG: prune '{}' as -x or -p is missing", entry.rela_path).ok();
@@ -148,7 +183,7 @@ pub(crate) mod function {
 
             match disk_kind {
                 Kind::File | Kind::Symlink => {}
-                Kind::EmptyDirectory | Kind::Directory => {
+                Kind::Directory => {
                     if !directories {
                         skipped_directories += 1;
                         if debug {
@@ -175,6 +210,11 @@ pub(crate) mod function {
                 saw_ignored_directory |= is_ignored;
                 saw_untracked_directory |= entry.status == gix::dir::entry::Status::Untracked;
             }
+
+            if gix::interrupt::is_triggered() {
+                execute = false;
+            }
+            let mut may_remove_this_entry = execute;
             writeln!(
                 out,
                 "{maybe}{suffix} {}{} {status}",
@@ -200,24 +240,32 @@ pub(crate) mod function {
                             "".into()
                         },
                 },
-                maybe = if execute { "removing" } else { "WOULD remove" },
-                suffix = match disk_kind {
-                    Kind::File | Kind::Symlink | Kind::Directory => {
-                        ""
+                maybe = if entry.property == Some(gix::dir::entry::Property::EmptyDirectoryAndCWD) {
+                    may_remove_this_entry = false;
+                    if execute {
+                        "Refusing to remove empty current working directory"
+                    } else {
+                        "Would refuse to remove empty current working directory"
                     }
-                    Kind::EmptyDirectory => {
+                } else if execute {
+                    "removing"
+                } else {
+                    "WOULD remove"
+                },
+                suffix = match disk_kind {
+                    Kind::Directory if entry.property == Some(gix::dir::entry::Property::EmptyDirectory) => {
                         " empty"
                     }
                     Kind::Repository => {
                         " repository"
                     }
+                    Kind::File | Kind::Symlink | Kind::Directory => {
+                        ""
+                    }
                 },
             )?;
 
-            if gix::interrupt::is_triggered() {
-                execute = false;
-            }
-            if execute {
+            if may_remove_this_entry {
                 let path = workdir.join(entry_path);
                 if disk_kind.is_dir() {
                     std::fs::remove_dir_all(path)?;
@@ -256,7 +304,7 @@ pub(crate) mod function {
             }));
             messages.extend((pruned_entries > 0 && has_patterns).then(|| {
                 format!(
-                    "try to adjust your pathspec to reveal some of the {pruned_entries} pruned {entries}",
+                    "try to adjust your pathspec to reveal some of the {pruned_entries} pruned {entries} - show with --debug",
                     entries = plural("entry", "entries", pruned_entries)
                 )
             }));
