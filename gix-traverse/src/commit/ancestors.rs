@@ -100,7 +100,7 @@ pub mod ancestors {
     use gix_object::{CommitRefIter, FindExt};
     use smallvec::SmallVec;
 
-    use crate::commit::{collect_parents, Ancestors, Either, Info, ParentIds, Parents, Sorting};
+    use super::{collect_parents, Ancestors, Either, Info, ParentIds, Parents, Sorting};
 
     /// The error is part of the item returned by the [Ancestors] iterator.
     #[derive(Debug, thiserror::Error)]
@@ -454,6 +454,8 @@ pub mod ancestors {
         }
     }
 }
+
+pub use ancestors::{Error, State};
 
 enum Either<'buf, 'cache> {
     CommitRefIter(gix_object::CommitRefIter<'buf>),
