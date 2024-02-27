@@ -10,6 +10,8 @@ pub mod resource_cache {
         ResourceCache(#[from] crate::diff::resource_cache::Error),
         #[error(transparent)]
         Index(#[from] crate::repository::index_or_load_from_head::Error),
+        #[error(transparent)]
+        AttributeStack(#[from] crate::config::attribute_stack::Error),
     }
 }
 
@@ -30,15 +32,19 @@ impl Repository {
         mode: gix_diff::blob::pipeline::Mode,
         worktree_roots: gix_diff::blob::pipeline::WorktreeRoots,
     ) -> Result<gix_diff::blob::Platform, resource_cache::Error> {
+        let index = self.index_or_load_from_head()?;
         Ok(crate::diff::resource_cache(
             self,
-            &*self.index_or_load_from_head()?,
             mode,
-            if worktree_roots.new_root.is_some() || worktree_roots.old_root.is_some() {
-                gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping
-            } else {
-                gix_worktree::stack::state::attributes::Source::IdMapping
-            },
+            self.attributes_only(
+                &index,
+                if worktree_roots.new_root.is_some() || worktree_roots.old_root.is_some() {
+                    gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping
+                } else {
+                    gix_worktree::stack::state::attributes::Source::IdMapping
+                },
+            )?
+            .inner,
             worktree_roots,
         )?)
     }
