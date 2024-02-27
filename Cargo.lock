@@ -1671,6 +1671,7 @@ dependencies = [
  "gix-testtools",
  "gix-traverse 0.37.0",
  "gix-worktree 0.31.0",
+ "pretty_assertions",
  "shell-words",
 ]
 
