@@ -15,10 +15,7 @@ use crate::{
 /// These functions are the raw value API, returning normalized byte strings.
 impl<'event> File<'event> {
     /// TODO
-    pub fn raw_value(
-        &self,
-        key: impl Key,
-    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
+    pub fn raw_value(&self, key: impl Key) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
         self.raw_value_by(key.section_name(), key.subsection_name(), key.name())
     }
 
@@ -160,10 +157,7 @@ impl<'event> File<'event> {
     }
 
     /// TODO
-    pub fn raw_values(
-        &self,
-        key: impl Key,
-    ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
+    pub fn raw_values(&self, key: impl Key) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         self.raw_values_by(key.section_name(), key.subsection_name(), key.name())
     }
 

@@ -86,16 +86,8 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
         config.to_string(),
         ";before a\n[core]\na = true\n;before b\n [core]\nb\n# nothing in c\n; nothing in d\n"
     );
-    assert_eq!(
-        config.strings("core.a").expect("present").len(),
-        1,
-        "precondition"
-    );
-    assert_eq!(
-        config.strings("core.b").expect("present").len(),
-        1,
-        "precondition"
-    );
+    assert_eq!(config.strings("core.a").expect("present").len(), 1, "precondition");
+    assert_eq!(config.strings("core.b").expect("present").len(), 1, "precondition");
 
     config.append(config.clone());
     assert_eq!(
@@ -183,8 +175,7 @@ fn multiple_paths_multi_value_and_filter() -> crate::Result {
     );
 
     assert_eq!(
-        config.strings_filter("core.key", &mut |m| m.source == Source::Git
-            || m.source == Source::User),
+        config.strings_filter("core.key", &mut |m| m.source == Source::Git || m.source == Source::User),
         Some(vec![cow_str("b"), cow_str("c")])
     );
     assert_eq!(

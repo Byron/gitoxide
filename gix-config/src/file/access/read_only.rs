@@ -5,7 +5,11 @@ use gix_features::threading::OwnShared;
 use smallvec::SmallVec;
 
 use crate::{
-    file::{self, write::{extract_newline, platform_newline}, Metadata, MetadataFilter, SectionId},
+    file::{
+        self,
+        write::{extract_newline, platform_newline},
+        Metadata, MetadataFilter, SectionId,
+    },
     lookup,
     parse::Event,
     File, Key,
@@ -60,10 +64,7 @@ impl<'event> File<'event> {
     }
 
     /// TODO
-    pub fn try_value<'a, T: TryFrom<Cow<'a, BStr>>>(
-        &'a self,
-        key: impl Key,
-    ) -> Option<Result<T, T::Error>> {
+    pub fn try_value<'a, T: TryFrom<Cow<'a, BStr>>>(&'a self, key: impl Key) -> Option<Result<T, T::Error>> {
         self.try_value_by(key.section_name(), key.subsection_name(), key.name())
     }
 
@@ -74,14 +75,13 @@ impl<'event> File<'event> {
         subsection_name: Option<&BStr>,
         key: &str,
     ) -> Option<Result<T, T::Error>> {
-        self.raw_value_by(section_name, subsection_name, key).ok().map(T::try_from)
+        self.raw_value_by(section_name, subsection_name, key)
+            .ok()
+            .map(T::try_from)
     }
 
     /// TODO
-    pub fn values<'a, T: TryFrom<Cow<'a, BStr>>>(
-        &'a self,
-        key: impl Key,
-    ) -> Result<Vec<T>, lookup::Error<T::Error>> {
+    pub fn values<'a, T: TryFrom<Cow<'a, BStr>>>(&'a self, key: impl Key) -> Result<Vec<T>, lookup::Error<T::Error>> {
         self.values_by(key.section_name(), key.subsection_name(), key.name())
     }
 

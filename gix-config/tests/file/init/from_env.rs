@@ -65,18 +65,9 @@ fn multiple_key_value_pairs() {
 
     let config = File::from_env(Default::default()).unwrap().unwrap();
 
-    assert_eq!(
-        config.raw_value("core.a").unwrap(),
-        Cow::<[u8]>::Borrowed(b"a")
-    );
-    assert_eq!(
-        config.raw_value("core.b").unwrap(),
-        Cow::<[u8]>::Borrowed(b"b")
-    );
-    assert_eq!(
-        config.raw_value("core.c").unwrap(),
-        Cow::<[u8]>::Borrowed(b"c")
-    );
+    assert_eq!(config.raw_value("core.a").unwrap(), Cow::<[u8]>::Borrowed(b"a"));
+    assert_eq!(config.raw_value("core.b").unwrap(), Cow::<[u8]>::Borrowed(b"b"));
+    assert_eq!(config.raw_value("core.c").unwrap(), Cow::<[u8]>::Borrowed(b"c"));
     assert_eq!(config.num_values(), 3);
 }
 
@@ -132,9 +123,6 @@ fn follow_include_paths() {
     .unwrap()
     .unwrap();
 
-    assert_eq!(
-        config.raw_value("core.key").unwrap(),
-        Cow::<[u8]>::Borrowed(b"changed")
-    );
+    assert_eq!(config.raw_value("core.key").unwrap(), Cow::<[u8]>::Borrowed(b"changed"));
     assert_eq!(config.num_values(), 5);
 }

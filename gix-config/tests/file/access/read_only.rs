@@ -72,10 +72,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             Some(cow_str("")),
             "mere presence with equal sign is always the empty implicit string"
         );
-        assert!(
-            config.path("core.empty-equals").is_some(),
-            "this is an empty path…"
-        );
+        assert!(config.path("core.empty-equals").is_some(), "this is an empty path…");
         assert_eq!(
             config.string("core.empty-explicit"),
             Some(cow_str("")),
@@ -136,10 +133,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             );
         }
 
-        assert_eq!(
-            config.string("core.other-quoted").unwrap(),
-            cow_str("hello world")
-        );
+        assert_eq!(config.string("core.other-quoted").unwrap(), cow_str("hello world"));
 
         {
             let strings = config.strings("core.other-quoted").unwrap();
@@ -154,10 +148,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             assert!(matches!(cow, Cow::Borrowed(_)));
         }
         assert_eq!(
-            config
-                .string("core.other-quoted")
-                .expect("present")
-                .as_ref(),
+            config.string("core.other-quoted").expect("present").as_ref(),
             "hello world"
         );
 
@@ -407,11 +398,7 @@ fn overrides_with_implicit_booleans_work_in_single_section() {
             b
         "#;
     let config = File::try_from(config).unwrap();
-    assert_eq!(
-        config.boolean("a.b"),
-        Some(Ok(true)),
-        "empty implicit booleans "
-    );
+    assert_eq!(config.boolean("a.b"), Some(Ok(true)), "empty implicit booleans ");
 }
 
 #[test]
@@ -423,9 +410,5 @@ fn overrides_with_implicit_booleans_work_across_sections() {
             b
         "#;
     let config = File::try_from(config).unwrap();
-    assert_eq!(
-        config.boolean("a.b"),
-        Some(Ok(true)),
-        "empty implicit booleans "
-    );
+    assert_eq!(config.boolean("a.b"), Some(Ok(true)), "empty implicit booleans ");
 }

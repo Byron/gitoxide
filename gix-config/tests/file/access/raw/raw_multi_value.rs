@@ -7,10 +7,7 @@ use crate::file::cow_str;
 #[test]
 fn single_value_is_identical_to_single_value_query() -> crate::Result {
     let config = File::try_from("[core]\na=b\nc=d")?;
-    assert_eq!(
-        vec![config.raw_value("core.a")?],
-        config.raw_values("core.a")?
-    );
+    assert_eq!(vec![config.raw_value("core.a")?], config.raw_values("core.a")?);
     Ok(())
 }
 
