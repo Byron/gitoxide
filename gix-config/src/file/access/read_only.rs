@@ -59,6 +59,14 @@ impl<'event> File<'event> {
         T::try_from(self.raw_value_by(section_name, subsection_name, key)?).map_err(lookup::Error::FailedConversion)
     }
 
+    /// TODO
+    pub fn try_value<'a, T: TryFrom<Cow<'a, BStr>>>(
+        &'a self,
+        key: impl Key,
+    ) -> Option<Result<T, T::Error>> {
+        self.try_value_by(key.section_name(), key.subsection_name(), key.name())
+    }
+
     /// Like [`value()`][File::value()], but returning an `None` if the value wasn't found at `section[.subsection].key`
     pub fn try_value_by<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
