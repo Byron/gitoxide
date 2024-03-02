@@ -49,9 +49,9 @@ impl<'event> File<'event> {
     /// "#;
     /// let git_config = gix_config::File::try_from(config)?;
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.value::<Integer>("core", None, "a")?;
+    /// let a_value = git_config.value_by::<Integer>("core", None, "a")?;
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Boolean = git_config.value("core", None, "c")?;
+    /// let c_value: Boolean = git_config.value_by("core", None, "c")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn value_by<'a, T: TryFrom<Cow<'a, BStr>>>(
@@ -115,7 +115,7 @@ impl<'event> File<'event> {
     /// "#;
     /// let git_config = gix_config::File::try_from(config).unwrap();
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.values::<Boolean>("core", None, "a")?;
+    /// let a_value = git_config.values_by::<Boolean>("core", None, "a")?;
     /// assert_eq!(
     ///     a_value,
     ///     vec![
@@ -125,7 +125,7 @@ impl<'event> File<'event> {
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Vec<Boolean> = git_config.values("core", None, "c").unwrap();
+    /// let c_value: Vec<Boolean> = git_config.values_by("core", None, "c").unwrap();
     /// assert_eq!(c_value, vec![Boolean(false)]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```

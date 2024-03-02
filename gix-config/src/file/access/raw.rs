@@ -188,7 +188,7 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let git_config = gix_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
-    ///     git_config.raw_values("core", None, "a").unwrap(),
+    ///     git_config.raw_values_by("core", None, "a").unwrap(),
     ///     vec![
     ///         Cow::<BStr>::Borrowed("b".into()),
     ///         Cow::<BStr>::Borrowed("c".into()),
@@ -279,7 +279,7 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = gix_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
-    ///     git_config.raw_values("core", None, "a")?,
+    ///     git_config.raw_values_by("core", None, "a")?,
     ///     vec![
     ///         Cow::<BStr>::Borrowed("b".into()),
     ///         Cow::<BStr>::Borrowed("c".into()),
@@ -287,10 +287,10 @@ impl<'event> File<'event> {
     ///     ]
     /// );
     ///
-    /// git_config.raw_values_mut("core", None, "a")?.set_all("g");
+    /// git_config.raw_values_mut_by("core", None, "a")?.set_all("g");
     ///
     /// assert_eq!(
-    ///     git_config.raw_values("core", None, "a")?,
+    ///     git_config.raw_values_by("core", None, "a")?,
     ///     vec![
     ///         Cow::<BStr>::Borrowed("g".into()),
     ///         Cow::<BStr>::Borrowed("g".into()),
@@ -410,9 +410,9 @@ impl<'event> File<'event> {
     /// # use std::convert::TryFrom;
     /// # let mut git_config = gix_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// git_config.set_existing_raw_value("core", None, "a", "e")?;
-    /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
+    /// assert_eq!(git_config.raw_value("core.a")?, Cow::<BStr>::Borrowed("e".into()));
     /// assert_eq!(
-    ///     git_config.raw_values("core", None, "a")?,
+    ///     git_config.raw_values("core.a")?,
     ///     vec![
     ///         Cow::<BStr>::Borrowed("b".into()),
     ///         Cow::<BStr>::Borrowed("c".into()),
@@ -452,11 +452,11 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = gix_config::File::try_from("[core]a=b").unwrap();
-    /// let prev = git_config.set_raw_value(&"core.a", "e")?;
-    /// git_config.set_raw_value(&"core.b", "f")?;
+    /// let prev = git_config.set_raw_value_by("core", None, "a", "e")?;
+    /// git_config.set_raw_value_by("core", None, "b", "f")?;
     /// assert_eq!(prev.expect("present").as_ref(), "b");
-    /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
-    /// assert_eq!(git_config.raw_value("core", None, "b")?, Cow::<BStr>::Borrowed("f".into()));
+    /// assert_eq!(git_config.raw_value("core.a")?, Cow::<BStr>::Borrowed("e".into()));
+    /// assert_eq!(git_config.raw_value("core.b")?, Cow::<BStr>::Borrowed("f".into()));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn set_raw_value_by<'b, Key, E>(
@@ -550,7 +550,7 @@ impl<'event> File<'event> {
     ///     "z",
     /// ];
     /// git_config.set_existing_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// let fetched_config = git_config.raw_values("core", None, "a")?;
+    /// let fetched_config = git_config.raw_values("core.a")?;
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("z".into())));
@@ -570,7 +570,7 @@ impl<'event> File<'event> {
     ///     "y",
     /// ];
     /// git_config.set_existing_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// let fetched_config = git_config.raw_values("core", None, "a")?;
+    /// let fetched_config = git_config.raw_values("core.a")?;
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
     /// # Ok::<(), gix_config::lookup::existing::Error>(())
@@ -591,7 +591,7 @@ impl<'event> File<'event> {
     ///     "discarded",
     /// ];
     /// git_config.set_existing_raw_multi_value("core", None, "a", new_values)?;
-    /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
+    /// assert!(!git_config.raw_values("core.a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), gix_config::lookup::existing::Error>(())
     /// ```
     pub fn set_existing_raw_multi_value<'a, Iter, Item>(
