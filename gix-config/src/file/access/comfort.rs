@@ -15,7 +15,7 @@ impl<'event> File<'event> {
         subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Cow<'_, BStr>> {
-        self.string_filter_by(section_name, subsection_name, key, &mut |_| true)
+        self.string_filter_by(section_name.as_ref(), subsection_name, key.as_ref(), &mut |_| true)
     }
 
     /// Like [`string()`][File::string_by()], but suitable for statically known `key`s like `remote.origin.url`.
@@ -53,7 +53,7 @@ impl<'event> File<'event> {
         subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<crate::Path<'_>> {
-        self.path_filter_by(section_name, subsection_name, key, &mut |_| true)
+        self.path_filter_by(section_name.as_ref(), subsection_name, key.as_ref(), &mut |_| true)
     }
 
     /// Like [`path()`][File::path_by()], but suitable for statically known `key`s like `remote.origin.url`.
@@ -91,7 +91,7 @@ impl<'event> File<'event> {
         subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Result<bool, value::Error>> {
-        self.boolean_filter_by(section_name, subsection_name, key, &mut |_| true)
+        self.boolean_filter_by(section_name.as_ref(), subsection_name, key.as_ref(), &mut |_| true)
     }
 
     /// Like [`boolean()`][File::boolean_by()], but suitable for statically known `key`s like `remote.origin.url`.
@@ -209,7 +209,7 @@ impl<'event> File<'event> {
         subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Result<Vec<i64>, value::Error>> {
-        self.integers_filter_by(section_name, subsection_name, key, &mut |_| true)
+        self.integers_filter_by(section_name.as_ref(), subsection_name, key.as_ref(), &mut |_| true)
     }
 
     /// Like [`integers()`][File::integers_by()], but suitable for statically known `key`s like `remote.origin.url`.
