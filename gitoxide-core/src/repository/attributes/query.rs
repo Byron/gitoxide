@@ -1,4 +1,4 @@
-use gix::repository::IndexPersistedOrInMemory;
+use gix::worktree::IndexPersistedOrInMemory;
 
 use crate::OutputFormat;
 
