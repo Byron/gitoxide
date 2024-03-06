@@ -5,8 +5,9 @@ impl<'repo, Progress> Platform<'repo, Progress>
 where
     Progress: gix_features::progress::Progress,
 {
-    /// Call `cb` on dirwalk options if these are set (which is the default). The directory walk is used to find
-    /// untracked files or ignored files.
+    /// Call `cb` on dirwalk options if these are set (which is the default when created through [`Repository::status()`](crate::Repository::status())).
+    /// The directory walk is used to find untracked files or ignored files.
+    ///
     /// `cb` will be able to run builder-methods on the passed dirwalk options.
     pub fn dirwalk_options(mut self, cb: impl FnOnce(crate::dirwalk::Options) -> crate::dirwalk::Options) -> Self {
         if let Some(opts) = self.index_worktree_options.dirwalk_options.take() {

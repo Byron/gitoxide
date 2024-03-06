@@ -26,6 +26,7 @@ mod open {
                             worktree_checkout: true,
                             superproject_configuration: true,
                         },
+                        Some(false),
                     ),
                     (
                         "dir/m1",
@@ -35,6 +36,7 @@ mod open {
                             worktree_checkout: true,
                             superproject_configuration: true,
                         },
+                        Some(false),
                     ),
                 ] as &[_],
             ),
@@ -48,6 +50,7 @@ mod open {
                         worktree_checkout: false,
                         superproject_configuration: true,
                     },
+                    None,
                 )],
             ),
             (
@@ -60,11 +63,13 @@ mod open {
                         worktree_checkout: false,
                         superproject_configuration: true,
                     },
+                    Some(true),
                 )],
             ),
         ] {
             let repo = repo(name)?;
-            for (sm, (name, expected)) in repo.submodules()?.expect("modules present").zip(expected) {
+            for (sm, (name, expected, _expected_is_dirty)) in repo.submodules()?.expect("modules present").zip(expected)
+            {
                 assert_eq!(sm.name(), name);
                 let state = sm.state()?;
                 assert_eq!(&state, expected);
@@ -87,6 +92,19 @@ mod open {
                         "there is a way to check for indicators that a submodule worktree isn't checked out though"
                     )
                 }
+                #[cfg(all(feature = "status", feature = "parallel"))]
+                for check_dirty in [false, true] {
+                    let status = sm.status(gix::submodule::config::Ignore::None, check_dirty)?;
+                    assert_eq!(
+                        &status.state, expected,
+                        "no matter what status configuration, the state is always obtained"
+                    );
+                    assert_eq!(
+                        status.is_dirty(),
+                        *_expected_is_dirty,
+                        "none of these submodules are dirty, but some aren't checked out"
+                    )
+                }
             }
             assert_eq!(
                 repo.modules()?.expect("present").names().count(),
@@ -95,6 +113,146 @@ mod open {
             );
         }
         Ok(())
+    }
+
+    #[cfg(all(feature = "status", feature = "parallel"))]
+    mod status {
+        use crate::submodule::repo;
+        use crate::util::hex_to_id;
+
+        #[test]
+        fn changed_head_compared_to_superproject_index() -> crate::Result {
+            let repo = repo("submodule-head-changed")?;
+            let sm = repo.submodules()?.into_iter().flatten().next().expect("one submodule");
+            let mut status = sm.status(gix::submodule::config::Ignore::None, false)?;
+            assert_eq!(
+                status.is_dirty(),
+                Some(true),
+                "we could decide that the submodule is dirty"
+            );
+            assert_eq!(
+                status.index_id,
+                Some(hex_to_id("e046f3e51d955840619fc7d01fbd9a469663de22"))
+            );
+            assert_eq!(
+                status.checked_out_head_id,
+                Some(hex_to_id("362cb5539acbd3c8ca355471f97c6a68d3db0da7")),
+                "the checked out head was reset to something else after the superproject commit"
+            );
+            assert_eq!(
+                status.changes,
+                Some(Vec::new()),
+                "the status check ran, but there were no changes"
+            );
+            // make it easier to compare this as baseline
+            status.changes.take();
+
+            let status_with_ignore = sm.status(gix::submodule::config::Ignore::Dirty, false)?;
+            assert_eq!(
+                status_with_ignore, status,
+                "The lowest status that makes these changes observable"
+            );
+
+            let status_with_ignore_check_only = sm.status(gix::submodule::config::Ignore::Dirty, true)?;
+            assert_eq!(
+                status_with_ignore_check_only, status,
+                "dirty-check has no observable influence here yet as there no 'more expensive' changes"
+            );
+
+            let status_with_ignore = sm.status(gix::submodule::config::Ignore::All, false)?;
+            assert_eq!(
+                status_with_ignore.is_dirty(),
+                Some(false),
+                "no dirty-information is retrieved, it seems clean"
+            );
+            assert_eq!(
+                status_with_ignore.index_id, None,
+                "to avoid false-positives, we don't retrieve the value"
+            );
+            assert_eq!(
+                status_with_ignore.checked_out_head_id, None,
+                "this check is ignored as it requires opening a repository"
+            );
+            Ok(())
+        }
+
+        #[test]
+        fn modified_and_untracked() -> crate::Result {
+            let repo = repo("modified-and-untracked")?;
+            let sm = repo.submodules()?.into_iter().flatten().next().expect("one submodule");
+
+            let status = sm.status(gix::submodule::config::Ignore::Dirty, false)?;
+            assert_eq!(status.is_dirty(), Some(false), "Dirty skips worktree changes entirely");
+
+            let status = sm.status_opts(
+                gix::submodule::config::Ignore::None,
+                false,
+                &mut |status: gix::status::Platform<'_, gix::progress::Discard>| {
+                    status.index_worktree_options_mut(|opts| {
+                        opts.sorting = Some(gix_status::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive);
+                    })
+                },
+            )?;
+            assert_eq!(
+                status.is_dirty(),
+                Some(true),
+                "we could decide that the submodule is dirty"
+            );
+            assert_eq!(status.index_id, status.checked_out_head_id, "the head didn't change");
+            assert_eq!(
+                status.changes.as_ref().into_iter().flatten().count(),
+                2,
+                "1 modified, 1 untracked"
+            );
+
+            let status_with_dirty_check = sm.status_opts(
+                gix::submodule::config::Ignore::None,
+                true,
+                &mut |status: gix::status::Platform<'_, gix::progress::Discard>| {
+                    status.index_worktree_options_mut(|opts| {
+                        opts.sorting = Some(gix_status::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive);
+                    })
+                },
+            )?;
+            assert_eq!(
+                status_with_dirty_check, status,
+                "it cannot abort early as the only change it sees is the modification check"
+            );
+
+            let status = sm.status(gix::submodule::config::Ignore::Untracked, false)?;
+            assert_eq!(
+                status.is_dirty(),
+                Some(true),
+                "we could decide that the submodule is dirty, even though untracked files are missing"
+            );
+            assert_eq!(status.index_id, status.checked_out_head_id, "the head didn't change");
+            assert_eq!(status.changes.as_ref().into_iter().flatten().count(), 1, "1 modified");
+
+            Ok(())
+        }
+
+        #[test]
+        fn is_dirty_skips_expensive_checks() -> crate::Result {
+            let repo = repo("submodule-head-changed-and-modified")?;
+            let sm = repo.submodules()?.into_iter().flatten().next().expect("one submodule");
+
+            let status = sm.status(gix::submodule::config::Ignore::None, true)?;
+            assert_eq!(
+                status.changes, None,
+                "computation was stopped on the first detected change (the index/head)"
+            );
+            assert_eq!(
+                status.index_id,
+                Some(hex_to_id("e046f3e51d955840619fc7d01fbd9a469663de22")),
+                "the index id was obtained"
+            );
+            assert_eq!(
+                status.checked_out_head_id,
+                Some(hex_to_id("362cb5539acbd3c8ca355471f97c6a68d3db0da7")),
+                "the checked out head was also obtained to be able to se if it's dirty"
+            );
+            Ok(())
+        }
     }
 
     #[test]
