@@ -63,7 +63,13 @@ pub(super) fn recursive(
             ctx,
         )?;
 
-        if can_recurse(current_bstr.as_bstr(), info, opts.for_deletion, delegate) {
+        if can_recurse(
+            current_bstr.as_bstr(),
+            info,
+            opts.for_deletion,
+            false, /* is root */
+            delegate,
+        ) {
             let subdir_may_collapse = state.may_collapse(current);
             let (action, subdir_prevent_collapse) = recursive(
                 subdir_may_collapse,

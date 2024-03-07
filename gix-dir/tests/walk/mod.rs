@@ -2632,6 +2632,130 @@ fn root_may_not_go_through_dot_git() -> crate::Result {
 }
 
 #[test]
+fn root_at_submodule_repository_allows_walk() -> crate::Result {
+    let root = fixture("repo-with-submodule");
+    let troot = root.join("submodule");
+    let ((out, _root), entries) = try_collect_filtered_opts_collect_with_root(
+        &troot,
+        None,
+        Some(&troot),
+        |keep, ctx| {
+            walk(
+                &troot,
+                ctx,
+                walk::Options {
+                    emit_tracked: true,
+                    emit_untracked: Matching,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Options::git_dir("../.git/modules/submodule"),
+    )?;
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 3,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [entry("dir/file", Tracked, File), entry("untracked", Untracked, File)],
+        "this is a special case to allow walking submodules specifically, like a normal repository"
+    );
+    Ok(())
+}
+
+#[test]
+fn root_in_submodule_repository_allows_walk() -> crate::Result {
+    let root = fixture("repo-with-submodule");
+    let troot = root.join("submodule");
+    let ((out, _root), entries) = try_collect_filtered_opts_collect_with_root(
+        &troot,
+        None,
+        Some(&troot.join("dir")),
+        |keep, ctx| {
+            walk(
+                &troot,
+                ctx,
+                walk::Options {
+                    emit_tracked: true,
+                    emit_untracked: Matching,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Options::git_dir("../.git/modules/submodule"),
+    )?;
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 1,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [entry("dir/file", Tracked, File)],
+        "it's also working if the traversal root is inside the subdmodule"
+    );
+    Ok(())
+}
+
+#[test]
+fn root_in_submodule_from_superproject_repository_allows_walk() -> crate::Result {
+    let root = fixture("repo-with-submodule");
+    let troot = root.join("submodule").join("dir");
+    let ((out, _root), entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| {
+            walk(
+                &troot,
+                ctx,
+                walk::Options {
+                    emit_tracked: true,
+                    emit_untracked: Matching,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Default::default(),
+    )?;
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 1,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [entry("file", Untracked, File)],
+        "there is no index that has 'file' in it (it's 'dir/file'), hence it's untracked.\
+        But the traversal is possible, even though it might not make the most sense."
+    );
+    Ok(())
+}
+
+#[test]
 fn root_enters_directory_with_dot_git_in_reconfigured_worktree_tracked() -> crate::Result {
     let root = fixture("nonstandard-worktree");
     let troot = root.join("dir-with-dot-git").join("inside");
@@ -2797,7 +2921,8 @@ fn root_may_not_go_through_submodule() -> crate::Result {
     assert_eq!(
         entries,
         [entry("submodule", Tracked, Repository)],
-        "it refuses to start traversal in a submodule, thus it ends in the directory that is the submodule"
+        "it refuses to start traversal in a submodule, thus it ends in the directory that is the submodule, \
+        if the root is another repository"
     );
     Ok(())
 }

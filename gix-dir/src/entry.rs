@@ -168,6 +168,9 @@ impl Status {
     /// This implements the default rules of `git status`, which is good for a minimal traversal through
     /// tracked and non-ignored portions of a worktree.
     /// `for_deletion` is used to determine if recursion into a directory is allowed even though it otherwise wouldn't be.
+    /// If `worktree_root_is_repository` is `true`, then this status is part of the root of an iteration, and the corresponding
+    /// worktree root is a repository itself. This typically happens for submodules. In this case, recursion rules are relaxed
+    /// to allow traversing submodule worktrees.
     ///
     /// Use `pathspec_match` to determine if a pathspec matches in any way, affecting the decision to recurse.
     pub fn can_recurse(
@@ -175,8 +178,15 @@ impl Status {
         file_type: Option<Kind>,
         pathspec_match: Option<PathspecMatch>,
         for_deletion: Option<ForDeletionMode>,
+        worktree_root_is_repository: bool,
     ) -> bool {
-        let is_dir_on_disk = file_type.map_or(false, |ft| ft.is_recursable_dir());
+        let is_dir_on_disk = file_type.map_or(false, |ft| {
+            if worktree_root_is_repository {
+                ft.is_dir()
+            } else {
+                ft.is_recursable_dir()
+            }
+        });
         if !is_dir_on_disk {
             return false;
         }

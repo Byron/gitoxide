@@ -69,12 +69,24 @@ pub trait Delegate {
     /// Use `for_deletion` to specify if the seen entries should ultimately be deleted, which may affect the decision
     /// of whether to resource or not.
     ///
+    /// If `worktree_root_is_repository` is `true`, then this status is part of the root of an iteration, and the corresponding
+    /// worktree root is a repository itself. This typically happens for submodules. In this case, recursion rules are relaxed
+    /// to allow traversing submodule worktrees.
+    ///
     /// Note that this method will see all directories, even though not all of them may end up being [emitted](Self::emit()).
     /// If this method returns `false`, the `entry` will always be emitted.
-    fn can_recurse(&mut self, entry: EntryRef<'_>, for_deletion: Option<ForDeletionMode>) -> bool {
-        entry
-            .status
-            .can_recurse(entry.disk_kind, entry.pathspec_match, for_deletion)
+    fn can_recurse(
+        &mut self,
+        entry: EntryRef<'_>,
+        for_deletion: Option<ForDeletionMode>,
+        worktree_root_is_repository: bool,
+    ) -> bool {
+        entry.status.can_recurse(
+            entry.disk_kind,
+            entry.pathspec_match,
+            for_deletion,
+            worktree_root_is_repository,
+        )
     }
 }
 
