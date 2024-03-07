@@ -64,8 +64,6 @@ impl Repository {
     /// Whereas Git runs the index-modified check before the directory walk to set entries
     /// as up-to-date to (potentially) safe some disk-access, we run both in parallel which
     /// ultimately is much faster.
-    // TODO: if untracked and ignored entries are disabled, don't run a dirwalk at all.
-    // TODO: submodule support with reasonable configurability.
     pub fn status<P>(&self, progress: P) -> Result<Platform<'_, P>, config::boolean::Error>
     where
         P: gix_features::progress::Progress + 'static,
@@ -83,8 +81,6 @@ impl Repository {
             },
         })
     }
-
-    // TODO: submodule status, where the base of the operation is the list of submodules in the .gitmodules file.
 }
 
 mod platform;

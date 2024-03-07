@@ -174,6 +174,10 @@ impl Repository {
 /// Note that depending on the underlying configuration, there might be a significant delay until the first
 /// item is received due to the buffering necessary to perform rename tracking and/or sorting.
 ///
+/// ### Submodules
+///
+/// Note that submodules can be set to 'inactive' which automatically excludes them from the status operation.
+///
 /// ### Index Changes
 ///
 /// Changes to the index are collected and it's possible to write the index back using [iter::Outcome::write_changes()].
@@ -200,6 +204,7 @@ pub mod iter {
     use crate::status::index_worktree::iter;
     use crate::status::{index_worktree, Platform};
     use crate::worktree::IndexPersistedOrInMemory;
+    use crate::ThreadSafeRepository;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
 
@@ -420,9 +425,7 @@ pub mod iter {
         }
     }
 
-    /// The status of a submodule
-    #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
-    pub struct SubmoduleStatus {}
+    type SubmoduleStatus = crate::submodule::Status;
 
     /// The error returned by [Platform::into_index_worktree_iter()](crate::status::Platform::into_index_worktree_iter()).
     #[derive(Debug, thiserror::Error)]
@@ -434,6 +437,8 @@ pub mod iter {
         SpawnThread(#[source] std::io::Error),
         #[error(transparent)]
         ConfigSkipHash(#[from] crate::config::boolean::Error),
+        #[error(transparent)]
+        PrepareSubmodules(#[from] crate::submodule::modules::Error),
     }
 
     /// Lifecycle
@@ -454,7 +459,6 @@ pub mod iter {
             let should_interrupt = Arc::new(AtomicBool::default());
             let (tx, rx) = std::sync::mpsc::channel();
             let mut collect = Collect { tx };
-            let submodule = ComputeSubmoduleStatus { _mode: self.submodules };
             let skip_hash = self
                 .repo
                 .config
@@ -464,6 +468,7 @@ pub mod iter {
                 .transpose()
                 .with_lenient_default(self.repo.config.lenient_config)?
                 .unwrap_or_default();
+            let submodule = ComputeSubmoduleStatus::new(self.repo.clone().into_sync(), self.submodules)?;
             let join = std::thread::Builder::new()
                 .name("gix::status::index_worktree::iter::producer".into())
                 .spawn({
@@ -568,19 +573,53 @@ pub mod iter {
 
     #[derive(Clone)]
     struct ComputeSubmoduleStatus {
-        _mode: crate::status::Submodule,
+        mode: crate::status::Submodule,
+        repo: ThreadSafeRepository,
+        submodule_paths: Vec<BString>,
     }
 
+    ///
     mod submodule_status {
+        use crate::bstr;
         use crate::bstr::BStr;
         use crate::status::index_worktree::iter::{ComputeSubmoduleStatus, SubmoduleStatus};
+        use crate::status::Submodule;
+        use std::borrow::Cow;
 
-        /// The error returned by the submodule status implementation - it will be turned into a box, hence it doesn't have to
-        /// be private.
+        impl ComputeSubmoduleStatus {
+            pub(super) fn new(
+                repo: crate::ThreadSafeRepository,
+                mode: crate::status::Submodule,
+            ) -> Result<Self, crate::submodule::modules::Error> {
+                let local_repo = repo.to_thread_local();
+                let submodule_paths = match local_repo.submodules()? {
+                    Some(sm) => {
+                        let mut v: Vec<_> = sm
+                            .filter(|sm| sm.is_active().unwrap_or_default())
+                            .filter_map(|sm| sm.path().ok().map(Cow::into_owned))
+                            .collect();
+                        v.sort();
+                        v
+                    }
+                    None => Vec::new(),
+                };
+                Ok(Self {
+                    mode,
+                    repo,
+                    submodule_paths,
+                })
+            }
+        }
+
+        /// The error returned submodule status checks.
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
-        #[error("TBD")]
-        pub enum Error {}
+        pub(super) enum Error {
+            #[error(transparent)]
+            SubmoduleStatus(#[from] crate::submodule::status::Error),
+            #[error(transparent)]
+            IgnoreConfig(#[from] crate::submodule::config::Error),
+        }
 
         impl gix_status::index_as_worktree::traits::SubmoduleStatus for ComputeSubmoduleStatus {
             type Output = SubmoduleStatus;
@@ -589,9 +628,29 @@ pub mod iter {
             fn status(
                 &mut self,
                 _entry: &gix_index::Entry,
-                _rela_path: &BStr,
+                rela_path: &BStr,
             ) -> Result<Option<Self::Output>, Self::Error> {
-                todo!("impl in Submodule itself, it will be calling this exact implementation under the hood, maybe with reduced threads")
+                use bstr::ByteSlice;
+                if self
+                    .submodule_paths
+                    .binary_search_by(|path| path.as_bstr().cmp(rela_path))
+                    .is_err()
+                {
+                    return Ok(None);
+                }
+                let repo = self.repo.to_thread_local();
+                let Ok(Some(mut submodules)) = repo.submodules() else {
+                    return Ok(None);
+                };
+                let Some(sm) = submodules.find(|sm| sm.path().map_or(false, |path| path == rela_path)) else {
+                    return Ok(None);
+                };
+                let (ignore, check_dirty) = match self.mode {
+                    Submodule::AsConfigured { check_dirty } => (sm.ignore()?.unwrap_or_default(), check_dirty),
+                    Submodule::Given { ignore, check_dirty } => (ignore, check_dirty),
+                };
+                let status = sm.status(ignore, check_dirty)?;
+                Ok(status.is_dirty().and_then(|dirty| dirty.then_some(status)))
             }
         }
     }

@@ -42,6 +42,22 @@ git init submodule-head-changed-and-modified
   )
 )
 
+git init modified-untracked-and-submodule-head-changed-and-modified
+(cd modified-untracked-and-submodule-head-changed-and-modified
+  git submodule add ../module1 m1
+  git commit -m "add submodule"
+
+  (cd m1
+    git checkout @~1
+    echo change >> this
+  )
+
+  touch this
+  git add this && git commit -m "this"
+  echo change >> this
+  touch untracked
+)
+
 git init with-submodules
 (cd with-submodules
   mkdir dir
