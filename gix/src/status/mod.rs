@@ -83,6 +83,52 @@ impl Repository {
     }
 }
 
+///
+#[cfg(feature = "parallel")]
+pub mod is_dirty {
+    use crate::Repository;
+
+    /// The error returned by [Repository::is_dirty()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        StatusPlatform(#[from] crate::config::boolean::Error),
+        #[error(transparent)]
+        CreateStatusIterator(#[from] crate::status::index_worktree::iter::Error),
+    }
+
+    impl Repository {
+        /// Returns `true` if the repository is dirty.
+        /// This means it's changed in one of the following ways:
+        ///
+        /// * the index was changed in comparison to its working tree
+        /// * the working tree was changed in comparison to the index
+        /// * submodules are taken in consideration, along with their `ignore` and `isActive` configuration
+        ///
+        /// Note that *untracked files* do *not* affect this flag.
+        ///
+        /// ### Incomplete Implementation Warning
+        ///
+        /// Currently, this does not compute changes between the head and the index.
+        // TODO: use iterator which also tests for head->index changes.
+        pub fn is_dirty(&self) -> Result<bool, Error> {
+            let is_dirty = self
+                .status(gix_features::progress::Discard)?
+                .index_worktree_rewrites(None)
+                .index_worktree_submodules(crate::status::Submodule::AsConfigured { check_dirty: true })
+                .index_worktree_options_mut(|opts| {
+                    opts.dirwalk_options = None;
+                })
+                .into_index_worktree_iter(Vec::new())?
+                .take_while(Result::is_ok)
+                .next()
+                .is_some();
+            Ok(is_dirty)
+        }
+    }
+}
+
 mod platform;
 
 ///

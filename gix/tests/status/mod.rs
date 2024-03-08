@@ -44,3 +44,45 @@ mod index_worktree {
         }
     }
 }
+
+mod is_dirty {
+    use crate::status::repo;
+
+    #[test]
+    fn various_changes_positive() -> crate::Result {
+        let repo = repo("modified-untracked-and-submodule-head-changed-and-modified")?;
+        assert!(repo.is_dirty()?, "The repository has various changes");
+        Ok(())
+    }
+
+    #[test]
+    fn submodule_changes_are_picked_up() -> crate::Result {
+        let repo = repo("submodule-head-changed")?;
+        assert!(repo.is_dirty()?, "head-changes are also discoverd");
+        Ok(())
+    }
+
+    #[test]
+    fn untracked_files_are_excluded() -> crate::Result {
+        let repo = repo("module1")?;
+        assert_eq!(
+            repo.status(gix::progress::Discard)?
+                .into_index_worktree_iter(Vec::new())?
+                .count(),
+            1,
+            "there is one untracked file"
+        );
+        assert!(
+            !repo.is_dirty()?,
+            "untracked files aren't taken into consideration, just like `git describe` which ignores them"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn no_changes() -> crate::Result {
+        let repo = repo("with-submodules")?;
+        assert!(!repo.is_dirty()?, "there are no changes");
+        Ok(())
+    }
+}
