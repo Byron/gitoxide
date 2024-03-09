@@ -2,8 +2,6 @@
 
 use std::path::{Path, PathBuf};
 
-use memmap2::Mmap;
-
 use crate::{decode, extension, File, State};
 
 mod error {
@@ -64,7 +62,7 @@ impl File {
             let mut file = std::fs::File::open(&path)?;
             // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
             #[allow(unsafe_code)]
-            let data = unsafe { Mmap::map(&file)? };
+            let data = unsafe { memmap2::MmapOptions::new().map_copy_read_only(&file)? };
 
             if !skip_hash {
                 // Note that even though it's trivial to offload this into a thread, which is worth it for all but the smallest

@@ -4,9 +4,6 @@ use std::{
     path::Path,
 };
 
-use bstr::ByteSlice;
-use memmap2::Mmap;
-
 use crate::{
     file::{
         ChunkId, BASE_GRAPHS_LIST_CHUNK_ID, COMMIT_DATA_CHUNK_ID, COMMIT_DATA_ENTRY_SIZE_SANS_HASH,
@@ -14,6 +11,7 @@ use crate::{
     },
     File,
 };
+use bstr::ByteSlice;
 
 /// The error used in [`File::at()`].
 #[derive(thiserror::Error, Debug)]
@@ -246,7 +244,7 @@ impl TryFrom<&Path> for File {
                 // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
                 #[allow(unsafe_code)]
                 unsafe {
-                    Mmap::map(&file)
+                    memmap2::MmapOptions::new().map_copy_read_only(&file)
                 }
             })
             .map_err(|e| Error::Io {

@@ -55,7 +55,7 @@ mod mmap {
         // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
         #[allow(unsafe_code)]
         unsafe {
-            memmap2::Mmap::map(&file)
+            memmap2::MmapOptions::new().map_copy_read_only(&file)
         }
     }
 }
