@@ -213,14 +213,16 @@ pub mod status {
         RefChange,
         /// See if there are worktree modifications compared to the index, but do not check for untracked files.
         Modifications,
+        /// Ignore all submodule changes.
+        None,
     }
 
     #[derive(Debug, clap::Parser)]
     #[command(about = "compute repository status similar to `git status`")]
     pub struct Platform {
-        /// Define how to display submodule status.
-        #[clap(long, default_value = "all")]
-        pub submodules: Submodules,
+        /// Define how to display the submodule status. Defaults to git configuration if unset.
+        #[clap(long)]
+        pub submodules: Option<Submodules>,
         /// Print additional statistics to help understanding performance.
         #[clap(long, short = 's')]
         pub statistics: bool,
