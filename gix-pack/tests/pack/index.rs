@@ -148,7 +148,7 @@ mod version {
                     desired_kind,
                     || {
                         let file = std::fs::File::open(fixture_path(data_path))?;
-                        let map = unsafe { memmap2::Mmap::map(&file)? };
+                        let map = unsafe { memmap2::MmapOptions::map_copy_read_only(&file)? };
                         Ok((slice_map, map))
                     },
                     pack_iter,

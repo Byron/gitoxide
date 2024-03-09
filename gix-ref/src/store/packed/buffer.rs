@@ -19,7 +19,6 @@ impl AsRef<[u8]> for packed::Backing {
 pub mod open {
     use std::path::PathBuf;
 
-    use memmap2::Mmap;
     use winnow::{prelude::*, stream::Offset};
 
     use crate::store_impl::packed;
@@ -81,7 +80,7 @@ pub mod open {
                     // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
                     #[allow(unsafe_code)]
                     unsafe {
-                        Mmap::map(&std::fs::File::open(&path)?)?
+                        memmap2::MmapOptions::new().map_copy_read_only(&std::fs::File::open(&path)?)?
                     },
                 )
             };
