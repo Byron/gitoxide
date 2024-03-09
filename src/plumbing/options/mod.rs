@@ -875,7 +875,11 @@ pub mod submodule {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// Print all direct submodules to standard output
-        List,
+        List {
+            /// Set the suffix to append if the repository is dirty (not counting untracked files).
+            #[clap(short = 'd', long)]
+            dirty_suffix: Option<Option<String>>,
+        },
     }
 }
 

@@ -223,16 +223,23 @@ pub fn main() -> Result<()> {
         ),
         Subcommands::Submodule(platform) => match platform
             .cmds
-            .unwrap_or(crate::plumbing::options::submodule::Subcommands::List)
+            .unwrap_or(crate::plumbing::options::submodule::Subcommands::List { dirty_suffix: None })
         {
-            crate::plumbing::options::submodule::Subcommands::List => prepare_and_run(
+            crate::plumbing::options::submodule::Subcommands::List { dirty_suffix } => prepare_and_run(
                 "submodule-list",
                 trace,
                 verbose,
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| core::repository::submodule::list(repository(Mode::Lenient)?, out, format),
+                move |_progress, out, _err| {
+                    core::repository::submodule::list(
+                        repository(Mode::Lenient)?,
+                        out,
+                        format,
+                        dirty_suffix.map(|suffix| suffix.unwrap_or_else(|| "dirty".to_string())),
+                    )
+                },
             ),
         },
         #[cfg(feature = "gitoxide-core-tools-archive")]
