@@ -52,7 +52,7 @@ pub mod describe {
         /// performed so that the `suffix` is appended to the output. If it is `None`, no check will be performed and
         /// there will be no suffix.
         /// Note that obtaining the dirty-state of the repository can be expensive.
-        #[cfg(all(feature = "status", feature = "parallel"))]
+        #[cfg(feature = "status")]
         pub fn format_with_dirty_suffix(
             self,
             dirty_suffix: impl Into<Option<String>>,
@@ -81,7 +81,7 @@ pub mod describe {
         #[error(transparent)]
         RefIterInit(#[from] crate::reference::iter::init::Error),
         #[error(transparent)]
-        #[cfg(all(feature = "status", feature = "parallel"))]
+        #[cfg(feature = "status")]
         DetermineIsDirty(#[from] crate::status::is_dirty::Error),
     }
 

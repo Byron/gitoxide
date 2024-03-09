@@ -6,9 +6,7 @@ pub struct Platform<'repo, Progress>
 where
     Progress: gix_features::progress::Progress + 'static,
 {
-    #[cfg_attr(not(feature = "parallel"), allow(dead_code))]
     repo: &'repo Repository,
-    #[cfg_attr(not(feature = "parallel"), allow(dead_code))]
     progress: Progress,
     index: Option<crate::worktree::IndexPersistedOrInMemory>,
     submodules: Submodule,
@@ -84,7 +82,6 @@ impl Repository {
 }
 
 ///
-#[cfg(feature = "parallel")]
 pub mod is_dirty {
     use crate::Repository;
 

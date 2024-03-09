@@ -68,9 +68,10 @@ mod open {
             ),
         ] {
             let repo = repo(name)?;
-            for (sm, (name, expected, _expected_is_dirty)) in repo.submodules()?.expect("modules present").zip(expected)
+            for (sm, (sm_name, expected, _expected_is_dirty)) in
+                repo.submodules()?.expect("modules present").zip(expected)
             {
-                assert_eq!(sm.name(), name);
+                assert_eq!(sm.name(), sm_name);
                 let state = sm.state()?;
                 assert_eq!(&state, expected);
 
@@ -92,9 +93,18 @@ mod open {
                         "there is a way to check for indicators that a submodule worktree isn't checked out though"
                     )
                 }
-                #[cfg(all(feature = "status", feature = "parallel"))]
+                #[cfg(feature = "status")]
                 for check_dirty in [false, true] {
-                    let status = sm.status(gix::submodule::config::Ignore::None, check_dirty)?;
+                    let status = match sm.status(gix::submodule::config::Ignore::None, check_dirty) {
+                        Ok(status) => status,
+                        Err(err) => {
+                            assert_eq!(
+                                name, "not-a-submodule",
+                                "{name}: BUG: only one submodule is expected to fail, got '{err:?}'"
+                            );
+                            continue;
+                        }
+                    };
                     assert_eq!(
                         &status.state, expected,
                         "no matter what status configuration, the state is always obtained"
@@ -115,7 +125,7 @@ mod open {
         Ok(())
     }
 
-    #[cfg(all(feature = "status", feature = "parallel"))]
+    #[cfg(feature = "status")]
     mod status {
         use crate::submodule::repo;
         use crate::util::hex_to_id;

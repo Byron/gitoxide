@@ -276,7 +276,7 @@ impl<'repo> Submodule<'repo> {
 }
 
 ///
-#[cfg(all(feature = "status", feature = "parallel"))]
+#[cfg(feature = "status")]
 pub mod status {
     use super::{head_id, index_id, open, Status};
     use crate::Submodule;
@@ -300,6 +300,8 @@ pub mod status {
         StatusPlatform(#[from] crate::config::boolean::Error),
         #[error(transparent)]
         Status(#[from] crate::status::index_worktree::iter::Error),
+        #[error(transparent)]
+        IndexWorktreeStatus(#[from] crate::status::index_worktree::Error),
     }
 
     impl<'repo> Submodule<'repo> {
@@ -379,19 +381,19 @@ pub mod status {
                 return Ok(status);
             }
 
-            status.changes = Some(
-                adjust_options(sm_repo.status(gix_features::progress::Discard)?)
-                    .index_worktree_options_mut(|opts| {
-                        assert!(opts.dirwalk_options.is_some(), "BUG: it's supposed to be the default");
-                        if ignore == config::Ignore::Untracked {
-                            opts.dirwalk_options = None;
-                        }
-                    })
-                    .into_index_worktree_iter(Vec::new())?
-                    .filter_map(Result::ok)
-                    .collect(),
-            );
-
+            let statusses = adjust_options(sm_repo.status(gix_features::progress::Discard)?)
+                .index_worktree_options_mut(|opts| {
+                    assert!(opts.dirwalk_options.is_some(), "BUG: it's supposed to be the default");
+                    if ignore == config::Ignore::Untracked {
+                        opts.dirwalk_options = None;
+                    }
+                })
+                .into_index_worktree_iter(Vec::new())?;
+            let mut changes = Vec::new();
+            for change in statusses {
+                changes.push(change?);
+            }
+            status.changes = Some(changes);
             Ok(status)
         }
     }
@@ -444,7 +446,7 @@ pub mod status {
         }
     }
 }
-#[cfg(all(feature = "status", feature = "parallel"))]
+#[cfg(feature = "status")]
 pub use status::types::Status;
 
 /// A summary of the state of all parts forming a submodule, which allows to answer various questions about it.

@@ -1,4 +1,4 @@
-use crate::bstr::BStr;
+use crate::bstr::{BStr, BString};
 use crate::{config, Repository};
 use gix_status::index_as_worktree::traits::{CompareBlobs, SubmoduleStatus};
 use std::sync::atomic::AtomicBool;
@@ -169,6 +169,100 @@ impl Repository {
     }
 }
 
+/// An implementation of a trait to use with [`Repository::index_worktree_status()`] to compute the submodule status
+/// using [Submodule::status()](crate::Submodule::status()).
+#[derive(Clone)]
+pub struct BuiltinSubmoduleStatus {
+    mode: crate::status::Submodule,
+    #[cfg(feature = "parallel")]
+    repo: crate::ThreadSafeRepository,
+    #[cfg(not(feature = "parallel"))]
+    git_dir: std::path::PathBuf,
+    submodule_paths: Vec<BString>,
+}
+
+///
+mod submodule_status {
+    use crate::bstr;
+    use crate::bstr::BStr;
+    use crate::status::index_worktree::BuiltinSubmoduleStatus;
+    use crate::status::Submodule;
+    use std::borrow::Cow;
+
+    impl BuiltinSubmoduleStatus {
+        /// Create a new instance from a `repo` and a `mode` to control how the submodule status will be obtained.
+        pub fn new(
+            repo: crate::ThreadSafeRepository,
+            mode: Submodule,
+        ) -> Result<Self, crate::submodule::modules::Error> {
+            let local_repo = repo.to_thread_local();
+            let submodule_paths = match local_repo.submodules()? {
+                Some(sm) => {
+                    let mut v: Vec<_> = sm
+                        .filter(|sm| sm.is_active().unwrap_or_default())
+                        .filter_map(|sm| sm.path().ok().map(Cow::into_owned))
+                        .collect();
+                    v.sort();
+                    v
+                }
+                None => Vec::new(),
+            };
+            Ok(Self {
+                mode,
+                #[cfg(feature = "parallel")]
+                repo,
+                #[cfg(not(feature = "parallel"))]
+                git_dir: local_repo.git_dir().to_owned(),
+                submodule_paths,
+            })
+        }
+    }
+
+    /// The error returned submodule status checks.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        SubmoduleStatus(#[from] crate::submodule::status::Error),
+        #[error(transparent)]
+        IgnoreConfig(#[from] crate::submodule::config::Error),
+    }
+
+    impl gix_status::index_as_worktree::traits::SubmoduleStatus for BuiltinSubmoduleStatus {
+        type Output = crate::submodule::Status;
+        type Error = Error;
+
+        fn status(&mut self, _entry: &gix_index::Entry, rela_path: &BStr) -> Result<Option<Self::Output>, Self::Error> {
+            use bstr::ByteSlice;
+            if self
+                .submodule_paths
+                .binary_search_by(|path| path.as_bstr().cmp(rela_path))
+                .is_err()
+            {
+                return Ok(None);
+            }
+            #[cfg(feature = "parallel")]
+            let repo = self.repo.to_thread_local();
+            #[cfg(not(feature = "parallel"))]
+            let Ok(repo) = crate::open(&self.git_dir) else {
+                return Ok(None);
+            };
+            let Ok(Some(mut submodules)) = repo.submodules() else {
+                return Ok(None);
+            };
+            let Some(sm) = submodules.find(|sm| sm.path().map_or(false, |path| path == rela_path)) else {
+                return Ok(None);
+            };
+            let (ignore, check_dirty) = match self.mode {
+                Submodule::AsConfigured { check_dirty } => (sm.ignore()?.unwrap_or_default(), check_dirty),
+                Submodule::Given { ignore, check_dirty } => (ignore, check_dirty),
+            };
+            let status = sm.status(ignore, check_dirty)?;
+            Ok(status.is_dirty().and_then(|dirty| dirty.then_some(status)))
+        }
+    }
+}
+
 /// An iterator for changes between the index and the worktree.
 ///
 /// Note that depending on the underlying configuration, there might be a significant delay until the first
@@ -182,14 +276,26 @@ impl Repository {
 ///
 /// Changes to the index are collected and it's possible to write the index back using [iter::Outcome::write_changes()].
 /// Note that these changes are not observable, they will always be kept.
-#[cfg(feature = "parallel")]
+///
+/// ### Parallel Operation
+///
+/// Note that without the `parallel` feature, the iterator becomes 'serial', which means all status will be computed in advance
+/// and it's non-interruptable, yielding worse performance for is-dirty checks for instance as interruptions won't happen.
+/// It's a crutch that is just there to make single-threaded applications possible at all, as it's not really an iterator
+/// anymore. If this matters, better run [Repository::index_worktree_status()] by hand as it provides all control one would need,
+/// just not as an iterator.
 pub struct Iter {
+    #[cfg(feature = "parallel")]
     #[allow(clippy::type_complexity)]
     rx_and_join: Option<(
         std::sync::mpsc::Receiver<iter::Item>,
         std::thread::JoinHandle<Result<iter::Outcome, crate::status::index_worktree::Error>>,
     )>,
+    #[cfg(feature = "parallel")]
     should_interrupt: std::sync::Arc<AtomicBool>,
+    /// Without parallelization, the iterator has to buffer all changes in advance.
+    #[cfg(not(feature = "parallel"))]
+    items: std::vec::IntoIter<iter::Item>,
     /// The outcome of the operation, only available once the operation has ended.
     out: Option<iter::Outcome>,
     /// The set of `(entry_index, change)` we extracted in order to potentially write back the index with the changes applied.
@@ -197,15 +303,13 @@ pub struct Iter {
 }
 
 ///
-#[cfg(feature = "parallel")]
 pub mod iter {
     use crate::bstr::BString;
     use crate::config::cache::util::ApplyLeniencyDefault;
-    use crate::status::index_worktree::iter;
+    use crate::status::index_worktree::{iter, BuiltinSubmoduleStatus};
     use crate::status::{index_worktree, Platform};
     use crate::worktree::IndexPersistedOrInMemory;
-    use crate::ThreadSafeRepository;
-    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::atomic::AtomicBool;
     use std::sync::Arc;
 
     pub(super) enum ApplyChange {
@@ -278,7 +382,7 @@ pub mod iter {
             /// The repository-relative path of the `source_entry`.
             source_rela_path: BString,
             /// The computed status of the `source_entry`.
-            source_status: gix_status::index_as_worktree::EntryStatus<(), SubmoduleStatus>,
+            source_status: gix_status::index_as_worktree::EntryStatus<(), crate::submodule::Status>,
         },
         /// This source originates in the directory tree and is always the source of copies.
         CopyFromDirectoryEntry {
@@ -434,7 +538,11 @@ pub mod iter {
         #[error(transparent)]
         Index(#[from] crate::worktree::open_index::Error),
         #[error("Failed to spawn producer thread")]
+        #[cfg(feature = "parallel")]
         SpawnThread(#[source] std::io::Error),
+        #[error(transparent)]
+        #[cfg(not(feature = "parallel"))]
+        IndexWorktreeStatus(#[from] crate::status::index_worktree::Error),
         #[error(transparent)]
         ConfigSkipHash(#[from] crate::config::boolean::Error),
         #[error(transparent)]
@@ -457,8 +565,6 @@ pub mod iter {
             };
 
             let should_interrupt = Arc::new(AtomicBool::default());
-            let (tx, rx) = std::sync::mpsc::channel();
-            let mut collect = Collect { tx };
             let skip_hash = self
                 .repo
                 .config
@@ -468,42 +574,86 @@ pub mod iter {
                 .transpose()
                 .with_lenient_default(self.repo.config.lenient_config)?
                 .unwrap_or_default();
-            let submodule = ComputeSubmoduleStatus::new(self.repo.clone().into_sync(), self.submodules)?;
-            let join = std::thread::Builder::new()
-                .name("gix::status::index_worktree::iter::producer".into())
-                .spawn({
-                    let repo = self.repo.clone().into_sync();
-                    let options = self.index_worktree_options;
-                    let should_interrupt = should_interrupt.clone();
-                    let mut progress = self.progress;
-                    move || -> Result<_, crate::status::index_worktree::Error> {
-                        let repo = repo.to_thread_local();
-                        let out = repo.index_worktree_status(
-                            &index,
-                            patterns,
-                            &mut collect,
-                            gix_status::index_as_worktree::traits::FastEq,
-                            submodule,
-                            &mut progress,
-                            &should_interrupt,
-                            options,
-                        )?;
-                        Ok(Outcome {
-                            index_worktree: out,
-                            index,
-                            changes: None,
-                            skip_hash,
-                        })
-                    }
-                })
-                .map_err(Error::SpawnThread)?;
+            let submodule = BuiltinSubmoduleStatus::new(self.repo.clone().into_sync(), self.submodules)?;
+            #[cfg(feature = "parallel")]
+            {
+                let (tx, rx) = std::sync::mpsc::channel();
+                let mut collect = Collect { tx };
+                let join = std::thread::Builder::new()
+                    .name("gix::status::index_worktree::iter::producer".into())
+                    .spawn({
+                        let repo = self.repo.clone().into_sync();
+                        let options = self.index_worktree_options;
+                        let should_interrupt = should_interrupt.clone();
+                        let mut progress = self.progress;
+                        move || -> Result<_, crate::status::index_worktree::Error> {
+                            let repo = repo.to_thread_local();
+                            let out = repo.index_worktree_status(
+                                &index,
+                                patterns,
+                                &mut collect,
+                                gix_status::index_as_worktree::traits::FastEq,
+                                submodule,
+                                &mut progress,
+                                &should_interrupt,
+                                options,
+                            )?;
+                            Ok(Outcome {
+                                index_worktree: out,
+                                index,
+                                changes: None,
+                                skip_hash,
+                            })
+                        }
+                    })
+                    .map_err(Error::SpawnThread)?;
 
-            Ok(super::Iter {
-                rx_and_join: Some((rx, join)),
-                should_interrupt,
-                changes: Vec::new(),
-                out: None,
-            })
+                Ok(super::Iter {
+                    rx_and_join: Some((rx, join)),
+                    should_interrupt,
+                    changes: Vec::new(),
+                    out: None,
+                })
+            }
+            #[cfg(not(feature = "parallel"))]
+            {
+                let mut collect = Collect { items: Vec::new() };
+
+                let repo = self.repo.clone().into_sync();
+                let options = self.index_worktree_options;
+                let mut progress = self.progress;
+                let repo = repo.to_thread_local();
+                let out = repo.index_worktree_status(
+                    &index,
+                    patterns,
+                    &mut collect,
+                    gix_status::index_as_worktree::traits::FastEq,
+                    submodule,
+                    &mut progress,
+                    &should_interrupt,
+                    options,
+                )?;
+                let mut out = Outcome {
+                    index_worktree: out,
+                    index,
+                    changes: None,
+                    skip_hash,
+                };
+                let mut iter = super::Iter {
+                    items: Vec::new().into_iter(),
+                    changes: Vec::new(),
+                    out: None,
+                };
+                let items = collect
+                    .items
+                    .into_iter()
+                    .filter_map(|item| iter.maybe_keep_index_change(item))
+                    .collect::<Vec<_>>();
+                out.changes = (!iter.changes.is_empty()).then(|| std::mem::take(&mut iter.changes));
+                iter.items = items.into_iter();
+                iter.out = Some(out);
+                Ok(iter)
+            }
         }
     }
 
@@ -511,6 +661,7 @@ pub mod iter {
         type Item = Result<Item, crate::status::index_worktree::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
+            #[cfg(feature = "parallel")]
             loop {
                 let (rx, _join) = self.rx_and_join.as_ref()?;
                 match rx.recv().ok() {
@@ -523,7 +674,8 @@ pub mod iter {
                     None => {
                         let (_rx, handle) = self.rx_and_join.take()?;
                         break match handle.join().expect("no panic") {
-                            Ok(out) => {
+                            Ok(mut out) => {
+                                out.changes = Some(std::mem::take(&mut self.changes));
                                 self.out = Some(out);
                                 None
                             }
@@ -532,6 +684,15 @@ pub mod iter {
                     }
                 }
             }
+            #[cfg(not(feature = "parallel"))]
+            self.items.next().map(Ok)
+        }
+    }
+
+    impl super::Iter {
+        /// Return the outcome of the iteration, or `None` if the iterator isn't fully consumed.
+        pub fn outcome_mut(&mut self) -> Option<&mut Outcome> {
+            self.out.as_mut()
         }
     }
 
@@ -562,107 +723,27 @@ pub mod iter {
         }
     }
 
+    #[cfg(feature = "parallel")]
     impl Drop for super::Iter {
         fn drop(&mut self) {
-            self.should_interrupt.store(true, Ordering::Relaxed);
+            self.should_interrupt.store(true, std::sync::atomic::Ordering::Relaxed);
             // Allow to temporarily 'leak' the producer to not block on drop, nobody
             // is interested in the result of the thread anymore.
             drop(self.rx_and_join.take());
         }
     }
 
-    #[derive(Clone)]
-    struct ComputeSubmoduleStatus {
-        mode: crate::status::Submodule,
-        repo: ThreadSafeRepository,
-        submodule_paths: Vec<BString>,
-    }
-
-    ///
-    mod submodule_status {
-        use crate::bstr;
-        use crate::bstr::BStr;
-        use crate::status::index_worktree::iter::{ComputeSubmoduleStatus, SubmoduleStatus};
-        use crate::status::Submodule;
-        use std::borrow::Cow;
-
-        impl ComputeSubmoduleStatus {
-            pub(super) fn new(
-                repo: crate::ThreadSafeRepository,
-                mode: crate::status::Submodule,
-            ) -> Result<Self, crate::submodule::modules::Error> {
-                let local_repo = repo.to_thread_local();
-                let submodule_paths = match local_repo.submodules()? {
-                    Some(sm) => {
-                        let mut v: Vec<_> = sm
-                            .filter(|sm| sm.is_active().unwrap_or_default())
-                            .filter_map(|sm| sm.path().ok().map(Cow::into_owned))
-                            .collect();
-                        v.sort();
-                        v
-                    }
-                    None => Vec::new(),
-                };
-                Ok(Self {
-                    mode,
-                    repo,
-                    submodule_paths,
-                })
-            }
-        }
-
-        /// The error returned submodule status checks.
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub(super) enum Error {
-            #[error(transparent)]
-            SubmoduleStatus(#[from] crate::submodule::status::Error),
-            #[error(transparent)]
-            IgnoreConfig(#[from] crate::submodule::config::Error),
-        }
-
-        impl gix_status::index_as_worktree::traits::SubmoduleStatus for ComputeSubmoduleStatus {
-            type Output = SubmoduleStatus;
-            type Error = Error;
-
-            fn status(
-                &mut self,
-                _entry: &gix_index::Entry,
-                rela_path: &BStr,
-            ) -> Result<Option<Self::Output>, Self::Error> {
-                use bstr::ByteSlice;
-                if self
-                    .submodule_paths
-                    .binary_search_by(|path| path.as_bstr().cmp(rela_path))
-                    .is_err()
-                {
-                    return Ok(None);
-                }
-                let repo = self.repo.to_thread_local();
-                let Ok(Some(mut submodules)) = repo.submodules() else {
-                    return Ok(None);
-                };
-                let Some(sm) = submodules.find(|sm| sm.path().map_or(false, |path| path == rela_path)) else {
-                    return Ok(None);
-                };
-                let (ignore, check_dirty) = match self.mode {
-                    Submodule::AsConfigured { check_dirty } => (sm.ignore()?.unwrap_or_default(), check_dirty),
-                    Submodule::Given { ignore, check_dirty } => (ignore, check_dirty),
-                };
-                let status = sm.status(ignore, check_dirty)?;
-                Ok(status.is_dirty().and_then(|dirty| dirty.then_some(status)))
-            }
-        }
-    }
-
     struct Collect {
+        #[cfg(feature = "parallel")]
         tx: std::sync::mpsc::Sender<Item>,
+        #[cfg(not(feature = "parallel"))]
+        items: Vec<Item>,
     }
 
     impl<'index> gix_status::index_as_worktree_with_renames::VisitEntry<'index> for Collect {
         type ContentChange = <gix_status::index_as_worktree::traits::FastEq as gix_status::index_as_worktree::traits::CompareBlobs>::Output;
         type SubmoduleStatus =
-            <ComputeSubmoduleStatus as gix_status::index_as_worktree::traits::SubmoduleStatus>::Output;
+            <BuiltinSubmoduleStatus as gix_status::index_as_worktree::traits::SubmoduleStatus>::Output;
 
         fn visit_entry(
             &mut self,
@@ -673,7 +754,10 @@ pub mod iter {
             >,
         ) {
             // NOTE: we assume that the receiver triggers interruption so the operation will stop if the receiver is down.
+            #[cfg(feature = "parallel")]
             self.tx.send(entry.into()).ok();
+            #[cfg(not(feature = "parallel"))]
+            self.items.push(entry.into());
         }
     }
 }

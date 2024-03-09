@@ -4,7 +4,7 @@ mod describe {
 
     use crate::named_repo;
 
-    #[cfg(all(feature = "status", feature = "parallel"))]
+    #[cfg(feature = "status")]
     mod with_dirty_suffix {
         use crate::util::named_subrepo_opts;
         use gix::commit::describe::SelectRef;

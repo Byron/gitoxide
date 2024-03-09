@@ -12,6 +12,15 @@ mod index_worktree {
         use crate::status::repo;
 
         #[test]
+        fn item_size() {
+            assert_eq!(
+                std::mem::size_of::<gix::status::index_worktree::iter::Item>(),
+                264,
+                "The size is pretty huge and goes down ideally"
+            );
+        }
+
+        #[test]
         fn submodule_modification() -> crate::Result {
             let repo = repo("modified-untracked-and-submodule-head-changed-and-modified")?;
             let mut status = repo
