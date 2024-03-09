@@ -627,6 +627,10 @@ pub mod commit {
             /// If there was no way to describe the commit, fallback to using the abbreviated input revision.
             always: bool,
 
+            /// Set the suffix to append if the repository is dirty (not counting untracked files).
+            #[clap(short = 'd', long)]
+            dirty_suffix: Option<Option<String>>,
+
             /// A specification of the revision to use, or the current `HEAD` if unset.
             rev_spec: Option<String>,
         },

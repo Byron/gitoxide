@@ -1036,6 +1036,7 @@ pub fn main() -> Result<()> {
                 statistics,
                 max_candidates,
                 rev_spec,
+                dirty_suffix,
             } => prepare_and_run(
                 "commit-describe",
                 trace,
@@ -1057,6 +1058,7 @@ pub fn main() -> Result<()> {
                             statistics,
                             max_candidates,
                             always,
+                            dirty_suffix: dirty_suffix.map(|suffix| suffix.unwrap_or_else(|| "dirty".to_string())),
                         },
                     )
                 },
