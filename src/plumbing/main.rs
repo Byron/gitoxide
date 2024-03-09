@@ -146,6 +146,24 @@ pub fn main() -> Result<()> {
     }
 
     match cmd {
+        Subcommands::IsClean | Subcommands::IsChanged => {
+            let mode = if matches!(cmd, Subcommands::IsClean) {
+                core::repository::dirty::Mode::IsClean
+            } else {
+                core::repository::dirty::Mode::IsDirty
+            };
+            prepare_and_run(
+                "clean",
+                trace,
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::repository::dirty::check(repository(Mode::Lenient)?, mode, out, format)
+                },
+            )
+        }
         #[cfg(feature = "gitoxide-core-tools-clean")]
         Subcommands::Clean(crate::plumbing::options::clean::Command {
             debug,

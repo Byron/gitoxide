@@ -130,6 +130,8 @@ pub enum Subcommands {
     /// Interact with submodules.
     #[clap(alias = "submodules")]
     Submodule(submodule::Platform),
+    IsClean,
+    IsChanged,
     /// Show which git configuration values are used or planned.
     ConfigTree,
     Status(status::Platform),
