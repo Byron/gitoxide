@@ -284,6 +284,10 @@ mod submodule_status {
 /// It's a crutch that is just there to make single-threaded applications possible at all, as it's not really an iterator
 /// anymore. If this matters, better run [Repository::index_worktree_status()] by hand as it provides all control one would need,
 /// just not as an iterator.
+///
+/// Also, even with `parallel` set, the first call to `next()` will block until there is an item available, without a chance
+/// to interrupt unless [`status::Platform::should_interrupt_*()`](crate::status::Platform::should_interrupt_shared()) was
+/// configured.
 pub struct Iter {
     #[cfg(feature = "parallel")]
     #[allow(clippy::type_complexity)]
@@ -292,7 +296,7 @@ pub struct Iter {
         std::thread::JoinHandle<Result<iter::Outcome, crate::status::index_worktree::Error>>,
     )>,
     #[cfg(feature = "parallel")]
-    should_interrupt: std::sync::Arc<AtomicBool>,
+    should_interrupt: crate::status::OwnedOrStaticAtomic,
     /// Without parallelization, the iterator has to buffer all changes in advance.
     #[cfg(not(feature = "parallel"))]
     items: std::vec::IntoIter<iter::Item>,
@@ -309,8 +313,6 @@ pub mod iter {
     use crate::status::index_worktree::{iter, BuiltinSubmoduleStatus};
     use crate::status::{index_worktree, Platform};
     use crate::worktree::IndexPersistedOrInMemory;
-    use std::sync::atomic::AtomicBool;
-    use std::sync::Arc;
 
     pub(super) enum ApplyChange {
         SetSizeToZero,
@@ -564,7 +566,6 @@ pub mod iter {
                 Some(index) => index,
             };
 
-            let should_interrupt = Arc::new(AtomicBool::default());
             let skip_hash = self
                 .repo
                 .config
@@ -574,6 +575,7 @@ pub mod iter {
                 .transpose()
                 .with_lenient_default(self.repo.config.lenient_config)?
                 .unwrap_or_default();
+            let should_interrupt = self.should_interrupt.clone().unwrap_or_default();
             let submodule = BuiltinSubmoduleStatus::new(self.repo.clone().into_sync(), self.submodules)?;
             #[cfg(feature = "parallel")]
             {
@@ -726,10 +728,28 @@ pub mod iter {
     #[cfg(feature = "parallel")]
     impl Drop for super::Iter {
         fn drop(&mut self) {
-            self.should_interrupt.store(true, std::sync::atomic::Ordering::Relaxed);
-            // Allow to temporarily 'leak' the producer to not block on drop, nobody
-            // is interested in the result of the thread anymore.
-            drop(self.rx_and_join.take());
+            use crate::status::OwnedOrStaticAtomic;
+            let Some((rx, handle)) = self.rx_and_join.take() else {
+                return;
+            };
+            let prev = self.should_interrupt.swap(true, std::sync::atomic::Ordering::Relaxed);
+            let undo = match &self.should_interrupt {
+                OwnedOrStaticAtomic::Shared(flag) => *flag,
+                OwnedOrStaticAtomic::Owned { flag, private: false } => flag.as_ref(),
+                OwnedOrStaticAtomic::Owned { private: true, .. } => {
+                    // Leak the handle to let it shut down in the background, so drop returns more quickly.
+                    drop((rx, handle));
+                    return;
+                }
+            };
+            // Wait until there is time to respond before we undo the change.
+            handle.join().ok();
+            undo.fetch_update(
+                std::sync::atomic::Ordering::SeqCst,
+                std::sync::atomic::Ordering::SeqCst,
+                |current| current.then_some(prev),
+            )
+            .ok();
         }
     }
 

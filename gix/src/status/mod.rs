@@ -1,5 +1,8 @@
 use crate::{config, Repository};
 pub use gix_status as plumbing;
+use std::ops::Deref;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 /// A structure to hold options configuring the status request, which can then be turned into an iterator.
 pub struct Platform<'repo, Progress>
@@ -11,6 +14,37 @@ where
     index: Option<crate::worktree::IndexPersistedOrInMemory>,
     submodules: Submodule,
     index_worktree_options: index_worktree::Options,
+    should_interrupt: Option<OwnedOrStaticAtomic>,
+}
+
+#[derive(Clone)]
+enum OwnedOrStaticAtomic {
+    Owned {
+        flag: Arc<AtomicBool>,
+        #[cfg_attr(not(feature = "parallel"), allow(dead_code))]
+        private: bool,
+    },
+    Shared(&'static AtomicBool),
+}
+
+impl Default for OwnedOrStaticAtomic {
+    fn default() -> Self {
+        OwnedOrStaticAtomic::Owned {
+            flag: Arc::new(AtomicBool::default()),
+            private: true,
+        }
+    }
+}
+
+impl Deref for OwnedOrStaticAtomic {
+    type Target = std::sync::atomic::AtomicBool;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            OwnedOrStaticAtomic::Owned { flag, .. } => flag,
+            OwnedOrStaticAtomic::Shared(flag) => flag,
+        }
+    }
 }
 
 /// How to obtain a submodule's status.
@@ -71,6 +105,7 @@ impl Repository {
             progress,
             index: None,
             submodules: Submodule::default(),
+            should_interrupt: None,
             index_worktree_options: index_worktree::Options {
                 sorting: None,
                 dirwalk_options: Some(self.dirwalk_options()?),
