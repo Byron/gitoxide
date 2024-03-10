@@ -1,5 +1,3 @@
-use std::convert::{TryFrom, TryInto};
-
 use gix_hash::ObjectId;
 use gix_object::bstr::BString;
 use winnow::{

@@ -1,5 +1,4 @@
 use std::{
-    convert::TryFrom,
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
 };

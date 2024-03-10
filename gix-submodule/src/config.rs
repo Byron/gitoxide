@@ -149,6 +149,7 @@ pub struct Error {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod branch {
     use bstr::BString;
 
@@ -164,6 +165,7 @@ pub mod branch {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod update {
     use bstr::BString;
 
@@ -179,6 +181,7 @@ pub mod update {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod url {
     use bstr::BString;
 
@@ -197,6 +200,7 @@ pub mod url {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod path {
     use bstr::BString;
 

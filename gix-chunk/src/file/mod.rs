@@ -1,9 +1,12 @@
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode;
 ///
+#[allow(clippy::empty_docs)]
 pub mod index;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod write;
 
 /// The offset to a chunk as seen relative to the beginning of the file containing it.

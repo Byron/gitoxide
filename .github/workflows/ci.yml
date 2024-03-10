@@ -47,18 +47,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Setup dependencies
-      run:
-        sudo apt-get install tree
-    - uses: extractions/setup-just@v1
-    - name: test
-      env:
-        CI: true
-        GITOXIDE_TEST_IGNORE_ARCHIVES: 1
-      run: just ci-test
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Setup dependencies
+        run:
+          sudo apt-get install tree
+      - uses: extractions/setup-just@v1
+      - name: test
+        env:
+          CI: true
+          GITOXIDE_TEST_IGNORE_ARCHIVES: 1
+        run: just ci-test
 
   test-fast:
     strategy:
@@ -163,7 +163,7 @@ jobs:
           components: clippy,rustfmt
       - uses: extractions/setup-just@v1
       - name: Run cargo clippy
-        run: just clippy -D warnings
+        run: just clippy -D warnings -A unknown-lints
       - name: Run cargo doc
         run: just doc
       - name: Run cargo fmt
@@ -189,10 +189,10 @@ jobs:
     continue-on-error: ${{ matrix.checks == 'advisories' }}
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: EmbarkStudios/cargo-deny-action@v1
-      with:
-        command: check ${{ matrix.checks }}
+      - uses: actions/checkout@v3
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check ${{ matrix.checks }}
   wasm:
     name: WebAssembly
     runs-on: ubuntu-latest

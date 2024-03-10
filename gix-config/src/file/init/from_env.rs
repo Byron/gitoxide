@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use bstr::{BStr, ByteSlice};
 
 use crate::{file, file::init, parse, parse::section, path::interpolate, File};

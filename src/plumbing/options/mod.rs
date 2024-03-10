@@ -657,6 +657,7 @@ pub mod credential {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod commitgraph {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -816,10 +817,10 @@ pub mod index {
     pub mod entries {
         #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
         pub enum Format {
-            ///
+            /// Show only minimal information, useful for first glances.
             #[default]
             Simple,
-            /// Use the `.tar` file format, uncompressed.
+            /// Show much more information that is still human-readable.
             Rich,
         }
     }
@@ -888,4 +889,5 @@ pub mod submodule {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod free;

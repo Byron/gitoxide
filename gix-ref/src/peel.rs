@@ -1,4 +1,5 @@
 ///
+#[allow(clippy::empty_docs)]
 pub mod to_id {
     use std::path::PathBuf;
 

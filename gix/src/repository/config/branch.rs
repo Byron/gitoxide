@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::BTreeSet, convert::TryInto};
+use std::{borrow::Cow, collections::BTreeSet};
 
 use gix_ref::{FullName, FullNameRef};
 

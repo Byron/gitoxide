@@ -141,6 +141,7 @@ impl File<'static> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod from_git_dir {
     use crate::file::init;
 

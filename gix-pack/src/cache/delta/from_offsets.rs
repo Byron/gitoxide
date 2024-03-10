@@ -1,5 +1,4 @@
 use std::{
-    convert::TryFrom,
     fs, io,
     io::{BufRead, Read, Seek, SeekFrom},
     sync::atomic::{AtomicBool, Ordering},

@@ -1,5 +1,5 @@
 mod refedit_ext {
-    use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
+    use std::{cell::RefCell, collections::BTreeMap};
 
     use gix_object::bstr::{BString, ByteSlice};
     use gix_ref::{
@@ -96,7 +96,7 @@ mod refedit_ext {
     }
 
     mod splitting {
-        use std::{cell::Cell, convert::TryInto};
+        use std::cell::Cell;
 
         use gix_ref::{
             transaction::{Change, LogChange, PreviousValue, RefEdit, RefEditsExt, RefLog},

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::TryFrom, ffi::OsString, fmt::Display};
+use std::{borrow::Cow, ffi::OsString, fmt::Display};
 
 use bstr::{BStr, BString, ByteSlice};
 

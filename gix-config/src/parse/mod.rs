@@ -23,9 +23,11 @@ pub use events_type::{Events, FrontMatterEvents};
 mod comment;
 mod error;
 ///
+#[allow(clippy::empty_docs)]
 pub mod section;
 
 ///
+#[allow(clippy::empty_docs)]
 mod key;
 pub use key::{parse_unvalidated as key, Key};
 

@@ -1,6 +1,5 @@
-use std::convert::TryInto;
-
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode {
     /// The error returned by [`decode()`][super::decode()].
     #[derive(Debug, thiserror::Error)]
@@ -52,8 +51,6 @@ pub fn decode(data: &[u8]) -> Result<(Vec, &[u8]), decode::Error> {
 }
 
 mod access {
-    use std::convert::{TryFrom, TryInto};
-
     use super::Vec;
 
     impl Vec {

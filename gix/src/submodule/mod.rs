@@ -276,6 +276,7 @@ impl<'repo> Submodule<'repo> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(feature = "status")]
 pub mod status {
     use super::{head_id, index_id, open, Status};

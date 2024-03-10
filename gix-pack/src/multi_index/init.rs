@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, path::Path};
+use std::path::Path;
 
 use crate::multi_index::{chunk, File, Version};
 

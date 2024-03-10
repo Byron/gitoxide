@@ -20,6 +20,7 @@ pub mod diff {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod init {
         /// The error returned by [`Platform::from_tree_change()`][super::Platform::from_tree_change()].
         pub type Error = gix_diff::blob::platform::set_resource::Error;
@@ -115,6 +116,7 @@ pub mod diff {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod lines {
         use crate::bstr::BStr;
 

@@ -34,6 +34,7 @@ pub enum ProgramKind {
 mod program_kind;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod invocation {
     use std::ffi::OsString;
 
@@ -54,6 +55,7 @@ pub mod invocation {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod connect {
     use std::ffi::{OsStr, OsString};
 

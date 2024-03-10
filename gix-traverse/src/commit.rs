@@ -87,6 +87,7 @@ pub struct Info {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod ancestors {
     use std::{
         borrow::{Borrow, BorrowMut},

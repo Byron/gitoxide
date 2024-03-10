@@ -1,4 +1,5 @@
 //!
+#![allow(clippy::empty_docs)]
 
 /// The kind of repository.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -73,6 +74,7 @@ mod thread_safe;
 mod worktree;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod branch_remote_ref_name {
 
     /// The error returned by [Repository::branch_remote_ref_name()](crate::Repository::branch_remote_ref_name()).
@@ -89,6 +91,7 @@ pub mod branch_remote_ref_name {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod branch_remote_tracking_ref_name {
 
     /// The error returned by [Repository::branch_remote_tracking_ref_name()](crate::Repository::branch_remote_tracking_ref_name()).

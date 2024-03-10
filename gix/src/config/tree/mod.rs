@@ -109,8 +109,10 @@ pub use sections::{diff, Diff};
 pub mod keys;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod key {
     ///
+    #[allow(clippy::empty_docs)]
     pub mod validate {
         /// The error returned by [`Key::validate()`][crate::config::tree::Key::validate()].
         #[derive(Debug, thiserror::Error)]
@@ -122,6 +124,7 @@ pub mod key {
         }
     }
     ///
+    #[allow(clippy::empty_docs)]
     pub mod validate_assignment {
         /// The error returned by [`Key::validated_assignment`*()][crate::config::tree::Key::validated_assignment_fmt()].
         #[derive(Debug, thiserror::Error)]

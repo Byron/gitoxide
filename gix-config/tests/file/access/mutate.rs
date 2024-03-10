@@ -1,6 +1,4 @@
 mod remove_section {
-    use std::convert::TryFrom;
-
     #[test]
     fn removal_of_all_sections_programmatically_with_sections_and_ids_by_name() {
         let mut file = gix_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
@@ -47,7 +45,7 @@ mod remove_section {
     }
 }
 mod rename_section {
-    use std::{borrow::Cow, convert::TryFrom};
+    use std::borrow::Cow;
 
     use gix_config::{file::rename_section, parse::section};
 

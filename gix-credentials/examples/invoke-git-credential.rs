@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 /// Invokes `git credential` with the passed url as argument and prints obtained credentials.
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out = gix_credentials::builtin(gix_credentials::helper::Action::get_for_url(

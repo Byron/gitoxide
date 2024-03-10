@@ -16,6 +16,7 @@ pub fn setup(mode: handler::Mode) {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod handler {
     use std::sync::atomic::AtomicUsize;
 

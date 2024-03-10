@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use bstr::{BStr, BString};
 
 use crate::{protocol, protocol::Context, Program};

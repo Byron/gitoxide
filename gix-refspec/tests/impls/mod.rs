@@ -1,7 +1,4 @@
-use std::{
-    collections::{BTreeSet, HashSet},
-    iter::FromIterator,
-};
+use std::collections::{BTreeSet, HashSet};
 
 use gix_refspec::{parse::Operation, RefSpec};
 

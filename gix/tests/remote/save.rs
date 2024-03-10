@@ -45,8 +45,6 @@ mod save_to {
 }
 
 mod save_as_to {
-    use std::convert::TryInto;
-
     use crate::{basic_repo, remote::save::uniformize};
 
     #[test]

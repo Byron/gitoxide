@@ -15,8 +15,10 @@
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod cache;
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode;
 pub mod fs;
 pub mod hash;
@@ -30,10 +32,12 @@ pub mod threading;
 pub use gix_trace as trace;
 
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(feature = "zlib")]
 pub mod zlib;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod iter {
     /// An iterator over chunks of input, producing `Vec<Item>` with a size of `size`, with the last chunk being the remainder and thus
     /// potentially smaller than `size`.

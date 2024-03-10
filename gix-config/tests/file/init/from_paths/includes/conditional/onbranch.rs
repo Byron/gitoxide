@@ -1,7 +1,4 @@
-use std::{
-    convert::{TryFrom, TryInto},
-    fs,
-};
+use std::fs;
 
 use bstr::{BString, ByteSlice};
 use gix_config::file::{

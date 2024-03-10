@@ -11,9 +11,11 @@ pub const DOT_GIT_DIR: &str = ".git";
 pub const MODULES: &str = "modules";
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod repository;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod is_git {
     use std::path::PathBuf;
 
@@ -46,11 +48,14 @@ mod is;
 pub use is::{bare as is_bare, git as is_git, submodule_git_dir as is_submodule_git_dir};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod upwards;
 pub use upwards::function::{discover as upwards, discover_opts as upwards_opts};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod path;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod parse;

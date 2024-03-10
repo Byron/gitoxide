@@ -8,6 +8,7 @@ use gix_features::progress::{Count, DynNestedProgress, Progress};
 use crate::{loose::Store, Write};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod integrity {
     /// The error returned by [`verify_integrity()`][super::Store::verify_integrity()].
     #[derive(Debug, thiserror::Error)]

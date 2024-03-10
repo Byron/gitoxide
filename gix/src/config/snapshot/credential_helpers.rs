@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::TryFrom};
+use std::borrow::Cow;
 
 pub use error::Error;
 

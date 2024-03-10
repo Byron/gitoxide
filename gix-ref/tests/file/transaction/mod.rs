@@ -1,6 +1,4 @@
 pub(crate) mod prepare_and_commit {
-    use std::convert::TryInto;
-
     use gix_date::{time::Sign, Time};
     use gix_hash::ObjectId;
     use gix_object::bstr::BString;

@@ -1,4 +1,4 @@
-use std::{convert::TryInto, io::Read, path::PathBuf};
+use std::{io::Read, path::PathBuf};
 
 use crate::{
     store_impl::{file, file::log},
@@ -84,6 +84,7 @@ impl file::Store {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod create_or_update {
     use std::{
         borrow::Cow,

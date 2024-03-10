@@ -195,8 +195,6 @@ mod read_only {
 }
 
 mod writable {
-    use std::convert::TryInto;
-
     use gix_lock::acquire::Fail;
     use gix_ref::{
         file::{transaction::PackedRefs, Store},

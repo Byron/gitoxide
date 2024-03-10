@@ -1,6 +1,4 @@
 mod invoke {
-    use std::convert::TryInto;
-
     use bstr::{ByteSlice, ByteVec};
     use gix_credentials::{
         helper::{Action, Cascade},

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::TryInto};
+use std::borrow::Cow;
 
 use gix_ref::{Category, FullNameRef, PartialNameRef};
 

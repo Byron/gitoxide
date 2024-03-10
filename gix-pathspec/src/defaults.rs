@@ -3,6 +3,7 @@ use std::ffi::OsString;
 use crate::{Defaults, MagicSignature, SearchMode};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod from_environment {
     /// The error returned by [Defaults::from_environment()](super::Defaults::from_environment()).
     #[derive(Debug, thiserror::Error)]

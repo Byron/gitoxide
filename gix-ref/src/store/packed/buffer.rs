@@ -16,6 +16,7 @@ impl AsRef<[u8]> for packed::Backing {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod open {
     use std::path::PathBuf;
 

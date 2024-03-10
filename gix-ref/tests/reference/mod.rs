@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use gix_ref::{FullName, Target};
 
 #[test]

@@ -174,5 +174,6 @@ where
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod reduce;
 pub use reduce::Reduce;

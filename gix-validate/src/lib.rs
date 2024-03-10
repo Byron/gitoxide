@@ -3,10 +3,13 @@
 #![forbid(unsafe_code)]
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod reference;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod tag;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod submodule;

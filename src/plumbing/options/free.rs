@@ -19,6 +19,7 @@ pub enum Subcommands {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod commitgraph {
     use std::path::PathBuf;
 
@@ -99,6 +100,7 @@ pub mod index {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod pack {
     use std::{ffi::OsString, path::PathBuf};
 
@@ -287,6 +289,7 @@ pub mod pack {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod multi_index {
         use std::path::PathBuf;
 
@@ -321,6 +324,7 @@ pub mod pack {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod index {
         use std::path::PathBuf;
 
@@ -458,6 +462,7 @@ pub mod pack {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod mailmap {
     use std::path::PathBuf;
 

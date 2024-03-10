@@ -41,6 +41,7 @@ pub struct Recorder {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod visit {
     /// What to do after an entry was [recorded][super::Visit::visit_tree()].
     #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
@@ -62,8 +63,10 @@ pub mod visit {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod recorder;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod breadthfirst;
 pub use breadthfirst::impl_::traverse as breadthfirst;

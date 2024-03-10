@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use gix_hash::ObjectId;
 use gix_lock::acquire::Fail;
 use gix_object::bstr::{BString, ByteSlice};

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::TryInto, io::Write};
+use std::{borrow::Cow, io::Write};
 
 use gix_ref::{
     transaction::{LogChange, RefLog},

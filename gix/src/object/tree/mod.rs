@@ -174,9 +174,11 @@ impl<'repo> Tree<'repo> {
 pub mod diff;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod traverse;
 
 ///
+#[allow(clippy::empty_docs)]
 mod iter;
 pub use iter::EntryRef;
 

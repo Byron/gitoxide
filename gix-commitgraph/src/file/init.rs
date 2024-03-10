@@ -1,8 +1,5 @@
+use std::path::Path;
 use std::path::PathBuf;
-use std::{
-    convert::{TryFrom, TryInto},
-    path::Path,
-};
 
 use bstr::ByteSlice;
 use memmap2::Mmap;

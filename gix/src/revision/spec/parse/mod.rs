@@ -11,6 +11,7 @@ use crate::bstr::BString;
 pub use types::{Error, ObjectKindHint, Options, RefsHint};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod single {
     use crate::bstr::BString;
 
@@ -26,6 +27,7 @@ pub mod single {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod error;
 
 impl<'repo> Spec<'repo> {

@@ -35,10 +35,13 @@ pub use store_impl::{file, packed};
 
 mod fullname;
 ///
+#[allow(clippy::empty_docs)]
 pub mod name;
 ///
+#[allow(clippy::empty_docs)]
 pub mod namespace;
 ///
+#[allow(clippy::empty_docs)]
 pub mod transaction;
 
 mod parse;
@@ -49,12 +52,15 @@ pub use raw::Reference;
 mod target;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod log;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod peel;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod store {
     /// The way a file store handles the reflog
     #[derive(Default, Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]

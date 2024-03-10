@@ -1,4 +1,4 @@
-use std::{convert::TryInto, io::Write};
+use std::io::Write;
 
 use crate::{entry, extension, write::util::CountBytes, State, Version};
 
@@ -183,8 +183,6 @@ fn entries<T: std::io::Write>(out: &mut CountBytes<T>, state: &State, header_siz
 }
 
 mod util {
-    use std::convert::TryFrom;
-
     pub struct CountBytes<T> {
         pub count: u32,
         pub inner: T,

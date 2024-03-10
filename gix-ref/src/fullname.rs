@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, convert::TryFrom, path::Path};
+use std::{borrow::Borrow, path::Path};
 
 use gix_object::bstr::{BStr, BString, ByteSlice};
 

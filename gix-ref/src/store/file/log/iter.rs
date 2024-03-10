@@ -8,6 +8,7 @@ use crate::{
 };
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode {
     use crate::store_impl::file::log;
 
@@ -143,6 +144,7 @@ where
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod reverse {
 
     use super::decode;

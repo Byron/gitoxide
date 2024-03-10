@@ -44,6 +44,7 @@ mod objects_impl;
 pub use objects_impl::{objects, objects_unthreaded};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod objects {
     pub use super::objects_impl::{Error, ObjectExpansion, Options, Outcome};
 }

@@ -1,5 +1,3 @@
-use std::convert::{TryFrom, TryInto};
-
 use gix_ref::packed;
 use gix_testtools::fixture_path_standalone;
 

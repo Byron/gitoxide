@@ -49,9 +49,8 @@ mod write {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode {
-    use std::convert::TryFrom;
-
     use bstr::{BString, ByteSlice};
 
     use crate::protocol::{context, context::serde::validate, Context};

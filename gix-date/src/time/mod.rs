@@ -29,6 +29,7 @@ pub enum Format<'a> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod format;
 mod init;
 mod write;

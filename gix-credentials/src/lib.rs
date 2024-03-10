@@ -21,12 +21,15 @@ pub struct Program {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod helper;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod program;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod protocol;
 
 /// Call the `git credential` helper program performing the given `action`, which reads all context from the git configuration

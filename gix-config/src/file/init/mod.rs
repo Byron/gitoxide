@@ -10,8 +10,10 @@ pub use types::{Error, Options};
 
 mod comfort;
 ///
+#[allow(clippy::empty_docs)]
 pub mod from_env;
 ///
+#[allow(clippy::empty_docs)]
 pub mod from_paths;
 
 impl<'a> File<'a> {

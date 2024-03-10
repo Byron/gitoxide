@@ -5,6 +5,7 @@ use gix_object::Exists;
 use crate::store::{load_index, Handle};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod lookup {
     use crate::loose;
 
@@ -24,6 +25,7 @@ pub mod lookup {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod disambiguate {
     /// A potentially ambiguous prefix for use with `Handle::disambiguate_prefix()`.
     #[derive(Debug, Copy, Clone)]

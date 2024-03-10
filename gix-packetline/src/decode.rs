@@ -21,6 +21,7 @@ pub enum Error {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod band {
     /// The error used in [`PacketLineRef::decode_band()`][super::PacketLineRef::decode_band()].
     #[derive(Debug, thiserror::Error)]

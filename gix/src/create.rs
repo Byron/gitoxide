@@ -1,5 +1,4 @@
 use std::{
-    convert::TryFrom,
     fs::{self, OpenOptions},
     io::Write,
     path::{Path, PathBuf},
@@ -89,6 +88,7 @@ fn write_file(data: &[u8], path: &Path) -> Result<(), Error> {
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .append(false)
         .open(path)
         .map_err(|e| Error::IoOpen {

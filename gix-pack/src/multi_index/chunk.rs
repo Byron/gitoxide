@@ -8,6 +8,7 @@ pub mod index_names {
     pub const ID: gix_chunk::Id = *b"PNAM";
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod decode {
         use gix_object::bstr::BString;
 
@@ -105,8 +106,6 @@ pub mod index_names {
 
 /// Information for the chunk with the fanout table
 pub mod fanout {
-    use std::convert::TryInto;
-
     use crate::multi_index;
 
     /// The size of the fanout table
@@ -173,7 +172,7 @@ pub mod lookup {
 
 /// Information about the offsets table.
 pub mod offsets {
-    use std::{convert::TryInto, ops::Range};
+    use std::ops::Range;
 
     use crate::multi_index;
 

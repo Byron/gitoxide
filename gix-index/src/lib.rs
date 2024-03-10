@@ -13,12 +13,15 @@ use filetime::FileTime;
 pub use gix_hash as hash;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod file;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod extension;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod entry;
 
 mod access;
@@ -26,12 +29,15 @@ mod access;
 mod init;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod verify;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod write;
 
 pub mod fs;
@@ -171,8 +177,6 @@ mod impls {
 }
 
 pub(crate) mod util {
-    use std::convert::TryInto;
-
     #[inline]
     pub fn var_int(data: &[u8]) -> Option<(u64, &[u8])> {
         let (num, consumed) = gix_features::decode::leb64_from_read(data).ok()?;

@@ -1,6 +1,7 @@
 use bstr::{BStr, ByteSlice};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod name {
     /// The error used in [name()](super::name()).
     #[derive(Debug, thiserror::Error)]

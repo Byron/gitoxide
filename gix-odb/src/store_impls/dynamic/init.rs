@@ -1,4 +1,4 @@
-use std::{iter::FromIterator, path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc};
 
 use arc_swap::ArcSwap;
 

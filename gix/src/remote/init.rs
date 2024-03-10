@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use gix_refspec::RefSpec;
 
 use crate::{config, remote, Remote, Repository};

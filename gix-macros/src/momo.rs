@@ -98,18 +98,18 @@ pub(crate) fn inner(code: proc_macro2::TokenStream) -> proc_macro2::TokenStream 
 
 #[derive(Copy, Clone)]
 // All conversions we support. Check references to this type for an idea how to add more.
-enum Conversion<'a> {
-    Into(&'a Type),
-    AsRef(&'a Type),
-    AsMut(&'a Type),
+enum Conversion {
+    Into,
+    AsRef,
+    AsMut,
 }
 
-impl<'a> Conversion<'a> {
+impl Conversion {
     fn conversion_expr(&self, i: &Ident) -> Expr {
         match *self {
-            Conversion::Into(_) => parse_quote!(#i.into()),
-            Conversion::AsRef(_) => parse_quote!(#i.as_ref()),
-            Conversion::AsMut(_) => parse_quote!(#i.as_mut()),
+            Conversion::Into => parse_quote!(#i.into()),
+            Conversion::AsRef => parse_quote!(#i.as_ref()),
+            Conversion::AsMut => parse_quote!(#i.as_mut()),
         }
     }
 }
@@ -128,13 +128,13 @@ fn parse_bounds(bounds: &Punctuated<TypeParamBound, Token![+]>) -> Option<Conver
     if let TypeParamBound::Trait(ref tb) = bounds.first().unwrap() {
         if let Some(seg) = tb.path.segments.iter().last() {
             if let PathArguments::AngleBracketed(ref gen_args) = seg.arguments {
-                if let GenericArgument::Type(ref arg_ty) = gen_args.args.first().unwrap() {
+                if let GenericArgument::Type(_) = gen_args.args.first().unwrap() {
                     if seg.ident == "Into" {
-                        return Some(Conversion::Into(arg_ty));
+                        return Some(Conversion::Into);
                     } else if seg.ident == "AsRef" {
-                        return Some(Conversion::AsRef(arg_ty));
+                        return Some(Conversion::AsRef);
                     } else if seg.ident == "AsMut" {
-                        return Some(Conversion::AsMut(arg_ty));
+                        return Some(Conversion::AsMut);
                     }
                 }
             }
@@ -144,7 +144,7 @@ fn parse_bounds(bounds: &Punctuated<TypeParamBound, Token![+]>) -> Option<Conver
 }
 
 // create a map from generic type to Conversion
-fn parse_generics(decl: &Signature) -> HashMap<Ident, Conversion<'_>> {
+fn parse_generics(decl: &Signature) -> HashMap<Ident, Conversion> {
     let mut ty_conversions = HashMap::new();
     for gp in decl.generics.params.iter() {
         if let GenericParam::Type(ref tp) = gp {
@@ -167,9 +167,9 @@ fn parse_generics(decl: &Signature) -> HashMap<Ident, Conversion<'_>> {
     ty_conversions
 }
 
-fn convert<'a>(
-    inputs: &'a Punctuated<FnArg, Token![,]>,
-    ty_conversions: &HashMap<Ident, Conversion<'a>>,
+fn convert(
+    inputs: &Punctuated<FnArg, Token![,]>,
+    ty_conversions: &HashMap<Ident, Conversion>,
 ) -> (bool, Punctuated<FnArg, Token![,]>, Punctuated<Expr, Token![,]>, bool) {
     let mut has_conversion_in_effect = false;
     let mut argtypes = Punctuated::new();
@@ -212,7 +212,7 @@ fn convert<'a>(
                     if let Some(conv) = parse_bounds(bounds) {
                         has_conversion_in_effect = true;
                         argexprs.push(conv.conversion_expr(ident));
-                        if let Conversion::AsMut(_) = conv {
+                        if let Conversion::AsMut = conv {
                             pat_ident.mutability = Some(Default::default());
                         }
                     } else {
@@ -223,7 +223,7 @@ fn convert<'a>(
                     if let Some(conv) = parse_bounded_type(&pat_type.ty).and_then(|ident| ty_conversions.get(&ident)) {
                         has_conversion_in_effect = true;
                         argexprs.push(conv.conversion_expr(ident));
-                        if let Conversion::AsMut(_) = conv {
+                        if let Conversion::AsMut = conv {
                             pat_ident.mutability = Some(Default::default());
                         }
                     } else {

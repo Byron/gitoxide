@@ -24,6 +24,7 @@ pub struct Change<'a, 'old, 'new> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod change;
 
 /// Diffing
@@ -86,4 +87,5 @@ impl<'a, 'repo> Platform<'a, 'repo> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod for_each;

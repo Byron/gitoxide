@@ -9,6 +9,7 @@ mod snapshot;
 pub use snapshot::credential_helpers;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod overrides;
 
 pub mod tree;
@@ -48,6 +49,7 @@ pub(crate) mod section {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod set_value {
     /// The error produced when calling [`SnapshotMut::set(_subsection)?_value()`][crate::config::SnapshotMut::set_value()]
     #[derive(Debug, thiserror::Error)]
@@ -107,8 +109,10 @@ pub enum Error {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod diff {
     ///
+    #[allow(clippy::empty_docs)]
     pub mod algorithm {
         use crate::bstr::BString;
 
@@ -124,6 +128,7 @@ pub mod diff {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod pipeline_options {
         /// The error produced when obtaining options needed to fill in [gix_diff::blob::pipeline::Options].
         #[derive(Debug, thiserror::Error)]
@@ -137,6 +142,7 @@ pub mod diff {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod drivers {
         use crate::bstr::BString;
 
@@ -155,6 +161,7 @@ pub mod diff {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod stat_options {
     /// The error produced when collecting stat information, and returned by [Repository::stat_options()](crate::Repository::stat_options()).
     #[derive(Debug, thiserror::Error)]
@@ -207,6 +214,7 @@ pub mod command_context {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod exclude_stack {
     use std::path::PathBuf;
 
@@ -224,6 +232,7 @@ pub mod exclude_stack {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod attribute_stack {
     /// The error produced when setting up the attribute stack to query `gitattributes`.
     #[derive(Debug, thiserror::Error)]
@@ -237,8 +246,10 @@ pub mod attribute_stack {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod protocol {
     ///
+    #[allow(clippy::empty_docs)]
     pub mod allow {
         use crate::bstr::BString;
 
@@ -254,6 +265,7 @@ pub mod protocol {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod ssh_connect_options {
     /// The error produced when obtaining ssh connection configuration.
     #[derive(Debug, thiserror::Error)]
@@ -263,6 +275,7 @@ pub mod ssh_connect_options {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod key {
     use crate::bstr::BString;
 
@@ -363,6 +376,7 @@ pub mod key {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod encoding {
     use crate::bstr::BString;
 
@@ -380,8 +394,10 @@ pub mod encoding {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod checkout {
     ///
+    #[allow(clippy::empty_docs)]
     pub mod workers {
         use crate::config;
 
@@ -391,6 +407,7 @@ pub mod checkout {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod abbrev {
     use crate::bstr::BString;
 
@@ -406,8 +423,10 @@ pub mod abbrev {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod remote {
     ///
+    #[allow(clippy::empty_docs)]
     pub mod symbolic_name {
         /// The error produced when failing to produce a symbolic remote name from configuration.
         pub type Error = super::super::key::Error<crate::remote::name::Error, 'v', 'i'>;
@@ -415,66 +434,77 @@ pub mod remote {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod time {
     /// The error produced when failing to parse time from configuration.
     pub type Error = super::key::Error<gix_date::parse::Error, 't', 'i'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod lock_timeout {
     /// The error produced when failing to parse timeout for locks.
     pub type Error = super::key::Error<gix_config::value::Error, 'i', 'i'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod duration {
     /// The error produced when failing to parse durations (in milliseconds).
     pub type Error = super::key::Error<gix_config::value::Error, 'd', 'i'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod boolean {
     /// The error produced when failing to parse time from configuration.
     pub type Error = super::key::Error<gix_config::value::Error, 'b', 'i'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod unsigned_integer {
     /// The error produced when failing to parse a signed integer from configuration.
     pub type Error = super::key::Error<gix_config::value::Error, 'k', 'u'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod url {
     /// The error produced when failing to parse a url from the configuration.
     pub type Error = super::key::Error<gix_url::parse::Error, 'u', 'p'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod string {
     /// The error produced when failing to interpret configuration as UTF-8 encoded string.
     pub type Error = super::key::Error<crate::bstr::Utf8Error, 'w', 'd'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod refspec {
     /// The error produced when failing to parse a refspec from the configuration.
     pub type Error = super::key::Error<gix_refspec::parse::Error, 'r', 'p'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod refs_namespace {
     /// The error produced when failing to parse a refspec from the configuration.
     pub type Error = super::key::Error<gix_validate::reference::name::Error, 'v', 'i'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod ssl_version {
     /// The error produced when failing to parse a refspec from the configuration.
     pub type Error = super::key::Error<std::convert::Infallible, 's', 'i'>;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod transport {
     use std::borrow::Cow;
 
@@ -514,6 +544,7 @@ pub mod transport {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod http {
         use std::borrow::Cow;
 

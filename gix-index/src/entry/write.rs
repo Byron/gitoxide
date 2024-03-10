@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::{entry, Entry, State};
 
 impl Entry {

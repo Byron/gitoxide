@@ -86,7 +86,7 @@ pub(crate) mod function {
 }
 
 mod relative {
-    use std::{convert::TryInto, str::FromStr, time::SystemTime};
+    use std::{str::FromStr, time::SystemTime};
 
     use time::{Duration, OffsetDateTime};
 

@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use crate::extension::{tree, Tree};
 
 impl Tree {

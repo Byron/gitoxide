@@ -11,6 +11,7 @@ mod types;
 pub use types::{Error, Mode, Options};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod unix;
 #[cfg(unix)]
 use unix::imp;

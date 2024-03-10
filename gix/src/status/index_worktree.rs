@@ -182,6 +182,7 @@ pub struct BuiltinSubmoduleStatus {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 mod submodule_status {
     use crate::bstr;
     use crate::bstr::BStr;
@@ -307,6 +308,7 @@ pub struct Iter {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod iter {
     use crate::bstr::BString;
     use crate::config::cache::util::ApplyLeniencyDefault;

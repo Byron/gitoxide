@@ -299,7 +299,7 @@ impl ThreadSafeRepository {
         }
 
         refs.write_reflog = config::cache::util::reflog_or_default(config.reflog, worktree_dir.is_some());
-        refs.namespace = config.refs_namespace.clone();
+        refs.namespace.clone_from(&config.refs_namespace);
         let replacements = replacement_objects_refs_prefix(&config.resolved, lenient_config, filter_config_section)?
             .and_then(|prefix| {
                 let _span = gix_trace::detail!("find replacement objects");

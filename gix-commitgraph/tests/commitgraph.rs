@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    convert::{TryFrom, TryInto},
     hash::BuildHasher,
     io::{BufRead, Cursor},
     path::Path,

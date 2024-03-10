@@ -26,7 +26,7 @@ impl Outcome {
             for (order, macro_attributes) in collection.iter().filter_map(|(_, meta)| {
                 (!meta.macro_attributes.is_empty()).then_some((meta.id.0, &meta.macro_attributes))
             }) {
-                self.matches_by_id[order].macro_attributes = macro_attributes.clone()
+                self.matches_by_id[order].macro_attributes.clone_from(macro_attributes)
             }
 
             for (name, id) in self.selected.iter_mut().filter(|(_, id)| id.is_none()) {
@@ -88,7 +88,7 @@ impl Outcome {
     /// Note that it's safe to call it multiple times, so that it can be called after this instance was used to store a search result.
     pub fn copy_into(&self, collection: &MetadataCollection, dest: &mut Self) {
         dest.initialize(collection);
-        dest.matches_by_id = self.matches_by_id.clone();
+        dest.matches_by_id.clone_from(&self.matches_by_id);
         if dest.patterns.len() != self.patterns.len() {
             dest.patterns = self.patterns.clone();
         }
@@ -325,7 +325,11 @@ impl MetadataCollection {
         };
 
         self.assign_order_to_attributes(attrs);
-        self.name_to_meta.get_mut(name).expect("just added").macro_attributes = attrs.clone();
+        self.name_to_meta
+            .get_mut(name)
+            .expect("just added")
+            .macro_attributes
+            .clone_from(attrs);
 
         order
     }
