@@ -4,7 +4,6 @@ use gix_config::parse::{Event, Events, Section};
 
 mod error;
 mod from_bytes;
-mod key;
 mod section;
 
 #[test]

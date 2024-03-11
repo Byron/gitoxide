@@ -5,20 +5,25 @@ use gix_features::threading::OwnShared;
 use smallvec::SmallVec;
 
 use crate::{
-    file,
     file::{
+        self,
         write::{extract_newline, platform_newline},
         Metadata, MetadataFilter, SectionId,
     },
     lookup,
     parse::Event,
-    File,
+    File, Key,
 };
 
 /// Read-only low-level access methods, as it requires generics for converting into
 /// custom values defined in this crate like [`Integer`][crate::Integer] and
 /// [`Color`][crate::Color].
 impl<'event> File<'event> {
+    /// TODO
+    pub fn value<'a, T: TryFrom<Cow<'a, BStr>>>(&'a self, key: impl Key) -> Result<T, lookup::Error<T::Error>> {
+        self.value_by(key.section_name(), key.subsection_name(), key.name())
+    }
+
     /// Returns an interpreted value given a section, an optional subsection and
     /// key.
     ///
@@ -44,28 +49,40 @@ impl<'event> File<'event> {
     /// "#;
     /// let git_config = gix_config::File::try_from(config)?;
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.value::<Integer>("core", None, "a")?;
+    /// let a_value = git_config.value_by::<Integer>("core", None, "a")?;
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Boolean = git_config.value("core", None, "c")?;
+    /// let c_value: Boolean = git_config.value_by("core", None, "c")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn value<'a, T: TryFrom<Cow<'a, BStr>>>(
+    pub fn value_by<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&BStr>,
         key: &str,
     ) -> Result<T, lookup::Error<T::Error>> {
-        T::try_from(self.raw_value(section_name, subsection_name, key)?).map_err(lookup::Error::FailedConversion)
+        T::try_from(self.raw_value_by(section_name, subsection_name, key)?).map_err(lookup::Error::FailedConversion)
+    }
+
+    /// TODO
+    pub fn try_value<'a, T: TryFrom<Cow<'a, BStr>>>(&'a self, key: impl Key) -> Option<Result<T, T::Error>> {
+        self.try_value_by(key.section_name(), key.subsection_name(), key.name())
     }
 
     /// Like [`value()`][File::value()], but returning an `None` if the value wasn't found at `section[.subsection].key`
-    pub fn try_value<'a, T: TryFrom<Cow<'a, BStr>>>(
+    pub fn try_value_by<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&BStr>,
         key: &str,
     ) -> Option<Result<T, T::Error>> {
-        self.raw_value(section_name, subsection_name, key).ok().map(T::try_from)
+        self.raw_value_by(section_name, subsection_name, key)
+            .ok()
+            .map(T::try_from)
+    }
+
+    /// TODO
+    pub fn values<'a, T: TryFrom<Cow<'a, BStr>>>(&'a self, key: impl Key) -> Result<Vec<T>, lookup::Error<T::Error>> {
+        self.values_by(key.section_name(), key.subsection_name(), key.name())
     }
 
     /// Returns all interpreted values given a section, an optional subsection
@@ -98,7 +115,7 @@ impl<'event> File<'event> {
     /// "#;
     /// let git_config = gix_config::File::try_from(config).unwrap();
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.values::<Boolean>("core", None, "a")?;
+    /// let a_value = git_config.values_by::<Boolean>("core", None, "a")?;
     /// assert_eq!(
     ///     a_value,
     ///     vec![
@@ -108,20 +125,20 @@ impl<'event> File<'event> {
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Vec<Boolean> = git_config.values("core", None, "c").unwrap();
+    /// let c_value: Vec<Boolean> = git_config.values_by("core", None, "c").unwrap();
     /// assert_eq!(c_value, vec![Boolean(false)]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// [`value`]: crate::value
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn values<'a, T: TryFrom<Cow<'a, BStr>>>(
+    pub fn values_by<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&BStr>,
         key: &str,
     ) -> Result<Vec<T>, lookup::Error<T::Error>> {
-        self.raw_values(section_name, subsection_name, key)?
+        self.raw_values_by(section_name, subsection_name, key)?
             .into_iter()
             .map(T::try_from)
             .collect::<Result<Vec<_>, _>>()

@@ -94,9 +94,7 @@ mod with_overrides {
         );
         let config = repo.config_snapshot();
         assert_eq!(
-            config
-                .strings_by_key("gitoxide.core.shallowFile")
-                .expect("at least one value"),
+            config.strings("gitoxide.core.shallowFile").expect("at least one value"),
             [
                 cow_bstr("shallow-file-cli"),
                 cow_bstr("shallow-file-api"),
@@ -105,7 +103,7 @@ mod with_overrides {
         );
         assert_eq!(
             config
-                .strings_by_key("gitoxide.core.refsNamespace")
+                .strings("gitoxide.core.refsNamespace")
                 .expect("at least one value"),
             [
                 cow_bstr("namespace-cli"),
@@ -114,7 +112,7 @@ mod with_overrides {
             ]
         );
         assert_eq!(
-            config.strings_by_key("http.userAgent").expect("at least one value"),
+            config.strings("http.userAgent").expect("at least one value"),
             [
                 cow_bstr("agentJustForHttp"),
                 cow_bstr("agent-from-cli"),
@@ -123,30 +121,20 @@ mod with_overrides {
             ]
         );
         assert_eq!(
-            config
-                .integers_by_key("http.lowSpeedLimit")
-                .transpose()?
-                .expect("many values"),
+            config.integers("http.lowSpeedLimit").transpose()?.expect("many values"),
             [5120, 3, 2, 1]
         );
         assert_eq!(
-            config
-                .integers_by_key("http.lowSpeedTime")
-                .transpose()?
-                .expect("many values"),
+            config.integers("http.lowSpeedTime").transpose()?.expect("many values"),
             [10, 3, 2, 1]
         );
         assert_eq!(
-            config
-                .strings_by_key("http.proxyAuthMethod")
-                .expect("at least one value"),
+            config.strings("http.proxyAuthMethod").expect("at least one value"),
             [cow_bstr("basic")],
             "this value isn't overridden directly"
         );
         assert_eq!(
-            config
-                .strings_by_key("gitoxide.https.proxy")
-                .expect("at least one value"),
+            config.strings("gitoxide.https.proxy").expect("at least one value"),
             [
                 cow_bstr("https-upper"),
                 cow_bstr(if cfg!(windows) {
@@ -157,31 +145,25 @@ mod with_overrides {
             ]
         );
         assert_eq!(
-            config
-                .strings_by_key("gitoxide.http.proxy")
-                .expect("at least one value"),
+            config.strings("gitoxide.http.proxy").expect("at least one value"),
             [cow_bstr("http-lower")]
         );
         assert_eq!(
-            config
-                .strings_by_key("gitoxide.http.allProxy")
-                .expect("at least one value"),
+            config.strings("gitoxide.http.allProxy").expect("at least one value"),
             [
                 cow_bstr("all-proxy"), // on windows, environment variables are case-insensitive
                 cow_bstr(if cfg!(windows) { "all-proxy" } else { "all-proxy-lower" })
             ]
         );
         assert_eq!(
-            config
-                .strings_by_key("gitoxide.http.noProxy")
-                .expect("at least one value"),
+            config.strings("gitoxide.http.noProxy").expect("at least one value"),
             [
                 cow_bstr("no-proxy"), // on windows, environment variables are case-insensitive
                 cow_bstr(if cfg!(windows) { "no-proxy" } else { "no-proxy-lower" })
             ]
         );
         assert_eq!(
-            config.strings_by_key("http.sslCAInfo").expect("at least one value"),
+            config.strings("http.sslCAInfo").expect("at least one value"),
             [
                 cow_bstr("./CA.pem"),
                 cow_bstr("./cli.pem"),
@@ -190,7 +172,7 @@ mod with_overrides {
             ]
         );
         assert_eq!(
-            config.strings_by_key("http.sslVersion").expect("at least one value"),
+            config.strings("http.sslVersion").expect("at least one value"),
             [
                 cow_bstr("sslv2"),
                 cow_bstr("sslv3"),
@@ -199,7 +181,7 @@ mod with_overrides {
             ]
         );
         assert_eq!(
-            config.strings_by_key("ssh.variant").expect("at least one value"),
+            config.strings("ssh.variant").expect("at least one value"),
             [
                 cow_bstr("ssh-variant-cli"),
                 cow_bstr("ssh-variant-api"),
@@ -207,7 +189,7 @@ mod with_overrides {
             ]
         );
         assert_eq!(
-            config.strings_by_key("core.sshCommand").expect("at least one value"),
+            config.strings("core.sshCommand").expect("at least one value"),
             [
                 cow_bstr("ssh-command-cli"),
                 cow_bstr("ssh-command-api"),
@@ -216,7 +198,7 @@ mod with_overrides {
         );
         assert_eq!(
             config
-                .strings_by_key("gitoxide.ssh.commandWithoutShellFallback")
+                .strings("gitoxide.ssh.commandWithoutShellFallback")
                 .expect("at least one value"),
             [
                 cow_bstr("ssh-command-fallback-cli"),
@@ -226,7 +208,7 @@ mod with_overrides {
         );
         assert_eq!(
             config
-                .strings_by_key("gitoxide.http.proxyAuthMethod")
+                .strings("gitoxide.http.proxyAuthMethod")
                 .expect("at least one value"),
             [
                 cow_bstr("proxy-auth-method-cli"),
@@ -261,7 +243,7 @@ mod with_overrides {
         ] {
             assert_eq!(
                 config
-                    .string_by_key(key)
+                    .string(key)
                     .unwrap_or_else(|| panic!("no value for {key}"))
                     .as_ref(),
                 expected,

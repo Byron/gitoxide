@@ -90,7 +90,7 @@ impl PrepareFetch {
             None => repo
                 .config
                 .resolved
-                .string("clone", None, crate::config::tree::Clone::DEFAULT_REMOTE_NAME.name)
+                .string(crate::config::tree::Clone::DEFAULT_REMOTE_NAME)
                 .map(|n| crate::config::tree::Clone::DEFAULT_REMOTE_NAME.try_into_symbolic_name(n))
                 .transpose()?
                 .unwrap_or_else(|| "origin".into()),

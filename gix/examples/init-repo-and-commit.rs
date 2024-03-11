@@ -2,7 +2,7 @@
 // adds initial commit with empty tree
 
 use anyhow::Context;
-use gix::objs::tree;
+use gix::{config::tree::Author, objs::tree};
 
 fn main() -> anyhow::Result<()> {
     // Note use of args_os:
@@ -20,8 +20,8 @@ fn main() -> anyhow::Result<()> {
     let empty_tree_id = repo.write_object(&tree)?.detach();
 
     let mut config = repo.config_snapshot_mut();
-    config.set_raw_value("author", None, "name", "Maria Sanchez")?;
-    config.set_raw_value("author", None, "email", "maria@example.com")?;
+    config.set_raw_value(&Author::NAME, "Maria Sanchez")?;
+    config.set_raw_value(&Author::EMAIL, "maria@example.com")?;
     {
         let repo = config.commit_auto_rollback()?;
         let initial_commit_id = repo.commit("HEAD", "initial commit", empty_tree_id, gix::commit::NO_PARENT_IDS)?;

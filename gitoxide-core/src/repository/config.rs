@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use gix::bstr::{BStr, BString};
+use gix::{bstr::BString, config::Key};
 
 use crate::OutputFormat;
 
@@ -57,12 +57,12 @@ struct Filter {
 
 impl Filter {
     fn new(input: BString) -> Self {
-        match gix::config::parse::key(<_ as AsRef<BStr>>::as_ref(&input)) {
-            Some(key) => Filter {
-                name: key.section_name.into(),
-                subsection: key.subsection_name.map(ToOwned::to_owned),
+        match ((&input).section_name(), (&input).subsection_name()) {
+            (section, subsection) if !section.is_empty() => Filter {
+                name: section.into(),
+                subsection: subsection.map(ToOwned::to_owned),
             },
-            None => Filter {
+            _ => Filter {
                 name: input.to_string(),
                 subsection: None,
             },

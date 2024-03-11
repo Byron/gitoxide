@@ -96,7 +96,7 @@ impl File<'static> {
             (local, path)
         };
 
-        let worktree = match local.boolean("extensions", None, "worktreeConfig") {
+        let worktree = match local.boolean("extensions.worktreeConfig") {
             Some(Ok(worktree_config)) => worktree_config.then(|| {
                 let source = Source::Worktree;
                 let path = git_dir.join(

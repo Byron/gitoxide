@@ -32,12 +32,9 @@ impl crate::Repository {
     pub fn remote_default_name(&self, direction: remote::Direction) -> Option<Cow<'_, BStr>> {
         let name = (direction == remote::Direction::Push)
             .then(|| {
-                self.config.resolved.string_filter(
-                    Remote.name(),
-                    None,
-                    Remote::PUSH_DEFAULT.name,
-                    &mut self.filter_config_section(),
-                )
+                self.config
+                    .resolved
+                    .string_filter(Remote::PUSH_DEFAULT, &mut self.filter_config_section())
             })
             .flatten();
         name.or_else(|| {

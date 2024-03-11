@@ -55,7 +55,7 @@ impl Repository {
         let shallow_name = self
             .config
             .resolved
-            .string_filter_by_key(
+            .string_filter(
                 gitoxide::Core::SHALLOW_FILE.logical_name().as_str(),
                 &mut self.filter_config_section(),
             )

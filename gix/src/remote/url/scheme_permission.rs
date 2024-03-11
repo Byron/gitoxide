@@ -59,7 +59,7 @@ impl SchemePermission {
         mut filter: fn(&gix_config::file::Metadata) -> bool,
     ) -> Result<Self, config::protocol::allow::Error> {
         let allow: Option<Allow> = config
-            .string_filter_by_key("protocol.allow", &mut filter)
+            .string_filter("protocol.allow", &mut filter)
             .map(|value| Protocol::ALLOW.try_into_allow(value, None))
             .transpose()?;
 
@@ -91,7 +91,7 @@ impl SchemePermission {
 
         let user_allowed = saw_user.then(|| {
             config
-                .string_filter_by_key(gitoxide::Allow::PROTOCOL_FROM_USER.logical_name().as_str(), &mut filter)
+                .string_filter(gitoxide::Allow::PROTOCOL_FROM_USER.logical_name().as_str(), &mut filter)
                 .map_or(true, |val| val.as_ref() == "1")
         });
         Ok(SchemePermission {

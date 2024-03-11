@@ -14,7 +14,10 @@ mod shallow {
 mod blocking_and_async_io {
     use std::sync::atomic::AtomicBool;
 
-    use gix::remote::{fetch, fetch::Status, Direction::Fetch};
+    use gix::{
+        config::tree::Protocol,
+        remote::{fetch, fetch::Status, Direction::Fetch},
+    };
     use gix_features::progress;
     use gix_protocol::maybe_async;
     use gix_testtools::tempfile::TempDir;
@@ -482,12 +485,8 @@ mod blocking_and_async_io {
         ] {
             let (mut repo, _tmp) = repo_rw("two-origins");
             if let Some(version) = version {
-                repo.config_snapshot_mut().set_raw_value(
-                    "protocol",
-                    None,
-                    "version",
-                    (version as u8).to_string().as_str(),
-                )?;
+                repo.config_snapshot_mut()
+                    .set_raw_value(&Protocol::VERSION, (version as u8).to_string().as_str())?;
             }
 
             // No updates
