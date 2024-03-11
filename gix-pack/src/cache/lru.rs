@@ -133,7 +133,7 @@ mod _static {
             if data.len() > self.mem_limit {
                 return;
             }
-            // If we could hold it but are are at limit, all we can do is make space.
+            // If we could hold it but are at limit, all we can do is make space.
             let mem_free = self.mem_limit - self.mem_used;
             if data.len() > mem_free {
                 // prefer freeing free-lists instead of clearing our cache

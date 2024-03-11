@@ -52,7 +52,7 @@ pub struct Prepare {
 pub struct Context {
     /// The `.git` directory that contains the repository.
     ///
-    /// If set, it will be used to set the the `GIT_DIR` environment variable.
+    /// If set, it will be used to set the `GIT_DIR` environment variable.
     pub git_dir: Option<PathBuf>,
     /// Set the `GIT_WORK_TREE` environment variable with the given path.
     pub worktree_dir: Option<PathBuf>,
