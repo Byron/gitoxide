@@ -145,6 +145,37 @@ mod ssh {
     }
 }
 
+#[cfg(feature = "status")]
+mod status {
+    use crate::config::tree::bcow;
+    use gix::config::tree::Status;
+    use gix::status::UntrackedFiles;
+
+    #[test]
+    fn default() -> crate::Result {
+        for (actual, expected) in [
+            ("no", UntrackedFiles::None),
+            ("normal", UntrackedFiles::Collapsed),
+            ("all", UntrackedFiles::Files),
+        ] {
+            assert_eq!(
+                Status::SHOW_UNTRACKED_FILES.try_into_show_untracked_files(bcow(actual))?,
+                expected
+            );
+        }
+
+        assert_eq!(
+            Status::SHOW_UNTRACKED_FILES
+                .try_into_show_untracked_files(bcow("NO"))
+                .unwrap_err()
+                .to_string(),
+            "The key \"status.showUntrackedFiles=NO\" was invalid",
+            "case-sensitive comparisons"
+        );
+        Ok(())
+    }
+}
+
 mod push {
     use crate::config::tree::bcow;
     use gix::config::tree::Push;

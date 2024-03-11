@@ -298,7 +298,7 @@ pub mod status {
         #[error(transparent)]
         IgnoreConfiguration(#[from] config::Error),
         #[error(transparent)]
-        StatusPlatform(#[from] crate::config::boolean::Error),
+        StatusPlatform(#[from] crate::status::Error),
         #[error(transparent)]
         Status(#[from] crate::status::index_worktree::iter::Error),
         #[error(transparent)]
@@ -384,7 +384,6 @@ pub mod status {
 
             let statusses = adjust_options(sm_repo.status(gix_features::progress::Discard)?)
                 .index_worktree_options_mut(|opts| {
-                    assert!(opts.dirwalk_options.is_some(), "BUG: it's supposed to be the default");
                     if ignore == config::Ignore::Untracked {
                         opts.dirwalk_options = None;
                     }

@@ -1,3 +1,4 @@
+use crate::config::cache::util::ApplyLeniencyDefault;
 use crate::{config, Repository};
 pub use gix_status as plumbing;
 use std::ops::Deref;
@@ -71,10 +72,35 @@ pub enum Submodule {
     },
 }
 
+/// How untracked files should be handled.
+#[derive(Default, Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub enum UntrackedFiles {
+    /// Do not show any untracked files.
+    ///
+    /// This can mean no directory walk is performed.
+    None,
+    /// If possible, collapse files into their parent folders to reduce the amount of
+    /// emitted untracked files.
+    #[default]
+    Collapsed,
+    /// Show each individual untracked file or directory (if empty directories are emitted) that the dirwalk encountered .
+    Files,
+}
+
 impl Default for Submodule {
     fn default() -> Self {
         Submodule::AsConfigured { check_dirty: false }
     }
+}
+
+/// The error returned by [status()](Repository::status).
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    DirwalkOptions(#[from] config::boolean::Error),
+    #[error(transparent)]
+    ConfigureUntrackedFiles(#[from] config::key::GenericErrorWithValue),
 }
 
 /// Status
@@ -84,9 +110,13 @@ impl Repository {
     /// By default, this is set to the fastest and most immediate way of obtaining a status,
     /// which is most similar to
     ///
-    /// `git status --untracked=all --ignored=no --no-renames`
+    /// `git status --ignored=no`
     ///
     /// which implies that submodule information is provided by default.
+    ///
+    /// Note that `status.showUntrackedFiles` is respected, which leads to untracked files being
+    /// collapsed by default. If that needs to be controlled,
+    /// [configure the directory walk explicitly](Platform::dirwalk_options) or more [implicitly](Platform::untracked_files).
     ///
     /// Pass `progress` to receive progress information on file modifications on this repository.
     /// Use [`progress::Discard`](crate::progress::Discard) to discard all progress information.
@@ -96,11 +126,11 @@ impl Repository {
     /// Whereas Git runs the index-modified check before the directory walk to set entries
     /// as up-to-date to (potentially) safe some disk-access, we run both in parallel which
     /// ultimately is much faster.
-    pub fn status<P>(&self, progress: P) -> Result<Platform<'_, P>, config::boolean::Error>
+    pub fn status<P>(&self, progress: P) -> Result<Platform<'_, P>, Error>
     where
         P: gix_features::progress::Progress + 'static,
     {
-        Ok(Platform {
+        let platform = Platform {
             repo: self,
             progress,
             index: None,
@@ -112,7 +142,20 @@ impl Repository {
                 rewrites: None,
                 thread_limit: None,
             },
-        })
+        };
+
+        let untracked = self
+            .config
+            .resolved
+            .string("status", None, "showUntrackedFiles")
+            .map(|value| {
+                config::tree::Status::SHOW_UNTRACKED_FILES
+                    .try_into_show_untracked_files(value)
+                    .with_lenient_default(self.config.lenient_config)
+            })
+            .transpose()?
+            .unwrap_or_default();
+        Ok(platform.untracked_files(untracked))
     }
 }
 
@@ -126,7 +169,7 @@ pub mod is_dirty {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        StatusPlatform(#[from] crate::config::boolean::Error),
+        StatusPlatform(#[from] crate::status::Error),
         #[error(transparent)]
         CreateStatusIterator(#[from] crate::status::index_worktree::iter::Error),
     }

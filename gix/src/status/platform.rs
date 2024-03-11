@@ -1,4 +1,4 @@
-use crate::status::{index_worktree, OwnedOrStaticAtomic, Platform, Submodule};
+use crate::status::{index_worktree, OwnedOrStaticAtomic, Platform, Submodule, UntrackedFiles};
 use std::sync::atomic::AtomicBool;
 
 /// Builder
@@ -15,6 +15,23 @@ where
             self.index_worktree_options.dirwalk_options = Some(cb(opts));
         }
         self
+    }
+
+    /// A simple way to explicitly set the desired way of listing `untracked_files`, overriding any value
+    /// set by the git configuration.
+    ///
+    /// Note that if [`None`](UntrackedFiles::None) is used, the directory walk will be disabled entirely
+    /// after this call. Further, if no dirwalk options are present anymore, this call has no effect.
+    pub fn untracked_files(mut self, untracked_files: UntrackedFiles) -> Self {
+        let mode = match untracked_files {
+            UntrackedFiles::None => {
+                self.index_worktree_options.dirwalk_options.take();
+                return self;
+            }
+            UntrackedFiles::Collapsed => gix_dir::walk::EmissionMode::CollapseDirectory,
+            UntrackedFiles::Files => gix_dir::walk::EmissionMode::Matching,
+        };
+        self.dirwalk_options(|cb| cb.emit_untracked(mode))
     }
 
     /// Set the interrupt flag to `should_interrupt`, which typically is an application-wide flag

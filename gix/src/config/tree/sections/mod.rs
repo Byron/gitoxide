@@ -106,6 +106,13 @@ mod safe;
 pub struct Ssh;
 pub mod ssh;
 
+/// The `status` top-level section.
+#[derive(Copy, Clone, Default)]
+#[cfg(feature = "status")]
+pub struct Status;
+#[cfg(feature = "status")]
+pub mod status;
+
 /// The `user` top-level section.
 #[derive(Copy, Clone, Default)]
 pub struct User;
