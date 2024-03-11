@@ -8,7 +8,7 @@ use crate::{PacketLineRef, DELIMITER_LINE, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LE
 pub enum Error {
     #[error("Failed to decode the first four hex bytes indicating the line length: {err}")]
     HexDecode { err: String },
-    #[error("The data received claims to be larger than than the maximum allowed size: got {length_in_bytes}, exceeds {MAX_DATA_LEN}")]
+    #[error("The data received claims to be larger than the maximum allowed size: got {length_in_bytes}, exceeds {MAX_DATA_LEN}")]
     DataLengthLimitExceeded { length_in_bytes: usize },
     #[error("Received an invalid empty line")]
     DataIsEmpty,
