@@ -217,9 +217,26 @@ pub mod status {
         None,
     }
 
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Ignored {
+        /// display all ignored files and directories, but collapse them if possible to simplify.
+        #[default]
+        Collapsed,
+        /// Show exact matches. Note that this may show directories if these are a match as well.
+        ///
+        /// Simplification will not happen in this mode.
+        Matching,
+        // TODO: figure out how to implement traditional, which right now can't be done as it requires ignored folders
+        //       to be fully expanded. This should probably be implemented in `gix_dir` which then simply works by not
+        //       allowing to ignore directories, naturally traversing the entire content.
+    }
+
     #[derive(Debug, clap::Parser)]
     #[command(about = "compute repository status similar to `git status`")]
     pub struct Platform {
+        /// If enabled, show ignored files and directories.
+        #[clap(long)]
+        pub ignored: Option<Option<Ignored>>,
         /// Define how to display the submodule status. Defaults to git configuration if unset.
         #[clap(long)]
         pub submodules: Option<Submodules>,

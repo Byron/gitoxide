@@ -17,7 +17,14 @@ pub enum Submodules {
     None,
 }
 
+#[derive(Copy, Clone)]
+pub enum Ignored {
+    Collapsed,
+    Matching,
+}
+
 pub struct Options {
+    pub ignored: Option<Ignored>,
     pub format: OutputFormat,
     pub submodules: Option<Submodules>,
     pub thread_limit: Option<usize>,
@@ -33,6 +40,7 @@ pub fn show(
     mut err: impl std::io::Write,
     mut progress: impl gix::NestedProgress + 'static,
     Options {
+        ignored,
         format,
         submodules,
         thread_limit,
@@ -52,6 +60,12 @@ pub fn show(
         .status(index_progress)?
         .should_interrupt_shared(&gix::interrupt::IS_INTERRUPTED)
         .index_worktree_options_mut(|opts| {
+            if let Some((opts, ignored)) = opts.dirwalk_options.as_mut().zip(ignored) {
+                opts.set_emit_ignored(Some(match ignored {
+                    Ignored::Collapsed => gix::dir::walk::EmissionMode::CollapseDirectory,
+                    Ignored::Matching => gix::dir::walk::EmissionMode::Matching,
+                }));
+            }
             opts.rewrites = index_worktree_renames.map(|percentage| gix::diff::Rewrites {
                 copies: None,
                 percentage: Some(percentage),
@@ -60,6 +74,9 @@ pub fn show(
             if opts.rewrites.is_some() {
                 if let Some(opts) = opts.dirwalk_options.as_mut() {
                     opts.set_emit_untracked(gix::dir::walk::EmissionMode::Matching);
+                    if ignored.is_some() {
+                        opts.set_emit_ignored(Some(gix::dir::walk::EmissionMode::Matching));
+                    }
                 }
             }
             opts.thread_limit = thread_limit;
