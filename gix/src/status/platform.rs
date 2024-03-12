@@ -16,7 +16,13 @@ where
         }
         self
     }
-
+    /// Like [dirwalk_options()](Self::dirwalk_options), but taking a mutable instance instead.
+    pub fn dirwalk_options_mut(&mut self, cb: impl FnOnce(&mut crate::dirwalk::Options)) -> &mut Self {
+        if let Some(opts) = self.index_worktree_options.dirwalk_options.as_mut() {
+            cb(opts);
+        }
+        self
+    }
     /// A simple way to explicitly set the desired way of listing `untracked_files`, overriding any value
     /// set by the git configuration.
     ///

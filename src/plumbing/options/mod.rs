@@ -201,7 +201,7 @@ pub mod archive {
 }
 
 pub mod status {
-    use gitoxide::shared::CheckPathSpec;
+    use gitoxide::shared::{CheckPathSpec, ParseRenameFraction};
     use gix::bstr::BString;
 
     #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
@@ -229,6 +229,9 @@ pub mod status {
         /// Don't write back a changed index, which forces this operation to always be idempotent.
         #[clap(long)]
         pub no_write: bool,
+        /// Enable rename tracking between the index and the working tree, preventing the collapse of folders as well.
+        #[clap(long, value_parser = ParseRenameFraction)]
+        pub index_worktree_renames: Option<Option<f32>>,
         /// The git path specifications to list attributes for, or unset to read from stdin one per line.
         #[clap(value_parser = CheckPathSpec)]
         pub pathspec: Vec<BString>,

@@ -23,6 +23,7 @@ pub struct Options {
     pub thread_limit: Option<usize>,
     pub statistics: bool,
     pub allow_write: bool,
+    pub index_worktree_renames: Option<f32>,
 }
 
 pub fn show(
@@ -37,6 +38,7 @@ pub fn show(
         thread_limit,
         allow_write,
         statistics,
+        index_worktree_renames,
     }: Options,
 ) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
@@ -50,6 +52,16 @@ pub fn show(
         .status(index_progress)?
         .should_interrupt_shared(&gix::interrupt::IS_INTERRUPTED)
         .index_worktree_options_mut(|opts| {
+            opts.rewrites = index_worktree_renames.map(|percentage| gix::diff::Rewrites {
+                copies: None,
+                percentage: Some(percentage),
+                limit: 0,
+            });
+            if opts.rewrites.is_some() {
+                if let Some(opts) = opts.dirwalk_options.as_mut() {
+                    opts.set_emit_untracked(gix::dir::walk::EmissionMode::Matching);
+                }
+            }
             opts.thread_limit = thread_limit;
             opts.sorting = Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive);
         })
@@ -85,14 +97,38 @@ pub fn show(
                 if collapsed_directory_status.is_none() {
                     writeln!(
                         out,
-                        "{status: >3} {rela_path}",
+                        "{status: >3} {rela_path}{slash}",
                         status = "?",
                         rela_path =
-                            gix::path::relativize_with_prefix(&gix::path::from_bstr(entry.rela_path), prefix).display()
+                            gix::path::relativize_with_prefix(&gix::path::from_bstr(entry.rela_path), prefix).display(),
+                        slash = if entry.disk_kind.unwrap_or(gix::dir::entry::Kind::File).is_dir() {
+                            "/"
+                        } else {
+                            ""
+                        }
                     )?;
                 }
             }
-            Item::Rewrite { .. } => {}
+            Item::Rewrite {
+                source,
+                dirwalk_entry,
+                copy: _, // TODO: how to visualize copies?
+                ..
+            } => {
+                // TODO: handle multi-status characters, there can also be modifications at the same time as determined by their ID and potentially diffstats.
+                writeln!(
+                    out,
+                    "{status: >3} {source_rela_path} → {dest_rela_path}",
+                    status = "R",
+                    source_rela_path =
+                        gix::path::relativize_with_prefix(&gix::path::from_bstr(source.rela_path()), prefix).display(),
+                    dest_rela_path = gix::path::relativize_with_prefix(
+                        &gix::path::from_bstr(dirwalk_entry.rela_path.as_ref()),
+                        prefix
+                    )
+                    .display(),
+                )?;
+            }
         }
     }
     if gix::interrupt::is_triggered() {

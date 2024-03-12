@@ -310,7 +310,7 @@ pub struct Iter {
 ///
 #[allow(clippy::empty_docs)]
 pub mod iter {
-    use crate::bstr::BString;
+    use crate::bstr::{BStr, BString};
     use crate::config::cache::util::ApplyLeniencyDefault;
     use crate::status::index_worktree::{iter, BuiltinSubmoduleStatus};
     use crate::status::{index_worktree, Platform};
@@ -404,6 +404,19 @@ pub mod iter {
             /// was determined by similarity, not by content equality.
             source_dirwalk_entry_id: gix_hash::ObjectId,
         },
+    }
+
+    /// Access
+    impl RewriteSource {
+        /// The repository-relative path of this source.
+        pub fn rela_path(&self) -> &BStr {
+            match self {
+                RewriteSource::RewriteFromIndex { source_rela_path, .. } => source_rela_path.as_ref(),
+                RewriteSource::CopyFromDirectoryEntry {
+                    source_dirwalk_entry, ..
+                } => source_dirwalk_entry.rela_path.as_ref(),
+            }
+        }
     }
 
     impl<'index> From<gix_status::index_as_worktree_with_renames::RewriteSource<'index, (), SubmoduleStatus>>
