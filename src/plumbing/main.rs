@@ -207,6 +207,7 @@ pub fn main() -> Result<()> {
         ),
         Subcommands::Status(crate::plumbing::options::status::Platform {
             ignored,
+            format: status_format,
             statistics,
             submodules,
             no_write,
@@ -228,6 +229,14 @@ pub fn main() -> Result<()> {
                     err,
                     progress,
                     core::repository::status::Options {
+                        format: match status_format.unwrap_or_default() {
+                            crate::plumbing::options::status::Format::Simplified => {
+                                core::repository::status::Format::Simplified
+                            }
+                            crate::plumbing::options::status::Format::PorcelainV2 => {
+                                core::repository::status::Format::PorcelainV2
+                            }
+                        },
                         ignored: ignored.map(|ignored| match ignored.unwrap_or_default() {
                             crate::plumbing::options::status::Ignored::Matching => {
                                 core::repository::status::Ignored::Matching
@@ -236,7 +245,7 @@ pub fn main() -> Result<()> {
                                 core::repository::status::Ignored::Collapsed
                             }
                         }),
-                        format,
+                        output_format: format,
                         statistics,
                         thread_limit: thread_limit.or(cfg!(target_os = "macos").then_some(3)), // TODO: make this a configurable when in `gix`, this seems to be optimal on MacOS, linux scales though! MacOS also scales if reading a lot of files for refresh index
                         allow_write: !no_write,

@@ -23,9 +23,16 @@ pub enum Ignored {
     Matching,
 }
 
+#[derive(Copy, Clone)]
+pub enum Format {
+    Simplified,
+    PorcelainV2,
+}
+
 pub struct Options {
     pub ignored: Option<Ignored>,
-    pub format: OutputFormat,
+    pub format: Format,
+    pub output_format: OutputFormat,
     pub submodules: Option<Submodules>,
     pub thread_limit: Option<usize>,
     pub statistics: bool,
@@ -42,6 +49,7 @@ pub fn show(
     Options {
         ignored,
         format,
+        output_format,
         submodules,
         thread_limit,
         allow_write,
@@ -49,8 +57,11 @@ pub fn show(
         index_worktree_renames,
     }: Options,
 ) -> anyhow::Result<()> {
-    if format != OutputFormat::Human {
+    if output_format != OutputFormat::Human {
         bail!("Only human format is supported right now");
+    }
+    if !matches!(format, Format::Simplified) {
+        bail!("Only the simplified format is currently implemented");
     }
 
     let start = std::time::Instant::now();
@@ -98,6 +109,7 @@ pub fn show(
             None => gix::status::Submodule::AsConfigured { check_dirty: false },
         })
         .into_index_worktree_iter(pathspecs)?;
+
     for item in iter.by_ref() {
         let item = item?;
         match item {

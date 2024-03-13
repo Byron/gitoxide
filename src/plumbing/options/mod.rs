@@ -231,9 +231,21 @@ pub mod status {
         //       allowing to ignore directories, naturally traversing the entire content.
     }
 
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Format {
+        /// A basic format that is easy to read, and useful for a first glimpse as flat list.
+        #[default]
+        Simplified,
+        /// Output very similar to `git status --porcelain=2`.
+        PorcelainV2,
+    }
+
     #[derive(Debug, clap::Parser)]
     #[command(about = "compute repository status similar to `git status`")]
     pub struct Platform {
+        /// The way status data is displayed.
+        #[clap(long, short = 'f')]
+        pub format: Option<Format>,
         /// If enabled, show ignored files and directories.
         #[clap(long)]
         pub ignored: Option<Option<Ignored>>,
