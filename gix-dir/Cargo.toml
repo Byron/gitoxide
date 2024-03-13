@@ -24,7 +24,7 @@ gix-ignore = { version = "^0.11.1", path = "../gix-ignore" }
 gix-utils = { version = "^0.1.10", path = "../gix-utils", features = ["bstr"] }
 
 bstr = { version = "1.5.0", default-features = false }
-thiserror = "1.0.56"
+thiserror = "1.0.34"
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
