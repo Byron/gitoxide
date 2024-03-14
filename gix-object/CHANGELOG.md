@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 4 calendar days.
+ - 18 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+</details>
+
 ## 0.41.1 (2024-02-25)
 
 ### New Features
@@ -24,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 34 calendar days.
+ - 16 commits contributed to the release over the course of 34 calendar days.
  - 36 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1259](https://github.com/Byron/gitoxide/issues/1259)
@@ -39,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Allow the creation of any `EntryMode`. ([`82e85fd`](https://github.com/Byron/gitoxide/commit/82e85fd192f59bc62bb27de13360a543971e8167))
     - `EntryMode` canonicalization ([`67833df`](https://github.com/Byron/gitoxide/commit/67833dfd18c49ed8073e7a3c0461579c0a5c2017))
  * **Uncategorized**
+    - Release gix-date v0.8.4, gix-utils v0.1.10, gix-actor v0.30.1, gix-object v0.41.1, gix-path v0.10.6, gix-glob v0.16.1, gix-quote v0.4.11, gix-attributes v0.22.1, gix-command v0.3.5, gix-filter v0.10.0, gix-commitgraph v0.24.1, gix-worktree-stream v0.10.0, gix-archive v0.10.0, gix-config-value v0.14.5, gix-ref v0.42.0, gix-sec v0.10.5, gix-config v0.35.0, gix-prompt v0.8.3, gix-url v0.27.1, gix-credentials v0.24.1, gix-ignore v0.11.1, gix-index v0.30.0, gix-worktree v0.31.0, gix-diff v0.41.0, gix-discover v0.30.0, gix-pathspec v0.7.0, gix-dir v0.1.0, gix-pack v0.48.0, gix-odb v0.58.0, gix-transport v0.41.1, gix-protocol v0.44.1, gix-revision v0.26.1, gix-refspec v0.22.1, gix-status v0.6.0, gix-submodule v0.9.0, gix-worktree-state v0.8.0, gix v0.59.0, gix-fsck v0.3.0, gitoxide-core v0.36.0, gitoxide v0.34.0, safety bump 10 crates ([`45b4470`](https://github.com/Byron/gitoxide/commit/45b447045bc826f252129c300c531acde2652c64))
     - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'btoi' ([`5fc379d`](https://github.com/Byron/gitoxide/commit/5fc379d1dc867d15a50cb086e30beefde2b42d86))
     - Refactor ([`c5c69bd`](https://github.com/Byron/gitoxide/commit/c5c69bd355771a6fb3e4f6db0c5f49aa2bf7f42f))
@@ -84,12 +109,12 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-3bd09ef120945a9669321ea856db4079a5dab930/> change `rust-version` manifest field back to 1.65.
-   They didn't actually need to be higher to work, and changing them
-   unecessarily can break downstream CI.
-   
-   Let's keep this value as low as possible, and only increase it when
-   more recent features are actually used.
+- <csr-id-3bd09ef120945a9669321ea856db4079a5dab930/> change `rust-version` manifest field back to 1.65.
+  They didn't actually need to be higher to work, and changing them
+  unecessarily can break downstream CI.
+
+  Let's keep this value as low as possible, and only increase it when
+  more recent features are actually used.
 
 ### Commit Statistics
 
@@ -118,12 +143,12 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
-   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+- <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+  Our MSRV follows the one of `helix`, which in turn follows Firefox.
 
 ### Other
 
- - <csr-id-de400fd0c4959ed60009a2fd71a88d7bcf6d5191/> Add gix-object fuzzers
+- <csr-id-de400fd0c4959ed60009a2fd71a88d7bcf6d5191/> Add gix-object fuzzers
 
 ### Commit Statistics
 
@@ -333,11 +358,11 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-ef54aab9e5521add4154ee8d902d62612a9d8d4a/> switch `nom` to `winnow` in remaining uses in `gix-object`, `gix-ref`, and `gix-actor` for ~20% more performance.
-   It's likely that over time, these parsers will get even faster due to improvements to `winnow`.
-   Thanks, Ed Page, for single-handedly performing this transition.
- - <csr-id-353b1a788a7c5a627ec73185f841ea4893a147a5/> add benchmarks to avoid parsing performance regressions
- - <csr-id-7649b185c93877e8c8b3cebedf685be8e94a0d9d/> remove unused dependency: 'hex'
+- <csr-id-ef54aab9e5521add4154ee8d902d62612a9d8d4a/> switch `nom` to `winnow` in remaining uses in `gix-object`, `gix-ref`, and `gix-actor` for ~20% more performance.
+  It's likely that over time, these parsers will get even faster due to improvements to `winnow`.
+  Thanks, Ed Page, for single-handedly performing this transition.
+- <csr-id-353b1a788a7c5a627ec73185f841ea4893a147a5/> add benchmarks to avoid parsing performance regressions
+- <csr-id-7649b185c93877e8c8b3cebedf685be8e94a0d9d/> remove unused dependency: 'hex'
 
 ### Commit Statistics
 
@@ -417,9 +442,9 @@ A maintenance release without user-facing changes.
 
 ### Other
 
- - <csr-id-7f7353e4525adc308e97b82d27bd301e48da6016/> fix test for struct size for 32-bit architectures
-   The size of gix_object::Data is 24 bytes only on 64-bit architectures,
-   on 32-bit architectures it's exactly half that (12 bytes).
+- <csr-id-7f7353e4525adc308e97b82d27bd301e48da6016/> fix test for struct size for 32-bit architectures
+  The size of gix_object::Data is 24 bytes only on 64-bit architectures,
+  on 32-bit architectures it's exactly half that (12 bytes).
 
 ### Commit Statistics
 
@@ -545,7 +570,7 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
+- <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
 
 ### Commit Statistics
 
@@ -865,10 +890,10 @@ A maintenance release without user-facing changes.
 
 ### Refactor (BREAKING)
 
- - <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/> move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait
-   This will break a lot, but has to happen to prepare these traits for the
-   next generation of object databases.
- - <csr-id-598698b88c194bc0e6ef69539f9fa7246ebfab70/> move loose header manipulation from git-pack to git-object
+- <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/> move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait
+  This will break a lot, but has to happen to prepare these traits for the
+  next generation of object databases.
+- <csr-id-598698b88c194bc0e6ef69539f9fa7246ebfab70/> move loose header manipulation from git-pack to git-object
 
 ### New Features (BREAKING)
 
@@ -885,8 +910,8 @@ A maintenance release without user-facing changes.
 
 ### Chore (BREAKING)
 
- - <csr-id-9c8a36f35b1e8dad66befb102e5a8670b4a6c2b2/> remove quick-error in favor of thiserror
-   Some errors change shape which makes this a breaking change.
+- <csr-id-9c8a36f35b1e8dad66befb102e5a8670b4a6c2b2/> remove quick-error in favor of thiserror
+  Some errors change shape which makes this a breaking change.
 
 ### Changed (BREAKING)
 
@@ -896,9 +921,9 @@ A maintenance release without user-facing changes.
 
 ### Refactor
 
- - <csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/> Use borrowed::Id in trees for full type safety
- - <csr-id-3b9d66c932075feb08cdf2967f7698daef9fd3ff/> make reusing round-trip code easier
- - <csr-id-ec3be19c8d007565b814b4757f17811ec0e9de2c/> Prefer integration level tests, but use unit-tests where appropriate
+- <csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/> Use borrowed::Id in trees for full type safety
+- <csr-id-3b9d66c932075feb08cdf2967f7698daef9fd3ff/> make reusing round-trip code easier
+- <csr-id-ec3be19c8d007565b814b4757f17811ec0e9de2c/> Prefer integration level tests, but use unit-tests where appropriate
 
 ### Performance
 
@@ -907,7 +932,7 @@ A maintenance release without user-facing changes.
 
 ### Other
 
- - <csr-id-899c57927ce4ba2e1b5d8182f9e731c2a9094cba/> describe variants
+- <csr-id-899c57927ce4ba2e1b5d8182f9e731c2a9094cba/> describe variants
 
 ### Bug Fixes
 
@@ -949,8 +974,8 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
- - <csr-id-322b2901382192d3b4ac0fbae32381a9abb49fa9/> upgrade dependencies
+- <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+- <csr-id-322b2901382192d3b4ac0fbae32381a9abb49fa9/> upgrade dependencies
 
 ### Documentation
 
@@ -1629,8 +1654,8 @@ A maintenance release without user-facing changes.
 
 ### Chore (BREAKING)
 
- - <csr-id-9c8a36f35b1e8dad66befb102e5a8670b4a6c2b2/> remove quick-error in favor of thiserror
-   Some errors change shape which makes this a breaking change.
+- <csr-id-9c8a36f35b1e8dad66befb102e5a8670b4a6c2b2/> remove quick-error in favor of thiserror
+  Some errors change shape which makes this a breaking change.
 
 ## 0.20.3 (2022-08-28)
 
@@ -1642,7 +1667,7 @@ Maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+- <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
 
 ### New Features
 
@@ -1695,7 +1720,7 @@ A automated maintenance release without impact to the public API.
 
 ### Fixes
 
- - Corrected the tree-entry ordering implementation.
+- Corrected the tree-entry ordering implementation.
 
 ## 0.17.0 (2022-01-23)
 
@@ -1704,7 +1729,7 @@ A automated maintenance release without impact to the public API.
 
 ### Chore
 
- - <csr-id-322b2901382192d3b4ac0fbae32381a9abb49fa9/> upgrade dependencies
+- <csr-id-322b2901382192d3b4ac0fbae32381a9abb49fa9/> upgrade dependencies
 
 ### New Features
 
@@ -1719,9 +1744,9 @@ A automated maintenance release without impact to the public API.
 
  - <csr-id-fda2a8d2f5f8b7d80b4cc0177d08d6a061f1b8f1/> rename `commit::ref_iter::Token::into_id()` to `*::try_into_id()`
    This makes the method more consistent.
- - move gix_pack::data::Object to gix_object::Data, massively alter gix_odb::Find trait
-   This will break a lot, but has to happen to prepare these traits for the
-   next generation of object databases.
+- move gix_pack::data::Object to gix_object::Data, massively alter gix_odb::Find trait
+  This will break a lot, but has to happen to prepare these traits for the
+  next generation of object databases.
 
 ## 0.16.0 (2021-11-29)
 
@@ -1746,13 +1771,13 @@ or generally trying to figure out what changed between commits.
 
 ### Other
 
- - <csr-id-899c57927ce4ba2e1b5d8182f9e731c2a9094cba/> describe variants
+- <csr-id-899c57927ce4ba2e1b5d8182f9e731c2a9094cba/> describe variants
 
 ### Performance
 
 <csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/>
 
- - Provide a new fast parser for tree objects which is used by the tree entry iterator.
+- Provide a new fast parser for tree objects which is used by the tree entry iterator.
  - <csr-id-83d591d536d1a43e8523082824ec0b95cca55d34/> parse entry mode into number instead of comparing it to byte strings
 
 ## v0.14.0 (2021-09-08)
@@ -1790,8 +1815,8 @@ or generally trying to figure out what changed between commits.
 
 ### Refactor
 
- - <csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/> Use borrowed::Id in trees for full type safety
- - <csr-id-3b9d66c932075feb08cdf2967f7698daef9fd3ff/> make reusing round-trip code easier
+- <csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/> Use borrowed::Id in trees for full type safety
+- <csr-id-3b9d66c932075feb08cdf2967f7698daef9fd3ff/> make reusing round-trip code easier
 
 ## v0.1.0 (2020-07-12)
 
@@ -1799,5 +1824,5 @@ or generally trying to figure out what changed between commits.
 
 ### Refactor
 
- - <csr-id-ec3be19c8d007565b814b4757f17811ec0e9de2c/> Prefer integration level tests, but use unit-tests where appropriate
+- <csr-id-ec3be19c8d007565b814b4757f17811ec0e9de2c/> Prefer integration level tests, but use unit-tests where appropriate
 
