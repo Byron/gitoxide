@@ -315,6 +315,9 @@ pub mod iter {
     use crate::status::index_worktree::{iter, BuiltinSubmoduleStatus};
     use crate::status::{index_worktree, Platform};
     use crate::worktree::IndexPersistedOrInMemory;
+    use gix_status::index_as_worktree::{Change, EntryStatus};
+
+    pub use gix_status::index_as_worktree_with_renames::Summary;
 
     pub(super) enum ApplyChange {
         SetSizeToZero,
@@ -377,7 +380,7 @@ pub mod iter {
         /// This can also happen for copies.
         RewriteFromIndex {
             /// The entry that is the source of the rewrite, which means it was removed on disk,
-            /// equivalent to [Change::Removed](gix_status::index_as_worktree::Change::Removed).
+            /// equivalent to [Change::Removed].
             ///
             /// Note that the [entry-id](gix_index::Entry::id) is the content-id of the source of the rewrite.
             source_entry: gix_index::Entry,
@@ -503,6 +506,41 @@ pub mod iter {
             /// as renames are tracked as deletions and additions of the same or similar content.
             copy: bool,
         },
+    }
+
+    impl Item {
+        /// Return a simplified summary of the item as digest of its status, or `None` if this item is
+        /// created from the directory walk and is *not untracked*, or if it is merely to communicate
+        /// a needed update to the index entry.
+        pub fn summary(&self) -> Option<Summary> {
+            use gix_status::index_as_worktree_with_renames::Summary::*;
+            Some(match self {
+                Item::Modification { status, .. } => match status {
+                    EntryStatus::Conflict(_) => Conflict,
+                    EntryStatus::Change(change) => match change {
+                        Change::Removed => Removed,
+                        Change::Type => TypeChange,
+                        Change::Modification { .. } | Change::SubmoduleModification(_) => Modified,
+                    },
+                    EntryStatus::NeedsUpdate(_) => return None,
+                    EntryStatus::IntentToAdd => IntentToAdd,
+                },
+                Item::DirectoryContents { entry, .. } => {
+                    if matches!(entry.status, gix_dir::entry::Status::Untracked) {
+                        Added
+                    } else {
+                        return None;
+                    }
+                }
+                Item::Rewrite { copy, .. } => {
+                    if *copy {
+                        Copied
+                    } else {
+                        Renamed
+                    }
+                }
+            })
+        }
     }
 
     impl<'index> From<gix_status::index_as_worktree_with_renames::Entry<'index, (), SubmoduleStatus>> for Item {
@@ -675,7 +713,7 @@ pub mod iter {
     }
 
     impl Iterator for super::Iter {
-        type Item = Result<Item, crate::status::index_worktree::Error>;
+        type Item = Result<Item, index_worktree::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             #[cfg(feature = "parallel")]
