@@ -5,7 +5,9 @@ use gix_diff::rewrites::CopySource;
 use gix_status::index_as_worktree::traits::FastEq;
 use gix_status::index_as_worktree::{Change, EntryStatus};
 use gix_status::index_as_worktree_with_renames;
-use gix_status::index_as_worktree_with_renames::{Context, DirwalkContext, Entry, Options, Outcome, Recorder, Sorting};
+use gix_status::index_as_worktree_with_renames::{
+    Context, DirwalkContext, Entry, Options, Outcome, Recorder, Sorting, Summary,
+};
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -267,8 +269,29 @@ fn fixture_filtered_detailed(
     )
     .unwrap();
 
-    assert_eq!(records_to_expectations(&recorder.records), expected);
+    let actual = records_to_expectations(&recorder.records);
+    assert_eq!(actual, expected);
+    assert_summary(&recorder.records, expected);
     cleanup(outcome)
+}
+
+fn assert_summary(entries: &[Entry<(), ()>], expected: &[Expectation]) {
+    let entries: Vec<_> = entries
+        .iter()
+        .filter(|r| {
+            !matches!(
+                r,
+                Entry::Modification {
+                    status: EntryStatus::NeedsUpdate(..),
+                    ..
+                }
+            )
+        })
+        .collect();
+    assert_eq!(entries.len(), expected.len());
+    for (entry, expected) in entries.iter().zip(expected) {
+        assert_eq!(entry.summary(), expected.summary());
+    }
 }
 
 fn records_to_expectations<'a>(recs: &'a [Entry<'_, (), ()>]) -> Vec<Expectation<'a>> {
@@ -327,4 +350,35 @@ enum Expectation<'a> {
         diff: Option<gix_diff::blob::DiffLineStats>,
         copy: bool,
     },
+}
+
+impl Expectation<'_> {
+    pub fn summary(&self) -> Option<Summary> {
+        Some(match self {
+            Expectation::Modification { status, .. } => match status {
+                EntryStatus::Conflict(_) => Summary::Conflict,
+                EntryStatus::Change(change) => match change {
+                    Change::Removed => Summary::Removed,
+                    Change::Type => Summary::TypeChange,
+                    Change::Modification { .. } | Change::SubmoduleModification(_) => Summary::Modified,
+                },
+                EntryStatus::NeedsUpdate(_) => return None,
+                EntryStatus::IntentToAdd => Summary::IntentToAdd,
+            },
+            Expectation::DirwalkEntry { status, .. } => {
+                if matches!(status, gix_dir::entry::Status::Untracked) {
+                    Summary::Added
+                } else {
+                    return None;
+                }
+            }
+            Expectation::Rewrite { copy, .. } => {
+                if *copy {
+                    Summary::Copied
+                } else {
+                    Summary::Renamed
+                }
+            }
+        })
+    }
 }

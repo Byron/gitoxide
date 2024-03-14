@@ -1,6 +1,6 @@
 //! Changes between the index and the worktree along with optional rename tracking.
 mod types;
-pub use types::{Context, DirwalkContext, Entry, Error, Options, Outcome, RewriteSource, Sorting, VisitEntry};
+pub use types::{Context, DirwalkContext, Entry, Error, Options, Outcome, RewriteSource, Sorting, Summary, VisitEntry};
 
 mod recorder;
 pub use recorder::Recorder;

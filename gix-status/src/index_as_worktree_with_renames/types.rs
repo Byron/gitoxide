@@ -1,4 +1,4 @@
-use crate::index_as_worktree::EntryStatus;
+use crate::index_as_worktree::{Change, EntryStatus};
 use bstr::{BStr, ByteSlice};
 use std::sync::atomic::AtomicBool;
 
@@ -141,6 +141,58 @@ pub enum Entry<'index, ContentChange, SubmoduleStatus> {
     },
 }
 
+/// An easy to grasp summary of the changes of the worktree compared to the index.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
+pub enum Summary {
+    /// An entry exists in the index but doesn't in the worktree.
+    Removed,
+    /// A file exists in the worktree but doesn't have a corresponding entry in the index.
+    ///
+    /// In a `git status`, this would be an untracked file.
+    Added,
+    /// A file or submodule was modified, compared to the state recorded in the index.
+    /// On Unix, the change of executable bit also counts as modification.
+    ///
+    /// If the modification is a submodule, it could also stem from various other factors, like
+    /// having modified or untracked files, or changes in the index.
+    Modified,
+    /// The type of the entry in the worktree changed compared to the index.
+    ///
+    /// This can happen if a file in the worktree now is a directory, or a symlink, for example.
+    TypeChange,
+    /// A match between an entry in the index and a differently named file in the worktree was detected,
+    /// considering the index the source of a rename operation, and the worktree file the destination.
+    ///
+    /// Note that the renamed file may also have been modified, but is considered similar enough.
+    ///
+    /// To obtain this state, rewrite-tracking must have been enabled, as otherwise the source would be
+    /// considered `Removed` and the destination would be considered `Added`.
+    Renamed,
+    /// A match between an entry in the index and a differently named file in the worktree was detected,
+    /// considering the index the source of the copy of a worktree file.
+    ///
+    /// Note that the copied file may also have been modified, but is considered similar enough.
+    ///
+    /// To obtain this state, rewrite-and-copy-tracking must have been enabled, as otherwise the source would be
+    /// considered `Removed` and the destination would be considered `Added`.
+    Copied,
+    /// An index entry with a corresponding worktree file that corresponds to an untracked worktree
+    /// file marked with `git add --intent-to-add`.
+    ///
+    /// This means it's not available in the object database yet even though now an entry exists
+    /// that represents the worktree file.
+    /// The entry represents the promise of adding a new file, no matter the actual stat or content.
+    /// Effectively this means nothing changed.
+    /// This also means the file is still present, and that no detailed change checks were performed.
+    IntentToAdd,
+    /// Describes a conflicting entry in the index, which also means that
+    /// no further comparison to the worktree file was performed.
+    ///
+    /// As this variant only describes the state of the index, the corresponding worktree file may
+    /// or may not exist.
+    Conflict,
+}
+
 /// Access
 impl<ContentChange, SubmoduleStatus> RewriteSource<'_, ContentChange, SubmoduleStatus> {
     /// The repository-relative path of this source.
@@ -156,6 +208,47 @@ impl<ContentChange, SubmoduleStatus> RewriteSource<'_, ContentChange, SubmoduleS
 
 /// Access
 impl<ContentChange, SubmoduleStatus> Entry<'_, ContentChange, SubmoduleStatus> {
+    /// Return a summary of the entry as digest of its status, or `None` if this entry is
+    /// created from the directory walk and is *not untracked*, or if it is merely to communicate
+    /// a needed update to the index entry.
+    pub fn summary(&self) -> Option<Summary> {
+        Some(match self {
+            Entry::Modification {
+                status: EntryStatus::Conflict(_),
+                ..
+            } => Summary::Conflict,
+            Entry::Modification {
+                status: EntryStatus::IntentToAdd,
+                ..
+            } => Summary::IntentToAdd,
+            Entry::Modification {
+                status: EntryStatus::NeedsUpdate(_),
+                ..
+            } => return None,
+            Entry::Modification {
+                status: EntryStatus::Change(change),
+                ..
+            } => match change {
+                Change::SubmoduleModification(_) | Change::Modification { .. } => Summary::Modified,
+                Change::Type => Summary::TypeChange,
+                Change::Removed => Summary::Removed,
+            },
+            Entry::DirectoryContents { entry, .. } => {
+                if matches!(entry.status, gix_dir::entry::Status::Untracked) {
+                    Summary::Added
+                } else {
+                    return None;
+                }
+            }
+            Entry::Rewrite { copy, .. } => {
+                if *copy {
+                    Summary::Copied
+                } else {
+                    Summary::Renamed
+                }
+            }
+        })
+    }
     /// The repository-relative path at which the source of a rewrite is located.
     ///
     /// If this isn't a rewrite, the path is the location of the entry itself.
