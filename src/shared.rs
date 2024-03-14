@@ -362,6 +362,28 @@ mod clap {
     }
 
     #[derive(Clone)]
+    pub struct ParseRenameFraction;
+
+    impl TypedValueParser for ParseRenameFraction {
+        type Value = f32;
+
+        fn parse_ref(&self, cmd: &Command, arg: Option<&Arg>, value: &OsStr) -> Result<Self::Value, Error> {
+            StringValueParser::new()
+                .try_map(|arg: String| -> Result<_, Box<dyn std::error::Error + Send + Sync>> {
+                    if arg.ends_with('%') {
+                        let val = u32::from_str(&arg[..arg.len() - 1])?;
+                        Ok(val as f32 / 100.0)
+                    } else {
+                        let val = u32::from_str(&arg)?;
+                        let num = format!("0.{val}");
+                        Ok(f32::from_str(&num)?)
+                    }
+                })
+                .parse_ref(cmd, arg, value)
+        }
+    }
+
+    #[derive(Clone)]
     pub struct AsTime;
 
     impl TypedValueParser for AsTime {
@@ -387,4 +409,36 @@ mod clap {
         }
     }
 }
-pub use self::clap::{AsBString, AsHashKind, AsOutputFormat, AsPartialRefName, AsPathSpec, AsTime, CheckPathSpec};
+pub use self::clap::{
+    AsBString, AsHashKind, AsOutputFormat, AsPartialRefName, AsPathSpec, AsTime, CheckPathSpec, ParseRenameFraction,
+};
+
+#[cfg(test)]
+mod value_parser_tests {
+    use super::ParseRenameFraction;
+    use clap::Parser;
+
+    #[test]
+    fn rename_fraction() {
+        #[derive(Debug, clap::Parser)]
+        pub struct Cmd {
+            #[clap(long, short='a', value_parser = ParseRenameFraction)]
+            pub arg: Option<Option<f32>>,
+        }
+
+        let c = Cmd::parse_from(["cmd", "-a"]);
+        assert_eq!(c.arg, Some(None), "this means we need to fill in the default");
+
+        let c = Cmd::parse_from(["cmd", "-a=50%"]);
+        assert_eq!(c.arg, Some(Some(0.5)), "percentages become a fraction");
+
+        let c = Cmd::parse_from(["cmd", "-a=100%"]);
+        assert_eq!(c.arg, Some(Some(1.0)));
+
+        let c = Cmd::parse_from(["cmd", "-a=5"]);
+        assert_eq!(c.arg, Some(Some(0.5)), "another way to specify fractions");
+
+        let c = Cmd::parse_from(["cmd", "-a=75"]);
+        assert_eq!(c.arg, Some(Some(0.75)));
+    }
+}

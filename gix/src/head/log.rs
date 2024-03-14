@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use gix_hash::ObjectId;
 
 use crate::{

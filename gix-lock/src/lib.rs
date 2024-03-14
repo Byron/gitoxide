@@ -24,10 +24,12 @@ use gix_tempfile::handle::{Closed, Writable};
 const DOT_LOCK_SUFFIX: &str = ".lock";
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod acquire;
 
 pub use gix_utils::backoff;
 ///
+#[allow(clippy::empty_docs)]
 pub mod commit;
 
 /// Locks a resource to eventually be overwritten with the content of this file.
@@ -53,4 +55,5 @@ pub struct Marker {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod file;

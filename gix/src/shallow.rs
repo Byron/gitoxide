@@ -79,6 +79,7 @@ pub mod write {
 pub use write::function::write;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod open {
     /// The error returned by [`Repository::shallow_commits()`][crate::Repository::shallow_commits()].
     #[derive(Debug, thiserror::Error)]

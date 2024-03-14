@@ -1,7 +1,4 @@
-use std::{
-    convert::TryFrom,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use bstr::BStr;
 

@@ -12,6 +12,7 @@ use gix_diff::{
     Rewrites,
 };
 use gix_object::tree::EntryKind;
+use pretty_assertions::assert_eq;
 
 use crate::{
     hex_to_id,
@@ -51,6 +52,7 @@ fn rename_by_id() -> crate::Result {
                     id: NULL_ID,
                     kind: SourceKind::Rename,
                     location: "b".into(),
+                    change: &Change::deletion(),
                     diff: None,
                 }
             );
@@ -146,11 +148,16 @@ fn copy_by_id() -> crate::Result {
         let out = util::assert_emit_with_objects(
             &mut track,
             |dst, src| {
+                let id = hex_to_id("2e65efe2a145dda7ee51d1741299f848e5bf752e");
                 let source_a = Source {
                     entry_mode: EntryKind::Blob.into(),
-                    id: hex_to_id("2e65efe2a145dda7ee51d1741299f848e5bf752e"),
+                    id,
                     kind: SourceKind::Copy,
                     location: "a".into(),
+                    change: &Change {
+                        id,
+                        ..Change::modification()
+                    },
                     diff: None,
                 };
                 match calls {
@@ -219,6 +226,10 @@ fn copy_by_id_search_in_all_sources() -> crate::Result {
                     id: content_id,
                     kind: SourceKind::Copy,
                     location: "a-src".into(),
+                    change: &Change {
+                        id: content_id,
+                        ..Change::modification()
+                    },
                     diff: None,
                 };
                 match calls {
@@ -289,11 +300,16 @@ fn copy_by_50_percent_similarity() -> crate::Result {
     let out = util::assert_emit_with_objects(
         &mut track,
         |dst, src| {
+            let id = hex_to_id("78981922613b2afb6025042ff6bd878ac1994e85");
             let source_a = Source {
                 entry_mode: EntryKind::Blob.into(),
-                id: hex_to_id("78981922613b2afb6025042ff6bd878ac1994e85"),
+                id,
                 kind: SourceKind::Copy,
                 location: "a".into(),
+                change: &Change {
+                    id,
+                    ..Change::modification()
+                },
                 diff: Some(DiffLineStats {
                     removals: 0,
                     insertions: 1,
@@ -459,13 +475,18 @@ fn rename_by_50_percent_similarity() -> crate::Result {
         |dst, src| {
             match calls {
                 0 => {
+                    let id = hex_to_id("66a52ee7a1d803dc57859c3e95ac9dcdc87c0164");
                     assert_eq!(
                         src.unwrap(),
                         Source {
                             entry_mode: EntryKind::Blob.into(),
-                            id: hex_to_id("66a52ee7a1d803dc57859c3e95ac9dcdc87c0164"),
+                            id,
                             kind: SourceKind::Rename,
                             location: "a".into(),
+                            change: &Change {
+                                id,
+                                ..Change::deletion()
+                            },
                             diff: Some(DiffLineStats {
                                 removals: 1,
                                 insertions: 1,
@@ -532,7 +553,7 @@ fn add_only() -> crate::Result {
     let out = util::assert_emit(&mut track, |dst, src| {
         assert!(!called);
         called = true;
-        assert_eq!(src, None, "there is just a single deletion, no pair");
+        assert!(src.is_none(), "there is just a single deletion, no pair");
         assert_eq!(dst.location, "a");
         assert_eq!(dst.change.kind, ChangeKind::Addition);
         Action::Continue
@@ -569,14 +590,14 @@ mod util {
 
     pub fn assert_emit(
         tracker: &mut rewrites::Tracker<Change>,
-        cb: impl FnMut(Destination<'_, Change>, Option<Source<'_>>) -> Action,
+        cb: impl FnMut(Destination<'_, Change>, Option<Source<'_, Change>>) -> Action,
     ) -> rewrites::Outcome {
         assert_emit_with_objects(tracker, cb, gix_object::find::Never)
     }
 
     pub fn assert_emit_with_objects(
         tracker: &mut rewrites::Tracker<Change>,
-        cb: impl FnMut(Destination<'_, Change>, Option<Source<'_>>) -> Action,
+        cb: impl FnMut(Destination<'_, Change>, Option<Source<'_, Change>>) -> Action,
         objects: impl gix_object::FindObjectOrHeader,
     ) -> rewrites::Outcome {
         assert_emit_with_objects_and_sources(tracker, cb, objects, None)
@@ -584,7 +605,7 @@ mod util {
 
     pub fn assert_emit_with_objects_and_sources<'a>(
         tracker: &mut rewrites::Tracker<Change>,
-        cb: impl FnMut(Destination<'_, Change>, Option<Source<'_>>) -> Action,
+        cb: impl FnMut(Destination<'_, Change>, Option<Source<'_, Change>>) -> Action,
         objects: impl gix_object::FindObjectOrHeader,
         sources: impl IntoIterator<Item = (Change, &'a str)>,
     ) -> rewrites::Outcome {

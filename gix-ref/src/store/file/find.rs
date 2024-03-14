@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    convert::TryInto,
     io::{self, Read},
     path::{Path, PathBuf},
 };
@@ -271,9 +270,8 @@ impl file::Store {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod existing {
-    use std::convert::TryInto;
-
     pub use error::Error;
 
     use crate::{

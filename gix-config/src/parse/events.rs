@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use smallvec::SmallVec;
 
 use crate::{

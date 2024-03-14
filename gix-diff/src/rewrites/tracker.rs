@@ -83,7 +83,7 @@ pub mod visit {
 
     /// The source of a rewrite, rename or copy.
     #[derive(Debug, Clone, PartialEq, PartialOrd)]
-    pub struct Source<'a> {
+    pub struct Source<'a, T> {
         /// The kind of entry.
         pub entry_mode: EntryMode,
         /// The hash of the state of the source as seen in the object database.
@@ -92,6 +92,8 @@ pub mod visit {
         pub kind: SourceKind,
         /// The repository-relative location of this entry.
         pub location: &'a BStr,
+        /// The change that was registered as source.
+        pub change: &'a T,
         /// If this is a rewrite, indicate how many lines would need to change to turn this source into the destination.
         pub diff: Option<DiffLineStats>,
     }
@@ -116,6 +118,7 @@ pub mod visit {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod emit {
     /// The error returned by [Tracker::emit()](super::Tracker::emit()).
     #[derive(Debug, thiserror::Error)]
@@ -193,7 +196,7 @@ impl<T: Change> Tracker<T> {
     /// will panic if `change` is not a modification, and it's valid to not call `push` at all.
     pub fn emit<PushSourceTreeFn, E>(
         &mut self,
-        mut cb: impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_>>) -> crate::tree::visit::Action,
+        mut cb: impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> crate::tree::visit::Action,
         diff_cache: &mut crate::blob::Platform,
         objects: &impl gix_object::FindObjectOrHeader,
         mut push_source_tree: PushSourceTreeFn,
@@ -283,7 +286,7 @@ impl<T: Change> Tracker<T> {
     fn match_pairs_of_kind(
         &mut self,
         kind: visit::SourceKind,
-        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_>>) -> crate::tree::visit::Action,
+        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> crate::tree::visit::Action,
         percentage: Option<f32>,
         out: &mut Outcome,
         diff_cache: &mut crate::blob::Platform,
@@ -326,7 +329,7 @@ impl<T: Change> Tracker<T> {
 
     fn match_pairs(
         &mut self,
-        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_>>) -> crate::tree::visit::Action,
+        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> crate::tree::visit::Action,
         percentage: Option<f32>,
         kind: visit::SourceKind,
         stats: &mut Outcome,
@@ -360,6 +363,7 @@ impl<T: Change> Tracker<T> {
                         id,
                         kind,
                         location,
+                        change: &src.change,
                         diff,
                     },
                     src_idx,
@@ -371,11 +375,15 @@ impl<T: Change> Tracker<T> {
             let location = dest.location(&self.path_backing);
             let change = dest.change.clone();
             let dest = visit::Destination { change, location };
+            let src_idx = src.as_ref().map(|t| t.1);
+            let res = cb(dest, src.map(|t| t.0));
+
             self.items[dest_idx].emitted = true;
-            if let Some(src_idx) = src.as_ref().map(|t| t.1) {
+            if let Some(src_idx) = src_idx {
                 self.items[src_idx].emitted = true;
             }
-            if cb(dest, src.map(|t| t.0)) == crate::tree::visit::Action::Cancel {
+
+            if res == crate::tree::visit::Action::Cancel {
                 return Ok(crate::tree::visit::Action::Cancel);
             }
         }

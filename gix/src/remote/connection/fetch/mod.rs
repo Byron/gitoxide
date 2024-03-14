@@ -90,6 +90,7 @@ pub mod outcome {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod negotiate {
         /// Key information about each round in the pack-negotiation.
         #[derive(Debug, Clone)]
@@ -138,6 +139,7 @@ impl From<ProgressId> for gix_features::progress::Id {
 pub(crate) mod negotiate;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod prepare {
     /// The error returned by [`prepare_fetch()`][super::Connection::prepare_fetch()].
     #[derive(Debug, thiserror::Error)]

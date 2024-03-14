@@ -1,4 +1,4 @@
-use crate::{config::cache::util::ApplyLeniencyDefault, repository::IndexPersistedOrInMemory, worktree};
+use crate::{config::cache::util::ApplyLeniencyDefault, worktree, worktree::IndexPersistedOrInMemory};
 
 /// Index access
 impl crate::Repository {

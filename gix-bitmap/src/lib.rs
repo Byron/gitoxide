@@ -7,8 +7,6 @@
 pub mod ewah;
 
 pub(crate) mod decode {
-    use std::convert::TryInto;
-
     #[inline]
     pub(crate) fn split_at_pos(data: &[u8], pos: usize) -> Option<(&[u8], &[u8])> {
         if data.len() < pos {

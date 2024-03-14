@@ -1,4 +1,5 @@
 //!
+#![allow(clippy::empty_docs)]
 
 /// The kind of repository.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -73,6 +74,7 @@ mod thread_safe;
 mod worktree;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod branch_remote_ref_name {
 
     /// The error returned by [Repository::branch_remote_ref_name()](crate::Repository::branch_remote_ref_name()).
@@ -89,6 +91,7 @@ pub mod branch_remote_ref_name {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod branch_remote_tracking_ref_name {
 
     /// The error returned by [Repository::branch_remote_tracking_ref_name()](crate::Repository::branch_remote_tracking_ref_name()).
@@ -102,17 +105,6 @@ pub mod branch_remote_tracking_ref_name {
         #[error("Couldn't find remote to obtain fetch-specs for mapping to the tracking reference")]
         FindRemote(#[from] crate::remote::find::existing::Error),
     }
-}
-
-/// A type to represent an index which either was loaded from disk as it was persisted there, or created on the fly in memory.
-#[cfg(feature = "index")]
-pub enum IndexPersistedOrInMemory {
-    /// The index as loaded from disk, and shared across clones of the owning `Repository`.
-    Persisted(crate::worktree::Index),
-    /// A temporary index as created from the `HEAD^{tree}`, with the file path set to the place where it would be stored naturally.
-    ///
-    /// Note that unless saved explicitly, it will not persist.
-    InMemory(gix_index::File),
 }
 
 ///

@@ -3,6 +3,7 @@ use std::{path::Path, sync::atomic::AtomicBool};
 use gix_features::progress::Progress;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod checksum {
     /// Returned by various methods to verify the checksum of a memory mapped file that might also exist on disk.
     #[derive(thiserror::Error, Debug)]

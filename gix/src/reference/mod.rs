@@ -1,4 +1,5 @@
 //!
+#![allow(clippy::empty_docs)]
 
 use gix_ref::file::ReferenceExt;
 
@@ -6,6 +7,7 @@ use crate::{Id, Reference};
 
 pub mod iter;
 ///
+#[allow(clippy::empty_docs)]
 pub mod remote;
 
 mod errors;

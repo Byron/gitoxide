@@ -1,5 +1,4 @@
 use std::{
-    convert::TryInto,
     fmt::{Debug, Formatter},
     path::Path,
 };

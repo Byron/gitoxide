@@ -29,6 +29,13 @@ git init dir-with-tracked-file
   git commit -m "init"
 )
 
+git init repo-with-submodule
+(cd repo-with-submodule
+  git submodule add ../dir-with-tracked-file submodule
+  git commit -m "add submodule"
+  touch submodule/untracked
+)
+
 git init ignored-dir
 (cd ignored-dir
   mkdir dir

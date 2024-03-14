@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, fmt};
+use std::fmt;
 
 use gix_hash::{oid, ObjectId};
 

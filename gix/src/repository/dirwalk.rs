@@ -9,7 +9,7 @@ pub enum Error {
     #[error(transparent)]
     Walk(#[from] gix_dir::walk::Error),
     #[error("A working tree is required to perform a directory walk")]
-    MissinWorkDir,
+    MissingWorkDir,
     #[error(transparent)]
     Excludes(#[from] config::exclude_stack::Error),
     #[error(transparent)]
@@ -57,7 +57,7 @@ impl Repository {
         delegate: &mut dyn gix_dir::walk::Delegate,
     ) -> Result<Outcome<'_>, Error> {
         let _span = gix_trace::coarse!("gix::dirwalk");
-        let workdir = self.work_dir().ok_or(Error::MissinWorkDir)?;
+        let workdir = self.work_dir().ok_or(Error::MissingWorkDir)?;
         let mut excludes = self.excludes(
             index,
             None,
@@ -70,11 +70,6 @@ impl Repository {
             index,
             crate::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
         )?;
-        gix_trace::debug!(
-            longest_prefix = ?pathspec.search.longest_common_directory(),
-            prefix_dir = ?pathspec.search.prefix_directory(),
-            patterns = ?pathspec.search.patterns().map(gix_pathspec::Pattern::path).collect::<Vec<_>>()
-        );
 
         let git_dir_realpath =
             crate::path::realpath_opts(self.git_dir(), self.current_dir(), crate::path::realpath::MAX_SYMLINKS)?;

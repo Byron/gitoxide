@@ -29,6 +29,7 @@ pub mod worktree;
 pub mod driver;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod pipeline;
 
 /// The standard git filter pipeline comprised of multiple standard filters and support for external filters.

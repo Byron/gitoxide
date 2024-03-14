@@ -90,8 +90,6 @@ mod pop {
 }
 
 mod set {
-    use std::convert::TryInto;
-
     use super::multi_value_section;
 
     #[test]
@@ -121,8 +119,6 @@ mod set {
 }
 
 mod push {
-    use std::convert::{TryFrom, TryInto};
-
     use gix_config::parse::section::Key;
 
     use crate::file::cow_str;
@@ -230,7 +226,7 @@ mod push_with_comment {
 }
 
 mod set_leading_whitespace {
-    use std::{borrow::Cow, convert::TryFrom};
+    use std::borrow::Cow;
 
     use bstr::BString;
     use gix_config::parse::section::Key;

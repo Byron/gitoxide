@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use gix_object::bstr::{BStr, BString, ByteSlice};
 use winnow::prelude::*;
 
@@ -131,6 +129,7 @@ mod error {
 pub use error::Error;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod existing {
 
     /// The error returned by [`find_existing()`][super::packed::Buffer::find()]

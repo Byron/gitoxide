@@ -1,5 +1,5 @@
 //! a pack data file
-use std::{convert::TryInto, path::Path};
+use std::path::Path;
 
 /// The offset to an entry into the pack data file, relative to its beginning.
 pub type Offset = u64;
@@ -26,14 +26,17 @@ pub struct Entry {
 mod file;
 pub use file::{decode, verify, Header};
 ///
+#[allow(clippy::empty_docs)]
 pub mod header;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod init {
     pub use super::header::decode::Error;
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod entry;
 
 ///

@@ -95,29 +95,36 @@ pub(in crate::store_impl::file) fn path_to_name<'a>(path: impl Into<Cow<'a, Path
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod loose;
 mod overlay_iter;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod iter {
     pub use super::overlay_iter::{LooseThenPacked, Platform};
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod loose_then_packed {
         pub use super::super::overlay_iter::Error;
     }
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod log;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod find;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod transaction;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod packed;
 
 mod raw_ext;

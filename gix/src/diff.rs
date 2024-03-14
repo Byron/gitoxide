@@ -1,6 +1,7 @@
 pub use gix_diff::*;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod rename {
     /// Determine how to do rename tracking.
     #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -28,6 +29,7 @@ mod utils {
     };
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod new_rewrites {
         /// The error returned by [`new_rewrites()`](super::new_rewrites()).
         #[derive(Debug, thiserror::Error)]
@@ -41,6 +43,7 @@ mod utils {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod resource_cache {
         /// The error returned by [`resource_cache()`](super::resource_cache()).
         #[derive(Debug, thiserror::Error)]
@@ -56,8 +59,6 @@ mod utils {
             DiffPipelineOptions(#[from] crate::config::diff::pipeline_options::Error),
             #[error(transparent)]
             CommandContext(#[from] crate::config::command_context::Error),
-            #[error(transparent)]
-            AttributeStack(#[from] crate::config::attribute_stack::Error),
         }
     }
 
@@ -102,18 +103,16 @@ mod utils {
     /// Return a low-level utility to efficiently prepare a the blob-level diff operation between two resources,
     /// and cache these diffable versions so that matrix-like MxN diffs are efficient.
     ///
-    /// `repo` is used to obtain the needed configuration values, and `index` is used to potentially read `.gitattributes`
-    /// files from which may affect the diff operation.
+    /// `repo` is used to obtain the needed configuration values.
     /// `mode` determines how the diffable files will look like, and also how fast, in average, these conversions are.
-    /// `attribute_source` controls where `.gitattributes` will be read from, and it's typically adjusted based on the
+    /// `attr_stack` is for accessing `.gitattributes` for knowing how to apply filters. Noow that it's typically adjusted based on the
     /// `roots` - if there are no worktree roots, `.gitattributes` are also not usually read from worktrees.
     /// `roots` provide information about where to get diffable data from, so source and destination can either be sourced from
     /// a worktree, or from the object database, or both.
     pub fn resource_cache(
         repo: &Repository,
-        index: &gix_index::State,
         mode: gix_diff::blob::pipeline::Mode,
-        attribute_source: gix_worktree::stack::state::attributes::Source,
+        attr_stack: gix_worktree::Stack,
         roots: gix_diff::blob::pipeline::WorktreeRoots,
     ) -> Result<gix_diff::blob::Platform, resource_cache::Error> {
         let diff_algo = repo.config.diff_algorithm()?;
@@ -129,13 +128,7 @@ mod utils {
                 repo.config.diff_pipeline_options()?,
             ),
             mode,
-            repo.attributes_only(
-                // TODO(perf): this could benefit from not having to build an intermediate index,
-                //             and traverse the a tree directly.
-                index,
-                attribute_source,
-            )?
-            .inner,
+            attr_stack,
         );
         Ok(diff_cache)
     }

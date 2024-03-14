@@ -4,6 +4,7 @@ use crate::extension::Signature;
 pub const SIGNATURE: Signature = *b"TREE";
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod verify;
 
 mod decode;

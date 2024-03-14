@@ -59,6 +59,9 @@ pub(crate) mod root {
         pub const SAFE: sections::Safe = sections::Safe;
         /// The `ssh` section.
         pub const SSH: sections::Ssh = sections::Ssh;
+        /// The `status` section.
+        #[cfg(feature = "status")]
+        pub const STATUS: sections::Status = sections::Status;
         /// The `user` section.
         pub const USER: sections::User = sections::User;
         /// The `url` section.
@@ -89,6 +92,8 @@ pub(crate) mod root {
                 &Self::REMOTE,
                 &Self::SAFE,
                 &Self::SSH,
+                #[cfg(feature = "status")]
+                &Self::STATUS,
                 &Self::USER,
                 &Self::URL,
             ]
@@ -104,13 +109,17 @@ pub use sections::{
 };
 #[cfg(feature = "blob-diff")]
 pub use sections::{diff, Diff};
+#[cfg(feature = "status")]
+pub use sections::{status, Status};
 
 /// Generic value implementations for static instantiation.
 pub mod keys;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod key {
     ///
+    #[allow(clippy::empty_docs)]
     pub mod validate {
         /// The error returned by [`Key::validate()`][crate::config::tree::Key::validate()].
         #[derive(Debug, thiserror::Error)]
@@ -122,6 +131,7 @@ pub mod key {
         }
     }
     ///
+    #[allow(clippy::empty_docs)]
     pub mod validate_assignment {
         /// The error returned by [`Key::validated_assignment`*()][crate::config::tree::Key::validated_assignment_fmt()].
         #[derive(Debug, thiserror::Error)]

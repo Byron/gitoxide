@@ -1,4 +1,5 @@
 //!
+#![allow(clippy::empty_docs)]
 use std::{io, path::Path};
 
 use tempfile::{NamedTempFile, TempPath};
@@ -249,6 +250,7 @@ mod io_impls {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod persist {
     use std::path::Path;
 

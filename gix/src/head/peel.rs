@@ -22,6 +22,7 @@ mod error {
 pub use error::Error;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod into_id {
     use crate::object;
 
@@ -39,6 +40,7 @@ pub mod into_id {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod to_commit {
     use crate::object;
 
@@ -54,6 +56,7 @@ pub mod to_commit {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod to_object {
     /// The error returned by [`Head::peel_to_object_in_place()`](super::Head::peel_to_object_in_place()).
     #[derive(Debug, thiserror::Error)]

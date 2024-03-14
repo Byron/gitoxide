@@ -1,12 +1,9 @@
-use std::{convert::TryInto, path::Path};
-
 use gix_actor::Signature;
 use gix_date::{time::Sign, Time};
 use gix_object::bstr::ByteSlice;
 use gix_testtools::tempfile::TempDir;
 
 use super::*;
-use crate::{file::WriteReflog, FullNameRef};
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

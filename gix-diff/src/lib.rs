@@ -44,6 +44,7 @@ pub struct Rewrites {
 pub mod rewrites;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod tree;
 
 ///

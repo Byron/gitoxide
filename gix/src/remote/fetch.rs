@@ -1,4 +1,5 @@
 ///
+#[allow(clippy::empty_docs)]
 pub mod negotiate {
     #[cfg(feature = "credentials")]
     pub use gix_negotiate::Algorithm;

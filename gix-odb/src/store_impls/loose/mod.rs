@@ -50,10 +50,13 @@ fn hash_path(id: &gix_hash::oid, mut root: PathBuf) -> PathBuf {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod find;
 ///
+#[allow(clippy::empty_docs)]
 pub mod iter;
 ///
+#[allow(clippy::empty_docs)]
 pub mod verify;
 
 /// The type for an iterator over `Result<gix_hash::ObjectId, Error>)`
@@ -63,4 +66,5 @@ pub struct Iter {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod write;

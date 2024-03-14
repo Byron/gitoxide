@@ -1,6 +1,4 @@
 mod existing {
-    use std::convert::{TryFrom, TryInto};
-
     use gix_ref::{PartialName, PartialNameRef};
 
     use crate::{file::store_at, hex_to_id};

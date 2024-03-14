@@ -123,6 +123,7 @@ impl<'graph> Iterator for Parents<'graph> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod iter_parents {
     /// The error returned by the [`Parents`][super::Parents] iterator.
     #[derive(Debug, thiserror::Error)]
@@ -136,6 +137,7 @@ pub mod iter_parents {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod to_owned {
     /// The error returned by [`to_owned()`][crate::graph::LazyCommit::to_owned()].
     #[derive(Debug, thiserror::Error)]

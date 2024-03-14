@@ -130,6 +130,8 @@ pub enum Subcommands {
     /// Interact with submodules.
     #[clap(alias = "submodules")]
     Submodule(submodule::Platform),
+    IsClean,
+    IsChanged,
     /// Show which git configuration values are used or planned.
     ConfigTree,
     Status(status::Platform),
@@ -199,7 +201,7 @@ pub mod archive {
 }
 
 pub mod status {
-    use gitoxide::shared::CheckPathSpec;
+    use gitoxide::shared::{CheckPathSpec, ParseRenameFraction};
     use gix::bstr::BString;
 
     #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
@@ -211,20 +213,54 @@ pub mod status {
         RefChange,
         /// See if there are worktree modifications compared to the index, but do not check for untracked files.
         Modifications,
+        /// Ignore all submodule changes.
+        None,
+    }
+
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Ignored {
+        /// display all ignored files and directories, but collapse them if possible to simplify.
+        #[default]
+        Collapsed,
+        /// Show exact matches. Note that this may show directories if these are a match as well.
+        ///
+        /// Simplification will not happen in this mode.
+        Matching,
+        // TODO: figure out how to implement traditional, which right now can't be done as it requires ignored folders
+        //       to be fully expanded. This should probably be implemented in `gix_dir` which then simply works by not
+        //       allowing to ignore directories, naturally traversing the entire content.
+    }
+
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Format {
+        /// A basic format that is easy to read, and useful for a first glimpse as flat list.
+        #[default]
+        Simplified,
+        /// Output very similar to `git status --porcelain=2`.
+        PorcelainV2,
     }
 
     #[derive(Debug, clap::Parser)]
     #[command(about = "compute repository status similar to `git status`")]
     pub struct Platform {
-        /// Define how to display submodule status.
-        #[clap(long, default_value = "all")]
-        pub submodules: Submodules,
+        /// The way status data is displayed.
+        #[clap(long, short = 'f')]
+        pub format: Option<Format>,
+        /// If enabled, show ignored files and directories.
+        #[clap(long)]
+        pub ignored: Option<Option<Ignored>>,
+        /// Define how to display the submodule status. Defaults to git configuration if unset.
+        #[clap(long)]
+        pub submodules: Option<Submodules>,
         /// Print additional statistics to help understanding performance.
         #[clap(long, short = 's')]
         pub statistics: bool,
         /// Don't write back a changed index, which forces this operation to always be idempotent.
         #[clap(long)]
         pub no_write: bool,
+        /// Enable rename tracking between the index and the working tree, preventing the collapse of folders as well.
+        #[clap(long, value_parser = ParseRenameFraction)]
+        pub index_worktree_renames: Option<Option<f32>>,
         /// The git path specifications to list attributes for, or unset to read from stdin one per line.
         #[clap(value_parser = CheckPathSpec)]
         pub pathspec: Vec<BString>,
@@ -627,6 +663,10 @@ pub mod commit {
             /// If there was no way to describe the commit, fallback to using the abbreviated input revision.
             always: bool,
 
+            /// Set the suffix to append if the repository is dirty (not counting untracked files).
+            #[clap(short = 'd', long)]
+            dirty_suffix: Option<Option<String>>,
+
             /// A specification of the revision to use, or the current `HEAD` if unset.
             rev_spec: Option<String>,
         },
@@ -649,6 +689,7 @@ pub mod credential {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod commitgraph {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -808,10 +849,10 @@ pub mod index {
     pub mod entries {
         #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
         pub enum Format {
-            ///
+            /// Show only minimal information, useful for first glances.
             #[default]
             Simple,
-            /// Use the `.tar` file format, uncompressed.
+            /// Show much more information that is still human-readable.
             Rich,
         }
     }
@@ -871,9 +912,14 @@ pub mod submodule {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// Print all direct submodules to standard output
-        List,
+        List {
+            /// Set the suffix to append if the repository is dirty (not counting untracked files).
+            #[clap(short = 'd', long)]
+            dirty_suffix: Option<Option<String>>,
+        },
     }
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod free;

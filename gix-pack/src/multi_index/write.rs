@@ -1,5 +1,4 @@
 use std::{
-    convert::TryInto,
     path::PathBuf,
     sync::atomic::{AtomicBool, Ordering},
     time::{Instant, SystemTime},

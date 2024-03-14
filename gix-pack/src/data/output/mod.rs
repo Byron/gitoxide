@@ -1,6 +1,7 @@
 use gix_hash::ObjectId;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod count;
 
 /// An item representing a future Entry in the leanest way possible.
@@ -35,7 +36,9 @@ pub struct Entry {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod entry;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod bytes;

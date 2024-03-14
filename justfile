@@ -92,6 +92,8 @@ check:
     cargo check -p gix-revision --no-default-features --features describe
     cargo check -p gix-mailmap --features serde
     cargo check -p gix-url --all-features
+    cargo check -p gix-status
+    cargo check -p gix-status --all-features
     cargo check -p gix-features --all-features
     cargo check -p gix-features --features parallel
     cargo check -p gix-features --features fs-walkdir-parallel

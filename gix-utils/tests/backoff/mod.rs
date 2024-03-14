@@ -1,4 +1,4 @@
-use std::{convert::TryInto, time::Duration};
+use std::time::Duration;
 
 use gix_utils::backoff::Exponential;
 

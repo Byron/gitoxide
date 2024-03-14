@@ -118,8 +118,7 @@ impl<'event> File<'event> {
         &'a self,
         section_name: &'a str,
         subsection_name: Option<&BStr>,
-    ) -> Result<impl Iterator<Item = SectionId> + ExactSizeIterator + DoubleEndedIterator + '_, lookup::existing::Error>
-    {
+    ) -> Result<impl ExactSizeIterator<Item = SectionId> + DoubleEndedIterator + '_, lookup::existing::Error> {
         let section_name = section::Name::from_str_unchecked(section_name);
         let section_ids = self
             .section_lookup_tree

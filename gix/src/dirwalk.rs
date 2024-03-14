@@ -68,9 +68,19 @@ impl Options {
         self.empty_patterns_match_prefix = toggle;
         self
     }
+    /// Like [`empty_patterns_match_prefix()`](Self::empty_patterns_match_prefix), but only requires a mutably borrowed instance.
+    pub fn set_empty_patterns_match_prefix(&mut self, toggle: bool) -> &mut Self {
+        self.empty_patterns_match_prefix = toggle;
+        self
+    }
     /// If `toggle` is `true`, we will stop figuring out if any directory that is a candidate for recursion is also a nested repository,
     /// which saves time but leads to recurse into it. If `false`, nested repositories will not be traversed.
     pub fn recurse_repositories(mut self, toggle: bool) -> Self {
+        self.recurse_repositories = toggle;
+        self
+    }
+    /// Like [`recurse_repositories()`](Self::recurse_repositories), but only requires a mutably borrowed instance.
+    pub fn set_recurse_repositories(&mut self, toggle: bool) -> &mut Self {
         self.recurse_repositories = toggle;
         self
     }
@@ -79,9 +89,19 @@ impl Options {
         self.emit_pruned = toggle;
         self
     }
+    /// Like [`emit_pruned()`](Self::emit_pruned), but only requires a mutably borrowed instance.
+    pub fn set_emit_pruned(&mut self, toggle: bool) -> &mut Self {
+        self.emit_pruned = toggle;
+        self
+    }
     /// If `value` is `Some(mode)`, entries that are ignored will be emitted according to the given `mode`.
     /// If `None`, ignored entries will not be emitted at all.
     pub fn emit_ignored(mut self, value: Option<EmissionMode>) -> Self {
+        self.emit_ignored = value;
+        self
+    }
+    /// Like [`emit_ignored()`](Self::emit_ignored), but only requires a mutably borrowed instance.
+    pub fn set_emit_ignored(&mut self, value: Option<EmissionMode>) -> &mut Self {
         self.emit_ignored = value;
         self
     }
@@ -93,9 +113,19 @@ impl Options {
         self.for_deletion = value;
         self
     }
+    /// Like [`for_deletion()`](Self::for_deletion), but only requires a mutably borrowed instance.
+    pub fn set_for_deletion(&mut self, value: Option<ForDeletionMode>) -> &mut Self {
+        self.for_deletion = value;
+        self
+    }
     /// If `toggle` is `true`, we will also emit entries for tracked items. Otherwise these will remain 'hidden',
     /// even if a pathspec directly refers to it.
     pub fn emit_tracked(mut self, toggle: bool) -> Self {
+        self.emit_tracked = toggle;
+        self
+    }
+    /// Like [`emit_tracked()`](Self::emit_tracked), but only requires a mutably borrowed instance.
+    pub fn set_emit_tracked(&mut self, toggle: bool) -> &mut Self {
         self.emit_tracked = toggle;
         self
     }
@@ -104,10 +134,21 @@ impl Options {
         self.emit_untracked = toggle;
         self
     }
+    /// Like [`emit_untracked()`](Self::emit_untracked), but only requires a mutably borrowed instance.
+    pub fn set_emit_untracked(&mut self, toggle: EmissionMode) -> &mut Self {
+        self.emit_untracked = toggle;
+        self
+    }
     /// If `toggle` is `true`, emit empty directories as well. Note that a directory also counts as empty if it has any
     /// amount or depth of nested subdirectories, as long as none of them includes a file.
     /// Thus, this makes leaf-level empty directories visible, as those don't have any content.
     pub fn emit_empty_directories(mut self, toggle: bool) -> Self {
+        self.emit_empty_directories = toggle;
+        self
+    }
+
+    /// Like [`emit_empty_directories()`](Self::emit_empty_directories), but only requires a mutably borrowed instance.
+    pub fn set_emit_empty_directories(&mut self, toggle: bool) -> &mut Self {
         self.emit_empty_directories = toggle;
         self
     }
@@ -121,9 +162,21 @@ impl Options {
         self
     }
 
+    /// Like [`classify_untracked_bare_repositories()`](Self::classify_untracked_bare_repositories), but only requires a mutably borrowed instance.
+    pub fn set_classify_untracked_bare_repositories(&mut self, toggle: bool) -> &mut Self {
+        self.classify_untracked_bare_repositories = toggle;
+        self
+    }
+
     /// Control whether entries that are in an about-to-be collapsed directory will be emitted. The default is `None`,
     /// so entries in a collapsed directory are not observable.
     pub fn emit_collapsed(mut self, value: Option<CollapsedEntriesEmissionMode>) -> Self {
+        self.emit_collapsed = value;
+        self
+    }
+
+    /// Like [`emit_collapsed()`](Self::emit_collapsed), but only requires a mutably borrowed instance.
+    pub fn set_emit_collapsed(&mut self, value: Option<CollapsedEntriesEmissionMode>) -> &mut Self {
         self.emit_collapsed = value;
         self
     }

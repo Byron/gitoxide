@@ -1,6 +1,7 @@
 use bstr::BStr;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod name {
     use bstr::BString;
 

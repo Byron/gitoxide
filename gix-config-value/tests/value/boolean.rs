@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use gix_config_value::Boolean;
 
 use crate::b;

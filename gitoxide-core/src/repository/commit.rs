@@ -52,6 +52,7 @@ pub fn describe(
         statistics,
         max_candidates,
         long_format,
+        dirty_suffix,
     }: describe::Options,
 ) -> Result<()> {
     repo.object_cache_size_if_unset(4 * 1024 * 1024);
@@ -80,7 +81,7 @@ pub fn describe(
         writeln!(err, "traversed {} commits", resolution.outcome.commits_seen)?;
     }
 
-    let mut describe_id = resolution.format()?;
+    let mut describe_id = resolution.format_with_dirty_suffix(dirty_suffix)?;
     describe_id.long(long_format);
 
     writeln!(out, "{describe_id}")?;
@@ -97,5 +98,6 @@ pub mod describe {
         pub long_format: bool,
         pub statistics: bool,
         pub max_candidates: usize,
+        pub dirty_suffix: Option<String>,
     }
 }

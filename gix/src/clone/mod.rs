@@ -1,6 +1,4 @@
 #![allow(clippy::result_large_err)]
-use std::convert::TryInto;
-
 use crate::{bstr::BString, config::tree::gitoxide, remote};
 
 type ConfigureRemoteFn =

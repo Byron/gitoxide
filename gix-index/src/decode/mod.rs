@@ -4,6 +4,7 @@ use crate::{entry, extension, Entry, State, Version};
 
 mod entries;
 ///
+#[allow(clippy::empty_docs)]
 pub mod header;
 
 mod error {

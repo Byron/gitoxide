@@ -51,6 +51,7 @@ pub fn at(path: impl AsRef<Path>) -> Result<Graph, init::Error> {
 mod access;
 pub mod file;
 ///
+#[allow(clippy::empty_docs)]
 pub mod init;
 pub mod verify;
 

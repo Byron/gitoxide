@@ -73,7 +73,7 @@ mod new {
 }
 
 mod try_from {
-    use std::{cmp::Ordering, convert::TryFrom};
+    use std::cmp::Ordering;
 
     use gix_hash::{prefix::from_hex::Error, Prefix};
 

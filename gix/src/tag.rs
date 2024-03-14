@@ -1,4 +1,5 @@
 //!
+#![allow(clippy::empty_docs)]
 mod error {
 
     /// The error returned by [`tag(…)`][crate::Repository::tag()].

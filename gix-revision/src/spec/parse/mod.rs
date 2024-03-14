@@ -46,6 +46,7 @@ pub enum Error {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod delegate;
 
 /// A delegate to be informed about parse events, with methods split into categories.

@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use bstr::BStr;
 use winnow::{error::ParserError, prelude::*};
 
@@ -124,8 +122,6 @@ impl TryFrom<u32> for tree::EntryMode {
 }
 
 mod decode {
-    use std::convert::TryFrom;
-
     use bstr::ByteSlice;
     use winnow::{error::ParserError, prelude::*};
 

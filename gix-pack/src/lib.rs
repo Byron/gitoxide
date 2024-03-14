@@ -19,6 +19,7 @@
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod bundle;
 /// A bundle of pack data and the corresponding pack index
 pub struct Bundle {
@@ -29,22 +30,28 @@ pub struct Bundle {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod find;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod cache;
 ///
+#[allow(clippy::empty_docs)]
 pub mod data;
 
 mod find_traits;
 pub use find_traits::{Find, FindExt};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod index;
 ///
+#[allow(clippy::empty_docs)]
 pub mod multi_index;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod verify;
 
 mod mmap {
@@ -59,8 +66,6 @@ mod mmap {
         }
     }
 }
-
-use std::convert::TryInto;
 
 #[inline]
 fn read_u32(b: &[u8]) -> u32 {

@@ -14,6 +14,7 @@ pub struct Request<'a> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod next_request {
     use bstr::BString;
 
@@ -31,6 +32,7 @@ pub mod next_request {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod handshake {
     /// The error returned by [Server::handshake()][super::Server::handshake()].
     #[derive(Debug, thiserror::Error)]

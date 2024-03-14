@@ -42,6 +42,7 @@ mod workers {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod validate {
     use crate::{bstr::BStr, config::tree::keys};
 

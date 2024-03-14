@@ -1,5 +1,5 @@
 #![allow(clippy::result_large_err)]
-use std::{convert::TryInto, ops::DerefMut};
+use std::ops::DerefMut;
 
 use gix_hash::ObjectId;
 use gix_macros::momo;

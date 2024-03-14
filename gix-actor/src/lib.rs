@@ -22,6 +22,7 @@ use gix_date::Time;
 
 mod identity;
 ///
+#[allow(clippy::empty_docs)]
 pub mod signature;
 
 /// A person with name and email.

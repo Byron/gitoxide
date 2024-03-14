@@ -70,8 +70,6 @@ mod header {
     }
 }
 mod name {
-    use std::convert::TryFrom;
-
     use gix_config::parse::section::Name;
 
     #[test]
@@ -90,7 +88,7 @@ mod name {
 }
 
 mod key {
-    use std::{cmp::Ordering, convert::TryFrom};
+    use std::cmp::Ordering;
 
     use gix_config::parse::section::Key;
 

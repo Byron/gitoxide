@@ -1,4 +1,5 @@
 //!
+#![allow(clippy::empty_docs)]
 use std::path::Path;
 
 use gix_macros::momo;
@@ -109,6 +110,7 @@ impl<'r> Iterator for Iter<'r> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod init {
     /// The error returned by [`Platform::all()`][super::Platform::all()] or [`Platform::prefixed()`][super::Platform::prefixed()].
     #[derive(Debug, thiserror::Error)]

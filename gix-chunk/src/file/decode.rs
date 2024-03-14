@@ -1,4 +1,4 @@
-use std::{convert::TryInto, ops::Range};
+use std::ops::Range;
 
 mod error {
     /// The value returned by [`crate::file::Index::from_bytes()`]

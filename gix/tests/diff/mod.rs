@@ -5,11 +5,12 @@ use crate::util::named_repo;
 #[test]
 fn resource_cache() -> crate::Result {
     let repo = named_repo("make_diff_repo.sh")?;
+    let index = repo.index()?;
     let cache = gix::diff::resource_cache(
         &repo,
-        &*repo.index()?,
         gix::diff::blob::pipeline::Mode::ToWorktreeAndBinaryToText,
-        gix_worktree::stack::state::attributes::Source::IdMapping,
+        repo.attributes_only(&index, gix_worktree::stack::state::attributes::Source::IdMapping)?
+            .detach(),
         Default::default(),
     )?;
     assert_eq!(

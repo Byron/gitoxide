@@ -1,4 +1,5 @@
 ///
+#[allow(clippy::empty_docs)]
 pub mod undo {
     use bstr::{BStr, BString};
 

@@ -5,6 +5,7 @@ use bstr::BStr;
 use crate::Path;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod interpolate {
     use std::path::PathBuf;
 

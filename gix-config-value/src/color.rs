@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
+use std::{borrow::Cow, fmt::Display, str::FromStr};
 
 use bstr::{BStr, BString};
 

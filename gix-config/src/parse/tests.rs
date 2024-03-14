@@ -109,7 +109,7 @@ pub(crate) mod util {
     //! This module is only included for tests, and contains common unit test helper
     //! functions.
 
-    use std::{borrow::Cow, convert::TryFrom};
+    use std::borrow::Cow;
 
     use crate::parse::{section, Comment, Event};
 

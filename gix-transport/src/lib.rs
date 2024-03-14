@@ -82,6 +82,7 @@ mod traits {
 pub use traits::IsSpuriousError;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod client;
 
 #[doc(inline)]

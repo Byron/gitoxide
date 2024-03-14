@@ -3,7 +3,12 @@ use gix::{commit::describe::SelectRef, prelude::ObjectIdExt, Repository, Submodu
 
 use crate::OutputFormat;
 
-pub fn list(repo: Repository, mut out: impl std::io::Write, format: OutputFormat) -> anyhow::Result<()> {
+pub fn list(
+    repo: Repository,
+    mut out: impl std::io::Write,
+    format: OutputFormat,
+    dirty_suffix: Option<String>,
+) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
         bail!("Only human output is supported for now")
     }
@@ -12,12 +17,12 @@ pub fn list(repo: Repository, mut out: impl std::io::Write, format: OutputFormat
         return Ok(());
     };
     for sm in submodules {
-        print_sm(sm, &mut out)?;
+        print_sm(sm, dirty_suffix.as_deref(), &mut out)?;
     }
     Ok(())
 }
 
-fn print_sm(sm: Submodule<'_>, out: &mut impl std::io::Write) -> anyhow::Result<()> {
+fn print_sm(sm: Submodule<'_>, dirty_suffix: Option<&str>, out: &mut impl std::io::Write) -> anyhow::Result<()> {
     let _span = gix::trace::coarse!("print_sm", path = ?sm.path());
     let state = sm.state()?;
     let mut sm_repo = sm.open()?;
@@ -48,7 +53,10 @@ fn print_sm(sm: Submodule<'_>, out: &mut impl std::io::Write) -> anyhow::Result<
                 repo.head_commit()?
                     .describe()
                     .names(SelectRef::AllRefs)
-                    .format()?
+                    .id_as_fallback(true)
+                    .try_resolve()?
+                    .expect("resolution present if ID can be used as fallback")
+                    .format_with_dirty_suffix(dirty_suffix.map(ToOwned::to_owned))?
                     .to_string()
             }
             None => {

@@ -50,6 +50,7 @@ pub trait ReadData<'a> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod read_data {
     use std::sync::atomic::{AtomicU64, Ordering};
 

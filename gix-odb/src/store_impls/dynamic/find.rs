@@ -1,4 +1,4 @@
-use std::{convert::TryInto, ops::Deref};
+use std::ops::Deref;
 
 use gix_pack::cache::DecodeEntry;
 

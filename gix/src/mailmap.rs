@@ -1,6 +1,7 @@
 pub use gix_mailmap::*;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod load {
     /// The error returned by [`crate::Repository::open_mailmap_into()`].
     #[derive(Debug, thiserror::Error)]

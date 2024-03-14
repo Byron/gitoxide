@@ -89,7 +89,7 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         refs: &[handshake::Ref],
     ) -> io::Result<Action> {
-        self.refs = refs.to_owned();
+        refs.clone_into(&mut self.refs);
         Ok(Action::Continue)
     }
 
@@ -135,7 +135,7 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         _features: &mut Vec<(&str, Option<Cow<'_, str>>)>,
         refs: &[handshake::Ref],
     ) -> io::Result<fetch::Action> {
-        self.refs = refs.to_owned();
+        refs.clone_into(&mut self.refs);
         Ok(fetch::Action::Cancel)
     }
     fn negotiate(

@@ -60,15 +60,21 @@ pub fn walk(
     let (mut current, worktree_root_relative) = assure_no_symlink_in_root(worktree_root, &root)?;
     let mut out = Outcome::default();
     let mut buf = BString::default();
-    let root_info = classify::root(
+    let (root_info, worktree_root_is_repository) = classify::root(
         worktree_root,
         &mut buf,
         worktree_root_relative.as_ref(),
         options,
         &mut ctx,
     )?;
-    if !can_recurse(buf.as_bstr(), root_info, options.for_deletion, delegate) {
-        if buf.is_empty() && !matches!(root_info.disk_kind, Some(entry::Kind::Directory { .. })) {
+    if !can_recurse(
+        buf.as_bstr(),
+        root_info,
+        options.for_deletion,
+        worktree_root_is_repository, /* is root */
+        delegate,
+    ) {
+        if buf.is_empty() && !root_info.disk_kind.map_or(false, |kind| kind.is_dir()) {
             return Err(Error::WorktreeRootIsFile { root: root.to_owned() });
         }
         if options.precompose_unicode {
@@ -141,12 +147,17 @@ pub(super) fn can_recurse(
     rela_path: &BStr,
     info: classify::Outcome,
     for_deletion: Option<ForDeletionMode>,
+    is_root: bool,
     delegate: &mut dyn Delegate,
 ) -> bool {
     if info.disk_kind.map_or(true, |k| !k.is_dir()) {
         return false;
     }
-    delegate.can_recurse(EntryRef::from_outcome(Cow::Borrowed(rela_path), info), for_deletion)
+    delegate.can_recurse(
+        EntryRef::from_outcome(Cow::Borrowed(rela_path), info),
+        for_deletion,
+        is_root,
+    )
 }
 
 /// Possibly emit an entry to `for_each` in case the provided information makes that possible.

@@ -110,6 +110,7 @@ impl Pipeline {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod convert;
 
 pub(crate) mod util;

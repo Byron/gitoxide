@@ -3,10 +3,12 @@
 #![forbid(unsafe_code)]
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod parse;
 pub use parse::function::parse;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod instruction;
 
 /// A refspec with references to the memory it was parsed from.
@@ -32,6 +34,7 @@ mod spec;
 mod write;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod match_group;
 pub use match_group::types::MatchGroup;
 

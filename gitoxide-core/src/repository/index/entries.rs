@@ -25,7 +25,7 @@ pub(crate) mod function {
 
     use gix::{
         bstr::{BStr, BString},
-        repository::IndexPersistedOrInMemory,
+        worktree::IndexPersistedOrInMemory,
         Repository,
     };
 

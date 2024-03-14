@@ -173,7 +173,7 @@ impl State {
                 }
             }
         }
-        gix_features::trace::detail!("stored directories", directories = out.icase_dirs.len());
+        gix_features::trace::debug!(directories = out.icase_dirs.len(), "stored directories");
         out
     }
 

@@ -5,6 +5,7 @@ pub use gix_pathspec::*;
 use crate::{bstr::BStr, AttributeStack, Pathspec, PathspecDetached, Repository};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod init {
     /// The error returned by [`Pathspec::new()`](super::Pathspec::new()).
     #[derive(Debug, thiserror::Error)]
@@ -67,6 +68,13 @@ impl<'repo> Pathspec<'repo> {
             )?,
         )?;
         let cache = needs_cache.then(make_attributes).transpose()?;
+
+        gix_trace::debug!(
+            longest_prefix = ?search.longest_common_directory(),
+            prefix_dir = ?search.prefix_directory(),
+            patterns = ?search.patterns().map(gix_pathspec::Pattern::path).collect::<Vec<_>>()
+        );
+
         Ok(Self {
             repo,
             search,

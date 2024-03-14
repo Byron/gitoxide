@@ -1,7 +1,9 @@
 ///
+#[allow(clippy::empty_docs)]
 pub mod connect;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod file;
 ///
 #[cfg(feature = "http-client")]
@@ -14,6 +16,7 @@ mod request;
 pub use request::RequestWriter;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod ssh;
 
 mod traits;

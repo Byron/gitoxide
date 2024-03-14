@@ -22,7 +22,7 @@ use crate::fixture_path;
 // changes when extracting the data so we need to disable all advanced stat
 // changes and only look at mtime seconds and file size to properly
 // test all code paths (and to trigger racy git).
-const TEST_OPTIONS: index::entry::stat::Options = index::entry::stat::Options {
+pub(super) const TEST_OPTIONS: index::entry::stat::Options = index::entry::stat::Options {
     trust_ctime: false,
     check_stat: false,
     use_nsec: false,
@@ -128,7 +128,9 @@ fn fixture_filtered_detailed(
 }
 
 /// Note that we also reset certain information to assure there is no flakiness - everything regarding race-detection otherwise can cause failures.
-fn records_to_tuple<'index>(records: impl IntoIterator<Item = Record<'index, (), ()>>) -> Vec<Expectation<'index>> {
+pub(super) fn records_to_tuple<'index>(
+    records: impl IntoIterator<Item = Record<'index, (), ()>>,
+) -> Vec<Expectation<'index>> {
     records
         .into_iter()
         .filter_map(|r| deracify_status(r.status).map(|status| (r.relative_path, r.entry_index, status)))
@@ -159,8 +161,8 @@ fn deracify_status(status: EntryStatus) -> Option<EntryStatus> {
 }
 
 #[derive(Clone)]
-struct SubmoduleStatusMock {
-    dirty: bool,
+pub(super) struct SubmoduleStatusMock {
+    pub(super) dirty: bool,
 }
 
 impl SubmoduleStatus for SubmoduleStatusMock {
@@ -172,7 +174,7 @@ impl SubmoduleStatus for SubmoduleStatusMock {
     }
 }
 
-fn to_pathspecs(input: &[&str]) -> Vec<gix_pathspec::Pattern> {
+pub(super) fn to_pathspecs(input: &[&str]) -> Vec<gix_pathspec::Pattern> {
     input
         .iter()
         .map(|pattern| gix_pathspec::parse(pattern.as_bytes(), Default::default()).expect("known to be valid"))
