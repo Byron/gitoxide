@@ -21,6 +21,15 @@ git init submodule-head-changed
   cd m1 && git checkout @~1
 )
 
+git init submodule-head-changed-no-worktree
+(cd submodule-head-changed-no-worktree
+  git submodule add ../module1 m1
+  git commit -m "add submodule"
+
+  (cd m1 && git checkout @~1)
+  rm -Rf m1 && mkdir m1
+)
+
 git init modified-and-untracked
 (cd modified-and-untracked
   git submodule add ../module1 m1

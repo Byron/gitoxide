@@ -63,7 +63,7 @@ mod open {
                         worktree_checkout: false,
                         superproject_configuration: true,
                     },
-                    Some(true),
+                    None,
                 )],
             ),
         ] {
@@ -237,6 +237,39 @@ mod open {
             );
             assert_eq!(status.index_id, status.checked_out_head_id, "the head didn't change");
             assert_eq!(status.changes.as_ref().into_iter().flatten().count(), 1, "1 modified");
+
+            Ok(())
+        }
+
+        #[test]
+        fn changed_head_empty_worktree() -> crate::Result {
+            let repo = repo("submodule-head-changed-no-worktree")?;
+            let sm = repo.submodules()?.into_iter().flatten().next().expect("one submodule");
+
+            let status = sm.status(gix::submodule::config::Ignore::None, false)?;
+            assert_eq!(
+                status.state,
+                gix::submodule::State {
+                    repository_exists: true,
+                    is_old_form: false,
+                    worktree_checkout: false,
+                    superproject_configuration: true,
+                }
+            );
+            assert_eq!(
+                status.is_dirty(),
+                None,
+                "a missing worktree counts as no-dirty, even though the checked out HEAD changed. \
+                 Git does the same, even though as we express it as 'not determined'"
+            );
+            assert_ne!(
+                status.index_id, status.checked_out_head_id,
+                "not considered dirty despite head mismatch"
+            );
+            assert!(
+                status.changes.is_none(),
+                "Detailed changes are never done if there is no worktree"
+            );
 
             Ok(())
         }

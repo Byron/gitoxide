@@ -382,6 +382,9 @@ pub mod status {
                 return Ok(status);
             }
 
+            if !state.worktree_checkout {
+                return Ok(status);
+            }
             let statusses = adjust_options(sm_repo.status(gix_features::progress::Discard)?)
                 .index_worktree_options_mut(|opts| {
                     if ignore == config::Ignore::Untracked {
@@ -408,7 +411,7 @@ pub mod status {
         /// Return `None` if the repository clone or the worktree are missing entirely, which would leave
         /// it to the caller to determine if that's considered dirty or not.
         pub fn is_dirty(&self) -> Option<bool> {
-            if !self.state.worktree_checkout && !self.state.repository_exists {
+            if !self.state.worktree_checkout || !self.state.repository_exists {
                 return None;
             }
             let is_dirty =
