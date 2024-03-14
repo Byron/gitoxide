@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.49.0 (2024-03-14)
+
+<csr-id-39879af6eaf2bf4fe159a5c6371c98d516c4febe/>
 
 ### Chore
 
@@ -20,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 5 calendar days.
+ - 7 commits contributed to the release over the course of 5 calendar days.
  - 18 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1312](https://github.com/Byron/gitoxide/issues/1312)
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1312](https://github.com/Byron/gitoxide/issues/1312)**
     - Assure memory maps are created with `MAP_PRIVATE` ([`88061a1`](https://github.com/Byron/gitoxide/commit/88061a176b2f4b5a377a4cff513979ddb1e306a1))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
     - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
     - Merge pull request #1314 from avoidalone/main ([`5722e3a`](https://github.com/Byron/gitoxide/commit/5722e3aeeba5dd44e38a6cdbb70717a45345307e))
     - Remove repetitive words ([`39879af`](https://github.com/Byron/gitoxide/commit/39879af6eaf2bf4fe159a5c6371c98d516c4febe))

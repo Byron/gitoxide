@@ -1,6 +1,6 @@
 [package]
 name = "gix-object"
-version = "0.41.1"
+version = "0.42.0"
 description = "Immutable and mutable git objects with decoding and encoding support"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
@@ -34,15 +34,15 @@ serde = [
 verbose-object-parsing-errors = ["winnow/std"]
 
 [dependencies]
-gix-features = { version = "^0.38.0", path = "../gix-features", features = [
+gix-features = { version = "^0.38.1", path = "../gix-features", features = [
     "rustsha1",
     "progress",
 ] }
-gix-hash = { version = "^0.14.1", path = "../gix-hash" }
-gix-validate = { version = "^0.8.3", path = "../gix-validate" }
-gix-actor = { version = "^0.30.1", path = "../gix-actor" }
-gix-date = { version = "^0.8.4", path = "../gix-date" }
-gix-utils = { version = "^0.1.10", path = "../gix-utils" }
+gix-hash = { version = "^0.14.2", path = "../gix-hash" }
+gix-validate = { version = "^0.8.4", path = "../gix-validate" }
+gix-actor = { version = "^0.31.0", path = "../gix-actor" }
+gix-date = { version = "^0.8.5", path = "../gix-date" }
+gix-utils = { version = "^0.1.11", path = "../gix-utils" }
 
 itoa = "1.0.1"
 thiserror = "1.0.34"

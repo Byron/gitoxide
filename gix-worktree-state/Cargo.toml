@@ -1,6 +1,6 @@
 [package]
 name = "gix-worktree-state"
-version = "0.8.0"
+version = "0.9.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project implementing setting the worktree to a particular state"
@@ -14,15 +14,15 @@ autotests = false
 doctest = false
 
 [dependencies]
-gix-worktree = { version = "^0.31.0", path = "../gix-worktree", default-features = false, features = ["attributes"] }
-gix-index = { version = "^0.30.0", path = "../gix-index" }
-gix-fs = { version = "^0.10.0", path = "../gix-fs" }
-gix-hash = { version = "^0.14.1", path = "../gix-hash" }
-gix-object = { version = "^0.41.1", path = "../gix-object" }
-gix-glob = { version = "^0.16.1", path = "../gix-glob" }
-gix-path = { version = "^0.10.6", path = "../gix-path" }
-gix-features = { version = "^0.38.0", path = "../gix-features" }
-gix-filter = { version = "^0.10.0", path = "../gix-filter" }
+gix-worktree = { version = "^0.32.0", path = "../gix-worktree", default-features = false, features = ["attributes"] }
+gix-index = { version = "^0.31.0", path = "../gix-index" }
+gix-fs = { version = "^0.10.1", path = "../gix-fs" }
+gix-hash = { version = "^0.14.2", path = "../gix-hash" }
+gix-object = { version = "^0.42.0", path = "../gix-object" }
+gix-glob = { version = "^0.16.2", path = "../gix-glob" }
+gix-path = { version = "^0.10.7", path = "../gix-path" }
+gix-features = { version = "^0.38.1", path = "../gix-features" }
+gix-filter = { version = "^0.11.0", path = "../gix-filter" }
 
 io-close = "0.3.7"
 thiserror = "1.0.26"

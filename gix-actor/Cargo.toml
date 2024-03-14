@@ -1,6 +1,6 @@
 [package]
 name = "gix-actor"
-version = "0.30.1"
+version = "0.31.0"
 description = "A way to identify git actors"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
@@ -18,9 +18,9 @@ doctest = false
 serde = ["dep:serde", "bstr/serde", "gix-date/serde"]
 
 [dependencies]
-gix-features = { version = "^0.38.0", path = "../gix-features", optional = true }
-gix-date = { version = "^0.8.4", path = "../gix-date" }
-gix-utils = { version = "^0.1.10", path = "../gix-utils" }
+gix-features = { version = "^0.38.1", path = "../gix-features", optional = true }
+gix-date = { version = "^0.8.5", path = "../gix-date" }
+gix-utils = { version = "^0.1.11", path = "../gix-utils" }
 
 thiserror = "1.0.38"
 bstr = { version = "1.3.0", default-features = false, features = [

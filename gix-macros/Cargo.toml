@@ -1,6 +1,6 @@
 [package]
 name = "gix-macros"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Proc-macro utilities for gix"
 authors = [

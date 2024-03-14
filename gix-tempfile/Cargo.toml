@@ -1,6 +1,6 @@
 [package]
 name = "gix-tempfile"
-version = "13.1.0"
+version = "13.1.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A tempfile implementation with a global registry to assure cleanup"
@@ -29,7 +29,7 @@ doctest = false
 test = true
 
 [dependencies]
-gix-fs = { version = "^0.10.0", path = "../gix-fs" }
+gix-fs = { version = "^0.10.1", path = "../gix-fs" }
 parking_lot = "0.12.1"
 dashmap = { version = "5.1.0", optional = true }
 once_cell = { version = "1.8.0", default-features = false, features = ["race", "std"] }
