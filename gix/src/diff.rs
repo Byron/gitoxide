@@ -105,7 +105,7 @@ mod utils {
     ///
     /// `repo` is used to obtain the needed configuration values.
     /// `mode` determines how the diffable files will look like, and also how fast, in average, these conversions are.
-    /// `attr_stack` is for accessing `.gitattributes` for knowing how to apply filters. Now that it's typically adjusted based on the
+    /// `attr_stack` is for accessing `.gitattributes` for knowing how to apply filters. Know that it's typically adjusted based on the
     /// `roots` - if there are no worktree roots, `.gitattributes` are also not usually read from worktrees.
     /// `roots` provide information about where to get diffable data from, so source and destination can either be sourced from
     /// a worktree, or from the object database, or both.
