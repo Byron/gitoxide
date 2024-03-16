@@ -176,11 +176,11 @@ impl Search {
                             matches!(pattern.path.get(common_len), None | Some(&b'/'))
                         } else {
                             relative_path.get(common_len) == Some(&b'/')
-                        }
+                        };
                     }
                 }
             }
-            if is_match {
+            if is_match && (!pattern.is_excluded() || pattern.always_matches()) {
                 return !pattern.is_excluded();
             }
         }
@@ -191,7 +191,7 @@ impl Search {
     /// Returns `true` if `relative_path` matches the prefix of this pathspec.
     ///
     /// For example, the relative path `d` matches `d/`, `d*/`, `d/` and `d/*`, but not `d/d/*` or `dir`.
-    /// When `leading` is `true`, then `d` matches `d/d` as well. Thus `relative_path` must may be
+    /// When `leading` is `true`, then `d` matches `d/d` as well. Thus, `relative_path` must may be
     /// partially included in `pathspec`, otherwise it has to be fully included.
     pub fn directory_matches_prefix(&self, relative_path: &BStr, leading: bool) -> bool {
         if self.patterns.is_empty() {
@@ -233,7 +233,7 @@ impl Search {
                     };
                 }
             }
-            if is_match {
+            if is_match && (!pattern.is_excluded() || pattern.always_matches()) {
                 return !pattern.is_excluded();
             }
         }
