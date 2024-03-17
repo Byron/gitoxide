@@ -1,5 +1,6 @@
 use gix_dir::{walk, EntryRef};
 use pretty_assertions::assert_eq;
+use std::sync::atomic::AtomicBool;
 
 use crate::walk_utils::{
     collect, collect_filtered, collect_filtered_with_cwd, entry, entry_dirstat, entry_nokind, entry_nomatch, entryps,
@@ -149,6 +150,24 @@ fn root_may_be_a_symlink_if_it_is_the_worktree() -> crate::Result {
         "it traversed the directory normally - without this capability, symlinked repos can't be traversed"
     );
     Ok(())
+}
+
+#[test]
+fn should_interrupt_works_even_in_empty_directories() {
+    let root = fixture("empty");
+    let should_interrupt = AtomicBool::new(true);
+    let err = try_collect_filtered_opts_collect(
+        &root,
+        None,
+        |keep, ctx| walk(&root, ctx, gix_dir::walk::Options { ..options() }, keep),
+        None::<&str>,
+        Options {
+            should_interrupt: Some(&should_interrupt),
+            ..Default::default()
+        },
+    )
+    .unwrap_err();
+    assert!(matches!(err, gix_dir::walk::Error::Interrupted));
 }
 
 #[test]

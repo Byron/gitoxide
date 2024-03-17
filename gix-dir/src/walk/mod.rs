@@ -1,6 +1,7 @@
 use crate::{entry, EntryRef};
 use bstr::BStr;
 use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
 
 /// A type returned by the [`Delegate::emit()`] as passed to [`walk()`](function::walk()).
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -195,6 +196,10 @@ pub struct Options {
 
 /// All information that is required to perform a dirwalk, and classify paths properly.
 pub struct Context<'a> {
+    /// If not `None`, it will be checked before entering any directory to trigger early interruption.
+    ///
+    /// If this flag is `true` at any point in the iteration, it will abort with an error.
+    pub should_interrupt: Option<&'a AtomicBool>,
     /// The `git_dir` of the parent repository, after a call to [`gix_path::realpath()`].
     ///
     /// It's used to help us differentiate our own `.git` directory from nested unrelated repositories,
@@ -269,6 +274,8 @@ pub struct Outcome {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Interrupted")]
+    Interrupted,
     #[error("Worktree root at '{}' is not a directory", root.display())]
     WorktreeRootIsFile { root: PathBuf },
     #[error("Traversal root '{}' contains relative path components and could not be normalized", root.display())]

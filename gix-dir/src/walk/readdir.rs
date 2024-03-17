@@ -1,6 +1,7 @@
 use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::Ordering;
 
 use crate::entry::{PathspecMatch, Status};
 use crate::walk::function::{can_recurse, emit_entry};
@@ -23,6 +24,9 @@ pub(super) fn recursive(
     out: &mut Outcome,
     state: &mut State,
 ) -> Result<(Action, bool), Error> {
+    if ctx.should_interrupt.map_or(false, |flag| flag.load(Ordering::Relaxed)) {
+        return Err(Error::Interrupted);
+    }
     out.read_dir_calls += 1;
     let entries = gix_fs::read_dir(current, opts.precompose_unicode).map_err(|err| Error::ReadDir {
         path: current.to_owned(),
