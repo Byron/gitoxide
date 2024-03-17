@@ -183,6 +183,14 @@ pub struct Options {
     pub emit_empty_directories: bool,
     /// If `None`, no entries inside of collapsed directories are emitted. Otherwise, act as specified by `Some(mode)`.
     pub emit_collapsed: Option<CollapsedEntriesEmissionMode>,
+    /// This is a `libgit2` compatibility flag, and if enabled, symlinks that point to directories will be considered a directory
+    /// when checking for exclusion.
+    ///
+    /// This is relevant if `src2` points to `src`, and is excluded with `src2/`. If `false`, `src2` will not be excluded,
+    /// if `true` it will be excluded as the symlink is considered a directory.
+    ///
+    /// In other words, for Git compatibility this flag should be `false`, the default, for `git2` compatibility it should be `true`.
+    pub symlinks_to_directories_are_ignored_like_directories: bool,
 }
 
 /// All information that is required to perform a dirwalk, and classify paths properly.

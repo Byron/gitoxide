@@ -134,6 +134,7 @@ pub fn path(
         emit_ignored,
         for_deletion,
         classify_untracked_bare_repositories,
+        symlinks_to_directories_are_ignored_like_directories,
         ..
     }: Options,
     ctx: &mut Context<'_>,
@@ -199,6 +200,15 @@ pub fn path(
         .pattern_matching_relative_path(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.pathspec_attributes)
         .map(Into::into);
 
+    let is_dir = if symlinks_to_directories_are_ignored_like_directories
+        && ctx.excludes.is_some()
+        && kind.map_or(false, |ft| ft == entry::Kind::Symlink)
+    {
+        path.metadata().ok().map(|md| md.is_dir()).or(Some(false))
+    } else {
+        kind.map(|ft| ft.is_dir())
+    };
+
     let mut maybe_upgrade_to_repository = |current_kind, find_harder: bool| {
         if recurse_repositories {
             return current_kind;
@@ -245,7 +255,7 @@ pub fn path(
         .as_mut()
         .map_or(Ok(None), |stack| {
             stack
-                .at_entry(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.objects)
+                .at_entry(rela_path.as_bstr(), is_dir, ctx.objects)
                 .map(|platform| platform.excluded_kind())
         })
         .map_err(Error::ExcludesAccess)?

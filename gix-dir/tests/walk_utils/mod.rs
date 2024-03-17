@@ -31,6 +31,7 @@ pub fn options_emit_all() -> walk::Options {
         emit_untracked: walk::EmissionMode::Matching,
         emit_empty_directories: true,
         emit_collapsed: None,
+        symlinks_to_directories_are_ignored_like_directories: false,
     }
 }
 

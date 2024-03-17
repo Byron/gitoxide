@@ -18,6 +18,81 @@ use gix_ignore::Kind::*;
 
 #[test]
 #[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
+fn symlink_to_dir_can_be_excluded() -> crate::Result {
+    let root = fixture_in("many-symlinks", "excluded-symlinks-to-dir");
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                ..options()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 9,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Untracked, Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "by default, symlinks are counted as files only, even if they point to a directory, when handled by the exclude machinery"
+    );
+
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                symlinks_to_directories_are_ignored_like_directories: true,
+                ..options()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 9,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Ignored(Expendable), Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "with libgit2 compatibility enabled, symlinks to directories are treated like a directory, not symlink"
+    );
+    Ok(())
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
 fn root_may_not_lead_through_symlinks() -> crate::Result {
     for (name, intermediate, expected) in [
         ("immediate-breakout-symlink", "", 0),
