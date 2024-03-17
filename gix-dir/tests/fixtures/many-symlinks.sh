@@ -41,3 +41,5 @@ EOF
   ln -s src/file file1
   ln -s src/file file2
 )
+
+ln -s excluded-symlinks-to-dir worktree-root-is-symlink

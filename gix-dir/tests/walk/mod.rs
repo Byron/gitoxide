@@ -119,6 +119,39 @@ fn root_may_not_lead_through_symlinks() -> crate::Result {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
+fn root_may_be_a_symlink_if_it_is_the_worktree() -> crate::Result {
+    let root = fixture_in("many-symlinks", "worktree-root-is-symlink");
+    let ((_out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                symlinks_to_directories_are_ignored_like_directories: true,
+                ..options()
+            },
+            keep,
+        )
+    });
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Ignored(Expendable), Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "it traversed the directory normally - without this capability, symlinked repos can't be traversed"
+    );
+    Ok(())
+}
+
+#[test]
 fn empty_root() -> crate::Result {
     let root = fixture("empty");
     let ((out, _root), entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options(), keep));

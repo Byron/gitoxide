@@ -69,9 +69,16 @@ pub fn walk(
     )?;
     if !can_recurse(
         buf.as_bstr(),
-        root_info,
+        if root == worktree_root && root_info.disk_kind == Some(entry::Kind::Symlink) && current.is_dir() {
+            classify::Outcome {
+                disk_kind: Some(entry::Kind::Directory),
+                ..root_info
+            }
+        } else {
+            root_info
+        },
         options.for_deletion,
-        worktree_root_is_repository, /* is root */
+        worktree_root_is_repository,
         delegate,
     ) {
         if buf.is_empty() && !root_info.disk_kind.map_or(false, |kind| kind.is_dir()) {
@@ -147,16 +154,17 @@ pub(super) fn can_recurse(
     rela_path: &BStr,
     info: classify::Outcome,
     for_deletion: Option<ForDeletionMode>,
-    is_root: bool,
+    worktree_root_is_repository: bool,
     delegate: &mut dyn Delegate,
 ) -> bool {
-    if info.disk_kind.map_or(true, |k| !k.is_dir()) {
+    let is_dir = info.disk_kind.map_or(false, |k| k.is_dir());
+    if !is_dir {
         return false;
     }
     delegate.can_recurse(
         EntryRef::from_outcome(Cow::Borrowed(rela_path), info),
         for_deletion,
-        is_root,
+        worktree_root_is_repository,
     )
 }
 
