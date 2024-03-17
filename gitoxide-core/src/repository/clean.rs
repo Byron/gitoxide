@@ -86,6 +86,7 @@ pub(crate) mod function {
             } else {
                 Vec::new()
             },
+            &gix::interrupt::IS_INTERRUPTED,
             options,
             &mut collect,
         )?;
