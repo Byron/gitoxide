@@ -177,8 +177,8 @@ pub use types::{Pathspec, PathspecDetached, Submodule};
 #[allow(clippy::empty_docs)]
 pub mod clone;
 pub mod commit;
-#[cfg(feature = "dirwalk")]
 ///
+#[cfg(feature = "dirwalk")]
 #[allow(clippy::empty_docs)]
 pub mod dirwalk;
 pub mod head;
@@ -191,6 +191,8 @@ pub mod repository;
 #[cfg(feature = "attributes")]
 pub mod submodule;
 pub mod tag;
+#[cfg(any(feature = "dirwalk", feature = "status"))]
+pub(crate) mod util;
 
 ///
 #[allow(clippy::empty_docs)]

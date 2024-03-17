@@ -1,4 +1,4 @@
-use crate::status::{index_worktree, OwnedOrStaticAtomic, Platform, Submodule, UntrackedFiles};
+use crate::status::{index_worktree, OwnedOrStaticAtomicBool, Platform, Submodule, UntrackedFiles};
 use std::sync::atomic::AtomicBool;
 
 /// Builder
@@ -45,7 +45,7 @@ where
     ///
     /// If it is `true`, the iteration will stop immediately.
     pub fn should_interrupt_shared(mut self, should_interrupt: &'static AtomicBool) -> Self {
-        self.should_interrupt = Some(OwnedOrStaticAtomic::Shared(should_interrupt));
+        self.should_interrupt = Some(OwnedOrStaticAtomicBool::Shared(should_interrupt));
         self
     }
 
@@ -53,7 +53,7 @@ where
     ///
     /// If it is `true`, the iteration will stop immediately.
     pub fn should_interrupt_owned(mut self, should_interrupt: std::sync::Arc<AtomicBool>) -> Self {
-        self.should_interrupt = Some(OwnedOrStaticAtomic::Owned {
+        self.should_interrupt = Some(OwnedOrStaticAtomicBool::Owned {
             flag: should_interrupt,
             private: false,
         });

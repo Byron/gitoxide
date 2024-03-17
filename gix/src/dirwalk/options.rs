@@ -1,25 +1,5 @@
+use crate::dirwalk::Options;
 use gix_dir::walk::{CollapsedEntriesEmissionMode, EmissionMode, ForDeletionMode};
-
-/// Options for use in the [`Repository::dirwalk()`](crate::Repository::dirwalk()) function.
-///
-/// Note that all values start out disabled.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct Options {
-    precompose_unicode: bool,
-    ignore_case: bool,
-
-    recurse_repositories: bool,
-    emit_pruned: bool,
-    emit_ignored: Option<EmissionMode>,
-    for_deletion: Option<ForDeletionMode>,
-    emit_tracked: bool,
-    emit_untracked: EmissionMode,
-    emit_empty_directories: bool,
-    classify_untracked_bare_repositories: bool,
-    emit_collapsed: Option<CollapsedEntriesEmissionMode>,
-    symlinks_to_directories_are_ignored_like_directories: bool,
-    pub(crate) empty_patterns_match_prefix: bool,
-}
 
 /// Construction
 impl Options {
