@@ -87,6 +87,7 @@ pub(super) mod function {
                                 gix_dir::walk(
                                     worktree,
                                     gix_dir::walk::Context {
+                                        should_interrupt: Some(ctx.should_interrupt),
                                         git_dir_realpath: dirwalk_ctx.git_dir_realpath,
                                         current_dir: dirwalk_ctx.current_dir,
                                         index,
