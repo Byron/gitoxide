@@ -44,32 +44,31 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
         * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
     * [x] rev-parse
        - [ ] handle relative paths as relative to working directory
-       - [ ] handle `upstream` and `push` resolution.
+       - [x] handle `upstream` and `push` resolution.
     * [x] rev-walk
         * [x] include tips
         * [ ] exclude commits
     * [x] instantiation
     * [x] access to refs and objects
+    * [x] create a pathspec-search from a set of strings
+        - [ ] allow to construct Pathspecs using data structure instead of enforcing them to be passed as strings.
     * **credentials**
         * [x] run `git credential` directly
         * [x] use credential helper configuration and to obtain credentials with `gix_credentials::helper::Cascade`
-    * **config**
-        * [ ] facilities to apply the [url-match](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httplturlgt) algorithm and to
-          [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.
     * **traverse**
         * [x] commit graphs
         * [ ] make [git-notes](https://git-scm.com/docs/git-notes) accessible
         * [x] tree entries
     * **diffs/changes**
         * [x] tree with other tree
-            * [ ] respect case-sensitivity of host filesystem.
+            * [x] respect case-sensitivity of host filesystem.
             * [x] a way to access various diff related settings or use them
-            * [ ] respect `diff.*.textconv`, `diff.*.cachetextconv` and external diff viewers with `diff.*.command`,
+            * [x] respect `diff.*.textconv`, `diff.*.cachetextconv` and external diff viewers with `diff.*.command`,
               [along with support for reading `diff` gitattributes](https://github.com/git/git/blob/73876f4861cd3d187a4682290ab75c9dccadbc56/Documentation/gitattributes.txt#L699:L699).
             * **rewrite tracking**
                 * **deviation** - git keeps up to four candidates whereas we use the first-found candidate that matches the similarity percentage.
                   This can lead to different sources being found. As such, we also don't consider the filename at all.
-                * [ ] handle binary files correctly, and apply filters for that matter
+                * [x] handle binary files correctly, and apply filters for that matter
                 * [x] computation limit with observable reduction of precision when it is hit, for copies and renames separately
                 * **by identity**
                     * [x] renames (sym-links are only ever compared by identity)
@@ -78,9 +77,9 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
                     * [x] renames
                     * [x] copies
                 * [x] 'find-copies-harder' - find copies with the source being the entire tree.
-        * [ ] tree or index with working tree
-             - [ ] rename tracking
-             - [ ] submodule status (recursive)
+        * [x] tree or index with working tree
+             - [x] rename tracking
+             - [x] submodule status (recursive)
         * [x] diffs between modified blobs with various algorithms
         * [ ] tree with index (via index-from-tree and index)
             - [ ] rename tracking
@@ -152,7 +151,10 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
         * [x] read the primitive types `boolean`, `integer`, `string`
         * [x] read and interpolate trusted paths
         * [x] low-level API for more elaborate access to all details of `git-config` files
-        * [ ] a way to make changes to individual configuration files
+        * [ ] a way to make changes to individual configuration files in memory
+        * [ ] write configuration back
+        * [ ] auto-refresh configuration values after they changed on disk
+        * [ ] facilities to apply the [url-match](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httplturlgt) algorithm and to [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.
     * [x] mailmap
     * [x] object replacements (`git replace`)
     * [x] read git configuration
@@ -459,7 +461,9 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 ### gix-pathspec
 * [x] parse single
 * [ ] parse file line by line (with or without quoting, NUL and LF/CRLF line separation) (see `--pathspec-from-file` and `--pathspec-file-nul`)
-* [ ] matching of paths with git-attributes support
+* [x] matching of paths with git-attributes support
+* [ ] programmatic creation of pathspecs
+* [ ] `TryIntoPathspec` trait to parse strings or accept ready-made pathspecs as well, for use in APIs
 
 ### gix-refspec
 * [x] parse
