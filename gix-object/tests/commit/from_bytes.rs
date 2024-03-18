@@ -9,6 +9,33 @@ use crate::{
 };
 
 #[test]
+fn invalid_timestsamp() {
+    let actor = gix_actor::SignatureRef {
+        name: b"Name".as_bstr(),
+        email: b"name@example.com".as_bstr(),
+        time: Time {
+            seconds: 1312735823,
+            offset: 0,
+            sign: Sign::Plus,
+        },
+    };
+    assert_eq!(
+        CommitRef::from_bytes(&fixture_name("commit", "invalid-timestamp.txt"))
+            .expect("auto-correct invalid timestamp by discarding it (time is still valid UTC)"),
+        CommitRef {
+            tree: b"7989dfb2ec2f41914611a22fb30bbc2b3849df9a".as_bstr(),
+            parents: [b"8845ae683e2688bc619baade49510c17e978518f".as_bstr()].into(),
+            author: actor,
+            committer: actor,
+            encoding: None,
+            message: b"edit changelog to mention about x_sendfile_header default change".as_bstr(),
+            extra_headers: vec![]
+        },
+        "the offset of the actor is null, leaving the UTC time"
+    );
+}
+
+#[test]
 fn unsigned() -> crate::Result {
     assert_eq!(
         CommitRef::from_bytes(&fixture_name("commit", "unsigned.txt"))?,
