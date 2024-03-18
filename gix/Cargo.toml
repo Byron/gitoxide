@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT OR Apache-2.0"
-version = "0.60.0"
+version = "0.61.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*"]
@@ -254,13 +254,13 @@ gix-sec = { version = "^0.10.6", path = "../gix-sec" }
 gix-date = { version = "^0.8.5", path = "../gix-date" }
 gix-refspec = { version = "^0.23.0", path = "../gix-refspec" }
 gix-filter = { version = "^0.11.0", path = "../gix-filter", optional = true }
-gix-dir = { version = "^0.2.0", path = "../gix-dir", optional = true }
+gix-dir = { version = "^0.3.0", path = "../gix-dir", optional = true }
 
 gix-config = { version = "^0.36.0", path = "../gix-config" }
 gix-odb = { version = "^0.59.0", path = "../gix-odb" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-gix-object = { version = "^0.42.0", path = "../gix-object" }
-gix-actor = { version = "^0.31.0", path = "../gix-actor" }
+gix-object = { version = "^0.42.1", path = "../gix-object" }
+gix-actor = { version = "^0.31.1", path = "../gix-actor" }
 gix-pack = { version = "^0.49.0", path = "../gix-pack", default-features = false, features = ["object-cache-dynamic"] }
 gix-revision = { version = "^0.27.0", path = "../gix-revision", default-features = false }
 gix-revwalk = { version = "^0.13.0", path = "../gix-revwalk" }
@@ -277,16 +277,16 @@ gix-trace = { version = "^0.1.8", path = "../gix-trace" }
 gix-glob = { version = "^0.16.2", path = "../gix-glob" }
 gix-credentials = { version = "^0.24.2", path = "../gix-credentials", optional = true }
 gix-prompt = { version = "^0.8.4", path = "../gix-prompt", optional = true }
-gix-index = { version = "^0.31.0", path = "../gix-index", optional = true }
+gix-index = { version = "^0.31.1", path = "../gix-index", optional = true }
 gix-attributes = { version = "^0.22.2", path = "../gix-attributes", optional = true }
 gix-ignore = { version = "^0.11.2", path = "../gix-ignore", optional = true }
 gix-worktree = { version = "^0.32.0", path = "../gix-worktree", optional = true, default-features = false }
 gix-worktree-state = { version = "^0.9.0", path = "../gix-worktree-state", optional = true }
 gix-hashtable = { version = "^0.5.2", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.24.2", path = "../gix-commitgraph" }
-gix-pathspec = { version = "^0.7.1", path = "../gix-pathspec", optional = true }
+gix-pathspec = { version = "^0.7.2", path = "../gix-pathspec", optional = true }
 gix-submodule = { version = "^0.10.0", path = "../gix-submodule", optional = true }
-gix-status = { version = "^0.7.0", path = "../gix-status", optional = true, features = ["worktree-rewrites"] }
+gix-status = { version = "^0.8.0", path = "../gix-status", optional = true, features = ["worktree-rewrites"] }
 gix-command = { version = "^0.3.6", path = "../gix-command", optional = true }
 
 gix-worktree-stream = { version = "^0.11.0", path = "../gix-worktree-stream", optional = true }
