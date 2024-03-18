@@ -62,6 +62,23 @@ bitflags! {
 impl Flags {
     /// Return the stage as extracted from the bits of this instance.
     pub fn stage(&self) -> Stage {
+        match self.stage_raw() {
+            0 => Stage::Unconflicted,
+            1 => Stage::Base,
+            2 => Stage::Ours,
+            3 => Stage::Theirs,
+            _ => unreachable!("BUG: Flags::STAGE_MASK is two bits, whose 4 possible values we have covered"),
+        }
+    }
+
+    /// Return an entry's stage as raw number between 0 and 4.
+    /// Possible values are:
+    ///
+    /// * 0 = no conflict,
+    /// * 1 = base,
+    /// * 2 = ours,
+    /// * 3 = theirs
+    pub fn stage_raw(&self) -> u32 {
         (*self & Flags::STAGE_MASK).bits() >> 12
     }
 
