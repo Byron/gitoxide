@@ -45,7 +45,7 @@ mod config;
 pub mod diff;
 ///
 #[cfg(feature = "dirwalk")]
-pub mod dirwalk;
+mod dirwalk;
 ///
 #[cfg(feature = "attributes")]
 pub mod filter;

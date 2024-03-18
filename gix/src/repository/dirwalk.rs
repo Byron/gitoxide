@@ -1,37 +1,8 @@
-use crate::bstr::BStr;
-use crate::{config, dirwalk, AttributeStack, Pathspec, Repository};
-use std::path::PathBuf;
-
-/// The error returned by [dirwalk()](Repository::dirwalk()).
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error(transparent)]
-    Walk(#[from] gix_dir::walk::Error),
-    #[error("A working tree is required to perform a directory walk")]
-    MissingWorkDir,
-    #[error(transparent)]
-    Excludes(#[from] config::exclude_stack::Error),
-    #[error(transparent)]
-    Pathspec(#[from] crate::pathspec::init::Error),
-    #[error(transparent)]
-    Prefix(#[from] gix_path::realpath::Error),
-    #[error(transparent)]
-    FilesystemOptions(#[from] config::boolean::Error),
-}
-
-/// The outcome of the [dirwalk()](Repository::dirwalk).
-pub struct Outcome<'repo> {
-    /// The excludes stack used for the dirwalk, for access of `.gitignore` information.
-    pub excludes: AttributeStack<'repo>,
-    /// The pathspecs used to guide the operation,
-    pub pathspec: Pathspec<'repo>,
-    /// The root actually being used for the traversal, and useful to transform the paths returned for the user.
-    /// It's always within the [`work-dir`](Repository::work_dir).
-    pub traversal_root: PathBuf,
-    /// The actual result of the dirwalk.
-    pub dirwalk: gix_dir::walk::Outcome,
-}
+use crate::bstr::{BStr, BString};
+use crate::util::OwnedOrStaticAtomicBool;
+use crate::worktree::IndexPersistedOrInMemory;
+use crate::{config, dirwalk, Repository};
+use std::sync::atomic::AtomicBool;
 
 impl Repository {
     /// Return default options suitable for performing a directory walk on this repository.
@@ -42,7 +13,8 @@ impl Repository {
     }
 
     /// Perform a directory walk configured with `options` under control of the `delegate`. Use `patterns` to
-    /// further filter entries.
+    /// further filter entries. `should_interrupt` is polled to see if an interrupt is requested, causing an
+    /// error to be returned instead.
     ///
     /// The `index` is used to determine if entries are tracked, and for excludes and attributes
     /// lookup. Note that items will only count as tracked if they have the [`gix_index::entry::Flags::UPTODATE`]
@@ -53,11 +25,12 @@ impl Repository {
         &self,
         index: &gix_index::State,
         patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
+        should_interrupt: &AtomicBool,
         options: dirwalk::Options,
         delegate: &mut dyn gix_dir::walk::Delegate,
-    ) -> Result<Outcome<'_>, Error> {
+    ) -> Result<dirwalk::Outcome<'_>, dirwalk::Error> {
         let _span = gix_trace::coarse!("gix::dirwalk");
-        let workdir = self.work_dir().ok_or(Error::MissingWorkDir)?;
+        let workdir = self.work_dir().ok_or(dirwalk::Error::MissingWorkDir)?;
         let mut excludes = self.excludes(
             index,
             None,
@@ -78,6 +51,7 @@ impl Repository {
         let (outcome, traversal_root) = gix_dir::walk(
             workdir,
             gix_dir::walk::Context {
+                should_interrupt: Some(should_interrupt),
                 git_dir_realpath: git_dir_realpath.as_ref(),
                 current_dir: self.current_dir(),
                 index,
@@ -101,11 +75,32 @@ impl Repository {
             delegate,
         )?;
 
-        Ok(Outcome {
+        Ok(dirwalk::Outcome {
             dirwalk: outcome,
             traversal_root,
             excludes,
             pathspec,
         })
+    }
+
+    /// Create an iterator over a running traversal, which stops if the iterator is dropped. All arguments
+    /// are the same as in [`dirwalk()`](Self::dirwalk).
+    ///
+    /// `should_interrupt` should be set to `Default::default()` if it is supposed to be unused.
+    /// Otherwise, it can be created by passing a `&'static AtomicBool`, `&Arc<AtomicBool>` or `Arc<AtomicBool>`.
+    pub fn dirwalk_iter(
+        &self,
+        index: impl Into<IndexPersistedOrInMemory>,
+        patterns: impl IntoIterator<Item = impl Into<BString>>,
+        should_interrupt: OwnedOrStaticAtomicBool,
+        options: dirwalk::Options,
+    ) -> Result<dirwalk::Iter, dirwalk::iter::Error> {
+        dirwalk::Iter::new(
+            self,
+            index.into(),
+            patterns.into_iter().map(Into::into).collect(),
+            should_interrupt,
+            options,
+        )
     }
 }

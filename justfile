@@ -181,6 +181,7 @@ unit-tests:
     cargo test -p gix-protocol --features blocking-client
     cargo test -p gix-protocol --features async-client
     cargo test -p gix --no-default-features
+    cargo test -p gix --no-default-features --features basic,extras,comfort
     cargo test -p gix --features async-network-client
     cargo test -p gix --features blocking-network-client
     cargo test -p gitoxide-core --lib

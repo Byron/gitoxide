@@ -1,24 +1,5 @@
+use crate::dirwalk::Options;
 use gix_dir::walk::{CollapsedEntriesEmissionMode, EmissionMode, ForDeletionMode};
-
-/// Options for use in the [`Repository::dirwalk()`](crate::Repository::dirwalk()) function.
-///
-/// Note that all values start out disabled.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct Options {
-    precompose_unicode: bool,
-    ignore_case: bool,
-
-    recurse_repositories: bool,
-    emit_pruned: bool,
-    emit_ignored: Option<EmissionMode>,
-    for_deletion: Option<ForDeletionMode>,
-    emit_tracked: bool,
-    emit_untracked: EmissionMode,
-    emit_empty_directories: bool,
-    classify_untracked_bare_repositories: bool,
-    emit_collapsed: Option<CollapsedEntriesEmissionMode>,
-    pub(crate) empty_patterns_match_prefix: bool,
-}
 
 /// Construction
 impl Options {
@@ -36,6 +17,7 @@ impl Options {
             classify_untracked_bare_repositories: false,
             emit_collapsed: None,
             empty_patterns_match_prefix: false,
+            symlinks_to_directories_are_ignored_like_directories: false,
         }
     }
 }
@@ -54,6 +36,8 @@ impl From<Options> for gix_dir::walk::Options {
             emit_empty_directories: v.emit_empty_directories,
             classify_untracked_bare_repositories: v.classify_untracked_bare_repositories,
             emit_collapsed: v.emit_collapsed,
+            symlinks_to_directories_are_ignored_like_directories: v
+                .symlinks_to_directories_are_ignored_like_directories,
         }
     }
 }
@@ -178,6 +162,25 @@ impl Options {
     /// Like [`emit_collapsed()`](Self::emit_collapsed), but only requires a mutably borrowed instance.
     pub fn set_emit_collapsed(&mut self, value: Option<CollapsedEntriesEmissionMode>) -> &mut Self {
         self.emit_collapsed = value;
+        self
+    }
+
+    /// This is a `libgit2` compatibility flag, and if enabled, symlinks that point to directories will be considered a directory
+    /// when checking for exclusion.
+    ///
+    /// This is relevant if `src2` points to `src`, and is excluded with `src2/`. If `false`, `src2` will not be excluded,
+    /// if `true` it will be excluded as the symlink is considered a directory.
+    ///
+    /// In other words, for Git compatibility this flag should be `false`, the default, for `git2` compatibility it should be `true`.
+    pub fn symlinks_to_directories_are_ignored_like_directories(&mut self, toggle: bool) -> &mut Self {
+        self.symlinks_to_directories_are_ignored_like_directories = toggle;
+        self
+    }
+
+    /// Like [`symlinks_to_directories_are_ignored_like_directories()`](Self::symlinks_to_directories_are_ignored_like_directories),
+    /// but only requires a mutably borrowed instance.
+    pub fn set_symlinks_to_directories_are_ignored_like_directories(&mut self, value: bool) -> &mut Self {
+        self.symlinks_to_directories_are_ignored_like_directories = value;
         self
     }
 }

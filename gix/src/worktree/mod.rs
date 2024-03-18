@@ -24,11 +24,25 @@ pub type Index = gix_fs::SharedFileSnapshot<gix_index::File>;
 #[cfg(feature = "index")]
 pub enum IndexPersistedOrInMemory {
     /// The index as loaded from disk, and shared across clones of the owning `Repository`.
-    Persisted(crate::worktree::Index),
+    Persisted(Index),
     /// A temporary index as created from the `HEAD^{tree}`, with the file path set to the place where it would be stored naturally.
     ///
     /// Note that unless saved explicitly, it will not persist.
     InMemory(gix_index::File),
+}
+
+#[cfg(feature = "index")]
+impl From<Index> for IndexPersistedOrInMemory {
+    fn from(value: Index) -> Self {
+        IndexPersistedOrInMemory::Persisted(value)
+    }
+}
+
+#[cfg(feature = "index")]
+impl From<gix_index::File> for IndexPersistedOrInMemory {
+    fn from(value: gix_index::File) -> Self {
+        IndexPersistedOrInMemory::InMemory(value)
+    }
 }
 
 /// A stand-in to a worktree as result of a worktree iteration.

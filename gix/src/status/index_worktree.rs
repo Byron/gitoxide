@@ -297,7 +297,7 @@ pub struct Iter {
         std::thread::JoinHandle<Result<iter::Outcome, crate::status::index_worktree::Error>>,
     )>,
     #[cfg(feature = "parallel")]
-    should_interrupt: crate::status::OwnedOrStaticAtomic,
+    should_interrupt: crate::status::OwnedOrStaticAtomicBool,
     /// Without parallelization, the iterator has to buffer all changes in advance.
     #[cfg(not(feature = "parallel"))]
     items: std::vec::IntoIter<iter::Item>,
@@ -744,10 +744,17 @@ pub mod iter {
         }
     }
 
+    /// Access
     impl super::Iter {
         /// Return the outcome of the iteration, or `None` if the iterator isn't fully consumed.
         pub fn outcome_mut(&mut self) -> Option<&mut Outcome> {
             self.out.as_mut()
+        }
+
+        /// Turn the iterator into the iteration outcome, which is `None` on error or if the iteration
+        /// isn't complete.
+        pub fn into_outcome(mut self) -> Option<Outcome> {
+            self.out.take()
         }
     }
 
@@ -781,28 +788,7 @@ pub mod iter {
     #[cfg(feature = "parallel")]
     impl Drop for super::Iter {
         fn drop(&mut self) {
-            use crate::status::OwnedOrStaticAtomic;
-            let Some((rx, handle)) = self.rx_and_join.take() else {
-                return;
-            };
-            let prev = self.should_interrupt.swap(true, std::sync::atomic::Ordering::Relaxed);
-            let undo = match &self.should_interrupt {
-                OwnedOrStaticAtomic::Shared(flag) => *flag,
-                OwnedOrStaticAtomic::Owned { flag, private: false } => flag.as_ref(),
-                OwnedOrStaticAtomic::Owned { private: true, .. } => {
-                    // Leak the handle to let it shut down in the background, so drop returns more quickly.
-                    drop((rx, handle));
-                    return;
-                }
-            };
-            // Wait until there is time to respond before we undo the change.
-            handle.join().ok();
-            undo.fetch_update(
-                std::sync::atomic::Ordering::SeqCst,
-                std::sync::atomic::Ordering::SeqCst,
-                |current| current.then_some(prev),
-            )
-            .ok();
+            crate::util::parallel_iter_drop(self.rx_and_join.take(), &self.should_interrupt);
         }
     }
 

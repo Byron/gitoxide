@@ -136,6 +136,47 @@ fn no_pathspecs_match_everything() -> crate::Result {
 }
 
 #[test]
+fn included_directory_and_excluded_subdir_top_level_with_prefix() -> crate::Result {
+    let mut search = gix_pathspec::Search::from_specs(pathspecs(&[":/foo", ":!/foo/target/"]), None, Path::new("foo"))?;
+    let m = search
+        .pattern_matching_relative_path("foo".into(), Some(true), &mut no_attrs)
+        .expect("matches");
+    assert_eq!(m.kind, Verbatim);
+
+    let m = search
+        .pattern_matching_relative_path("foo/bar".into(), Some(false), &mut no_attrs)
+        .expect("matches");
+    assert_eq!(m.kind, Prefix);
+
+    let m = search
+        .pattern_matching_relative_path("foo/target".into(), Some(false), &mut no_attrs)
+        .expect("matches");
+    assert_eq!(m.kind, Prefix, "files named `target` are allowed");
+
+    let m = search
+        .pattern_matching_relative_path("foo/target".into(), Some(true), &mut no_attrs)
+        .expect("matches");
+    assert!(m.is_excluded(), "directories named `target` are excluded");
+    assert_eq!(m.kind, Verbatim);
+
+    let m = search
+        .pattern_matching_relative_path("foo/target/file".into(), Some(false), &mut no_attrs)
+        .expect("matches");
+    assert!(m.is_excluded(), "everything below `target/` is also excluded");
+    assert_eq!(m.kind, Prefix);
+
+    assert!(search.directory_matches_prefix("foo/bar".into(), false));
+    assert!(search.directory_matches_prefix("foo/bar".into(), true));
+    assert!(search.directory_matches_prefix("foo".into(), false));
+    assert!(search.directory_matches_prefix("foo".into(), true));
+    assert!(search.can_match_relative_path("foo".into(), Some(true)));
+    assert!(search.can_match_relative_path("foo".into(), Some(false)));
+    assert!(search.can_match_relative_path("foo/hi".into(), Some(true)));
+    assert!(search.can_match_relative_path("foo/hi".into(), Some(false)));
+    Ok(())
+}
+
+#[test]
 fn starts_with() -> crate::Result {
     let mut search = gix_pathspec::Search::from_specs(pathspecs(&["a/*"]), None, Path::new(""))?;
     assert!(
@@ -261,8 +302,14 @@ fn simplified_search_respects_all_excluded() -> crate::Result {
         None,
         Path::new(""),
     )?;
-    assert!(!search.can_match_relative_path("b".into(), None));
-    assert!(!search.can_match_relative_path("a".into(), None));
+    assert!(
+        search.can_match_relative_path("b".into(), None),
+        "non-trivial excludes are ignored in favor of false-positives"
+    );
+    assert!(
+        search.can_match_relative_path("a".into(), None),
+        "non-trivial excludes are ignored in favor of false-positives"
+    );
     assert!(search.can_match_relative_path("c".into(), None));
     assert!(search.can_match_relative_path("c/".into(), None));
 

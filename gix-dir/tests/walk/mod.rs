@@ -1,5 +1,6 @@
 use gix_dir::{walk, EntryRef};
 use pretty_assertions::assert_eq;
+use std::sync::atomic::AtomicBool;
 
 use crate::walk_utils::{
     collect, collect_filtered, collect_filtered_with_cwd, entry, entry_dirstat, entry_nokind, entry_nomatch, entryps,
@@ -15,6 +16,81 @@ use gix_dir::walk::CollapsedEntriesEmissionMode::{All, OnStatusMismatch};
 use gix_dir::walk::EmissionMode::*;
 use gix_dir::walk::ForDeletionMode;
 use gix_ignore::Kind::*;
+
+#[test]
+#[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
+fn symlink_to_dir_can_be_excluded() -> crate::Result {
+    let root = fixture_in("many-symlinks", "excluded-symlinks-to-dir");
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                ..options()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 9,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Untracked, Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "by default, symlinks are counted as files only, even if they point to a directory, when handled by the exclude machinery"
+    );
+
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                symlinks_to_directories_are_ignored_like_directories: true,
+                ..options()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 9,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Ignored(Expendable), Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "with libgit2 compatibility enabled, symlinks to directories are treated like a directory, not symlink"
+    );
+    Ok(())
+}
 
 #[test]
 #[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
@@ -41,6 +117,57 @@ fn root_may_not_lead_through_symlinks() -> crate::Result {
         );
     }
     Ok(())
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
+fn root_may_be_a_symlink_if_it_is_the_worktree() -> crate::Result {
+    let root = fixture_in("many-symlinks", "worktree-root-is-symlink");
+    let ((_out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                symlinks_to_directories_are_ignored_like_directories: true,
+                ..options()
+            },
+            keep,
+        )
+    });
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Ignored(Expendable), Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "it traversed the directory normally - without this capability, symlinked repos can't be traversed"
+    );
+    Ok(())
+}
+
+#[test]
+fn should_interrupt_works_even_in_empty_directories() {
+    let root = fixture("empty");
+    let should_interrupt = AtomicBool::new(true);
+    let err = try_collect_filtered_opts_collect(
+        &root,
+        None,
+        |keep, ctx| walk(&root, ctx, gix_dir::walk::Options { ..options() }, keep),
+        None::<&str>,
+        Options {
+            should_interrupt: Some(&should_interrupt),
+            ..Default::default()
+        },
+    )
+    .unwrap_err();
+    assert!(matches!(err, gix_dir::walk::Error::Interrupted));
 }
 
 #[test]
