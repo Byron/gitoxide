@@ -157,11 +157,11 @@ where
             let mut idx = 0;
             while let Some(entry) = chunk_entries.get(idx) {
                 let absolute_entry_index = entry_offset + idx;
-                if idx == 0 && entry.stage() != 0 {
+                if idx == 0 && entry.stage_raw() != 0 {
                     let offset = entry_offset.checked_sub(1).and_then(|prev_idx| {
                         let prev_entry = &all_entries[prev_idx];
                         let entry_path = entry.path_in(state.path_backing);
-                        if prev_entry.stage() == 0 || prev_entry.path_in(state.path_backing) != entry_path {
+                        if prev_entry.stage_raw() == 0 || prev_entry.path_in(state.path_backing) != entry_path {
                             // prev_entry (in previous chunk) does not belong to our conflict
                             return None;
                         }
@@ -286,7 +286,7 @@ impl<'index> State<'_, 'index> {
             self.skipped_by_pathspec.fetch_add(1, Ordering::Relaxed);
             return None;
         }
-        let status = if entry.stage() != 0 {
+        let status = if entry.stage_raw() != 0 {
             Ok(
                 Conflict::try_from_entry(entries, self.path_backing, entry_index, path).map(|(conflict, offset)| {
                     *outer_entry_index += offset; // let out loop skip over entries related to the conflict
@@ -604,7 +604,7 @@ impl Conflict {
         let mut count = 0_usize;
         for stage in (start_index..(start_index + 3).min(entries.len())).filter_map(|idx| {
             let entry = &entries[idx];
-            let stage = entry.stage();
+            let stage = entry.stage_raw();
             (stage > 0 && entry.path_in(path_backing) == entry_path).then_some(stage)
         }) {
             // This could be `1 << (stage - 1)` but let's be specific.

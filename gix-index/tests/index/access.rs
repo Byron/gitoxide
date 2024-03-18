@@ -152,7 +152,7 @@ fn entry_by_path_and_stage() {
 #[test]
 fn entry_by_path_with_conflicting_file() {
     let file = Fixture::Loose("conflicting-file").open();
-    for expected_stage in [Stage::Base,Stage::Ours, Stage::Theirs] {
+    for expected_stage in [Stage::Base, Stage::Ours, Stage::Theirs] {
         assert!(
             file.entry_by_path_and_stage("file".into(), expected_stage).is_some(),
             "we have no stage 0 during a conflict, but all other ones. Missed {expected_stage:?}"

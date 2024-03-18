@@ -131,7 +131,7 @@ impl State {
 
                 // Stage 0 means there is no merge going on, stage 2 means it's 'our' side of the merge, but then
                 // there won't be a stage 0.
-                if entry.mode == gix_index::entry::Mode::FILE && (entry.stage() == 0 || entry.stage() == 2) {
+                if entry.mode == gix_index::entry::Mode::FILE && (entry.stage_raw() == 0 || entry.stage_raw() == 2) {
                     let basename = path.rfind_byte(b'/').map_or(path, |pos| path[pos + 1..].as_bstr());
                     let ignore_source = names.iter().find_map(|t| {
                         match case {
