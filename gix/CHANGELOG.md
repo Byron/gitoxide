@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Documentation
+
+ - <csr-id-e51b6b624994714c7e25d00e1204cefbf1b4ca12/> fix typo
+
+### New Features (BREAKING)
+
+ - <csr-id-ba3f2db0b65582a917466127dc16e4945104b01b/> provide `Repository::dirwalk_iter()`.
+   That way, more copying happens but the usability increases tremendously as well.
+   It's breaking as public types moved from `repository::dirwalk` to `dirwalk`,
+   dissolving `repository::dirwalk` entirely.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 3 calendar days.
+ - 3 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'improvements-for-cargo' ([`41cd53e`](https://github.com/Byron/gitoxide/commit/41cd53e2af76e35e047aac4eca6324774df4cb50))
+    - Provide `Repository::dirwalk_iter()`. ([`ba3f2db`](https://github.com/Byron/gitoxide/commit/ba3f2db0b65582a917466127dc16e4945104b01b))
+    - Adapt to changes in `gix-dir` ([`b90ab3d`](https://github.com/Byron/gitoxide/commit/b90ab3dd5e8986e28624f3e1cf54f8a9171ce9f0))
+    - Merge pull request #1318 from wtlin1228/main ([`4ccf39b`](https://github.com/Byron/gitoxide/commit/4ccf39b9f52fd318a2eba4c63dd13e96269a4c99))
+    - Refine typo-fix ([`c18734b`](https://github.com/Byron/gitoxide/commit/c18734b05fcbc3d6f57bcb2c6525ec10015a7192))
+    - Fix typo ([`e51b6b6`](https://github.com/Byron/gitoxide/commit/e51b6b624994714c7e25d00e1204cefbf1b4ca12))
+</details>
+
 ## 0.60.0 (2024-03-14)
 
 ### New Features
@@ -34,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 10 calendar days.
+ - 16 commits contributed to the release over the course of 10 calendar days.
  - 18 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -46,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
     - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
     - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
     - Assure submodule status doesn't operate if there is no worktree checkout ([`3753592`](https://github.com/Byron/gitoxide/commit/3753592ef2e33f138544f761d8e77742b80680d2))

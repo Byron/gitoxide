@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-e7e91cfaed6d40a773a65fc077b99d2e26bb28f5/> allow traversals to start from a symlink that points to a directory
+   Now symlinked repositories can be traversed as well.
+
+### New Features (BREAKING)
+
+ - <csr-id-35b74e7992a5a732b5ae8dbdc264479a91b1d60d/> allow directory walk to be interrupted with `should_interrupt` flag.
+   That way, it can be much more responsive to interruption.
+ - <csr-id-cd0c8af78fd7a4f06e33ec2ce06b094b5a490877/> assure symlinks to directories are ignored with `dir/` declarations in `.gitignore`.
+   Initially, symlinks appear like symlinks thanks to `lstat`, but to do
+   exclude handling correctly these need another `stat` call.
+   
+   However, this is also not done in Git, but done in `libgit2` only,
+   so a toggle was added to act like Git by default, but allow obtaining
+   the same behaviour as git2 for compatibility.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 3 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'improvements-for-cargo' ([`41cd53e`](https://github.com/Byron/gitoxide/commit/41cd53e2af76e35e047aac4eca6324774df4cb50))
+    - Allow directory walk to be interrupted with `should_interrupt` flag. ([`35b74e7`](https://github.com/Byron/gitoxide/commit/35b74e7992a5a732b5ae8dbdc264479a91b1d60d))
+    - Allow traversals to start from a symlink that points to a directory ([`e7e91cf`](https://github.com/Byron/gitoxide/commit/e7e91cfaed6d40a773a65fc077b99d2e26bb28f5))
+    - Assure symlinks to directories are ignored with `dir/` declarations in `.gitignore`. ([`cd0c8af`](https://github.com/Byron/gitoxide/commit/cd0c8af78fd7a4f06e33ec2ce06b094b5a490877))
+</details>
+
 ## 0.2.0 (2024-03-14)
 
 ### Bug Fixes
@@ -17,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 4 calendar days.
+ - 6 commits contributed to the release over the course of 4 calendar days.
  - 18 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -29,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
     - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
     - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
     - Keep lower-bound of `thiserror` low in `gix-dir` ([`917634f`](https://github.com/Byron/gitoxide/commit/917634fa694a1e91d37f6407e57ae96b3b0aec4b))
