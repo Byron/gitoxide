@@ -122,7 +122,7 @@ worktree-archive = ["gix-archive", "worktree-stream", "attributes"]
 async-network-client = ["gix-protocol/async-client", "gix-pack/streaming-input", "attributes", "credentials"]
 ## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers via the `git://` protocol.
 async-network-client-async-std = ["async-std", "async-network-client", "gix-transport/async-std"]
-## Make `gix-protocol` available along with a blocking client, providing access to the `file://`, git://` and `ssh://` transports.
+## Make `gix-protocol` available along with a blocking client, providing access to the `file://`, `git://` and `ssh://` transports.
 blocking-network-client = ["gix-protocol/blocking-client", "gix-pack/streaming-input", "attributes", "credentials"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport available.
 blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
