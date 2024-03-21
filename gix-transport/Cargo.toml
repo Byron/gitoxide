@@ -75,7 +75,7 @@ pin-project-lite = { version = "0.2.6", optional = true }
 base64 = { version = "0.21.0", optional = true }
 
 # for http-client-curl. Additional configuration should be performed on higher levels of the dependency tree.
-curl = { version = "0.4", optional = true }
+curl = { workspace = true, optional = true }
 
 # for http-client-reqwest
 reqwest = { workspace = true, optional = true, features = ["blocking"] }
