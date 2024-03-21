@@ -131,12 +131,12 @@ blocking-http-transport-curl-rustls = ["blocking-http-transport-curl", "dep:curl
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport available.
 blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
-blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls"]
+blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest/rustls-tls"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
 ## This also makes use of `trust-dns` to avoid `getaddrinfo`, but note it comes with its own problems.
-blocking-http-transport-reqwest-rust-tls-trust-dns = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
+blocking-http-transport-reqwest-rust-tls-trust-dns = ["blocking-http-transport-reqwest", "reqwest/rustls-tls", "reqwest/trust-dns"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `native-tls` crate.
-blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/default-tls"]
+blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest/default-tls"]
 
 
 #! #### Performance
@@ -315,7 +315,7 @@ curl-for-configuration-only = { package = "curl", version = "0.4", optional = tr
 regex = { version = "1.6.0", optional = true, default-features = false, features = ["std"] }
 
 # For internal use to allow pure-Rust builds without openssl.
-reqwest-for-configuration-only = { package = "reqwest", version = "0.11.13", default-features = false, optional = true }
+reqwest = { workspace = true, optional = true }
 
 # for `interrupt` module
 parking_lot = "0.12.1"
