@@ -354,11 +354,9 @@ where
     F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
 {
     fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<std::io::Result<usize>> {
-        let nread = {
-            use std::io::Read;
-            let mut rem = ready!(self.as_mut().poll_fill_buf(cx))?;
-            rem.read(buf)?
-        };
+        use std::io::Read;
+        let mut rem = ready!(self.as_mut().poll_fill_buf(cx))?;
+        let nread = rem.read(buf)?;
         self.consume(nread);
         Poll::Ready(Ok(nread))
     }
