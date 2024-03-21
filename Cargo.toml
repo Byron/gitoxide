@@ -304,6 +304,8 @@ members = [
 prodash = { version = "28.0.0", default-features = false }
 futures-lite = { version = "2.1.0", default-features = false, features = ["std"] }
 faster-hex = { version = "0.9.0", default-features = false }
+reqwest = { version = "0.12.0", default-features = false, features = ["charset", "http2", "macos-system-configuration"] } # all but the 'default-tls' feature
+curl = { version = "0.4" }
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]

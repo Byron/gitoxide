@@ -127,16 +127,16 @@ blocking-network-client = ["gix-protocol/blocking-client", "gix-pack/streaming-i
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport available.
 blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
 ## Stacks with `blocking-http-transport-curl` and also enables the `rustls` backend to avoid `openssl`.
-blocking-http-transport-curl-rustls = ["blocking-http-transport-curl", "dep:curl-for-configuration-only", "curl-for-configuration-only?/rustls"]
+blocking-http-transport-curl-rustls = ["blocking-http-transport-curl", "dep:curl", "curl?/rustls"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport available.
 blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
-blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls"]
+blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest/rustls-tls"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
 ## This also makes use of `trust-dns` to avoid `getaddrinfo`, but note it comes with its own problems.
-blocking-http-transport-reqwest-rust-tls-trust-dns = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/rustls-tls", "reqwest-for-configuration-only/trust-dns"]
+blocking-http-transport-reqwest-rust-tls-trust-dns = ["blocking-http-transport-reqwest", "reqwest/rustls-tls", "reqwest/trust-dns"]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `native-tls` crate.
-blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest-for-configuration-only/default-tls"]
+blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest/default-tls"]
 
 
 #! #### Performance
@@ -305,8 +305,8 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 smallvec = "1.9.0"
 async-std = { version = "1.12.0", optional = true }
 
-# Must match the one in `gix-transport`.
-curl-for-configuration-only = { package = "curl", version = "0.4", optional = true }
+# Used for feature-configuration only.
+curl = { workspace = true, optional = true }
 
 ## For use in rev-parse, which provides searching commits by running a regex on their message.
 ##
@@ -315,7 +315,7 @@ curl-for-configuration-only = { package = "curl", version = "0.4", optional = tr
 regex = { version = "1.6.0", optional = true, default-features = false, features = ["std"] }
 
 # For internal use to allow pure-Rust builds without openssl.
-reqwest-for-configuration-only = { package = "reqwest", version = "0.11.13", default-features = false, optional = true }
+reqwest = { workspace = true, optional = true }
 
 # for `interrupt` module
 parking_lot = "0.12.1"
