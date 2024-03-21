@@ -1,11 +1,14 @@
 use crate::{parse, path::interpolate};
+use std::path::PathBuf;
 
 /// The error returned when following includes.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
+    #[error("Failed to copy configuration file into buffer")]
+    CopyBuffer(#[source] std::io::Error),
+    #[error("Could not read included configuration file at '{}'", path.display())]
+    Io { path: PathBuf, source: std::io::Error },
     #[error(transparent)]
     Parse(#[from] parse::Error),
     #[error(transparent)]
