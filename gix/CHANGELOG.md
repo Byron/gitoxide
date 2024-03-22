@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This release also updates `reqwest` to v0.12, bringing hyper 1.0 and a more recent `rustls` version.
+
+### Bug Fixes
+
+ - <csr-id-e1fec3c3a46a358036255a2487c2a48cc7176b4e/> missing closing backtick in gix lib documentation
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 2 calendar days.
+ - 3 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'patch-1' ([`8fde62b`](https://github.com/Byron/gitoxide/commit/8fde62b2617985f835e2e2fa07c735a5158789cf))
+    - Turn`curl` into a workspace package ([`adee500`](https://github.com/Byron/gitoxide/commit/adee50016007619495c93580e845ae757377c4f0))
+    - Make reqwest a workspace package ([`369cf1b`](https://github.com/Byron/gitoxide/commit/369cf1b03735617debe1527b3f23247685181e7d))
+    - Merge pull request #1325 from kdelorey/fix/simple-docs-formatting ([`3b34699`](https://github.com/Byron/gitoxide/commit/3b34699d127a2fccbf4345ddc74070e56e26dd6e))
+    - Fixed opening of backtick in documentation. ([`f1bc4cd`](https://github.com/Byron/gitoxide/commit/f1bc4cd11aad91fc026c20979a02f3e9d8814d3d))
+    - Missing closing backtick in gix lib documentation ([`e1fec3c`](https://github.com/Byron/gitoxide/commit/e1fec3c3a46a358036255a2487c2a48cc7176b4e))
+</details>
+
 ## 0.61.0 (2024-03-18)
 
 ### Documentation
@@ -22,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 3 calendar days.
+ - 8 commits contributed to the release over the course of 3 calendar days.
  - 3 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -34,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-actor v0.31.1, gix-object v0.42.1, gix-index v0.31.1, gix-pathspec v0.7.2, gix-dir v0.3.0, gix-status v0.8.0, gix v0.61.0, safety bump 2 crates ([`155cc45`](https://github.com/Byron/gitoxide/commit/155cc45730b259e662d7c4be42a469a3af3750e1))
     - Prepare changelog prior to release ([`129ba3d`](https://github.com/Byron/gitoxide/commit/129ba3deccc9ada0dc571466458845939502763d))
     - Merge branch 'improvements-for-cargo' ([`41cd53e`](https://github.com/Byron/gitoxide/commit/41cd53e2af76e35e047aac4eca6324774df4cb50))
     - Provide `Repository::dirwalk_iter()`. ([`ba3f2db`](https://github.com/Byron/gitoxide/commit/ba3f2db0b65582a917466127dc16e4945104b01b))
