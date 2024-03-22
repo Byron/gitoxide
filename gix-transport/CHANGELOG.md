@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.41.3 (2024-03-22)
 
 A maintenance release without user-facing changes, but with a `reqwest` update that uses more recent tls and hyper versions.
 
@@ -13,8 +13,8 @@ A maintenance release without user-facing changes, but with a `reqwest` update t
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release.
- - 6 days passed between releases.
+ - 6 commits contributed to the release over the course of 1 calendar day.
+ - 7 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes, but with a `reqwest` update t
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`7018a92`](https://github.com/Byron/gitoxide/commit/7018a928a405ba0534442f0b538d58f520145376))
     - Merge branch 'patch-1' ([`8fde62b`](https://github.com/Byron/gitoxide/commit/8fde62b2617985f835e2e2fa07c735a5158789cf))
     - Turn`curl` into a workspace package ([`adee500`](https://github.com/Byron/gitoxide/commit/adee50016007619495c93580e845ae757377c4f0))
     - Adjust expectations to deal with reqwest Content-Length ([`3b8f39d`](https://github.com/Byron/gitoxide/commit/3b8f39d64cdf44952fea9a45dc3d40df550e60ec))

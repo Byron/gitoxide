@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.61.1 (2024-03-22)
 
 This release also updates `reqwest` to v0.12, bringing hyper 1.0 and a more recent `rustls` version.
 
@@ -17,7 +17,7 @@ This release also updates `reqwest` to v0.12, bringing hyper 1.0 and a more rece
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 2 calendar days.
+ - 7 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -29,6 +29,7 @@ This release also updates `reqwest` to v0.12, bringing hyper 1.0 and a more rece
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`7018a92`](https://github.com/Byron/gitoxide/commit/7018a928a405ba0534442f0b538d58f520145376))
     - Merge branch 'patch-1' ([`8fde62b`](https://github.com/Byron/gitoxide/commit/8fde62b2617985f835e2e2fa07c735a5158789cf))
     - Turn`curl` into a workspace package ([`adee500`](https://github.com/Byron/gitoxide/commit/adee50016007619495c93580e845ae757377c4f0))
     - Make reqwest a workspace package ([`369cf1b`](https://github.com/Byron/gitoxide/commit/369cf1b03735617debe1527b3f23247685181e7d))

@@ -1276,7 +1276,7 @@ dependencies = [
 
 [[package]]
 name = "gix"
-version = "0.61.0"
+version = "0.61.1"
 dependencies = [
  "anyhow",
  "async-std",
@@ -2205,7 +2205,7 @@ dependencies = [
 
 [[package]]
 name = "gix-packetline"
-version = "0.17.4"
+version = "0.17.5"
 dependencies = [
  "async-std",
  "bstr",
@@ -2633,7 +2633,7 @@ dependencies = [
 
 [[package]]
 name = "gix-transport"
-version = "0.41.2"
+version = "0.41.3"
 dependencies = [
  "async-std",
  "async-trait",

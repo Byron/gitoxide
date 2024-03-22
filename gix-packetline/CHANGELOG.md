@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.17.5 (2024-03-22)
 
 A maintenance release without user-facing changes.
 
@@ -13,8 +13,8 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
- - 6 days passed between releases.
+ - 2 commits contributed to the release.
+ - 7 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`7018a92`](https://github.com/Byron/gitoxide/commit/7018a928a405ba0534442f0b538d58f520145376))
     - Fix CI ([`a4af4cb`](https://github.com/Byron/gitoxide/commit/a4af4cb8b47c4b1df6e0cff9e8610bc4163742d2))
 </details>
 

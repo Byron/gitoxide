@@ -3,7 +3,7 @@ name = "gix"
 repository = "https://github.com/Byron/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT OR Apache-2.0"
-version = "0.61.0"
+version = "0.61.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*"]
@@ -294,7 +294,7 @@ gix-archive = { version = "^0.11.0", path = "../gix-archive", default-features =
 
 # For communication with remotes
 gix-protocol = { version = "^0.44.2", path = "../gix-protocol", optional = true }
-gix-transport = { version = "^0.41.2", path = "../gix-transport", optional = true }
+gix-transport = { version = "^0.41.3", path = "../gix-transport", optional = true }
 
 # Just to get the progress-tree feature
 prodash = { workspace = true, optional = true, features = ["progress-tree"] }
