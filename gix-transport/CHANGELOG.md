@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 A maintenance release without user-facing changes, but with a `reqwest` update that uses more recent tls and hyper versions.
 
+YANKED: This version requires that the used `gix` crate is also uses the most recently published `gix v0.61.1`, or else
+no HTTPS connection can be established at runtime. However, depending on the dependency tree, this isn't guaranteed to happen.
+Further, it will definitely not be working correctly when compiled with `gix v0.60.0`, which would also pull this release
+into its dependency tree.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
