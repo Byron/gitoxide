@@ -1280,7 +1280,6 @@ version = "0.61.1"
 dependencies = [
  "anyhow",
  "async-std",
- "curl",
  "document-features",
  "gix-actor 0.31.1",
  "gix-archive",
