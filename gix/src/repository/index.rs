@@ -40,6 +40,11 @@ impl crate::Repository {
     /// Return a shared worktree index which is updated automatically if the in-memory snapshot has become stale as the underlying file
     /// on disk has changed.
     ///
+    /// ### Notes
+    ///
+    /// * This will fail if the file doesn't exist, like in a newly initialized repository. If that is the case, use
+    ///   [index_or_empty()](Self::index_or_empty) or [try_index()](Self::try_index) instead.
+    ///
     /// The index file is shared across all clones of this repository.
     pub fn index(&self) -> Result<worktree::Index, worktree::open_index::Error> {
         self.try_index().and_then(|opt| match opt {
