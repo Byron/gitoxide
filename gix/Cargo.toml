@@ -51,10 +51,25 @@ default = ["max-performance-safe", "comfort", "basic", "extras"]
 basic = ["blob-diff", "revision", "index"]
 
 ## Various additional features and capabilities that are not necessarily part of what most users would need.
-extras = ["worktree-stream", "worktree-archive", "revparse-regex", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt", "status", "dirwalk"]
+extras = [
+    "worktree-stream",
+    "worktree-archive",
+    "revparse-regex",
+    "mailmap",
+    "excludes",
+    "attributes",
+    "worktree-mutation",
+    "credentials",
+    "interrupt",
+    "status",
+    "dirwalk",
+]
 
 ## Various progress-related features that improve the look of progress message units.
-comfort = ["gix-features/progress-unit-bytes", "gix-features/progress-unit-human-numbers"]
+comfort = [
+    "gix-features/progress-unit-bytes",
+    "gix-features/progress-unit-human-numbers",
+]
 
 #! #### Components
 #!
@@ -87,7 +102,15 @@ worktree-mutation = ["attributes", "dep:gix-worktree-state"]
 excludes = ["dep:gix-ignore", "dep:gix-worktree", "index"]
 
 ## Query attributes and excludes. Enables access to pathspecs, worktree checkouts, filter-pipelines and submodules.
-attributes = ["excludes", "dep:gix-filter", "dep:gix-pathspec", "dep:gix-attributes", "dep:gix-submodule", "gix-worktree?/attributes", "command"]
+attributes = [
+    "excludes",
+    "dep:gix-filter",
+    "dep:gix-pathspec",
+    "dep:gix-attributes",
+    "dep:gix-submodule",
+    "gix-worktree?/attributes",
+    "command",
+]
 
 ## Add support for mailmaps, as way of determining the final name of commmiters and authors.
 mailmap = ["dep:gix-mailmap", "revision"]
@@ -119,24 +142,56 @@ worktree-archive = ["gix-archive", "worktree-stream", "attributes"]
 #! Making a choice here also affects which crypto-library ends up being used.
 
 ## Make `gix-protocol` available along with an async client.
-async-network-client = ["gix-protocol/async-client", "gix-pack/streaming-input", "attributes", "credentials"]
+async-network-client = [
+    "gix-protocol/async-client",
+    "gix-pack/streaming-input",
+    "attributes",
+    "credentials",
+]
 ## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers via the `git://` protocol.
-async-network-client-async-std = ["async-std", "async-network-client", "gix-transport/async-std"]
+async-network-client-async-std = [
+    "async-std",
+    "async-network-client",
+    "gix-transport/async-std",
+]
 ## Make `gix-protocol` available along with a blocking client, providing access to the `file://`, `git://` and `ssh://` transports.
-blocking-network-client = ["gix-protocol/blocking-client", "gix-pack/streaming-input", "attributes", "credentials"]
+blocking-network-client = [
+    "gix-protocol/blocking-client",
+    "gix-pack/streaming-input",
+    "attributes",
+    "credentials",
+]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **curl**, and implies blocking networking as a whole, making the `https://` transport available.
-blocking-http-transport-curl = ["blocking-network-client", "gix-transport/http-client-curl"]
+blocking-http-transport-curl = [
+    "blocking-network-client",
+    "gix-transport/http-client-curl",
+]
 ## Stacks with `blocking-http-transport-curl` and also enables the `rustls` backend to avoid `openssl`.
-blocking-http-transport-curl-rustls = ["blocking-http-transport-curl", "dep:curl", "curl?/rustls"]
+blocking-http-transport-curl-rustls = [
+    "blocking-http-transport-curl",
+    "gix-transport/http-client-curl-rust-tls",
+]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S using **reqwest**, and implies blocking networking as a whole, making the `https://` transport available.
-blocking-http-transport-reqwest = ["blocking-network-client", "gix-transport/http-client-reqwest"]
+blocking-http-transport-reqwest = [
+    "blocking-network-client",
+    "gix-transport/http-client-reqwest",
+]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
-blocking-http-transport-reqwest-rust-tls = ["blocking-http-transport-reqwest", "reqwest/rustls-tls"]
+blocking-http-transport-reqwest-rust-tls = [
+    "blocking-http-transport-reqwest",
+    "gix-transport/http-client-reqwest-rust-tls",
+]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `rustls` crate.
 ## This also makes use of `trust-dns` to avoid `getaddrinfo`, but note it comes with its own problems.
-blocking-http-transport-reqwest-rust-tls-trust-dns = ["blocking-http-transport-reqwest", "reqwest/rustls-tls", "reqwest/trust-dns"]
+blocking-http-transport-reqwest-rust-tls-trust-dns = [
+    "blocking-http-transport-reqwest",
+    "gix-transport/http-client-reqwest-rust-tls-trust-dns",
+]
 ## Stacks with `blocking-http-transport-reqwest` and enables `https://` via the `native-tls` crate.
-blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest", "reqwest/default-tls"]
+blocking-http-transport-reqwest-native-tls = [
+    "blocking-http-transport-reqwest",
+    "gix-transport/http-client-reqwest-native-tls",
+]
 
 
 #! #### Performance
@@ -147,20 +202,13 @@ blocking-http-transport-reqwest-native-tls = ["blocking-http-transport-reqwest",
 ## Activate features that maximize performance, like using threads, but leave everything else that might affect compatibility out to allow users more fine-grained
 ## control over performance features like which `zlib*` implementation to use.
 ## No C toolchain is involved.
-max-control = [
-    "parallel",
-    "pack-cache-lru-static",
-    "pack-cache-lru-dynamic",
-]
+max-control = ["parallel", "pack-cache-lru-static", "pack-cache-lru-dynamic"]
 
 ## Activate features that maximize performance, like usage of threads, `and access to caching in object databases, skipping the ones known to cause compile failures
 ## on some platforms.
 ## Note that this configuration still uses a pure Rust zlib implementation which isn't the fastest compared to its C-alternatives.
 ## No C toolchain is involved.
-max-performance-safe = [
-    "max-control",
-    "parallel-walkdir"
-]
+max-performance-safe = ["max-control", "parallel-walkdir"]
 
 ## If set, walkdir iterators will be multi-threaded which affects the listing of loose objects and references.
 ## Note, however, that this will use `rayon` under the hood and spawn threads for each traversal to avoid a global rayon thread pool.
@@ -215,7 +263,8 @@ zlib-stock = ["gix-features/zlib-stock"]
 verbose-object-parsing-errors = ["gix-object/verbose-object-parsing-errors"]
 
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde = ["dep:serde",
+serde = [
+    "dep:serde",
     "gix-pack/serde",
     "gix-object/serde",
     "gix-protocol?/serde",
@@ -230,7 +279,8 @@ serde = ["dep:serde",
     "gix-revision/serde",
     "gix-worktree?/serde",
     "gix-commitgraph/serde",
-    "gix-credentials?/serde"]
+    "gix-credentials?/serde",
+]
 
 ## Re-export the progress tree root which allows to obtain progress from various functions which take `impl gix::Progress`.
 ## Applications which want to display progress will probably need this implementation.
@@ -238,7 +288,6 @@ progress-tree = ["prodash/progress-tree"]
 
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
 cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
-
 
 
 [dependencies]
@@ -261,7 +310,9 @@ gix-odb = { version = "^0.59.0", path = "../gix-odb" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-object = { version = "^0.42.1", path = "../gix-object" }
 gix-actor = { version = "^0.31.1", path = "../gix-actor" }
-gix-pack = { version = "^0.49.0", path = "../gix-pack", default-features = false, features = ["object-cache-dynamic"] }
+gix-pack = { version = "^0.49.0", path = "../gix-pack", default-features = false, features = [
+    "object-cache-dynamic",
+] }
 gix-revision = { version = "^0.27.0", path = "../gix-revision", default-features = false }
 gix-revwalk = { version = "^0.13.0", path = "../gix-revwalk" }
 gix-negotiate = { version = "^0.13.0", path = "../gix-negotiate", optional = true }
@@ -271,7 +322,10 @@ gix-url = { version = "^0.27.2", path = "../gix-url" }
 gix-traverse = { version = "^0.38.0", path = "../gix-traverse" }
 gix-diff = { version = "^0.42.0", path = "../gix-diff", default-features = false }
 gix-mailmap = { version = "^0.23.0", path = "../gix-mailmap", optional = true }
-gix-features = { version = "^0.38.1", path = "../gix-features", features = ["progress", "once_cell"] }
+gix-features = { version = "^0.38.1", path = "../gix-features", features = [
+    "progress",
+    "once_cell",
+] }
 gix-trace = { version = "^0.1.8", path = "../gix-trace" }
 
 gix-glob = { version = "^0.16.2", path = "../gix-glob" }
@@ -286,7 +340,9 @@ gix-hashtable = { version = "^0.5.2", path = "../gix-hashtable" }
 gix-commitgraph = { version = "^0.24.2", path = "../gix-commitgraph" }
 gix-pathspec = { version = "^0.7.2", path = "../gix-pathspec", optional = true }
 gix-submodule = { version = "^0.10.0", path = "../gix-submodule", optional = true }
-gix-status = { version = "^0.8.0", path = "../gix-status", optional = true, features = ["worktree-rewrites"] }
+gix-status = { version = "^0.8.0", path = "../gix-status", optional = true, features = [
+    "worktree-rewrites",
+] }
 gix-command = { version = "^0.3.6", path = "../gix-command", optional = true }
 
 gix-worktree-stream = { version = "^0.11.0", path = "../gix-worktree-stream", optional = true }
@@ -301,21 +357,19 @@ prodash = { workspace = true, optional = true, features = ["progress-tree"] }
 once_cell = "1.14.0"
 signal-hook = { version = "0.3.9", default-features = false, optional = true }
 thiserror = "1.0.26"
-serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
+serde = { version = "1.0.114", optional = true, default-features = false, features = [
+    "derive",
+] }
 smallvec = "1.9.0"
 async-std = { version = "1.12.0", optional = true }
-
-# Used for feature-configuration only.
-curl = { workspace = true, optional = true }
 
 ## For use in rev-parse, which provides searching commits by running a regex on their message.
 ##
 ## If disabled, the text will be search verbatim in any portion of the commit message, similar to
 ## how a simple unanchored regex of only 'normal' characters would work.
-regex = { version = "1.6.0", optional = true, default-features = false, features = ["std"] }
-
-# For internal use to allow pure-Rust builds without openssl.
-reqwest = { workspace = true, optional = true }
+regex = { version = "1.6.0", optional = true, default-features = false, features = [
+    "std",
+] }
 
 # for `interrupt` module
 parking_lot = "0.12.1"
@@ -332,4 +386,10 @@ serial_test = { version = "2.0.0", default-features = false }
 async-std = { version = "1.12.0", features = ["attributes"] }
 
 [package.metadata.docs.rs]
-features = ["document-features", "max-performance", "blocking-network-client", "blocking-http-transport-curl", "serde"]
+features = [
+    "document-features",
+    "max-performance",
+    "blocking-network-client",
+    "blocking-http-transport-curl",
+    "serde",
+]
