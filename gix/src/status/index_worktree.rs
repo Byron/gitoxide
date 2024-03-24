@@ -199,10 +199,7 @@ mod submodule_status {
             let local_repo = repo.to_thread_local();
             let submodule_paths = match local_repo.submodules()? {
                 Some(sm) => {
-                    let mut v: Vec<_> = sm
-                        .filter(|sm| sm.is_active().unwrap_or_default())
-                        .filter_map(|sm| sm.path().ok().map(Cow::into_owned))
-                        .collect();
+                    let mut v: Vec<_> = sm.filter_map(|sm| sm.path().ok().map(Cow::into_owned)).collect();
                     v.sort();
                     v
                 }
@@ -271,7 +268,8 @@ mod submodule_status {
 ///
 /// ### Submodules
 ///
-/// Note that submodules can be set to 'inactive' which automatically excludes them from the status operation.
+/// Note that submodules can be set to 'inactive', which will not exclude them from the status operation, similar to
+/// how `git status` includes them.
 ///
 /// ### Index Changes
 ///
