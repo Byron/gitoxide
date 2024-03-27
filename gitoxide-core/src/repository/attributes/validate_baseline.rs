@@ -262,6 +262,8 @@ pub(crate) mod function {
     }
 
     #[derive(Debug)]
+    // See note on `Mismatch`
+    #[allow(dead_code)]
     pub struct ExcludeLocation {
         pub line: usize,
         pub rela_source_file: String,
@@ -269,6 +271,9 @@ pub(crate) mod function {
     }
 
     #[derive(Debug)]
+    // We debug-print this structure, which makes all fields 'used', but it doesn't count.
+    // TODO: find a way to not have to do more work, but make the warning go away.
+    #[allow(dead_code)]
     pub enum Mismatch {
         Attributes {
             actual: Vec<gix::attrs::Assignment>,
@@ -281,6 +286,8 @@ pub(crate) mod function {
     }
 
     #[derive(Debug)]
+    // See note on `Mismatch`
+    #[allow(dead_code)]
     pub struct ExcludeMatch {
         pub pattern: gix::glob::Pattern,
         pub source: Option<PathBuf>,
