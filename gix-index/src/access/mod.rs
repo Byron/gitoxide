@@ -3,6 +3,7 @@ use std::{cmp::Ordering, ops::Range};
 use bstr::{BStr, ByteSlice, ByteVec};
 use filetime::FileTime;
 
+use crate::entry::{Stage, StageRaw};
 use crate::{entry, extension, AccelerateLookup, Entry, PathStorage, PathStorageRef, State, Version};
 
 // TODO: integrate this somehow, somewhere, depending on later usage.
@@ -81,7 +82,7 @@ impl State {
                 res
             })
             .ok()?;
-        self.entry_index_by_idx_and_stage(path, idx, stage, stage_cmp)
+        self.entry_index_by_idx_and_stage(path, idx, stage as StageRaw, stage_cmp)
     }
 
     /// Walk as far in `direction` as possible, with [`Ordering::Greater`] towards higher stages, and [`Ordering::Less`]
@@ -112,7 +113,7 @@ impl State {
         &self,
         path: &BStr,
         idx: usize,
-        wanted_stage: entry::Stage,
+        wanted_stage: entry::StageRaw,
         stage_cmp: Ordering,
     ) -> Option<usize> {
         match stage_cmp {
@@ -121,7 +122,7 @@ impl State {
                 .enumerate()
                 .rev()
                 .take_while(|(_, e)| e.path(self) == path)
-                .find_map(|(idx, e)| (e.stage() == wanted_stage).then_some(idx)),
+                .find_map(|(idx, e)| (e.stage_raw() == wanted_stage).then_some(idx)),
             Ordering::Equal => Some(idx),
             Ordering::Less => self
                 .entries
@@ -129,7 +130,7 @@ impl State {
                 .iter()
                 .enumerate()
                 .take_while(|(_, e)| e.path(self) == path)
-                .find_map(|(ofs, e)| (e.stage() == wanted_stage).then_some(idx + ofs + 1)),
+                .find_map(|(ofs, e)| (e.stage_raw() == wanted_stage).then_some(idx + ofs + 1)),
         }
     }
 
@@ -291,7 +292,7 @@ impl State {
             .binary_search_by(|e| {
                 let res = e.path(self).cmp(path);
                 if res.is_eq() {
-                    stage_at_index = e.stage();
+                    stage_at_index = e.stage_raw();
                 }
                 res
             })
@@ -299,7 +300,7 @@ impl State {
         let idx = if stage_at_index == 0 || stage_at_index == 2 {
             idx
         } else {
-            self.entry_index_by_idx_and_stage(path, idx, 2, stage_at_index.cmp(&2))?
+            self.entry_index_by_idx_and_stage(path, idx, Stage::Ours as StageRaw, stage_at_index.cmp(&2))?
         };
         Some(&self.entries[idx])
     }
@@ -334,13 +335,13 @@ impl State {
             + self.entries[low..].partition_point(|e| e.path(self).get(..prefix_len).map_or(false, |p| p <= prefix));
 
         let low_entry = &self.entries.get(low)?;
-        if low_entry.stage() != 0 {
+        if low_entry.stage_raw() != 0 {
             low = self
                 .walk_entry_stages(low_entry.path(self), low, Ordering::Less)
                 .unwrap_or(low);
         }
         if let Some(high_entry) = self.entries.get(high) {
-            if high_entry.stage() != 0 {
+            if high_entry.stage_raw() != 0 {
                 high = self
                     .walk_entry_stages(high_entry.path(self), high, Ordering::Less)
                     .unwrap_or(high);
@@ -374,7 +375,7 @@ impl State {
             .binary_search_by(|e| {
                 let res = e.path(self).cmp(path);
                 if res.is_eq() {
-                    stage_at_index = e.stage();
+                    stage_at_index = e.stage_raw();
                 }
                 res
             })

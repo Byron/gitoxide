@@ -1,5 +1,6 @@
 use crate::index::Fixture;
 use bstr::{BString, ByteSlice};
+use gix_index::entry::Stage;
 
 fn icase_fixture() -> gix_index::File {
     Fixture::Generated("v2_icase_name_clashes").open()
@@ -11,7 +12,7 @@ fn entry_by_path() {
     for entry in file.entries() {
         let path = entry.path(&file);
         assert_eq!(file.entry_by_path(path), Some(entry));
-        assert_eq!(file.entry_by_path_and_stage(path, 0), Some(entry));
+        assert_eq!(file.entry_by_path_and_stage(path, Stage::Unconflicted), Some(entry));
     }
 }
 
@@ -140,27 +141,27 @@ fn entry_by_path_and_stage() {
     for entry in file.entries() {
         let path = entry.path(&file);
         assert_eq!(
-            file.entry_index_by_path_and_stage(path, 0)
+            file.entry_index_by_path_and_stage(path, Stage::Unconflicted)
                 .map(|idx| &file.entries()[idx]),
             Some(entry)
         );
-        assert_eq!(file.entry_by_path_and_stage(path, 0), Some(entry));
+        assert_eq!(file.entry_by_path_and_stage(path, Stage::Unconflicted), Some(entry));
     }
 }
 
 #[test]
 fn entry_by_path_with_conflicting_file() {
     let file = Fixture::Loose("conflicting-file").open();
-    for expected_stage in [1 /* common ancestor */, 2 /* ours */, 3 /* theirs */] {
+    for expected_stage in [Stage::Base, Stage::Ours, Stage::Theirs] {
         assert!(
             file.entry_by_path_and_stage("file".into(), expected_stage).is_some(),
-            "we have no stage 0 during a conflict, but all other ones. Missed {expected_stage}"
+            "we have no stage 0 during a conflict, but all other ones. Missed {expected_stage:?}"
         );
     }
 
     assert_eq!(
         file.entry_by_path("file".into()).expect("found").stage(),
-        2,
+        Stage::Ours,
         "we always find our stage while in a merge"
     );
 }
@@ -226,13 +227,13 @@ fn sort_entries() {
 
     for (idx, entry) in file.entries()[..valid_entries].iter().enumerate() {
         assert_eq!(
-            file.entry_index_by_path_and_stage_bounded(entry.path(&file), 0, valid_entries),
+            file.entry_index_by_path_and_stage_bounded(entry.path(&file), Stage::Unconflicted, valid_entries),
             Some(idx),
             "we can still find entries in the correctly sorted region"
         );
     }
     assert_eq!(
-        file.entry_by_path_and_stage(new_entry_path, 0),
+        file.entry_by_path_and_stage(new_entry_path, Stage::Unconflicted),
         None,
         "new entry can't be found due to incorrect order"
     );
@@ -241,7 +242,7 @@ fn sort_entries() {
     assert!(file.verify_entries().is_ok(), "sorting of entries restores invariants");
 
     assert_eq!(
-        file.entry_by_path_and_stage(new_entry_path, 0)
+        file.entry_by_path_and_stage(new_entry_path, Stage::Unconflicted)
             .expect("can be found")
             .path(&file),
         new_entry_path,

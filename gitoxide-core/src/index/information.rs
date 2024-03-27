@@ -6,6 +6,7 @@ pub struct Options {
 
 #[cfg(feature = "serde")]
 mod serde_only {
+    use gix::index::entry::Stage;
 
     mod ext {
         #[derive(serde::Serialize)]
@@ -115,11 +116,10 @@ mod serde_only {
                     let (mut intent_to_add, mut skip_worktree) = (0, 0);
                     for entry in f.entries() {
                         match entry.flags.stage() {
-                            0 => stage_0_merged += 1,
-                            1 => stage_1_base += 1,
-                            2 => stage_2_ours += 1,
-                            3 => stage_3_theirs += 1,
-                            invalid => anyhow::bail!("Invalid stage {} encountered", invalid),
+                            Stage::Unconflicted => stage_0_merged += 1,
+                            Stage::Base => stage_1_base += 1,
+                            Stage::Ours => stage_2_ours += 1,
+                            Stage::Theirs => stage_3_theirs += 1,
                         }
                         match entry.mode {
                             gix::index::entry::Mode::DIR => dir += 1,

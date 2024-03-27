@@ -106,6 +106,7 @@ impl Repository {
     /// When only excludes are desired, this is the most efficient way to obtain them. Otherwise use
     /// [`Repository::attributes()`] for accessing both attributes and excludes.
     // TODO: test
+    #[doc(alias = "is_path_ignored", alias = "git2")]
     #[cfg(feature = "excludes")]
     pub fn excludes(
         &self,

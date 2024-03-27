@@ -98,7 +98,7 @@ pub enum Error {
         desired: usize,
         available: usize,
     },
-    #[error("Path {desired_path:?} did not exist in index at stage {desired_stage}{}{}", stage_hint.map(|actual|format!(". It does exist at stage {actual}")).unwrap_or_default(), exists.then(|| ". It exists on disk").unwrap_or(". It does not exist on disk"))]
+    #[error("Path {desired_path:?} did not exist in index at stage {}{}{}", *desired_stage as u8, stage_hint.map(|actual|format!(". It does exist at stage {}", actual as u8)).unwrap_or_default(), exists.then(|| ". It exists on disk").unwrap_or(". It does not exist on disk"))]
     IndexLookup {
         desired_path: BString,
         desired_stage: gix_index::entry::Stage,
