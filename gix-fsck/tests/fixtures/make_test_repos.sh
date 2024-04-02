@@ -18,9 +18,11 @@ git init base
     git add -A
     git commit -m "commit 1"
     echo "blob-2" > blob-2
+    mkdir tree-1
+    echo "blob-3" > tree-1/blob-3
     git add -A
     git commit -m "commit 2"
-    git rm blob-1
+    git rm blob-1 tree-1/blob-3
     git add -A
     git commit -m "commit 3"
 )
