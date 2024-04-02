@@ -110,24 +110,22 @@ git clone dir-with-tracked-file with-submodule
 git init nonstandard-worktree
 (cd nonstandard-worktree
   mkdir dir-with-dot-git
-  mv .git dir-with-dot-git
-
-  git -C dir-with-dot-git config core.worktree "$PWD"
   touch dir-with-dot-git/inside
   touch seemingly-outside
-  git -C dir-with-dot-git add inside ../seemingly-outside
+  git add dir-with-dot-git/inside seemingly-outside
+  mv .git dir-with-dot-git
+  git -C dir-with-dot-git config core.worktree "$PWD"
   git -C dir-with-dot-git commit -m "init"
 )
 
 git init nonstandard-worktree-untracked
 (cd nonstandard-worktree-untracked
   mkdir dir-with-dot-git
-  mv .git dir-with-dot-git
-
-  git -C dir-with-dot-git config core.worktree "$PWD"
   touch dir-with-dot-git/inside
   touch seemingly-outside
-  git -C dir-with-dot-git add inside ../seemingly-outside
+  git add dir-with-dot-git/inside seemingly-outside
+  mv .git dir-with-dot-git
+  git -C dir-with-dot-git config core.worktree "$PWD"
   git -C dir-with-dot-git commit -m "init"
 
   rm dir-with-dot-git/.git/index
