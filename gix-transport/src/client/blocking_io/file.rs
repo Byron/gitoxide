@@ -126,6 +126,18 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
     }
 }
 
+impl Drop for SpawnProcessOnDemand {
+    fn drop(&mut self) {
+        if let Some(mut child) = self.child.take() {
+            // The child process (e.g. `ssh`) may still be running at this point, so kill it before joining/waiting.
+            // In the happy-path case, it should have already exited gracefully, but in error cases or if the user
+            // interrupted the operation, it will likely still be running.
+            child.kill().ok();
+            child.wait().ok();
+        }
+    }
+}
+
 struct ReadStdoutFailOnError {
     recv: std::sync::mpsc::Receiver<std::io::Error>,
     read: std::process::ChildStdout,
