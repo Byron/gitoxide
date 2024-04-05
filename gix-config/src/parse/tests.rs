@@ -5,6 +5,7 @@ mod section {
     use std::borrow::Cow;
 
     #[test]
+    #[cfg(target_pointer_width = "64")]
     fn size_of_events() {
         assert_eq!(
             std::mem::size_of::<Section<'_>>(),
