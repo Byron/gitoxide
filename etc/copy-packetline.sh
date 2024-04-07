@@ -16,26 +16,58 @@ function fail () {
   exit 1
 }
 
-function status () {
-  git status --short --ignored=traditional -- "$@"
+function chdir_toplevel() {
+  local root
+
+  # NOTE: We get the wrong directory name, if the name ends in newline.
+  root="$(git rev-parse --show-toplevel)" ||
+    fail 'git-rev-parse failed to find top-level dir'
+
+  cd -- "$root"
 }
 
-function avoids_pattern () (
-  set +e  # Temporary, since the function body is in ( ).
-  grep -q "$@"
-  test "$?" -eq 1  # Distinguish no-match from error.
-)
+function merging () {
+  local git_dir
+
+  # NOTE: We get the wrong directory name, if the name ends in newline.
+  git_dir="$(git rev-parse --git-dir)" ||
+    fail 'git-rev-parse failed to find git dir'
+
+  test -e "$git_dir/MERGE_HEAD"
+}
+
+function target_status () {
+  git status --short --ignored=traditional -- gix-packetline-blocking/src ||
+    fail 'git-status failed'
+}
+
+function check_target () {
+  if ! test -e "gix-packetline-blocking/src"; then
+    # The target does not exist on disk, so nothing will be lost. Proceed.
+    return
+  fi
+
+  if merging; then
+    # In a merge, it would be confusing to replace anything at the target.
+    if target_status | grep -q '^'; then
+      fail 'target exists, and a merge is in progress'
+    fi
+  else
+    # We can lose data if anything of value at the target is not in the index.
+    if target_status | grep -q '^.[^ ]'; then
+      fail 'target exists, with unstaged changes or ignored files'
+    fi
+  fi
+}
 
 function indent () {
   sed 's/^/    /'
 }
 
 function generate_all () {
-  local root failures
+  local failures
 
-  # Find the working tree. (NOTE: Wrong if the directory name ends in newline.)
-  root="$(git rev-parse --show-toplevel)"
-  cd -- "$root"
+  chdir_toplevel
 
   if ! test -d gix-packetline/src; then
     fail 'no source directory: gix-packetline/src'
@@ -44,12 +76,9 @@ function generate_all () {
     fail 'no target parent directory: gix-packetline-blocking'
   fi
 
-  # FIXME: This misinterprets the status when in an unresolved merge conflict!
-  if ! status gix-packetline-blocking/src | avoids_pattern '^.[^ ]'; then
-    fail 'target has unstaged changes or contains ignored files'
-  fi
+  check_target
 
-  rm -rf gix-packetline-blocking/src  # No trailing /, as it may be a symlink.
+  rm -rf gix-packetline-blocking/src  # No trailing /. It may be a symlink.
   if test -e gix-packetline-blocking/src; then
     fail 'unable to remove target'
   fi
@@ -67,16 +96,17 @@ function generate_all () {
 }
 
 function first_line_ends_crlf () {
-  # This is tricky to check portably. On Windows in Cygwin-like environments
-  # including MSYS2 and Git Bash, most text processing tools, including awk,
-  # sed, and grep, automatically substitute \n for \r\n. Some can be told not
-  # to, but in non-portable ways that may affect other implementations. Bash
-  # does so on command substitution and other input, and optionally more often.
-  # Easy ways to check are often non-portable to other OSes. Fortunately, tools
-  # that treat input as binary data are exempt (including cat, but "-v" is not
-  # portable, and it's unreliable in general as lines can end in "^M"). This
-  # may be doable without od, by using tr more heavily, but it could be hard to
-  # avoid false positives with unexpected characters, or with \r not before \n.
+  # This is tricky to check portably. In Cygwin-like environments including
+  # MSYS2 and Git Bash, most text processing tools, including awk, sed, and
+  # grep, automatically ignore \r before \n. Some ignore \r everywhere. Some
+  # can be told to keep \r, but in non-portable ways that may affect other
+  # implementations. Bash ignores \r in some places even without "-o icncr",
+  # and ignores \r even more with it, including in all text from command
+  # substitution. Simple checks may be non-portable to other OSes. Fortunately,
+  # tools that treat input as binary data are exempt (even cat, but "-v" is
+  # non-portable, and unreliable in general because lines can end in "^M").
+  # This may be doable without od, by using tr more heavily, but it could be
+  # hard to avoid false positives with unexpected characters or \r without \n.
 
   head -n 1 -- "$1" |  # Get the longest prefix with no non-trailing \n byte.
     od -An -ta |       # Represent all bytes symbolically, without addresses.
