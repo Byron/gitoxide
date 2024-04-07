@@ -20,7 +20,6 @@ gix-date = { version = "^0.8.5", path = "../gix-date" }
 gix-hashtable = { version = "^0.5.2", path = "../gix-hashtable" }
 gix-revwalk = { version = "^0.13.0", path = "../gix-revwalk" }
 gix-commitgraph = { version = "^0.24.2", path = "../gix-commitgraph" }
-gix-revision = { version = "^0.27.0", path = "../gix-revision" }
 smallvec = "1.10.0"
 thiserror = "1.0.32"
 bitflags = "2"

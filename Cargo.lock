@@ -2684,7 +2684,6 @@ dependencies = [
  "gix-hash 0.14.2",
  "gix-hashtable 0.5.2",
  "gix-object 0.42.1",
- "gix-revision",
  "gix-revwalk 0.13.0",
  "smallvec",
  "thiserror",

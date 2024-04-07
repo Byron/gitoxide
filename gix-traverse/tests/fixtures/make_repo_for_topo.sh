@@ -25,6 +25,11 @@ function optimize() {
   git repack -adq
 }
 
+function collect_baselines() {
+  git rev-list --topo-order HEAD > all-commits.baseline
+  git rev-list --topo-order --first-parent HEAD > first-parent.baseline
+}
+
 git init
 git config merge.ff false
 
@@ -58,3 +63,4 @@ git merge branch1 -m merge
 commit c12
 
 optimize
+collect_baselines
