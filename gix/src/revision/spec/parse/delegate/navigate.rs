@@ -6,7 +6,6 @@ use gix_revision::spec::parse::{
     delegate,
     delegate::{PeelTo, Traversal},
 };
-use gix_traverse::commit::Sorting;
 
 use crate::{
     bstr::{BStr, ByteSlice},
@@ -193,7 +192,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     match oid
                         .attach(repo)
                         .ancestors()
-                        .sorting(Sorting::ByCommitTimeNewestFirst)
+                        .sorting(gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirst)
                         .all()
                     {
                         Ok(iter) => {
@@ -242,15 +241,10 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 references
                                     .peeled()
                                     .filter_map(Result::ok)
-                                    .filter(|r| {
-                                        r.id()
-                                            .object()
-                                            .ok()
-                                            .map_or(false, |obj| obj.kind == gix_object::Kind::Commit)
-                                    })
+                                    .filter(|r| r.id().header().ok().map_or(false, |obj| obj.kind().is_commit()))
                                     .filter_map(|r| r.detach().peeled),
                             )
-                            .sorting(Sorting::ByCommitTimeNewestFirst)
+                            .sorting(gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirst)
                             .all()
                         {
                             Ok(iter) => {

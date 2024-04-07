@@ -129,11 +129,10 @@ mod changes {
         }
 
         fn all_commits(db: &gix_odb::Handle) -> HashMap<String, ObjectId> {
-            use gix_traverse::commit;
             let mut buf = Vec::new();
 
             let head = head_of(db);
-            commit::Ancestors::new(Some(head), commit::ancestors::State::default(), &db)
+            gix_traverse::commit::Simple::new(Some(head), &db)
                 .collect::<Result<Vec<_>, _>>()
                 .expect("valid iteration")
                 .into_iter()

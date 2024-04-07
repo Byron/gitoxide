@@ -72,7 +72,7 @@ impl Display for Event<'_> {
 
 impl From<Event<'_>> for BString {
     fn from(event: Event<'_>) -> Self {
-        event.into()
+        event.to_bstring()
     }
 }
 

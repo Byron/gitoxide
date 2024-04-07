@@ -429,7 +429,7 @@ pub fn update(
                         break;
                     }
                 }
-                Err(gix::traverse::commit::ancestors::Error::Find { .. }) => {
+                Err(gix::traverse::commit::simple::Error::Find { .. }) => {
                     writeln!(err, "shallow repository - commit history is truncated").ok();
                     break;
                 }

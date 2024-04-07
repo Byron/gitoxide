@@ -2678,6 +2678,7 @@ dependencies = [
 name = "gix-traverse"
 version = "0.38.0"
 dependencies = [
+ "bitflags 2.4.1",
  "gix-commitgraph 0.24.2",
  "gix-date 0.8.5",
  "gix-hash 0.14.2",

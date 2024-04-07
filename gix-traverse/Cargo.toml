@@ -22,3 +22,4 @@ gix-revwalk = { version = "^0.13.0", path = "../gix-revwalk" }
 gix-commitgraph = { version = "^0.24.2", path = "../gix-commitgraph" }
 smallvec = "1.10.0"
 thiserror = "1.0.32"
+bitflags = "2"

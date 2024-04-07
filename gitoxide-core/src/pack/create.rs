@@ -130,7 +130,7 @@ where
                 .collect::<Result<Vec<_>, _>>()?;
             let handle = repo.objects.into_shared_arc().to_cache_arc();
             let iter = Box::new(
-                traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), handle.clone())
+                traverse::commit::Simple::new(tips, handle.clone())
                     .map(|res| res.map_err(|err| Box::new(err) as Box<_>).map(|c| c.id))
                     .inspect(move |_| progress.inc()),
             );
@@ -361,7 +361,7 @@ pub mod input_iteration {
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error("input objects couldn't be iterated completely")]
-        Iteration(#[from] traverse::commit::ancestors::Error),
+        Iteration(#[from] traverse::commit::simple::Error),
         #[error("An error occurred while reading hashes from standard input")]
         InputLinesIo(#[from] std::io::Error),
         #[error("Could not decode hex hash provided on standard input")]

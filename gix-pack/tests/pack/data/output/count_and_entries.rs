@@ -9,7 +9,6 @@ use gix_pack::data::{
     output,
     output::{count, entry},
 };
-use gix_traverse::commit;
 
 use crate::pack::{
     data::output::{db, DbKind},
@@ -241,7 +240,7 @@ fn traversals() -> crate::Result {
         .copied()
         {
             let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
-            let mut commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), db.clone())
+            let mut commits = gix_traverse::commit::Simple::new(Some(head), db.clone())
                 .map(Result::unwrap)
                 .map(|c| c.id)
                 .collect::<Vec<_>>();

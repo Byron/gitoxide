@@ -1,27 +1,10 @@
-use gix_object::FindExt;
+use gix_date::SecondsSinceUnixEpoch;
+use gix_hash::ObjectId;
+use gix_hashtable::HashSet;
 use smallvec::SmallVec;
+use std::collections::VecDeque;
 
-/// An iterator over the ancestors one or more starting commits
-pub struct Ancestors<Find, Predicate, StateMut> {
-    objects: Find,
-    cache: Option<gix_commitgraph::Graph>,
-    predicate: Predicate,
-    state: StateMut,
-    parents: Parents,
-    sorting: Sorting,
-}
-
-/// Specify how to handle commit parents during traversal.
-#[derive(Default, Copy, Clone)]
-pub enum Parents {
-    /// Traverse all parents, useful for traversing the entire ancestry.
-    #[default]
-    All,
-    /// Only traverse along the first parent, which commonly ignores all branches.
-    First,
-}
-
-/// Specify how to sort commits during traversal.
+/// Specify how to sort commits during a [simple](super::Simple) traversal.
 ///
 /// ### Sample History
 ///
@@ -33,7 +16,6 @@ pub enum Parents {
 ///     \              \
 ///      3----5----6----8---
 /// ```
-
 #[derive(Default, Debug, Copy, Clone)]
 pub enum Sorting {
     /// Commits are sorted as they are mentioned in the commit graph.
@@ -69,59 +51,38 @@ pub enum Sorting {
     },
 }
 
-/// The collection of parent ids we saw as part of the iteration.
-///
-/// Note that this list is truncated if [`Parents::First`] was used.
-pub type ParentIds = SmallVec<[gix_hash::ObjectId; 1]>;
+/// The error is part of the item returned by the [Ancestors](super::Simple) iterator.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    Find(#[from] gix_object::find::existing_iter::Error),
+    #[error(transparent)]
+    ObjectDecode(#[from] gix_object::decode::Error),
+}
 
-/// Information about a commit that we obtained naturally as part of the iteration.
-#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct Info {
-    /// The id of the commit.
-    pub id: gix_hash::ObjectId,
-    /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`] is enabled.
-    pub parent_ids: ParentIds,
-    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`], as the walk
-    /// needs to require the commit-date.
-    pub commit_time: Option<gix_date::SecondsSinceUnixEpoch>,
+/// The state used and potentially shared by multiple graph traversals.
+#[derive(Clone)]
+pub(super) struct State {
+    next: VecDeque<ObjectId>,
+    queue: gix_revwalk::PriorityQueue<SecondsSinceUnixEpoch, ObjectId>,
+    buf: Vec<u8>,
+    seen: HashSet<ObjectId>,
+    parents_buf: Vec<u8>,
+    parent_ids: SmallVec<[(ObjectId, SecondsSinceUnixEpoch); 2]>,
 }
 
 ///
 #[allow(clippy::empty_docs)]
-pub mod ancestors {
-    use std::{
-        borrow::{Borrow, BorrowMut},
-        collections::VecDeque,
-    };
-
+mod init {
     use gix_date::SecondsSinceUnixEpoch;
     use gix_hash::{oid, ObjectId};
-    use gix_hashtable::HashSet;
     use gix_object::{CommitRefIter, FindExt};
-    use smallvec::SmallVec;
 
-    use crate::commit::{collect_parents, Ancestors, Either, Info, ParentIds, Parents, Sorting};
-
-    /// The error is part of the item returned by the [Ancestors] iterator.
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        Find(#[from] gix_object::find::existing_iter::Error),
-        #[error(transparent)]
-        ObjectDecode(#[from] gix_object::decode::Error),
-    }
-
-    /// The state used and potentially shared by multiple graph traversals.
-    #[derive(Clone)]
-    pub struct State {
-        next: VecDeque<ObjectId>,
-        queue: gix_revwalk::PriorityQueue<SecondsSinceUnixEpoch, ObjectId>,
-        buf: Vec<u8>,
-        seen: HashSet<ObjectId>,
-        parents_buf: Vec<u8>,
-        parent_ids: SmallVec<[(ObjectId, SecondsSinceUnixEpoch); 2]>,
-    }
+    use super::{
+        super::{simple::Sorting, Either, Info, ParentIds, Parents, Simple},
+        collect_parents, Error, State,
+    };
 
     impl Default for State {
         fn default() -> Self {
@@ -146,12 +107,11 @@ pub mod ancestors {
     }
 
     /// Builder
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate> Simple<Find, Predicate>
     where
         Find: gix_object::Find,
-        StateMut: BorrowMut<State>,
     {
-        /// Set the sorting method, either topological or by author date
+        /// Set the `sorting` method.
         pub fn sorting(mut self, sorting: Sorting) -> Result<Self, Error> {
             self.sorting = sorting;
             match self.sorting {
@@ -160,7 +120,7 @@ pub mod ancestors {
                 }
                 Sorting::ByCommitTimeNewestFirst | Sorting::ByCommitTimeNewestFirstCutoffOlderThan { .. } => {
                     let cutoff_time = self.sorting.cutoff_time();
-                    let state = self.state.borrow_mut();
+                    let state = &mut self.state;
                     for commit_id in state.next.drain(..) {
                         let commit_iter = self.objects.find_commit_iter(&commit_id, &mut state.buf)?;
                         let time = commit_iter.committer()?.time.seconds;
@@ -198,7 +158,7 @@ pub mod ancestors {
         }
 
         fn queue_to_vecdeque(&mut self) {
-            let state = self.state.borrow_mut();
+            let state = &mut self.state;
             state.next.extend(
                 std::mem::replace(&mut state.queue, gix_revwalk::PriorityQueue::new())
                     .into_iter_unordered()
@@ -207,41 +167,35 @@ pub mod ancestors {
         }
     }
 
-    /// Initialization
-    impl<Find, StateMut> Ancestors<Find, fn(&oid) -> bool, StateMut>
+    /// Lifecyle
+    impl<Find> Simple<Find, fn(&oid) -> bool>
     where
         Find: gix_object::Find,
-        StateMut: BorrowMut<State>,
     {
         /// Create a new instance.
         ///
         /// * `find` - a way to lookup new object data during traversal by their `ObjectId`, writing their data into buffer and returning
         ///    an iterator over commit tokens if the object is present and is a commit. Caching should be implemented within this function
         ///    as needed.
-        /// * `state` - all state used for the traversal. If multiple traversals are performed, allocations can be minimized by reusing
-        ///   this state.
         /// * `tips`
         ///   * the starting points of the iteration, usually commits
         ///   * each commit they lead to will only be returned once, including the tip that started it
-        pub fn new(tips: impl IntoIterator<Item = impl Into<ObjectId>>, state: StateMut, find: Find) -> Self {
-            Self::filtered(tips, state, find, |_| true)
+        pub fn new(tips: impl IntoIterator<Item = impl Into<ObjectId>>, find: Find) -> Self {
+            Self::filtered(tips, find, |_| true)
         }
     }
 
-    /// Initialization
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    /// Lifecyle
+    impl<Find, Predicate> Simple<Find, Predicate>
     where
         Find: gix_object::Find,
         Predicate: FnMut(&oid) -> bool,
-        StateMut: BorrowMut<State>,
     {
         /// Create a new instance with commit filtering enabled.
         ///
         /// * `find` - a way to lookup new object data during traversal by their `ObjectId`, writing their data into buffer and returning
         ///    an iterator over commit tokens if the object is present and is a commit. Caching should be implemented within this function
         ///    as needed.
-        /// * `state` - all state used for the traversal. If multiple traversals are performed, allocations can be minimized by reusing
-        ///   this state.
         /// * `tips`
         ///   * the starting points of the iteration, usually commits
         ///   * each commit they lead to will only be returned once, including the tip that started it
@@ -249,13 +203,12 @@ pub mod ancestors {
         ///   as whether its parent commits should be traversed.
         pub fn filtered(
             tips: impl IntoIterator<Item = impl Into<ObjectId>>,
-            mut state: StateMut,
             find: Find,
             mut predicate: Predicate,
         ) -> Self {
             let tips = tips.into_iter();
+            let mut state = State::default();
             {
-                let state = state.borrow_mut();
                 state.clear();
                 state.next.reserve(tips.size_hint().0);
                 for tip in tips.map(Into::into) {
@@ -275,27 +228,24 @@ pub mod ancestors {
             }
         }
     }
+
     /// Access
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
-    where
-        StateMut: Borrow<State>,
-    {
-        /// Return an iterator for accessing more of the current commits data.
+    impl<Find, Predicate> Simple<Find, Predicate> {
+        /// Return an iterator for accessing data of the current commit, parsed lazily.
         pub fn commit_iter(&self) -> CommitRefIter<'_> {
-            CommitRefIter::from_bytes(&self.state.borrow().buf)
+            CommitRefIter::from_bytes(&self.state.buf)
         }
 
-        /// Return the current commits data.
+        /// Return the current commits' raw data, which can be parsed using [`gix_object::CommitRef::from_bytes()`].
         pub fn commit_data(&self) -> &[u8] {
-            &self.state.borrow().buf
+            &self.state.buf
         }
     }
 
-    impl<Find, Predicate, StateMut> Iterator for Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate> Iterator for Simple<Find, Predicate>
     where
         Find: gix_object::Find,
         Predicate: FnMut(&oid) -> bool,
-        StateMut: BorrowMut<State>,
     {
         type Item = Result<Info, Error>;
 
@@ -325,21 +275,20 @@ pub mod ancestors {
     }
 
     /// Utilities
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate> Simple<Find, Predicate>
     where
         Find: gix_object::Find,
         Predicate: FnMut(&oid) -> bool,
-        StateMut: BorrowMut<State>,
     {
         fn next_by_commit_date(
             &mut self,
             cutoff_older_than: Option<SecondsSinceUnixEpoch>,
         ) -> Option<Result<Info, Error>> {
-            let state = self.state.borrow_mut();
+            let state = &mut self.state;
 
             let (commit_time, oid) = state.queue.pop()?;
             let mut parents: ParentIds = Default::default();
-            match super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
+            match super::super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
                 Ok(Either::CachedCommit(commit)) => {
                     if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
                         // drop corrupt caches and try again with ODB
@@ -396,17 +345,16 @@ pub mod ancestors {
     }
 
     /// Utilities
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate> Simple<Find, Predicate>
     where
         Find: gix_object::Find,
         Predicate: FnMut(&oid) -> bool,
-        StateMut: BorrowMut<State>,
     {
         fn next_by_topology(&mut self) -> Option<Result<Info, Error>> {
-            let state = self.state.borrow_mut();
+            let state = &mut self.state;
             let oid = state.next.pop_front()?;
             let mut parents: ParentIds = Default::default();
-            match super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
+            match super::super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
                 Ok(Either::CachedCommit(commit)) => {
                     if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
                         // drop corrupt caches and try again with ODB
@@ -455,11 +403,6 @@ pub mod ancestors {
     }
 }
 
-enum Either<'buf, 'cache> {
-    CommitRefIter(gix_object::CommitRefIter<'buf>),
-    CachedCommit(gix_commitgraph::file::Commit<'cache>),
-}
-
 fn collect_parents(
     dest: &mut SmallVec<[(gix_hash::ObjectId, gix_date::SecondsSinceUnixEpoch); 2]>,
     cache: Option<&gix_commitgraph::Graph>,
@@ -480,19 +423,4 @@ fn collect_parents(
         }
     }
     true
-}
-
-fn find<'cache, 'buf, Find>(
-    cache: Option<&'cache gix_commitgraph::Graph>,
-    objects: Find,
-    id: &gix_hash::oid,
-    buf: &'buf mut Vec<u8>,
-) -> Result<Either<'buf, 'cache>, gix_object::find::existing_iter::Error>
-where
-    Find: gix_object::Find,
-{
-    match cache.and_then(|cache| cache.commit_by_id(id).map(Either::CachedCommit)) {
-        Some(c) => Ok(c),
-        None => objects.find_commit_iter(id, buf).map(Either::CommitRefIter),
-    }
 }
