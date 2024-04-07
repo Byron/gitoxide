@@ -130,7 +130,7 @@ where
                 .collect::<Result<Vec<_>, _>>()?;
             let handle = repo.objects.into_shared_arc().to_cache_arc();
             let iter = Box::new(
-                traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), handle.clone())
+                traverse::commit::Ancestors::new(tips, handle.clone())
                     .map(|res| res.map_err(|err| Box::new(err) as Box<_>).map(|c| c.id))
                     .inspect(move |_| progress.inc()),
             );
