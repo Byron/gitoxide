@@ -1,9 +1,19 @@
 use gix_object::FindExt;
 use smallvec::SmallVec;
 
+/// An iterator over the ancestors one or more starting commits
+pub struct Ancestors<Find, Predicate> {
+    objects: Find,
+    cache: Option<gix_commitgraph::Graph>,
+    predicate: Predicate,
+    state: ancestors::State,
+    parents: Parents,
+    sorting: Sorting,
+}
+
 /// Simple ancestors traversal
 pub mod ancestors;
-pub use ancestors::{Ancestors, Sorting};
+pub use ancestors::Sorting;
 
 // Topological traversal
 pub mod topo;
