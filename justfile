@@ -252,3 +252,7 @@ fmt:
 # Cancel this after the first few seconds, as yanked crates will appear in warnings.
 find-yanked:
     cargo install --debug --locked --no-default-features --features max-pure --path .
+
+# Delete gix-packetline-blocking/src and regenerate from gix-packetline/src
+copy-packetline:
+    ./etc/copy-packetline.sh
