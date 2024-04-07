@@ -1,27 +1,6 @@
-//! Topological commit traversal, similar to `git log --topo-order`.
-
-use gix_hash::ObjectId;
-use gix_revwalk::{graph::IdMap, PriorityQueue};
+//! Topological commit traversal, similar to `git log --topo-order`, which keeps track of graph state.
 
 use bitflags::bitflags;
-
-use super::Parents;
-
-/// A commit walker that walks in topographical order, like `git rev-list
-/// --topo-order` or `--date-order` depending on the chosen [`Sorting`].
-pub struct Walk<Find, Predicate> {
-    commit_graph: Option<gix_commitgraph::Graph>,
-    find: Find,
-    predicate: Predicate,
-    indegrees: IdMap<i32>,
-    states: IdMap<WalkFlags>,
-    explore_queue: PriorityQueue<iter::GenAndCommitTime, ObjectId>,
-    indegree_queue: PriorityQueue<iter::GenAndCommitTime, ObjectId>,
-    topo_queue: iter::Queue,
-    parents: Parents,
-    min_gen: u32,
-    buf: Vec<u8>,
-}
 
 /// The errors that can occur during creation and iteration.
 #[derive(thiserror::Error, Debug)]
@@ -44,7 +23,7 @@ bitflags! {
     // NOTE: The names correspond to the names of the flags in revision.h
     #[repr(transparent)]
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    struct WalkFlags: u32 {
+    pub(super) struct WalkFlags: u32 {
         /// Commit has been seen
         const Seen = 0b000001;
         /// Commit has been processed by the Explore walk
@@ -88,4 +67,4 @@ pub enum Sorting {
 mod init;
 pub use init::Builder;
 
-mod iter;
+pub(super) mod iter;

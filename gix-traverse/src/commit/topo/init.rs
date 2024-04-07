@@ -1,11 +1,11 @@
 use crate::commit::topo::iter::gen_and_commit_time;
-use crate::commit::topo::{Error, Sorting, Walk, WalkFlags};
-use crate::commit::{find, Info, Parents};
+use crate::commit::topo::{Error, Sorting, WalkFlags};
+use crate::commit::{find, Info, Parents, Topo};
 use gix_hash::{oid, ObjectId};
 use gix_revwalk::graph::IdMap;
 use gix_revwalk::PriorityQueue;
 
-/// Builder for [`Walk`].
+/// Builder for [`Topo`].
 pub struct Builder<Find, Predicate> {
     commit_graph: Option<gix_commitgraph::Graph>,
     find: Find,
@@ -20,7 +20,7 @@ impl<Find> Builder<Find, fn(&oid) -> bool>
 where
     Find: gix_object::Find,
 {
-    /// Create a new `Builder` for a [`Walk`] that reads commits from a repository with `find`.
+    /// Create a new `Builder` for a [`Topo`] that reads commits from a repository with `find`.
     /// starting at the `tips` and ending at the `ends`. Like `git rev-list
     /// --topo-order ^ends... tips...`.
     pub fn from_iters(
@@ -87,11 +87,11 @@ where
         self
     }
 
-    /// Build a new [`Walk`] instance.
+    /// Build a new [`Topo`] instance.
     ///
     /// Note that merely building an instance is currently expensive.
-    pub fn build(self) -> Result<Walk<Find, Predicate>, Error> {
-        let mut w = Walk {
+    pub fn build(self) -> Result<Topo<Find, Predicate>, Error> {
+        let mut w = Topo {
             commit_graph: self.commit_graph,
             find: self.find,
             predicate: self.predicate,

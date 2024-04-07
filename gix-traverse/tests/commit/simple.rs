@@ -9,7 +9,7 @@ struct TraversalAssertion<'a> {
     tips: &'a [&'a str],
     expected: &'a [&'a str],
     mode: commit::Parents,
-    sorting: commit::Sorting,
+    sorting: commit::simple::Sorting,
 }
 
 impl<'a> TraversalAssertion<'a> {
@@ -33,7 +33,7 @@ impl<'a> TraversalAssertion<'a> {
         self
     }
 
-    fn with_sorting(&mut self, sorting: commit::Sorting) -> &mut Self {
+    fn with_sorting(&mut self, sorting: commit::simple::Sorting) -> &mut Self {
         self.sorting = sorting;
         self
     }
@@ -63,7 +63,7 @@ impl TraversalAssertion<'_> {
         let (store, tips, expected) = self.setup()?;
 
         for use_commitgraph in [false, true] {
-            let oids = commit::Ancestors::filtered(tips.clone(), &store, predicate.clone())
+            let oids = commit::Simple::filtered(tips.clone(), &store, predicate.clone())
                 .sorting(self.sorting)?
                 .parents(self.mode)
                 .commit_graph(self.setup_commitgraph(store.store_ref(), use_commitgraph))
@@ -79,7 +79,7 @@ impl TraversalAssertion<'_> {
         let (store, tips, expected) = self.setup()?;
 
         for use_commitgraph in [false, true] {
-            let oids = commit::Ancestors::new(tips.clone(), &store)
+            let oids = commit::Simple::new(tips.clone(), &store)
                 .sorting(self.sorting)?
                 .parents(self.mode)
                 .commit_graph(self.setup_commitgraph(store.store_ref(), use_commitgraph))
@@ -92,9 +92,9 @@ impl TraversalAssertion<'_> {
 }
 
 mod different_date_intermixed {
-    use gix_traverse::commit::Sorting;
+    use gix_traverse::commit::simple::Sorting;
 
-    use crate::commit::ancestor::TraversalAssertion;
+    use crate::commit::simple::TraversalAssertion;
 
     #[test]
     fn head_breadth_first() -> crate::Result {
@@ -140,9 +140,9 @@ mod different_date_intermixed {
 }
 
 mod different_date {
-    use gix_traverse::commit::Sorting;
+    use gix_traverse::commit::simple::Sorting;
 
-    use crate::commit::ancestor::TraversalAssertion;
+    use crate::commit::simple::TraversalAssertion;
 
     #[test]
     fn head_breadth_first() -> crate::Result {
@@ -193,9 +193,9 @@ mod different_date {
 
 /// Same dates are somewhat special as they show how sorting-details on priority queues affects ordering
 mod same_date {
-    use gix_traverse::commit::{Parents, Sorting};
+    use gix_traverse::commit::{simple::Sorting, Parents};
 
-    use crate::{commit::ancestor::TraversalAssertion, hex_to_id};
+    use crate::{commit::simple::TraversalAssertion, hex_to_id};
 
     #[test]
     fn c4_breadth_first() -> crate::Result {
@@ -337,9 +337,9 @@ mod same_date {
 
 /// Some dates adjusted to be a year apart, but still 'c1' and 'c2' with the same date.
 mod adjusted_dates {
-    use gix_traverse::commit::{Ancestors, Parents, Sorting};
+    use gix_traverse::commit::{simple::Sorting, Parents, Simple};
 
-    use crate::{commit::ancestor::TraversalAssertion, hex_to_id};
+    use crate::{commit::simple::TraversalAssertion, hex_to_id};
 
     #[test]
     fn head_breadth_first() -> crate::Result {
@@ -390,7 +390,7 @@ mod adjusted_dates {
         let dir =
             gix_testtools::scripted_fixture_read_only_standalone("make_traversal_repo_for_commits_with_dates.sh")?;
         let store = gix_odb::at(dir.join(".git").join("objects"))?;
-        let iter = Ancestors::new(
+        let iter = Simple::new(
             Some(hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7" /* c2 */)),
             &store,
         )

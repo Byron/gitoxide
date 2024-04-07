@@ -184,7 +184,7 @@ pub enum Error {
         next: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
     },
     #[error(transparent)]
-    Traverse(#[from] gix_traverse::commit::ancestors::Error),
+    Traverse(#[from] gix_traverse::commit::simple::Error),
     #[error(transparent)]
     Walk(#[from] crate::revision::walk::Error),
     #[error("Spec does not contain a single object id")]

@@ -1,17 +1,17 @@
-use crate::commit::topo::{Error, Sorting, Walk, WalkFlags};
-use crate::commit::{find, Either, Info, Parents};
+use crate::commit::topo::{Error, Sorting, WalkFlags};
+use crate::commit::{find, Either, Info, Parents, Topo};
 use gix_hash::{oid, ObjectId};
 use gix_revwalk::PriorityQueue;
 use smallvec::SmallVec;
 
-pub(super) type GenAndCommitTime = (u32, i64);
+pub(in crate::commit) type GenAndCommitTime = (u32, i64);
 
 // Git's priority queue works as a LIFO stack if no compare function is set,
 // which is the case for `--topo-order.` However, even in that case the initial
 // items of the queue are sorted according to the commit time before beginning
 // the walk.
 #[derive(Debug)]
-pub(super) enum Queue {
+pub(in crate::commit) enum Queue {
     Date(PriorityQueue<i64, Info>),
     Topo(Vec<(i64, Info)>),
 }
@@ -45,7 +45,7 @@ impl Queue {
     }
 }
 
-impl<Find, Predicate> Walk<Find, Predicate>
+impl<Find, Predicate> Topo<Find, Predicate>
 where
     Find: gix_object::Find,
 {
@@ -214,7 +214,7 @@ where
     }
 }
 
-impl<Find, Predicate> Iterator for Walk<Find, Predicate>
+impl<Find, Predicate> Iterator for Topo<Find, Predicate>
 where
     Find: gix_object::Find,
     Predicate: FnMut(&oid) -> bool,

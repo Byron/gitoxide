@@ -8,7 +8,7 @@ use crate::{ext::ObjectIdExt, revision, Repository};
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    AncestorIter(#[from] gix_traverse::commit::ancestors::Error),
+    AncestorIter(#[from] gix_traverse::commit::simple::Error),
     #[error(transparent)]
     ShallowCommits(#[from] crate::shallow::open::Error),
     #[error(transparent)]
@@ -166,7 +166,7 @@ impl<'repo> Platform<'repo> {
         Ok(revision::Walk {
             repo,
             inner: Box::new(
-                gix_traverse::commit::Ancestors::filtered(tips, &repo.objects, {
+                gix_traverse::commit::Simple::filtered(tips, &repo.objects, {
                     // Note that specific shallow handling for commit-graphs isn't needed as these contain
                     // all information there is, and exclude shallow parents to be structurally consistent.
                     let shallow_commits = repo.shallow_commits()?;
@@ -221,13 +221,12 @@ pub(crate) mod iter {
     /// The iterator returned by [`crate::revision::walk::Platform::all()`].
     pub struct Walk<'repo> {
         pub(crate) repo: &'repo crate::Repository,
-        pub(crate) inner: Box<
-            dyn Iterator<Item = Result<gix_traverse::commit::Info, gix_traverse::commit::ancestors::Error>> + 'repo,
-        >,
+        pub(crate) inner:
+            Box<dyn Iterator<Item = Result<gix_traverse::commit::Info, gix_traverse::commit::simple::Error>> + 'repo>,
     }
 
     impl<'repo> Iterator for Walk<'repo> {
-        type Item = Result<super::Info<'repo>, gix_traverse::commit::ancestors::Error>;
+        type Item = Result<super::Info<'repo>, gix_traverse::commit::simple::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             self.inner

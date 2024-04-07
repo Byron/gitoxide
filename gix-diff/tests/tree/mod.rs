@@ -133,7 +133,7 @@ mod changes {
             let mut buf = Vec::new();
 
             let head = head_of(db);
-            commit::Ancestors::new(Some(head), &db)
+            commit::Simple::new(Some(head), &db)
                 .collect::<Result<Vec<_>, _>>()
                 .expect("valid iteration")
                 .into_iter()

@@ -241,7 +241,7 @@ fn traversals() -> crate::Result {
         .copied()
         {
             let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
-            let mut commits = commit::Ancestors::new(Some(head), db.clone())
+            let mut commits = commit::Simple::new(Some(head), db.clone())
                 .map(Result::unwrap)
                 .map(|c| c.id)
                 .collect::<Vec<_>>();

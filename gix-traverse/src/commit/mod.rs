@@ -1,67 +1,43 @@
+//! Provide multiple traversal implementations with different performance envelopes.
+//!
+//! Use [`Simple`] for fast walks that maintain minimal state, or [`Topo`] for a more elaborate traversal.
+use gix_hash::ObjectId;
 use gix_object::FindExt;
+use gix_revwalk::graph::IdMap;
+use gix_revwalk::PriorityQueue;
 use smallvec::SmallVec;
 
 /// A fast iterator over the ancestors of one or more starting commits.
-pub struct Ancestors<Find, Predicate> {
+pub struct Simple<Find, Predicate> {
     objects: Find,
     cache: Option<gix_commitgraph::Graph>,
     predicate: Predicate,
-    state: ancestors::State,
+    state: simple::State,
     parents: Parents,
-    sorting: Sorting,
+    sorting: simple::Sorting,
 }
 
-/// Specify how to sort commits during the [ancestor](Ancestors) traversal.
+/// Simple ancestors traversal, without the need to keep track of graph-state.
+pub mod simple;
+
+/// A commit walker that walks in topographical order, like `git rev-list
+/// --topo-order` or `--date-order` depending on the chosen [`topo::Sorting`].
 ///
-/// ### Sample History
-///
-/// The following history will be referred to for explaining how the sort order works, with the number denoting the commit timestamp
-/// (*their X-alignment doesn't matter*).
-///
-/// ```text
-/// ---1----2----4----7 <- second parent of 8
-///     \              \
-///      3----5----6----8---
-/// ```
-#[derive(Default, Debug, Copy, Clone)]
-pub enum Sorting {
-    /// Commits are sorted as they are mentioned in the commit graph.
-    ///
-    /// In the *sample history* the order would be `8, 6, 7, 5, 4, 3, 2, 1`
-    ///
-    /// ### Note
-    ///
-    /// This is not to be confused with `git log/rev-list --topo-order`, which is notably different from
-    /// as it avoids overlapping branches.
-    #[default]
-    BreadthFirst,
-    /// Commits are sorted by their commit time in descending order, that is newest first.
-    ///
-    /// The sorting applies to all currently queued commit ids and thus is full.
-    ///
-    /// In the *sample history* the order would be `8, 7, 6, 5, 4, 3, 2, 1`
-    ///
-    /// # Performance
-    ///
-    /// This mode benefits greatly from having an object_cache in `find()`
-    /// to avoid having to lookup each commit twice.
-    ByCommitTimeNewestFirst,
-    /// This sorting is similar to `ByCommitTimeNewestFirst`, but adds a cutoff to not return commits older than
-    /// a given time, stopping the iteration once no younger commits is queued to be traversed.
-    ///
-    /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
-    ///
-    /// In the *sample history* and a cut-off date of 4, the returned list of commits would be `8, 7, 6, 4`
-    ByCommitTimeNewestFirstCutoffOlderThan {
-        /// The amount of seconds since unix epoch, the same value obtained by any `gix_date::Time` structure and the way git counts time.
-        seconds: gix_date::SecondsSinceUnixEpoch,
-    },
+/// Instantiate with [`topo::Builder`].
+pub struct Topo<Find, Predicate> {
+    commit_graph: Option<gix_commitgraph::Graph>,
+    find: Find,
+    predicate: Predicate,
+    indegrees: IdMap<i32>,
+    states: IdMap<topo::WalkFlags>,
+    explore_queue: PriorityQueue<topo::iter::GenAndCommitTime, ObjectId>,
+    indegree_queue: PriorityQueue<topo::iter::GenAndCommitTime, ObjectId>,
+    topo_queue: topo::iter::Queue,
+    parents: Parents,
+    min_gen: u32,
+    buf: Vec<u8>,
 }
 
-/// Simple ancestors traversal
-pub mod ancestors;
-
-// Topological traversal
 pub mod topo;
 
 /// Specify how to handle commit parents during traversal.
@@ -86,8 +62,8 @@ pub struct Info {
     pub id: gix_hash::ObjectId,
     /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`] is enabled.
     pub parent_ids: ParentIds,
-    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`], as the walk
-    /// needs to require the commit-date.
+    /// The time at which the commit was created. It will only be `Some(_)` if the chosen traversal was
+    /// taking dates into consideration.
     pub commit_time: Option<gix_date::SecondsSinceUnixEpoch>,
 }
 
