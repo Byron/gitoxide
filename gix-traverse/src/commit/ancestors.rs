@@ -4,54 +4,6 @@ use gix_hashtable::HashSet;
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 
-/// Specify how to sort commits during traversal.
-///
-/// ### Sample History
-///
-/// The following history will be referred to for explaining how the sort order works, with the number denoting the commit timestamp
-/// (*their X-alignment doesn't matter*).
-///
-/// ```text
-/// ---1----2----4----7 <- second parent of 8
-///     \              \
-///      3----5----6----8---
-/// ```
-
-#[derive(Default, Debug, Copy, Clone)]
-pub enum Sorting {
-    /// Commits are sorted as they are mentioned in the commit graph.
-    ///
-    /// In the *sample history* the order would be `8, 6, 7, 5, 4, 3, 2, 1`
-    ///
-    /// ### Note
-    ///
-    /// This is not to be confused with `git log/rev-list --topo-order`, which is notably different from
-    /// as it avoids overlapping branches.
-    #[default]
-    BreadthFirst,
-    /// Commits are sorted by their commit time in descending order, that is newest first.
-    ///
-    /// The sorting applies to all currently queued commit ids and thus is full.
-    ///
-    /// In the *sample history* the order would be `8, 7, 6, 5, 4, 3, 2, 1`
-    ///
-    /// # Performance
-    ///
-    /// This mode benefits greatly from having an object_cache in `find()`
-    /// to avoid having to lookup each commit twice.
-    ByCommitTimeNewestFirst,
-    /// This sorting is similar to `ByCommitTimeNewestFirst`, but adds a cutoff to not return commits older than
-    /// a given time, stopping the iteration once no younger commits is queued to be traversed.
-    ///
-    /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
-    ///
-    /// In the *sample history* and a cut-off date of 4, the returned list of commits would be `8, 7, 6, 4`
-    ByCommitTimeNewestFirstCutoffOlderThan {
-        /// The amount of seconds since unix epoch, the same value obtained by any `gix_date::Time` structure and the way git counts time.
-        seconds: gix_date::SecondsSinceUnixEpoch,
-    },
-}
-
 /// The error is part of the item returned by the [Ancestors](super::Ancestors) iterator.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -81,8 +33,8 @@ mod init {
     use gix_object::{CommitRefIter, FindExt};
 
     use super::{
-        super::{Ancestors, Either, Info, ParentIds, Parents},
-        collect_parents, Error, Sorting, State,
+        super::{Ancestors, Either, Info, ParentIds, Parents, Sorting},
+        collect_parents, Error, State,
     };
 
     impl Default for State {

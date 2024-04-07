@@ -60,16 +60,28 @@ bitflags! {
     }
 }
 
-/// Sorting to use for the topological walk
+/// Sorting to use for the topological walk.
+///
+/// ### Sample History
+///
+/// The following history will be referred to for explaining how the sort order works, with the number denoting the commit timestamp
+/// (*their X-alignment doesn't matter*).
+///
+/// ```text
+/// ---1----2----4----7 <- second parent of 8
+///     \              \
+///      3----5----6----8---
+/// ```
 #[derive(Clone, Copy, Debug, Default)]
 pub enum Sorting {
     /// Show no parents before all of its children are shown, but otherwise show
     /// commits in the commit timestamp order.
     #[default]
     DateOrder,
-
     /// Show no parents before all of its children are shown, and avoid
     /// showing commits on multiple lines of history intermixed.
+    ///
+    /// In the *sample history* the order would be `8, 6, 5, 3, 7, 4, 2, 1`
     TopoOrder,
 }
 
