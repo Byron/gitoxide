@@ -44,7 +44,7 @@ fn yes() -> crate::Result {
 }
 
 mod traverse {
-    use gix_traverse::commit::Sorting;
+    use gix_traverse::commit::simple::Sorting;
     use serial_test::parallel;
 
     use crate::util::{hex_to_id, named_subrepo_opts};

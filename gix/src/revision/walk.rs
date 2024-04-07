@@ -8,7 +8,7 @@ use crate::{ext::ObjectIdExt, revision, Repository};
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    AncestorIter(#[from] gix_traverse::commit::simple::Error),
+    SimpleTraversal(#[from] gix_traverse::commit::simple::Error),
     #[error(transparent)]
     ShallowCommits(#[from] crate::shallow::open::Error),
     #[error(transparent)]
@@ -22,8 +22,8 @@ pub struct Info<'repo> {
     pub id: gix_hash::ObjectId,
     /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`][gix_traverse::commit::Parents::First] is enabled.
     pub parent_ids: gix_traverse::commit::ParentIds,
-    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`][gix_traverse::commit::Sorting::BreadthFirst],
-    /// as the walk needs to require the commit-date.
+    /// The time at which the commit was created. It will only be `Some(_)` if the chosen traversal was
+    /// taking dates into consideration.
     pub commit_time: Option<gix_date::SecondsSinceUnixEpoch>,
 
     repo: &'repo Repository,
@@ -91,7 +91,7 @@ impl<'repo> Info<'repo> {
 pub struct Platform<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) tips: Vec<ObjectId>,
-    pub(crate) sorting: gix_traverse::commit::Sorting,
+    pub(crate) sorting: gix_traverse::commit::simple::Sorting,
     pub(crate) parents: gix_traverse::commit::Parents,
     pub(crate) use_commit_graph: Option<bool>,
     pub(crate) commit_graph: Option<gix_commitgraph::Graph>,
@@ -113,7 +113,7 @@ impl<'repo> Platform<'repo> {
 /// Create-time builder methods
 impl<'repo> Platform<'repo> {
     /// Set the sort mode for commits to the given value. The default is to order topologically breadth-first.
-    pub fn sorting(mut self, sorting: gix_traverse::commit::Sorting) -> Self {
+    pub fn sorting(mut self, sorting: gix_traverse::commit::simple::Sorting) -> Self {
         self.sorting = sorting;
         self
     }

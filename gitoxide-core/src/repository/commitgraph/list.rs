@@ -2,7 +2,7 @@ pub(crate) mod function {
     use std::{borrow::Cow, ffi::OsString};
 
     use anyhow::{bail, Context};
-    use gix::{prelude::ObjectIdExt, traverse::commit::Sorting};
+    use gix::{prelude::ObjectIdExt, traverse::commit::simple::Sorting};
 
     use crate::OutputFormat;
 

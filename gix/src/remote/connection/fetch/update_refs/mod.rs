@@ -162,7 +162,7 @@ pub(crate) fn update(
                                                     .to_owned()
                                                     .ancestors(&repo.objects)
                                                     .sorting(
-                                                        gix_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                                                        gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
                                                             seconds: local_commit_time
                                                         },
                                                     )

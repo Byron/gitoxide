@@ -87,7 +87,7 @@ mod ancestors {
             let commits_by_commit_date = head
                 .ancestors()
                 .use_commit_graph(!use_commit_graph)
-                .sorting(commit::Sorting::ByCommitTimeNewestFirst)
+                .sorting(commit::simple::Sorting::ByCommitTimeNewestFirst)
                 .all()?
                 .map(|c| c.map(gix::revision::walk::Info::detach))
                 .collect::<Result<Vec<_>, _>>()?;
@@ -121,7 +121,7 @@ mod ancestors {
             let head = repo.head()?.into_peeled_id()?;
             let commits = head
                 .ancestors()
-                .sorting(commit::Sorting::ByCommitTimeNewestFirst) // assure we have time set
+                .sorting(commit::simple::Sorting::ByCommitTimeNewestFirst) // assure we have time set
                 .use_commit_graph(use_commit_graph)
                 .all()?
                 .collect::<Result<Vec<_>, _>>()?;
@@ -141,9 +141,9 @@ mod ancestors {
 
         for use_commit_graph in [false, true] {
             for sorting in [
-                commit::Sorting::BreadthFirst,
-                commit::Sorting::ByCommitTimeNewestFirst,
-                commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: 0 },
+                commit::simple::Sorting::BreadthFirst,
+                commit::simple::Sorting::ByCommitTimeNewestFirst,
+                commit::simple::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: 0 },
             ] {
                 let commits_graph_order = head
                     .ancestors()
