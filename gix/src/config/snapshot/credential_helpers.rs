@@ -6,7 +6,6 @@ use crate::config::cache::util::ApplyLeniency;
 use crate::{
     bstr::{ByteSlice, ByteVec},
     config::{
-        cache::util::IgnoreEmptyPath,
         tree::{credential, gitoxide::Credentials, Core, Credential, Key},
         Snapshot,
     },
@@ -195,5 +194,19 @@ fn host_matches(pattern: Option<&str>, host: Option<&str>) -> bool {
 fn normalize(url: &mut gix_url::Url) {
     if !url.path_is_root() && url.path.ends_with(b"/") {
         url.path.pop();
+    }
+}
+
+trait IgnoreEmptyPath {
+    fn ignore_empty(self) -> Self;
+}
+
+impl IgnoreEmptyPath for Result<Option<std::borrow::Cow<'_, std::path::Path>>, gix_config::path::interpolate::Error> {
+    fn ignore_empty(self) -> Self {
+        match self {
+            Ok(maybe_path) => Ok(maybe_path),
+            Err(gix_config::path::interpolate::Error::Missing { .. }) => Ok(None),
+            Err(err) => Err(err),
+        }
     }
 }

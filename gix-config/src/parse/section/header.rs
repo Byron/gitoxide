@@ -145,7 +145,7 @@ impl Display for Header<'_> {
 
 impl From<Header<'_>> for BString {
     fn from(header: Header<'_>) -> Self {
-        header.into()
+        header.to_bstring()
     }
 }
 

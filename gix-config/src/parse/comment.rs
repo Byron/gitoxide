@@ -39,7 +39,7 @@ impl Display for Comment<'_> {
 
 impl From<Comment<'_>> for BString {
     fn from(c: Comment<'_>) -> Self {
-        c.into()
+        c.to_bstring()
     }
 }
 

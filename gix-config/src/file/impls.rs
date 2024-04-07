@@ -42,7 +42,7 @@ impl<'a> TryFrom<&'a BStr> for File<'a> {
 
 impl From<File<'_>> for BString {
     fn from(c: File<'_>) -> Self {
-        c.into()
+        c.to_bstring()
     }
 }
 

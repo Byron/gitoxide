@@ -39,7 +39,6 @@ mod ssh_options {
 mod transport_options;
 
 #[cfg(feature = "blocking-network-client")]
-#[cfg(feature = "blocking-network-client")]
 pub fn repo(name: &str) -> gix::Repository {
     repo_opts(name, |opts| opts.strict_config(true))
 }
