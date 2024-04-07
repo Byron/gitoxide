@@ -20,6 +20,7 @@ impl<'a> Platform<'a> {
     /// # Panics
     ///
     /// If the cache was configured without exclude patterns.
+    #[doc(alias = "is_path_ignored", alias = "git2")]
     pub fn is_excluded(&self) -> bool {
         self.matching_exclude_pattern()
             .map_or(false, |m| !m.pattern.is_negative())

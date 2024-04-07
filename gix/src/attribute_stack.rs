@@ -39,6 +39,7 @@ impl<'repo> AttributeStack<'repo> {
     /// path is created as directory. If it's not known it is assumed to be a file.
     ///
     /// Provide access to cached information for that `relative` path via the returned platform.
+    #[doc(alias = "is_path_ignored", alias = "git2")]
     pub fn at_path(
         &mut self,
         relative: impl AsRef<std::path::Path>,

@@ -23,6 +23,7 @@ pub(crate) mod function {
         io::{BufWriter, Write},
     };
 
+    use gix::index::entry::Stage;
     use gix::{
         bstr::{BStr, BString},
         worktree::IndexPersistedOrInMemory,
@@ -392,11 +393,10 @@ pub(crate) mod function {
             out,
             "{} {}{:?} {} {}{}{}",
             match entry.flags.stage() {
-                0 => "       ",
-                1 => "BASE   ",
-                2 => "OURS   ",
-                3 => "THEIRS ",
-                _ => "UNKNOWN",
+                Stage::Unconflicted => "       ",
+                Stage::Base => "BASE   ",
+                Stage::Ours => "OURS   ",
+                Stage::Theirs => "THEIRS ",
             },
             if entry.flags.is_empty() {
                 "".to_string()

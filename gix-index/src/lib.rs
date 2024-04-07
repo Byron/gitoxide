@@ -144,6 +144,7 @@ pub struct State {
 }
 
 mod impls {
+    use crate::entry::Stage;
     use std::fmt::{Debug, Formatter};
 
     use crate::State;
@@ -155,11 +156,10 @@ mod impls {
                     f,
                     "{} {}{:?} {} {}",
                     match entry.flags.stage() {
-                        0 => "       ",
-                        1 => "BASE   ",
-                        2 => "OURS   ",
-                        3 => "THEIRS ",
-                        _ => "UNKNOWN",
+                        Stage::Unconflicted => "       ",
+                        Stage::Base => "BASE   ",
+                        Stage::Ours => "OURS   ",
+                        Stage::Theirs => "THEIRS ",
                     },
                     if entry.flags.is_empty() {
                         "".to_string()
