@@ -33,7 +33,8 @@ function indent () {
 function generate_all () {
   local root failures
 
-  root="$(git rev-parse --show-toplevel)/."  # /. in case name ends in newline.
+  # Find the working tree. (NOTE: Wrong if the directory name ends in newline.)
+  root="$(git rev-parse --show-toplevel)"
   cd -- "$root"
 
   if ! test -d gix-packetline/src; then
@@ -53,7 +54,11 @@ function generate_all () {
     fail 'unable to remove target'
   fi
 
-  failures="$(find gix-packetline/src/ -exec "$0" --file {} \; -o -print)"
+  failures="$(
+    find gix-packetline/src/ \
+    -exec etc/copy-packetline.sh --file {} \; \
+    -o -print
+  )"
 
   # If we get here, traversal succeeded, but perhaps some generations failed.
   if test -n "$failures"; then
@@ -74,7 +79,7 @@ function first_line_ends_crlf () {
   # avoid false positives with unexpected characters, or with \r not before \n.
 
   head -n 1 -- "$1" |  # Get the longest prefix with no non-trailing \n byte.
-    od -An -ta |       # Show all bytes symbolically, without addresses.
+    od -An -ta |       # Represent all bytes symbolically, without addresses.
     tr -sd '\n' ' ' |  # Scrunch into one line, so "cr nl" appears as such.
     grep -q 'cr nl$'   # Check if the result signifies a \r\n line ending.
 }
@@ -120,7 +125,7 @@ function generate_one () {
     # Cover this case separately, for more useful error messages.
     fail "source file is symbolic link: $source"
   elif ! test -f "$source"; then
-    # This covers less common kinds of files we can't/shouldn't process.
+    # This covers less common kinds of files we can't or shouldn't process.
     fail "source file neither regular file nor directory: $source"
   elif [[ "$source" =~ \.rs$ ]]; then
     copy_with_header "$source" "$target"
@@ -128,13 +133,6 @@ function generate_one () {
     fail "source file not named as Rust source code: $source"
   fi
 }
-
-case "$0" in
-*{}*)
-  # Some "find" implementations expand "{}" even inside a larger argument.
-  fail "can't operate portably with literal {} in command name"
-  ;;
-esac
 
 if { test "$#" -eq 1 && test "$1" = '--all'; } || test "$#" -eq 0; then
   generate_all
