@@ -2,15 +2,6 @@
 
 set -euC -o pipefail
 
-function usage() {
-  local name
-
-  name="$(basename -- "$0")"
-  printf '%s [--all]         regenerate gix-packetline-blocking source\n' "$name"
-  printf '%s --file {path}   regenerate a single file (avoid; prefer --all)\n' "$name"
-  printf '%s --help          print this message\n' "$name"
-}
-
 function fail () {
   printf '%s: error: %s\n' "$0" "$1" >&2
   exit 1
@@ -62,47 +53,12 @@ function check_target () {
   fi
 }
 
-function indent () {
-  sed 's/^/    /'
-}
-
-function generate_all () {
-  local failures
-
-  chdir_toplevel
-
-  if ! test -d gix-packetline/src; then
-    fail 'no source directory: gix-packetline/src'
-  fi
-  if ! test -d gix-packetline-blocking; then
-    fail 'no target parent directory: gix-packetline-blocking'
-  fi
-
-  check_target
-
-  rm -rf gix-packetline-blocking/src  # No trailing /. It may be a symlink.
-  if test -e gix-packetline-blocking/src; then
-    fail 'unable to remove target'
-  fi
-
-  failures="$(
-    find gix-packetline/src/ \
-    -exec etc/copy-packetline.sh --file {} \; \
-    -o -print
-  )"
-
-  # If we get here, traversal succeeded, but perhaps some generations failed.
-  if test -n "$failures"; then
-    fail $'failed to generate from:\n'"$(indent <<<"$failures")"
-  fi
-}
-
 function first_line_ends_crlf () {
   # This is tricky to check portably. In Cygwin-like environments including
   # MSYS2 and Git Bash, most text processing tools, including awk, sed, and
   # grep, automatically ignore \r before \n. Some ignore \r everywhere. Some
   # can be told to keep \r, but in non-portable ways that may affect other
-  # implementations. Bash ignores \r in some places even without "-o icncr",
+  # implementations. Bash ignores \r in some places even without "-o igncr",
   # and ignores \r even more with it, including in all text from command
   # substitution. Simple checks may be non-portable to other OSes. Fortunately,
   # tools that treat input as binary data are exempt (even cat, but "-v" is
@@ -118,6 +74,7 @@ function first_line_ends_crlf () {
 
 function make_header () {
   local source endline
+
   source="$1"
   endline="$2"
 
@@ -142,14 +99,10 @@ function copy_with_header () {
 }
 
 function generate_one () {
-  local source shared target
+  local source target
 
   source="$1"
-  shared="${source#gix-packetline/src/}"
-  if test "$source" = "$shared"; then
-    fail "source path seems to be outside gix-packetline/src/: $source"
-  fi
-  target="gix-packetline-blocking/src/$shared"
+  target="gix-packetline-blocking/src/${source#gix-packetline/src/}"
 
   if test -d "$source"; then
     mkdir -p -- "$target"
@@ -166,12 +119,28 @@ function generate_one () {
   fi
 }
 
-if { test "$#" -eq 1 && test "$1" = '--all'; } || test "$#" -eq 0; then
-  generate_all
-elif test "$#" -eq 2 && test "$1" = '--file'; then
-  generate_one "$2"
-elif test "$#" -eq 1 && test "$1" = '--help'; then
-  usage
-else
-  fail 'unrecognized syntax, try passing only --help for usage'
-fi
+function generate_all () {
+  local source
+
+  chdir_toplevel
+
+  if ! test -d gix-packetline/src; then
+    fail 'no source directory: gix-packetline/src'
+  fi
+  if ! test -d gix-packetline-blocking; then
+    fail 'no target parent directory: gix-packetline-blocking'
+  fi
+
+  check_target
+
+  rm -rf gix-packetline-blocking/src  # No trailing "/" as it may be a symlink.
+  if test -e gix-packetline-blocking/src; then
+    fail 'unable to remove target'
+  fi
+
+  find gix-packetline/src/ -print0 | while IFS= read -r -d '' source; do
+    generate_one "$source"
+  done
+}
+
+generate_all
