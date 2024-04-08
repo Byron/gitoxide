@@ -178,6 +178,14 @@ For Arch Linux you can download `gitoxide` from `community` repository:
 pacman -S gitoxide
 ```
 
+### Download from Exherbo Linux Rust repository
+
+For Exherbo Linux you can download `gitoxide` from the [Rust](https://gitlab.exherbo.org/exherbo/rust/-/tree/master/packages/dev-scm/gitoxide) repository:
+```
+cave resolve -x repository/rust
+cave resolve -x gitoxide
+```
+
 ### From Source via Cargo
 
 `cargo` is the Rust package manager which can easily be obtained through [rustup]. With it, you can build your own binary
@@ -262,7 +270,6 @@ Project goals can change over time as we learn more, and they can be challenged.
    * [Windows is tested on CI](https://github.com/Byron/gitoxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
      and failures do prevent releases.
      
-
 ## Non-Goals
 
 Project non-goals can change over time as we learn more, and they can be challenged.
@@ -365,7 +372,6 @@ Provide a CLI to for the most basic user journey:
 [syncthing]: https://github.com/syncthing/syncthing
 [fossil-scm]: https://www.fossil-scm.org
 [magit]: https://magit.vc
-
 
 ## Shortcomings & Limitations
 
