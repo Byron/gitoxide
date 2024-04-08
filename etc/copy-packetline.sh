@@ -17,21 +17,23 @@ function fail () {
 }
 
 function chdir_toplevel() {
-  local root
+  local root_padded root
 
-  # NOTE: We get the wrong directory name, if the name ends in newline.
-  root="$(git rev-parse --show-toplevel)" ||
+  # Find the working tree's root. (Padding is for the trailing-newline case.)
+  root_padded="$(git rev-parse --show-toplevel && echo -n .)" ||
     fail 'git-rev-parse failed to find top-level dir'
+  root="${root_padded%$'\n.'}"
 
   cd -- "$root"
 }
 
 function merging () {
-  local git_dir
+  local git_dir_padded git_dir
 
-  # NOTE: We get the wrong directory name, if the name ends in newline.
-  git_dir="$(git rev-parse --git-dir)" ||
+  # Find the .git directory. (Padding is for the trailing-newline case.)
+  git_dir_padded="$(git rev-parse --git-dir && echo -n .)" ||
     fail 'git-rev-parse failed to find git dir'
+  git_dir="${git_dir_padded%$'\n.'}"
 
   test -e "$git_dir/MERGE_HEAD"
 }
