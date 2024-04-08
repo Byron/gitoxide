@@ -23,7 +23,7 @@ bitflags! {
     // NOTE: The names correspond to the names of the flags in revision.h
     #[repr(transparent)]
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    pub(super) struct WalkFlags: u32 {
+    pub(super) struct WalkFlags: u8 {
         /// Commit has been seen
         const Seen = 0b000001;
         /// Commit has been processed by the Explore walk
