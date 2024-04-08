@@ -346,8 +346,8 @@ mod date_order {
     use super::TraversalAssertion;
 
     #[test]
-    fn simple() -> crate::Result {
-        TraversalAssertion::new(
+    fn with_ends() -> crate::Result {
+        let mut assertion = TraversalAssertion::new(
             // Same tip and end as basic::one_end() but the order should be
             // different.
             &["62ed296d9986f50477e9f7b7e81cd0258939a43d"],
@@ -365,8 +365,9 @@ mod date_order {
                 "33eb18340e4eaae3e3dcf80222b02f161cd3f966",
                 "1a27cb1a26c9faed9f0d1975326fe51123ab01ed",
             ],
-        )
-        .with_sorting(topo::Sorting::DateOrder)
-        .check()
+        );
+        assertion.with_sorting(topo::Sorting::DateOrder).check()?;
+        assertion.assert_baseline("date-order");
+        Ok(())
     }
 }

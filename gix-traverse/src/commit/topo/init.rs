@@ -22,7 +22,7 @@ where
 {
     /// Create a new `Builder` for a [`Topo`] that reads commits from a repository with `find`.
     /// starting at the `tips` and ending at the `ends`. Like `git rev-list
-    /// --topo-order ^ends... tips...`.
+    /// --topo-order ^ends tips`.
     pub fn from_iters(
         find: Find,
         tips: impl IntoIterator<Item = impl Into<ObjectId>>,

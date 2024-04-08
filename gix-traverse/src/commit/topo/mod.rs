@@ -55,12 +55,15 @@ bitflags! {
 pub enum Sorting {
     /// Show no parents before all of its children are shown, but otherwise show
     /// commits in the commit timestamp order.
+    ///
+    /// This is equivalent to `git rev-list --date-order`.
     #[default]
     DateOrder,
     /// Show no parents before all of its children are shown, and avoid
     /// showing commits on multiple lines of history intermixed.
     ///
-    /// In the *sample history* the order would be `8, 6, 5, 3, 7, 4, 2, 1`
+    /// In the *sample history* the order would be `8, 6, 5, 3, 7, 4, 2, 1`.
+    /// This is equivalent to `git rev-list --topo-order`.
     TopoOrder,
 }
 

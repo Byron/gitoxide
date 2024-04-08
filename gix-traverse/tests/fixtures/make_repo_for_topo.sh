@@ -28,6 +28,7 @@ function optimize() {
 function collect_baselines() {
   git rev-list --topo-order HEAD > all-commits.baseline
   git rev-list --topo-order --first-parent HEAD > first-parent.baseline
+  git rev-list --date-order ^f1cce1b5c7efcdfa106e95caa6c45a2cae48a481 HEAD > date-order.baseline
 }
 
 git init
