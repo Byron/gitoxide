@@ -178,9 +178,9 @@ For Arch Linux you can download `gitoxide` from `community` repository:
 pacman -S gitoxide
 ```
 
-### Download from Exherbo Linux rust repository
+### Download from Exherbo Linux Rust repository
 
-For Exherbo Linux you can download `gitoxide` from [rust](https://gitlab.exherbo.org/exherbo/rust/-/tree/master/packages/dev-scm/gitoxide) repository:
+For Exherbo Linux you can download `gitoxide` from the [Rust](https://gitlab.exherbo.org/exherbo/rust/-/tree/master/packages/dev-scm/gitoxide) repository:
 ```
 cave resolve -x repository/rust
 cave resolve -x gitoxide
