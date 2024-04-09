@@ -229,17 +229,13 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: stable
-      - uses: extractions/setup-just@v2
       - name: Check that working tree is initially clean
         run: |
           git status
           set -x
           git status | grep -qF 'nothing to commit, working tree clean'
       - name: Regenerate gix-packetline-blocking/src
-        run: just copy-packetline
+        run: etc/copy-packetline.sh
       - name: Check that gix-packetline-blocking/src was already up to date
         run: |
           git status
