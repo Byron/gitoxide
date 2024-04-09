@@ -1,4 +1,4 @@
-//! DO NOT EDIT - this is a copy of gix-packetline/src/decode.rs. Run `just copy-packetline` to update it.
+// DO NOT EDIT - this is a copy of gix-packetline/src/decode.rs. Run `just copy-packetline` to update it.
 
 use bstr::BString;
 

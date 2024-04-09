@@ -1,4 +1,4 @@
-//! DO NOT EDIT - this is a copy of gix-packetline/src/read/mod.rs. Run `just copy-packetline` to update it.
+// DO NOT EDIT - this is a copy of gix-packetline/src/read/mod.rs. Run `just copy-packetline` to update it.
 
 #[cfg(any(feature = "blocking-io", feature = "async-io"))]
 use crate::MAX_LINE_LEN;

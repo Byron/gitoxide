@@ -1,4 +1,4 @@
-//! DO NOT EDIT - this is a copy of gix-packetline/src/lib.rs. Run `just copy-packetline` to update it.
+// DO NOT EDIT - this is a copy of gix-packetline/src/lib.rs. Run `just copy-packetline` to update it.
 
 //! Read and write the git packet line wire format without copying it.
 //!

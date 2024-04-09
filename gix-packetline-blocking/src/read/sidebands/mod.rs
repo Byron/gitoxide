@@ -1,4 +1,4 @@
-//! DO NOT EDIT - this is a copy of gix-packetline/src/read/sidebands/mod.rs. Run `just copy-packetline` to update it.
+// DO NOT EDIT - this is a copy of gix-packetline/src/read/sidebands/mod.rs. Run `just copy-packetline` to update it.
 
 #[cfg(feature = "blocking-io")]
 mod blocking_io;
