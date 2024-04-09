@@ -87,7 +87,7 @@ function make_header () {
   endline="$2"
 
   # shellcheck disable=SC2016  # The backticks are intentionally literal.
-  printf '//! DO NOT EDIT - this is a copy of %s. Run `just copy-packetline` to update it.%s%s' \
+  printf '// DO NOT EDIT - this is a copy of %s. Run `just copy-packetline` to update it.%s%s' \
     "$source_file" "$endline" "$endline"
 }
 
