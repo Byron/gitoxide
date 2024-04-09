@@ -111,7 +111,7 @@ function generate_one () {
   local source_file target_file
 
   source_file="$1"
-  target_file="$target_dir/${source_file#"$source_dir"/}"
+  target_file="$target_dir${source_file#"$source_dir"}"
 
   if test -d "$source_file"; then
     mkdir -p -- "$target_file"
@@ -144,7 +144,7 @@ function generate_all () {
     fail 'unable to remove target location'
   fi
 
-  find "$source_dir/" -print0 | while IFS= read -r -d '' source_file; do
+  find "$source_dir" -print0 | while IFS= read -r -d '' source_file; do
     generate_one "$source_file"
   done
 }
