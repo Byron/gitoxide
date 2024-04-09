@@ -51,7 +51,10 @@ function check_target_dir () {
     fi
   else
     # We can lose data if anything of value at the target is not in the index.
-    # (Even unstaged deletions, for we can forget what was and wasn't deleted.)
+    # (This includes unstaged deletions, for two reasons. One is that we could
+    # lose track of which files had been deleted. More importantly, replacing a
+    # staged symlink or regular file with an unstaged directory is shown by
+    # git-status as only a deletion, even if the directory is non-empty.)
     if target_dir_status | grep -q '^.[^ ]'; then
       fail 'target exists, with unstaged changes or ignored files'
     fi
