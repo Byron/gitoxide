@@ -2,9 +2,9 @@
 
 set -euC -o pipefail
 
-readonly source_dir='gix-packetline/src'
-readonly destination_parent_dir='gix-packetline-blocking'
-readonly destination_dir="$destination_parent_dir/src"
+readonly input_dir='gix-packetline/src'
+readonly output_parent_dir='gix-packetline-blocking'
+readonly output_dir="$output_parent_dir/src"
 
 function fail () {
   printf '%s: error: %s\n' "$0" "$1" >&2
@@ -14,7 +14,7 @@ function fail () {
 function chdir_toplevel () {
   local root_padded root
 
-  # Find the working tree's root. (Padding is for the trailing-newline case.)
+  # Find the working tree's root. (Padding covers the trailing-newline case.)
   root_padded="$(git rev-parse --show-toplevel && echo -n .)" ||
     fail 'git-rev-parse failed to find top-level dir'
   root="${root_padded%$'\n.'}"
@@ -25,7 +25,7 @@ function chdir_toplevel () {
 function merging () {
   local git_dir_padded git_dir
 
-  # Find the .git directory. (Padding is for the trailing-newline case.)
+  # Find the .git directory. (Padding covers the trailing-newline case.)
   git_dir_padded="$(git rev-parse --git-dir && echo -n .)" ||
     fail 'git-rev-parse failed to find git dir'
   git_dir="${git_dir_padded%$'\n.'}"
@@ -33,30 +33,30 @@ function merging () {
   test -e "$git_dir/MERGE_HEAD"
 }
 
-function target_dir_status () {
-  git status --porcelain --ignored=traditional -- "$destination_dir" ||
+function output_dir_status () {
+  git status --porcelain --ignored=traditional -- "$output_dir" ||
     fail 'git-status failed'
 }
 
-function check_destination_dir () {
-  if ! test -e "$destination_dir"; then
-    # The target does not exist on disk, so nothing will be lost. Proceed.
+function check_output_dir () {
+  if ! test -e "$output_dir"; then
+    # The destination does not exist on disk, so nothing will be lost. Proceed.
     return
   fi
 
   if merging; then
-    # In a merge, it would be confusing to replace anything at the target.
-    if target_dir_status | grep -q '^'; then
-      fail 'target exists, and a merge is in progress'
+    # In a merge, it would be confusing to replace anything at the destination.
+    if output_dir_status | grep -q '^'; then
+      fail 'output location exists, and a merge is in progress'
     fi
   else
-    # We can lose data if anything of value at the target is not in the index.
-    # (This includes unstaged deletions, for two reasons. One is that we could
-    # lose track of which files had been deleted. More importantly, replacing a
+    # We can lose data if anything of value at the destination is not in the
+    # index. (This includes unstaged deletions, for two reasons. We could lose
+    # track of which files had been deleted. More importantly, replacing a
     # staged symlink or regular file with an unstaged directory is shown by
     # git-status as only a deletion, even if the directory is non-empty.)
-    if target_dir_status | grep -q '^.[^ ]'; then
-      fail 'target exists, with unstaged changes or ignored files'
+    if output_dir_status | grep -q '^.[^ ]'; then
+      fail 'output location exists, with unstaged changes or ignored files'
     fi
   fi
 }
@@ -81,71 +81,70 @@ function first_line_ends_crlf () {
 }
 
 function make_header () {
-  local source_file endline
+  local input_file endline
 
-  source_file="$1"
+  input_file="$1"
   endline="$2"
 
   # shellcheck disable=SC2016  # The backticks are intentionally literal.
   printf '// DO NOT EDIT - this is a copy of %s. Run `just copy-packetline` to update it.%s%s' \
-    "$source_file" "$endline" "$endline"
+    "$input_file" "$endline" "$endline"
 }
 
 function copy_with_header () {
-  local source_file target_file endline
+  local input_file output_file endline
 
-  source_file="$1"
-  target_file="$2"
+  input_file="$1"
+  output_file="$2"
 
-  if first_line_ends_crlf "$source_file"; then
+  if first_line_ends_crlf "$input_file"; then
     endline=$'\r\n'
   else
     endline=$'\n'
   fi
 
-  make_header "$source_file" "$endline" |
-    cat -- - "$source_file" >"$target_file"
+  make_header "$input_file" "$endline" | cat -- - "$input_file" >"$output_file"
 }
 
 function generate_one () {
-  local source_file target_file
+  local input_file output_file
 
-  source_file="$1"
-  target_file="$destination_dir${source_file#"$source_dir"}"
+  input_file="$1"
+  output_file="$output_dir${input_file#"$input_dir"}"
 
-  if test -d "$source_file"; then
-    mkdir -p -- "$target_file"
-  elif test -L "$source_file"; then
+  if test -d "$input_file"; then
+    mkdir -p -- "$output_file"
+  elif test -L "$input_file"; then
     # Cover this case separately, for more useful error messages.
-    fail "source file is symbolic link: $source_file"
-  elif ! test -f "$source_file"; then
+    fail "input file is symbolic link: $input_file"
+  elif ! test -f "$input_file"; then
     # This covers less common kinds of files we can't or shouldn't process.
-    fail "source file neither regular file nor directory: $source_file"
-  elif [[ "$source_file" =~ \.rs$ ]]; then
-    copy_with_header "$source_file" "$target_file"
+    fail "input file neither regular file nor directory: $input_file"
+  elif [[ "$input_file" =~ \.rs$ ]]; then
+    copy_with_header "$input_file" "$output_file"
   else
-    fail "source file not named as Rust source code: $source_file"
+    fail "input file not named as Rust source code: $input_file"
   fi
 }
 
 function generate_all () {
-  local source_file
+  local input_file
 
-  if ! test -d "$source_dir"; then
-    fail "no source directory: $source_dir"
+  if ! test -d "$input_dir"; then
+    fail "no input directory: $input_dir"
   fi
-  if ! test -d "$destination_parent_dir"; then
-    fail "no target parent directory: $destination_parent_dir"
+  if ! test -d "$output_parent_dir"; then
+    fail "no output parent directory: $output_parent_dir"
   fi
-  check_destination_dir
+  check_output_dir
 
-  rm -rf -- "$destination_dir"  # It may be a directory, symlink, or regular file.
-  if test -e "$destination_dir"; then
-    fail 'unable to remove target location'
+  rm -rf -- "$output_dir"  # It may be a directory, symlink, or regular file.
+  if test -e "$output_dir"; then
+    fail 'unable to remove output location'
   fi
 
-  find "$source_dir" -print0 | while IFS= read -r -d '' source_file; do
-    generate_one "$source_file"
+  find "$input_dir" -print0 | while IFS= read -r -d '' input_file; do
+    generate_one "$input_file"
   done
 }
 
