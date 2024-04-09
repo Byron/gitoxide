@@ -34,7 +34,7 @@ function merging () {
 }
 
 function target_dir_status () {
-  git status --short --ignored=traditional -- "$target_dir" ||
+  git status --porcelain --ignored=traditional -- "$target_dir" ||
     fail 'git-status failed'
 }
 
