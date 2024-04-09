@@ -101,7 +101,7 @@ function copy_with_header () {
   fi
 
   make_header "$source_file" "$endline" |
-    cat - -- "$source_file" >"$target_file"
+    cat -- - "$source_file" >"$target_file"
 }
 
 function generate_one () {
