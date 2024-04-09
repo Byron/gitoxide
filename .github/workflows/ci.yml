@@ -230,14 +230,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check that working tree is initially clean
-        run: |
-          git status
-          set -x
-          git status | grep -qF 'nothing to commit, working tree clean'
+        run: git status; set -x; git diff --quiet
       - name: Regenerate gix-packetline-blocking/src
         run: etc/copy-packetline.sh
       - name: Check that gix-packetline-blocking/src was already up to date
-        run: |
-          git status
-          set -x
-          git status | grep -qF 'nothing to commit, working tree clean'
+        run: git status; set -x; git diff --quiet
