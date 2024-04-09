@@ -220,9 +220,10 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
-          - windows-latest
-    continue-on-error: true
+          # We consider this script read-only and its effect is the same everywhere.
+          # However, when changes are made to `etc/copy-packetline.sh`, re-enable the other platforms for testing.
+    #          - macos-latest
+    #          - windows-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:

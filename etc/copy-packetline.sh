@@ -3,8 +3,8 @@
 set -euC -o pipefail
 
 readonly source_dir='gix-packetline/src'
-readonly target_parent_dir='gix-packetline-blocking'
-readonly target_dir="$target_parent_dir/src"
+readonly destination_parent_dir='gix-packetline-blocking'
+readonly destination_dir="$destination_parent_dir/src"
 
 function fail () {
   printf '%s: error: %s\n' "$0" "$1" >&2
@@ -34,12 +34,12 @@ function merging () {
 }
 
 function target_dir_status () {
-  git status --porcelain --ignored=traditional -- "$target_dir" ||
+  git status --porcelain --ignored=traditional -- "$destination_dir" ||
     fail 'git-status failed'
 }
 
-function check_target_dir () {
-  if ! test -e "$target_dir"; then
+function check_destination_dir () {
+  if ! test -e "$destination_dir"; then
     # The target does not exist on disk, so nothing will be lost. Proceed.
     return
   fi
@@ -111,7 +111,7 @@ function generate_one () {
   local source_file target_file
 
   source_file="$1"
-  target_file="$target_dir${source_file#"$source_dir"}"
+  target_file="$destination_dir${source_file#"$source_dir"}"
 
   if test -d "$source_file"; then
     mkdir -p -- "$target_file"
@@ -134,13 +134,13 @@ function generate_all () {
   if ! test -d "$source_dir"; then
     fail "no source directory: $source_dir"
   fi
-  if ! test -d "$target_parent_dir"; then
-    fail "no target parent directory: $target_parent_dir"
+  if ! test -d "$destination_parent_dir"; then
+    fail "no target parent directory: $destination_parent_dir"
   fi
-  check_target_dir
+  check_destination_dir
 
-  rm -rf -- "$target_dir"  # It may be a directory, symlink, or regular file.
-  if test -e "$target_dir"; then
+  rm -rf -- "$destination_dir"  # It may be a directory, symlink, or regular file.
+  if test -e "$destination_dir"; then
     fail 'unable to remove target location'
   fi
 
