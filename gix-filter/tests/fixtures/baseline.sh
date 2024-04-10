@@ -17,7 +17,7 @@ function repo_assertions() {
 
   git config filter.arrow.clean "$driver clean %f"
   git config filter.arrow.smudge "$driver smudge %f"
-  git config filter.arrow.requred true
+  git config filter.arrow.required true
 
   repo_assertions
 )
@@ -26,7 +26,7 @@ function repo_assertions() {
   git init process && cd process
 
   git config filter.arrow.process "$driver process"
-  git config filter.arrow.requred true
+  git config filter.arrow.required true
 
   repo_assertions
 )
@@ -35,7 +35,7 @@ function repo_assertions() {
   git init process-no-delay && cd process-no-delay
 
   git config filter.arrow.process "$driver process disallow-delay"
-  git config filter.arrow.requred true
+  git config filter.arrow.required true
 
   repo_assertions
 )

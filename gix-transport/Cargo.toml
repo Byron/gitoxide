@@ -30,7 +30,7 @@ http-client = [
 ]
 ## Implies `http-client`, and adds support for the http and https transports using the Rust bindings for `libcurl`.
 http-client-curl = ["curl", "http-client"]
-## Implies `http-client-curl` and enables `rustls` for creationg `https://` connections.
+## Implies `http-client-curl` and enables `rustls` for creating `https://` connections.
 http-client-curl-rust-tls = ["http-client-curl", "curl/rustls"]
 ### Implies `http-client` and adds support for http and https transports using the blocking version of `reqwest`.
 http-client-reqwest = ["reqwest", "http-client"]

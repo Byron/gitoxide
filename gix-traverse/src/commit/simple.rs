@@ -167,7 +167,7 @@ mod init {
         }
     }
 
-    /// Lifecyle
+    /// Lifecycle
     impl<Find> Simple<Find, fn(&oid) -> bool>
     where
         Find: gix_object::Find,
@@ -185,7 +185,7 @@ mod init {
         }
     }
 
-    /// Lifecyle
+    /// Lifecycle
     impl<Find, Predicate> Simple<Find, Predicate>
     where
         Find: gix_object::Find,

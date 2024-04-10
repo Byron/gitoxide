@@ -249,7 +249,7 @@ pub fn path(
         return Ok(out.with_status(status).with_kind(kind, index_kind));
     }
 
-    debug_assert!(maybe_status.is_none(), "It only communicates a single stae right now");
+    debug_assert!(maybe_status.is_none(), "It only communicates a single state right now");
     if let Some(excluded) = ctx
         .excludes
         .as_mut()

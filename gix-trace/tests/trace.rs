@@ -2,8 +2,8 @@ use gix_trace::{coarse, debug, detail, error, event, info, span, trace, warn};
 #[test]
 fn span() {
     let _x = span!(gix_trace::Level::Coarse, "hello");
-    let fourty_two = span!(gix_trace::Level::Coarse, "hello", x = "value", y = 42).into_scope(|| 42);
-    assert_eq!(fourty_two, 42);
+    let forty_two = span!(gix_trace::Level::Coarse, "hello", x = "value", y = 42).into_scope(|| 42);
+    assert_eq!(forty_two, 42);
     let span = span!(target: "other", gix_trace::Level::Coarse, "hello", x = "value", y = 42);
     span.record("y", "hello").record("x", 36);
 }

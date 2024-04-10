@@ -419,7 +419,7 @@ fn rename_by_similarity_reports_limit_if_encountered() -> crate::Result {
         &mut track,
         [
             (Change::deletion(), "a", "first\nsecond\n"),
-            (Change::addition(), "b", "firt\nsecond\n"),
+            (Change::addition(), "b", "first\nsecond\n"),
             (Change::addition(), "c", "second\nunrelated\n"),
         ],
     );
@@ -464,7 +464,7 @@ fn rename_by_50_percent_similarity() -> crate::Result {
         &mut track,
         [
             (Change::deletion(), "a", "first\nsecond\n"),
-            (Change::addition(), "b", "firt\nsecond\n"),
+            (Change::addition(), "b", "first\nsecond\n"),
             (Change::addition(), "c", "second\nunrelated\n"),
         ],
     );

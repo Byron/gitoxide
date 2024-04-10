@@ -20,7 +20,7 @@ impl Search {
     ///
     /// ### Deviation
     ///
-    /// The case-sensivity of the attribute match is controlled by the sensitivity of the pathspec, instead of being based on the
+    /// The case-sensitivity of the attribute match is controlled by the sensitivity of the pathspec, instead of being based on the
     /// case folding settings of the repository. That way we assure that the matching is consistent.
     /// Higher-level crates should control this default case folding of pathspecs when instantiating them, which is when they can
     /// set it to match the repository setting for more natural behaviour when, for instance, adding files to a repository:

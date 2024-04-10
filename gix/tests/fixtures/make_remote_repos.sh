@@ -22,7 +22,7 @@ GIT_COMMITTER_EMAIL=committer@example.com
 GIT_COMMITTER_NAME='C O Mitter'
 GIT_COMMITTER_DATE='1112354055 +0200'
 
-# runup to the correct count for ambigous commits
+# runup to the correct count for ambiguous commits
 tick; tick; tick; tick; tick
 
 git init base

@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Capabilities {
-    /// If `true`, the filesystem will consider the precomposed umlaut `ä` similiar to its decomposed form `"a\u{308}"` and consider them the same.
+    /// If `true`, the filesystem will consider the precomposed umlaut `ä` similar to its decomposed form `"a\u{308}"` and consider them the same.
     /// If `false`, the filesystem will only see bytes which means that the above example could live side-by-side.
     ///
     /// Even though a filesystem that treats both forms the same will still reproduce the exact same byte sequence during traversal for instance,

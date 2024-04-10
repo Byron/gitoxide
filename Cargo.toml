@@ -64,7 +64,7 @@ small = ["pretty-cli", "gix-features/rustsha1", "gix-features/zlib-rust-backend"
 ## This build is more of a demonstration showing how async can work with `gitoxide`, which generally is blocking. This also means that the selection of async transports
 ## is very limited to only HTTP (without typical `git` configuration) and git over TCP like provided by the `git daemon`.
 ##
-## As fast as possible, progress line rendering, less feature-ful HTTP (pure Rust) and only `git-damon` support, all `ein` tools, CLI colors and local-time support, JSON output.
+## As fast as possible, progress line rendering, less featureful HTTP (pure Rust) and only `git-daemon` support, all `ein` tools, CLI colors and local-time support, JSON output.
 ##
 ## Due to async client-networking not being implemented for most transports, this one supports only the 'git+tcp' and HTTP transport.
 ## It uses, however, a fully asynchronous networking implementation which can serve a real-world example on how to implement custom async transports.

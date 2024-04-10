@@ -98,7 +98,7 @@ pub trait Delegate {
 pub enum EmissionMode {
     /// Emit each entry as it matches exactly, without doing any kind of simplification.
     ///
-    /// Emissions in this mode are happening as they occour, without any buffering or ordering.
+    /// Emissions in this mode are happening as they occur, without any buffering or ordering.
     #[default]
     Matching,
     /// Emit only a containing directory if all of its entries are of the same type.
@@ -215,7 +215,7 @@ pub struct Context<'a> {
     /// ### Important
     ///
     /// The index must have been validated so that each entry that is considered up-to-date will have the [gix_index::entry::Flags::UPTODATE] flag
-    /// set. Otherwise the index entry is not considered and a disk-access may occour which is costly.
+    /// set. Otherwise the index entry is not considered and a disk-access may occur which is costly.
     pub index: &'a gix_index::State,
     /// A utility to lookup index entries faster, and deal with ignore-case handling.
     ///

@@ -385,7 +385,7 @@ pub mod status {
             if !state.worktree_checkout {
                 return Ok(status);
             }
-            let statusses = adjust_options(sm_repo.status(gix_features::progress::Discard)?)
+            let statuses = adjust_options(sm_repo.status(gix_features::progress::Discard)?)
                 .index_worktree_options_mut(|opts| {
                     if ignore == config::Ignore::Untracked {
                         opts.dirwalk_options = None;
@@ -393,7 +393,7 @@ pub mod status {
                 })
                 .into_index_worktree_iter(Vec::new())?;
             let mut changes = Vec::new();
-            for change in statusses {
+            for change in statuses {
                 changes.push(change?);
             }
             status.changes = Some(changes);
