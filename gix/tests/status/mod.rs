@@ -144,7 +144,7 @@ mod is_dirty {
     #[test]
     fn submodule_changes_are_picked_up() -> crate::Result {
         let repo = submodule_repo("submodule-head-changed")?;
-        assert!(repo.is_dirty()?, "head-changes are also discoverd");
+        assert!(repo.is_dirty()?, "head-changes are also discovered");
         Ok(())
     }
 

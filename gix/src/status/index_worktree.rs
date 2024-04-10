@@ -279,7 +279,7 @@ mod submodule_status {
 /// ### Parallel Operation
 ///
 /// Note that without the `parallel` feature, the iterator becomes 'serial', which means all status will be computed in advance
-/// and it's non-interruptable, yielding worse performance for is-dirty checks for instance as interruptions won't happen.
+/// and it's non-interruptible, yielding worse performance for is-dirty checks for instance as interruptions won't happen.
 /// It's a crutch that is just there to make single-threaded applications possible at all, as it's not really an iterator
 /// anymore. If this matters, better run [Repository::index_worktree_status()] by hand as it provides all control one would need,
 /// just not as an iterator.

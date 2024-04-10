@@ -306,7 +306,7 @@ pub struct Options {
     /// the latency until the first entries are received. Note that some entries are never candidates for renames, which means
     /// they are forwarded to the caller right away.
     ///
-    /// If `None`, no tracking will occour, which means that all output becomes visible to the delegate immediately.
+    /// If `None`, no tracking will occur, which means that all output becomes visible to the delegate immediately.
     pub rewrites: Option<gix_diff::Rewrites>,
 }
 
@@ -314,7 +314,7 @@ pub struct Options {
 pub struct Context<'a> {
     /// The pathspec to limit the amount of paths that are checked. Can be empty to allow all paths.
     ///
-    /// Note that these are expected to have a [commont_prefix()](gix_pathspec::Search::common_prefix()) according
+    /// Note that these are expected to have a [common_prefix()](gix_pathspec::Search::common_prefix()) according
     /// to the prefix of the repository to efficiently limit the scope of the paths we process, both for the
     /// index modifications as well as for the directory walk.
     pub pathspec: gix_pathspec::Search,

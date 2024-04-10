@@ -60,7 +60,7 @@ pub(crate) mod function {
         let index = repo.index_or_empty()?;
         let pathspec_for_dirwalk = !pathspec_matches_result;
         let has_patterns = !patterns.is_empty();
-        let mut collect = InterruptableCollect::default();
+        let mut collect = InterruptibleCollect::default();
         let collapse_directories = CollapseDirectory;
         let options = repo
             .dirwalk_options()?
@@ -365,11 +365,11 @@ pub(crate) mod function {
     }
 
     #[derive(Default)]
-    struct InterruptableCollect {
+    struct InterruptibleCollect {
         inner: gix::dir::walk::delegate::Collect,
     }
 
-    impl gix::dir::walk::Delegate for InterruptableCollect {
+    impl gix::dir::walk::Delegate for InterruptibleCollect {
         fn emit(&mut self, entry: EntryRef<'_>, collapsed_directory_status: Option<Status>) -> walk::Action {
             let res = self.inner.emit(entry, collapsed_directory_status);
             if gix::interrupt::is_triggered() {

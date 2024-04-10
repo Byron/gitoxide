@@ -417,7 +417,7 @@ fn init_with_exclude() -> crate::Result {
     assert_eq!(search.patterns().count(), 2, "nothing artificial is added");
     assert!(
         search.patterns().next().expect("first of two").is_excluded(),
-        "re-orded so that excluded are first"
+        "re-ordered so that excluded are first"
     );
     assert_eq!(search.common_prefix(), "tests");
     assert_eq!(

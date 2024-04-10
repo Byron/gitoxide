@@ -59,7 +59,7 @@ fn no_conversion_if_nothing_to_do() -> crate::Result {
             "mixed crlf and lf is avoided",
         ),
         (
-            &b"elligible-but-disabled\nhere"[..],
+            &b"eligible-but-disabled\nhere"[..],
             AttributesDigest::Binary,
             "designated binary is never handled",
         ),

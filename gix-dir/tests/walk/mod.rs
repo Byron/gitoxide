@@ -1605,7 +1605,7 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
         "with pathspec, we match what's inside and expect to have all the lowest-level paths that have 'ignored' in them.\
          It seems strange that 'precious' isn't precious, while 'all-precious' is. However, the ignore-search is special
          as it goes backward through directories (using directory-declarations), and aborts if it matched. Thus it finds
-         that '$/all-precious/' matched, but in the other cases it maches 'ignored/'.
+         that '$/all-precious/' matched, but in the other cases it matches 'ignored/'.
         'other' gets folded and inherits, just like before.
         Also, look how the ignore-state overrides the prune-default for DotGit kinds, to have more finegrained classification."
     );

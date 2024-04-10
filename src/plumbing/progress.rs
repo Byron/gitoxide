@@ -263,7 +263,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "fetch.showForcedUpdates",
-        usage: NotApplicable("we don't support advices")
+        usage: NotApplicable("we don't support advice")
     },
     Record {
         config: "fetch.output",
