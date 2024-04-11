@@ -31,17 +31,6 @@ mod canonicalized {
 }
 
 #[test]
-fn password() -> crate::Result {
-    let mut url = gix_url::parse("https://user:password@host/path".into())?;
-
-    assert_eq!(url.password(), Some("password"));
-    assert_eq!(url.set_password(Some("new-pass".into())), Some("password".into()));
-    assert_eq!(url.password(), Some("new-pass"));
-
-    Ok(())
-}
-
-#[test]
 fn user() -> crate::Result {
     let mut url = gix_url::parse("https://user:password@host/path".into())?;
 
@@ -53,22 +42,58 @@ fn user() -> crate::Result {
 }
 
 #[test]
+fn password() -> crate::Result {
+    let mut url = gix_url::parse("https://user:password@host/path".into())?;
+
+    assert_eq!(url.password(), Some("password"));
+    assert_eq!(url.set_password(Some("new-pass".into())), Some("password".into()));
+    assert_eq!(url.password(), Some("new-pass"));
+
+    Ok(())
+}
+
+#[test]
+fn user_argument_safe() -> crate::Result {
+    let url = gix_url::parse("ssh://-Fconfigfile@foo/bar".into())?;
+
+    // FIXME: Add the critical assertions for the user argument here.
+
+    assert_eq!(url.host(), Some("foo"));
+    assert_eq!(url.host_argument_safe(), Some("foo"));
+
+    assert_eq!(url.path, "/bar");
+    assert_eq!(url.path_argument_safe(), Some("/bar".into()));
+
+    Ok(())
+}
+
+#[test]
 fn host_argument_safe() -> crate::Result {
     let url = gix_url::parse("ssh://-oProxyCommand=open$IFS-aCalculator/foo".into())?;
+
+    // FIXME: Add assertions for the user argument here.
+
     assert_eq!(url.host(), Some("-oProxyCommand=open$IFS-aCalculator"));
     assert_eq!(url.host_argument_safe(), None);
+
     assert_eq!(url.path, "/foo");
     assert_eq!(url.path_argument_safe(), Some("/foo".into()));
+
     Ok(())
 }
 
 #[test]
 fn path_argument_safe() -> crate::Result {
     let url = gix_url::parse("ssh://foo/-oProxyCommand=open$IFS-aCalculator".into())?;
+
+    // FIXME: Add assertions for the user argument here.
+
     assert_eq!(url.host(), Some("foo"));
     assert_eq!(url.host_argument_safe(), Some("foo"));
+
     assert_eq!(url.path, "/-oProxyCommand=open$IFS-aCalculator");
     assert_eq!(url.path_argument_safe(), None);
+
     Ok(())
 }
 
