@@ -57,7 +57,7 @@ fn user_argument_safe() -> crate::Result {
     let url = gix_url::parse("ssh://-Fconfigfile@foo/bar".into())?;
 
     assert_eq!(url.user(), Some("-Fconfigfile"));
-    // FIXME: Add the critical user_argument_safe assertion here.
+    assert_eq!(url.user_argument_safe(), None);
 
     assert_eq!(url.host(), Some("foo"));
     assert_eq!(url.host_argument_safe(), Some("foo"));

@@ -165,8 +165,22 @@ impl Url {
 /// Access
 impl Url {
     /// Return the user mentioned in the URL, if present.
+    ///
+    /// # Security-Warning
+    ///
+    /// URLs allow usernames to start with `-` which makes it possible to mask command-line arguments as username which then leads to
+    /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
+    ///
+    /// If this value is going to be used in a command-line application, call [Self::user_argument_safe()] instead.
     pub fn user(&self) -> Option<&str> {
         self.user.as_deref()
+    }
+
+    /// Return the user from this URL if present *and* if it can't be mistaken for a command-line argument.
+    ///
+    /// Use this method if the user or a portion of the URL that begins with it will be passed to a command-line application.
+    pub fn user_argument_safe(&self) -> Option<&str> {
+        self.user().filter(|user| !looks_like_argument(user.as_bytes()))
     }
 
     /// Return the password mentioned in the url, if present.
