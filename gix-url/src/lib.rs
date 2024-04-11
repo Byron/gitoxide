@@ -90,7 +90,7 @@ pub struct Url {
     /// URLs allow paths to start with `-` which makes it possible to mask command-line arguments as path which then leads to
     /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
     ///
-    /// If this value is going to be used in a command-line application, call [Self::path_argument_safe()] instead.
+    /// If this value is ever going to be passed to a command-line application, call [Self::path_argument_safe()] instead.
     pub path: BString,
 }
 
@@ -171,7 +171,7 @@ impl Url {
     /// URLs allow usernames to start with `-` which makes it possible to mask command-line arguments as username which then leads to
     /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
     ///
-    /// If this value is going to be used in a command-line application, call [Self::user_argument_safe()] instead.
+    /// If this value is ever going to be passed to a command-line application, call [Self::user_argument_safe()] instead.
     pub fn user(&self) -> Option<&str> {
         self.user.as_deref()
     }
@@ -195,7 +195,7 @@ impl Url {
     /// URLs allow hosts to start with `-` which makes it possible to mask command-line arguments as host which then leads to
     /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
     ///
-    /// If this value is going to be used in a command-line application, call [Self::host_argument_safe()] instead.
+    /// If this value is ever going to be passed to a command-line application, call [Self::host_argument_safe()] instead.
     pub fn host(&self) -> Option<&str> {
         self.host.as_deref()
     }
