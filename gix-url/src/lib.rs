@@ -164,15 +164,17 @@ impl Url {
 
 /// Access
 impl Url {
-    /// Returns the user mentioned in the url, if present.
+    /// Return the user mentioned in the URL, if present.
     pub fn user(&self) -> Option<&str> {
         self.user.as_deref()
     }
-    /// Returns the password mentioned in the url, if present.
+
+    /// Return the password mentioned in the url, if present.
     pub fn password(&self) -> Option<&str> {
         self.password.as_deref()
     }
-    /// Returns the host mentioned in the url, if present.
+
+    /// Return the host mentioned in the URL, if present.
     ///
     /// # Security-Warning
     ///
@@ -191,7 +193,7 @@ impl Url {
         self.host().filter(|host| !looks_like_argument(host.as_bytes()))
     }
 
-    /// Return the path of this URL *and* if it can't be mistaken for a command-line argument.
+    /// Return the path of this URL *if* it can't be mistaken for a command-line argument.
     /// Note that it always begins with a slash, which is ignored for this comparison.
     ///
     /// Use this method if the path is going to be passed to a command-line application.
@@ -201,11 +203,12 @@ impl Url {
             .and_then(|truncated| (!looks_like_argument(truncated)).then_some(self.path.as_ref()))
     }
 
-    /// Returns true if the path portion of the url is `/`.
+    /// Return true if the path portion of the URL is `/`.
     pub fn path_is_root(&self) -> bool {
         self.path == "/"
     }
-    /// Returns the actual or default port for use according to the url scheme.
+
+    /// Return the actual or default port for use according to the URL scheme.
     /// Note that there may be no default port either.
     pub fn port_or_default(&self) -> Option<u16> {
         self.port.or_else(|| {
@@ -227,7 +230,7 @@ fn looks_like_argument(b: &[u8]) -> bool {
 
 /// Transformation
 impl Url {
-    /// Turn a file url like `file://relative` into `file:///root/relative`, hence it assures the url's path component is absolute, using
+    /// Turn a file URL like `file://relative` into `file:///root/relative`, hence it assures the URL's path component is absolute, using
     /// `current_dir` if necessary.
     pub fn canonicalized(&self, current_dir: &std::path::Path) -> Result<Self, gix_path::realpath::Error> {
         let mut res = self.clone();
@@ -287,7 +290,7 @@ impl Url {
 
 /// Deserialization
 impl Url {
-    /// Parse a URL from `bytes`
+    /// Parse a URL from `bytes`.
     pub fn from_bytes(bytes: &BStr) -> Result<Self, parse::Error> {
         parse(bytes)
     }

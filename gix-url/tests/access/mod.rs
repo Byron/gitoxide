@@ -56,7 +56,8 @@ fn password() -> crate::Result {
 fn user_argument_safe() -> crate::Result {
     let url = gix_url::parse("ssh://-Fconfigfile@foo/bar".into())?;
 
-    // FIXME: Add the critical assertions for the user argument here.
+    assert_eq!(url.user(), Some("-Fconfigfile"));
+    // FIXME: Add the critical user_argument_safe assertion here.
 
     assert_eq!(url.host(), Some("foo"));
     assert_eq!(url.host_argument_safe(), Some("foo"));
@@ -71,7 +72,8 @@ fn user_argument_safe() -> crate::Result {
 fn host_argument_safe() -> crate::Result {
     let url = gix_url::parse("ssh://-oProxyCommand=open$IFS-aCalculator/foo".into())?;
 
-    // FIXME: Add assertions for the user argument here.
+    assert_eq!(url.user(), None);
+    // FIXME: Add the user_argument_safe assertion here.
 
     assert_eq!(url.host(), Some("-oProxyCommand=open$IFS-aCalculator"));
     assert_eq!(url.host_argument_safe(), None);
@@ -86,7 +88,8 @@ fn host_argument_safe() -> crate::Result {
 fn path_argument_safe() -> crate::Result {
     let url = gix_url::parse("ssh://foo/-oProxyCommand=open$IFS-aCalculator".into())?;
 
-    // FIXME: Add assertions for the user argument here.
+    assert_eq!(url.user(), None);
+    // FIXME: Add the user_argument_safe assertion here.
 
     assert_eq!(url.host(), Some("foo"));
     assert_eq!(url.host_argument_safe(), Some("foo"));
