@@ -347,7 +347,7 @@ title "gix commit-graph"
           )
           (with "an ambiguous ssh host which could be mistaken for an argument"
               it "fails without trying to pass it to command-line programs" && {
-                WITH_SNAPSHOT="$snapshot/fail-ambigous-host" \
+                WITH_SNAPSHOT="$snapshot/fail-ambiguous-host" \
                 expect_run $WITH_FAILURE "$exe_plumbing" free pack receive 'ssh://-oProxyCommand=open$IFS-aCalculator/foo'
               }
           )
@@ -366,7 +366,7 @@ title "gix commit-graph"
         snapshot="$snapshot/clone"
         (with "an ambiguous ssh host which could be mistaken for an argument"
             it "fails without trying to pass it to command-line programs" && {
-              WITH_SNAPSHOT="$snapshot/fail-ambigous-host" \
+              WITH_SNAPSHOT="$snapshot/fail-ambiguous-host" \
               expect_run $WITH_FAILURE "$exe_plumbing" clone 'ssh://-oProxyCommand=open$IFS-aCalculator/foo'
             }
         )
