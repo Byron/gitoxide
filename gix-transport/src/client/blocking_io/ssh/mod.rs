@@ -118,6 +118,8 @@ pub fn connect(
                 .stdin(Stdio::null())
                 .with_shell()
                 .arg("-G")
+                // Username affects the stdout from `ssh -G` but may not affect the status. But if
+                // we end up needing it, it can be added here, with a user_argument_safe() check.
                 .arg(url.host_argument_safe().ok_or_else(|| Error::AmbiguousHostName {
                     host: url.host().expect("set in ssh urls").into(),
                 })?),
