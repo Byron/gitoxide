@@ -180,6 +180,13 @@ impl Url {
     ///
     /// Use this method if the user or a portion of the URL that begins with it will be passed to a command-line application.
     pub fn user_argument_safe(&self) -> Option<&str> {
+        // FIXME: A return value of None from this method, or host_argument_safe(), is ambiguous: the user (or host) is
+        // either present but unsafe, or absent. Furthermore, in practice the value is usually needed even if unsafe,
+        // in order to report it in an error message. In gix-transport, the ambiguity makes it easy to write a new bug
+        // while using this interface for user_argument_safe(). In contrast, in host_argument_safe(), the ambiguity is
+        // much less of a problem, because the host is expected to be present. Yet the host() method must still be
+        // called when handling the None case, to include it in the error. If possible, both methods should be replaced
+        // by methods with a richer return type (a new enum). If not, the ambiguity should be prominently documented.
         self.user().filter(|user| !looks_like_argument(user.as_bytes()))
     }
 

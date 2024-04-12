@@ -60,8 +60,12 @@ impl ProgramKind {
                 }
             }
         };
-        let host_as_ssh_arg = match url.user() {
+        let host_maybe_with_user_as_ssh_arg = match url.user() {
             Some(user) => {
+                // FIXME: See the fixme comment on Url::user_argument_safe() about its return type.
+                if url.user_argument_safe() != Some(user) {
+                    return Err(ssh::invocation::Error::AmbiguousUserName { user: user.into() });
+                }
                 let host = url.host().expect("present in ssh urls");
                 format!("{user}@{host}")
             }
@@ -75,8 +79,11 @@ impl ProgramKind {
             }
         };
 
-        // Try to force ssh to yield english messages (for parsing later)
-        Ok(prepare.arg(host_as_ssh_arg).env("LANG", "C").env("LC_ALL", "C"))
+        // Try to force ssh to yield English messages (for parsing later).
+        Ok(prepare
+            .arg(host_maybe_with_user_as_ssh_arg)
+            .env("LANG", "C")
+            .env("LC_ALL", "C"))
     }
 
     /// Note that the caller has to assure that the ssh program is launched in English by setting the locale.
