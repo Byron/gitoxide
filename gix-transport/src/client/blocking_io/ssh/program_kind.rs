@@ -2,6 +2,8 @@ use std::{ffi::OsStr, io::ErrorKind};
 
 use bstr::{BString, ByteSlice, ByteVec};
 
+use gix_url::ArgumentSafety::*;
+
 use crate::{
     client::{ssh, ssh::ProgramKind},
     Protocol,
@@ -60,23 +62,13 @@ impl ProgramKind {
                 }
             }
         };
-        let host_maybe_with_user_as_ssh_arg = match url.user() {
-            Some(user) => {
-                // FIXME: See the fixme comment on Url::user_argument_safe() about its return type.
-                if url.user_argument_safe() != Some(user) {
-                    return Err(ssh::invocation::Error::AmbiguousUserName { user: user.into() });
-                }
-                let host = url.host().expect("present in ssh urls");
-                format!("{user}@{host}")
-            }
-            None => {
-                let host = url
-                    .host_argument_safe()
-                    .ok_or_else(|| ssh::invocation::Error::AmbiguousHostName {
-                        host: url.host().expect("ssh host always set").into(),
-                    })?;
-                host.into()
-            }
+
+        let host_maybe_with_user_as_ssh_arg = match (url.user_as_argument(), url.host_as_argument()) {
+            (Usable(user), Usable(host)) => format!("{user}@{host}"),
+            (Absent, Usable(host)) => host.into(),
+            (Dangerous(user), _) => Err(ssh::invocation::Error::AmbiguousUserName { user: user.into() })?,
+            (_, Dangerous(host)) => Err(ssh::invocation::Error::AmbiguousHostName { host: host.into() })?,
+            (_, Absent) => panic!("BUG: host should always be present in SSH URLs"),
         };
 
         // Try to force ssh to yield English messages (for parsing later).
