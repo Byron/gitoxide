@@ -55,6 +55,26 @@ pub fn expand_path(user: Option<&expand_path::ForUser>, path: &BStr) -> Result<P
     })
 }
 
+/// Classification of a portion of a URL by whether it is *syntactically* safe to pass as an argument to a command-line program.
+///
+/// Various parts of URLs can be specified to begin with `-`. If they are used as options to a command-line application
+/// such as an SSH client, they will be treated as options rather than as non-option arguments as the developer intended.
+/// This is a security risk, because URLs are not always trusted and can often be composed or influenced by an attacker.
+/// See <https://secure.phabricator.com/T12961> for details.
+///
+/// # Security Warning
+///
+/// This type only expresses known *syntactic* risk. It does not cover other risks, such as passing a personal access
+/// token as a username rather than a password in an application that logs usernames.
+enum ArgumentSafety<'a, T> {
+    /// May be safe. There is nothing to pass, so there is nothing dangerous.
+    Absent,
+    /// May be safe. The argument does not begin with a `-` and so will not be confused as an option.
+    Usable(&'a T),
+    /// Dangerous! Begins with `-` and could be treated as an option. Use the value in error messages only.
+    Dangerous(&'a T),
+}
+
 /// A URL with support for specialized git related capabilities.
 ///
 /// Additionally there is support for [deserialization](Url::from_bytes()) and [serialization](Url::to_bstring()).
@@ -85,7 +105,7 @@ pub struct Url {
     pub port: Option<u16>,
     /// The path portion of the URL, usually the location of the git repository.
     ///
-    /// # Security-Warning
+    /// # Security Warning
     ///
     /// URLs allow paths to start with `-` which makes it possible to mask command-line arguments as path which then leads to
     /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
@@ -164,9 +184,9 @@ impl Url {
 
 /// Access
 impl Url {
-    /// Return the user mentioned in the URL, if present.
+    /// Return the username mentioned in the URL, if present.
     ///
-    /// # Security-Warning
+    /// # Security Warning
     ///
     /// URLs allow usernames to start with `-` which makes it possible to mask command-line arguments as username which then leads to
     /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
@@ -176,19 +196,28 @@ impl Url {
         self.user.as_deref()
     }
 
-    /// Return the user from this URL if present *and* if it can't be mistaken for a command-line argument.
+    /// Classify the username of this URL by whether it is safe to pass as a command-line argument.
     ///
-    /// Use this method if the user or a portion of the URL that begins with it will be passed to a command-line application.
+    /// Use this method instead of [Self::user()] if the host is going to be passed to a command-line application.
+    /// If the unsafe and absent cases need not be distinguished, [Self::user_argument_safe()] may also be used.
+    pub fn user_as_argument(&self) -> ArgumentSafety<str> {
+        match self.user() {
+            Some(user) if looks_like_command_line_option(user.as_bytes()) => ArgumentSafety::Dangerous(user),
+            Some(user) => ArgumentSafety::Usable(user),
+            None => ArgumentSafety::Absent,
+        }
+    }
+
+    /// Return the username of this URL if present *and* if it can't be mistaken for a command-line argument.
+    ///
+    /// Use this method or [Self::user_as_argument()] instead of [Self::user()] if the host is going to be
+    /// passed to a command-line application. Prefer [Self::user_as_argument()] unless the unsafe and absent
+    /// cases need not be distinguished from each other.
     pub fn user_argument_safe(&self) -> Option<&str> {
-        // FIXME: A return value of None from this method, or host_argument_safe(), is ambiguous: the user (or host) is
-        // either present but unsafe, or absent. Furthermore, in practice the value is usually needed even if unsafe,
-        // in order to report it in an error message. In gix-transport, the ambiguity makes it easy to write a new bug
-        // while using this interface for user_argument_safe(). In contrast, in host_argument_safe(), the ambiguity is
-        // much less of a problem, because the host is expected to be present. Yet the host() method must still be
-        // called when handling the None case, to include it in the error. If possible, both methods should be replaced
-        // by methods with a richer return type (a new enum). If not, the ambiguity should be prominently documented.
-        self.user()
-            .filter(|user| !looks_like_command_line_option(user.as_bytes()))
+        match self.user_as_argument() {
+            ArgumentSafety::Usable(user) => Some(user),
+            _ => None,
+        }
     }
 
     /// Return the password mentioned in the url, if present.
@@ -198,28 +227,63 @@ impl Url {
 
     /// Return the host mentioned in the URL, if present.
     ///
-    /// # Security-Warning
+    /// # Security Warning
     ///
     /// URLs allow hosts to start with `-` which makes it possible to mask command-line arguments as host which then leads to
     /// the invocation of programs from an attacker controlled URL. See <https://secure.phabricator.com/T12961> for details.
     ///
-    /// If this value is ever going to be passed to a command-line application, call [Self::host_argument_safe()] instead.
+    /// If this value is ever going to be passed to a command-line application, call [Self::host_as_argument()]
+    /// or [Self::host_argument_safe()] instead.
     pub fn host(&self) -> Option<&str> {
         self.host.as_deref()
     }
 
+    /// Classify the host of this URL by whether it is safe to pass as a command-line argument.
+    ///
+    /// Use this method instead of [Self::host()] if the host is going to be passed to a command-line application.
+    /// If the unsafe and absent cases need not be distinguished, [Self::host_argument_safe()] may also be used.
+    pub fn host_as_argument(&self) -> ArgumentSafety<str> {
+        match self.host() {
+            Some(host) if looks_like_command_line_option(host.as_bytes()) => ArgumentSafety::Dangerous(host),
+            Some(host) => ArgumentSafety::Usable(host),
+            None => ArgumentSafety::Absent,
+        }
+    }
+
     /// Return the host of this URL if present *and* if it can't be mistaken for a command-line argument.
     ///
-    /// Use this method if the host is going to be passed to a command-line application.
+    /// Use this method or [Self::host_as_argument()] instead of [Self::host()] if the host is going to be
+    /// passed to a command-line application. Prefer [Self::host_as_argument()] unless the unsafe and absent
+    /// cases need not be distinguished from each other.
     pub fn host_argument_safe(&self) -> Option<&str> {
-        self.host()
-            .filter(|host| !looks_like_command_line_option(host.as_bytes()))
+        match self.host_as_argument() {
+            ArgumentSafety::Usable(host) => Some(host),
+            _ => None,
+        }
+    }
+
+    /// Classify the path of this URL by whether it is safe to pass as a command-line argument.
+    /// Note that it always begins with a slash, which is ignored for this classification.
+    ///
+    /// Use this method or [Self::path_argument_safe()] instead of [Self::path] if the host is going to be
+    /// passed to a command-line application, unless it is certain that the leading `/` will always be included.
+    ///
+    /// This method never returns an [ArgumentSafety::Absent].
+    pub fn path_as_argument(&self) -> ArgumentSafety<BStr> {
+        match self.path_argument_safe() {
+            Some(path) => ArgumentSafety::Usable(path),
+            None => ArgumentSafety::Dangerous(self.path.as_ref()),
+        }
     }
 
     /// Return the path of this URL *if* it can't be mistaken for a command-line argument.
     /// Note that it always begins with a slash, which is ignored for this comparison.
     ///
-    /// Use this method if the path is going to be passed to a command-line application.
+    /// Use this method instead of accessing [Self::path] directly if the path is going to be passed to a
+    /// command-line application, unless it is certain that the leading `/` will always be included.
+    ///
+    /// The result of this method is unambiguous because [Self::path] is not an option type, but
+    /// [Self::path_as_argument()] may also safely be used.
     pub fn path_argument_safe(&self) -> Option<&BStr> {
         self.path
             .get(1..)
