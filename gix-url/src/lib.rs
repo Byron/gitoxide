@@ -66,6 +66,7 @@ pub fn expand_path(user: Option<&expand_path::ForUser>, path: &BStr) -> Result<P
 ///
 /// This type only expresses known *syntactic* risk. It does not cover other risks, such as passing a personal access
 /// token as a username rather than a password in an application that logs usernames.
+#[derive(Debug, PartialEq)]
 pub enum ArgumentSafety<T> {
     /// May be safe. There is nothing to pass, so there is nothing dangerous.
     Absent,
