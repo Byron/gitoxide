@@ -187,7 +187,8 @@ impl Url {
         // much less of a problem, because the host is expected to be present. Yet the host() method must still be
         // called when handling the None case, to include it in the error. If possible, both methods should be replaced
         // by methods with a richer return type (a new enum). If not, the ambiguity should be prominently documented.
-        self.user().filter(|user| !looks_like_argument(user.as_bytes()))
+        self.user()
+            .filter(|user| !looks_like_command_line_option(user.as_bytes()))
     }
 
     /// Return the password mentioned in the url, if present.
@@ -211,7 +212,8 @@ impl Url {
     ///
     /// Use this method if the host is going to be passed to a command-line application.
     pub fn host_argument_safe(&self) -> Option<&str> {
-        self.host().filter(|host| !looks_like_argument(host.as_bytes()))
+        self.host()
+            .filter(|host| !looks_like_command_line_option(host.as_bytes()))
     }
 
     /// Return the path of this URL *if* it can't be mistaken for a command-line argument.
@@ -221,7 +223,7 @@ impl Url {
     pub fn path_argument_safe(&self) -> Option<&BStr> {
         self.path
             .get(1..)
-            .and_then(|truncated| (!looks_like_argument(truncated)).then_some(self.path.as_ref()))
+            .and_then(|truncated| (!looks_like_command_line_option(truncated)).then_some(self.path.as_ref()))
     }
 
     /// Return true if the path portion of the URL is `/`.
@@ -245,7 +247,7 @@ impl Url {
     }
 }
 
-fn looks_like_argument(b: &[u8]) -> bool {
+fn looks_like_command_line_option(b: &[u8]) -> bool {
     b.first() == Some(&b'-')
 }
 
