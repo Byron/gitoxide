@@ -65,6 +65,7 @@ impl ProgramKind {
 
         let host_maybe_with_user_as_ssh_arg = match (url.user_as_argument(), url.host_as_argument()) {
             (Usable(user), Usable(host)) => format!("{user}@{host}"),
+            (Usable(user), Dangerous(host)) => format!("{user}@{host}"), // The `user@` makes it safe.
             (Absent, Usable(host)) => host.into(),
             (Dangerous(user), _) => Err(ssh::invocation::Error::AmbiguousUserName { user: user.into() })?,
             (_, Dangerous(host)) => Err(ssh::invocation::Error::AmbiguousHostName { host: host.into() })?,
