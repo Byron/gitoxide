@@ -1,5 +1,7 @@
 use std::process::Stdio;
 
+use gix_url::ArgumentSafety::*;
+
 use crate::{client::blocking_io, Protocol};
 
 /// The error used in [`connect()`].
@@ -118,11 +120,11 @@ pub fn connect(
                 .stdin(Stdio::null())
                 .with_shell()
                 .arg("-G")
-                // Username affects the stdout from `ssh -G` but may not affect the status. But if
-                // we end up needing it, it can be added here, with a user_argument_safe() check.
-                .arg(url.host_argument_safe().ok_or_else(|| Error::AmbiguousHostName {
-                    host: url.host().expect("set in ssh urls").into(),
-                })?),
+                .arg(match url.host_as_argument() {
+                    Usable(host) => host,
+                    Dangerous(host) => Err(Error::AmbiguousHostName { host: host.into() })?,
+                    Absent => panic!("BUG: host should always be present in SSH URLs"),
+                }),
         );
         gix_features::trace::debug!(cmd = ?cmd, "invoking `ssh` for feature check");
         kind = if cmd.status().ok().map_or(false, |status| status.success()) {
