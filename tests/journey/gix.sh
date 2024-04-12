@@ -351,6 +351,12 @@ title "gix commit-graph"
                 expect_run $WITH_FAILURE "$exe_plumbing" free pack receive 'ssh://-oProxyCommand=open$IFS-aCalculator/foo'
               }
           )
+          (with "an ambiguous ssh path which could be mistaken for an argument"
+              it "fails without trying to pass it to command-line programs" && {
+                WITH_SNAPSHOT="$snapshot/fail-ambiguous-path" \
+                expect_run $WITH_FAILURE "$exe_plumbing" free pack receive 'git@foo:-oProxyCommand=open$IFS-aCalculator/bar'
+              }
+          )
           fi
         )
         elif [[ "$kind" = "small" ]]; then
@@ -368,6 +374,12 @@ title "gix commit-graph"
             it "fails without trying to pass it to command-line programs" && {
               WITH_SNAPSHOT="$snapshot/fail-ambiguous-host" \
               expect_run $WITH_FAILURE "$exe_plumbing" clone 'ssh://-oProxyCommand=open$IFS-aCalculator/foo'
+            }
+        )
+        (with "an ambiguous ssh path which could be mistaken for an argument"
+            it "fails without trying to pass it to command-line programs" && {
+              WITH_SNAPSHOT="$snapshot/fail-ambiguous-path" \
+              expect_run $WITH_FAILURE "$exe_plumbing" clone 'git@foo:-oProxyCommand=open$IFS-aCalculator/bar'
             }
         )
     )
