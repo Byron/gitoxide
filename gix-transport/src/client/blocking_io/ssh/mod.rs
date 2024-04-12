@@ -42,6 +42,8 @@ pub mod invocation {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error("Username '{user}' could be mistaken for a command-line argument")]
+        AmbiguousUserName { user: String },
         #[error("Host name '{host}' could be mistaken for a command-line argument")]
         AmbiguousHostName { host: String },
         #[error("The 'Simple' ssh variant doesn't support {function}")]
