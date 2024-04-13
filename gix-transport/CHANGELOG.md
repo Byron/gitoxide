@@ -5,6 +5,76 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-f56ad390a5569d0129b7b16632991d18b9ddb4f7/> Prevent usernames with leading `-` from being passed to SSH
+   This detects ambiguous usernames in dangerous cases where they
+   would be passed to external commands to form SSH connections, if
+   they would be misinterpreted as option arguments.
+   
+   This change is analogous to b06a0dd, hardening `gix-transport` and
+   applications that use it against options smuggled in URLs, but for
+   the non-mandatory username portion of a URL, rather than the host
+   and path portions that were covered there.
+   
+   For example, commands like these no longer pass `-F...` options to
+   `ssh`:
+   
+       gix clone 'ssh://-Fconfigfile@example.com/abc'
+       gix clone -- '-Fconfigfile@example.com:abc/def'
+   
+   Instead, they refuse to run `ssh`, producing the error:
+   
+       Error: Username '-Fconfigfile' could be mistaken for a command-line argument
+ - <csr-id-98cfbec51276bbd6caa48fd6d8942247df091c94/> forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`.
+   This removes the `curl` dependency just for configuring it, and removes
+   a hazard which became evident with reqwest.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-e30436982903e82a0c635bec58dfee1fff33fed8/> declare `reqwest` dependency update as breaking
+   Related to https://github.com/Byron/gitoxide/pull/1327 .
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 19 commits contributed to the release over the course of 20 calendar days.
+ - 22 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1328](https://github.com/Byron/gitoxide/issues/1328)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1328](https://github.com/Byron/gitoxide/issues/1328)**
+    - Forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`. ([`98cfbec`](https://github.com/Byron/gitoxide/commit/98cfbec51276bbd6caa48fd6d8942247df091c94))
+    - Declare `reqwest` dependency update as breaking ([`e304369`](https://github.com/Byron/gitoxide/commit/e30436982903e82a0c635bec58dfee1fff33fed8))
+ * **Uncategorized**
+    - Merge branch 'strange-usernames' ([`1272542`](https://github.com/Byron/gitoxide/commit/1272542e79c29302ada47324d6bb02101393563d))
+    - Refactor `gix-transport` with minor edits to comments ([`996310b`](https://github.com/Byron/gitoxide/commit/996310ba1408fe746c6de43cb24dc1e809fd4d57))
+    - (Re)add a short, more specific comment about user@ ([`03fb64a`](https://github.com/Byron/gitoxide/commit/03fb64ac8fca02bed9786b0e832764c1728e6e0e))
+    - Use `Url::host_as_argument()` in `ssh::connect()` ([`cf59f57`](https://github.com/Byron/gitoxide/commit/cf59f574f97f9a3ca489c603674d0ec76e498e1e))
+    - Test that leading-`-` host names aren't used in `-G` check ([`902367f`](https://github.com/Byron/gitoxide/commit/902367fb452787a8fd8305676fa9c5a827646490))
+    - Try, so far unsuccessfully, to add missing `-G` test ([`524739b`](https://github.com/Byron/gitoxide/commit/524739b9189d007dab2f0dde38ce59dabd20d737))
+    - Reallow `user@-arg...` in prepare_invocation ([`2911623`](https://github.com/Byron/gitoxide/commit/29116236de3ca0ee97f60f1ad4024f74490bb2cd))
+    - Start on using {user,host}_as_argument in prepare_invocation ([`4dda375`](https://github.com/Byron/gitoxide/commit/4dda375cb1e2b4c7bc656979ac718f919c391b94))
+    - Comment gix_transport::client::blocking_io::ssh::connect ([`2e7517e`](https://github.com/Byron/gitoxide/commit/2e7517e964af0a0d74e05049db6bcd2527199cb3))
+    - Prevent usernames with leading `-` from being passed to SSH ([`f56ad39`](https://github.com/Byron/gitoxide/commit/f56ad390a5569d0129b7b16632991d18b9ddb4f7))
+    - Add ambiguous user unit tests, and more for hostname ([`5428609`](https://github.com/Byron/gitoxide/commit/54286091ebc6e13a8f27f730fa88127e6334cf13))
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge pull request #1333 from cesfahani/fix_zombie_ssh_procs ([`16dc027`](https://github.com/Byron/gitoxide/commit/16dc027508d17a5ffb694328ec9218d4ecdaba51))
+    - Fix zombie ssh processes from accumulating ([`ba93ef2`](https://github.com/Byron/gitoxide/commit/ba93ef272317c697b3eb3e2202c6d7453ce2e5f8))
+    - Merge branch 'patch-1' ([`9e9c653`](https://github.com/Byron/gitoxide/commit/9e9c653a83df58f8cdfe3a7adb2d824c8a368e72))
+    - Remove dep reqwest from gix ([`e3eedd8`](https://github.com/Byron/gitoxide/commit/e3eedd8b5326b8de2e6fe8941e1851bdbad673ab))
+</details>
+
 ## 0.41.3 (2024-03-22)
 
 A maintenance release without user-facing changes, but with a `reqwest` update that uses more recent tls and hyper versions.
@@ -18,7 +88,7 @@ into its dependency tree.
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 1 calendar day.
+ - 7 commits contributed to the release over the course of 1 calendar day.
  - 7 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -30,6 +100,7 @@ into its dependency tree.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-packetline v0.17.5, gix-transport v0.41.3, gix v0.61.1 ([`57579f1`](https://github.com/Byron/gitoxide/commit/57579f1ee4ef12c214db36325a2a0b2e8b2b14fd))
     - Prepare changelogs prior to release ([`7018a92`](https://github.com/Byron/gitoxide/commit/7018a928a405ba0534442f0b538d58f520145376))
     - Merge branch 'patch-1' ([`8fde62b`](https://github.com/Byron/gitoxide/commit/8fde62b2617985f835e2e2fa07c735a5158789cf))
     - Turn`curl` into a workspace package ([`adee500`](https://github.com/Byron/gitoxide/commit/adee50016007619495c93580e845ae757377c4f0))

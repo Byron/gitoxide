@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48/> Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple`
+ - <csr-id-3f938faf9e6323b8056ee286f299747e15e6a0d3/> adjust the structure of `commit::ancestors` to be more consistent with other plumbing crates.
+   This makes sure that each time is reached by only a single path.
+ - <csr-id-e0969c3cc928b31345c4f3a122466193697eb0fc/> simplify ancestor module..
+   We remove ability to reuse `State` as ultimately,this capability
+   wasn't all that useful.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 6 calendar days.
+ - 29 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1336](https://github.com/Byron/gitoxide/issues/1336)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1336](https://github.com/Byron/gitoxide/issues/1336)**
+    - Improve documentation of Topological DateOrder sorting and add baseline test ([`1f6c8ab`](https://github.com/Byron/gitoxide/commit/1f6c8abe9a0055631369ed6e03a6ce308b42242f))
+ * **Uncategorized**
+    - Use `u8` for `WalkFlags` in the hopes that this can save memory. ([`a5751bc`](https://github.com/Byron/gitoxide/commit/a5751bc10a414c6d7ad5f280e23962784faa4fc4))
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge branch 'add-topo-walk' ([`b590a9d`](https://github.com/Byron/gitoxide/commit/b590a9d2b6a273f76f0320d2b9fe1f679c08f549))
+    - Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple` ([`2a9c178`](https://github.com/Byron/gitoxide/commit/2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48))
+    - Adjust the structure of `commit::ancestors` to be more consistent with other plumbing crates. ([`3f938fa`](https://github.com/Byron/gitoxide/commit/3f938faf9e6323b8056ee286f299747e15e6a0d3))
+    - Refactor ([`ee13bdb`](https://github.com/Byron/gitoxide/commit/ee13bdb94e574a35c43cc6b6353f39e6c2d5c786))
+    - Simplify ancestor module.. ([`e0969c3`](https://github.com/Byron/gitoxide/commit/e0969c3cc928b31345c4f3a122466193697eb0fc))
+    - Initial implementation of topological commit walk ([`25b3d23`](https://github.com/Byron/gitoxide/commit/25b3d23bc370825ee15c68fd869b3ee5f4f79a1f))
+    - Move some utilities to super module to make them sharable ([`5b3dfbb`](https://github.com/Byron/gitoxide/commit/5b3dfbb129ae5e53fd63ce1a8637a35d7836b909))
+    - Move [Aa]ncestors to under commit module ([`ecc049c`](https://github.com/Byron/gitoxide/commit/ecc049cf14187d751c4d33b4c4b5d71bcce620b9))
+</details>
+
 ## 0.38.0 (2024-03-14)
 
 A maintenance release without user-facing changes.
@@ -13,7 +55,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 4 calendar days.
+ - 4 commits contributed to the release over the course of 4 calendar days.
  - 54 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +67,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
     - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
     - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
     - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))

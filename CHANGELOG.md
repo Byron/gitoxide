@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-84c74ffa698d35f8395c63db6acd3d0e6700d07f/> add `gix status --ignored` support
+ - <csr-id-66e87cd31c060c3f97ac685ee0541c408f600362/> add `gix status --index-worktree-renames`
+   This enables rename-tracking between worktree and index, something
+   that Git also doesn't do or doesn't do by default.
+   It is, however, available in `git2`.
+ - <csr-id-61c002bc4ca5b5345c411e561fdcb492e7ae1d97/> `gix status` with submodule and rewrite support.
+   Submodule changes are now picked up as long as the submodule is
+   in the index.
+   Further, it's possible to enable rename-tracking between
+   index and worktree separately.
+ - <csr-id-98b368095ec99d1bc287da7f9294a9fce424deed/> add `gix is-clean|is-changed`
+   It's a good way to compare the time it takes to run a full status
+   compared to a quick is-dirty check.
+ - <csr-id-afd20caadb40b6b793f2099b7232669f9a8f9086/> `gix submodules list --dirty-suffix` for dirty-information
+   This is a submodule-centric and greatly simplified way of obtaining
+   describe information with dirty-suffix.
+   
+   Note that `status` information is also possible, but it seems
+   hard to display nicely, which this command isn't great at
+   in the first place.
+ - <csr-id-58231b418fa39ea122ef41bb7691289f5b0be855/> add `gix commit describe --dirty-suffix`
+   That way a suffix will be added depending on the dirty-state of the repository.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 34 calendar days.
+ - 47 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Add `gix status --format` to communicate the current format is very simple. ([`23bea36`](https://github.com/Byron/gitoxide/commit/23bea36f046a6f652cd1e06885ae132c85bb4f05))
+    - Add `gix status --ignored` support ([`84c74ff`](https://github.com/Byron/gitoxide/commit/84c74ffa698d35f8395c63db6acd3d0e6700d07f))
+    - Add `gix status --index-worktree-renames` ([`66e87cd`](https://github.com/Byron/gitoxide/commit/66e87cd31c060c3f97ac685ee0541c408f600362))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+    - `gix status` with submodule and rewrite support. ([`61c002b`](https://github.com/Byron/gitoxide/commit/61c002bc4ca5b5345c411e561fdcb492e7ae1d97))
+    - Add `gix is-clean|is-changed` ([`98b3680`](https://github.com/Byron/gitoxide/commit/98b368095ec99d1bc287da7f9294a9fce424deed))
+    - `gix submodules list --dirty-suffix` for dirty-information ([`afd20ca`](https://github.com/Byron/gitoxide/commit/afd20caadb40b6b793f2099b7232669f9a8f9086))
+    - Add `gix commit describe --dirty-suffix` ([`58231b4`](https://github.com/Byron/gitoxide/commit/58231b418fa39ea122ef41bb7691289f5b0be855))
+</details>
+
 ## 0.34.0 (2024-02-25)
 
 ### New Features

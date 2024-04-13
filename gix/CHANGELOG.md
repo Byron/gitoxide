@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+Please note that this release contains a security fix originally implemented in `gix-transport` via [this PR](https://github.com/Byron/gitoxide/pull/1342)
+which prevents `ssh` options to be smuggled into the `ssh` command-line invocation with a username provided to a clone or fetch URL.
+
+Details can be found [in the advisory](https://github.com/Byron/gitoxide/security/advisories/GHSA-98p4-xjmm-8mfh).
+
+### Bug Fixes
+
+ - <csr-id-18b2921aaa28df536faf74098d5f1f13d34148f9/> `into_index_worktree_iter()` now takes an iterator, instead of a Vec.
+   This makes the API more consistent, and one can pass `None`
+   as well.
+ - <csr-id-719ced8a7949ba1f30fef13801e3466a7d1da590/> show submodules in status independently of their active state.
+   Even inactive submodules are shown in the status by `git status`,
+   so `gix` should do the same.
+   
+   First observed in https://github.com/helix-editor/helix/pull/5645#issuecomment-2016798212
+ - <csr-id-98cfbec51276bbd6caa48fd6d8942247df091c94/> forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`.
+   This removes the `curl` dependency just for configuring it, and removes
+   a hazard which became evident with reqwest.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48/> Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release over the course of 20 calendar days.
+ - 22 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1328](https://github.com/Byron/gitoxide/issues/1328)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1328](https://github.com/Byron/gitoxide/issues/1328)**
+    - Forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`. ([`98cfbec`](https://github.com/Byron/gitoxide/commit/98cfbec51276bbd6caa48fd6d8942247df091c94))
+ * **Uncategorized**
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge branch 'add-topo-walk' ([`b590a9d`](https://github.com/Byron/gitoxide/commit/b590a9d2b6a273f76f0320d2b9fe1f679c08f549))
+    - Adapt to changes in `gix-traverse` ([`1cfeb11`](https://github.com/Byron/gitoxide/commit/1cfeb11f1fe9ad9c7b9084840ed7f5c5877f2f9a))
+    - Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple` ([`2a9c178`](https://github.com/Byron/gitoxide/commit/2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48))
+    - Adapt to changes in `gix-traverse` ([`6154bf3`](https://github.com/Byron/gitoxide/commit/6154bf3a346d69f9749271d50e4f3aacdcbad4d0))
+    - Thanks clippy ([`7f6bee5`](https://github.com/Byron/gitoxide/commit/7f6bee5452ee01638f89a0cec2d4ee2a6f0d0136))
+    - Merge branch 'status' ([`45edd2e`](https://github.com/Byron/gitoxide/commit/45edd2ea66035adf526cb2f617873dcba60a2a9a))
+    - `into_index_worktree_iter()` now takes an iterator, instead of a Vec. ([`18b2921`](https://github.com/Byron/gitoxide/commit/18b2921aaa28df536faf74098d5f1f13d34148f9))
+    - Show submodules in status independently of their active state. ([`719ced8`](https://github.com/Byron/gitoxide/commit/719ced8a7949ba1f30fef13801e3466a7d1da590))
+    - Make it easier to discover `is_path_excluded()` in documentation ([`c136329`](https://github.com/Byron/gitoxide/commit/c13632959e287f31a00c1ba8fc6e97470f0cd734))
+    - Adapt to changes in `gix-index` ([`1e1fce1`](https://github.com/Byron/gitoxide/commit/1e1fce11a968ebbcede1135ccbd0b03e749a1267))
+    - Merge branch 'patch-1' ([`9e9c653`](https://github.com/Byron/gitoxide/commit/9e9c653a83df58f8cdfe3a7adb2d824c8a368e72))
+    - Remove dep reqwest from gix ([`e3eedd8`](https://github.com/Byron/gitoxide/commit/e3eedd8b5326b8de2e6fe8941e1851bdbad673ab))
+</details>
+
 ## 0.61.1 (2024-03-22)
 
 This release also updates `reqwest` to v0.12, bringing hyper 1.0 and a more recent `rustls` version.
@@ -17,7 +82,7 @@ This release also updates `reqwest` to v0.12, bringing hyper 1.0 and a more rece
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 2 calendar days.
+ - 8 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -29,6 +94,7 @@ This release also updates `reqwest` to v0.12, bringing hyper 1.0 and a more rece
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-packetline v0.17.5, gix-transport v0.41.3, gix v0.61.1 ([`57579f1`](https://github.com/Byron/gitoxide/commit/57579f1ee4ef12c214db36325a2a0b2e8b2b14fd))
     - Prepare changelogs prior to release ([`7018a92`](https://github.com/Byron/gitoxide/commit/7018a928a405ba0534442f0b538d58f520145376))
     - Merge branch 'patch-1' ([`8fde62b`](https://github.com/Byron/gitoxide/commit/8fde62b2617985f835e2e2fa07c735a5158789cf))
     - Turn`curl` into a workspace package ([`adee500`](https://github.com/Byron/gitoxide/commit/adee50016007619495c93580e845ae757377c4f0))
