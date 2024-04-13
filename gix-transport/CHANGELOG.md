@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.42.0 (2024-04-13)
 
 ### Bug Fixes
 
@@ -22,12 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    For example, commands like these no longer pass `-F...` options to
    `ssh`:
    
-       gix clone 'ssh://-Fconfigfile@example.com/abc'
-       gix clone -- '-Fconfigfile@example.com:abc/def'
+   gix clone 'ssh://-Fconfigfile@example.com/abc'
+   gix clone -- '-Fconfigfile@example.com:abc/def'
    
    Instead, they refuse to run `ssh`, producing the error:
    
-       Error: Username '-Fconfigfile' could be mistaken for a command-line argument
+   Error: Username '-Fconfigfile' could be mistaken for a command-line argument
  - <csr-id-98cfbec51276bbd6caa48fd6d8942247df091c94/> forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`.
    This removes the `curl` dependency just for configuring it, and removes
    a hazard which became evident with reqwest.
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 19 commits contributed to the release over the course of 20 calendar days.
+ - 20 commits contributed to the release over the course of 20 calendar days.
  - 22 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1328](https://github.com/Byron/gitoxide/issues/1328)
@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`. ([`98cfbec`](https://github.com/Byron/gitoxide/commit/98cfbec51276bbd6caa48fd6d8942247df091c94))
     - Declare `reqwest` dependency update as breaking ([`e304369`](https://github.com/Byron/gitoxide/commit/e30436982903e82a0c635bec58dfee1fff33fed8))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
     - Merge branch 'strange-usernames' ([`1272542`](https://github.com/Byron/gitoxide/commit/1272542e79c29302ada47324d6bb02101393563d))
     - Refactor `gix-transport` with minor edits to comments ([`996310b`](https://github.com/Byron/gitoxide/commit/996310ba1408fe746c6de43cb24dc1e809fd4d57))
     - (Re)add a short, more specific comment about user@ ([`03fb64a`](https://github.com/Byron/gitoxide/commit/03fb64ac8fca02bed9786b0e832764c1728e6e0e))

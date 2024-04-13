@@ -5,48 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.27.3 (2024-04-13)
 
 ### New Features
+
+<csr-id-db40382328c373258aa3bd5f9551511a42af6be5/>
 
  - <csr-id-545799882643532dd0b3e8ab436efd7722c74e3c/> Add `ArgumentSafety` and `Url::*_as_argument()` methods
    This adds three methods to `Url`:
    
    - `Url::user_as_argument`
-   - `Url::host_as_argument`
-   - `Url::path_as_argument`
-   
-   They return `ArgumentSafety` values that distingiush three cases:
-   
-   1. There is no wrapped value (`Absent`).
-   
-   2. The wrapped value is usable and presumably safe (`Usable`).
-   
-   3. The wrapped value is dangerous and should not be passed as a
+- `Url::host_as_argument`
+- `Url::path_as_argument`
+1. There is no wrapped value (`Absent`).
+2. The wrapped value is usable and presumably safe (`Usable`).
+3. The wrapped value is dangerous and should not be passed as a
       command-line argument because it could be interpreted as an
       option due to starting with `-`. The value itself may still be
       useful and safe to include in error messages.
-   
-   `user_as_argument` and `host_as_argument` are the most useful ones,
-   as they serve as alternatives to `user_argument_safe` and
-   `host_argument_safe` whose return values are unambiguous. The
-   `user_argument_safe` and `host_argument_safe` methods don't
-   distinguish between the absence of a username or host, and the
-   presence of a username or host that is unsafe to pass as an
-   argument.
-   
-   `path_as_argument` included for parity, in case it is useful to
-   write code that handles the three cases similarly. However, there
-   is no underlying ambiguity in the return value of the corresponding
-   `path_argument_safe` method, since unlike `user` and `host`, the
-   `path` is not an option type.
- - <csr-id-db40382328c373258aa3bd5f9551511a42af6be5/> Add `Url::user_argument_safe()`
-   This returns `None` if the username begins with a `-`, which would
-   confuse command-line applications.
-   
-   It is analogous to the `Url::host_argument_safe()` and
-   `Url::path_argument_safe()` methods (introduced in d80b5f6), but
-   for usernames rather than hosts or paths.
 
 ### Bug Fixes
 
@@ -63,18 +39,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    For example, commands like these no longer pass `-F...` options to
    `ssh`:
    
-       gix clone 'ssh://-Fconfigfile@example.com/abc'
-       gix clone -- '-Fconfigfile@example.com:abc/def'
+   gix clone 'ssh://-Fconfigfile@example.com/abc'
+   gix clone -- '-Fconfigfile@example.com:abc/def'
    
    Instead, they refuse to run `ssh`, producing the error:
    
-       Error: Username '-Fconfigfile' could be mistaken for a command-line argument
+   Error: Username '-Fconfigfile' could be mistaken for a command-line argument
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 1 calendar day.
+ - 13 commits contributed to the release over the course of 1 calendar day.
  - 29 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -86,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
     - Merge branch 'strange-usernames' ([`1272542`](https://github.com/Byron/gitoxide/commit/1272542e79c29302ada47324d6bb02101393563d))
     - Refactor `gix-url` ([`09311b0`](https://github.com/Byron/gitoxide/commit/09311b0e0039c5a82c871047ff24336ab1741d47))
     - Give `ArgumentSafety` traits; test `*_as_argument` methods ([`1b0af07`](https://github.com/Byron/gitoxide/commit/1b0af07ffa122a2199d444b84512300ef578abb5))
@@ -99,6 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Prepare for adding Url::user_argument_safe ([`1bdfdd9`](https://github.com/Byron/gitoxide/commit/1bdfdd98c9a82eee7ac40b38fe05d54f1f93237e))
     - Reorder tests and add username assertion placeholders ([`6cbe65d`](https://github.com/Byron/gitoxide/commit/6cbe65d3f25c5c00fb9248a5558ac74f6e77ff06))
 </details>
+
+<csr-unknown>
+They return ArgumentSafety values that distingiush three cases:user_as_argument and host_as_argument are the most useful ones,as they serve as alternatives to user_argument_safe andhost_argument_safe whose return values are unambiguous. Theuser_argument_safe and host_argument_safe methods don’tdistinguish between the absence of a username or host, and thepresence of a username or host that is unsafe to pass as anargument.path_as_argument included for parity, in case it is useful towrite code that handles the three cases similarly. However, thereis no underlying ambiguity in the return value of the correspondingpath_argument_safe method, since unlike user and host, thepath is not an option type. Add Url::user_argument_safe()This returns None if the username begins with a -, which wouldconfuse command-line applications.It is analogous to the Url::host_argument_safe() andUrl::path_argument_safe() methods (introduced in d80b5f6), butfor usernames rather than hosts or paths.<csr-unknown/>
 
 ## 0.27.2 (2024-03-14)
 

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.17.4 (2024-04-13)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 4 calendar days.
+ - 4 commits contributed to the release over the course of 4 calendar days.
  - 84 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
     - Merge branch 'copy-packetline' ([`a9b783d`](https://github.com/Byron/gitoxide/commit/a9b783df45948eb0adf538251315f808f38008f6))
     - Rerun script to get `//` instead of `//!` comments ([`ec2427f`](https://github.com/Byron/gitoxide/commit/ec2427fc78df81901a5636fb1213999a3a5ed969))
     - Replace gix-packetline-blocking/src with generated files ([`a793bde`](https://github.com/Byron/gitoxide/commit/a793bde062553288bfc045bfda75addb25a7be76))

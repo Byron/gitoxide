@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.62.0 (2024-04-13)
 
 Please note that this release contains a security fix originally implemented in `gix-transport` via [this PR](https://github.com/Byron/gitoxide/pull/1342)
 which prevents `ssh` options to be smuggled into the `ssh` command-line invocation with a username provided to a clone or fetch URL.
@@ -34,7 +34,7 @@ Details can be found [in the advisory](https://github.com/Byron/gitoxide/securit
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 20 calendar days.
+ - 16 commits contributed to the release over the course of 20 calendar days.
  - 22 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1328](https://github.com/Byron/gitoxide/issues/1328)
@@ -54,6 +54,7 @@ Details can be found [in the advisory](https://github.com/Byron/gitoxide/securit
  * **[#1328](https://github.com/Byron/gitoxide/issues/1328)**
     - Forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`. ([`98cfbec`](https://github.com/Byron/gitoxide/commit/98cfbec51276bbd6caa48fd6d8942247df091c94))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
     - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
     - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
     - Merge branch 'add-topo-walk' ([`b590a9d`](https://github.com/Byron/gitoxide/commit/b590a9d2b6a273f76f0320d2b9fe1f679c08f549))

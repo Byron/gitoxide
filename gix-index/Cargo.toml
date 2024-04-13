@@ -1,6 +1,6 @@
 [package]
 name = "gix-index"
-version = "0.31.1"
+version = "0.32.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
@@ -27,10 +27,10 @@ gix-features = { version = "^0.38.1", path = "../gix-features", features = [
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-bitmap = { version = "^0.2.11", path = "../gix-bitmap" }
 gix-object = { version = "^0.42.1", path = "../gix-object" }
-gix-traverse = { version = "^0.38.0", path = "../gix-traverse" }
+gix-traverse = { version = "^0.39.0", path = "../gix-traverse" }
 gix-lock = { version = "^13.0.0", path = "../gix-lock" }
-gix-fs = { version = "^0.10.1", path = "../gix-fs" }
-gix-utils = { version = "^0.1.11", path = "../gix-utils" }
+gix-fs = { version = "^0.10.2", path = "../gix-fs" }
+gix-utils = { version = "^0.1.12", path = "../gix-utils" }
 
 hashbrown = "0.14.3"
 fnv = "1.0.7"

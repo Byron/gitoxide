@@ -1,6 +1,6 @@
 [package]
 name = "gix-pathspec"
-version = "0.7.2"
+version = "0.7.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing magical pathspecs"

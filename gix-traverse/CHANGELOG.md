@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.39.0 (2024-04-13)
 
 ### Bug Fixes (BREAKING)
 
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 6 calendar days.
+ - 13 commits contributed to the release over the course of 6 calendar days.
  - 29 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1336](https://github.com/Byron/gitoxide/issues/1336)
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1336](https://github.com/Byron/gitoxide/issues/1336)**
     - Improve documentation of Topological DateOrder sorting and add baseline test ([`1f6c8ab`](https://github.com/Byron/gitoxide/commit/1f6c8abe9a0055631369ed6e03a6ce308b42242f))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
     - Use `u8` for `WalkFlags` in the hopes that this can save memory. ([`a5751bc`](https://github.com/Byron/gitoxide/commit/a5751bc10a414c6d7ad5f280e23962784faa4fc4))
     - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
     - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
