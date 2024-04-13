@@ -124,7 +124,7 @@ pub fn connect(
                     Usable(host) => host,
                     Dangerous(host) => Err(Error::AmbiguousHostName { host: host.into() })?,
                     Absent => panic!("BUG: host should always be present in SSH URLs"),
-                }),
+                }), // We omit `user@` with `-G`, so it need not be safe here, but host must be safe.
         );
         gix_features::trace::debug!(cmd = ?cmd, "invoking `ssh` for feature check");
         kind = if cmd.status().ok().map_or(false, |status| status.success()) {
