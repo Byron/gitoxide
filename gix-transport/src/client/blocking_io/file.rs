@@ -291,7 +291,7 @@ pub fn connect(
 mod tests {
     mod ssh {
         mod connect {
-            use crate::{client::blocking_io::ssh::connect, Protocol};
+            use crate::{client::blocking_io::ssh, Protocol};
 
             #[test]
             fn path() {
@@ -304,8 +304,27 @@ mod tests {
                     ("user@host.xy:~/repo", "~/repo"),
                 ] {
                     let url = gix_url::parse((*url).into()).expect("valid url");
-                    let cmd = connect(url, Protocol::V1, Default::default(), false).expect("parse success");
+                    let cmd = ssh::connect(url, Protocol::V1, Default::default(), false).expect("parse success");
                     assert_eq!(cmd.path, expected, "the path will be substituted by the remote shell");
+                }
+            }
+
+            #[test]
+            fn ambiguous_host_disallowed() {
+                for url in [
+                    "ssh://-oProxyCommand=open$IFS-aCalculator/foo",
+                    "user@-oProxyCommand=open$IFS-aCalculator:username/repo",
+                ] {
+                    let url = gix_url::parse((*url).into()).expect("valid url");
+                    let options = ssh::connect::Options {
+                        command: Some("unrecognized".into()),
+                        disallow_shell: false,
+                        kind: None,
+                    };
+                    assert!(matches!(
+                        ssh::connect(url, Protocol::V1, options, false),
+                        Err(ssh::Error::AmbiguousHostName { host }) if host == "-oProxyCommand=open$IFS-aCalculator",
+                    ));
                 }
             }
         }

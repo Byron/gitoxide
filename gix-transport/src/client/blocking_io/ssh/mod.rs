@@ -1,5 +1,7 @@
 use std::process::Stdio;
 
+use gix_url::ArgumentSafety::*;
+
 use crate::{client::blocking_io, Protocol};
 
 /// The error used in [`connect()`].
@@ -42,6 +44,8 @@ pub mod invocation {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error("Username '{user}' could be mistaken for a command-line argument")]
+        AmbiguousUserName { user: String },
         #[error("Host name '{host}' could be mistaken for a command-line argument")]
         AmbiguousHostName { host: String },
         #[error("The 'Simple' ssh variant doesn't support {function}")]
@@ -116,9 +120,11 @@ pub fn connect(
                 .stdin(Stdio::null())
                 .with_shell()
                 .arg("-G")
-                .arg(url.host_argument_safe().ok_or_else(|| Error::AmbiguousHostName {
-                    host: url.host().expect("set in ssh urls").into(),
-                })?),
+                .arg(match url.host_as_argument() {
+                    Usable(host) => host,
+                    Dangerous(host) => Err(Error::AmbiguousHostName { host: host.into() })?,
+                    Absent => panic!("BUG: host should always be present in SSH URLs"),
+                }),
         );
         gix_features::trace::debug!(cmd = ?cmd, "invoking `ssh` for feature check");
         kind = if cmd.status().ok().map_or(false, |status| status.success()) {

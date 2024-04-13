@@ -345,10 +345,31 @@ title "gix commit-graph"
               }
             )
           )
+          (with "an ambiguous ssh username which could be mistaken for an argument"
+            snapshot="$snapshot/fail-ambiguous-username"
+            (with "explicit ssh (true url with scheme)"
+              it "fails without trying to pass it to command-line programs" && {
+                WITH_SNAPSHOT="$snapshot/explicit-ssh" \
+                expect_run $WITH_FAILURE "$exe_plumbing" free pack receive 'ssh://-Fconfigfile@foo/bar'
+              }
+            )
+            (with "implicit ssh (special syntax with no scheme)"
+              it "fails without trying to pass it to command-line programs" && {
+                WITH_SNAPSHOT="$snapshot/implicit-ssh" \
+                expect_run $WITH_FAILURE "$exe_plumbing" free pack receive -- '-Fconfigfile@foo:bar/baz'
+              }
+            )
+          )
           (with "an ambiguous ssh host which could be mistaken for an argument"
               it "fails without trying to pass it to command-line programs" && {
-                WITH_SNAPSHOT="$snapshot/fail-ambigous-host" \
+                WITH_SNAPSHOT="$snapshot/fail-ambiguous-host" \
                 expect_run $WITH_FAILURE "$exe_plumbing" free pack receive 'ssh://-oProxyCommand=open$IFS-aCalculator/foo'
+              }
+          )
+          (with "an ambiguous ssh path which could be mistaken for an argument"
+              it "fails without trying to pass it to command-line programs" && {
+                WITH_SNAPSHOT="$snapshot/fail-ambiguous-path" \
+                expect_run $WITH_FAILURE "$exe_plumbing" free pack receive 'git@foo:-oProxyCommand=open$IFS-aCalculator/bar'
               }
           )
           fi
@@ -364,10 +385,31 @@ title "gix commit-graph"
     if test "$kind" = "max" || test "$kind" = "max-pure"; then
     (with "the 'clone' sub-command"
         snapshot="$snapshot/clone"
+        (with "an ambiguous ssh username which could be mistaken for an argument"
+          snapshot="$snapshot/fail-ambiguous-username"
+          (with "explicit ssh (true url with scheme)"
+            it "fails without trying to pass it to command-line programs" && {
+              WITH_SNAPSHOT="$snapshot/explicit-ssh" \
+              expect_run $WITH_FAILURE "$exe_plumbing" clone 'ssh://-Fconfigfile@foo/bar'
+            }
+          )
+          (with "implicit ssh (special syntax with no scheme)"
+            it "fails without trying to pass it to command-line programs" && {
+              WITH_SNAPSHOT="$snapshot/implicit-ssh" \
+              expect_run $WITH_FAILURE "$exe_plumbing" clone -- '-Fconfigfile@foo:bar/baz'
+            }
+          )
+        )
         (with "an ambiguous ssh host which could be mistaken for an argument"
             it "fails without trying to pass it to command-line programs" && {
-              WITH_SNAPSHOT="$snapshot/fail-ambigous-host" \
+              WITH_SNAPSHOT="$snapshot/fail-ambiguous-host" \
               expect_run $WITH_FAILURE "$exe_plumbing" clone 'ssh://-oProxyCommand=open$IFS-aCalculator/foo'
+            }
+        )
+        (with "an ambiguous ssh path which could be mistaken for an argument"
+            it "fails without trying to pass it to command-line programs" && {
+              WITH_SNAPSHOT="$snapshot/fail-ambiguous-path" \
+              expect_run $WITH_FAILURE "$exe_plumbing" clone 'git@foo:-oProxyCommand=open$IFS-aCalculator/bar'
             }
         )
     )

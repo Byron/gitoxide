@@ -144,8 +144,25 @@ mod program_kind {
                 assert!(call_args(kind, "ssh://user@host:43/p", Protocol::V2).ends_with("-P 43 user@host"));
             }
         }
+
         #[test]
-        fn ambiguous_host_is_allowed_with_user() {
+        fn ambiguous_user_is_disallowed_explicit_ssh() {
+            assert!(matches!(
+                try_call(ProgramKind::Ssh, "ssh://-arg@host/p", Protocol::V2),
+                Err(ssh::invocation::Error::AmbiguousUserName { user }) if user == "-arg"
+            ))
+        }
+
+        #[test]
+        fn ambiguous_user_is_disallowed_implicit_ssh() {
+            assert!(matches!(
+                try_call(ProgramKind::Ssh, "-arg@host:p/q", Protocol::V2),
+                Err(ssh::invocation::Error::AmbiguousUserName { user }) if user == "-arg"
+            ))
+        }
+
+        #[test]
+        fn ambiguous_host_is_allowed_with_user_explicit_ssh() {
             assert_eq!(
                 call_args(ProgramKind::Ssh, "ssh://user@-arg/p", Protocol::V2),
                 joined(&["ssh", "-o", "SendEnv=GIT_PROTOCOL", "user@-arg"])
@@ -153,10 +170,34 @@ mod program_kind {
         }
 
         #[test]
-        fn ambiguous_host_is_disallowed() {
+        fn ambiguous_host_is_allowed_with_user_implicit_ssh() {
+            assert_eq!(
+                call_args(ProgramKind::Ssh, "user@-arg:p/q", Protocol::V2),
+                joined(&["ssh", "-o", "SendEnv=GIT_PROTOCOL", "user@-arg"])
+            );
+        }
+
+        #[test]
+        fn ambiguous_host_is_disallowed_without_user() {
             assert!(matches!(
                 try_call(ProgramKind::Ssh, "ssh://-arg/p", Protocol::V2),
                 Err(ssh::invocation::Error::AmbiguousHostName { host }) if host == "-arg"
+            ));
+        }
+
+        #[test]
+        fn ambiguous_user_and_host_remain_disallowed_together_explicit_ssh() {
+            assert!(matches!(
+                try_call(ProgramKind::Ssh, "ssh://-arg@host/p", Protocol::V2),
+                Err(ssh::invocation::Error::AmbiguousUserName { user }) if user == "-arg"
+            ));
+        }
+
+        #[test]
+        fn ambiguous_user_and_host_remain_disallowed_together_implicit_ssh() {
+            assert!(matches!(
+                try_call(ProgramKind::Ssh, "-userarg@-hostarg:p/q", Protocol::V2),
+                Err(ssh::invocation::Error::AmbiguousUserName { user }) if user == "-userarg"
             ));
         }
 
