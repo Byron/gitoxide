@@ -27,4 +27,3 @@ git clone tag-symbolic tag-detached
   git rev-parse point-at-tag-start > .git/HEAD.tmp
   mv .git/HEAD.tmp .git/HEAD
 )
-

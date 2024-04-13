@@ -13,4 +13,3 @@ git init -q untracked-only
   mkdir new
   touch new/untracked subdir/untracked
 )
-
