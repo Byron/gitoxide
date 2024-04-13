@@ -60,14 +60,13 @@ fn user_argument_safety() -> crate::Result {
 
     assert_eq!(url.user(), Some("-Fconfigfile"));
     assert_eq!(url.user_as_argument(), ArgumentSafety::Dangerous("-Fconfigfile"));
-    assert_eq!(url.user_argument_safe(), None); // An unsafe username is blocked.
+    assert_eq!(url.user_argument_safe(), None, "An unsafe username is blocked.");
 
     assert_eq!(url.host(), Some("foo"));
     assert_eq!(url.host_as_argument(), ArgumentSafety::Usable("foo"));
     assert_eq!(url.host_argument_safe(), Some("foo"));
 
     assert_eq!(url.path, "/bar");
-    assert_eq!(url.path_as_argument(), ArgumentSafety::Usable("/bar".into()));
     assert_eq!(url.path_argument_safe(), Some("/bar".into()));
 
     Ok(())
@@ -79,17 +78,20 @@ fn host_argument_safety() -> crate::Result {
 
     assert_eq!(url.user(), None);
     assert_eq!(url.user_as_argument(), ArgumentSafety::Absent);
-    assert_eq!(url.user_argument_safe(), None); // As there is no user. See all_argument_safe_valid().
+    assert_eq!(
+        url.user_argument_safe(),
+        None,
+        "As there is no user. See all_argument_safe_valid()"
+    );
 
     assert_eq!(url.host(), Some("-oProxyCommand=open$IFS-aCalculator"));
     assert_eq!(
         url.host_as_argument(),
         ArgumentSafety::Dangerous("-oProxyCommand=open$IFS-aCalculator")
     );
-    assert_eq!(url.host_argument_safe(), None); // An unsafe host string is blocked.
+    assert_eq!(url.host_argument_safe(), None, "An unsafe host string is blocked");
 
     assert_eq!(url.path, "/foo");
-    assert_eq!(url.path_as_argument(), ArgumentSafety::Usable("/foo".into()));
     assert_eq!(url.path_argument_safe(), Some("/foo".into()));
 
     Ok(())
@@ -101,18 +103,18 @@ fn path_argument_safety() -> crate::Result {
 
     assert_eq!(url.user(), None);
     assert_eq!(url.user_as_argument(), ArgumentSafety::Absent);
-    assert_eq!(url.user_argument_safe(), None); // As there is no user. See all_argument_safe_valid().
+    assert_eq!(
+        url.user_argument_safe(),
+        None,
+        "As there is no user. See all_argument_safe_valid()"
+    );
 
     assert_eq!(url.host(), Some("foo"));
     assert_eq!(url.host_as_argument(), ArgumentSafety::Usable("foo"));
     assert_eq!(url.host_argument_safe(), Some("foo"));
 
     assert_eq!(url.path, "/-oProxyCommand=open$IFS-aCalculator");
-    assert_eq!(
-        url.path_as_argument(),
-        ArgumentSafety::Dangerous("/-oProxyCommand=open$IFS-aCalculator".into())
-    );
-    assert_eq!(url.path_argument_safe(), None); // An unsafe path is blocked.
+    assert_eq!(url.path_argument_safe(), None, "An unsafe path is blocked");
 
     Ok(())
 }
@@ -130,7 +132,6 @@ fn all_argument_safety_safe() -> crate::Result {
     assert_eq!(url.host_argument_safe(), Some("example.com"));
 
     assert_eq!(url.path, "/path/to/file");
-    assert_eq!(url.path_as_argument(), ArgumentSafety::Usable("/path/to/file".into()));
     assert_eq!(url.path_argument_safe(), Some("/path/to/file".into()));
 
     Ok(())
@@ -150,14 +151,10 @@ fn all_argument_safety_not_safe() -> crate::Result {
         url.host_as_argument(),
         ArgumentSafety::Dangerous("-oProxyCommand=open$IFS-aCalculator")
     );
-    assert_eq!(url.host_argument_safe(), None); // An unsafe host string is blocked.
+    assert_eq!(url.host_argument_safe(), None, "An unsafe host string is blocked");
 
     assert_eq!(url.path, "/-oProxyCommand=open$IFS-aCalculator");
-    assert_eq!(
-        url.path_as_argument(),
-        ArgumentSafety::Dangerous("/-oProxyCommand=open$IFS-aCalculator".into())
-    );
-    assert_eq!(url.path_argument_safe(), None); // An unsafe path is blocked.
+    assert_eq!(url.path_argument_safe(), None, "An unsafe path is blocked");
 
     Ok(())
 }

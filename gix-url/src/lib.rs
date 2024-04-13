@@ -66,14 +66,14 @@ pub fn expand_path(user: Option<&expand_path::ForUser>, path: &BStr) -> Result<P
 ///
 /// This type only expresses known *syntactic* risk. It does not cover other risks, such as passing a personal access
 /// token as a username rather than a password in an application that logs usernames.
-#[derive(Debug, PartialEq)]
-pub enum ArgumentSafety<T> {
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum ArgumentSafety<'a> {
     /// May be safe. There is nothing to pass, so there is nothing dangerous.
     Absent,
     /// May be safe. The argument does not begin with a `-` and so will not be confused as an option.
-    Usable(T),
+    Usable(&'a str),
     /// Dangerous! Begins with `-` and could be treated as an option. Use the value in error messages only.
-    Dangerous(T),
+    Dangerous(&'a str),
 }
 
 /// A URL with support for specialized git related capabilities.
@@ -201,7 +201,7 @@ impl Url {
     ///
     /// Use this method instead of [Self::user()] if the host is going to be passed to a command-line application.
     /// If the unsafe and absent cases need not be distinguished, [Self::user_argument_safe()] may also be used.
-    pub fn user_as_argument(&self) -> ArgumentSafety<&str> {
+    pub fn user_as_argument(&self) -> ArgumentSafety<'_> {
         match self.user() {
             Some(user) if looks_like_command_line_option(user.as_bytes()) => ArgumentSafety::Dangerous(user),
             Some(user) => ArgumentSafety::Usable(user),
@@ -243,7 +243,7 @@ impl Url {
     ///
     /// Use this method instead of [Self::host()] if the host is going to be passed to a command-line application.
     /// If the unsafe and absent cases need not be distinguished, [Self::host_argument_safe()] may also be used.
-    pub fn host_as_argument(&self) -> ArgumentSafety<&str> {
+    pub fn host_as_argument(&self) -> ArgumentSafety<'_> {
         match self.host() {
             Some(host) if looks_like_command_line_option(host.as_bytes()) => ArgumentSafety::Dangerous(host),
             Some(host) => ArgumentSafety::Usable(host),
@@ -263,28 +263,11 @@ impl Url {
         }
     }
 
-    /// Classify the path of this URL by whether it is safe to pass as a command-line argument.
-    /// Note that it always begins with a slash, which is ignored for this classification.
-    ///
-    /// Use this method or [Self::path_argument_safe()] instead of [Self::path] if the host is going to be
-    /// passed to a command-line application, unless it is certain that the leading `/` will always be included.
-    ///
-    /// This method never returns an [ArgumentSafety::Absent].
-    pub fn path_as_argument(&self) -> ArgumentSafety<&BStr> {
-        match self.path_argument_safe() {
-            Some(path) => ArgumentSafety::Usable(path),
-            None => ArgumentSafety::Dangerous(self.path.as_ref()),
-        }
-    }
-
     /// Return the path of this URL *if* it can't be mistaken for a command-line argument.
     /// Note that it always begins with a slash, which is ignored for this comparison.
     ///
     /// Use this method instead of accessing [Self::path] directly if the path is going to be passed to a
     /// command-line application, unless it is certain that the leading `/` will always be included.
-    ///
-    /// The result of this method is unambiguous because [Self::path] is not an option type, but
-    /// [Self::path_as_argument()] may also safely be used.
     pub fn path_argument_safe(&self) -> Option<&BStr> {
         self.path
             .get(1..)
