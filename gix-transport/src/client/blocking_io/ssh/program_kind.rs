@@ -72,9 +72,9 @@ impl ProgramKind {
             (_, Absent) => panic!("BUG: host should always be present in SSH URLs"),
         };
 
-        // Try to force ssh to yield English messages (for parsing later).
         Ok(prepare
             .arg(host_maybe_with_user_as_ssh_arg)
+            // Try to force ssh to yield English messages (for parsing later).
             .env("LANG", "C")
             .env("LC_ALL", "C"))
     }
