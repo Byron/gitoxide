@@ -316,8 +316,13 @@ mod tests {
                     "user@-oProxyCommand=open$IFS-aCalculator:username/repo",
                 ] {
                     let url = gix_url::parse((*url).into()).expect("valid url");
+                    let options = ssh::connect::Options {
+                        command: Some("unrecognized".into()),
+                        disallow_shell: false,
+                        kind: None,
+                    };
                     assert!(matches!(
-                        ssh::connect(url, Protocol::V1, Default::default(), false),
+                        ssh::connect(url, Protocol::V1, options, false),
                         Err(ssh::Error::AmbiguousHostName { host }) if host == "-oProxyCommand=open$IFS-aCalculator",
                     ));
                 }
