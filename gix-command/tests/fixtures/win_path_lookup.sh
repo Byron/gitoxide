@@ -7,4 +7,3 @@ echo "#!/a/x" > a/x
 echo "#!/b/exe" > b/exe
 echo "#!/b/exe.com" > b/exe.com
 echo "#!/c/x.exe" > c/x.exe
-
