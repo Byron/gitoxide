@@ -23,11 +23,11 @@ pub use parse::function::parse;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
-    /// time in seconds since epoch.
+    /// The seconds that passed since UNIX epoch. This makes it UTC, or `<seconds>+0000`.
     pub seconds: SecondsSinceUnixEpoch,
-    /// time offset in seconds, may be negative to match the `sign` field.
+    /// The time's offset in seconds, which may be negative to match the `sign` field.
     pub offset: OffsetInSeconds,
-    /// the sign of `offset`, used to encode `-0000` which would otherwise loose sign information.
+    /// the sign of `offset`, used to encode `-0000` which would otherwise lose sign information.
     pub sign: time::Sign,
 }
 
