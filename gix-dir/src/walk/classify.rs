@@ -21,7 +21,13 @@ pub fn root(
     let mut path_buf = worktree_root.to_owned();
     // These initial values kick in if worktree_relative_root.is_empty();
     let file_kind = path_buf.symlink_metadata().map(|m| m.file_type().into()).ok();
-    let mut out = path(&mut path_buf, buf, 0, file_kind, || None, options, ctx)?;
+    let pathspec_orig = std::mem::replace(
+        ctx.pathspec,
+        gix_pathspec::Search::from_specs(None, None, "".as_ref()).expect("empty is valid"),
+    );
+    let res = path(&mut path_buf, buf, 0, file_kind, || None, options, ctx);
+    *ctx.pathspec = pathspec_orig;
+    let mut out = res?;
     let worktree_root_is_repository = out
         .disk_kind
         .map_or(false, |kind| matches!(kind, entry::Kind::Repository));
@@ -52,6 +58,9 @@ pub fn root(
             break;
         }
         last_length = Some(buf.len());
+    }
+    if out.pathspec_match.is_none() {
+        out.pathspec_match = Some(PathspecMatch::Always);
     }
     Ok((out, worktree_root_is_repository))
 }
