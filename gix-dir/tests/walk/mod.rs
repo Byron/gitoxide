@@ -2732,7 +2732,7 @@ fn worktree_root_can_be_symlink() -> crate::Result {
 #[test]
 fn root_may_not_go_through_dot_git() -> crate::Result {
     let root = fixture("with-nested-dot-git");
-    for (dir, expected_pathspec) in [("", Some(Verbatim)), ("subdir", None)] {
+    for (dir, expected_pathspec) in [("", Verbatim), ("subdir", Always)] {
         let troot = root.join("dir").join(".git").join(dir);
         let ((out, _root), entries) = collect(&root, Some(&troot), |keep, ctx| {
             walk(&root, ctx, options_emit_all(), keep)
@@ -2747,12 +2747,10 @@ fn root_may_not_go_through_dot_git() -> crate::Result {
         );
         assert_eq!(
             entries,
-            [{
-                let mut e = entry("dir/.git", Pruned, Directory).with_property(DotGit);
-                e.0.pathspec_match = expected_pathspec;
-                e
-            }],
-            "no traversal happened as root passes though .git"
+            [entry("dir/.git", Pruned, Directory)
+                .with_property(DotGit)
+                .with_match(expected_pathspec)],
+            "{dir}: no traversal happened as root passes though .git"
         );
     }
     Ok(())
@@ -3167,7 +3165,7 @@ fn root_can_be_pruned_early_with_pathspec() -> crate::Result {
 
     assert_eq!(
         entries,
-        [entry_nomatch("dir", Pruned, Directory)],
+        [entry("dir", Pruned, Directory)],
         "the pathspec didn't match the root, early abort"
     );
     Ok(())
@@ -3929,7 +3927,7 @@ fn untracked_and_ignored_collapse_mix() {
 #[test]
 fn root_cannot_pass_through_case_altered_capital_dot_git_if_case_insensitive() -> crate::Result {
     let root = fixture("with-nested-capitalized-dot-git");
-    for (dir, expected_pathspec) in [("", Some(Verbatim)), ("subdir", None)] {
+    for (dir, expected_pathspec) in [("", Verbatim), ("subdir", Always)] {
         let troot = root.join("dir").join(".GIT").join(dir);
         let ((out, _root), entries) = collect(&root, Some(&troot), |keep, ctx| {
             walk(
@@ -3952,12 +3950,10 @@ fn root_cannot_pass_through_case_altered_capital_dot_git_if_case_insensitive() -
         );
         assert_eq!(
             entries,
-            [{
-                let mut e = entry("dir/.GIT", Pruned, Directory).with_property(DotGit);
-                e.0.pathspec_match = expected_pathspec;
-                e
-            }],
-            "no traversal happened as root passes though .git, it compares in a case-insensitive fashion"
+            [entry("dir/.GIT", Pruned, Directory)
+                .with_property(DotGit)
+                .with_match(expected_pathspec)],
+            "{dir}: no traversal happened as root passes though .git, it compares in a case-insensitive fashion"
         );
     }
 

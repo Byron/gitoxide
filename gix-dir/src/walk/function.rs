@@ -67,7 +67,8 @@ pub fn walk(
         options,
         &mut ctx,
     )?;
-    if !can_recurse(
+
+    let can_recurse = can_recurse(
         buf.as_bstr(),
         if root == worktree_root && root_info.disk_kind == Some(entry::Kind::Symlink) && current.is_dir() {
             classify::Outcome {
@@ -80,7 +81,8 @@ pub fn walk(
         options.for_deletion,
         worktree_root_is_repository,
         delegate,
-    ) {
+    );
+    if !can_recurse {
         if buf.is_empty() && !root_info.disk_kind.map_or(false, |kind| kind.is_dir()) {
             return Err(Error::WorktreeRootIsFile { root: root.to_owned() });
         }

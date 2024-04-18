@@ -18,17 +18,17 @@ doctest = false
 worktree-rewrites = ["dep:gix-dir", "dep:gix-diff"]
 
 [dependencies]
-gix-index = { version = "^0.32.0", path = "../gix-index" }
+gix-index = { version = "^0.32.1", path = "../gix-index" }
 gix-fs = { version = "^0.10.2", path = "../gix-fs" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-object = { version = "^0.42.1", path = "../gix-object" }
 gix-path = { version = "^0.10.7", path = "../gix-path" }
 gix-features = { version = "^0.38.1", path = "../gix-features", features = ["progress"] }
 gix-filter = { version = "^0.11.1", path = "../gix-filter" }
-gix-worktree = { version = "^0.33.0", path = "../gix-worktree", default-features = false, features = ["attributes"] }
-gix-pathspec = { version = "^0.7.3", path = "../gix-pathspec" }
+gix-worktree = { version = "^0.33.1", path = "../gix-worktree", default-features = false, features = ["attributes"] }
+gix-pathspec = { version = "^0.7.4", path = "../gix-pathspec" }
 
-gix-dir = { version = "^0.4.0", path = "../gix-dir", optional = true }
+gix-dir = { version = "^0.4.1", path = "../gix-dir", optional = true }
 gix-diff = { version = "^0.43.0", path = "../gix-diff", default-features = false, features = ["blob"], optional = true }
 
 thiserror = "1.0.26"
