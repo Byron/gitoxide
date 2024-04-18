@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.33.1 (2024-04-18)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 4 calendar days.
+ - 3 commits contributed to the release over the course of 4 calendar days.
  - 5 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelog prior to `gix-dir` patch release ([`6ca6fa6`](https://github.com/Byron/gitoxide/commit/6ca6fa69b5c21c8d8e9e07e21558e98201504cda))
     - Merge pull request #1345 from EliahKagan/shell-scripts ([`fe24c89`](https://github.com/Byron/gitoxide/commit/fe24c89e326670deaa3aaa643276d612d866072e))
     - Add missing +x bit on scripts that are run and not sourced ([`41bf65a`](https://github.com/Byron/gitoxide/commit/41bf65adef6f7d2cdd28fede262173ec7ba10822))
 </details>
