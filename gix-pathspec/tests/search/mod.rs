@@ -58,6 +58,31 @@ fn directory_matches_prefix_starting_wildcards_always_match() -> crate::Result {
 }
 
 #[test]
+fn empty_dir_always_matches() -> crate::Result {
+    for specs in [
+        &["*ir"] as &[_],
+        &[],
+        &["included", ":!excluded"],
+        &[":!all", ":!excluded"],
+    ] {
+        let mut search = gix_pathspec::Search::from_specs(pathspecs(specs), None, Path::new(""))?;
+        assert_eq!(
+            search
+                .pattern_matching_relative_path("".into(), None, &mut no_attrs)
+                .map(|m| m.kind),
+            Some(Always),
+            "{specs:?}"
+        );
+        assert!(search.directory_matches_prefix("".into(), false));
+        assert!(search.directory_matches_prefix("".into(), false));
+        for is_dir in [Some(true), Some(false), None] {
+            assert!(search.can_match_relative_path("".into(), is_dir));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn directory_matches_prefix_leading() -> crate::Result {
     let search = gix_pathspec::Search::from_specs(pathspecs(&["d/d/generated/b"]), None, Path::new(""))?;
     assert!(!search.directory_matches_prefix("di".into(), false));
