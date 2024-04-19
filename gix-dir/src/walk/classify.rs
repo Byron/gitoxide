@@ -21,13 +21,7 @@ pub fn root(
     let mut path_buf = worktree_root.to_owned();
     // These initial values kick in if worktree_relative_root.is_empty();
     let file_kind = path_buf.symlink_metadata().map(|m| m.file_type().into()).ok();
-    let pathspec_orig = std::mem::replace(
-        ctx.pathspec,
-        gix_pathspec::Search::from_specs(None, None, "".as_ref()).expect("empty is valid"),
-    );
-    let res = path(&mut path_buf, buf, 0, file_kind, || None, options, ctx);
-    *ctx.pathspec = pathspec_orig;
-    let mut out = res?;
+    let mut out = path(&mut path_buf, buf, 0, file_kind, || None, options, ctx)?;
     let worktree_root_is_repository = out
         .disk_kind
         .map_or(false, |kind| matches!(kind, entry::Kind::Repository));
@@ -58,9 +52,6 @@ pub fn root(
             break;
         }
         last_length = Some(buf.len());
-    }
-    if out.pathspec_match.is_none() {
-        out.pathspec_match = Some(PathspecMatch::Always);
     }
     Ok((out, worktree_root_is_repository))
 }
@@ -181,10 +172,9 @@ pub fn path(
         out.property = entry::Property::DotGit.into();
         return Ok(out);
     }
-    let pathspec_could_match = rela_path.is_empty()
-        || ctx
-            .pathspec
-            .can_match_relative_path(rela_path.as_bstr(), disk_kind.map(|ft| ft.is_dir()));
+    let pathspec_could_match = ctx
+        .pathspec
+        .can_match_relative_path(rela_path.as_bstr(), disk_kind.map(|ft| ft.is_dir()));
     if !pathspec_could_match {
         return Ok(out.with_status(entry::Status::Pruned));
     }
