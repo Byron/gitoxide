@@ -8,6 +8,7 @@
 #![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 // `unsafe_code` not forbidden because we need to interact with the libc
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
+#![cfg_attr(target_os = "wasi", feature(wasi_ext))]
 
 use std::fmt::{Display, Formatter};
 

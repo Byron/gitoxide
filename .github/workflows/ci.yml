@@ -215,6 +215,25 @@ jobs:
       - run: cd gix-pack && cargo build --all-features --target ${{ matrix.target }}
         name: gix-pack with all features (including wasm)
 
+  wasi:
+    name: WASI check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [ gix-config, gix-fs, gix-sec ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # The `fs` API in `wasi` target is unstable, so we need to use nightly here.
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          targets: wasm32-wasi
+      - name: "check"
+        run: cargo check -p ${{ matrix.package }} --target wasm32-wasi --all-features
+
   check-packetline:
     strategy:
       fail-fast: false

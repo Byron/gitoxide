@@ -21,6 +21,13 @@ pub fn is_path_owned_by_current_user(path: &Path) -> std::io::Result<bool> {
 mod impl_ {
     use std::path::Path;
 
+    #[cfg(target_os = "wasi")]
+    #[allow(unused_variables)]
+    pub fn is_path_owned_by_current_user(path: &Path) -> std::io::Result<bool> {
+        Ok(true)
+    }
+
+    #[cfg(not(target_os = "wasi"))]
     pub fn is_path_owned_by_current_user(path: &Path) -> std::io::Result<bool> {
         fn owner_from_path(path: &Path) -> std::io::Result<u32> {
             use std::os::unix::fs::MetadataExt;

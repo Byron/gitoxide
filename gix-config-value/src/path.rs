@@ -51,9 +51,12 @@ pub mod interpolate {
     /// Obtain the home directory for the given user `name` or return `None` if the user wasn't found
     /// or any other error occurred.
     /// It can be used as `home_for_user` parameter in [`Path::interpolate()`][crate::Path::interpolate()].
-    #[cfg_attr(windows, allow(unused_variables))]
+    #[cfg_attr(
+        any(target_os = "android", target_os = "windows", target_os = "wasi"),
+        allow(unused_variables)
+    )]
     pub fn home_for_user(name: &str) -> Option<PathBuf> {
-        #[cfg(not(any(target_os = "android", target_os = "windows")))]
+        #[cfg(not(any(target_os = "android", target_os = "windows", target_os = "wasi")))]
         {
             let cname = std::ffi::CString::new(name).ok()?;
             // SAFETY: calling this in a threaded program that modifies the pw database is not actually safe.
@@ -71,7 +74,7 @@ pub mod interpolate {
                 Some(std::ffi::OsStr::from_bytes(cstr.to_bytes()).into())
             }
         }
-        #[cfg(any(target_os = "android", target_os = "windows"))]
+        #[cfg(any(target_os = "android", target_os = "windows", target_os = "wasi"))]
         {
             None
         }
