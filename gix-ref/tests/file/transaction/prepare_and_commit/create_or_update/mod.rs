@@ -813,3 +813,39 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     );
     Ok(())
 }
+
+#[test]
+fn packed_refs_deletion_in_deletions_and_updates_mode() -> crate::Result {
+    let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
+    assert!(
+        store.try_find_loose("refs/heads/d1")?.is_none(),
+        "no loose d1 available, it's packed"
+    );
+    let odb = gix_odb::at(store.git_dir().join("objects"))?;
+    let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+    let edits = store
+        .transaction()
+        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(odb)))
+        .prepare(
+            Some(RefEdit {
+                change: Change::Delete {
+                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
+                    log: RefLog::AndReference,
+                },
+                name: "refs/heads/d1".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+            Fail::Immediately,
+        )?
+        .commit(committer().to_ref())?;
+
+    assert_eq!(edits.len(), 1, "only one edit was performed in the packed refs store");
+
+    let packed = store.open_packed_buffer().unwrap().expect("packed refs is available");
+    assert!(
+        packed.try_find("refs/heads/d1")?.is_none(),
+        "d1 should be removed from packed refs"
+    );
+    Ok(())
+}
