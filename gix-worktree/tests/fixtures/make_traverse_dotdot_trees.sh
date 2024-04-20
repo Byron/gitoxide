@@ -3,7 +3,6 @@
 set -eu
 
 repo="$1"
-
 git init -- "$repo"
 cd -- "$repo"
 
@@ -13,6 +12,7 @@ printf 'Vulnerable!\n'
 date >~/vulnerable
 exec /bin/ls "$@"
 EOF
+chmod +x ls.tmp
 
 upward='..'
 for subdir in .a .b .c .d .e .f .g .h .i .j; do
