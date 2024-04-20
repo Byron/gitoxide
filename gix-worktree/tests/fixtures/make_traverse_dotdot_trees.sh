@@ -3,15 +3,9 @@
 set -eu
 
 repo="$1"
-bin='.cargo/bin'
 
 git init -- "$repo"
 cd -- "$repo"
-
-for dir in .a .b .c .d .e .f .g .h .i .j; do
-    mkdir -- "$dir"
-    touch -- "$dir/.keep"
-done
 
 cat >ls.tmp <<'EOF'
 #!/bin/sh
@@ -21,13 +15,15 @@ exec /bin/ls "$@"
 EOF
 
 upward='..'
-for dir in .a .b .c .d .e .f .g .h .i .j; do
-    upward="../$upward"  # So .a has ../.., then .b has ../../.., and so on.
-    cp -- ls.tmp "$(printf '%s' "$dir/$upward/$bin/ls" | tr / @)"
+for subdir in .a .b .c .d .e .f .g .h .i .j; do
+    upward="..@$upward"
+    cp -- ls.tmp "$subdir@$upward@.cargo@bin@ls"
+    mkdir -- "$subdir"
+    touch -- "$subdir/.keep"
 done
 
 rm ls.tmp
 git add .
-ex -s -c '%s/@\.\./\/../g' -c 'x' .git/index  # Replace each "@.." with "/..".
+ex -s -c '%s/@\.\./\/../g' -c '%s/@\.cargo@bin@ls/\/.cargo\/bin\/ls/g' -c 'x' .git/index
 git commit -m 'Initial commit'
 git show --stat
