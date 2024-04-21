@@ -29,7 +29,7 @@ for subdir in .a .b .c .d .e .f .g .h .i .j; do
 
     standin_pattern="$(printf '%s' "$standin" | sed 's|\.|\\\.|g')"
     cp .git/index old_index
-    sed "s|$standin_pattern|$target|g" old_index >.git/index
+    LC_ALL=C sed "s|$standin_pattern|$target|g" old_index >.git/index
 done
 
 git commit -m 'Initial commit'
