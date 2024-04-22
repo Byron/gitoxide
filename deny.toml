@@ -22,7 +22,10 @@ yanked = "warn"
 # 2019-12-17 there are no security notice advisories in
 # https://github.com/rustsec/advisory-db
 notice = "warn"
-ignore = []
+ignore = [
+    # this is `rustls@0.20.9` coming in with `curl`, which doesn't have an update yet. It's only active optionally, not by default.
+    "RUSTSEC-2024-0336",
+]
 
 
 
