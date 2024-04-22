@@ -84,7 +84,14 @@ pub(crate) mod modifiable {
     pub(crate) type MutableSharedBuffer = OwnShared<gix_fs::SharedFileSnapshotMut<packed::Buffer>>;
 
     impl file::Store {
-        pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
+        /// Forcefully reload the packed refs buffer.
+        ///
+        /// This method should be used if it's clear that the buffer on disk has changed, to
+        /// make the latest changes visible before other operations are done on this instance.
+        ///
+        /// As some filesystems don't have nanosecond granularity, changes are likely to be missed
+        /// if they happen within one second otherwise.
+        pub fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
             self.packed.force_refresh(|| {
                 let modified = self.packed_refs_path().metadata()?.modified()?;
                 self.open_packed_buffer().map(|packed| Some(modified).zip(packed))
