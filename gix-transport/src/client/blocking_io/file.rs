@@ -143,45 +143,46 @@ struct ReadStdoutFailOnError {
     read: std::process::ChildStdout,
 }
 
+impl std::io::Read for ReadStdoutFailOnError {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let res = self.read.read(buf);
+        self.swap_err_if_present_in_stderr(buf.len(), res)
+    }
+}
+
+impl ReadStdoutFailOnError {
+    fn swap_err_if_present_in_stderr(&self, wanted: usize, res: std::io::Result<usize>) -> std::io::Result<usize> {
+        match self.recv.try_recv().ok() {
+            Some(err) => Err(err),
+            None => match res {
+                Ok(n) if n == wanted => Ok(n),
+                Ok(n) => {
+                    // TODO: fix this
+                    // When parsing refs this seems to happen legitimately
+                    // (even though we read packet lines only and should always know exactly how much to read)
+                    // Maybe this still happens in `read_exact()` as sometimes we just don't get enough bytes
+                    // despite knowing how many.
+                    // To prevent deadlock, we have to set a timeout which slows down legitimate parts of the protocol.
+                    // This code was specifically written to make the `cargo` test-suite pass, and we can reduce
+                    // the timeouts even more once there is a native ssh transport that is used by `cargo`, it will
+                    // be able to handle these properly.
+                    // Alternatively, one could implement something like `read2` to avoid blocking on stderr entirely.
+                    self.recv
+                        .recv_timeout(std::time::Duration::from_millis(5))
+                        .ok()
+                        .map_or(Ok(n), Err)
+                }
+                Err(err) => Err(self.recv.recv().ok().unwrap_or(err)),
+            },
+        }
+    }
+}
+
 fn supervise_stderr(
     ssh_kind: ssh::ProgramKind,
     stderr: std::process::ChildStderr,
     stdout: std::process::ChildStdout,
 ) -> ReadStdoutFailOnError {
-    impl ReadStdoutFailOnError {
-        fn swap_err_if_present_in_stderr(&self, wanted: usize, res: std::io::Result<usize>) -> std::io::Result<usize> {
-            match self.recv.try_recv().ok() {
-                Some(err) => Err(err),
-                None => match res {
-                    Ok(n) if n == wanted => Ok(n),
-                    Ok(n) => {
-                        // TODO: fix this
-                        // When parsing refs this seems to happen legitimately
-                        // (even though we read packet lines only and should always know exactly how much to read)
-                        // Maybe this still happens in `read_exact()` as sometimes we just don't get enough bytes
-                        // despite knowing how many.
-                        // To prevent deadlock, we have to set a timeout which slows down legitimate parts of the protocol.
-                        // This code was specifically written to make the `cargo` test-suite pass, and we can reduce
-                        // the timeouts even more once there is a native ssh transport that is used by `cargo`, it will
-                        // be able to handle these properly.
-                        // Alternatively, one could implement something like `read2` to avoid blocking on stderr entirely.
-                        self.recv
-                            .recv_timeout(std::time::Duration::from_millis(5))
-                            .ok()
-                            .map_or(Ok(n), Err)
-                    }
-                    Err(err) => Err(self.recv.recv().ok().unwrap_or(err)),
-                },
-            }
-        }
-    }
-    impl std::io::Read for ReadStdoutFailOnError {
-        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-            let res = self.read.read(buf);
-            self.swap_err_if_present_in_stderr(buf.len(), res)
-        }
-    }
-
     let (send, recv) = std::sync::mpsc::sync_channel(1);
     std::thread::Builder::new()
         .name("supervise ssh stderr".into())

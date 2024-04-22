@@ -1,6 +1,4 @@
 mod existing {
-    use gix_ref::{PartialName, PartialNameRef};
-
     use crate::{file::store_at, hex_to_id};
 
     #[test]
@@ -13,12 +11,41 @@ mod existing {
         Ok(())
     }
 
-    // TODO: figure this out
-    #[test]
-    fn possible_inputs() -> crate::Result {
-        let store = crate::file::store()?;
-        store.find_loose("dt1")?;
-        store.find_loose(&String::from("dt1"))?; // Owned Strings don't have an impl for PartialName
+    mod convert {
+        use gix_ref::{PartialName, PartialNameRef};
+
+        // TODO: figure this out
+        #[test]
+        fn possible_inputs() -> crate::Result {
+            let store = crate::file::store()?;
+            store.find_loose("dt1")?;
+            store.find_loose(&String::from("dt1"))?; // Owned Strings don't have an impl for PartialName
+
+            store.find_loose(&CustomType("dt1".into()))?;
+
+            let name = CustomName {
+                remote: "origin",
+                branch: "main",
+            };
+            store.find_loose(&name.to_partial_name())?;
+            // TODO: this effectively needs a `Cow<'_, PartialNameRef>`, but we are not allowed to implement conversions for it.
+            //       After having been there, I don't want to have a `PartialNameCow(Cow<'_, PartialNameRef)` anymore, nor
+            //       copies of `TryFrom/TryInto` traits in our crate.
+            //       Make it work once we can implement standard traits for Cow<OurType>.
+            // store.find_loose(&name)?;
+            // store.find_loose(name.to_partial_name())?;
+            store.find_loose(&name.to_partial_name_from_string())?;
+            store.find_loose(&name.to_partial_name_from_bstring())?;
+            store.find_loose(&name.to_full_name())?;
+            store.find_loose(name.to_full_name().as_ref())?;
+            store.find_loose(name.to_full_name().as_ref().as_partial_name())?;
+            store.find_loose(&PartialName::try_from(name.remote)?.join(name.branch.into())?)?;
+            store.find_loose(&PartialName::try_from("origin")?.join("main".into())?)?;
+            store.find_loose(&PartialName::try_from("origin")?.join(String::from("main").as_str().into())?)?;
+            store.find_loose(&PartialName::try_from("origin")?.join("main".into())?)?;
+
+            Ok(())
+        }
 
         struct CustomType(String);
         impl<'a> TryFrom<&'a CustomType> for &'a PartialNameRef {
@@ -28,7 +55,6 @@ mod existing {
                 value.0.as_str().try_into()
             }
         }
-        store.find_loose(&CustomType("dt1".into()))?;
 
         struct CustomName {
             remote: &'static str,
@@ -61,29 +87,6 @@ mod existing {
                 PartialName::try_from(value.to_partial_name())
             }
         }
-
-        let name = CustomName {
-            remote: "origin",
-            branch: "main",
-        };
-        store.find_loose(&name.to_partial_name())?;
-        // TODO: this effectively needs a `Cow<'_, PartialNameRef>`, but we are not allowed to implement conversions for it.
-        //       After having been there, I don't want to have a `PartialNameCow(Cow<'_, PartialNameRef)` anymore, nor
-        //       copies of `TryFrom/TryInto` traits in our crate.
-        //       Make it work once we can implement standard traits for Cow<OurType>.
-        // store.find_loose(&name)?;
-        // store.find_loose(name.to_partial_name())?;
-        store.find_loose(&name.to_partial_name_from_string())?;
-        store.find_loose(&name.to_partial_name_from_bstring())?;
-        store.find_loose(&name.to_full_name())?;
-        store.find_loose(name.to_full_name().as_ref())?;
-        store.find_loose(name.to_full_name().as_ref().as_partial_name())?;
-        store.find_loose(&PartialName::try_from(name.remote)?.join(name.branch.into())?)?;
-        store.find_loose(&PartialName::try_from("origin")?.join("main".into())?)?;
-        store.find_loose(&PartialName::try_from("origin")?.join(String::from("main").as_str().into())?)?;
-        store.find_loose(&PartialName::try_from("origin")?.join("main".into())?)?;
-
-        Ok(())
     }
 }
 

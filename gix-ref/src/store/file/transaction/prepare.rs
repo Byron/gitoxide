@@ -287,8 +287,8 @@ impl<'s, 'p> Transaction<'s, 'p> {
                             ..edit.update.clone()
                         });
                         *num_updates += 1;
+                        continue;
                     }
-                    continue;
                 }
                 match edit.update.change {
                     Change::Update {
