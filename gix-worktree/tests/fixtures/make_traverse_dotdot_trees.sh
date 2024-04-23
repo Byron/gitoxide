@@ -22,8 +22,7 @@ for subdir in .a .b .c .d .e .f .g .h .i .j; do
     standin="$(printf '%s' "$target" | tr / @)"
 
     cp -- payload "$standin"
-    git add -- "$standin"
-    git update-index --chmod=+x -- "$standin"
+    git add --chmod=+x -- "$standin"
 
     standin_pattern="$(printf '%s' "$standin" | sed 's|\.|\\\.|g')"
     cp .git/index old_index
