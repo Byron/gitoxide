@@ -32,4 +32,3 @@ done
 
 git commit -m 'Initial commit'
 rm payload old_index
-git show --stat
