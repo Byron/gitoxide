@@ -22,7 +22,7 @@ printf '%s' "$blob_hash" | xxd -r -p >blob-hash-bytes
 tree_hash="$(
     printf '%s %s\0' "$filemode" "$filename" |
     cat - blob-hash-bytes |
-    git hash-object -t tree -w --stdin
+    git hash-object -t tree -w --stdin --literally
 )"
 
 rm blob-hash-bytes
