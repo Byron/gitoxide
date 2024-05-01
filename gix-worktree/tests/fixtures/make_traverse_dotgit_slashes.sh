@@ -25,3 +25,5 @@ tree_hash="$(
 )"
 commit_hash="$(git commit-tree -m 'Initial commit' "$tree_hash")"
 git branch -f -- "$branch" "$commit_hash"
+
+git show
