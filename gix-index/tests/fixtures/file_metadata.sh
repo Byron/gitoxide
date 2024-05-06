@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 # The largest-possible date for Ext4, nanos are special there, but ont usually on other filesystems

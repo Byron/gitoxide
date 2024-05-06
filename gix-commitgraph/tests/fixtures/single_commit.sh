@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 # The goal with this repo is to have the smallest commit-graph file possible, in the hopes that an

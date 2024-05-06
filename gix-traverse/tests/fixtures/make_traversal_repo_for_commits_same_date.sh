@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 # all commits have the same date as it's set by `gix-testtools` to a fixed value.

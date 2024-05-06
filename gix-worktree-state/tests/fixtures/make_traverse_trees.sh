@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 # Makes a repo carrying a tree structure representing the given path to a blob.
