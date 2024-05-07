@@ -19,7 +19,7 @@ jobs:
           - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@1.67.0 # dictated by `firefox` to support the `helix` editor, but now driven by the `time` crate. IMPORTANT: adjust etc/msrv-badge.svg as well
-      - uses: extractions/setup-just@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.80.0 # dictated by `firefox` to support the `helix` editor, but now driven by the `time` crate. IMPORTANT: adjust etc/msrv-badge.svg as well
+      - uses: extractions/setup-just@v2
       - run: just ci-check-msrv
