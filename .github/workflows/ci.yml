@@ -150,7 +150,7 @@ jobs:
       - name: "Install prerequisites"
         run: vcpkg install  zlib:x64-windows-static-md
       - name: "Installation from crates.io: gitoxide"
-        run: cargo +${{ matrix.rust }} install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force gitoxide
+        run: cargo +${{ matrix.rust }} install --target ${{ matrix.target }} --no-default-features --features max-pure --target-dir install-artifacts --debug --force gitoxide
         shell: msys2 {0}
 
   lint:

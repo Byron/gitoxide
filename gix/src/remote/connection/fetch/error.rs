@@ -45,6 +45,8 @@ pub enum Error {
     RejectShallowRemote,
     #[error(transparent)]
     NegotiationAlgorithmConfig(#[from] config::key::GenericErrorWithValue),
+    #[error("Failed to read remaining bytes in stream")]
+    ReadRemainingBytes(#[source] std::io::Error),
 }
 
 impl gix_protocol::transport::IsSpuriousError for Error {
