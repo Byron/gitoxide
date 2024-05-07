@@ -4,6 +4,16 @@ updates:
   directory: "/"
   schedule:
     interval: weekly
+  ignore:
+    # Ignore version updates to dtolnay/rust-toolchain, as @X.Y.Z tags are used for exact toolchain
+    # versions (and @master and @stable are branches). To still get Dependabot *security* updates
+    # if the action itself ever has an advisory, we list all version update types explicitly. See:
+    # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+    dependency-name: dtolnay/rust-toolchain
+    update-types:
+    - "version-update:semver-major"
+    - "version-update:semver-minor"
+    - "version-update:semver-patch"
   groups:
     github-actions:
       patterns: ["*"]
