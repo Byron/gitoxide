@@ -82,7 +82,7 @@ jobs:
       - run: |
           # it should never be a failure not to get the caches, as they can be regenerated.
           git lfs fetch && git lfs checkout || true
-      - uses: taiki-e/install-action@v1
+      - uses: taiki-e/install-action@v2
         with:
           tool: nextest
       - name: "Test (nextest)"
@@ -102,7 +102,7 @@ jobs:
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
-      - uses: taiki-e/install-action@v1
+      - uses: taiki-e/install-action@v2
         with:
           tool: cross
       - name: "check"
