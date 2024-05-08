@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     container: debian:buster
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Prerequisites
         run: apt-get update && apt-get install --no-install-recommends -y ca-certificates curl gcc libc-dev # gcc is required as OS abstraction
       - name: install Rust via Rustup
@@ -47,13 +47,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Setup dependencies
         run:
           sudo apt-get install tree
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v2
       - name: test
         env:
           CI: true
@@ -69,7 +69,7 @@ jobs:
           - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Setup dependencies (macos)
@@ -94,7 +94,7 @@ jobs:
       matrix:
         target: [ armv7-linux-androideabi ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Install Rust
@@ -135,7 +135,7 @@ jobs:
             target: i686-pc-windows-gnu
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
         with:
@@ -156,12 +156,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
           components: clippy,rustfmt
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v2
       - name: Run cargo clippy
         run: just clippy -D warnings -A unknown-lints
       - name: Run cargo doc
@@ -189,7 +189,7 @@ jobs:
     continue-on-error: ${{ matrix.checks == 'advisories' }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: EmbarkStudios/cargo-deny-action@v1
         with:
           command: check ${{ matrix.checks }}

@@ -18,8 +18,13 @@ jobs:
           - windows-2019
           - ubuntu-latest
     runs-on: ${{ matrix.os }}
+    env:
+      # dictated by `firefox` to support the `helix` editor, but now driven by the `time` crate. IMPORTANT: adjust etc/msrv-badge.svg as well
+      rust_version: 1.67.0
     steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@1.67.0 # dictated by `firefox` to support the `helix` editor, but now driven by the `time` crate. IMPORTANT: adjust etc/msrv-badge.svg as well
-      - uses: extractions/setup-just@v1
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - run: |
+          rustup toolchain install $rust_version --profile minimal --no-self-update
+          rustup default $rust_version
       - run: just ci-check-msrv
