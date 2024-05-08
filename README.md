@@ -3,10 +3,10 @@
 <img src="etc/msrv-badge.svg">
 
 `gitoxide` is an implementation of `git` written in Rust for developing future-proof applications which strive for correctness and
-performance while providing a pleasant and unsurprising developer experience. 
+performance while providing a pleasant and unsurprising developer experience.
 
 `gitoxide` provides the `gix` and `ein` binaries for use on the command-line to allow experimentation with key features
-like `fetch` and `clone`, and to validate the usability and control of the API offered by the [`gix`] crate. 
+like `fetch` and `clone`, and to validate the usability and control of the API offered by the [`gix`] crate.
 
 `gitoxide` aspires to be a production-grade server implementation and the `ein` binary aspires to become the default way to interact with git repositories.
 
@@ -16,10 +16,10 @@ like `fetch` and `clone`, and to validate the usability and control of the API o
 
 ## Development Status
 
-The command-line tools as well as the status of each crate is described in 
+The command-line tools as well as the status of each crate is described in
 [the crate status document](https://github.com/Byron/gitoxide/blob/main/crate-status.md).
 
-For use in applications, look for the [`gix`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) crate, 
+For use in applications, look for the [`gix`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) crate,
 which serves as entrypoint to the functionality provided by various lower-level plumbing crates like
 [`gix-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config).
 
@@ -66,10 +66,10 @@ Follow linked crate name for detailed status. Please note that all crates follow
 
 * **Stability Tier 1**
   - [gix-lock](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.md)
-     
+
 * **Stability Tier 2**
   - [gix-tempfile](https://github.com/Byron/gitoxide/blob/main/gix-tempfile/README.md)
-   
+
 ### Stabilization Candidates
 
 Crates that seem feature complete and need to see some more use before they can be released as 1.0.
@@ -144,13 +144,13 @@ is usable to some extent.
   * [gix-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tix)
   * [gix-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bundle)
   * [gix-fsck](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fsck)
-  
+
 ### Stress Testing
   * [x] Verify huge packs
-  * [x] Explode a pack to disk 
+  * [x] Explode a pack to disk
   * [x] Generate and verify large commit graphs
   * [ ] Generate huge pack from a lot of loose objects
-  
+
 ### Stability and MSRV
 
 Our [stability guide] helps to judge how much churn can be expected when depending on crates in this workspace.
@@ -161,7 +161,7 @@ Our [stability guide] helps to judge how much churn can be expected when dependi
 
 ### Download a Binary Release
 
-Using `cargo binstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-binstall`, assuming 
+Using `cargo binstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-binstall`, assuming
 the [rust toolchain][rustup] is present.
 
 Then install gitoxide with `cargo binstall gitoxide`.
@@ -200,7 +200,7 @@ for packagers who need to tune external dependencies.
 ```
 # A certain way to install `gitoxide` with just Rust and a C compiler installed.
 # If there are problems with SSL certificates during clones, try to omit `--locked`.
-cargo install gitoxide --locked --no-default-features --features max-pure 
+cargo install gitoxide --locked --no-default-features --features max-pure
 
 # The default installation, 'max', is the fastest, but also needs some libraries available to build successfully.
 # Installing these is platform-dependent and thus can't be explained here.
@@ -227,7 +227,7 @@ What follows is a list of known failures.
 - On Fedora, `perl` needs to be installed for `OpenSSL` to build properly. This can be done with the following command:
   `dnf install perl` (see [this issue](https://github.com/Byron/gitoxide/issues/592)).
 
-[releases]: https://github.com/Byron/gitoxide/releases 
+[releases]: https://github.com/Byron/gitoxide/releases
 [rustup]: https://rustup.rs
 
 ## Usage
@@ -269,7 +269,7 @@ Project goals can change over time as we learn more, and they can be challenged.
    * With the tools and experience available here there is no reason not to support Windows.
    * [Windows is tested on CI](https://github.com/Byron/gitoxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
      and failures do prevent releases.
-     
+
 ## Non-Goals
 
 Project non-goals can change over time as we learn more, and they can be challenged.
@@ -282,7 +282,7 @@ Project non-goals can change over time as we learn more, and they can be challen
  * **use async IO everywhere**
    * for the most part, git operations are heavily reliant on memory mapped IO as well as CPU to decompress data,
      which doesn't lend itself well to async IO out of the box.
-   * Use `blocking` as well as `gix-features::interrupt` to bring operations into the async world and to control 
+   * Use `blocking` as well as `gix-features::interrupt` to bring operations into the async world and to control
      long running operations.
    * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
      though, but behind a feature flag.
@@ -291,12 +291,9 @@ Project non-goals can change over time as we learn more, and they can be challen
 
 If what you have seen so far sparked your interest to contribute, then let us say: We are happy to have you and help you to get started.
 
-> ❗️Note❗️: For cloning, `gix-lfs` needs to be locally installed or the checkout will fail. `git lfs install` must have been called once, followed
-  by `git lfs pull` to replace the `lfs`-pointer files.
-
 We recommend running `just test check-size` during the development process to assure CI is green before pushing.
 
-A backlog for work ready to be picked up is [available in the Project's Kanban board][project-board], which contains instructions on how 
+A backlog for work ready to be picked up is [available in the Project's Kanban board][project-board], which contains instructions on how
 to pick a task. If it's empty or you have other questions, feel free to [start a discussion][discussions] or reach out to @Byron [privately][keybase].
 
 For additional details, also take a look at the [collaboration guide].
@@ -314,7 +311,7 @@ For additional details, also take a look at the [collaboration guide].
    - Get an introduction to `gitoxide` itself which should be a good foundation for any contribution, but isn't a requirement for contributions either.
 - [Gifting Gitoxide](https://www.youtube.com/playlist?list=PLMHbQxe1e9MlhyyZQXPi_dc-bKudE-WUw)
    - See how PRs are reviewed along with a lot of inner monologue.
- 
+
 #### Other Media
 
 - [Rustacean Station Podcast](https://rustacean-station.org/episode/055-sebastian-thiel/)
@@ -376,20 +373,20 @@ Provide a CLI to for the most basic user journey:
 ## Shortcomings & Limitations
 
 Please take a look at the [`SHORTCOMINGS.md` file](https://github.com/Byron/gitoxide/blob/main/SHORTCOMINGS.md) for details.
-  
+
 ## Credits
 
 * **itertools** _(MIT Licensed)_
   * We use the `izip!` macro in code
 * **deflate2** _(MIT Licensed)_
   * We use various abstractions to implement decompression and compression directly on top of the rather low-level `miniz_oxide` crate
-    
+
 ## 🙏 Special Thanks 🙏
 
 At least for now this section is exclusive to highlight the incredible support that [Josh Triplett](https://github.com/joshtriplett) has provided to me
 in the form of advice, sponsorship and countless other benefits that were incredibly meaningful. Going full time with `gitoxide` would hardly have been
 feasible without his involvement, and I couldn't be more grateful 😌.
-  
+
 ## License
 
 This project is licensed under either of
@@ -405,6 +402,6 @@ at your option.
 
 * Originally @Byron was really fascinated by [this problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)
   and believes that with `gitoxide` it will be possible to provide the fastest solution for it.
-* @Byron has been absolutely blown away by `git` from the first time he experienced git more than 13 years ago, and 
+* @Byron has been absolutely blown away by `git` from the first time he experienced git more than 13 years ago, and
   tried to implement it in [various shapes](https://github.com/gitpython-developers/GitPython/pull/1028) and [forms](https://github.com/byron/gogit)
   multiple [times](https://github.com/Byron/gitplusplus). Now with Rust @Byron finally feels to have found the right tool for the job!

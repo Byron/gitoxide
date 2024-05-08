@@ -29,7 +29,7 @@ pub use tempfile;
 ///
 /// #[test]
 /// fn this() -> Result {
-///     let x: usize = "42".parse()?;    
+///     let x: usize = "42".parse()?;
 ///     Ok(())
 ///
 /// }
@@ -264,8 +264,8 @@ fn fixture_bytes_inner(path: impl AsRef<Path>, root: DirectoryRoot) -> Vec<u8> {
 /// If a script result doesn't exist, these will be checked first and extracted if present, which they are by default.
 /// This behaviour can be prohibited by setting the `GIX_TEST_IGNORE_ARCHIVES` to any value.
 ///
-/// To speed CI up, one can add these archives to the repository. It's absolutely recommended to use `gix-lfs` for that to
-/// not bloat the repository size.
+/// To speed CI up, one can add these archives to the repository. Since LFS is not currently being used, it is
+/// important to check their size first, though in most cases generated archives will not be very large.
 ///
 /// #### Disable Archive Creation
 ///
