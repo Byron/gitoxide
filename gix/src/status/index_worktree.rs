@@ -611,6 +611,7 @@ pub mod iter {
         ///
         /// * `patterns`
         ///     - Optional patterns to use to limit the paths to look at. If empty, all paths are considered.
+        #[doc(alias = "diff_index_to_workdir", alias = "git2")]
         pub fn into_index_worktree_iter(
             self,
             patterns: impl IntoIterator<Item = BString>,
