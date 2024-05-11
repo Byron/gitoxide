@@ -91,6 +91,7 @@ fn bad_raw() {
         "123456 +060",
         "123456 -060",
         "123456 +06000",
+        "123456 +10030",
         "123456 06000",
         "123456  0600",
         "123456 +0600 extra",
@@ -99,6 +100,26 @@ fn bad_raw() {
     ] {
         assert!(gix_date::parse(bad_date_str, None).is_err());
     }
+}
+
+#[test]
+fn double_negation_in_offset() {
+    let actual = gix_date::parse("1288373970 --700", None).unwrap();
+    assert_eq!(
+        actual,
+        gix_date::Time {
+            seconds: 1288373970,
+            offset: 25200,
+            sign: Sign::Minus,
+        },
+        "double-negation stays negative, and is parseable."
+    );
+
+    assert_eq!(
+        actual.to_bstring(),
+        "1288373970 -0700",
+        "serialization corrects the issue"
+    );
 }
 
 #[test]
