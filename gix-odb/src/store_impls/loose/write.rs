@@ -107,8 +107,16 @@ impl Store {
 
 impl Store {
     fn dest(&self) -> Result<hash::Write<CompressedTempfile>, Error> {
+        #[cfg_attr(not(unix), allow(unused_mut))]
+        let mut builder = tempfile::Builder::new();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let perms = std::fs::Permissions::from_mode(0o444);
+            builder.permissions(perms);
+        }
         Ok(hash::Write::new(
-            deflate::Write::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
+            deflate::Write::new(builder.tempfile_in(&self.path).map_err(|err| Error::Io {
                 source: err,
                 message: "create named temp file in",
                 path: self.path.to_owned(),
@@ -142,24 +150,6 @@ impl Store {
                 || err.error.kind() == std::io::ErrorKind::AlreadyExists
             {
                 return Ok(id);
-            }
-        }
-        #[cfg(unix)]
-        if let Ok(mut perm) = object_path.metadata().map(|m| m.permissions()) {
-            use std::os::unix::fs::PermissionsExt;
-            /// For now we assume the default with standard umask. This can be more sophisticated,
-            /// but we have the bare minimum.
-            fn comp_mode(_mode: u32) -> u32 {
-                0o444
-            }
-            let new_mode = comp_mode(perm.mode());
-            if (perm.mode() ^ new_mode) & !0o170000 != 0 {
-                perm.set_mode(new_mode);
-                std::fs::set_permissions(&object_path, perm).map_err(|err| Error::Io {
-                    source: err,
-                    message: "Failed to set permission bits",
-                    path: object_path.clone(),
-                })?;
             }
         }
         res.map_err(|err| Error::Persist {
