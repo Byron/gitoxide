@@ -18,7 +18,7 @@ pub(crate) type AtomicGeneration = AtomicU32;
 
 /// A way to indicate which pack indices we have seen already and which of them are loaded, along with an idea
 /// of whether stored `PackId`s are still usable.
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct SlotIndexMarker {
     /// The generation the `loaded_until_index` belongs to. Indices of different generations are completely incompatible.
     /// This value changes once the internal representation is compacted, something that may happen only if there is no handle
@@ -262,7 +262,7 @@ impl IndexAndPacks {
         }
     }
 
-    /// If we are garbage, put ourselves into the loaded state. Otherwise put ourselves back to unloaded.
+    /// If we are garbage, put ourselves into the loaded state. Otherwise, put ourselves back to unloaded.
     pub(crate) fn put_back(&mut self) {
         match self {
             IndexAndPacks::Index(bundle) => {

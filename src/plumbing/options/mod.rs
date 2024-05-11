@@ -586,7 +586,11 @@ pub mod odb {
         Info,
         /// Count and obtain information on all, possibly duplicate, objects in the database.
         #[clap(visible_alias = "statistics")]
-        Stats,
+        Stats {
+            /// Lookup headers again, but without preloading indices.
+            #[clap(long)]
+            extra_header_lookup: bool,
+        },
     }
 }
 

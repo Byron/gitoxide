@@ -1153,7 +1153,7 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Odb(cmd) => match cmd {
-            odb::Subcommands::Stats => prepare_and_run(
+            odb::Subcommands::Stats { extra_header_lookup } => prepare_and_run(
                 "odb-stats",
                 trace,
                 auto_verbose,
@@ -1166,7 +1166,11 @@ pub fn main() -> Result<()> {
                         progress,
                         out,
                         err,
-                        core::repository::odb::statistics::Options { format, thread_limit },
+                        core::repository::odb::statistics::Options {
+                            format,
+                            thread_limit,
+                            extra_header_lookup,
+                        },
                     )
                 },
             ),
