@@ -37,7 +37,7 @@ mod new_from_header {
                 let mut buf = Vec::<u8>::new();
                 entry.header.write_to(entry.decompressed_size, &mut buf)?;
                 let new_entry =
-                    pack::data::Entry::from_bytes(&buf, entry.pack_offset, gix_hash::Kind::Sha1.len_in_bytes());
+                    pack::data::Entry::from_bytes(&buf, entry.pack_offset, gix_hash::Kind::Sha1.len_in_bytes())?;
 
                 assert_eq!(
                     new_entry.header_size(),
