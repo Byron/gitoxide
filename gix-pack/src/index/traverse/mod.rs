@@ -161,7 +161,7 @@ impl index::File {
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let pack_entry = pack.entry(index_entry.pack_offset);
+        let pack_entry = pack.entry(index_entry.pack_offset)?;
         let pack_entry_data_offset = pack_entry.data_offset;
         let entry_stats = pack
             .decode_entry(
@@ -169,9 +169,10 @@ impl index::File {
                 buf,
                 inflate,
                 &|id, _| {
-                    self.lookup(id).map(|index| {
-                        crate::data::decode::entry::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
-                    })
+                    let index = self.lookup(id)?;
+                    pack.entry(self.pack_offset_at_index(index))
+                        .ok()
+                        .map(crate::data::decode::entry::ResolvedBase::InPack)
                 },
                 cache,
             )

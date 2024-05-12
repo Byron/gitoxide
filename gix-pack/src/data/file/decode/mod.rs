@@ -17,6 +17,8 @@ pub enum Error {
     ZlibInflate(#[from] gix_features::zlib::inflate::Error),
     #[error("A delta chain could not be followed as the ref base with id {0} could not be found")]
     DeltaBaseUnresolved(gix_hash::ObjectId),
+    #[error(transparent)]
+    EntryType(#[from] crate::data::entry::decode::Error),
     #[error("Entry too large to fit in memory")]
     OutOfMemory,
 }

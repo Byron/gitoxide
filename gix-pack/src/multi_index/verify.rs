@@ -286,6 +286,7 @@ impl File {
                             TreeTraversal(err) => TreeTraversal(err),
                             PackDecode { id, offset, source } => PackDecode { id, offset, source },
                             PackMismatch { expected, actual } => PackMismatch { expected, actual },
+                            EntryType(err) => EntryType(err),
                             PackObjectMismatch {
                                 expected,
                                 actual,

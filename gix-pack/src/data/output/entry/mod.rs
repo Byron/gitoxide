@@ -38,6 +38,8 @@ pub enum Kind {
 pub enum Error {
     #[error("{0}")]
     ZlibDeflate(#[from] std::io::Error),
+    #[error(transparent)]
+    EntryType(#[from] crate::data::entry::decode::Error),
 }
 
 impl output::Entry {
@@ -74,7 +76,11 @@ impl output::Entry {
         };
 
         let pack_offset_must_be_zero = 0;
-        let pack_entry = data::Entry::from_bytes(&entry.data, pack_offset_must_be_zero, count.id.as_slice().len());
+        let pack_entry = match data::Entry::from_bytes(&entry.data, pack_offset_must_be_zero, count.id.as_slice().len())
+        {
+            Ok(e) => e,
+            Err(err) => return Some(Err(err.into())),
+        };
 
         use crate::data::entry::Header::*;
         match pack_entry.header {
