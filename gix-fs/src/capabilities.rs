@@ -101,22 +101,13 @@ impl Capabilities {
     }
 
     fn probe_symlink(root: &Path) -> std::io::Result<bool> {
-        let src_path = root.join("__link_src_file");
-        std::fs::OpenOptions::new()
-            .create_new(true)
-            .write(true)
-            .open(&src_path)?;
         let link_path = root.join("__file_link");
-        if crate::symlink::create(&src_path, &link_path).is_err() {
-            std::fs::remove_file(&src_path)?;
+        if crate::symlink::create("dangling".as_ref(), &link_path).is_err() {
             return Ok(false);
         }
 
         let res = std::fs::symlink_metadata(&link_path).map(|m| m.file_type().is_symlink());
-
-        let cleanup = crate::symlink::remove(&link_path).or_else(|_| std::fs::remove_file(&link_path));
-        std::fs::remove_file(&src_path).and(cleanup)?;
-
+        crate::symlink::remove(&link_path).or_else(|_| std::fs::remove_file(&link_path))?;
         res
     }
 }

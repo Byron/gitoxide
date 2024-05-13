@@ -2,6 +2,8 @@ use std::{io, io::ErrorKind::AlreadyExists, path::Path};
 
 #[cfg(not(windows))]
 /// Create a new symlink at `link` which points to `original`.
+///
+/// Note that `original` doesn't have to exist.
 pub fn create(original: &Path, link: &Path) -> io::Result<()> {
     std::os::unix::fs::symlink(original, link)
 }
