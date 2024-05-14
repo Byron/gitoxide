@@ -50,7 +50,7 @@ gix-features = { version = "^0.38.1", path = "../gix-features", features = [
 ] }
 gix-transport = { version = "^0.42.0", path = "../gix-transport" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-gix-date = { version = "^0.8.5", path = "../gix-date" }
+gix-date = { version = "^0.8.6", path = "../gix-date" }
 gix-credentials = { version = "^0.24.2", path = "../gix-credentials" }
 gix-utils = { version = "^0.1.12", path = "../gix-utils" }
 
