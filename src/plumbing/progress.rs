@@ -96,11 +96,11 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.protectHFS",
-        usage: Planned("relevant for checkout on MacOS")
+        usage: Planned("relevant for checkout on MacOS, and possibly on networked drives")
     },
     Record {
         config: "core.protectNTFS",
-        usage: NotPlanned("lack of demand")
+        usage: Planned("relevant for checkout on Windows, and possibly networked drives")
     },
     Record {
         config: "core.sparseCheckout",
