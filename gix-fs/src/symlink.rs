@@ -2,6 +2,8 @@ use std::{io, io::ErrorKind::AlreadyExists, path::Path};
 
 #[cfg(not(windows))]
 /// Create a new symlink at `link` which points to `original`.
+///
+/// Note that `original` doesn't have to exist.
 pub fn create(original: &Path, link: &Path) -> io::Result<()> {
     std::os::unix::fs::symlink(original, link)
 }
@@ -31,10 +33,20 @@ pub fn remove(path: &Path) -> io::Result<()> {
 
 #[cfg(windows)]
 /// Create a new symlink at `link` which points to `original`.
+///
+/// Note that if a symlink target (the `original`) isn't present on disk, it's assumed to be a
+/// file, creating a dangling file symlink. This is similar to a dangling symlink on Unix,
+/// which doesn't have to care about the target type though.
 pub fn create(original: &Path, link: &Path) -> io::Result<()> {
     use std::os::windows::fs::{symlink_dir, symlink_file};
     // TODO: figure out if links to links count as files or whatever they point at
-    if std::fs::metadata(link.parent().expect("dir for link").join(original))?.is_dir() {
+    let orig_abs = link.parent().expect("dir for link").join(original);
+    let is_dir = match std::fs::metadata(orig_abs) {
+        Ok(m) => m.is_dir(),
+        Err(err) if err.kind() == io::ErrorKind::NotFound => false,
+        Err(err) => return Err(err),
+    };
+    if is_dir {
         symlink_dir(original, link)
     } else {
         symlink_file(original, link)

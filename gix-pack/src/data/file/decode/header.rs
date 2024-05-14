@@ -66,7 +66,7 @@ impl File {
                     if first_delta_decompressed_size.is_none() {
                         first_delta_decompressed_size = Some(self.decode_delta_object_size(inflate, &entry)?);
                     }
-                    entry = self.entry(entry.base_pack_offset(base_distance))
+                    entry = self.entry(entry.base_pack_offset(base_distance))?
                 }
                 RefDelta { base_id } => {
                     num_deltas += 1;

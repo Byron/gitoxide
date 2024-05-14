@@ -14,7 +14,7 @@ include = ["src/**/*", "LICENSE-*"]
 rust-version = "1.65"
 
 [lib]
-proc_macro = true
+proc-macro = true
 
 [dependencies]
 syn = { version = "2.0", features = ["full", "fold"] }

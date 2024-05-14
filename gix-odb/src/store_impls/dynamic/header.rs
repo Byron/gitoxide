@@ -72,10 +72,12 @@ where
                                 }
                             },
                         };
-                        let entry = pack.entry(pack_offset);
+                        let entry = pack.entry(pack_offset)?;
                         let res = match pack.decode_header(entry, inflate, &|id| {
-                            index_file.pack_offset_by_id(id).map(|pack_offset| {
-                                gix_pack::data::decode::header::ResolvedBase::InPack(pack.entry(pack_offset))
+                            index_file.pack_offset_by_id(id).and_then(|pack_offset| {
+                                pack.entry(pack_offset)
+                                    .ok()
+                                    .map(gix_pack::data::decode::header::ResolvedBase::InPack)
                             })
                         }) {
                             Ok(header) => Ok(header.into()),
@@ -129,14 +131,14 @@ where
                                 let pack = possibly_pack
                                     .as_ref()
                                     .expect("pack to still be available like just now");
-                                let entry = pack.entry(pack_offset);
+                                let entry = pack.entry(pack_offset)?;
                                 pack.decode_header(entry, inflate, &|id| {
                                     index_file
                                         .pack_offset_by_id(id)
-                                        .map(|pack_offset| {
-                                            gix_pack::data::decode::header::ResolvedBase::InPack(
-                                                pack.entry(pack_offset),
-                                            )
+                                        .and_then(|pack_offset| {
+                                            pack.entry(pack_offset)
+                                                .ok()
+                                                .map(gix_pack::data::decode::header::ResolvedBase::InPack)
                                         })
                                         .or_else(|| {
                                             (id == base_id).then(|| {

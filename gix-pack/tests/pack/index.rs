@@ -398,7 +398,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
         let sorted_offsets = idx.sorted_offsets();
         assert_eq!(num_objects, sorted_offsets.len());
         for idx_entry in idx.iter() {
-            let pack_entry = pack.entry(idx_entry.pack_offset);
+            let pack_entry = pack.entry(idx_entry.pack_offset)?;
             assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);
             assert!(sorted_offsets.binary_search(&idx_entry.pack_offset).is_ok());
         }
@@ -410,7 +410,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             );
 
             let mut buf = vec![0u8; entry.decompressed_size as usize];
-            let pack_entry = pack.entry(offset_from_index);
+            let pack_entry = pack.entry(offset_from_index)?;
             assert_eq!(
                 pack_entry.pack_offset(),
                 entry.pack_offset,

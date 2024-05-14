@@ -100,18 +100,10 @@ impl File {
             .map_err(Into::into)
     }
 
-    fn assure_v2(&self) {
-        assert!(
-            matches!(self.version, crate::data::Version::V2),
-            "Only V2 is implemented"
-        );
-    }
-
     /// Obtain the [`Entry`][crate::data::Entry] at the given `offset` into the pack.
     ///
     /// The `offset` is typically obtained from the pack index file.
-    pub fn entry(&self, offset: data::Offset) -> data::Entry {
-        self.assure_v2();
+    pub fn entry(&self, offset: data::Offset) -> Result<data::Entry, data::entry::decode::Error> {
         let pack_offset: usize = offset.try_into().expect("offset representable by machine");
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
 
@@ -246,7 +238,7 @@ impl File {
             });
             use crate::data::entry::Header;
             cursor = match cursor.header {
-                Header::OfsDelta { base_distance } => self.entry(cursor.base_pack_offset(base_distance)),
+                Header::OfsDelta { base_distance } => self.entry(cursor.base_pack_offset(base_distance))?,
                 Header::RefDelta { base_id } => match resolve(base_id.as_ref(), out) {
                     Some(ResolvedBase::InPack(entry)) => entry,
                     Some(ResolvedBase::OutOfPack { end, kind }) => {

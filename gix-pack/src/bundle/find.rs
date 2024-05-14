@@ -37,7 +37,7 @@ impl crate::Bundle {
         cache: &mut dyn crate::cache::DecodeEntry,
     ) -> Result<(gix_object::Data<'a>, crate::data::entry::Location), crate::data::decode::Error> {
         let ofs = self.index.pack_offset_at_index(idx);
-        let pack_entry = self.pack.entry(ofs);
+        let pack_entry = self.pack.entry(ofs)?;
         let header_size = pack_entry.header_size();
         self.pack
             .decode_entry(
@@ -45,11 +45,11 @@ impl crate::Bundle {
                 out,
                 inflate,
                 &|id, _out| {
-                    self.index.lookup(id).map(|idx| {
-                        crate::data::decode::entry::ResolvedBase::InPack(
-                            self.pack.entry(self.index.pack_offset_at_index(idx)),
-                        )
-                    })
+                    let idx = self.index.lookup(id)?;
+                    self.pack
+                        .entry(self.index.pack_offset_at_index(idx))
+                        .ok()
+                        .map(crate::data::decode::entry::ResolvedBase::InPack)
                 },
                 cache,
             )

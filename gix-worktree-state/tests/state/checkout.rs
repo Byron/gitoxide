@@ -42,6 +42,11 @@ fn driver_exe() -> String {
     exe
 }
 
+fn assure_is_empty(dir: impl AsRef<Path>) -> std::io::Result<()> {
+    assert_eq!(std::fs::read_dir(dir)?.count(), 0);
+    Ok(())
+}
+
 #[test]
 fn submodules_are_instantiated_as_directories() -> crate::Result {
     let mut opts = opts_from_probe();
@@ -54,11 +59,6 @@ fn submodules_are_instantiated_as_directories() -> crate::Result {
         assure_is_empty(sm)?;
     }
 
-    Ok(())
-}
-
-fn assure_is_empty(dir: impl AsRef<Path>) -> std::io::Result<()> {
-    assert_eq!(std::fs::read_dir(dir)?.count(), 0);
     Ok(())
 }
 
@@ -125,7 +125,7 @@ fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
                 if cfg!(windows) { "A-dir\\a" } else { "A-dir/a" },
                 "A-file",
                 "FAKE-DIR",
-                if cfg!(windows) { "fake-file" } else { "FAKE-FILE" }
+                "FAKE-FILE"
             ]),
         );
         assert!(outcome.collisions.is_empty());
@@ -258,6 +258,30 @@ fn symlinks_become_files_if_disabled() -> crate::Result {
 }
 
 #[test]
+fn dangling_symlinks_can_be_created() -> crate::Result {
+    let opts = opts_from_probe();
+    if !opts.fs.symlink {
+        eprintln!("Skipping dangling symlink test on filesystem that doesn't support it");
+        return Ok(());
+    }
+
+    let (_source_tree, destination, _index, outcome) =
+        checkout_index_in_tmp_dir(opts.clone(), "make_dangling_symlink")?;
+    let worktree_files = dir_structure(&destination);
+    let worktree_files_stripped = stripped_prefix(&destination, &worktree_files);
+
+    assert_eq!(worktree_files_stripped, paths(["dangling"]));
+    let symlink_path = &worktree_files[0];
+    assert!(symlink_path
+        .symlink_metadata()
+        .expect("dangling symlink is on disk")
+        .is_symlink());
+    assert_eq!(std::fs::read_link(symlink_path)?, Path::new("non-existing-target"));
+    assert!(outcome.collisions.is_empty());
+    Ok(())
+}
+
+#[test]
 fn allow_or_disallow_symlinks() -> crate::Result {
     let mut opts = opts_from_probe();
     for allowed in &[false, true] {
@@ -303,12 +327,7 @@ fn keep_going_collects_results() {
                 .iter()
                 .map(|r| r.path.to_path_lossy().into_owned())
                 .collect::<Vec<_>>(),
-            paths(if cfg!(unix) {
-                [".gitattributes", "dir/content"]
-            } else {
-                // not actually a symlink anymore, even though symlinks are supported but git think differently.
-                ["dir/content", "dir/sub-dir/symlink"]
-            })
+            paths([".gitattributes", "dir/content"])
         );
     }
 
@@ -322,11 +341,15 @@ fn keep_going_collects_results() {
     } else {
         assert_eq!(
             stripped_prefix(&destination, &dir_structure(&destination)),
-            paths(if cfg!(unix) {
-                Box::new(["dir/sub-dir/symlink", "empty", "executable"].into_iter()) as Box<dyn Iterator<Item = &str>>
-            } else {
-                Box::new(["empty", "executable"].into_iter())
-            }),
+            paths([
+                if cfg!(unix) {
+                    "dir/sub-dir/symlink"
+                } else {
+                    "dir\\sub-dir\\symlink"
+                },
+                "empty",
+                "executable",
+            ]),
             "some files could not be created"
         );
     }
@@ -550,8 +573,10 @@ fn probe_gitoxide_dir() -> crate::Result<gix_fs::Capabilities> {
 }
 
 fn opts_from_probe() -> gix_worktree_state::checkout::Options {
+    static CAPABILITIES: Lazy<gix_fs::Capabilities> = Lazy::new(|| probe_gitoxide_dir().unwrap());
+
     gix_worktree_state::checkout::Options {
-        fs: probe_gitoxide_dir().unwrap(),
+        fs: *CAPABILITIES,
         destination_is_initially_empty: true,
         thread_limit: gix_features::parallel::num_threads(None).into(),
         ..Default::default()

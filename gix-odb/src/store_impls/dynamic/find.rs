@@ -19,6 +19,8 @@ pub(crate) mod error {
         LoadIndex(#[from] crate::store::load_index::Error),
         #[error(transparent)]
         LoadPack(#[from] std::io::Error),
+        #[error(transparent)]
+        EntryType(#[from] gix_pack::data::entry::decode::Error),
         #[error("Reached recursion limit of {} while resolving ref delta bases for {}", .max_depth, .id)]
         DeltaBaseRecursionLimit {
             /// the maximum recursion depth we encountered.
@@ -144,19 +146,21 @@ where
                                 }
                             },
                         };
-                        let entry = pack.entry(pack_offset);
+                        let entry = pack.entry(pack_offset)?;
                         let header_size = entry.header_size();
-                        let res = match pack.decode_entry(
+                        let res = pack.decode_entry(
                             entry,
                             buffer,
                             inflate,
                             &|id, _out| {
-                                index_file.pack_offset_by_id(id).map(|pack_offset| {
-                                    gix_pack::data::decode::entry::ResolvedBase::InPack(pack.entry(pack_offset))
-                                })
+                                let pack_offset = index_file.pack_offset_by_id(id)?;
+                                pack.entry(pack_offset)
+                                    .ok()
+                                    .map(gix_pack::data::decode::entry::ResolvedBase::InPack)
                             },
                             pack_cache,
-                        ) {
+                        );
+                        let res = match res {
                             Ok(r) => Ok((
                                 gix_object::Data {
                                     kind: r.kind,
@@ -230,7 +234,7 @@ where
                                 let pack = possibly_pack
                                     .as_ref()
                                     .expect("pack to still be available like just now");
-                                let entry = pack.entry(pack_offset);
+                                let entry = pack.entry(pack_offset)?;
                                 let header_size = entry.header_size();
                                 pack.decode_entry(
                                     entry,
@@ -239,10 +243,10 @@ where
                                     &|id, out| {
                                         index_file
                                             .pack_offset_by_id(id)
-                                            .map(|pack_offset| {
-                                                gix_pack::data::decode::entry::ResolvedBase::InPack(
-                                                    pack.entry(pack_offset),
-                                                )
+                                            .and_then(|pack_offset| {
+                                                pack.entry(pack_offset)
+                                                    .ok()
+                                                    .map(gix_pack::data::decode::entry::ResolvedBase::InPack)
                                             })
                                             .or_else(|| {
                                                 (id == base_id).then(|| {
@@ -398,7 +402,7 @@ where
                                 }
                             },
                         };
-                        let entry = pack.entry(pack_offset);
+                        let entry = pack.entry(pack_offset).ok()?;
 
                         buf.resize(entry.decompressed_size.try_into().expect("representable size"), 0);
                         assert_eq!(pack.id, pack_id.to_intrinsic_pack_id(), "both ids must always match");

@@ -4,7 +4,7 @@ use std::{
     ops::Deref,
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicU16, AtomicUsize, Ordering},
+        atomic::{AtomicU16, Ordering},
         Arc,
     },
     time::SystemTime,
@@ -86,7 +86,7 @@ impl super::Store {
             Ok(Some(self.collect_snapshot()))
         } else {
             // always compare to the latest state
-            // Nothing changed in the mean time, try to load another index…
+            // Nothing changed in the meantime, try to load another index…
             if self.load_next_index(index) {
                 Ok(Some(self.collect_snapshot()))
             } else {
@@ -119,7 +119,7 @@ impl super::Store {
                         let slot = &self.files[index.slot_indices[slot_map_index]];
                         let _lock = slot.write.lock();
                         if slot.generation.load(Ordering::SeqCst) > index.generation {
-                            // There is a disk consolidation in progress which just overwrote a slot that cold be disposed with some other
+                            // There is a disk consolidation in progress which just overwrote a slot that could be disposed with some other
                             // index, one we didn't intend to load.
                             // Continue with the next slot index in the hope there is something else we can do…
                             continue 'retry_with_next_slot_index;
@@ -128,14 +128,18 @@ impl super::Store {
                         let bundle_mut = Arc::make_mut(&mut bundle);
                         if let Some(files) = bundle_mut.as_mut() {
                             // these are always expected to be set, unless somebody raced us. We handle this later by retrying.
-                            let _loaded_count = IncOnDrop(&index.loaded_indices);
-                            match files.load_index(self.object_hash) {
+                            let res = {
+                                let res = files.load_index(self.object_hash);
+                                slot.files.store(bundle);
+                                index.loaded_indices.fetch_add(1, Ordering::SeqCst);
+                                res
+                            };
+                            match res {
                                 Ok(_) => {
-                                    slot.files.store(bundle);
                                     break 'retry_with_next_slot_index;
                                 }
-                                Err(_) => {
-                                    slot.files.store(bundle);
+                                Err(_err) => {
+                                    gix_features::trace::error!(err=?_err, "Failed to load index file - some objects may seem to not exist");
                                     continue 'retry_with_next_slot_index;
                                 }
                             }
@@ -145,9 +149,14 @@ impl super::Store {
                         // There can be contention as many threads start working at the same time and take all the
                         // slots to load indices for. Some threads might just be left-over and have to wait for something
                         // to change.
-                        let num_load_operations = index.num_indices_currently_being_loaded.deref();
                         // TODO: potentially hot loop - could this be a condition variable?
-                        while num_load_operations.load(Ordering::Relaxed) != 0 {
+                        // This is a timing-based fix for the case that the `num_indices_being_loaded` isn't yet incremented,
+                        // and we might break out here without actually waiting for the loading operation. Then we'd fail to
+                        // observe a change and the underlying handler would not have all the indices it needs at its disposal.
+                        // Yielding means we will definitely loose enough time to observe the ongoing operation,
+                        // or its effects.
+                        std::thread::yield_now();
+                        while index.num_indices_currently_being_loaded.load(Ordering::SeqCst) != 0 {
                             std::thread::yield_now()
                         }
                         break 'retry_with_next_slot_index;
@@ -197,7 +206,7 @@ impl super::Store {
 
         // We might not be able to detect by pointer if the state changed, as this itself is racy. So we keep track of double-initialization
         // using a flag, which means that if `needs_init` was true we saw the index uninitialized once, but now that we are here it's
-        // initialized meaning that somebody was faster and we couldn't detect it by comparisons to the index.
+        // initialized meaning that somebody was faster, and we couldn't detect it by comparisons to the index.
         // If so, make sure we collect the snapshot instead of returning None in case nothing actually changed, which is likely with a
         // race like this.
         if !was_uninitialized && needs_init {
@@ -397,18 +406,19 @@ impl super::Store {
                     // generation stays the same, as it's the same value still but scheduled for eventual removal.
                 }
             } else {
+                // set the generation before we actually change the value, otherwise readers of old generations could observe the new one.
+                // We rather want them to turn around here and update their index, which, by that time, might actually already be available.
+                // If not, they would fail unable to load a pack or index they need, but that's preferred over returning wrong objects.
+                // Safety: can't race as we hold the lock, have to set the generation beforehand to help avoid others to observe the value.
+                slot.generation.store(generation, Ordering::SeqCst);
                 *files_mut = None;
             };
             slot.files.store(files);
-            if !needs_stable_indices {
-                // Not racy due to lock, generation must be set after unsetting the slot value AND storing it.
-                slot.generation.store(generation, Ordering::SeqCst);
-            }
         }
 
         let new_index = self.index.load();
         Ok(if index.state_id() == new_index.state_id() {
-            // there was no change, and nothing was loaded in the meantime, reflect that in the return value to not get into loops
+            // there was no change, and nothing was loaded in the meantime, reflect that in the return value to not get into loops.
             None
         } else {
             if load_new_index {
@@ -619,34 +629,44 @@ impl super::Store {
     }
 
     pub(crate) fn collect_snapshot(&self) -> Snapshot {
+        // We don't observe changes-on-disk in our 'wait-for-load' loop.
+        // That loop is meant to help assure the marker (which includes the amount of loaded indices) matches
+        // the actual amount of indices we collect.
         let index = self.index.load();
-        let indices = if index.is_initialized() {
-            index
-                .slot_indices
-                .iter()
-                .map(|idx| (*idx, &self.files[*idx]))
-                .filter_map(|(id, file)| {
-                    let lookup = match (**file.files.load()).as_ref()? {
-                        types::IndexAndPacks::Index(bundle) => handle::SingleOrMultiIndex::Single {
-                            index: bundle.index.loaded()?.clone(),
-                            data: bundle.data.loaded().cloned(),
-                        },
-                        types::IndexAndPacks::MultiIndex(multi) => handle::SingleOrMultiIndex::Multi {
-                            index: multi.multi_index.loaded()?.clone(),
-                            data: multi.data.iter().map(|f| f.loaded().cloned()).collect(),
-                        },
-                    };
-                    handle::IndexLookup { file: lookup, id }.into()
-                })
-                .collect()
-        } else {
-            Vec::new()
-        };
+        loop {
+            if index.num_indices_currently_being_loaded.deref().load(Ordering::SeqCst) != 0 {
+                std::thread::yield_now();
+                continue;
+            }
+            let marker = index.marker();
+            let indices = if index.is_initialized() {
+                index
+                    .slot_indices
+                    .iter()
+                    .map(|idx| (*idx, &self.files[*idx]))
+                    .filter_map(|(id, file)| {
+                        let lookup = match (**file.files.load()).as_ref()? {
+                            types::IndexAndPacks::Index(bundle) => handle::SingleOrMultiIndex::Single {
+                                index: bundle.index.loaded()?.clone(),
+                                data: bundle.data.loaded().cloned(),
+                            },
+                            types::IndexAndPacks::MultiIndex(multi) => handle::SingleOrMultiIndex::Multi {
+                                index: multi.multi_index.loaded()?.clone(),
+                                data: multi.data.iter().map(|f| f.loaded().cloned()).collect(),
+                            },
+                        };
+                        handle::IndexLookup { file: lookup, id }.into()
+                    })
+                    .collect()
+            } else {
+                Vec::new()
+            };
 
-        Snapshot {
-            indices,
-            loose_dbs: Arc::clone(&index.loose_dbs),
-            marker: index.marker(),
+            return Snapshot {
+                indices,
+                loose_dbs: Arc::clone(&index.loose_dbs),
+                marker,
+            };
         }
     }
 }
@@ -666,13 +686,6 @@ impl<'a> IncOnNewAndDecOnDrop<'a> {
 impl<'a> Drop for IncOnNewAndDecOnDrop<'a> {
     fn drop(&mut self) {
         self.0.fetch_sub(1, Ordering::SeqCst);
-    }
-}
-
-struct IncOnDrop<'a>(&'a AtomicUsize);
-impl<'a> Drop for IncOnDrop<'a> {
-    fn drop(&mut self) {
-        self.0.fetch_add(1, Ordering::SeqCst);
     }
 }
 

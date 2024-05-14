@@ -4,7 +4,7 @@ use std::alloc;
 use std::time::Instant;
 
 #[global_allocator]
-static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
+static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::MAX);
 
 #[test]
 fn usage() {

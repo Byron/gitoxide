@@ -12,6 +12,8 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     Tree(#[from] crate::cache::delta::from_offsets::Error),
     #[error("The tree traversal failed")]
     TreeTraversal(#[from] crate::cache::delta::traverse::Error),
+    #[error(transparent)]
+    EntryType(#[from] crate::data::entry::decode::Error),
     #[error("Object {id} at offset {offset} could not be decoded")]
     PackDecode {
         id: gix_hash::ObjectId,
