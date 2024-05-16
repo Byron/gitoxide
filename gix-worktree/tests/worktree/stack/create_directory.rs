@@ -8,7 +8,7 @@ fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() -> crate
     let dir = tempdir()?;
     let mut cache = Stack::new(
         dir.path().join("non-existing-root"),
-        stack::State::for_checkout(false, Default::default()),
+        stack::State::for_checkout(false, Default::default(), Default::default()),
         Default::default(),
         Vec::new(),
         Default::default(),
@@ -51,6 +51,23 @@ fn existing_directories_are_fine() -> crate::Result {
     assert!(path.parent().unwrap().is_dir(), "directory is still present");
     assert!(!path.exists(), "it won't create the file");
     assert_eq!(cache.statistics().delegate.num_mkdir_calls, 1);
+    Ok(())
+}
+
+#[test]
+fn validation_to_each_component() -> crate::Result {
+    let (mut cache, tmp) = new_cache();
+
+    let err = cache
+        .at_path("valid/.gIt", Some(false), &gix_object::find::Never)
+        .unwrap_err();
+    assert_eq!(
+        cache.statistics().delegate.num_mkdir_calls,
+        1,
+        "the valid directory was created"
+    );
+    assert!(tmp.path().join("valid").is_dir(), "it was actually created");
+    assert_eq!(err.to_string(), "The .git name may never be used");
     Ok(())
 }
 
@@ -110,7 +127,7 @@ fn new_cache() -> (Stack, TempDir) {
     let dir = tempdir().unwrap();
     let cache = Stack::new(
         dir.path(),
-        stack::State::for_checkout(false, Default::default()),
+        stack::State::for_checkout(false, Default::default(), Default::default()),
         Default::default(),
         Vec::new(),
         Default::default(),

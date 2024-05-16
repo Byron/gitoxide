@@ -63,14 +63,12 @@ impl Stack {
     /// The path is also expected to be normalized, and should not contain extra separators, and must not contain `..`
     /// or have leading or trailing slashes (or additionally backslashes on Windows).
     pub fn make_relative_path_current(&mut self, relative: &Path, delegate: &mut dyn Delegate) -> std::io::Result<()> {
-        if relative.as_os_str().is_empty() {
+        if self.valid_components != 0 && relative.as_os_str().is_empty() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "empty inputs are not allowed",
             ));
         }
-        // TODO: prevent leading or trailing slashes, on Windows also backslashes.
-        //       prevent leading backslashes on Windows as they are strange
         if self.valid_components == 0 {
             delegate.push_directory(self)?;
         }

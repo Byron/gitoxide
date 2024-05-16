@@ -88,14 +88,18 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
             #[cfg(feature = "attributes")]
             State::CreateDirectoryAndAttributesStack {
                 unlink_on_collision,
+                validate,
                 attributes: _,
-            } => create_leading_directory(
-                is_last_component,
-                stack,
-                self.is_dir,
-                &mut self.statistics.delegate.num_mkdir_calls,
-                *unlink_on_collision,
-            )?,
+            } => {
+                validate_last_component(stack, *validate)?;
+                create_leading_directory(
+                    is_last_component,
+                    stack,
+                    self.is_dir,
+                    &mut self.statistics.delegate.num_mkdir_calls,
+                    *unlink_on_collision,
+                )?
+            }
             #[cfg(feature = "attributes")]
             State::AttributesAndIgnoreStack { .. } | State::AttributesStack(_) => {}
             State::IgnoreStack(_) => {}
@@ -120,6 +124,29 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
             }
         }
     }
+}
+
+#[cfg(feature = "attributes")]
+fn validate_last_component(stack: &gix_fs::Stack, opts: gix_validate::path::component::Options) -> std::io::Result<()> {
+    // TODO: add mode-information
+    let Some(last_component) = stack.current_relative().components().rev().next() else {
+        return Ok(());
+    };
+    let last_component =
+        gix_path::try_into_bstr(std::borrow::Cow::Borrowed(last_component.as_os_str().as_ref())).map_err(|_err| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!(
+                    "Path component {last_component:?} of path \"{}\" contained invalid UTF-8 and could not be validated",
+                    stack.current_relative().display()
+                ),
+            )
+        })?;
+
+    if let Err(err) = gix_validate::path::component(last_component.as_ref(), None, opts) {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, err));
+    }
+    Ok(())
 }
 
 #[cfg(feature = "attributes")]

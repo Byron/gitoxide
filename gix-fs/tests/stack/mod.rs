@@ -158,6 +158,20 @@ fn path_join_handling() {
 }
 
 #[test]
+fn empty_paths_are_noop_if_no_path_was_pushed_before() {
+    let root = PathBuf::from(".");
+    let mut s = Stack::new(root.clone());
+
+    let mut r = Record::default();
+    s.make_relative_path_current("".as_ref(), &mut r).unwrap();
+    assert_eq!(
+        s.current_relative().to_string_lossy(),
+        "",
+        "it's fine to push an empty path to get a value for the stack root, once"
+    );
+}
+
+#[test]
 fn relative_components_are_invalid() {
     let root = PathBuf::from(".");
     let mut s = Stack::new(root.clone());

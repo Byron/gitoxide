@@ -28,6 +28,8 @@ pub enum State {
     CreateDirectoryAndAttributesStack {
         /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
         unlink_on_collision: bool,
+        /// Options to control how newly created path components should be validated.
+        validate: gix_validate::path::component::Options,
         /// State to handle attribute information
         attributes: state::Attributes,
     },
@@ -135,10 +137,6 @@ impl Stack {
     /// All effects are similar to [`at_path()`][Self::at_path()].
     ///
     /// If `relative` ends with `/` and `is_dir` is `None`, it is automatically assumed to be a directory.
-    ///
-    /// ### Panics
-    ///
-    /// on illformed UTF8 in `relative`
     pub fn at_entry<'r>(
         &mut self,
         relative: impl Into<&'r BStr>,
@@ -146,7 +144,15 @@ impl Stack {
         objects: &dyn gix_object::Find,
     ) -> std::io::Result<Platform<'_>> {
         let relative = relative.into();
-        let relative_path = gix_path::from_bstr(relative);
+        let relative_path = gix_path::try_from_bstr(relative).map_err(|_err| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!(
+                    "The path \"{}\" contained invalid UTF-8 and could not be turned into a path",
+                    relative
+                ),
+            )
+        })?;
 
         self.at_path(
             relative_path,

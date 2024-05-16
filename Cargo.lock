@@ -2791,6 +2791,7 @@ dependencies = [
  "gix-index 0.32.1",
  "gix-object 0.42.1",
  "gix-path 0.10.7",
+ "gix-validate 0.8.4",
  "serde",
 ]
 
