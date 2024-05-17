@@ -1,6 +1,8 @@
 use gix::Repository;
 
 mod config;
+#[cfg(feature = "excludes")]
+mod excludes;
 #[cfg(feature = "attributes")]
 mod filter;
 mod object;
@@ -38,6 +40,7 @@ mod dirwalk {
             ("all-untracked".to_string(), Repository),
             ("bare-repo-with-index.git".to_string(), Directory),
             ("bare.git".into(), Directory),
+            ("empty-core-excludes".into(), Repository),
             ("non-bare-repo-without-index".into(), Repository),
             ("some".into(), Directory),
         ];
