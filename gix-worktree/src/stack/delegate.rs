@@ -1,3 +1,4 @@
+use crate::stack::mode_is_dir;
 use crate::{stack::State, PathIdMapping};
 
 /// Various aggregate numbers related to the stack delegate itself.
@@ -20,7 +21,7 @@ pub(crate) struct StackDelegate<'a, 'find> {
     pub state: &'a mut State,
     pub buf: &'a mut Vec<u8>,
     #[cfg_attr(not(feature = "attributes"), allow(dead_code))]
-    pub is_dir: bool,
+    pub mode: Option<gix_index::entry::Mode>,
     pub id_mappings: &'a Vec<PathIdMapping>,
     pub objects: &'find dyn gix_object::Find,
     pub case: gix_glob::pattern::Case,
@@ -91,11 +92,11 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                 validate,
                 attributes: _,
             } => {
-                validate_last_component(stack, *validate)?;
+                validate_last_component(stack, self.mode, *validate)?;
                 create_leading_directory(
                     is_last_component,
                     stack,
-                    self.is_dir,
+                    self.mode,
                     &mut self.statistics.delegate.num_mkdir_calls,
                     *unlink_on_collision,
                 )?
@@ -127,8 +128,11 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
 }
 
 #[cfg(feature = "attributes")]
-fn validate_last_component(stack: &gix_fs::Stack, opts: gix_validate::path::component::Options) -> std::io::Result<()> {
-    // TODO: add mode-information
+fn validate_last_component(
+    stack: &gix_fs::Stack,
+    mode: Option<gix_index::entry::Mode>,
+    opts: gix_validate::path::component::Options,
+) -> std::io::Result<()> {
     let Some(last_component) = stack.current_relative().components().rev().next() else {
         return Ok(());
     };
@@ -143,7 +147,13 @@ fn validate_last_component(stack: &gix_fs::Stack, opts: gix_validate::path::comp
             )
         })?;
 
-    if let Err(err) = gix_validate::path::component(last_component.as_ref(), None, opts) {
+    if let Err(err) = gix_validate::path::component(
+        last_component.as_ref(),
+        mode.and_then(|m| {
+            (m == gix_index::entry::Mode::SYMLINK).then_some(gix_validate::path::component::Mode::Symlink)
+        }),
+        opts,
+    ) {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, err));
     }
     Ok(())
@@ -153,11 +163,11 @@ fn validate_last_component(stack: &gix_fs::Stack, opts: gix_validate::path::comp
 fn create_leading_directory(
     is_last_component: bool,
     stack: &gix_fs::Stack,
-    is_dir: bool,
+    mode: Option<gix_index::entry::Mode>,
     mkdir_calls: &mut usize,
     unlink_on_collision: bool,
 ) -> std::io::Result<()> {
-    if is_last_component && !is_dir {
+    if is_last_component && !mode_is_dir(mode).unwrap_or(false) {
         return Ok(());
     }
     *mkdir_calls += 1;
