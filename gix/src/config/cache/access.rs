@@ -219,12 +219,21 @@ impl Cache {
         subsection_name: Option<&BStr>,
         key: impl AsRef<str>,
     ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
+        let section_name = section_name.as_ref();
+        let key = key.as_ref();
         let path = self.resolved.path_filter(
             section_name,
             subsection_name,
             key,
             &mut self.filter_config_section.clone(),
         )?;
+
+        if self.lenient_config && path.is_empty() {
+            gix_trace::info!(
+                "Ignored empty path at {section_name}.{subsection_name:?}.{key} due to lenient configuration"
+            );
+            return None;
+        }
 
         let install_dir = crate::path::install_dir().ok();
         let home = self.home_dir();

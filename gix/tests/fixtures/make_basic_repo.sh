@@ -32,3 +32,8 @@ git init all-untracked
   mkdir d
   >d/a
 )
+
+git init empty-core-excludes
+(cd empty-core-excludes
+  echo $'[core]\n\texcludesFile = ' >> .git/config
+)
