@@ -95,14 +95,6 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned("")
     },
     Record {
-        config: "core.protectHFS",
-        usage: Planned("relevant for checkout on MacOS, and possibly on networked drives")
-    },
-    Record {
-        config: "core.protectNTFS",
-        usage: Planned("relevant for checkout on Windows, and possibly networked drives")
-    },
-    Record {
         config: "core.sparseCheckout",
         usage: Planned("we want to support huge repos and be the fastest in doing so")
     },

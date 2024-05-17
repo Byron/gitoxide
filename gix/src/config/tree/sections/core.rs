@@ -44,6 +44,10 @@ impl Core {
     /// Needs application to use [`env::args_os`][crate::env::args_os()] to conform all input paths before they are used.
     pub const PRECOMPOSE_UNICODE: keys::Boolean = keys::Boolean::new_boolean("precomposeUnicode", &config::Tree::CORE)
         .with_note("application needs to conform all program input by using gix::env::args_os()");
+    /// The `core.protectHFS` key.
+    pub const PROTECT_HFS: keys::Boolean = keys::Boolean::new_boolean("protectHFS", &config::Tree::CORE);
+    /// The `core.protectNTFS` key.
+    pub const PROTECT_NTFS: keys::Boolean = keys::Boolean::new_boolean("protectNTFS", &config::Tree::CORE);
     /// The `core.repositoryFormatVersion` key.
     pub const REPOSITORY_FORMAT_VERSION: keys::UnsignedInteger =
         keys::UnsignedInteger::new_unsigned_integer("repositoryFormatVersion", &config::Tree::CORE);
@@ -116,6 +120,8 @@ impl Section for Core {
             &Self::SYMLINKS,
             &Self::TRUST_C_TIME,
             &Self::WORKTREE,
+            &Self::PROTECT_HFS,
+            &Self::PROTECT_NTFS,
             &Self::ASKPASS,
             &Self::EXCLUDES_FILE,
             &Self::ATTRIBUTES_FILE,

@@ -103,6 +103,10 @@ mod subsections {
         pub const USE_STDEV: keys::Boolean = keys::Boolean::new_boolean("useStdev", &Gitoxide::CORE)
             .with_note("A runtime version of the USE_STDEV build flag.");
 
+        /// The `gitoxide.core.protectWindows` key.
+        pub const PROTECT_WINDOWS: keys::Boolean = keys::Boolean::new_boolean("protectWindows", &Gitoxide::CORE)
+            .with_note("enable protections that are enabled by default on Windows");
+
         /// The `gitoxide.core.shallowFile` key.
         pub const SHALLOW_FILE: keys::Path = keys::Path::new_path("shallowFile", &Gitoxide::CORE)
             .with_environment_override("GIT_SHALLOW_FILE")
@@ -142,6 +146,7 @@ mod subsections {
                 &Self::USE_NSEC,
                 &Self::USE_STDEV,
                 &Self::SHALLOW_FILE,
+                &Self::PROTECT_WINDOWS,
                 &Self::FILTER_PROCESS_DELAY,
                 &Self::EXTERNAL_COMMAND_STDERR,
                 &Self::REFS_NAMESPACE,
