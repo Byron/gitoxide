@@ -583,14 +583,14 @@ impl Platform {
         if self.diff_cache.contains_key(storage) {
             return Ok(());
         }
-        let entry = self
-            .attr_stack
-            .at_entry(rela_path, Some(false), objects)
-            .map_err(|err| set_resource::Error::Attributes {
-                source: err,
-                kind,
-                rela_path: rela_path.to_owned(),
-            })?;
+        let entry =
+            self.attr_stack
+                .at_entry(rela_path, None, objects)
+                .map_err(|err| set_resource::Error::Attributes {
+                    source: err,
+                    kind,
+                    rela_path: rela_path.to_owned(),
+                })?;
         let mut buf = Vec::new();
         let out = self.filter.convert_to_diffable(
             &id,

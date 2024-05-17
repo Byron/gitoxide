@@ -310,6 +310,7 @@ impl Cache {
         };
         Ok(gix_worktree_state::checkout::Options {
             filter_process_delay,
+            validate: Default::default(), // TODO: derive these from configuration
             filters,
             attributes: self
                 .assemble_attribute_globals(git_dir, attributes_source, self.attributes)?

@@ -137,7 +137,15 @@ impl<'repo> Pathspec<'repo> {
                 let stack = self.stack.as_mut().expect("initialized in advance");
                 stack
                     .set_case(case)
-                    .at_entry(relative_path, Some(is_dir), &self.repo.objects)
+                    .at_entry(
+                        relative_path,
+                        Some(if is_dir {
+                            gix_index::entry::Mode::DIR
+                        } else {
+                            gix_index::entry::Mode::FILE
+                        }),
+                        &self.repo.objects,
+                    )
                     .map_or(false, |platform| platform.matching_attributes(out))
             },
         )
@@ -193,7 +201,15 @@ impl PathspecDetached {
                 let stack = self.stack.as_mut().expect("initialized in advance");
                 stack
                     .set_case(case)
-                    .at_entry(relative_path, Some(is_dir), &self.odb)
+                    .at_entry(
+                        relative_path,
+                        Some(if is_dir {
+                            gix_index::entry::Mode::DIR
+                        } else {
+                            gix_index::entry::Mode::FILE
+                        }),
+                        &self.odb,
+                    )
                     .map_or(false, |platform| platform.matching_attributes(out))
             },
         )

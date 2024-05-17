@@ -127,11 +127,10 @@ pub(crate) mod function {
             }
             gix::object::Kind::Blob if cache.is_some() && spec.path_and_mode().is_some() => {
                 let (path, mode) = spec.path_and_mode().expect("is present");
-                let is_dir = Some(mode.is_tree());
                 match cache.expect("is some") {
                     (BlobFormat::Git, _) => unreachable!("no need for a cache when querying object db"),
                     (BlobFormat::Worktree, cache) => {
-                        let platform = cache.attr_stack.at_entry(path, is_dir, &repo.objects)?;
+                        let platform = cache.attr_stack.at_entry(path, Some(mode.into()), &repo.objects)?;
                         let object = id.object()?;
                         let mut converted = cache.filter.worktree_filter.convert_to_worktree(
                             &object.data,

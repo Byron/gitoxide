@@ -99,7 +99,15 @@ pub(super) mod function {
                                                 .expect("can only be called if attributes are used in patterns");
                                             stack
                                                 .set_case(case)
-                                                .at_entry(relative_path, Some(is_dir), &objects)
+                                                .at_entry(
+                                                    relative_path,
+                                                    Some(if is_dir {
+                                                        gix_index::entry::Mode::DIR
+                                                    } else {
+                                                        gix_index::entry::Mode::FILE
+                                                    }),
+                                                    &objects,
+                                                )
                                                 .map_or(false, |platform| platform.matching_attributes(out))
                                         },
                                         excludes: excludes.as_mut(),
@@ -494,7 +502,7 @@ pub(super) mod function {
             Ok(match kind {
                 Kind::File => {
                     let platform = attrs
-                        .at_entry(rela_path, Some(false), objects)
+                        .at_entry(rela_path, None, objects)
                         .map_err(Error::SetAttributeContext)?;
                     let rela_path = gix_path::from_bstr(rela_path);
                     let file_path = worktree_root.join(rela_path.as_ref());

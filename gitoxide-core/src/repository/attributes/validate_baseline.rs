@@ -192,7 +192,7 @@ pub(crate) mod function {
         );
 
         for (rela_path, baseline) in rx_base {
-            let entry = cache.at_entry(rela_path.as_str(), Some(false))?;
+            let entry = cache.at_entry(rela_path.as_str(), None)?;
             match baseline {
                 Baseline::Attribute { assignments: expected } => {
                     entry.matching_attributes(&mut matches);

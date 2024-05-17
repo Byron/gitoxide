@@ -14,6 +14,7 @@ pub(crate) mod function {
     use gix::bstr::BStr;
 
     use crate::{
+        is_dir_to_mode,
         repository::{
             attributes::query::{attributes_cache, Options},
             PathsOrPatterns,
@@ -38,12 +39,12 @@ pub(crate) mod function {
         match input {
             PathsOrPatterns::Paths(paths) => {
                 for path in paths {
-                    let is_dir = gix::path::from_bstr(Cow::Borrowed(path.as_ref()))
+                    let mode = gix::path::from_bstr(Cow::Borrowed(path.as_ref()))
                         .metadata()
                         .ok()
-                        .map(|m| m.is_dir());
+                        .map(|m| is_dir_to_mode(m.is_dir()));
 
-                    let entry = cache.at_entry(path.as_slice(), is_dir)?;
+                    let entry = cache.at_entry(path.as_slice(), mode)?;
                     if !entry.matching_attributes(&mut matches) {
                         continue;
                     }
@@ -61,9 +62,9 @@ pub(crate) mod function {
                 )?;
                 let mut pathspec_matched_entry = false;
                 if let Some(it) = pathspec.index_entries_with_paths(&index) {
-                    for (path, _entry) in it {
+                    for (path, entry) in it {
                         pathspec_matched_entry = true;
-                        let entry = cache.at_entry(path, Some(false))?;
+                        let entry = cache.at_entry(path, entry.mode.into())?;
                         if !entry.matching_attributes(&mut matches) {
                             continue;
                         }
@@ -87,10 +88,10 @@ pub(crate) mod function {
                         let path = pattern.path();
                         let entry = cache.at_entry(
                             path,
-                            Some(
+                            Some(is_dir_to_mode(
                                 workdir.map_or(false, |wd| wd.join(gix::path::from_bstr(path)).is_dir())
                                     || pattern.signature.contains(gix::pathspec::MagicSignature::MUST_BE_DIR),
-                            ),
+                            )),
                         )?;
                         if !entry.matching_attributes(&mut matches) {
                             continue;

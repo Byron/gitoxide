@@ -84,3 +84,11 @@ pub use discover::discover;
 
 #[cfg(all(feature = "async-client", feature = "blocking-client"))]
 compile_error!("Cannot set both 'blocking-client' and 'async-client' features as they are mutually exclusive");
+
+fn is_dir_to_mode(is_dir: bool) -> gix::index::entry::Mode {
+    if is_dir {
+        gix::index::entry::Mode::DIR
+    } else {
+        gix::index::entry::Mode::FILE
+    }
+}

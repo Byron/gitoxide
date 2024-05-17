@@ -21,7 +21,7 @@ fn all_stages() -> gix_testtools::Result {
         "any.txt".into(),
         &mut |path, attrs| {
             cache
-                .at_entry(path, Some(false), &gix_object::find::Never)
+                .at_entry(path, None, &gix_object::find::Never)
                 .expect("cannot fail")
                 .matching_attributes(attrs);
         },
@@ -54,7 +54,7 @@ fn all_stages_no_filter() -> gix_testtools::Result {
         "other.txt".into(),
         &mut |path, attrs| {
             cache
-                .at_entry(path, Some(false), &gix_object::find::Never)
+                .at_entry(path, None, &gix_object::find::Never)
                 .expect("cannot fail")
                 .matching_attributes(attrs);
         },
@@ -86,7 +86,7 @@ fn no_filter() -> gix_testtools::Result {
         "other.txt".into(),
         &mut |path, attrs| {
             cache
-                .at_entry(path, Some(false), &gix_object::find::Never)
+                .at_entry(path, None, &gix_object::find::Never)
                 .expect("cannot fail")
                 .matching_attributes(attrs);
         },

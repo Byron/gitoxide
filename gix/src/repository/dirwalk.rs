@@ -64,7 +64,15 @@ impl Repository {
                         .expect("can only be called if attributes are used in patterns");
                     stack
                         .set_case(case)
-                        .at_entry(relative_path, Some(is_dir), &self.objects)
+                        .at_entry(
+                            relative_path,
+                            Some(if is_dir {
+                                gix_index::entry::Mode::DIR
+                            } else {
+                                gix_index::entry::Mode::FILE
+                            }),
+                            &self.objects,
+                        )
                         .map_or(false, |platform| platform.matching_attributes(out))
                 },
                 excludes: Some(&mut excludes.inner),

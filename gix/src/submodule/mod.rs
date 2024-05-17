@@ -154,7 +154,15 @@ impl<'repo> Submodule<'repo> {
             &mut |relative_path, case, is_dir, out| {
                 attributes
                     .set_case(case)
-                    .at_entry(relative_path, Some(is_dir), &self.state.repo.objects)
+                    .at_entry(
+                        relative_path,
+                        Some(if is_dir {
+                            gix_index::entry::Mode::DIR
+                        } else {
+                            gix_index::entry::Mode::FILE
+                        }),
+                        &self.state.repo.objects,
+                    )
                     .map_or(false, |platform| platform.matching_attributes(out))
             }
         })?;

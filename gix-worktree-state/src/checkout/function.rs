@@ -64,7 +64,11 @@ where
         path_cache: Stack::from_state_and_ignore_case(
             dir,
             options.fs.ignore_case,
-            stack::State::for_checkout(options.overwrite_existing, std::mem::take(&mut options.attributes)),
+            stack::State::for_checkout(
+                options.overwrite_existing,
+                options.validate,
+                std::mem::take(&mut options.attributes),
+            ),
             index,
             paths,
         ),
