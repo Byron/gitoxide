@@ -113,6 +113,21 @@ pub struct AccelerateLookup<'a> {
 ///
 /// As opposed to a snapshot, it's meant to be altered and eventually be written back to disk or converted into a tree.
 /// We treat index and its state synonymous.
+///
+/// # A note on safety
+///
+/// An index (i.e. [`State`]) created [from a tree](State::from_tree()) is not guaranteed to have valid entry paths as those
+/// depend on the names contained in trees entirely, without applying any level of validation.
+///
+/// This means that before using these paths to recreate files on disk, *they must be validated*.
+///
+/// It's notable that it's possible to manufacture tree objects which contain names like `.git/hooks/pre-commit`
+/// which then will look like `.git/hooiks/pre-commit` in the index, which doesn't care that the name came from a single
+/// tree instead of from trees named `.git`, `hooks` and a blob named `pre-commit`. The effect is still the same - an invalid
+/// path is presented in the index and its consumer must validate each path component before usage.
+///
+/// It's recommended to do that using `gix_worktree::Stack` which has it built-in if it's created `for_checkout()`. Alternatively
+/// one can validate component names with `gix_validate::path::component()`.
 #[derive(Clone)]
 pub struct State {
     /// The kind of object hash used when storing the underlying file.
