@@ -13,6 +13,10 @@ pub mod component {
         PathSeparator,
         #[error("Window path prefixes are not allowed")]
         WindowsPathPrefix,
+        #[error("Windows device-names may have side-effects and are not allowed")]
+        WindowsReservedName,
+        #[error("Trailing spaces or dots and the following characters are forbidden in Windows paths, along with non-printable ones: <>:\"|?*")]
+        WindowsIllegalCharacter,
         #[error("The .git name may never be used")]
         DotGitDir,
         #[error("The .gitmodules file must not be a symlink")]
@@ -101,6 +105,12 @@ pub fn component(
         if is_symlink(mode) && is_dot_ntfs(input, "gitmodules", "gi7eba") {
             return Err(component::Error::SymlinkedGitModules);
         }
+
+        if protect_windows {
+            if let Some(err) = check_win_devices_and_illegal_characters(input) {
+                return Err(err);
+            }
+        }
     }
 
     if !(protect_hfs | protect_ntfs) {
@@ -112,6 +122,44 @@ pub fn component(
         }
     }
     Ok(input)
+}
+
+fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::Error> {
+    let in3 = input.get(..3)?;
+    if in3.eq_ignore_ascii_case(b"aux") && is_done_windows(input.get(3..)) {
+        return Some(component::Error::WindowsReservedName);
+    }
+    if in3.eq_ignore_ascii_case(b"nul") && is_done_windows(input.get(3..)) {
+        return Some(component::Error::WindowsReservedName);
+    }
+    if in3.eq_ignore_ascii_case(b"prn") && is_done_windows(input.get(3..)) {
+        return Some(component::Error::WindowsReservedName);
+    }
+    if in3.eq_ignore_ascii_case(b"com")
+        && input.get(3).map_or(false, |n| *n >= b'1' && *n <= b'9')
+        && is_done_windows(input.get(4..))
+    {
+        return Some(component::Error::WindowsReservedName);
+    }
+    if in3.eq_ignore_ascii_case(b"lpt")
+        && input.get(3).map_or(false, |n| n.is_ascii_digit())
+        && is_done_windows(input.get(4..))
+    {
+        return Some(component::Error::WindowsReservedName);
+    }
+    if in3.eq_ignore_ascii_case(b"con")
+        && ((input.get(3..6).map_or(false, |n| n.eq_ignore_ascii_case(b"in$")) && is_done_windows(input.get(6..)))
+            || (input.get(3..7).map_or(false, |n| n.eq_ignore_ascii_case(b"out$")) && is_done_windows(input.get(7..))))
+    {
+        return Some(component::Error::WindowsReservedName);
+    }
+    if input.iter().find(|b| **b < 0x20 || b":<>\"|?*".contains(b)).is_some() {
+        return Some(component::Error::WindowsIllegalCharacter);
+    }
+    if input.ends_with(b".") || input.ends_with(b" ") {
+        return Some(component::Error::WindowsIllegalCharacter);
+    }
+    None
 }
 
 fn is_symlink(mode: Option<component::Mode>) -> bool {
@@ -243,4 +291,11 @@ fn is_done_ntfs(input: Option<&[u8]>) -> bool {
         }
     }
     true
+}
+
+fn is_done_windows(input: Option<&[u8]>) -> bool {
+    let Some(input) = input else { return true };
+    let skip = input.bytes().take_while(|b| *b == b' ').count();
+    let Some(next) = input.get(skip) else { return true };
+    !(*next != b'.' && *next != b':')
 }

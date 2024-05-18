@@ -60,6 +60,12 @@ mod component {
         mktest!(not_dot_git_shorter_ntfs_8_3_disabled, b"git~1", NO_OPTS);
         mktest!(not_dot_git_longer_hfs, ".g\u{200c}itu".as_bytes());
         mktest!(not_dot_git_shorter_hfs, ".g\u{200c}i".as_bytes());
+        mktest!(com_0_lower, b"com0");
+        mktest!(com_without_number_0_lower, b"comm");
+        mktest!(conout_without_dollar_with_extension, b"conout.c");
+        mktest!(conin_without_dollar_with_extension, b"conin.c");
+        mktest!(conin_without_dollar, b"conin");
+        mktest!(not_nul, b"null");
         mktest!(
             not_dot_gitmodules_shorter_hfs,
             ".gitm\u{200c}odule".as_bytes(),
@@ -158,6 +164,16 @@ mod component {
             Symlink,
             ALL_OPTS
         );
+        mktest!(
+            not_gitmodules_trailing_space,
+            b".gitmodules x ",
+            Error::WindowsIllegalCharacter
+        );
+        mktest!(
+            not_gitmodules_trailing_stream,
+            b".gitmodules,:$DATA",
+            Error::WindowsIllegalCharacter
+        );
         mktest!(path_separator_slash_between, b"a/b", Error::PathSeparator);
         mktest!(path_separator_slash_leading, b"/a", Error::PathSeparator);
         mktest!(path_separator_slash_trailing, b"a/", Error::PathSeparator);
@@ -167,6 +183,29 @@ mod component {
         mktest!(path_separator_backslash_between, b"a\\b", Error::PathSeparator);
         mktest!(path_separator_backslash_leading, b"\\a", Error::PathSeparator);
         mktest!(path_separator_backslash_trailing, b"a\\", Error::PathSeparator);
+        mktest!(aux_mixed, b"Aux", Error::WindowsReservedName);
+        mktest!(aux_with_extension, b"aux.c", Error::WindowsReservedName);
+        mktest!(com_lower, b"com1", Error::WindowsReservedName);
+        mktest!(com_upper_with_extension, b"COM9.c", Error::WindowsReservedName);
+        mktest!(trailing_space, b"win32 ", Error::WindowsIllegalCharacter);
+        mktest!(trailing_dot, b"win32.", Error::WindowsIllegalCharacter);
+        mktest!(trailing_dot_dot, b"win32 . .", Error::WindowsIllegalCharacter);
+        mktest!(colon_inbetween, b"colon:separates", Error::WindowsIllegalCharacter);
+        mktest!(left_arrow, b"arrow<left", Error::WindowsIllegalCharacter);
+        mktest!(right_arrow, b"arrow>right", Error::WindowsIllegalCharacter);
+        mktest!(apostrophe, b"a\"b", Error::WindowsIllegalCharacter);
+        mktest!(pipe, b"a|b", Error::WindowsIllegalCharacter);
+        mktest!(questionmark, b"a?b", Error::WindowsIllegalCharacter);
+        mktest!(asterisk, b"a*b", Error::WindowsIllegalCharacter);
+        mktest!(lpt_mixed_with_number, b"LPt8", Error::WindowsReservedName);
+        mktest!(nul_mixed, b"NuL", Error::WindowsReservedName);
+        mktest!(prn_mixed_with_extension, b"PrN.abc", Error::WindowsReservedName);
+        mktest!(
+            conout_mixed_with_extension,
+            b"ConOut$  .xyz",
+            Error::WindowsReservedName
+        );
+        mktest!(conin_mixed, b"conIn$  ", Error::WindowsReservedName);
         mktest!(drive_letters, b"c:", Error::WindowsPathPrefix, ALL_OPTS);
         mktest!(
             virtual_drive_letters,
@@ -244,7 +283,6 @@ mod component {
                 "..gitmodules",
                 "gitmodules",
                 ".gitmodule",
-                ".gitmodules x ",
                 ".gitmodules .x",
                 "GI7EBA~",
                 "GI7EBA~0",
@@ -255,7 +293,6 @@ mod component {
                 "GI7EB~1",
                 "GI7EB~01",
                 "GI7EB~1X",
-                ".gitmodules,:$DATA",
             ] {
                 gix_validate::path::component(valid.into(), Some(Symlink), ALL_OPTS)
                     .unwrap_or_else(|_| panic!("{valid:?} should have been valid"));
