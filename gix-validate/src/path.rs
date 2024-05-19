@@ -83,7 +83,7 @@ pub fn component(
         if input.find_byteset(b"/\\").is_some() {
             return Err(component::Error::PathSeparator);
         }
-        if input.chars().skip(1).next() == Some(':') {
+        if input.chars().nth(1) == Some(':') {
             return Err(component::Error::WindowsPathPrefix);
         }
     } else if input.find_byte(b'/').is_some() {
@@ -142,7 +142,7 @@ fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::E
         return Some(component::Error::WindowsReservedName);
     }
     if in3.eq_ignore_ascii_case(b"lpt")
-        && input.get(3).map_or(false, |n| n.is_ascii_digit())
+        && input.get(3).map_or(false, u8::is_ascii_digit)
         && is_done_windows(input.get(4..))
     {
         return Some(component::Error::WindowsReservedName);
@@ -153,7 +153,7 @@ fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::E
     {
         return Some(component::Error::WindowsReservedName);
     }
-    if input.iter().find(|b| **b < 0x20 || b":<>\"|?*".contains(b)).is_some() {
+    if input.iter().any(|b| *b < 0x20 || b":<>\"|?*".contains(b)) {
         return Some(component::Error::WindowsIllegalCharacter);
     }
     if input.ends_with(b".") || input.ends_with(b" ") {
@@ -221,7 +221,7 @@ fn is_dot_git_ntfs(input: &BStr) -> bool {
 }
 
 fn is_dot_ntfs(input: &BStr, search_case_insensitive: &str, ntfs_shortname_prefix: &str) -> bool {
-    if input.get(0) == Some(&b'.') {
+    if input.first() == Some(&b'.') {
         let end_pos = 1 + search_case_insensitive.len();
         if input.get(1..end_pos).map_or(false, |input| {
             input.eq_ignore_ascii_case(search_case_insensitive.as_bytes())
@@ -238,7 +238,7 @@ fn is_dot_ntfs(input: &BStr, search_case_insensitive: &str, ntfs_shortname_prefi
             .map_or(false, |(ntfs_prefix, first_6_of_input)| {
                 first_6_of_input.eq_ignore_ascii_case(ntfs_prefix)
                     && input.get(6) == Some(&b'~')
-                    && input.get(7).map_or(false, |num| num >= &b'1' && num <= &b'4')
+                    && input.get(7).map_or(false, |num| (b'1'..=b'4').contains(num))
             })
         {
             return is_done_ntfs(input.get(8..));
@@ -252,7 +252,7 @@ fn is_dot_ntfs(input: &BStr, search_case_insensitive: &str, ntfs_shortname_prefi
                 return false;
             };
             if saw_tilde {
-                if b < b'0' || b > b'9' {
+                if !b.is_ascii_digit() {
                     return false;
                 }
             } else if b == b'~' {
@@ -261,16 +261,14 @@ fn is_dot_ntfs(input: &BStr, search_case_insensitive: &str, ntfs_shortname_prefi
                 let Some(b) = input.get(pos).copied() else {
                     return false;
                 };
-                if b < b'1' || b > b'9' {
+                if !(b'1'..=b'9').contains(&b) {
                     return false;
                 }
-            } else if pos >= 6 {
-                return false;
-            } else if b & 0x80 == 0x80 {
-                return false;
-            } else if ntfs_shortname_prefix
-                .get(pos)
-                .map_or(true, |ob| !b.eq_ignore_ascii_case(ob))
+            } else if pos >= 6
+                || b & 0x80 == 0x80
+                || ntfs_shortname_prefix
+                    .get(pos)
+                    .map_or(true, |ob| !b.eq_ignore_ascii_case(ob))
             {
                 return false;
             }

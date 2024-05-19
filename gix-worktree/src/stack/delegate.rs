@@ -133,7 +133,7 @@ fn validate_last_component(
     mode: Option<gix_index::entry::Mode>,
     opts: gix_validate::path::component::Options,
 ) -> std::io::Result<()> {
-    let Some(last_component) = stack.current_relative().components().rev().next() else {
+    let Some(last_component) = stack.current_relative().components().next_back() else {
         return Ok(());
     };
     let last_component =

@@ -151,10 +151,7 @@ impl Stack {
         let relative_path = gix_path::try_from_bstr(relative).map_err(|_err| {
             std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!(
-                    "The path \"{}\" contained invalid UTF-8 and could not be turned into a path",
-                    relative
-                ),
+                format!("The path \"{relative}\" contained invalid UTF-8 and could not be turned into a path"),
             )
         })?;
 
