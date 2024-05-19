@@ -163,13 +163,7 @@ pub fn path(
                     stack
                         .at_entry(
                             rela_path.as_bstr(),
-                            disk_kind.map(|ft| {
-                                if ft.is_dir() {
-                                    gix_index::entry::Mode::DIR
-                                } else {
-                                    gix_index::entry::Mode::FILE
-                                }
-                            }),
+                            disk_kind.map(|ft| is_dir_to_mode(ft.is_dir())),
                             ctx.objects,
                         )
                         .map(|platform| platform.excluded_kind())

@@ -126,35 +126,41 @@ pub fn component(
 
 fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::Error> {
     let in3 = input.get(..3)?;
-    if in3.eq_ignore_ascii_case(b"aux") && is_done_windows(input.get(3..)) {
+    if in3.eq_ignore_ascii_case(b"AUX") && is_done_windows(input.get(3..)) {
         return Some(component::Error::WindowsReservedName);
     }
-    if in3.eq_ignore_ascii_case(b"nul") && is_done_windows(input.get(3..)) {
+    if in3.eq_ignore_ascii_case(b"NUL") && is_done_windows(input.get(3..)) {
         return Some(component::Error::WindowsReservedName);
     }
-    if in3.eq_ignore_ascii_case(b"prn") && is_done_windows(input.get(3..)) {
+    if in3.eq_ignore_ascii_case(b"PRN") && is_done_windows(input.get(3..)) {
         return Some(component::Error::WindowsReservedName);
     }
-    if in3.eq_ignore_ascii_case(b"com")
+    // Note that the following allows `COM0`, even though `LPT0` is not allowed.
+    // Even though tests seem to indicate that neither `LPT0` nor `COM0` are valid
+    // device names, it's unclear this truly is the case in all possible versions and editions
+    // of Windows.
+    // Hence, justification for this asymmetry is merely to do exactly the same as Git does,
+    // and to have exactly the same behaviour during validation (for worktree-writes).
+    if in3.eq_ignore_ascii_case(b"COM")
         && input.get(3).map_or(false, |n| *n >= b'1' && *n <= b'9')
         && is_done_windows(input.get(4..))
     {
         return Some(component::Error::WindowsReservedName);
     }
-    if in3.eq_ignore_ascii_case(b"lpt")
+    if in3.eq_ignore_ascii_case(b"LPT")
         && input.get(3).map_or(false, u8::is_ascii_digit)
         && is_done_windows(input.get(4..))
     {
         return Some(component::Error::WindowsReservedName);
     }
-    if in3.eq_ignore_ascii_case(b"con")
+    if in3.eq_ignore_ascii_case(b"CON")
         && (is_done_windows(input.get(3..))
-            || (input.get(3..6).map_or(false, |n| n.eq_ignore_ascii_case(b"in$")) && is_done_windows(input.get(6..)))
-            || (input.get(3..7).map_or(false, |n| n.eq_ignore_ascii_case(b"out$")) && is_done_windows(input.get(7..))))
+            || (input.get(3..6).map_or(false, |n| n.eq_ignore_ascii_case(b"IN$")) && is_done_windows(input.get(6..)))
+            || (input.get(3..7).map_or(false, |n| n.eq_ignore_ascii_case(b"OUT$")) && is_done_windows(input.get(7..))))
     {
         return Some(component::Error::WindowsReservedName);
     }
-    if input.iter().any(|b| *b < 0x20 || b":<>\"|?*".contains(b)) {
+    if input.iter().any(|b| b.is_ascii_control() || b":<>\"|?*".contains(b)) {
         return Some(component::Error::WindowsIllegalCharacter);
     }
     if input.ends_with(b".") || input.ends_with(b" ") {
@@ -225,6 +231,10 @@ fn is_dot_git_ntfs(input: &BStr) -> bool {
     false
 }
 
+/// The `search_case_insensitive` name is the actual name to look for (in a case-insensitive way).
+/// Opposed to that there is the special `ntfs_shortname_prefix` which is derived from `search_case_insensitive`
+/// but looks more like a hash, one that NTFS uses to disambiguate things, for when there is a lot of files
+/// with the same prefix.
 fn is_dot_ntfs(input: &BStr, search_case_insensitive: &str, ntfs_shortname_prefix: &str) -> bool {
     if input.first() == Some(&b'.') {
         let end_pos = 1 + search_case_insensitive.len();
@@ -243,6 +253,8 @@ fn is_dot_ntfs(input: &BStr, search_case_insensitive: &str, ntfs_shortname_prefi
             .map_or(false, |(ntfs_prefix, first_6_of_input)| {
                 first_6_of_input.eq_ignore_ascii_case(ntfs_prefix)
                     && input.get(6) == Some(&b'~')
+                    // It's notable that only `~1` to `~4` are possible before the disambiguation algorithm
+                    // switches to using the `ntfs_shortname_prefix`, which is checked hereafter.
                     && input.get(7).map_or(false, |num| (b'1'..=b'4').contains(num))
             })
         {

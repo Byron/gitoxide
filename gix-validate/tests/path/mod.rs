@@ -65,6 +65,8 @@ mod component {
         mktest!(conout_without_dollar_with_extension, b"conout.c");
         mktest!(conin_without_dollar_with_extension, b"conin.c");
         mktest!(conin_without_dollar, b"conin");
+        mktest!(not_con, b"com");
+        mktest!(also_not_con, b"co");
         mktest!(not_nul, b"null");
         mktest!(
             not_dot_gitmodules_shorter_hfs,
@@ -115,7 +117,7 @@ mod component {
         mktest!(empty, b"", Error::Empty);
         mktest!(dot_git_lower, b".git", Error::DotGitDir, NO_OPTS);
         mktest!(dot_git_lower_hfs, ".g\u{200c}it".as_bytes(), Error::DotGitDir);
-        mktest!(dot_git_lower_hfs_simple, ".Git".as_bytes(), Error::DotGitDir);
+        mktest!(dot_git_mixed_hfs_simple, b".Git", Error::DotGitDir);
         mktest!(dot_git_upper, b".GIT", Error::DotGitDir, NO_OPTS);
         mktest!(dot_git_upper_hfs, ".GIT\u{200e}".as_bytes(), Error::DotGitDir);
         mktest!(dot_git_upper_ntfs_8_3, b"GIT~1", Error::DotGitDir);
@@ -165,6 +167,30 @@ mod component {
             ALL_OPTS
         );
         mktest!(
+            dot_gitmodules_lower_ntfs_stream_default_implicit,
+            b".gitmodules::$DATA",
+            Error::SymlinkedGitModules,
+            Symlink,
+            ALL_OPTS
+        );
+        mktest!(
+            ntfs_stream_default_implicit,
+            b"file::$DATA",
+            Error::WindowsIllegalCharacter
+        );
+        mktest!(
+            ntfs_stream_default_explicit,
+            b"file:$ANYTHING_REALLY:$DATA",
+            Error::WindowsIllegalCharacter
+        );
+        mktest!(
+            dot_gitmodules_lower_ntfs_stream_default_explicit,
+            b".gitmodules:$DATA:$DATA",
+            Error::SymlinkedGitModules,
+            Symlink,
+            ALL_OPTS
+        );
+        mktest!(
             not_gitmodules_trailing_space,
             b".gitmodules x ",
             Error::WindowsIllegalCharacter
@@ -201,6 +227,7 @@ mod component {
         mktest!(nul_mixed, b"NuL", Error::WindowsReservedName);
         mktest!(prn_mixed_with_extension, b"PrN.abc", Error::WindowsReservedName);
         mktest!(con, b"CON", Error::WindowsReservedName);
+        mktest!(con_with_extension, b"CON.abc", Error::WindowsReservedName);
         mktest!(
             conout_mixed_with_extension,
             b"ConOut$  .xyz",

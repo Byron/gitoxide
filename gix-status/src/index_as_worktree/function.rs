@@ -19,7 +19,7 @@ use crate::{
         types::{Error, Options},
         Change, Conflict, EntryStatus, Outcome, VisitEntry,
     },
-    SymlinkCheck,
+    is_dir_to_mode, SymlinkCheck,
 };
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them
@@ -276,15 +276,7 @@ impl<'index> State<'_, 'index> {
                 &mut |relative_path, case, is_dir, out| {
                     self.attr_stack
                         .set_case(case)
-                        .at_entry(
-                            relative_path,
-                            Some(if is_dir {
-                                gix_index::entry::Mode::DIR
-                            } else {
-                                gix_index::entry::Mode::FILE
-                            }),
-                            objects,
-                        )
+                        .at_entry(relative_path, Some(is_dir_to_mode(is_dir)), objects)
                         .map_or(false, |platform| platform.matching_attributes(out))
                 },
             )

@@ -9,6 +9,7 @@ pub(super) mod function {
     use crate::index_as_worktree::traits::{CompareBlobs, SubmoduleStatus};
     use crate::index_as_worktree_with_renames::function::rewrite::ModificationOrDirwalkEntry;
     use crate::index_as_worktree_with_renames::{Context, Entry, Error, Options, Outcome, RewriteSource, VisitEntry};
+    use crate::is_dir_to_mode;
     use bstr::ByteSlice;
     use gix_worktree::stack::State;
     use std::borrow::Cow;
@@ -99,15 +100,7 @@ pub(super) mod function {
                                                 .expect("can only be called if attributes are used in patterns");
                                             stack
                                                 .set_case(case)
-                                                .at_entry(
-                                                    relative_path,
-                                                    Some(if is_dir {
-                                                        gix_index::entry::Mode::DIR
-                                                    } else {
-                                                        gix_index::entry::Mode::FILE
-                                                    }),
-                                                    &objects,
-                                                )
+                                                .at_entry(relative_path, Some(is_dir_to_mode(is_dir)), &objects)
                                                 .map_or(false, |platform| platform.matching_attributes(out))
                                         },
                                         excludes: excludes.as_mut(),

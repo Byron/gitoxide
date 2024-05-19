@@ -37,12 +37,12 @@ fn path_join_handling() {
     let absolute = p("/absolute");
     assert!(
         absolute.is_relative(),
-        "on Windows, absolute linux paths are considered relative"
+        "on Windows, absolute Linux paths are considered relative (and relative to the current drive)"
     );
     let bs_absolute = p("\\absolute");
     assert!(
         absolute.is_relative(),
-        "on Windows, strange single-backslash paths are relative"
+        "on Windows, strange single-backslash paths are relative (and relative to the current drive)"
     );
     assert_eq!(
         p("relative").join(absolute),
@@ -58,7 +58,7 @@ fn path_join_handling() {
     assert_eq!(
         p("c:").join("relative"),
         p("c:relative"),
-        "absolute + relative = strange joined result with missing slash - but that shouldn't usually happen"
+        "absolute + relative = strange joined result with missing back-slash, but it's a valid path that works just like `c:\relative`"
     );
     assert_eq!(
         p("c:\\").join("relative"),
@@ -69,34 +69,52 @@ fn path_join_handling() {
     assert_eq!(
         p("\\\\?\\base").join(absolute),
         p("\\\\?\\base\\absolute"),
-        "absolute1 + absolute2 = joined result with backslash"
+        "absolute1 + unix-absolute2 = joined result with backslash"
+    );
+    assert_eq!(
+        p("\\\\.\\base").join(absolute),
+        p("\\\\.\\base\\absolute"),
+        "absolute1 + absolute2 = joined result with backslash (device relative)"
     );
     assert_eq!(
         p("\\\\?\\base").join(bs_absolute),
         p("\\\\?\\base\\absolute"),
         "absolute1 + absolute2 = joined result"
     );
-
     assert_eq!(
-        p("/").join("C:"),
+        p("\\\\.\\base").join(bs_absolute),
+        p("\\\\.\\base\\absolute"),
+        "absolute1 + absolute2 = joined result (device relative)"
+    );
+
+    assert_eq!(p("/").join("C:"), p("C:"), "unix-absolute + win-drive = win-drive");
+    assert_eq!(
+        p("d:/").join("C:"),
         p("C:"),
-        "unix-absolute + win-absolute = win-absolute"
+        "d-drive + c-drive = c-drive - interesting, as C: is supposed to be relative"
+    );
+    assert_eq!(
+        p("d:\\").join("C:\\"),
+        p("C:\\"),
+        "d-drive-with-bs + c-drive-with-bs = c-drive-with-bs - nothing special happens with backslashes"
+    );
+    assert_eq!(
+        p("c:\\").join("\\\\.\\"),
+        p("\\\\.\\"),
+        "d-drive-with-bs + device-relative-unc = device-relative-unc"
     );
     assert_eq!(
         p("/").join("C:/"),
         p("C:\\"),
-        "unix-absolute + win-absolute = win-result, strangely enough it changed the trailing slash to backslash, so better not have trailing slashes"
+        "unix-absolute + win-drive = win-drive, strangely enough it changed the trailing slash to backslash, so better not have trailing slashes"
     );
+    assert_eq!(p("/").join("C:\\"), p("C:\\"), "unix-absolute + win-drive = win-drive");
     assert_eq!(
-        p("/").join("C:\\"),
-        p("C:\\"),
-        "unix-absolute + win-absolute = win-result"
-    );
-    assert_eq!(
-        p("relative").join("C:"),
+        p("\\\\.").join("C:"),
         p("C:"),
-        "relative + win-absolute = win-result"
+        "device-relative-unc + win-drive-relative = win-drive-relative - c: was supposed to be relative, but it's not acting like it."
     );
+    assert_eq!(p("relative").join("C:"), p("C:"), "relative + win-drive = win-drive");
 
     assert_eq!(
         p("/").join("\\\\localhost"),
@@ -202,6 +220,17 @@ fn relative_components_are_invalid() {
         if cfg!(windows) { ".\\a\\b" } else { "./a/b" },
         "dot is silently ignored"
     );
+    s.make_relative_path_current("a//b/".as_ref(), &mut r)
+        .expect("multiple-slashes are ignored");
+    assert_eq!(
+        r,
+        Record {
+            push_dir: 2,
+            dirs: vec![".".into(), "./a".into()],
+            push: 2,
+        },
+        "nothing changed"
+    );
 }
 
 #[test]
@@ -226,7 +255,7 @@ fn absolute_paths_are_invalid() -> crate::Result {
     assert_eq!(
         s.current(),
         p("./b\\"),
-        "trailing back-slashes are fine both on Windows and unix - on Unix it's part fo the filename"
+        "trailing backslashes are fine both on Windows and Unix - on Unix it's part fo the filename"
     );
 
     #[cfg(windows)]
@@ -235,7 +264,7 @@ fn absolute_paths_are_invalid() -> crate::Result {
         assert_eq!(
             err.to_string(),
             "Input path \"\\\" contains relative or absolute components",
-            "on windows, backslashes are considered absolute and replace the base if it is relative, \
+            "on Windows, backslashes are considered absolute and replace the base if it is relative, \
             hence they are forbidden."
         );
 
@@ -243,14 +272,20 @@ fn absolute_paths_are_invalid() -> crate::Result {
         assert_eq!(
             err.to_string(),
             "Input path \"c:\" contains relative or absolute components",
-            "on windows, drive-letters are also absolute"
+            "on Windows, drive-letters without trailing backslash or slash are also absolute (even though they ought to be relative)"
+        );
+        let err = s.make_relative_path_current("c:\\".as_ref(), &mut r).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "Input path \"c:\\\" contains relative or absolute components",
+            "on Windows, drive-letters are absolute, which is expected"
         );
 
         s.make_relative_path_current("֍:".as_ref(), &mut r)?;
         assert_eq!(
             s.current().to_string_lossy(),
             ".\\֍:",
-            "on windows, any unicode character will do as virtual drive-letter actually with `subst`, \
+            "on Windows, almost any unicode character will do as virtual drive-letter actually with `subst`, \
             but we just turn it into a presumably invalid path which is fine, i.e. we get a joined path"
         );
         let err = s
@@ -440,7 +475,7 @@ fn delegate_calls_are_consistent() -> crate::Result {
                 dirs: dirs.clone(),
                 push: 19,
             },
-            "a backslash is a normal character outside of windows, so it's fine to have it as component"
+            "a backslash is a normal character outside of Windows, so it's fine to have it as component"
         );
 
         s.make_relative_path_current("\\".as_ref(), &mut r)?;

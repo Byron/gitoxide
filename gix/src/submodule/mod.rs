@@ -9,7 +9,7 @@ use std::{
 
 pub use gix_submodule::*;
 
-use crate::{bstr::BStr, worktree::IndexPersistedOrInMemory, Repository, Submodule};
+use crate::{bstr::BStr, is_dir_to_mode, worktree::IndexPersistedOrInMemory, Repository, Submodule};
 
 pub(crate) type ModulesFileStorage = gix_features::threading::OwnShared<gix_fs::SharedFileSnapshotMut<File>>;
 /// A lazily loaded and auto-updated worktree index.
@@ -154,15 +154,7 @@ impl<'repo> Submodule<'repo> {
             &mut |relative_path, case, is_dir, out| {
                 attributes
                     .set_case(case)
-                    .at_entry(
-                        relative_path,
-                        Some(if is_dir {
-                            gix_index::entry::Mode::DIR
-                        } else {
-                            gix_index::entry::Mode::FILE
-                        }),
-                        &self.state.repo.objects,
-                    )
+                    .at_entry(relative_path, Some(is_dir_to_mode(is_dir)), &self.state.repo.objects)
                     .map_or(false, |platform| platform.matching_attributes(out))
             }
         })?;
