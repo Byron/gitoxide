@@ -200,6 +200,7 @@ mod component {
         mktest!(lpt_mixed_with_number, b"LPt8", Error::WindowsReservedName);
         mktest!(nul_mixed, b"NuL", Error::WindowsReservedName);
         mktest!(prn_mixed_with_extension, b"PrN.abc", Error::WindowsReservedName);
+        mktest!(con, b"CON", Error::WindowsReservedName);
         mktest!(
             conout_mixed_with_extension,
             b"ConOut$  .xyz",

@@ -11,11 +11,11 @@ pub mod component {
         Empty,
         #[error("Path separators like / or \\ are not allowed")]
         PathSeparator,
-        #[error("Window path prefixes are not allowed")]
+        #[error("Windows path prefixes are not allowed")]
         WindowsPathPrefix,
         #[error("Windows device-names may have side-effects and are not allowed")]
         WindowsReservedName,
-        #[error("Trailing spaces or dots and the following characters are forbidden in Windows paths, along with non-printable ones: <>:\"|?*")]
+        #[error("Trailing spaces or dots, and the following characters anywhere, are forbidden in Windows paths, along with non-printable ones: <>:\"|?*")]
         WindowsIllegalCharacter,
         #[error("The .git name may never be used")]
         DotGitDir,
@@ -37,7 +37,7 @@ pub mod component {
         /// This field is equivalent to `core.protectHFS`.
         pub protect_hfs: bool,
         /// If `true`, protections for Windows NTFS specific features will be active. This adds special handling
-        /// for `8.3` filenames and alternate data streams, both of which could be used to mask th etrue name of
+        /// for `8.3` filenames and alternate data streams, both of which could be used to mask the true name of
         /// what would be created on disk.
         ///
         /// This field is equivalent to `core.protectNTFS`.
@@ -64,7 +64,7 @@ pub mod component {
 
 /// Assure the given `input` resembles a valid name for a tree or blob, and in that sense, a path component.
 /// `mode` indicates the kind of `input` and it should be `Some` if `input` is the last component in the underlying
-/// path. Currently, this is only used to determine if `.gitmodules` is a symlink.
+/// path.
 ///
 /// `input` must not make it possible to exit the repository, or to specify absolute paths.
 pub fn component(
@@ -148,7 +148,8 @@ fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::E
         return Some(component::Error::WindowsReservedName);
     }
     if in3.eq_ignore_ascii_case(b"con")
-        && ((input.get(3..6).map_or(false, |n| n.eq_ignore_ascii_case(b"in$")) && is_done_windows(input.get(6..)))
+        && (is_done_windows(input.get(3..))
+            || (input.get(3..6).map_or(false, |n| n.eq_ignore_ascii_case(b"in$")) && is_done_windows(input.get(6..)))
             || (input.get(3..7).map_or(false, |n| n.eq_ignore_ascii_case(b"out$")) && is_done_windows(input.get(7..))))
     {
         return Some(component::Error::WindowsReservedName);
@@ -168,22 +169,26 @@ fn is_symlink(mode: Option<component::Mode>) -> bool {
 
 fn is_dot_hfs(input: &BStr, search_case_insensitive: &str) -> bool {
     let mut input = input.chars().filter(|c| match *c as u32 {
-            0x200c | /* ZERO WIDTH NON-JOINER */
-            0x200d | /* ZERO WIDTH JOINER */
-            0x200e | /* LEFT-TO-RIGHT MARK */
-            0x200f | /* RIGHT-TO-LEFT MARK */
-            0x202a | /* LEFT-TO-RIGHT EMBEDDING */
-            0x202b | /* RIGHT-TO-LEFT EMBEDDING */
-            0x202c | /* POP DIRECTIONAL FORMATTING */
-            0x202d | /* LEFT-TO-RIGHT OVERRIDE */
-            0x202e | /* RIGHT-TO-LEFT OVERRIDE */
-            0x206a | /* INHIBIT SYMMETRIC SWAPPING */
-            0x206b | /* ACTIVATE SYMMETRIC SWAPPING */
-            0x206c | /* INHIBIT ARABIC FORM SHAPING */
-            0x206d | /* ACTIVATE ARABIC FORM SHAPING */
-            0x206e | /* NATIONAL DIGIT SHAPES */
-            0x206f | /* NOMINAL DIGIT SHAPES */
-            0xfeff => false, /* ZERO WIDTH NO-BREAK SPACE */
+        // Case-insensitive HFS+ skips these code points as "ignorable" when comparing filenames. See:
+        // https://github.com/git/git/commit/6162a1d323d24fd8cbbb1a6145a91fb849b2568f
+        // https://developer.apple.com/library/archive/technotes/tn/tn1150.html#StringComparisonAlgorithm
+        // https://github.com/apple-oss-distributions/hfs/blob/main/core/UCStringCompareData.h
+            0x200c | // ZERO WIDTH NON-JOINER
+            0x200d | // ZERO WIDTH JOINER
+            0x200e | // LEFT-TO-RIGHT MARK
+            0x200f | // RIGHT-TO-LEFT MARK
+            0x202a | // LEFT-TO-RIGHT EMBEDDING
+            0x202b | // RIGHT-TO-LEFT EMBEDDING
+            0x202c | // POP DIRECTIONAL FORMATTING
+            0x202d | // LEFT-TO-RIGHT OVERRIDE
+            0x202e | // RIGHT-TO-LEFT OVERRIDE
+            0x206a | // INHIBIT SYMMETRIC SWAPPING
+            0x206b | // ACTIVATE SYMMETRIC SWAPPING
+            0x206c | // INHIBIT ARABIC FORM SHAPING
+            0x206d | // ACTIVATE ARABIC FORM SHAPING
+            0x206e | // NATIONAL DIGIT SHAPES
+            0x206f | // NOMINAL DIGIT SHAPES
+            0xfeff => false, // ZERO WIDTH NO-BREAK SPACE
             _ => true
         });
     if input.next() != Some('.') {
@@ -278,7 +283,9 @@ fn is_dot_ntfs(input: &BStr, search_case_insensitive: &str, ntfs_shortname_prefi
     }
 }
 
+/// Check if trailing filename bytes leave a match to special files like `.git` unchanged in NTFS.
 fn is_done_ntfs(input: Option<&[u8]>) -> bool {
+    // Skip spaces and dots. Then return true if we are at the end or a colon.
     let Some(input) = input else { return true };
     for b in input.bytes() {
         if b == b':' {
@@ -291,9 +298,11 @@ fn is_done_ntfs(input: Option<&[u8]>) -> bool {
     true
 }
 
+/// Check if trailing filename bytes leave a match to Windows reserved device names unchanged.
 fn is_done_windows(input: Option<&[u8]>) -> bool {
+    // Skip spaces. Then return true if we are at the end or a dot or colon.
     let Some(input) = input else { return true };
     let skip = input.bytes().take_while(|b| *b == b' ').count();
     let Some(next) = input.get(skip) else { return true };
-    !(*next != b'.' && *next != b':')
+    *next == b'.' || *next == b':'
 }

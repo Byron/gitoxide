@@ -25,7 +25,7 @@ pub trait Delegate {
     /// Called whenever we push a directory on top of the stack, and after the respective call to [`push()`](Self::push).
     ///
     /// It is only called if the currently acted on path is a directory in itself, which is determined by knowing
-    /// that it's not the last component fo the path.
+    /// that it's not the last component of the path.
     /// Use [`Stack::current()`] to see the directory.
     fn push_directory(&mut self, stack: &Stack) -> std::io::Result<()>;
 

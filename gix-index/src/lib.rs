@@ -122,7 +122,7 @@ pub struct AccelerateLookup<'a> {
 /// This means that before using these paths to recreate files on disk, *they must be validated*.
 ///
 /// It's notable that it's possible to manufacture tree objects which contain names like `.git/hooks/pre-commit`
-/// which then will look like `.git/hooiks/pre-commit` in the index, which doesn't care that the name came from a single
+/// which then will look like `.git/hooks/pre-commit` in the index, which doesn't care that the name came from a single
 /// tree instead of from trees named `.git`, `hooks` and a blob named `pre-commit`. The effect is still the same - an invalid
 /// path is presented in the index and its consumer must validate each path component before usage.
 ///
