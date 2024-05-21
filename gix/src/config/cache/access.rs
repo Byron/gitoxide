@@ -271,8 +271,8 @@ impl Cache {
         })
     }
 
-    #[cfg(feature = "worktree-mutation")]
-    fn protect_options(&self) -> Result<gix_validate::path::component::Options, config::boolean::Error> {
+    #[cfg(feature = "index")]
+    pub(crate) fn protect_options(&self) -> Result<gix_validate::path::component::Options, config::boolean::Error> {
         const IS_WINDOWS: bool = cfg!(windows);
         const IS_MACOS: bool = cfg!(target_os = "macos");
         const ALWAYS_ON_FOR_SAFETY: bool = true;

@@ -41,12 +41,15 @@ pub mod attributes;
 mod cache;
 mod config;
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(feature = "blob-diff")]
 pub mod diff;
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(feature = "dirwalk")]
 mod dirwalk;
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(feature = "attributes")]
 pub mod filter;
 mod graph;
@@ -72,6 +75,24 @@ mod state;
 mod submodule;
 mod thread_safe;
 mod worktree;
+
+///
+#[allow(clippy::empty_docs)]
+#[cfg(feature = "index")]
+pub mod index_from_tree {
+    /// The error returned by [Repository::index_from_tree()](crate::Repository::index_from_tree).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not create index from tree at {id}")]
+        IndexFromTree {
+            id: gix_hash::ObjectId,
+            source: gix_index::init::from_tree::Error,
+        },
+        #[error("Couldn't obtain configuration for core.protect*")]
+        BooleanConfig(#[from] crate::config::boolean::Error),
+    }
+}
 
 ///
 #[allow(clippy::empty_docs)]
@@ -133,7 +154,7 @@ pub mod index_or_load_from_head {
         #[error(transparent)]
         TreeId(#[from] gix_object::decode::Error),
         #[error(transparent)]
-        TraverseTree(#[from] gix_traverse::tree::breadthfirst::Error),
+        TraverseTree(#[from] crate::repository::index_from_tree::Error),
         #[error(transparent)]
         OpenIndex(#[from] crate::worktree::open_index::Error),
     }
@@ -149,7 +170,7 @@ pub mod worktree_stream {
         #[error(transparent)]
         FindTree(#[from] crate::object::find::existing::Error),
         #[error(transparent)]
-        OpenTree(#[from] gix_traverse::tree::breadthfirst::Error),
+        OpenTree(#[from] crate::repository::index_from_tree::Error),
         #[error(transparent)]
         AttributesCache(#[from] crate::config::attribute_stack::Error),
         #[error(transparent)]

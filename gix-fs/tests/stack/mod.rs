@@ -1,3 +1,4 @@
+#![allow(clippy::join_absolute_paths)]
 use std::path::{Path, PathBuf};
 
 use gix_fs::Stack;
