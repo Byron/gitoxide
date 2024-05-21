@@ -10,6 +10,7 @@ use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target,
 };
+use std::error::Error;
 
 use crate::{
     file::{
@@ -426,6 +427,63 @@ fn symbolic_reference_writes_reflog_if_previous_value_is_set() -> crate::Result 
          as special accommodation for the state during clone to allow us to get a peeled id into the log"
     );
     assert!(store.try_find_loose(referent)?.is_none(), "referent wasn't created");
+
+    Ok(())
+}
+
+#[test]
+fn windows_device_name_is_illegal_with_enabled_windows_protections() -> crate::Result {
+    let (_keep, mut store) = empty_store()?;
+    store.prohibit_windows_device_names = true;
+    let log_ignored = LogChange {
+        mode: RefLog::AndReference,
+        force_create_reflog: false,
+        message: "ignored".into(),
+    };
+
+    let new = Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"));
+    for invalid_name in ["refs/heads/CON", "refs/CON/still-invalid"] {
+        let err = store
+            .transaction()
+            .prepare(
+                Some(RefEdit {
+                    change: Change::Update {
+                        log: log_ignored.clone(),
+                        new: new.clone(),
+                        expected: PreviousValue::Any,
+                    },
+                    name: invalid_name.try_into()?,
+                    deref: false,
+                }),
+                Fail::Immediately,
+                Fail::Immediately,
+            )
+            .unwrap_err();
+        assert_eq!(
+            err.source().expect("inner").to_string(),
+            format!("Illegal use of reserved Windows device name in \"{invalid_name}\""),
+            "it's notable that the check also kicks in when the previous value doesn't matter - we expect a 'read' to happen anyway \
+            - it can't be optimized away as the previous value is stored in the transaction result right now."
+        );
+    }
+
+    #[cfg(not(windows))]
+    {
+        store.prohibit_windows_device_names = false;
+        let _prepared_transaction = store.transaction().prepare(
+            Some(RefEdit {
+                change: Change::Update {
+                    log: log_ignored.clone(),
+                    new,
+                    expected: PreviousValue::Any,
+                },
+                name: "refs/heads/CON".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+            Fail::Immediately,
+        )?;
+    }
 
     Ok(())
 }
