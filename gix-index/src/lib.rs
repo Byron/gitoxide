@@ -26,7 +26,9 @@ pub mod entry;
 
 mod access;
 
-mod init;
+///
+#[allow(clippy::empty_docs)]
+pub mod init;
 
 ///
 #[allow(clippy::empty_docs)]
@@ -116,8 +118,8 @@ pub struct AccelerateLookup<'a> {
 ///
 /// # A note on safety
 ///
-/// An index (i.e. [`State`]) created [from a tree](State::from_tree()) is not guaranteed to have valid entry paths as those
-/// depend on the names contained in trees entirely, without applying any level of validation.
+/// An index (i.e. [`State`]) created by hand is not guaranteed to have valid entry paths as they are entirely controlled
+/// by the caller, without applying any level of validation.
 ///
 /// This means that before using these paths to recreate files on disk, *they must be validated*.
 ///

@@ -228,7 +228,7 @@ fn compare_states_against_baseline(
 
 fn compare_states(actual: &State, actual_version: Version, expected: &State, options: Options, fixture: &str) {
     actual.verify_entries().expect("valid");
-    actual.verify_extensions(false, gix::objs::find::Never).expect("valid");
+    actual.verify_extensions(false, gix_object::find::Never).expect("valid");
 
     assert_eq!(
         actual.version(),

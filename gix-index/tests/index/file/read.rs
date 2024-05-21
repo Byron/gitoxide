@@ -11,7 +11,7 @@ use crate::{hex_to_id, index::Fixture, loose_file_path};
 fn verify(index: gix_index::File) -> gix_index::File {
     index.verify_integrity().unwrap();
     index.verify_entries().unwrap();
-    index.verify_extensions(false, gix::objs::find::Never).unwrap();
+    index.verify_extensions(false, gix_object::find::Never).unwrap();
     index
 }
 

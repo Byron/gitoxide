@@ -1,4 +1,6 @@
-mod from_tree {
+#[allow(clippy::empty_docs)]
+///
+pub mod from_tree {
     use std::collections::VecDeque;
 
     use bstr::{BStr, BString, ByteSlice, ByteVec};
@@ -9,6 +11,19 @@ mod from_tree {
         entry::{Flags, Mode, Stat},
         Entry, PathStorage, State, Version,
     };
+
+    /// The error returned by [State::from_tree()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The path \"{path}\" is invalid")]
+        InvalidComponent {
+            path: BString,
+            source: gix_validate::path::component::Error,
+        },
+        #[error(transparent)]
+        Traversal(#[from] gix_traverse::tree::breadthfirst::Error),
+    }
 
     /// Initialization
     impl State {
@@ -32,23 +47,42 @@ mod from_tree {
         }
         /// Create an index [`State`] by traversing `tree` recursively, accessing sub-trees
         /// with `objects`.
+        /// `validate` is used to determine which validations to perform on every path component we see.
         ///
         /// **No extension data is currently produced**.
-        pub fn from_tree<Find>(tree: &gix_hash::oid, objects: Find) -> Result<Self, breadthfirst::Error>
+        pub fn from_tree<Find>(
+            tree: &gix_hash::oid,
+            objects: Find,
+            validate: gix_validate::path::component::Options,
+        ) -> Result<Self, Error>
         where
             Find: gix_object::Find,
         {
             let _span = gix_features::trace::coarse!("gix_index::State::from_tree()");
             let mut buf = Vec::new();
-            let root = objects.find_tree_iter(tree, &mut buf)?;
-            let mut delegate = CollectEntries::new();
-            breadthfirst(root, breadthfirst::State::default(), &objects, &mut delegate)?;
+            let root = objects
+                .find_tree_iter(tree, &mut buf)
+                .map_err(breadthfirst::Error::from)?;
+            let mut delegate = CollectEntries::new(validate);
+            match breadthfirst(root, breadthfirst::State::default(), &objects, &mut delegate) {
+                Ok(()) => {}
+                Err(gix_traverse::tree::breadthfirst::Error::Cancelled) => {
+                    let (path, err) = delegate
+                        .invalid_path
+                        .take()
+                        .expect("cancellation only happens on validation error");
+                    return Err(Error::InvalidComponent { path, source: err });
+                }
+                Err(err) => return Err(err.into()),
+            }
 
             let CollectEntries {
                 mut entries,
                 path_backing,
                 path: _,
                 path_deque: _,
+                validate: _,
+                invalid_path: _,
             } = delegate;
 
             entries.sort_by(|a, b| Entry::cmp_filepaths(a.path_in(&path_backing), b.path_in(&path_backing)));
@@ -76,15 +110,19 @@ mod from_tree {
         path_backing: PathStorage,
         path: BString,
         path_deque: VecDeque<BString>,
+        validate: gix_validate::path::component::Options,
+        invalid_path: Option<(BString, gix_validate::path::component::Error)>,
     }
 
     impl CollectEntries {
-        pub fn new() -> CollectEntries {
+        pub fn new(validate: gix_validate::path::component::Options) -> CollectEntries {
             CollectEntries {
                 entries: Vec::new(),
                 path_backing: Vec::new(),
                 path: BString::default(),
                 path_deque: VecDeque::new(),
+                validate,
+                invalid_path: None,
             }
         }
 
@@ -93,6 +131,11 @@ mod from_tree {
                 self.path.push(b'/');
             }
             self.path.push_str(name);
+            if self.invalid_path.is_none() {
+                if let Err(err) = gix_validate::path::component(name, None, self.validate) {
+                    self.invalid_path = Some((self.path.clone(), err))
+                }
+            }
         }
 
         pub fn add_entry(&mut self, entry: &tree::EntryRef<'_>) {
@@ -103,6 +146,18 @@ mod from_tree {
                 EntryKind::Link => Mode::SYMLINK,
                 EntryKind::Commit => Mode::COMMIT,
             };
+            // There are leaf-names that require special validation, specific to their mode.
+            // Double-validate just for this case, as the previous validation didn't know the mode yet.
+            if self.invalid_path.is_none() {
+                let start = self.path.rfind_byte(b'/').map(|pos| pos + 1).unwrap_or_default();
+                if let Err(err) = gix_validate::path::component(
+                    self.path[start..].as_ref(),
+                    (entry.mode.kind() == EntryKind::Link).then_some(gix_validate::path::component::Mode::Symlink),
+                    self.validate,
+                ) {
+                    self.invalid_path = Some((self.path.clone(), err));
+                }
+            }
 
             let path_start = self.path_backing.len();
             self.path_backing.extend_from_slice(&self.path);
@@ -117,6 +172,14 @@ mod from_tree {
 
             self.entries.push(new_entry);
         }
+
+        fn determine_action(&self) -> Action {
+            if self.invalid_path.is_none() {
+                Action::Continue
+            } else {
+                Action::Cancel
+            }
+        }
     }
 
     impl Visit for CollectEntries {
@@ -127,12 +190,12 @@ mod from_tree {
                 .expect("every call is matched with push_tracked_path_component");
         }
 
-        fn push_back_tracked_path_component(&mut self, component: &bstr::BStr) {
+        fn push_back_tracked_path_component(&mut self, component: &BStr) {
             self.push_element(component);
             self.path_deque.push_back(self.path.clone());
         }
 
-        fn push_path_component(&mut self, component: &bstr::BStr) {
+        fn push_path_component(&mut self, component: &BStr) {
             self.push_element(component);
         }
 
@@ -144,13 +207,13 @@ mod from_tree {
             }
         }
 
-        fn visit_tree(&mut self, _entry: &gix_object::tree::EntryRef<'_>) -> gix_traverse::tree::visit::Action {
-            Action::Continue
+        fn visit_tree(&mut self, _entry: &gix_object::tree::EntryRef<'_>) -> Action {
+            self.determine_action()
         }
 
-        fn visit_nontree(&mut self, entry: &gix_object::tree::EntryRef<'_>) -> gix_traverse::tree::visit::Action {
+        fn visit_nontree(&mut self, entry: &gix_object::tree::EntryRef<'_>) -> Action {
             self.add_entry(entry);
-            Action::Continue
+            self.determine_action()
         }
     }
 }

@@ -1963,6 +1963,7 @@ dependencies = [
  "gix-object 0.42.1",
  "gix-traverse 0.39.0",
  "gix-utils 0.1.12",
+ "gix-validate 0.8.4",
  "hashbrown 0.14.3",
  "itoa",
  "libc",
@@ -1979,10 +1980,11 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "filetime",
- "gix",
  "gix-features 0.38.1",
  "gix-hash 0.14.2",
  "gix-index 0.32.1",
+ "gix-object 0.42.1",
+ "gix-odb",
  "gix-testtools",
 ]
 
