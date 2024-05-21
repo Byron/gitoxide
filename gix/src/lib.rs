@@ -346,7 +346,7 @@ pub mod discover;
 
 pub mod env;
 
-#[cfg(feature = "index")]
+#[cfg(feature = "attributes")]
 fn is_dir_to_mode(is_dir: bool) -> gix_index::entry::Mode {
     if is_dir {
         gix_index::entry::Mode::DIR
