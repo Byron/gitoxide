@@ -175,7 +175,7 @@ dependencies = [
  "async-lock 3.2.0",
  "async-task",
  "concurrent-queue",
- "fastrand 2.0.1",
+ "fastrand 2.1.0",
  "futures-lite 2.1.0",
  "slab",
 ]
@@ -390,7 +390,7 @@ dependencies = [
  "async-channel 2.1.1",
  "async-lock 3.2.0",
  "async-task",
- "fastrand 2.0.1",
+ "fastrand 2.1.0",
  "futures-io",
  "futures-lite 2.1.0",
  "piper",
@@ -1004,9 +1004,9 @@ dependencies = [
 
 [[package]]
 name = "fastrand"
-version = "2.0.1"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
+checksum = "9fc0510504f03c51ada170672ac806f1f105a88aa97a5281117e1ddc3368e51a"
 
 [[package]]
 name = "filetime"
@@ -1146,7 +1146,7 @@ version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aeee267a1883f7ebef3700f262d2d54de95dfaf38189015a74fdc4e0c7ad8143"
 dependencies = [
- "fastrand 2.0.1",
+ "fastrand 2.1.0",
  "futures-core",
  "futures-io",
  "parking",
@@ -1810,6 +1810,8 @@ dependencies = [
 name = "gix-fs"
 version = "0.10.2"
 dependencies = [
+ "crossbeam-channel",
+ "fastrand 2.1.0",
  "gix-features 0.38.1",
  "gix-utils 0.1.12",
  "serde",
@@ -2593,7 +2595,7 @@ version = "0.14.0"
 dependencies = [
  "bstr",
  "crc",
- "fastrand 2.0.1",
+ "fastrand 2.1.0",
  "fs_extra",
  "gix-discover 0.26.0",
  "gix-fs 0.10.2",
@@ -2727,7 +2729,7 @@ version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f82c41937f00e15a1f6cb0b55307f0ca1f77f4407ff2bf440be35aa688c6a3e"
 dependencies = [
- "fastrand 2.0.1",
+ "fastrand 2.1.0",
 ]
 
 [[package]]
@@ -2735,7 +2737,7 @@ name = "gix-utils"
 version = "0.1.12"
 dependencies = [
  "bstr",
- "fastrand 2.0.1",
+ "fastrand 2.1.0",
  "unicode-normalization",
 ]
 
@@ -3709,7 +3711,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "668d31b1c4eba19242f2088b2bf3316b82ca31082a8335764db4e083db7485d4"
 dependencies = [
  "atomic-waker",
- "fastrand 2.0.1",
+ "fastrand 2.1.0",
  "futures-io",
 ]
 
@@ -4533,7 +4535,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a365e8cd18e44762ef95d87f284f4b5cd04107fec2ff3052bd6a3e6069669e67"
 dependencies = [
  "cfg-if",
- "fastrand 2.0.1",
+ "fastrand 2.1.0",
  "rustix 0.38.31",
  "windows-sys 0.52.0",
 ]

@@ -60,7 +60,8 @@ impl Capabilities {
         use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 
         // test it exactly as we typically create executable files, not using chmod.
-        let test_path = root.join("_test_executable_bit");
+        let rand = fastrand::usize(..);
+        let test_path = root.join(format!("_test_executable_bit{rand}"));
         let res = std::fs::OpenOptions::new()
             .create_new(true)
             .write(true)
@@ -87,8 +88,9 @@ impl Capabilities {
     }
 
     fn probe_precompose_unicode(root: &Path) -> std::io::Result<bool> {
-        let precomposed = "ä";
-        let decomposed = "a\u{308}";
+        let rand = fastrand::usize(..);
+        let precomposed = format!("ä{rand}");
+        let decomposed = format!("a\u{308}{rand}");
 
         let precomposed = root.join(precomposed);
         std::fs::OpenOptions::new()
@@ -101,7 +103,8 @@ impl Capabilities {
     }
 
     fn probe_symlink(root: &Path) -> std::io::Result<bool> {
-        let link_path = root.join("__file_link");
+        let rand = fastrand::usize(..);
+        let link_path = root.join(format!("__file_link{rand}"));
         if crate::symlink::create("dangling".as_ref(), &link_path).is_err() {
             return Ok(false);
         }
