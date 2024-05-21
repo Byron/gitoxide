@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 
 use super::{util, Error};
-use crate::config::cache::util::ApplyLeniency;
+use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefaultValue};
 use crate::config::tree::{Core, Extensions, Key};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
@@ -15,6 +15,7 @@ pub(crate) struct StageOne {
     pub object_hash: gix_hash::Kind,
     pub reflog: Option<gix_ref::store::WriteReflog>,
     pub precompose_unicode: bool,
+    pub protect_windows: bool,
 }
 
 /// Initialization
@@ -80,6 +81,15 @@ impl StageOne {
             .map_err(Error::ConfigBoolean)?
             .unwrap_or_default();
 
+        const IS_WINDOWS: bool = cfg!(windows);
+        let protect_windows = crate::config::tree::gitoxide::Core::PROTECT_WINDOWS
+            .enrich_error(
+                config
+                    .boolean("gitoxide", Some("core".into()), "protectWindows")
+                    .unwrap_or(Ok(IS_WINDOWS)),
+            )
+            .with_lenient_default_value(lenient, IS_WINDOWS)?;
+
         let reflog = util::query_refupdates(&config, lenient)?;
         Ok(StageOne {
             git_dir_config: config,
@@ -89,6 +99,7 @@ impl StageOne {
             object_hash,
             reflog,
             precompose_unicode,
+            protect_windows,
         })
     }
 }
