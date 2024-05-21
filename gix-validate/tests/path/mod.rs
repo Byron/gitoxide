@@ -1,3 +1,13 @@
+#[test]
+fn component_is_windows_device() {
+    for device in ["con", "CONIN$", "lpt1.txt", "AUX", "Prn", "NUL", "COM9"] {
+        assert!(gix_validate::path::component_is_windows_device(device.into()));
+    }
+    for not_device in ["coni", "CONIN", "lpt", "AUXi", "aPrn", "NULl", "COM"] {
+        assert!(!gix_validate::path::component_is_windows_device(not_device.into()));
+    }
+}
+
 mod component {
     use gix_validate::path::component;
 

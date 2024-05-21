@@ -124,16 +124,25 @@ pub fn component(
     Ok(input)
 }
 
-fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::Error> {
-    let in3 = input.get(..3)?;
+/// Return `true` if the path component at `input` looks like a Windows device, like `CON`
+/// or `LPT1` (case-insensitively).
+///
+/// This is relevant only on Windows, where one may be tricked into reading or writing to such devices.
+/// When reading from `CON`, a console-program may block until the user provided input.
+pub fn component_is_windows_device(input: &BStr) -> bool {
+    is_win_device(input)
+}
+
+fn is_win_device(input: &BStr) -> bool {
+    let Some(in3) = input.get(..3) else { return false };
     if in3.eq_ignore_ascii_case(b"AUX") && is_done_windows(input.get(3..)) {
-        return Some(component::Error::WindowsReservedName);
+        return true;
     }
     if in3.eq_ignore_ascii_case(b"NUL") && is_done_windows(input.get(3..)) {
-        return Some(component::Error::WindowsReservedName);
+        return true;
     }
     if in3.eq_ignore_ascii_case(b"PRN") && is_done_windows(input.get(3..)) {
-        return Some(component::Error::WindowsReservedName);
+        return true;
     }
     // Note that the following allows `COM0`, even though `LPT0` is not allowed.
     // Even though tests seem to indicate that neither `LPT0` nor `COM0` are valid
@@ -145,19 +154,26 @@ fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::E
         && input.get(3).map_or(false, |n| *n >= b'1' && *n <= b'9')
         && is_done_windows(input.get(4..))
     {
-        return Some(component::Error::WindowsReservedName);
+        return true;
     }
     if in3.eq_ignore_ascii_case(b"LPT")
         && input.get(3).map_or(false, u8::is_ascii_digit)
         && is_done_windows(input.get(4..))
     {
-        return Some(component::Error::WindowsReservedName);
+        return true;
     }
     if in3.eq_ignore_ascii_case(b"CON")
         && (is_done_windows(input.get(3..))
             || (input.get(3..6).map_or(false, |n| n.eq_ignore_ascii_case(b"IN$")) && is_done_windows(input.get(6..)))
             || (input.get(3..7).map_or(false, |n| n.eq_ignore_ascii_case(b"OUT$")) && is_done_windows(input.get(7..))))
     {
+        return true;
+    }
+    false
+}
+
+fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::Error> {
+    if is_win_device(input) {
         return Some(component::Error::WindowsReservedName);
     }
     if input.iter().any(|b| *b < 0x20 || b":<>\"|?*".contains(b)) {
