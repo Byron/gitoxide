@@ -178,6 +178,10 @@ fn overwriting_files_and_lone_directories_works() -> crate::Result {
         gix_filter::driver::apply::Delay::Forbid,
     ] {
         let mut opts = opts_from_probe();
+        assert!(
+            opts.fs.symlink,
+            "BUG: the probe must detect to be able to generate symlinks"
+        );
         opts.overwrite_existing = true;
         opts.filter_process_delay = delay;
         opts.destination_is_initially_empty = false;
@@ -197,7 +201,7 @@ fn overwriting_files_and_lone_directories_works() -> crate::Result {
                 let dir = dir.join("sub-dir");
                 std::fs::create_dir(&dir)?;
 
-                symlink::symlink_dir(empty, dir.join("symlink"))?; // 'symlink' is a symlink to another file
+                symlink::symlink_dir(empty, dir.join("symlink"))?; // 'symlink' is a symlink to a directory.
                 Ok(())
             },
         )?;
