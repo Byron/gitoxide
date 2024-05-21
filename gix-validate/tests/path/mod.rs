@@ -54,6 +54,11 @@ mod component {
         mktest!(not_dot_gitmodules_longer, b".gitmodulesa", Symlink, NO_OPTS);
         mktest!(not_dot_gitmodules_longer_all, b".gitmodulesa", Symlink, ALL_OPTS);
         mktest!(dot_gitmodules_as_file, b".gitmodules", UNIX_OPTS);
+        mktest!(
+            starts_with_dot_git_with_backslashes_on_linux,
+            b".git\\hooks\\precommit",
+            UNIX_OPTS
+        );
         mktest!(not_dot_git_shorter, b".gi", NO_OPTS);
         mktest!(not_dot_git_shorter_ntfs_8_3, b"gi~1");
         mktest!(not_dot_git_longer_ntfs_8_3, b"gitu~1");
@@ -119,6 +124,11 @@ mod component {
         mktest!(dot_git_lower_hfs, ".g\u{200c}it".as_bytes(), Error::DotGitDir);
         mktest!(dot_git_mixed_hfs_simple, b".Git", Error::DotGitDir);
         mktest!(dot_git_upper, b".GIT", Error::DotGitDir, NO_OPTS);
+        mktest!(
+            starts_with_dot_git_with_backslashes_on_windows,
+            b".git\\hooks\\precommit",
+            Error::PathSeparator
+        );
         mktest!(dot_git_upper_hfs, ".GIT\u{200e}".as_bytes(), Error::DotGitDir);
         mktest!(dot_git_upper_ntfs_8_3, b"GIT~1", Error::DotGitDir);
         mktest!(dot_git_mixed, b".gIt", Error::DotGitDir, NO_OPTS);
