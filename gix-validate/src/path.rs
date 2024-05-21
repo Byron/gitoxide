@@ -160,7 +160,7 @@ fn check_win_devices_and_illegal_characters(input: &BStr) -> Option<component::E
     {
         return Some(component::Error::WindowsReservedName);
     }
-    if input.iter().any(|b| b.is_ascii_control() || b":<>\"|?*".contains(b)) {
+    if input.iter().any(|b| *b < 0x20 || b":<>\"|?*".contains(b)) {
         return Some(component::Error::WindowsIllegalCharacter);
     }
     if input.ends_with(b".") || input.ends_with(b" ") {

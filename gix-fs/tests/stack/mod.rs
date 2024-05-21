@@ -58,7 +58,7 @@ fn path_join_handling() {
     assert_eq!(
         p("c:").join("relative"),
         p("c:relative"),
-        "absolute + relative = strange joined result with missing back-slash, but it's a valid path that works just like `c:\relative`"
+        "absolute + relative = strange joined result with missing backslash, but it's a valid path that works just like `c:\relative`"
     );
     assert_eq!(
         p("c:\\").join("relative"),
@@ -74,7 +74,7 @@ fn path_join_handling() {
     assert_eq!(
         p("\\\\.\\base").join(absolute),
         p("\\\\.\\base\\absolute"),
-        "absolute1 + absolute2 = joined result with backslash (device relative)"
+        "absolute1 + absolute2 = joined result with backslash (device namespace)"
     );
     assert_eq!(
         p("\\\\?\\base").join(bs_absolute),
@@ -84,7 +84,7 @@ fn path_join_handling() {
     assert_eq!(
         p("\\\\.\\base").join(bs_absolute),
         p("\\\\.\\base\\absolute"),
-        "absolute1 + absolute2 = joined result (device relative)"
+        "absolute1 + absolute2 = joined result (device namespace)"
     );
 
     assert_eq!(p("/").join("C:"), p("C:"), "unix-absolute + win-drive = win-drive");
@@ -101,7 +101,7 @@ fn path_join_handling() {
     assert_eq!(
         p("c:\\").join("\\\\.\\"),
         p("\\\\.\\"),
-        "d-drive-with-bs + device-relative-unc = device-relative-unc"
+        "d-drive-with-bs + device-namespace-unc = device-namespace-unc"
     );
     assert_eq!(
         p("/").join("C:/"),
@@ -112,7 +112,7 @@ fn path_join_handling() {
     assert_eq!(
         p("\\\\.").join("C:"),
         p("C:"),
-        "device-relative-unc + win-drive-relative = win-drive-relative - c: was supposed to be relative, but it's not acting like it."
+        "device-namespace-unc + win-drive-relative = win-drive-relative - c: was supposed to be relative, but it's not acting like it."
     );
     assert_eq!(p("relative").join("C:"), p("C:"), "relative + win-drive = win-drive");
 
@@ -150,7 +150,7 @@ fn path_join_handling() {
         "absolute1 + absolute2 = absolute2"
     );
 
-    assert_eq!(p("/").join("C:"), p("/C:"), "absolute + win-absolute = joined result");
+    assert_eq!(p("/").join("C:"), p("/C:"), "absolute + win-drive = joined result");
     assert_eq!(p("/").join("C:/"), p("/C:/"), "absolute + win-absolute = joined result");
     assert_eq!(
         p("/").join("C:\\"),
@@ -160,7 +160,7 @@ fn path_join_handling() {
     assert_eq!(
         p("relative").join("C:"),
         p("relative/C:"),
-        "relative + win-absolute = joined result"
+        "relative + win-drive = joined result"
     );
 
     assert_eq!(
