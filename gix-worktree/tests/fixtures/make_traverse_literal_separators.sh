@@ -27,8 +27,16 @@ function make_repo() (
 make_repo traverse_dotdot_slashes ../outside 100644 \
   <<<'A file outside the working tree, somehow.'
 
-# TODO: Should the payload be simplified to a single side effect for tests to check?
 make_repo traverse_dotgit_slashes .git/hooks/pre-commit 100755 <<'EOF'
+#!/bin/sh
+printf 'Vulnerable!\n'
+date >vulnerable
+EOF
+
+make_repo traverse_dotdot_backslashes '..\outside' 100644 \
+  <<<'A file outside the working tree, somehow.'
+
+make_repo traverse_dotgit_backslashes '.git\hooks\pre-commit' 100755 <<'EOF'
 #!/bin/sh
 printf 'Vulnerable!\n'
 date >vulnerable
