@@ -51,7 +51,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     .map_err(Error::from),
                 (None, None) => Ok(None),
                 (maybe_loose, _) => Ok(maybe_loose),
-            });
+            })?;
         let lock = match &mut change.update.change {
             Change::Delete { expected, .. } => {
                 let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref());
@@ -70,7 +70,6 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     .into()
                 };
 
-                let existing_ref = existing_ref?;
                 match (&expected, &existing_ref) {
                     (PreviousValue::MustNotExist, _) => {
                         panic!("BUG: MustNotExist constraint makes no sense if references are to be deleted")
@@ -120,7 +119,6 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 };
                 let mut lock = (!has_global_lock).then(obtain_lock).transpose()?;
 
-                let existing_ref = existing_ref?;
                 match (&expected, &existing_ref) {
                     (PreviousValue::Any, _)
                     | (PreviousValue::MustExist, Some(_))

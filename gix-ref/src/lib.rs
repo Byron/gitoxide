@@ -66,7 +66,7 @@ pub mod store {
     #[allow(clippy::empty_docs)]
     pub mod init {
 
-        /// Options for use during [initialization](crate::Store::at).
+        /// Options for use during [initialization](crate::file::Store::at).
         #[derive(Debug, Copy, Clone, Default)]
         pub struct Options {
             /// How to write the ref-log.

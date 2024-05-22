@@ -263,8 +263,8 @@ impl file::Store {
                 format!("Illegal use of reserved Windows device name in \"{}\"", name.as_bstr()),
             ));
         }
-        let ref_path = base.join(relative_path);
 
+        let ref_path = base.join(relative_path);
         match std::fs::File::open(&ref_path) {
             Ok(mut file) => {
                 let mut buf = Vec::with_capacity(128);
