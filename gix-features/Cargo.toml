@@ -25,7 +25,7 @@ progress-unit-human-numbers = ["prodash?/unit-human"]
 progress-unit-bytes = ["dep:bytesize", "prodash?/unit-bytes"]
 
 ## If set, walkdir iterators will be multi-threaded.
-fs-walkdir-parallel = [ "dep:jwalk", "dep:gix-utils" ]
+fs-walkdir-parallel = ["dep:jwalk", "dep:gix-utils"]
 
 ## Provide utilities suitable for working with the `std::fs::read_dir()`.
 fs-read-dir = ["dep:gix-utils"]
@@ -34,10 +34,10 @@ fs-read-dir = ["dep:gix-utils"]
 ##
 ## Note that this may have overhead as well, thus instrumentations should be used stategically, only providing coarse tracing by default and adding details
 ## only where needed while marking them with the appropriate level.
-tracing = [ "gix-trace/tracing" ]
+tracing = ["gix-trace/tracing"]
 
 ## If enabled, detailed tracing is also emitted, which can greatly increase insights but at a cost.
-tracing-detail = [ "gix-trace/tracing-detail" ]
+tracing-detail = ["gix-trace/tracing-detail"]
 
 ## Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
 ## where it makes sense.
@@ -45,7 +45,7 @@ tracing-detail = [ "gix-trace/tracing-detail" ]
 ## The `threading` module will contain thread-safe primitives for shared ownership and mutation, otherwise these will be their single threaded counterparts.
 ## This way, single-threaded applications don't have to pay for threaded primitives.
 parallel = ["dep:crossbeam-channel",
- "dep:parking_lot"]
+    "dep:parking_lot"]
 ## If enabled, OnceCell will be made available for interior mutability either in sync or unsync forms.
 once_cell = ["dep:once_cell"]
 ## Makes facilities of the `walkdir` crate partially available.
@@ -159,7 +159,7 @@ bstr = { version = "1.3.0", default-features = false }
 
 # Assembly doesn't yet compile on MSVC on windows, but does on GNU, see https://github.com/RustCrypto/asm-hashes/issues/17
 # At this time, only aarch64, x86 and x86_64 are supported.
-[target.'cfg(all(any(target_arch = "aarch64", target_arch = "x86", target_arch = "x86_64"), not(target_env = "msvc")))'.dependencies]
+[target.'cfg(all(any(target_arch = "aarch64", target_arch = "x86", target_arch = "x86_64"), not(target_os = "windows")))'.dependencies]
 sha1 = { version = "0.10.0", optional = true, features = ["asm"] }
 
 [package.metadata.docs.rs]

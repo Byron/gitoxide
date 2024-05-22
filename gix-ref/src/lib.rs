@@ -62,6 +62,25 @@ pub mod peel;
 ///
 #[allow(clippy::empty_docs)]
 pub mod store {
+    ///
+    #[allow(clippy::empty_docs)]
+    pub mod init {
+
+        /// Options for use during [initialization](crate::file::Store::at).
+        #[derive(Debug, Copy, Clone, Default)]
+        pub struct Options {
+            /// How to write the ref-log.
+            pub write_reflog: super::WriteReflog,
+            /// The kind of hash to expect in
+            pub object_hash: gix_hash::Kind,
+            /// The equivalent of `core.precomposeUnicode`.
+            pub precompose_unicode: bool,
+            /// If `true`, we will avoid reading from or writing to references that contains Windows device names
+            /// to avoid side effects. This only needs to be `true` on Windows, but can be `true` on other platforms
+            /// if they need to remain compatible with Windows.
+            pub prohibit_windows_device_names: bool,
+        }
+    }
     /// The way a file store handles the reflog
     #[derive(Default, Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
     pub enum WriteReflog {
@@ -93,9 +112,8 @@ pub mod store {
     ///
     #[path = "general/handle/mod.rs"]
     mod handle;
-    pub use handle::find;
-
     use crate::file;
+    pub use handle::find;
 }
 
 /// The git reference store.

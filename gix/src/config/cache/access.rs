@@ -271,6 +271,36 @@ impl Cache {
         })
     }
 
+    #[cfg(feature = "index")]
+    pub(crate) fn protect_options(&self) -> Result<gix_validate::path::component::Options, config::boolean::Error> {
+        const IS_WINDOWS: bool = cfg!(windows);
+        const IS_MACOS: bool = cfg!(target_os = "macos");
+        const ALWAYS_ON_FOR_SAFETY: bool = true;
+        Ok(gix_validate::path::component::Options {
+            protect_windows: config::tree::gitoxide::Core::PROTECT_WINDOWS
+                .enrich_error(
+                    self.resolved
+                        .boolean("gitoxide", Some("core".into()), "protectWindows")
+                        .unwrap_or(Ok(IS_WINDOWS)),
+                )
+                .with_lenient_default_value(self.lenient_config, IS_WINDOWS)?,
+            protect_hfs: config::tree::Core::PROTECT_HFS
+                .enrich_error(
+                    self.resolved
+                        .boolean("core", None, "protectHFS")
+                        .unwrap_or(Ok(IS_MACOS)),
+                )
+                .with_lenient_default_value(self.lenient_config, IS_MACOS)?,
+            protect_ntfs: config::tree::Core::PROTECT_NTFS
+                .enrich_error(
+                    self.resolved
+                        .boolean("core", None, "protectNTFS")
+                        .unwrap_or(Ok(ALWAYS_ON_FOR_SAFETY)),
+                )
+                .with_lenient_default_value(self.lenient_config, ALWAYS_ON_FOR_SAFETY)?,
+        })
+    }
+
     /// Collect everything needed to checkout files into a worktree.
     /// Note that some of the options being returned will be defaulted so safe settings, the caller might have to override them
     /// depending on the use-case.
@@ -310,6 +340,7 @@ impl Cache {
         };
         Ok(gix_worktree_state::checkout::Options {
             filter_process_delay,
+            validate: self.protect_options()?,
             filters,
             attributes: self
                 .assemble_attribute_globals(git_dir, attributes_source, self.attributes)?

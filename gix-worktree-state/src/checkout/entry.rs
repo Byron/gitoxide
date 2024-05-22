@@ -80,8 +80,7 @@ where
     let dest_relative = gix_path::try_from_bstr(entry_path).map_err(|_| crate::checkout::Error::IllformedUtf8 {
         path: entry_path.to_owned(),
     })?;
-    let is_dir = Some(entry.mode == gix_index::entry::Mode::COMMIT || entry.mode == gix_index::entry::Mode::DIR);
-    let path_cache = path_cache.at_path(dest_relative, is_dir, &*objects)?;
+    let path_cache = path_cache.at_path(dest_relative, Some(entry.mode), &*objects)?;
     let dest = path_cache.path();
 
     let object_size = match entry.mode {

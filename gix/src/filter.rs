@@ -135,7 +135,7 @@ impl<'repo> Pipeline<'repo> {
 impl<'repo> Pipeline<'repo> {
     /// Convert a `src` stream (to be found at `rela_path`, a repo-relative path) to a representation suitable for storage in `git`
     /// by using all attributes at `rela_path` and configuration of the repository to know exactly which filters apply.
-    /// `index` is used in particularly rare cases where the CRLF filter in auto-mode tries to determine whether or not to apply itself,
+    /// `index` is used in particularly rare cases where the CRLF filter in auto-mode tries to determine whether to apply itself,
     /// and it should match the state used when [instantiating this instance][Self::new()].
     /// Note that the return-type implements [`std::io::Read`].
     pub fn convert_to_git<R>(
@@ -147,7 +147,7 @@ impl<'repo> Pipeline<'repo> {
     where
         R: std::io::Read,
     {
-        let entry = self.cache.at_path(rela_path, Some(false), &self.repo.objects)?;
+        let entry = self.cache.at_path(rela_path, None, &self.repo.objects)?;
         Ok(self.inner.convert_to_git(
             src,
             rela_path,
@@ -179,7 +179,7 @@ impl<'repo> Pipeline<'repo> {
         can_delay: gix_filter::driver::apply::Delay,
     ) -> Result<gix_filter::pipeline::convert::ToWorktreeOutcome<'input, '_>, pipeline::convert_to_worktree::Error>
     {
-        let entry = self.cache.at_entry(rela_path, Some(false), &self.repo.objects)?;
+        let entry = self.cache.at_entry(rela_path, None, &self.repo.objects)?;
         Ok(self.inner.convert_to_worktree(
             src,
             rela_path,

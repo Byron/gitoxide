@@ -161,7 +161,11 @@ pub fn path(
                 .as_mut()
                 .map_or(Ok(None), |stack| {
                     stack
-                        .at_entry(rela_path.as_bstr(), disk_kind.map(|ft| ft.is_dir()), ctx.objects)
+                        .at_entry(
+                            rela_path.as_bstr(),
+                            disk_kind.map(|ft| is_dir_to_mode(ft.is_dir())),
+                            ctx.objects,
+                        )
                         .map(|platform| platform.excluded_kind())
                 })
                 .map_err(Error::ExcludesAccess)?
@@ -203,9 +207,9 @@ pub fn path(
         && ctx.excludes.is_some()
         && kind.map_or(false, |ft| ft == entry::Kind::Symlink)
     {
-        path.metadata().ok().map(|md| md.is_dir()).or(Some(false))
+        path.metadata().ok().map(|md| is_dir_to_mode(md.is_dir()))
     } else {
-        kind.map(|ft| ft.is_dir())
+        kind.map(|ft| is_dir_to_mode(ft.is_dir()))
     };
 
     let mut maybe_upgrade_to_repository = |current_kind, find_harder: bool| {
@@ -406,5 +410,13 @@ fn is_eq(lhs: &BStr, rhs: impl AsRef<BStr>, ignore_case: bool) -> bool {
         lhs.eq_ignore_ascii_case(rhs.as_ref().as_ref())
     } else {
         lhs == rhs.as_ref()
+    }
+}
+
+fn is_dir_to_mode(is_dir: bool) -> gix_index::entry::Mode {
+    if is_dir {
+        gix_index::entry::Mode::DIR
+    } else {
+        gix_index::entry::Mode::FILE
     }
 }

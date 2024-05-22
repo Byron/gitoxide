@@ -1,5 +1,4 @@
-use bstr::{BStr, ByteSlice};
-
+use crate::stack::mode_is_dir;
 use crate::{stack::State, PathIdMapping};
 
 /// Various aggregate numbers related to the stack delegate itself.
@@ -22,7 +21,7 @@ pub(crate) struct StackDelegate<'a, 'find> {
     pub state: &'a mut State,
     pub buf: &'a mut Vec<u8>,
     #[cfg_attr(not(feature = "attributes"), allow(dead_code))]
-    pub is_dir: bool,
+    pub mode: Option<gix_index::entry::Mode>,
     pub id_mappings: &'a Vec<PathIdMapping>,
     pub objects: &'find dyn gix_object::Find,
     pub case: gix_glob::pattern::Case,
@@ -32,29 +31,15 @@ pub(crate) struct StackDelegate<'a, 'find> {
 impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
     fn push_directory(&mut self, stack: &gix_fs::Stack) -> std::io::Result<()> {
         self.statistics.delegate.push_directory += 1;
-        let dir_bstr = gix_path::into_bstr(stack.current());
-        let rela_dir_cow = gix_path::to_unix_separators_on_windows(
-            gix_glob::search::pattern::strip_base_handle_recompute_basename_pos(
-                gix_path::into_bstr(stack.root()).as_ref(),
-                dir_bstr.as_ref(),
-                None,
-                self.case,
-            )
-            .expect("dir in root")
-            .0,
-        );
-        let rela_dir: &BStr = if rela_dir_cow.starts_with(b"/") {
-            rela_dir_cow[1..].as_bstr()
-        } else {
-            rela_dir_cow.as_ref()
-        };
+        let rela_dir_bstr = gix_path::into_bstr(stack.current_relative());
+        let rela_dir = gix_path::to_unix_separators_on_windows(rela_dir_bstr);
         match &mut self.state {
             #[cfg(feature = "attributes")]
             State::CreateDirectoryAndAttributesStack { attributes, .. } | State::AttributesStack(attributes) => {
                 attributes.push_directory(
                     stack.root(),
                     stack.current(),
-                    rela_dir,
+                    &rela_dir,
                     self.buf,
                     self.id_mappings,
                     self.objects,
@@ -66,7 +51,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                 attributes.push_directory(
                     stack.root(),
                     stack.current(),
-                    rela_dir,
+                    &rela_dir,
                     self.buf,
                     self.id_mappings,
                     self.objects,
@@ -75,7 +60,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                 ignore.push_directory(
                     stack.root(),
                     stack.current(),
-                    rela_dir,
+                    &rela_dir,
                     self.buf,
                     self.id_mappings,
                     self.objects,
@@ -86,7 +71,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
             State::IgnoreStack(ignore) => ignore.push_directory(
                 stack.root(),
                 stack.current(),
-                rela_dir,
+                &rela_dir,
                 self.buf,
                 self.id_mappings,
                 self.objects,
@@ -104,14 +89,18 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
             #[cfg(feature = "attributes")]
             State::CreateDirectoryAndAttributesStack {
                 unlink_on_collision,
+                validate,
                 attributes: _,
-            } => create_leading_directory(
-                is_last_component,
-                stack,
-                self.is_dir,
-                &mut self.statistics.delegate.num_mkdir_calls,
-                *unlink_on_collision,
-            )?,
+            } => {
+                validate_last_component(stack, self.mode, *validate)?;
+                create_leading_directory(
+                    is_last_component,
+                    stack,
+                    self.mode,
+                    &mut self.statistics.delegate.num_mkdir_calls,
+                    *unlink_on_collision,
+                )?
+            }
             #[cfg(feature = "attributes")]
             State::AttributesAndIgnoreStack { .. } | State::AttributesStack(_) => {}
             State::IgnoreStack(_) => {}
@@ -139,14 +128,46 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
 }
 
 #[cfg(feature = "attributes")]
+fn validate_last_component(
+    stack: &gix_fs::Stack,
+    mode: Option<gix_index::entry::Mode>,
+    opts: gix_validate::path::component::Options,
+) -> std::io::Result<()> {
+    let Some(last_component) = stack.current_relative().components().next_back() else {
+        return Ok(());
+    };
+    let last_component =
+        gix_path::try_into_bstr(std::borrow::Cow::Borrowed(last_component.as_os_str().as_ref())).map_err(|_err| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!(
+                    "Path component {last_component:?} of path \"{}\" contained invalid UTF-8 and could not be validated",
+                    stack.current_relative().display()
+                ),
+            )
+        })?;
+
+    if let Err(err) = gix_validate::path::component(
+        last_component.as_ref(),
+        mode.and_then(|m| {
+            (m == gix_index::entry::Mode::SYMLINK).then_some(gix_validate::path::component::Mode::Symlink)
+        }),
+        opts,
+    ) {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, err));
+    }
+    Ok(())
+}
+
+#[cfg(feature = "attributes")]
 fn create_leading_directory(
     is_last_component: bool,
     stack: &gix_fs::Stack,
-    is_dir: bool,
+    mode: Option<gix_index::entry::Mode>,
     mkdir_calls: &mut usize,
     unlink_on_collision: bool,
 ) -> std::io::Result<()> {
-    if is_last_component && !is_dir {
+    if is_last_component && !mode_is_dir(mode).unwrap_or(false) {
         return Ok(());
     }
     *mkdir_calls += 1;

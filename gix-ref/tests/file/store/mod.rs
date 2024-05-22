@@ -21,9 +21,11 @@ fn precompose_unicode_journey() -> crate::Result {
 
     let store_decomposed = gix_ref::file::Store::at(
         root,
-        WriteReflog::Always,
-        gix_hash::Kind::Sha1,
-        false, /* precompose_unicode */
+        gix_ref::store::init::Options {
+            write_reflog: WriteReflog::Always,
+            precompose_unicode: false,
+            ..Default::default()
+        },
     );
     assert!(!store_decomposed.precompose_unicode);
 
@@ -46,9 +48,11 @@ fn precompose_unicode_journey() -> crate::Result {
 
     let store_precomposed = gix_ref::file::Store::at(
         tmp.path().join(precomposed_a), // it's important that root paths are also precomposed then.
-        WriteReflog::Always,
-        gix_hash::Kind::Sha1,
-        true, /* precompose_unicode */
+        gix_ref::store::init::Options {
+            write_reflog: WriteReflog::Always,
+            precompose_unicode: true,
+            ..Default::default()
+        },
     );
 
     let precomposed_ref = format!("refs/heads/{precomposed_a}");

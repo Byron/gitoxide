@@ -27,6 +27,9 @@ pub struct Store {
     pub write_reflog: WriteReflog,
     /// The namespace to use for edits and reads
     pub namespace: Option<Namespace>,
+    /// This is only needed on Windows, where some device names are reserved at any level of a path, so that
+    /// reading or writing `refs/heads/CON` for example would read from the console, or write to it.
+    pub prohibit_windows_device_names: bool,
     /// If set, we will convert decomposed unicode like `a\u308` into precomposed unicode like `ä` when reading
     /// ref names from disk.
     /// Note that this is an internal operation that isn't observable on the outside, but it's needed for lookups

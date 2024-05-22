@@ -507,7 +507,7 @@ pub(crate) mod convert_to_diffable {
         assert_eq!(out.data, Some(pipeline::Data::Binary { size: 11 }));
         assert_eq!(buf.len(), 0, "buffers are cleared even if we read them");
 
-        let platform = attributes.at_entry("c", Some(false), &gix_object::find::Never)?;
+        let platform = attributes.at_entry("c", None, &gix_object::find::Never)?;
 
         let id = db.insert("b");
         let out = filter.convert_to_diffable(
@@ -589,7 +589,7 @@ pub(crate) mod convert_to_diffable {
         let mut db = ObjectDb::default();
         let null = gix_hash::Kind::Sha1.null();
         let mut buf = Vec::new();
-        let platform = attributes.at_entry("a", Some(false), &gix_object::find::Never)?;
+        let platform = attributes.at_entry("a", None, &gix_object::find::Never)?;
         let worktree_modes = [
             pipeline::Mode::ToWorktreeAndBinaryToText,
             pipeline::Mode::ToGitUnlessBinaryToTextIsPresent,
@@ -672,7 +672,7 @@ pub(crate) mod convert_to_diffable {
             "no filter was applied in this mode, also when using the ODB"
         );
 
-        let platform = attributes.at_entry("missing", Some(false), &gix_object::find::Never)?;
+        let platform = attributes.at_entry("missing", None, &gix_object::find::Never)?;
         for mode in all_modes {
             buf.push(1);
             let out = filter.convert_to_diffable(
@@ -731,7 +731,7 @@ pub(crate) mod convert_to_diffable {
             );
         }
 
-        let platform = attributes.at_entry("b", Some(false), &gix_object::find::Never)?;
+        let platform = attributes.at_entry("b", None, &gix_object::find::Never)?;
         for mode in all_modes {
             buf.push(1);
             let out = filter.convert_to_diffable(
@@ -781,7 +781,7 @@ pub(crate) mod convert_to_diffable {
             assert_eq!(buf.len(), 0, "it's always cleared before any potential use");
         }
 
-        let platform = attributes.at_entry("c", Some(false), &gix_object::find::Never)?;
+        let platform = attributes.at_entry("c", None, &gix_object::find::Never)?;
         for mode in worktree_modes {
             let out = filter.convert_to_diffable(
                 &null,
@@ -827,7 +827,7 @@ pub(crate) mod convert_to_diffable {
             );
         }
 
-        let platform = attributes.at_entry("unset", Some(false), &gix_object::find::Never)?;
+        let platform = attributes.at_entry("unset", None, &gix_object::find::Never)?;
         for mode in all_modes {
             let out = filter.convert_to_diffable(
                 &null,
@@ -879,7 +879,7 @@ pub(crate) mod convert_to_diffable {
             assert_eq!(buf.len(), 0);
         }
 
-        let platform = attributes.at_entry("d", Some(false), &gix_object::find::Never)?;
+        let platform = attributes.at_entry("d", None, &gix_object::find::Never)?;
         let id = db.insert("d-in-db");
         for mode in worktree_modes {
             let out = filter.convert_to_diffable(
@@ -923,7 +923,7 @@ pub(crate) mod convert_to_diffable {
             );
         }
 
-        let platform = attributes.at_entry("e-no-attr", Some(false), &gix_object::find::Never)?;
+        let platform = attributes.at_entry("e-no-attr", None, &gix_object::find::Never)?;
         let out = filter.convert_to_diffable(
             &null,
             EntryKind::Blob,

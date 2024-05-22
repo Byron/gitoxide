@@ -11,3 +11,5 @@ mkdir d
 
 git add .
 git commit -m "empty"
+
+git rev-parse @^{tree} > head.tree

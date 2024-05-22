@@ -60,9 +60,14 @@ pub mod ignore;
 impl State {
     /// Configure a state to be suitable for checking out files, which only needs access to attribute files read from the index.
     #[cfg(feature = "attributes")]
-    pub fn for_checkout(unlink_on_collision: bool, attributes: Attributes) -> Self {
+    pub fn for_checkout(
+        unlink_on_collision: bool,
+        validate: gix_validate::path::component::Options,
+        attributes: Attributes,
+    ) -> Self {
         State::CreateDirectoryAndAttributesStack {
             unlink_on_collision,
+            validate,
             attributes,
         }
     }

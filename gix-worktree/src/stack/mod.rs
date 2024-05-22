@@ -28,6 +28,8 @@ pub enum State {
     CreateDirectoryAndAttributesStack {
         /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
         unlink_on_collision: bool,
+        /// Options to control how newly created path components should be validated.
+        validate: gix_validate::path::component::Options,
         /// State to handle attribute information
         attributes: state::Attributes,
     },
@@ -103,22 +105,23 @@ impl Stack {
 impl Stack {
     /// Append the `relative` path to the root directory of the cache and efficiently create leading directories, while assuring that no
     /// symlinks are in that path.
-    /// Unless `is_dir` is known with `Some(…)`, then `relative` points to a directory itself in which case the entire resulting
-    /// path is created as directory. If it's not known it is assumed to be a file.
+    /// Unless `mode` is known with `Some(gix_index::entry::Mode::DIR|COMMIT)`,
+    /// then `relative` points to a directory itself in which case the entire resulting path is created as directory.
+    /// If it's not known it is assumed to be a file.
     /// `objects` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()], with mappnigs
     ///
     /// Provide access to cached information for that `relative` path via the returned platform.
     pub fn at_path(
         &mut self,
         relative: impl AsRef<Path>,
-        is_dir: Option<bool>,
+        mode: Option<gix_index::entry::Mode>,
         objects: &dyn gix_object::Find,
     ) -> std::io::Result<Platform<'_>> {
         self.statistics.platforms += 1;
         let mut delegate = StackDelegate {
             state: &mut self.state,
             buf: &mut self.buf,
-            is_dir: is_dir.unwrap_or(false),
+            mode,
             id_mappings: &self.id_mappings,
             objects,
             case: self.case,
@@ -126,34 +129,44 @@ impl Stack {
         };
         self.stack
             .make_relative_path_current(relative.as_ref(), &mut delegate)?;
-        Ok(Platform { parent: self, is_dir })
+        Ok(Platform {
+            parent: self,
+            is_dir: mode_is_dir(mode),
+        })
     }
 
-    /// Obtain a platform for lookups from a repo-`relative` path, typically obtained from an index entry. `is_dir` should reflect
-    /// whether it's a directory or not, or left at `None` if unknown.
+    /// Obtain a platform for lookups from a repo-`relative` path, typically obtained from an index entry. `mode` should reflect
+    /// the kind of item set here, or left at `None` if unknown.
     /// `objects` maybe used to lookup objects from an [id mapping][crate::stack::State::id_mappings_from_index()].
     /// All effects are similar to [`at_path()`][Self::at_path()].
     ///
-    /// If `relative` ends with `/` and `is_dir` is `None`, it is automatically assumed to be a directory.
-    ///
-    /// ### Panics
-    ///
-    /// on illformed UTF8 in `relative`
+    /// If `relative` ends with `/` and `mode` is `None`, it is automatically assumed set to be a directory.
     pub fn at_entry<'r>(
         &mut self,
         relative: impl Into<&'r BStr>,
-        is_dir: Option<bool>,
+        mode: Option<gix_index::entry::Mode>,
         objects: &dyn gix_object::Find,
     ) -> std::io::Result<Platform<'_>> {
         let relative = relative.into();
-        let relative_path = gix_path::from_bstr(relative);
+        let relative_path = gix_path::try_from_bstr(relative).map_err(|_err| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("The path \"{relative}\" contained invalid UTF-8 and could not be turned into a path"),
+            )
+        })?;
 
         self.at_path(
             relative_path,
-            is_dir.or_else(|| relative.ends_with_str("/").then_some(true)),
+            mode.or_else(|| relative.ends_with_str("/").then_some(gix_index::entry::Mode::DIR)),
             objects,
         )
     }
+}
+
+fn mode_is_dir(mode: Option<gix_index::entry::Mode>) -> Option<bool> {
+    mode.map(|m|
+        // This applies to directories and commits (submodules are directories on disk)
+        m.is_sparse() || m.is_submodule())
 }
 
 /// Mutation

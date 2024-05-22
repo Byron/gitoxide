@@ -86,7 +86,7 @@ impl crate::Repository {
             objects.clone(),
             pipeline,
             move |path, mode, attrs| -> std::io::Result<()> {
-                let entry = cache.at_entry(path, Some(mode.is_tree()), &objects)?;
+                let entry = cache.at_entry(path, Some(mode.into()), &objects)?;
                 entry.matching_attributes(attrs);
                 Ok(())
             },

@@ -208,7 +208,11 @@ mod from_tree {
                 );
                 let mut link = ar.by_name("prefix/symlink-to-a")?;
                 assert!(!link.is_dir());
-                assert!(link.is_file(), "no symlink differentiation");
+                assert_eq!(
+                    link.is_symlink(),
+                    cfg!(not(windows)),
+                    "symlinks are supported as well, but only on Unix"
+                );
                 assert_eq!(
                     link.unix_mode(),
                     Some(if cfg!(windows) { 0o100644 } else { 0o120644 }),
@@ -233,7 +237,7 @@ mod from_tree {
             noop_pipeline(),
             move |rela_path, mode, attrs| {
                 cache
-                    .at_entry(rela_path, mode.is_tree().into(), &odb)
+                    .at_entry(rela_path, Some(mode.into()), &odb)
                     .map(|entry| entry.matching_attributes(attrs))
                     .map(|_| ())
             },

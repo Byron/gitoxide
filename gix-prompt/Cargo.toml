@@ -23,6 +23,6 @@ parking_lot = "0.12.1"
 rustix = { version = "0.38.4", features = ["termios"] }
 
 [dev-dependencies]
-gix-testtools = { path = "../tests/tools"}
-serial_test = { version = "2.0.0", default-features = false }
+gix-testtools = { path = "../tests/tools" }
+serial_test = { version = "3.1.0", default-features = false }
 expectrl = "0.7.0"

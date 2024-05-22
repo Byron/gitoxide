@@ -1,7 +1,7 @@
 use crate::bstr::{BStr, BString};
 use crate::util::OwnedOrStaticAtomicBool;
 use crate::worktree::IndexPersistedOrInMemory;
-use crate::{config, dirwalk, Repository};
+use crate::{config, dirwalk, is_dir_to_mode, Repository};
 use std::sync::atomic::AtomicBool;
 
 impl Repository {
@@ -64,7 +64,7 @@ impl Repository {
                         .expect("can only be called if attributes are used in patterns");
                     stack
                         .set_case(case)
-                        .at_entry(relative_path, Some(is_dir), &self.objects)
+                        .at_entry(relative_path, Some(is_dir_to_mode(is_dir)), &self.objects)
                         .map_or(false, |platform| platform.matching_attributes(out))
                 },
                 excludes: Some(&mut excludes.inner),

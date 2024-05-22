@@ -251,8 +251,20 @@ impl file::Store {
 
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
     pub(crate) fn ref_contents(&self, name: &FullNameRef) -> io::Result<Option<Vec<u8>>> {
-        let ref_path = self.reference_path(name);
+        let (base, relative_path) = self.reference_path_with_base(name);
+        if self.prohibit_windows_device_names
+            && relative_path
+                .components()
+                .filter_map(|c| gix_path::try_os_str_into_bstr(c.as_os_str().into()).ok())
+                .any(|c| gix_validate::path::component_is_windows_device(c.as_ref()))
+        {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Illegal use of reserved Windows device name in \"{}\"", name.as_bstr()),
+            ));
+        }
 
+        let ref_path = base.join(relative_path);
         match std::fs::File::open(&ref_path) {
             Ok(mut file) => {
                 let mut buf = Vec::with_capacity(128);

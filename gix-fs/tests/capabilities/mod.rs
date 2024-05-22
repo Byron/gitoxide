@@ -20,3 +20,29 @@ fn probe() {
         assert!(caps.executable_bit, "Unix should always honor executable bits");
     }
 }
+
+#[test]
+fn parallel_probe() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::File::create(dir.path().join("config")).unwrap();
+    let baseline = gix_fs::Capabilities::probe(dir.path());
+
+    let (tx, rx) = crossbeam_channel::unbounded::<()>();
+    let threads: Vec<_> = (0..10)
+        .map(|_id| {
+            std::thread::spawn({
+                let dir = dir.path().to_owned();
+                let rx = rx.clone();
+                move || {
+                    for _ in rx {}
+                    let actual = gix_fs::Capabilities::probe(&dir);
+                    assert_eq!(actual, baseline);
+                }
+            })
+        })
+        .collect();
+    drop((rx, tx));
+    for thread in threads {
+        thread.join().expect("no panic");
+    }
+}

@@ -111,12 +111,14 @@ impl crate::Repository {
     /// Create new index-file, which would live at the correct location, in memory from the given `tree`.
     ///
     /// Note that this is an expensive operation as it requires recursively traversing the entire tree to unpack it into the index.
-    pub fn index_from_tree(
-        &self,
-        tree: &gix_hash::oid,
-    ) -> Result<gix_index::File, gix_traverse::tree::breadthfirst::Error> {
+    pub fn index_from_tree(&self, tree: &gix_hash::oid) -> Result<gix_index::File, super::index_from_tree::Error> {
         Ok(gix_index::File::from_state(
-            gix_index::State::from_tree(tree, &self.objects)?,
+            gix_index::State::from_tree(tree, &self.objects, self.config.protect_options()?).map_err(|err| {
+                super::index_from_tree::Error::IndexFromTree {
+                    id: tree.into(),
+                    source: err,
+                }
+            })?,
             self.git_dir().join("index"),
         ))
     }

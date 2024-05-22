@@ -26,9 +26,10 @@ fn run() -> crate::Result {
             let store = gix_odb::at(base.join("client").join(".git/objects"))?;
             let refs = gix_ref::file::Store::at(
                 base.join("client").join(".git"),
-                WriteReflog::Disable,
-                gix_hash::Kind::Sha1,
-                false,
+                gix_ref::store::init::Options {
+                    write_reflog: WriteReflog::Disable,
+                    ..Default::default()
+                },
             );
             let lookup_names = |names: &[&str]| -> Vec<gix_hash::ObjectId> {
                 names

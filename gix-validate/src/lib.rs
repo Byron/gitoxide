@@ -13,3 +13,7 @@ pub mod tag;
 ///
 #[allow(clippy::empty_docs)]
 pub mod submodule;
+
+///
+#[allow(clippy::empty_docs)]
+pub mod path;
