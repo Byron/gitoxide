@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.51.0 (2024-05-22)
 
 ### Bug Fixes (BREAKING)
 
@@ -17,16 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    in the Git codebase.
    
    It also looks like that Git [will never write packs that aren't V2](https://github.com/git/git/blob/0f3415f1f8478b05e64db11eb8aaa2915e48fef6/pack-write.c#L352)
-    - initially I thought it might write V3 based on some other criteria.
-   
-   For now, the thesis is that one would have to be able to mark bad objects
-   to be able to handle this more gracefully, but all we can do is try to fail.
+   - initially I thought it might write V3 based on some other criteria.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 9 calendar days.
+ - 4 commits contributed to the release over the course of 9 calendar days.
  - 38 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -38,10 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'status' ([`04ef31e`](https://github.com/Byron/gitoxide/commit/04ef31e9d6f5332d49037a5a4c248ebbb5aaf92b))
     - Adapt to changes in `gix-pack` ([`bad5b48`](https://github.com/Byron/gitoxide/commit/bad5b48e4f0d865b0b0937f136d9a0041aa88046))
     - Don't panic when unknown entry types are encountered. ([`b32a847`](https://github.com/Byron/gitoxide/commit/b32a847e10b742834169fac56c284645c1ed28f3))
 </details>
+
+<csr-unknown>
+For now, the thesis is that one would have to be able to mark bad objectsto be able to handle this more gracefully, but all we can do is try to fail.<csr-unknown/>
 
 ## 0.50.0 (2024-04-13)
 

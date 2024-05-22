@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.44.0 (2024-05-22)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 38 calendar days.
+ - 8 commits contributed to the release over the course of 38 calendar days.
  - 38 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
     - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
     - Adapt to changes in `gix-worktree` ([`1ca6a3c`](https://github.com/Byron/gitoxide/commit/1ca6a3ce22887c7eb42ec3e0a19f6e1202715745))

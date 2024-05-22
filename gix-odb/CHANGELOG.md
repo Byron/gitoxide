@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.61.0 (2024-05-22)
 
 ### Bug Fixes
 
@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 10 calendar days.
+ - 6 commits contributed to the release over the course of 10 calendar days.
  - 38 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Release gix-date v0.8.6 ([`d3588ca`](https://github.com/Byron/gitoxide/commit/d3588ca4fe0364c88e42cdac24ceae548355d99d))
     - Merge branch 'status' ([`04ef31e`](https://github.com/Byron/gitoxide/commit/04ef31e9d6f5332d49037a5a4c248ebbb5aaf92b))
     - Adapt to changes in `gix-pack` ([`bad5b48`](https://github.com/Byron/gitoxide/commit/bad5b48e4f0d865b0b0937f136d9a0041aa88046))

@@ -1,6 +1,6 @@
 [package]
 name = "gix-diff"
-version = "0.43.0"
+version = "0.44.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "Calculate differences between various git objects"
@@ -24,13 +24,13 @@ doctest = false
 
 [dependencies]
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-gix-object = { version = "^0.42.0", path = "../gix-object" }
-gix-filter = { version = "^0.11.1", path = "../gix-filter", optional = true }
-gix-worktree = { version = "^0.33.1", path = "../gix-worktree", default-features = false, features = ["attributes"], optional = true }
-gix-command = { version = "^0.3.6", path = "../gix-command", optional = true }
+gix-object = { version = "^0.42.2", path = "../gix-object" }
+gix-filter = { version = "^0.11.2", path = "../gix-filter", optional = true }
+gix-worktree = { version = "^0.34.0", path = "../gix-worktree", default-features = false, features = ["attributes"], optional = true }
+gix-command = { version = "^0.3.7", path = "../gix-command", optional = true }
 gix-path = { version = "^0.10.7", path = "../gix-path", optional = true }
-gix-fs = { version = "^0.10.2", path = "../gix-fs", optional = true }
-gix-tempfile = { version = "^13.0.0", path = "../gix-tempfile", optional = true }
+gix-fs = { version = "^0.11.0", path = "../gix-fs", optional = true }
+gix-tempfile = { version = "^14.0.0", path = "../gix-tempfile", optional = true }
 gix-trace = { version = "^0.1.9", path = "../gix-trace", optional = true }
 
 thiserror = "1.0.32"

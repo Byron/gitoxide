@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.11.0 (2024-05-22)
 
 ### Bug Fixes
 
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 33 calendar days.
+ - 10 commits contributed to the release over the course of 33 calendar days.
  - 38 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1354](https://github.com/Byron/gitoxide/issues/1354), [#1373](https://github.com/Byron/gitoxide/issues/1373)
@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1373](https://github.com/Byron/gitoxide/issues/1373)**
     - Better detection of pre-requisites for symlink test ([`00a1c47`](https://github.com/Byron/gitoxide/commit/00a1c47e7f3566feb14a4926b0cd3834f7007686))
  * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
     - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
     - Add tests for actual worktree checkouts to assure validations kick in ([`a6710c5`](https://github.com/Byron/gitoxide/commit/a6710c552670412cbb3d3d175c243ed086f25f33))

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.63.0 (2024-05-22)
 
 ### New Features
 
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 22 commits contributed to the release over the course of 38 calendar days.
+ - 23 commits contributed to the release over the course of 38 calendar days.
  - 38 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1352](https://github.com/Byron/gitoxide/issues/1352), [#1370](https://github.com/Byron/gitoxide/issues/1370)
@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1370](https://github.com/Byron/gitoxide/issues/1370)**
     - Empty paths as configured will not be an error with lenient configuration enabled. ([`3c7b7b3`](https://github.com/Byron/gitoxide/commit/3c7b7b3a7b981040cd51417202d7022597179114))
  * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
     - Update dependencies ([`cd4de83`](https://github.com/Byron/gitoxide/commit/cd4de8327fc195eb862ab6e138f2315a87374f85))
     - Fix-CI ([`6f55f2a`](https://github.com/Byron/gitoxide/commit/6f55f2abd13078f94e8c4e10922806f195ae0d8b))
