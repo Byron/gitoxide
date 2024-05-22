@@ -208,7 +208,11 @@ mod from_tree {
                 );
                 let mut link = ar.by_name("prefix/symlink-to-a")?;
                 assert!(!link.is_dir());
-                assert!(link.is_file(), "no symlink differentiation");
+                assert_eq!(
+                    link.is_symlink(),
+                    cfg!(not(windows)),
+                    "symlinks are supported as well, but only on Unix"
+                );
                 assert_eq!(
                     link.unix_mode(),
                     Some(if cfg!(windows) { 0o100644 } else { 0o120644 }),

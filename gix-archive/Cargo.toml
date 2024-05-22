@@ -31,7 +31,7 @@ gix-path = { version = "^0.10.7", path = "../gix-path", optional = true }
 gix-date = { version = "^0.8.6", path = "../gix-date" }
 
 flate2 = { version = "1.0.26", optional = true }
-zip = { version = "0.6.6", optional = true, default-features = false, features = ["deflate", "time"] }
+zip = { version = "1.3.1", optional = true, default-features = false, features = ["deflate", "time"] }
 time = { version = "0.3.23", optional = true, default-features = false, features = ["std"] }
 
 thiserror = "1.0.26"
@@ -42,13 +42,13 @@ tar = { version = "0.4.38", optional = true }
 document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
-gix-testtools = { path = "../tests/tools"}
-gix-odb = { path = "../gix-odb"}
-gix-worktree = { path = "../gix-worktree", default-features = false, features = ["attributes"]}
-gix-hash = { path = "../gix-hash"}
-gix-attributes = { path = "../gix-attributes"}
-gix-object = { path = "../gix-object"}
-gix-filter = { path = "../gix-filter"}
+gix-testtools = { path = "../tests/tools" }
+gix-odb = { path = "../gix-odb" }
+gix-worktree = { path = "../gix-worktree", default-features = false, features = ["attributes"] }
+gix-hash = { path = "../gix-hash" }
+gix-attributes = { path = "../gix-attributes" }
+gix-object = { path = "../gix-object" }
+gix-filter = { path = "../gix-filter" }
 
 [package.metadata.docs.rs]
 all-features = true
