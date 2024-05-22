@@ -66,7 +66,7 @@ mod component {
         mktest!(dot_gitmodules_as_file, b".gitmodules", UNIX_OPTS);
         mktest!(
             starts_with_dot_git_with_backslashes_on_linux,
-            b".git\\hooks\\precommit",
+            b".git\\hooks\\pre-commit",
             UNIX_OPTS
         );
         mktest!(not_dot_git_shorter, b".gi", NO_OPTS);
@@ -136,7 +136,7 @@ mod component {
         mktest!(dot_git_upper, b".GIT", Error::DotGitDir, NO_OPTS);
         mktest!(
             starts_with_dot_git_with_backslashes_on_windows,
-            b".git\\hooks\\precommit",
+            b".git\\hooks\\pre-commit",
             Error::PathSeparator
         );
         mktest!(dot_git_upper_hfs, ".GIT\u{200e}".as_bytes(), Error::DotGitDir);
@@ -199,12 +199,12 @@ mod component {
             Error::WindowsIllegalCharacter
         );
         mktest!(
-            ntfs_stream_default_explicit,
-            b"file:$ANYTHING_REALLY:$DATA",
+            ntfs_stream_explicit,
+            b"file:ANYTHING_REALLY:$DATA",
             Error::WindowsIllegalCharacter
         );
         mktest!(
-            dot_gitmodules_lower_ntfs_stream_default_explicit,
+            dot_gitmodules_lower_ntfs_stream,
             b".gitmodules:$DATA:$DATA",
             Error::SymlinkedGitModules,
             Symlink,

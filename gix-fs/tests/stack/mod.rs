@@ -59,7 +59,7 @@ fn path_join_handling() {
     assert_eq!(
         p("c:").join("relative"),
         p("c:relative"),
-        "absolute + relative = strange joined result with missing backslash, but it's a valid path that works just like `c:\relative`"
+        "drive + relative = strange joined result with missing backslash, but it's a valid path that works just like `c:\relative`"
     );
     assert_eq!(
         p("c:\\").join("relative"),
@@ -102,7 +102,7 @@ fn path_join_handling() {
     assert_eq!(
         p("c:\\").join("\\\\.\\"),
         p("\\\\.\\"),
-        "d-drive-with-bs + device-namespace-unc = device-namespace-unc"
+        "c-drive-with-bs + device-namespace-unc = device-namespace-unc"
     );
     assert_eq!(
         p("/").join("C:/"),
