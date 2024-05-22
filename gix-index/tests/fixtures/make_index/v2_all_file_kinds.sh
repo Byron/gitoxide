@@ -22,3 +22,5 @@ mkdir d
 
 git add .
 git commit -m "init"
+
+git rev-parse @^{tree} > head.tree

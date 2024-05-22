@@ -21,5 +21,9 @@ gix-features = { version = "^0.38.1", path = "../gix-features", features = ["fs-
 gix-utils = { version = "^0.1.12", path = "../gix-utils" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"] }
 
+# For `Capabilities` to assure parallel operation works.
+fastrand = { version = "2.1.0", default-features = false, features = ["std"] }
+
 [dev-dependencies]
 tempfile = "3.5.0"
+crossbeam-channel = "0.5.0"

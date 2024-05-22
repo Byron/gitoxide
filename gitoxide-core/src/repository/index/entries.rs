@@ -31,6 +31,7 @@ pub(crate) mod function {
     };
 
     use crate::{
+        is_dir_to_mode,
         repository::index::entries::{Attributes, Options},
         OutputFormat,
     };
@@ -174,7 +175,7 @@ pub(crate) mod function {
                                         }
                                         // The user doesn't want attributes, so we set the cache position on demand only
                                         None => cache
-                                            .at_entry(rela_path, Some(is_dir))
+                                            .at_entry(rela_path, Some(is_dir_to_mode(is_dir)))
                                             .ok()
                                             .map(|platform| platform.matching_attributes(out))
                                             .unwrap_or_default(),

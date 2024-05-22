@@ -33,34 +33,29 @@ impl DerefMut for AttributeStack<'_> {
 
 /// Platform retrieval
 impl<'repo> AttributeStack<'repo> {
-    /// Append the `relative` path to the root directory of the cache and efficiently create leading directories, while assuring that no
-    /// symlinks are in that path.
-    /// Unless `is_dir` is known with `Some(…)`, then `relative` points to a directory itself in which case the entire resulting
-    /// path is created as directory. If it's not known it is assumed to be a file.
+    /// Append the `relative` path to the root directory of the cache and load all attribute or ignore files on the way as needed.
+    /// Use `mode` to specify what kind of item lives at `relative` - directories may match against rules specifically.
+    /// If `mode` is `None`, the item at `relative` is assumed to be a file.
     ///
-    /// Provide access to cached information for that `relative` path via the returned platform.
+    /// The returned platform may be used to access the actual attribute or ignore information.
     #[doc(alias = "is_path_ignored", alias = "git2")]
     pub fn at_path(
         &mut self,
         relative: impl AsRef<std::path::Path>,
-        is_dir: Option<bool>,
+        mode: Option<gix_index::entry::Mode>,
     ) -> std::io::Result<gix_worktree::stack::Platform<'_>> {
-        self.inner.at_path(relative, is_dir, &self.repo.objects)
+        self.inner.at_path(relative, mode, &self.repo.objects)
     }
 
-    /// Obtain a platform for lookups from a repo-`relative` path, typically obtained from an index entry. `is_dir` should reflect
-    /// whether it's a directory or not, or left at `None` if unknown.
+    /// Obtain a platform for attribute or ignore lookups from a repo-`relative` path, typically obtained from an index entry.
+    /// `mode` should reflect whether it's a directory or not, or left at `None` if unknown.
     ///
-    /// If `relative` ends with `/` and `is_dir` is `None`, it is automatically assumed to be a directory.
-    ///
-    /// ### Panics
-    ///
-    /// - on illformed UTF8 in `relative`
+    /// If `relative` ends with `/` and `mode` is `None`, it is automatically assumed to be a directory.
     pub fn at_entry<'r>(
         &mut self,
         relative: impl Into<&'r BStr>,
-        is_dir: Option<bool>,
+        mode: Option<gix_index::entry::Mode>,
     ) -> std::io::Result<gix_worktree::stack::Platform<'_>> {
-        self.inner.at_entry(relative, is_dir, &self.repo.objects)
+        self.inner.at_entry(relative, mode, &self.repo.objects)
     }
 }

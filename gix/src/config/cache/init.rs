@@ -28,6 +28,7 @@ impl Cache {
             object_hash,
             reflog: _,
             precompose_unicode: _,
+            protect_windows: _,
         }: StageOne,
         git_dir: &std::path::Path,
         branch_name: Option<&gix_ref::FullNameRef>,

@@ -19,6 +19,9 @@ pub use gix_glob as glob;
 pub use gix_ignore as ignore;
 /// Provides types needed for using [`Stack::at_path()`] and [`Stack::at_entry()`].
 pub use gix_object as object;
+/// Provides types needed for using [`stack::State::for_checkout()`].
+#[cfg(feature = "attributes")]
+pub use gix_validate as validate;
 
 /// A cache for efficiently executing operations on directories and files which are encountered in sorted order.
 /// That way, these operations can be re-used for subsequent invocations in the same directory.

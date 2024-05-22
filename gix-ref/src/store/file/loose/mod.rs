@@ -35,15 +35,18 @@ mod init {
     impl file::Store {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
         /// `refs/` subdirectory.
-        /// The `object_hash` defines which kind of hash we should recognize.
+        /// Use [`Options`](crate::store::init::Options) to adjust settings.
         ///
-        /// Note that if `precompose_unicode` is set, the `git_dir` is also expected to use precomposed unicode,
-        /// or else some operations that strip prefixes will fail.
+        /// Note that if [`precompose_unicode`](crate::store::init::Options::precompose_unicode) is set in the options,
+        /// the `git_dir` is also expected to use precomposed unicode, or else some operations that strip prefixes will fail.
         pub fn at(
             git_dir: PathBuf,
-            write_reflog: file::WriteReflog,
-            object_hash: gix_hash::Kind,
-            precompose_unicode: bool,
+            crate::store::init::Options {
+                write_reflog,
+                object_hash,
+                precompose_unicode,
+                prohibit_windows_device_names,
+            }: crate::store::init::Options,
         ) -> Self {
             file::Store {
                 git_dir,
@@ -51,6 +54,7 @@ mod init {
                 common_dir: None,
                 write_reflog,
                 namespace: None,
+                prohibit_windows_device_names,
                 packed: gix_fs::SharedFileSnapshotMut::new().into(),
                 object_hash,
                 precompose_unicode,
@@ -60,14 +64,17 @@ mod init {
         /// Like [`at()`][file::Store::at()], but for _linked_ work-trees which use `git_dir` as private ref store and `common_dir` for
         /// shared references.
         ///
-        /// Note that if `precompose_unicode` is set, the `git_dir` and `common_dir` are also expected to use precomposed unicode,
-        /// or else some operations that strip prefixes will fail.
+        /// Note that if [`precompose_unicode`](crate::store::init::Options::precompose_unicode) is set, the `git_dir` and
+        /// `common_dir` are also expected to use precomposed unicode, or else some operations that strip prefixes will fail.
         pub fn for_linked_worktree(
             git_dir: PathBuf,
             common_dir: PathBuf,
-            write_reflog: file::WriteReflog,
-            object_hash: gix_hash::Kind,
-            precompose_unicode: bool,
+            crate::store::init::Options {
+                write_reflog,
+                object_hash,
+                precompose_unicode,
+                prohibit_windows_device_names,
+            }: crate::store::init::Options,
         ) -> Self {
             file::Store {
                 git_dir,
@@ -75,6 +82,7 @@ mod init {
                 common_dir: Some(common_dir),
                 write_reflog,
                 namespace: None,
+                prohibit_windows_device_names,
                 packed: gix_fs::SharedFileSnapshotMut::new().into(),
                 object_hash,
                 precompose_unicode,

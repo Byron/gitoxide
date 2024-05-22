@@ -98,8 +98,7 @@ impl Attributes {
         objects: &dyn gix_object::Find,
         stats: &mut Statistics,
     ) -> std::io::Result<()> {
-        let attr_path_relative =
-            gix_path::to_unix_separators_on_windows(gix_path::join_bstr_unix_pathsep(rela_dir, ".gitattributes"));
+        let attr_path_relative = gix_path::join_bstr_unix_pathsep(rela_dir, ".gitattributes");
         let attr_file_in_index = id_mappings.binary_search_by(|t| t.0.as_bstr().cmp(attr_path_relative.as_ref()));
         // Git does not follow symbolic links as per documentation.
         let no_follow_symlinks = false;

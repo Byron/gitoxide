@@ -17,6 +17,11 @@ fn baseline() -> crate::Result {
     let mut collection = gix_attributes::search::MetadataCollection::default();
     let state = gix_worktree::stack::State::for_checkout(
         false,
+        gix_worktree::validate::path::component::Options {
+            protect_windows: false,
+            protect_ntfs: false,
+            ..Default::default()
+        },
         state::Attributes::new(
             gix_attributes::Search::new_globals([base.join("user.attributes")], &mut buf, &mut collection)?,
             Some(git_dir.join("info").join("attributes")),
