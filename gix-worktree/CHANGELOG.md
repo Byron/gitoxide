@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features (BREAKING)
+
+ - <csr-id-595fe877455824ee1f079976b61d4a5bad74383d/> `Stack::at_path()` replaces `is_dir` parameter with `mode`.
+   That way, detailed information about the path-to-be is available not
+   only for evaluating attributes or excludes, but also for validating
+   path components (in this case, relevant for `.gitmodules`).
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-874cfd6dd7e371f178ec5f63368220b272608805/> validate all components pushed onto the stack when creating leading paths.
+   This way, everyone using the stack with the purpose of
+   altering the working tree will run additional checks to prevent callers
+   from sneaking in forbidden paths.
+   
+   Note that these checks don't run otherwise, so one has to be careful
+   to not forget to run these checks whenever needed.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 29 commits contributed to the release over the course of 33 calendar days.
+ - 33 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
+    - Add tests for actual worktree checkouts to assure validations kick in ([`a6710c5`](https://github.com/Byron/gitoxide/commit/a6710c552670412cbb3d3d175c243ed086f25f33))
+    - Make more test repos with traversal-attempting blob names ([`f3edaa3`](https://github.com/Byron/gitoxide/commit/f3edaa352ab266de2d24b7b71133bcc17ee661b3))
+    - Combine non-"slashes" (i.e. trees) scripts and make it a fixture ([`6f44aca`](https://github.com/Byron/gitoxide/commit/6f44aca4dc1e04f082f5d6c6bdf0b11df28d3a28))
+    - Combine "slashes" scripts and make it a fixture ([`7e9c769`](https://github.com/Byron/gitoxide/commit/7e9c76993a72f1d982cb1c1f73dcd42afe3ec6d2))
+    - Adjust make_traverse_dotdot_slashes.sh for environment ([`fe8c2c9`](https://github.com/Byron/gitoxide/commit/fe8c2c939db69ffce855059e2b16be50efcc05e6))
+    - Start on demo script making repo with ../… filename ([`4c684ca`](https://github.com/Byron/gitoxide/commit/4c684cae998d757eb5013825a1bc62bb46122f2a))
+    - Pass --literally to hash-object when making tree ([`6846c90`](https://github.com/Byron/gitoxide/commit/6846c90efbc6fa861709b719ab2629818c4b1fee))
+    - Reword to be more portable and self-documenting ([`89ee180`](https://github.com/Byron/gitoxide/commit/89ee1806c91692af9266fb9fad6dd1b235292dad))
+    - Split into commented sections ([`9436f3f`](https://github.com/Byron/gitoxide/commit/9436f3f498bbba6bc781a17033ccfcceb45a5721))
+    - Show the new commit, once made and on the branch ([`981cf5b`](https://github.com/Byron/gitoxide/commit/981cf5b944dff07ea59c89e5454614876e0bc831))
+    - Start on demo script making repo with .git/… filename ([`7daca49`](https://github.com/Byron/gitoxide/commit/7daca4924f33b40df9437c339ca090996e8f9b0d))
+    - Use .git::$INDEX_ALLOCATION instead of .git:$I30 ([`7041e73`](https://github.com/Byron/gitoxide/commit/7041e73d21f5be06308a51650ded012cbc5675c2))
+    - Start on demo script making repo with NTFS stream ([`49eb14c`](https://github.com/Byron/gitoxide/commit/49eb14cc94fde0924490917385a79ceb97cf57f1))
+    - Stage and set mode in one step instead of two ([`a59c05a`](https://github.com/Byron/gitoxide/commit/a59c05aa8c6de6f83a9b9ae11eba5f9b42f045c5))
+    - Don't require the filesystem that makes the repo to support +x ([`0581966`](https://github.com/Byron/gitoxide/commit/0581966a9a1ea7a143a8557a9f83fa28a51972c0))
+    - Don't bother running `git show --stat` ([`845c6bc`](https://github.com/Byron/gitoxide/commit/845c6bc34e00f4d0c830bb9900b96d075cf6ce9d))
+    - No need to actually create the directories ([`0d15e5c`](https://github.com/Byron/gitoxide/commit/0d15e5c561a3aaf2eac439b022b95e5b0ebdde51))
+    - Set LC_ALL=C when using sed on a binary file ([`9180dde`](https://github.com/Byron/gitoxide/commit/9180dde2a3a173f0cab3f34440066b6c9db26e52))
+    - Make the script more robust, and don't require `ex` ([`474bf0d`](https://github.com/Byron/gitoxide/commit/474bf0dc6efae8c939b963a47c8139cf5710a617))
+    - Add missing executable bit to payloads ([`4e3b77d`](https://github.com/Byron/gitoxide/commit/4e3b77d07ea8ada921a40cc256a2cd1c02423c36))
+    - Hard-code target to fix remaining replacement bugs ([`bf49d73`](https://github.com/Byron/gitoxide/commit/bf49d7328e46b0e94625276e272cca9a495d6707))
+    - Start on demo script making repo with .. trees, deploying above repo ([`7fa0185`](https://github.com/Byron/gitoxide/commit/7fa0185e7dc3f250255c47f105e7a8a33bb43180))
+    - Thanks clippy ([`1076375`](https://github.com/Byron/gitoxide/commit/1076375571c493fe4f2cd512b28bb4e28d365292))
+    - `Stack::at_path()` replaces `is_dir` parameter with `mode`. ([`595fe87`](https://github.com/Byron/gitoxide/commit/595fe877455824ee1f079976b61d4a5bad74383d))
+    - Validate all components pushed onto the stack when creating leading paths. ([`874cfd6`](https://github.com/Byron/gitoxide/commit/874cfd6dd7e371f178ec5f63368220b272608805))
+    - Add validation for path components and tree-names ([`0d78db2`](https://github.com/Byron/gitoxide/commit/0d78db2440c3866bfa972c8773aa7d8e7b245f2e))
+    - Merge branch 'cargo-fixes' ([`977346e`](https://github.com/Byron/gitoxide/commit/977346ee61de6207c66f3de003db6e8c722fb81c))
+</details>
+
 ## 0.33.1 (2024-04-18)
 
 A maintenance release without user-facing changes.
@@ -13,7 +85,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 4 calendar days.
+ - 4 commits contributed to the release over the course of 4 calendar days.
  - 5 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +97,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-index v0.32.1, gix-pathspec v0.7.4, gix-worktree v0.33.1, gix-dir v0.4.1 ([`54ac559`](https://github.com/Byron/gitoxide/commit/54ac55946bb04635cd74582a1ce2e4bee70f2e60))
     - Prepare changelog prior to `gix-dir` patch release ([`6ca6fa6`](https://github.com/Byron/gitoxide/commit/6ca6fa69b5c21c8d8e9e07e21558e98201504cda))
     - Merge pull request #1345 from EliahKagan/shell-scripts ([`fe24c89`](https://github.com/Byron/gitoxide/commit/fe24c89e326670deaa3aaa643276d612d866072e))
     - Add missing +x bit on scripts that are run and not sourced ([`41bf65a`](https://github.com/Byron/gitoxide/commit/41bf65adef6f7d2cdd28fede262173ec7ba10822))

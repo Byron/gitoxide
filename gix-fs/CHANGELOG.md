@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-bec648dc5790186cddbe12277978baf572f8e164/> multi-process safe parallel filesystem capabilities probing
+   This is achieved by making filenames unique so they won't clash.
+ - <csr-id-31d02a89ee15a0df463a5b5c34864497f8adfae1/> default to creating file-symlinks if it is dangling on Windows
+   This behaviour is the same as in Git.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-874cfd6dd7e371f178ec5f63368220b272608805/> validate all components pushed onto the stack when creating leading paths.
+   This way, everyone using the stack with the purpose of
+   altering the working tree will run additional checks to prevent callers
+   from sneaking in forbidden paths.
+   
+   Note that these checks don't run otherwise, so one has to be careful
+   to not forget to run these checks whenever needed.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 8 calendar days.
+ - 38 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#1354](https://github.com/Byron/gitoxide/issues/1354), [#1373](https://github.com/Byron/gitoxide/issues/1373)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1354](https://github.com/Byron/gitoxide/issues/1354)**
+    - Default to creating file-symlinks if it is dangling on Windows ([`31d02a8`](https://github.com/Byron/gitoxide/commit/31d02a89ee15a0df463a5b5c34864497f8adfae1))
+ * **[#1373](https://github.com/Byron/gitoxide/issues/1373)**
+    - Multi-process safe parallel filesystem capabilities probing ([`bec648d`](https://github.com/Byron/gitoxide/commit/bec648dc5790186cddbe12277978baf572f8e164))
+ * **Uncategorized**
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
+    - Apply suggestions from code review ([`1242151`](https://github.com/Byron/gitoxide/commit/1242151079004ae99fae7b80966de151961a6159))
+    - Adapt to changes in `gix-index` ([`5f86e6b`](https://github.com/Byron/gitoxide/commit/5f86e6b11bb73921b458ffee9091bc028a7d6204))
+    - Apply suggestions from code review ([`ccbc119`](https://github.com/Byron/gitoxide/commit/ccbc1197b6dcb7e7118e206183582d6b46fc5ebc))
+    - Address review comments ([`fcc3b69`](https://github.com/Byron/gitoxide/commit/fcc3b69867db1628f6a44d0e0dad8f7417f566bc))
+    - Apply suggestions from code review ([`bad9a79`](https://github.com/Byron/gitoxide/commit/bad9a797b99880ce9d1c20e11c801bd0e741db64))
+    - Validate all components pushed onto the stack when creating leading paths. ([`874cfd6`](https://github.com/Byron/gitoxide/commit/874cfd6dd7e371f178ec5f63368220b272608805))
+    - Add validation for path components and tree-names ([`0d78db2`](https://github.com/Byron/gitoxide/commit/0d78db2440c3866bfa972c8773aa7d8e7b245f2e))
+    - Merge branch 'status' ([`04ef31e`](https://github.com/Byron/gitoxide/commit/04ef31e9d6f5332d49037a5a4c248ebbb5aaf92b))
+    - Improve the symlink probing by simplifying it ([`7a3c583`](https://github.com/Byron/gitoxide/commit/7a3c583d51629697804c9f6d122b505b0afcefc8))
+</details>
+
 ## 0.10.2 (2024-04-13)
 
 A maintenance release without user-facing changes.
@@ -13,7 +65,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 2 calendar days.
+ - 4 commits contributed to the release over the course of 2 calendar days.
  - 29 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +77,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-trace v0.1.9, gix-utils v0.1.12, gix-packetline-blocking v0.17.4, gix-filter v0.11.1, gix-fs v0.10.2, gix-traverse v0.39.0, gix-worktree-stream v0.12.0, gix-archive v0.12.0, gix-config v0.36.1, gix-url v0.27.3, gix-index v0.32.0, gix-worktree v0.33.0, gix-diff v0.43.0, gix-pathspec v0.7.3, gix-dir v0.4.0, gix-pack v0.50.0, gix-odb v0.60.0, gix-transport v0.42.0, gix-protocol v0.45.0, gix-status v0.9.0, gix-worktree-state v0.10.0, gix v0.62.0, gix-fsck v0.4.0, gitoxide-core v0.37.0, gitoxide v0.35.0, safety bump 14 crates ([`095c673`](https://github.com/Byron/gitoxide/commit/095c6739b2722a8b9af90776b435ef2da454c0e6))
     - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
     - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
     - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))

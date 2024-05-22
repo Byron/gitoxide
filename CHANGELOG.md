@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-886d6b58e4612ac21cc660ea4ddf1dd0b49d1c6e/> checkout respects options for `core.protectHFS` and `core.protectNTFS`.
+   This also adds `gitoxide.core.protectWindows` as a way to enforce
+   additional restrictions that are usually only available on Windows.
+   
+   Note that `core.protectNFS` is always enabled by default, just like
+   [it is in Git](https://github.com/git/git/commit/9102f958ee5254b10c0be72672aa3305bf4f4704).
+
+### Bug Fixes
+
+ - <csr-id-addf446f052ff74edcdb083f2b2968b313daa940/> more robustness in the face of a trampling-herd of threads loading a single index.
+   The motivating example is here: https://github.com/praetorian-inc/noseyparker/issues/179
+   
+   Previously, it was possible for a trampling herd of threads to consolidate the
+   disk state. Most of them would be 'needs-init' threads which could notice that
+   the initialization already happened, and just use that.
+   
+   But a thread might be late for the party and somehow manages to not get any
+   newly loaded index, and thus tries to consolidate with what's on disk again.
+   Then it would again determine no change, and return nothing, causing the caller
+   to abort and not find objects it should find because it wouldn't see the index
+   that it should have seen.
+   
+   The reason the thread got into this mess is that the 'is-load-ongoing' flagging
+   was racy itself, so it would not wait for ongoing loads and just conclude nothing
+   happened. An extra delay (by yielding) now assures it either seees the loading state
+   and waits for it, sees the newly loaded indices.
+   
+   Note that this issue can be reproduced with:
+   
+   ```
+   './target/release/gix -r repo-with-one-pack -t10 --trace odb stats --extra-header-lookup'
+   ```
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 10 calendar days.
+ - 38 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
+    - Checkout respects options for `core.protectHFS` and `core.protectNTFS`. ([`886d6b5`](https://github.com/Byron/gitoxide/commit/886d6b58e4612ac21cc660ea4ddf1dd0b49d1c6e))
+    - Mark safety-related core-flags as planned ([`f3d5a69`](https://github.com/Byron/gitoxide/commit/f3d5a69bbe0ad14502ce617dc580cc2aa481bb0a))
+    - Merge branch 'status' ([`04ef31e`](https://github.com/Byron/gitoxide/commit/04ef31e9d6f5332d49037a5a4c248ebbb5aaf92b))
+    - More robustness in the face of a trampling-herd of threads loading a single index. ([`addf446`](https://github.com/Byron/gitoxide/commit/addf446f052ff74edcdb083f2b2968b313daa940))
+</details>
+
 ## 0.35.0 (2024-04-13)
 
 ### New Features

@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-f2d8955eacc1a0ce8678f3e9026e696926bae654/> add `file::Store::force_refresh_packed_buffer()` to public API
+   That way it's possible to explicitly refresh if the caller knows that some other
+   operation might have invalidated the in-memory cache. The `mtime` based approach
+   doesn't work reliably on all filesystems due to coarse granularity of time.
+
+### Bug Fixes
+
+ - <csr-id-e33efa23c2ed45b3c2826fe2c3c70707fcb9100d/> don't ignore packed ref deletion in non-default transaction mode
+   Before, Change::Delete edits weren't propagated to packed refs if the mode was
+   DeletionsAndNonSymbolicUpdates/RemoveLooseSourceReference.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-9555efe8964d3de3c692f79cef390916e34daefb/> assure that special device names on Windows aren't allowed.
+   Otherwise it's possible to read or write to devices when interacting
+   with references of the 'right' name.
+   
+   This behaviour can be controlled with the new `prohibit_windows_device_names` flag,
+   which is adjustable on the `Store` instance as field, and which now has to be
+   passed during instantiation as part of the new `store::init::Options` struct.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 30 calendar days.
+ - 68 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1348](https://github.com/Byron/gitoxide/issues/1348)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1348](https://github.com/Byron/gitoxide/issues/1348)**
+    - Add `file::Store::force_refresh_packed_buffer()` to public API ([`f2d8955`](https://github.com/Byron/gitoxide/commit/f2d8955eacc1a0ce8678f3e9026e696926bae654))
+ * **Uncategorized**
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Fix-CI ([`6f55f2a`](https://github.com/Byron/gitoxide/commit/6f55f2abd13078f94e8c4e10922806f195ae0d8b))
+    - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
+    - Apply suggestions from code review ([`1242151`](https://github.com/Byron/gitoxide/commit/1242151079004ae99fae7b80966de151961a6159))
+    - Assure that special device names on Windows aren't allowed. ([`9555efe`](https://github.com/Byron/gitoxide/commit/9555efe8964d3de3c692f79cef390916e34daefb))
+    - Release gix-date v0.8.6 ([`d3588ca`](https://github.com/Byron/gitoxide/commit/d3588ca4fe0364c88e42cdac24ceae548355d99d))
+    - Merge branch 'push-wwxrqxuzmolm' ([`048e43e`](https://github.com/Byron/gitoxide/commit/048e43e26908b0572852a75780a451460dc152ff))
+    - Refactor - address fix suggested by `cargo check` ([`4faf10e`](https://github.com/Byron/gitoxide/commit/4faf10e27a942da3da25e659a43e97eb160e79f2))
+    - Don't ignore packed ref deletion in non-default transaction mode ([`e33efa2`](https://github.com/Byron/gitoxide/commit/e33efa23c2ed45b3c2826fe2c3c70707fcb9100d))
+    - Merge branch 'status' ([`68fd5b3`](https://github.com/Byron/gitoxide/commit/68fd5b34e1214d5c2cc7d00dd06e19ee86c00c66))
+</details>
+
 ## 0.43.0 (2024-03-14)
 
 ### Bug Fixes
@@ -16,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 5 calendar days.
+ - 6 commits contributed to the release over the course of 5 calendar days.
  - 18 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1312](https://github.com/Byron/gitoxide/issues/1312)
@@ -30,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1312](https://github.com/Byron/gitoxide/issues/1312)**
     - Assure memory maps are created with `MAP_PRIVATE` ([`88061a1`](https://github.com/Byron/gitoxide/commit/88061a176b2f4b5a377a4cff513979ddb1e306a1))
  * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
     - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
     - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
     - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
