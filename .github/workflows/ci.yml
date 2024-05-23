@@ -84,9 +84,6 @@ jobs:
           tool: nextest
       - name: "Test (nextest)"
         run: cargo nextest run --all --no-fail-fast
-        env:
-          # Works around https://github.com/nextest-rs/nextest/issues/1493.
-          RUSTUP_WINDOWS_PATH_ADD_BIN: '1'
 
   test-32bit:
     runs-on: ubuntu-latest
