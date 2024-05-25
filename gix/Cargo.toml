@@ -346,7 +346,7 @@ gix-status = { version = "^0.10.0", path = "../gix-status", optional = true, fea
 gix-command = { version = "^0.3.7", path = "../gix-command", optional = true }
 
 gix-worktree-stream = { version = "^0.13.0", path = "../gix-worktree-stream", optional = true }
-gix-archive = { version = "^0.13.0", path = "../gix-archive", default-features = false, optional = true }
+gix-archive = { version = "^0.13.1", path = "../gix-archive", default-features = false, optional = true }
 
 # For communication with remotes
 gix-protocol = { version = "^0.45.1", path = "../gix-protocol", optional = true }
