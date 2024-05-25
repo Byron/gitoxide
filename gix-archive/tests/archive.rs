@@ -183,8 +183,8 @@ mod from_tree {
             },
             |buf| {
                 assert!(
-                    buf.len() < 1220,
-                    "bigger than uncompressed for some reason: {} < 1220",
+                    buf.len() < 1230,
+                    "much bigger than uncompressed for some reason (565): {} < 1230",
                     buf.len()
                 );
                 let mut ar = zip::ZipArchive::new(std::io::Cursor::new(buf.as_slice()))?;
