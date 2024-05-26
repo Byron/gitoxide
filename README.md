@@ -78,13 +78,13 @@ COPY --from gitoxide:latest /bin/ein /usr/local/bin/
 #### Pipeline Integration (base image)
 
 ```sh
-docker build -f docker/Dockerfile.alpine -t gitoxide:latest --compress . --target=pipeline
+docker build -f etc/docker/Dockerfile.alpine -t gitoxide:latest --compress . --target=pipeline
 ```
 
 Debian distributions can use:
 
 ```sh
-docker build -f docker/Dockerfile.bookworm -t gitoxide:latest --compress . --target=pipeline
+docker build -f etc/docker/Dockerfile.bookworm -t gitoxide:latest --compress . --target=pipeline
 ```
 
 ### Production Grade
