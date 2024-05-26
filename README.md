@@ -62,6 +62,31 @@ Follow linked crate name for detailed status. Please note that all crates follow
 
 [semver]: https://semver.org
 
+### Pipeline Integration
+
+Some CI/CD pipelines leverage repository cloning. Below is a copy-paste-able example to build docker images for such workflows.
+
+#### Pipeline Integration (recommended)
+
+Build an image without a target and then copy the binaries into your local image
+
+```dockerfile
+COPY --from gitoxide:latest /bin/gix /usr/local/bin/
+COPY --from gitoxide:latest /bin/ein /usr/local/bin/
+```
+
+#### Pipeline Integration (base image)
+
+```sh
+docker build -f docker/Dockerfile.alpine -t gitoxide:latest --compress . --target=pipeline
+```
+
+Debian distributions can use:
+
+```sh
+docker build -f docker/Dockerfile.bookworm -t gitoxide:latest --compress . --target=pipeline
+```
+
 ### Production Grade
 
 * **Stability Tier 1**
