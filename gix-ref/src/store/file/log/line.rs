@@ -5,7 +5,7 @@ use crate::{log::Line, store_impl::file::log::LineRef};
 impl<'a> LineRef<'a> {
     /// Convert this instance into its mutable counterpart
     pub fn to_owned(&self) -> Line {
-        self.clone().into()
+        (*self).into()
     }
 }
 

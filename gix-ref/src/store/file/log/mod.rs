@@ -8,9 +8,8 @@ pub mod iter;
 mod line;
 
 /// A parsed ref log line.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[non_exhaustive]
 pub struct LineRef<'a> {
     /// The previous object id in hexadecimal. Use [`LineRef::previous_oid()`] to get a more usable form.
     pub previous_oid: &'a BStr,
