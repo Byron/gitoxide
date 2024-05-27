@@ -1,7 +1,7 @@
 #![deny(rust_2018_idioms, unsafe_code)]
 
 fn main() -> anyhow::Result<()> {
-    crate::porcelain::main()
+    gitoxide::porcelain::main()
 }
 
 #[cfg(not(feature = "pretty-cli"))]
