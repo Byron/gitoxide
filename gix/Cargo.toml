@@ -294,7 +294,7 @@ cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 gix-macros = { version = "^0.1.5", path = "../gix-macros" }
 gix-utils = { version = "^0.1.12", path = "../gix-utils" }
 gix-fs = { version = "^0.11.0", path = "../gix-fs" }
-gix-ref = { version = "^0.44.0", path = "../gix-ref" }
+gix-ref = { version = "^0.44.1", path = "../gix-ref" }
 gix-discover = { version = "^0.32.0", path = "../gix-discover" }
 gix-tempfile = { version = "^14.0.0", path = "../gix-tempfile", default-features = false }
 gix-lock = { version = "^14.0.0", path = "../gix-lock" }
