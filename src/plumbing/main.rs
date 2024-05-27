@@ -732,7 +732,7 @@ pub fn main() -> Result<()> {
                         &url,
                         directory,
                         refs_directory,
-                        refs.into_iter().map(|s| s.into()).collect(),
+                        refs.into_iter().map(Into::into).collect(),
                         progress,
                         core::pack::receive::Context {
                             thread_limit,
