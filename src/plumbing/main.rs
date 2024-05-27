@@ -7,9 +7,9 @@ use std::{
     },
 };
 
+use crate::shared::pretty::prepare_and_run;
 use anyhow::{anyhow, Context, Result};
 use clap::{CommandFactory, Parser};
-use gitoxide::shared::pretty::prepare_and_run;
 use gitoxide_core as core;
 use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
 use gix::bstr::{io::BufReadExt, BString};
@@ -24,7 +24,7 @@ use crate::plumbing::{
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {
-    use gitoxide::shared::ProgressRange;
+    use crate::shared::ProgressRange;
 
     #[cfg(not(feature = "prodash-render-line"))]
     compile_error!("BUG: Need at least a line renderer in async mode");
@@ -38,7 +38,7 @@ pub mod async_util {
         Option<prodash::render::line::JoinHandle>,
         gix_features::progress::DoOrDiscard<prodash::tree::Item>,
     ) {
-        use gitoxide::shared::{self, STANDARD_RANGE};
+        use crate::shared::{self, STANDARD_RANGE};
         shared::init_env_logger();
 
         if verbose {
@@ -732,7 +732,7 @@ pub fn main() -> Result<()> {
                         &url,
                         directory,
                         refs_directory,
-                        refs.into_iter().map(|s| s.into()).collect(),
+                        refs.into_iter().map(Into::into).collect(),
                         progress,
                         core::pack::receive::Context {
                             thread_limit,

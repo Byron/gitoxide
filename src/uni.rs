@@ -8,9 +8,6 @@
 
 use anyhow::{bail, Result};
 
-mod plumbing;
-mod porcelain;
-
 #[cfg(feature = "pretty-cli")]
 fn main() -> Result<()> {
     match std::env::current_exe()?
@@ -18,8 +15,8 @@ fn main() -> Result<()> {
         .and_then(|stem| stem.to_str())
         .unwrap_or("gix")
     {
-        "gix" => plumbing::main(),
-        "ein" => porcelain::main(),
+        "gix" => crate::plumbing::main(),
+        "ein" => crate::porcelain::main(),
         unknown => bail!("Executable named '{unknown}' cannot be launched. Exe must be named either `gix` or `ein`."),
     }
 }

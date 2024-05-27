@@ -22,7 +22,9 @@
 #![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(rust_2018_idioms)]
 #![allow(missing_docs)]
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 
+pub mod plumbing;
+pub mod porcelain;
 /// everything in common between the `gix` and `ein` binaries.
 pub mod shared;
