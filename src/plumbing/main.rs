@@ -7,9 +7,9 @@ use std::{
     },
 };
 
+use crate::shared::pretty::prepare_and_run;
 use anyhow::{anyhow, Context, Result};
 use clap::{CommandFactory, Parser};
-use gitoxide::shared::pretty::prepare_and_run;
 use gitoxide_core as core;
 use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
 use gix::bstr::{io::BufReadExt, BString};

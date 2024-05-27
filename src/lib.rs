@@ -24,5 +24,7 @@
 #![allow(missing_docs)]
 #![forbid(unsafe_code)]
 
+pub mod plumbing;
+pub mod porcelain;
 /// everything in common between the `gix` and `ein` binaries.
 pub mod shared;
