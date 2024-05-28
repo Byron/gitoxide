@@ -1,3 +1,4 @@
+# Please note that this file is not regularly tested, and you are welcome to create PRs with fixes as needed.
 ARG GITOXIDE_VERSION=0.36.0
 
 FROM rust:alpine AS bootstrap_os
