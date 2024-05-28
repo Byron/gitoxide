@@ -293,7 +293,7 @@ cache-efficiency-debug = ["gix-features/cache-efficiency-debug"]
 [dependencies]
 gix-macros = { version = "^0.1.5", path = "../gix-macros" }
 gix-utils = { version = "^0.1.12", path = "../gix-utils" }
-gix-fs = { version = "^0.11.0", path = "../gix-fs" }
+gix-fs = { version = "^0.11.1", path = "../gix-fs" }
 gix-ref = { version = "^0.44.1", path = "../gix-ref" }
 gix-discover = { version = "^0.32.0", path = "../gix-discover" }
 gix-tempfile = { version = "^14.0.0", path = "../gix-tempfile", default-features = false }
@@ -328,7 +328,7 @@ gix-features = { version = "^0.38.2", path = "../gix-features", features = [
 ] }
 gix-trace = { version = "^0.1.9", path = "../gix-trace" }
 
-gix-glob = { version = "^0.16.2", path = "../gix-glob" }
+gix-glob = { version = "^0.16.3", path = "../gix-glob" }
 gix-credentials = { version = "^0.24.2", path = "../gix-credentials", optional = true }
 gix-prompt = { version = "^0.8.5", path = "../gix-prompt", optional = true }
 gix-index = { version = "^0.33.0", path = "../gix-index", optional = true }

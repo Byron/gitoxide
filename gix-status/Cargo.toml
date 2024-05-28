@@ -19,7 +19,7 @@ worktree-rewrites = ["dep:gix-dir", "dep:gix-diff"]
 
 [dependencies]
 gix-index = { version = "^0.33.0", path = "../gix-index" }
-gix-fs = { version = "^0.11.0", path = "../gix-fs" }
+gix-fs = { version = "^0.11.1", path = "../gix-fs" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-object = { version = "^0.42.2", path = "../gix-object" }
 gix-path = { version = "^0.10.7", path = "../gix-path" }

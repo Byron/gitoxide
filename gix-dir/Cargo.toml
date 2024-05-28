@@ -15,7 +15,7 @@ doctest = false
 gix-trace = { version = "^0.1.9", path = "../gix-trace" }
 gix-index = { version = "^0.33.0", path = "../gix-index" }
 gix-discover = { version = "^0.32.0", path = "../gix-discover" }
-gix-fs = { version = "^0.11.0", path = "../gix-fs" }
+gix-fs = { version = "^0.11.1", path = "../gix-fs" }
 gix-path = { version = "^0.10.7", path = "../gix-path" }
 gix-pathspec = { version = "^0.7.5", path = "../gix-pathspec" }
 gix-worktree = { version = "^0.34.0", path = "../gix-worktree", default-features = false }

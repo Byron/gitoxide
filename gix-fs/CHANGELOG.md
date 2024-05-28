@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.11.1 (2024-05-28)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 6 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare gix-fs changelog prior to release ([`eb7880b`](https://github.com/Byron/gitoxide/commit/eb7880b32803d5d91a1be563da07f80d3213f7d0))
     - Merge branch 'dir-as-ignore' ([`31d2f0a`](https://github.com/Byron/gitoxide/commit/31d2f0a742257d7031df114f0c92197a0781921e))
     - Adapt to changes in `gix-glob` ([`5fbbaaa`](https://github.com/Byron/gitoxide/commit/5fbbaaa10d919dd216badb05b2fae32d5dd955c9))
 </details>
