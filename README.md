@@ -232,6 +232,10 @@ What follows is a list of known failures.
 Some CI/CD pipelines leverage repository cloning. Below is a copy-paste-able example to build docker images for such workflows. 
 As no official image exists (at this time), an image must first be built.
 
+> [!NOTE]
+> The dockerfile isn't continuously tested as it costs too much time and thus might already be broken.
+> PRs are welcome.
+
 #### Building the most compatible base image 
 
 ```sh
