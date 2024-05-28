@@ -1,4 +1,3 @@
-use crate::stack::mode_is_dir;
 use crate::{stack::State, PathIdMapping};
 
 /// Various aggregate numbers related to the stack delegate itself.
@@ -167,7 +166,7 @@ fn create_leading_directory(
     mkdir_calls: &mut usize,
     unlink_on_collision: bool,
 ) -> std::io::Result<()> {
-    if is_last_component && !mode_is_dir(mode).unwrap_or(false) {
+    if is_last_component && !crate::stack::mode_is_dir(mode).unwrap_or(false) {
         return Ok(());
     }
     *mkdir_calls += 1;
