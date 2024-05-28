@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 6 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'dir-as-ignore' ([`31d2f0a`](https://github.com/Byron/gitoxide/commit/31d2f0a742257d7031df114f0c92197a0781921e))
+    - Adapt to changes in `gix-glob` ([`5fbbaaa`](https://github.com/Byron/gitoxide/commit/5fbbaaa10d919dd216badb05b2fae32d5dd955c9))
+</details>
+
 ## 0.11.0 (2024-05-22)
 
 ### Bug Fixes
@@ -28,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 8 calendar days.
+ - 15 commits contributed to the release over the course of 8 calendar days.
  - 38 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1354](https://github.com/Byron/gitoxide/issues/1354), [#1373](https://github.com/Byron/gitoxide/issues/1373)
@@ -44,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1373](https://github.com/Byron/gitoxide/issues/1373)**
     - Multi-process safe parallel filesystem capabilities probing ([`bec648d`](https://github.com/Byron/gitoxide/commit/bec648dc5790186cddbe12277978baf572f8e164))
  * **Uncategorized**
+    - Release gix-features v0.38.2, gix-actor v0.31.2, gix-validate v0.8.5, gix-object v0.42.2, gix-command v0.3.7, gix-filter v0.11.2, gix-fs v0.11.0, gix-revwalk v0.13.1, gix-traverse v0.39.1, gix-worktree-stream v0.13.0, gix-archive v0.13.0, gix-tempfile v14.0.0, gix-lock v14.0.0, gix-ref v0.44.0, gix-config v0.37.0, gix-prompt v0.8.5, gix-index v0.33.0, gix-worktree v0.34.0, gix-diff v0.44.0, gix-discover v0.32.0, gix-pathspec v0.7.5, gix-dir v0.5.0, gix-macros v0.1.5, gix-mailmap v0.23.1, gix-negotiate v0.13.1, gix-pack v0.51.0, gix-odb v0.61.0, gix-transport v0.42.1, gix-protocol v0.45.1, gix-revision v0.27.1, gix-status v0.10.0, gix-submodule v0.11.0, gix-worktree-state v0.11.0, gix v0.63.0, gitoxide-core v0.38.0, gitoxide v0.36.0, safety bump 19 crates ([`4f98e94`](https://github.com/Byron/gitoxide/commit/4f98e94e0e8b79ed2899b35bef40f3c30b3025b0))
     - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
     - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
