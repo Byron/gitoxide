@@ -1,0 +1,70 @@
+# Please note that this file is not regularly tested, and you are welcome to create PRs with fixes as needed.
+ARG GITOXIDE_VERSION=0.36.0
+
+FROM rust:alpine AS bootstrap_os
+  # hadolint ignore=DL3018
+  RUN apk upgrade --update-cache --available \
+      && apk add --no-cache --virtual .runtime-gitoxide libressl zlib-ng \
+             libressl3.8-libcrypto
+
+
+FROM bootstrap_os AS bootstrap_build_deps
+  # hadolint ignore=DL3018
+  RUN apk add --no-cache --virtual .rust-builder cmake gcc musl-dev make pkgconfig \
+      && apk add --no-cache --virtual .bootstrap-gitoxide libressl-dev zlib-ng \
+             libressl3.8-libcrypto
+
+
+FROM bootstrap_build_deps AS bootstrap_builder
+  ARG GITOXIDE_VERSION
+
+  ENV RUST_BACKTRACE=1
+
+  RUN cargo install gitoxide --version "${GITOXIDE_VERSION}" --message-format short \
+      && apk del .bootstrap-gitoxide \
+      && apk del .rust-builder
+
+
+FROM alpine:3.13.3 AS pipeline
+  # hadolint ignore=SC2016
+  RUN apk upgrade --update-cache --available \
+      && { \
+        echo '#!/bin/sh'; \
+        echo 'set -eu'; \
+        echo 'if [ "${#}" -gt 0 ] && [ "${1#-}" = "${1}" ] \'; \
+        echo '  && command -v "${1}" > "/dev/null" 2>&1; then'; \
+        echo '  exec "${@}"'; \
+        echo 'else exec /bin/shfmt "${@}"; fi'; \
+        echo 'exit 0'; \
+      } > /init && chmod +x /init
+
+  COPY --from=bootstrap_builder /usr/local/cargo/bin/gix /usr/local/cargo/bin/
+  COPY --from=bootstrap_builder /usr/local/cargo/bin/ein /usr/local/cargo/bin/
+
+  WORKDIR /usr/local/cargo/bin
+
+  SHELL [ "/bin/ash", "-o", "pipefail", "-c" ]
+
+  RUN find . -type f -executable -not \( -name '*tkinter*' \) -exec ldd '{}' ';' \
+      | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); gsub(".*/", "", so); print so }' \
+      | xargs -r apk search -f | awk '{ so = $(NF-1); gsub(/-\d+.*$/, "", so); print so }' \
+      | xargs -r apk add --no-cache --virtual .runtime
+
+  ENV PATH="/usr/local/cargo/bin:${PATH}"
+
+  WORKDIR /root
+
+  HEALTHCHECK --retries=1 --timeout=15s CMD gix help
+
+  ENTRYPOINT [ "/init" ]
+
+
+FROM scratch
+  COPY --from=bootstrap_builder /usr/local/cargo/bin/gix /bin/
+  COPY --from=bootstrap_builder /usr/local/cargo/bin/ein /bin/
+
+  ENTRYPOINT [ "/bin/gix" ]
+
+  CMD [ "/bin/gix" ]
+
+# vi: nospell

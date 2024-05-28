@@ -226,6 +226,35 @@ What follows is a list of known failures.
 
 - On Fedora, `perl` needs to be installed for `OpenSSL` to build properly. This can be done with the following command:
   `dnf install perl` (see [this issue](https://github.com/Byron/gitoxide/issues/592)).
+- 
+### Using Docker
+
+Some CI/CD pipelines leverage repository cloning. Below is a copy-paste-able example to build docker images for such workflows. 
+As no official image exists (at this time), an image must first be built.
+
+#### Building the most compatible base image 
+
+```sh
+docker build -f etc/docker/Dockerfile.alpine -t gitoxide:latest --compress . --target=pipeline
+```
+
+#### Basic usage in a Pipeline
+
+For example, if a `Dockerfile` currently uses something like `RUN git clone https://github.com/Byron/gitoxide`, first build the image:
+
+```sh
+docker build -f etc/docker/Dockerfile.alpine -t gitoxide:latest --compress .
+```
+
+Then copy the binaries into your image and replace the `git` directive with a `gix` equivalent.
+
+```dockerfile
+COPY --from gitoxide:latest /bin/gix /usr/local/bin/
+COPY --from gitoxide:latest /bin/ein /usr/local/bin/
+
+RUN /usr/local/bin/gix clone --depth 1 https://github.com/Byron/gitoxide gitoxide
+```
+
 
 [releases]: https://github.com/Byron/gitoxide/releases
 [rustup]: https://rustup.rs
