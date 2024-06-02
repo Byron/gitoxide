@@ -11,7 +11,6 @@ like `fetch` and `clone`, and to validate the usability and control of the API o
 `gitoxide` aspires to be a production-grade server implementation and the `ein` binary aspires to become the default way to interact with git repositories.
 
 [![asciicast](https://asciinema.org/a/542159.svg)](https://asciinema.org/a/542159)
-[![asciicast](https://asciinema.org/a/542159.svg)](https://asciinema.org/a/542159)
 
 [`gix`]: https://docs.rs/gix
 
