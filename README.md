@@ -1,4 +1,4 @@
-[![Rust](https://github.com/Byron/gitoxide/workflows/Rust/badge.svg)](https://github.com/Byron/gitoxide/actions)
+[![CI](https://github.com/Byron/gitoxide/workflows/ci/badge.svg)](https://github.com/Byron/gitoxide/actions)
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 <img src="etc/msrv-badge.svg">
 
