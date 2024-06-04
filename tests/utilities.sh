@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 WHITE="$(tput setaf 9 2>/dev/null || echo -n '')"
 YELLOW="$(tput setaf 3 2>/dev/null || echo -n '')"

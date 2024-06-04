@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 driver=${1:?First argument is the driver program supporting both process mode and clean/smudge}

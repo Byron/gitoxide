@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 # Nothing here may use symlinks so these fixtures can be used on windows as well.

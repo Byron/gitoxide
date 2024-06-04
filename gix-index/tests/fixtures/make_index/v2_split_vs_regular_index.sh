@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Creates a 2 identical repositories, one using a split index, the other
 # using a regular index

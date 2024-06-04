@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Check if there is input on stdin
 if [ -t 0 ]; then
