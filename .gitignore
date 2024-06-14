@@ -18,3 +18,6 @@ $/tests/fixtures/commit-graphs/
 
 # newer Git sees these as precious, older Git falls through to the pattern above
 $**/fuzz/Cargo.lock
+
+# RustRover IDE directory
+./idea/
