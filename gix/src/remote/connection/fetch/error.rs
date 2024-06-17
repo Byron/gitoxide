@@ -47,6 +47,11 @@ pub enum Error {
     NegotiationAlgorithmConfig(#[from] config::key::GenericErrorWithValue),
     #[error("Failed to read remaining bytes in stream")]
     ReadRemainingBytes(#[source] std::io::Error),
+    #[error("None of the refspec(s) {} matched any of the {num_remote_refs} refs on the remote", refspecs.iter().map(|r| r.to_ref().instruction().to_bstring().to_string()).collect::<Vec<_>>().join(", "))]
+    NoMapping {
+        refspecs: Vec<gix_refspec::RefSpec>,
+        num_remote_refs: usize,
+    },
 }
 
 impl gix_protocol::transport::IsSpuriousError for Error {

@@ -91,6 +91,15 @@ where
         let _span = gix_trace::coarse!("fetch::Prepare::receive()");
         let mut con = self.con.take().expect("receive() can only be called once");
 
+        if self.ref_map.mappings.is_empty() && !self.ref_map.remote_refs.is_empty() {
+            let mut specs = con.remote.fetch_specs.clone();
+            specs.extend(self.ref_map.extra_refspecs.clone());
+            return Err(Error::NoMapping {
+                refspecs: specs,
+                num_remote_refs: self.ref_map.remote_refs.len(),
+            });
+        }
+
         let handshake = &self.ref_map.handshake;
         let protocol_version = handshake.server_protocol_version;
 

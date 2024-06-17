@@ -61,7 +61,7 @@ pub(crate) enum Action {
 /// Finally, we also mark tips in the `negotiator` in one go to avoid traversing all refs twice, since we naturally encounter all tips during
 /// our own walk.
 ///
-/// Return whether or not we should negotiate, along with a queue for later use.
+/// Return whether we should negotiate, along with a queue for later use.
 pub(crate) fn mark_complete_and_common_ref(
     repo: &crate::Repository,
     negotiator: &mut dyn gix_negotiate::Negotiator,
@@ -71,6 +71,9 @@ pub(crate) fn mark_complete_and_common_ref(
     mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
 ) -> Result<Action, Error> {
     let _span = gix_trace::detail!("mark_complete_and_common_ref", mappings = ref_map.mappings.len());
+    if ref_map.mappings.is_empty() {
+        return Ok(Action::NoChange);
+    }
     if let fetch::Shallow::Deepen(0) = shallow {
         // Avoid deepening (relative) with zero as it seems to upset the server. Git also doesn't actually
         // perform the negotiation for some reason (couldn't find it in code).
