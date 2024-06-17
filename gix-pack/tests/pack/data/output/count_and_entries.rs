@@ -322,13 +322,18 @@ fn traversals() -> crate::Result {
 
 #[test]
 fn empty_pack_is_allowed() {
-    write_and_verify(
-        db(DbKind::DeterministicGeneratedContent).unwrap(),
-        vec![],
-        hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"),
-        None,
-    )
-    .unwrap();
+    assert_eq!(
+        write_and_verify(
+            db(DbKind::DeterministicGeneratedContent).unwrap(),
+            vec![],
+            hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"),
+            None,
+        )
+        .unwrap_err()
+        .to_string(),
+        "pack data directory should be set",
+        "empty packs are not actually written as they would be useless"
+    );
 }
 
 fn write_and_verify(
@@ -392,7 +397,7 @@ fn write_and_verify(
             pack::bundle::write::Options::default(),
         )?
         .data_path
-        .expect("directory set"),
+        .ok_or("pack data directory should be set")?,
         object_hash,
     )?;
     // TODO: figure out why these hashes change, also depending on the machine, even though they are indeed stable.

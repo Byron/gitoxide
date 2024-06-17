@@ -300,31 +300,37 @@ impl crate::Bundle {
                 )?;
                 drop(pack_entries_iter);
 
-                let data_path = directory.join(format!("pack-{}.pack", outcome.data_hash.to_hex()));
-                let index_path = data_path.with_extension("idx");
-                let keep_path = data_path.with_extension("keep");
+                if outcome.num_objects == 0 {
+                    WriteOutcome {
+                        outcome,
+                        data_path: None,
+                        index_path: None,
+                        keep_path: None,
+                    }
+                } else {
+                    let data_path = directory.join(format!("pack-{}.pack", outcome.data_hash.to_hex()));
+                    let index_path = data_path.with_extension("idx");
+                    let keep_path = data_path.with_extension("keep");
 
-                std::fs::write(&keep_path, b"")?;
-                Arc::try_unwrap(data_file)
-                    .expect("only one handle left after pack was consumed")
-                    .into_inner()
-                    .into_inner()
-                    .map_err(|err| Error::from(err.into_error()))?
-                    .persist(&data_path)?;
-                index_file
-                    .persist(&index_path)
-                    .map_err(|err| {
-                        progress.info(format!(
-                            "pack file at {} is retained despite failing to move the index file into place. You can use plumbing to make it usable.",
-                            data_path.display()
-                        ));
-                        err
-                    })?;
-                WriteOutcome {
-                    outcome,
-                    data_path: Some(data_path),
-                    index_path: Some(index_path),
-                    keep_path: Some(keep_path),
+                    std::fs::write(&keep_path, b"")?;
+                    Arc::try_unwrap(data_file)
+                        .expect("only one handle left after pack was consumed")
+                        .into_inner()
+                        .into_inner()
+                        .map_err(|err| Error::from(err.into_error()))?
+                        .persist(&data_path)?;
+                    index_file
+                        .persist(&index_path)
+                        .map_err(|err| {
+                            gix_features::trace::warn!("pack file at \"{}\" is retained despite failing to move the index file into place. You can use plumbing to make it usable.",data_path.display());
+                            err
+                        })?;
+                    WriteOutcome {
+                        outcome,
+                        data_path: Some(data_path),
+                        index_path: Some(index_path),
+                        keep_path: Some(keep_path),
+                    }
                 }
             }
             None => WriteOutcome {
