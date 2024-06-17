@@ -20,10 +20,10 @@ fn fuzz(ctx: Ctx) -> Result<()> {
 
     let mut buf = [0u8; 1024];
     let read = std::io::Cursor::new(ctx.multi_line_reverse);
-    let mut iter = gix_ref::file::log::iter::reverse(read, &mut buf)?;
+    let iter = gix_ref::file::log::iter::reverse(read, &mut buf)?;
     _ = black_box(iter.map(|x| black_box(x)).count());
 
-    let mut iter = gix_ref::file::log::iter::forward(ctx.multi_line_forward);
+    let iter = gix_ref::file::log::iter::forward(ctx.multi_line_forward);
     _ = black_box(iter.map(|x| black_box(x)).count());
 
     Ok(())
