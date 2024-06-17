@@ -18,7 +18,7 @@ impl File<'_> {
     pub fn write_to_filter(
         &self,
         mut out: &mut dyn std::io::Write,
-        mut filter: &mut dyn FnMut(&Section<'_>) -> bool,
+        filter: &mut dyn FnMut(&Section<'_>) -> bool,
     ) -> std::io::Result<()> {
         let nl = self.detect_newline_style();
 
@@ -27,7 +27,8 @@ impl File<'_> {
                 event.write_to(&mut out)?;
             }
 
-            if !ends_with_newline(self.frontmatter_events.as_ref(), nl, true) && self.sections.values().any(&mut filter)
+            if !ends_with_newline(self.frontmatter_events.as_ref(), nl, true)
+                && self.sections.values().any(&mut *filter)
             {
                 out.write_all(nl)?;
             }

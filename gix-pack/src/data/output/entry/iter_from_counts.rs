@@ -40,7 +40,7 @@ pub(crate) mod function {
     ///
     /// * ~~currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
     ///   so with minimal overhead (especially compared to `gix index-from-pack`)~~ Probably works now by chaining Iterators
-    ///  or keeping enough state to write a pack and then generate an index with recorded data.
+    ///   or keeping enough state to write a pack and then generate an index with recorded data.
     ///
     pub fn iter_from_counts<Find>(
         mut counts: Vec<output::Count>,

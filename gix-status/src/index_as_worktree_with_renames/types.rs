@@ -325,10 +325,10 @@ pub struct Context<'a> {
     ///
     /// * `attr_stack`
     ///     - A stack pre-configured to allow accessing attributes for each entry, as required for `filter`
-    ///      and possibly pathspecs.
-    ///      It *may* also allow accessing `.gitignore` information for use in the directory walk.
-    ///      If no excludes information is present, the directory walk will identify ignored files as untracked, which
-    ///      might be desirable under certain circumstances.
+    ///       and possibly pathspecs.
+    ///       It *may* also allow accessing `.gitignore` information for use in the directory walk.
+    ///       If no excludes information is present, the directory walk will identify ignored files as untracked, which
+    ///       might be desirable under certain circumstances.
     /// * `filter`
     ///     - A filter to be able to perform conversions from and to the worktree format.
     ///       It is needed to potentially refresh the index with data read from the worktree, which needs to be converted back

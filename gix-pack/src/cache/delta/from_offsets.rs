@@ -31,13 +31,13 @@ const PACK_HEADER_LEN: usize = 12;
 impl<T> Tree<T> {
     /// Create a new `Tree` from any data sorted by offset, ascending as returned by the `data_sorted_by_offsets` iterator.
     /// * `get_pack_offset(item: &T) -> data::Offset` is a function returning the pack offset of the given item, which can be used
-    /// for obtaining the objects entry within the pack.
+    ///   for obtaining the objects entry within the pack.
     /// * `pack_path` is the path to the pack file itself and from which to read the entry data, which is a pack file matching the offsets
-    /// returned by `get_pack_offset(…)`.
+    ///   returned by `get_pack_offset(…)`.
     /// * `progress` is used to track progress when creating the tree.
     /// * `resolve_in_pack_id(gix_hash::oid) -> Option<data::Offset>` takes an object ID and tries to resolve it to an object within this pack if
-    /// possible. Failing to do so aborts the operation, and this function is not expected to be called in usual packs. It's a theoretical
-    /// possibility though as old packs might have referred to their objects using the 20 bytes hash, instead of their encoded offset from the base.
+    ///   possible. Failing to do so aborts the operation, and this function is not expected to be called in usual packs. It's a theoretical
+    ///   possibility though as old packs might have referred to their objects using the 20 bytes hash, instead of their encoded offset from the base.
     ///
     /// Note that the sort order is ascending. The given pack file path must match the provided offsets.
     pub fn from_offsets_in_pack(
