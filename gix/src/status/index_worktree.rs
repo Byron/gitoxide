@@ -539,6 +539,15 @@ pub mod iter {
                 }
             })
         }
+
+        /// The repository-relative path of the entry contained in this item.
+        pub fn rela_path(&self) -> &BStr {
+            match self {
+                Item::Modification { rela_path, .. } => rela_path.as_ref(),
+                Item::DirectoryContents { entry, .. } => entry.rela_path.as_ref(),
+                Item::Rewrite { dirwalk_entry, .. } => dirwalk_entry.rela_path.as_ref(),
+            }
+        }
     }
 
     impl<'index> From<gix_status::index_as_worktree_with_renames::Entry<'index, (), SubmoduleStatus>> for Item {
