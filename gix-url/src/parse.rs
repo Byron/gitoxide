@@ -183,7 +183,7 @@ pub(crate) fn file_url(input: &BStr, protocol_colon: usize) -> Result<crate::Url
     // We cannot use the url crate to parse host and path because it special cases Windows
     // driver letters. With the url crate an input of `file://x:/path/to/git` is parsed as empty
     // host and with `x:/path/to/git` as path. This behavior is wrong for Git which only follows
-    // that rule on Windows and parses `x:` as host on Unix platforms. Additionally the url crate
+    // that rule on Windows and parses `x:` as host on Unix platforms. Additionally, the url crate
     // does not account for Windows special UNC path support.
 
     // TODO: implement UNC path special case
