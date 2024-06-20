@@ -5,6 +5,8 @@ use crate::{clone::PrepareCheckout, Repository};
 pub mod main_worktree {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
+    use gix_ref::bstr::BStr;
+
     use crate::{clone::PrepareCheckout, Progress, Repository};
 
     /// The error returned by [`PrepareCheckout::main_worktree()`].
@@ -28,6 +30,8 @@ pub mod main_worktree {
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
         IndexCheckout(#[from] gix_worktree_state::checkout::Error),
+        #[error(transparent)]
+        Peel(#[from] crate::reference::peel::Error),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
         #[error("The HEAD reference could not be located")]
@@ -72,13 +76,29 @@ pub mod main_worktree {
             P: gix_features::progress::NestedProgress,
             P::SubProgress: gix_features::progress::NestedProgress + 'static,
         {
-            self.main_worktree_inner(&mut progress, should_interrupt)
+            self.main_worktree_inner(&mut progress, should_interrupt, None)
+        }
+
+        /// Checkout the a worktree, determining how many threads to use by looking at `checkout.workers`, defaulting to using
+        /// on thread per logical core.
+        pub fn worktree<P>(
+            &mut self,
+            mut progress: P,
+            should_interrupt: &AtomicBool,
+            reference: Option<&BStr>,
+        ) -> Result<(Repository, gix_worktree_state::checkout::Outcome), Error>
+        where
+            P: gix_features::progress::NestedProgress,
+            P::SubProgress: gix_features::progress::NestedProgress + 'static,
+        {
+            self.main_worktree_inner(&mut progress, should_interrupt, reference)
         }
 
         fn main_worktree_inner(
             &mut self,
             progress: &mut dyn gix_features::progress::DynNestedProgress,
             should_interrupt: &AtomicBool,
+            reference: Option<&BStr>,
         ) -> Result<(Repository, gix_worktree_state::checkout::Outcome), Error> {
             let _span = gix_trace::coarse!("gix::clone::PrepareCheckout::main_worktree()");
             let repo = self
@@ -88,15 +108,22 @@ pub mod main_worktree {
             let workdir = repo.work_dir().ok_or_else(|| Error::BareRepository {
                 git_dir: repo.git_dir().to_owned(),
             })?;
-            let root_tree = match repo.head()?.try_peel_to_id_in_place()? {
+
+            let root_tree_id = match reference {
+                Some(reference_val) => Some(repo.find_reference(reference_val)?.peel_to_id_in_place()?),
+                None => repo.head()?.try_peel_to_id_in_place()?,
+            };
+
+            let root_tree = match root_tree_id {
                 Some(id) => id.object().expect("downloaded from remote").peel_to_tree()?.id,
                 None => {
                     return Ok((
                         self.repo.take().expect("still present"),
                         gix_worktree_state::checkout::Outcome::default(),
-                    ))
+                    ));
                 }
             };
+
             let index = gix_index::State::from_tree(&root_tree, &repo.objects, repo.config.protect_options()?)
                 .map_err(|err| Error::IndexFromTree {
                     id: root_tree,

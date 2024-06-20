@@ -5,7 +5,7 @@ mod blocking_io {
     use std::{borrow::Cow, sync::atomic::AtomicBool};
 
     use gix::{
-        bstr::BString,
+        bstr::{BStr, BString},
         config::tree::{Clone, Core, Init, Key},
         remote::{
             fetch::{Shallow, SpecIndex},
@@ -496,6 +496,43 @@ mod blocking_io {
         let (mut checkout, _out) =
             prepare.fetch_then_checkout(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
         let (repo, _) = checkout.main_worktree(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        let index = repo.index()?;
+        assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
+
+        let work_dir = repo.work_dir().expect("non-bare");
+        for entry in index.entries() {
+            let entry_path = work_dir.join(gix_path::from_bstr(entry.path(&index)));
+            assert!(entry_path.is_file(), "{entry_path:?} not found on disk")
+        }
+        Ok(())
+    }
+    #[test]
+    fn fetch_and_checkout_branch() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let mut prepare = gix::clone::PrepareFetch::new(
+            remote::repo("base").path(),
+            tmp.path(),
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
+        )?;
+        let (mut checkout, _out) =
+            prepare.fetch_then_checkout(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        let branch_names = checkout.repo().branch_names();
+        let target_branch: &BStr = "a".into();
+        let branch_result = checkout.repo().find_reference(target_branch);
+
+        assert!(
+            branch_result.is_ok(),
+            "branch {target_branch} not found: {branch_result:?}. Available branches: {branch_names:?}"
+        );
+        let (repo, _) = checkout.worktree(
+            gix::progress::Discard,
+            &std::sync::atomic::AtomicBool::default(),
+            Some("a".into()),
+        )?;
 
         let index = repo.index()?;
         assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
