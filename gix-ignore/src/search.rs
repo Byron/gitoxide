@@ -55,7 +55,7 @@ impl Search {
                 .transpose()?,
         );
         group.patterns.extend(pattern::List::<Ignore>::from_file(
-            &git_dir.join("info").join("exclude"),
+            git_dir.join("info").join("exclude"),
             None,
             follow_symlinks,
             buf,

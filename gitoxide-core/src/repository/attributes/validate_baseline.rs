@@ -305,13 +305,13 @@ pub(crate) mod function {
     }
 
     fn parse_exclude(line: &str) -> Option<(String, Baseline)> {
-        let (left, value) = line.split_at(line.find(|c| c == '\t')?);
+        let (left, value) = line.split_at(line.find('\t')?);
         let value = &value[1..];
 
         let location = if left == "::" {
             None
         } else {
-            let mut tokens = left.split(|b| b == ':');
+            let mut tokens = left.split(':');
             let source = tokens.next()?;
             let line_number: usize = tokens.next()?.parse().ok()?;
             let pattern = tokens.next()?;
@@ -363,8 +363,8 @@ pub(crate) mod function {
                 "unspecified" => StateRef::Unspecified,
                 _ => StateRef::from_bytes(info.as_bytes()),
             };
-            path = path.trim_end_matches(|b| b == ':');
-            let attr = attr.trim_end_matches(|b| b == ':');
+            path = path.trim_end_matches(':');
+            let attr = attr.trim_end_matches(':');
             let assignment = gix::attrs::AssignmentRef {
                 name: gix::attrs::NameRef::try_from(attr.as_bytes().as_bstr()).ok()?,
                 state,

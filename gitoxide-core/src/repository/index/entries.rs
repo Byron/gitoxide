@@ -319,7 +319,7 @@ pub(crate) mod function {
 
     #[cfg(feature = "serde")]
     fn to_json(
-        mut out: &mut impl std::io::Write,
+        out: &mut impl std::io::Write,
         index: &gix::index::File,
         entry: &gix::index::Entry,
         attrs: Option<Attrs>,
@@ -338,7 +338,7 @@ pub(crate) mod function {
         }
 
         serde_json::to_writer(
-            &mut out,
+            &mut *out,
             &Entry {
                 stat: &entry.stat,
                 hex_id: entry.id.to_hex().to_string(),

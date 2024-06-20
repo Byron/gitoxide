@@ -108,7 +108,7 @@ mod version {
         }
     }
 
-    #[cfg(feature = "internal-testing-gix-features-parallel")]
+    #[cfg(feature = "gix-features-parallel")]
     mod any {
         use std::{fs, io, sync::atomic::AtomicBool};
 
@@ -133,7 +133,7 @@ mod version {
                 index_path: &&str,
                 data_path: &&str,
             ) -> Result<(), Box<dyn std::error::Error>> {
-                let pack_iter = pack::data::input::BytesToEntriesIter::new_from_header(
+                let mut pack_iter = pack::data::input::BytesToEntriesIter::new_from_header(
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
                     *mode,
                     *compressed,
@@ -148,12 +148,12 @@ mod version {
                     desired_kind,
                     || {
                         let file = std::fs::File::open(fixture_path(data_path))?;
-                        let map = unsafe { memmap2::MmapOptions::map_copy_read_only(&file)? };
+                        let map = unsafe { memmap2::MmapOptions::new().map_copy_read_only(&file)? };
                         Ok((slice_map, map))
                     },
-                    pack_iter,
+                    &mut pack_iter,
                     None,
-                    progress::Discard,
+                    &mut progress::Discard,
                     &mut actual,
                     &AtomicBool::new(false),
                     gix_hash::Kind::Sha1,
@@ -210,7 +210,7 @@ mod version {
                 assert_eq!(outcome.index_version, desired_kind);
                 assert_eq!(
                     outcome.index_hash,
-                    gix_hash::ObjectId::from(&expected[end_of_pack_hash..end_of_index_hash])
+                    gix_hash::ObjectId::try_from(&expected[end_of_pack_hash..end_of_index_hash])?
                 );
                 Ok(())
             }
@@ -227,7 +227,7 @@ mod version {
         #[test]
         fn lookup_missing() {
             let file = index::File::at(&fixture_path(INDEX_V2), gix_hash::Kind::Sha1).unwrap();
-            let prefix = gix_hash::Prefix::new(gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
+            let prefix = gix_hash::Prefix::new(&gix_hash::Kind::Sha1.null(), 7).unwrap();
             assert!(file.lookup_prefix(prefix, None).is_none());
 
             let mut candidates = 1..1;

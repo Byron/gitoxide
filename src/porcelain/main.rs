@@ -62,11 +62,11 @@ pub fn main() -> Result<()> {
                     progress,
                     progress_keep_open,
                     crate::shared::STANDARD_RANGE,
-                    move |mut progress, out, mut err| {
+                    move |mut progress, out, err| {
                         let engine = query::prepare(
                             &repo_dir,
                             &mut progress,
-                            &mut err,
+                            &mut *err,
                             query::Options {
                                 object_cache_size_mb,
                                 find_copies_harder,

@@ -709,11 +709,10 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-channel"
-version = "0.5.10"
+version = "0.5.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82a9b73a36529d9c47029b9fb3a6f0ea3cc916a261195352ba19e770fc1748b2"
+checksum = "33480d6946193aa8033910124896ca395333cae7e2d1113d1fef6c3272217df2"
 dependencies = [
- "cfg-if",
  "crossbeam-utils",
 ]
 
@@ -2181,6 +2180,7 @@ dependencies = [
 name = "gix-odb-tests"
 version = "0.0.0"
 dependencies = [
+ "crossbeam-channel",
  "filetime",
  "gix-actor 0.31.2",
  "gix-date 0.8.6",

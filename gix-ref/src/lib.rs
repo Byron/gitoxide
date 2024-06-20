@@ -23,8 +23,6 @@
 #![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
-use std::borrow::Cow;
-
 use gix_hash::{oid, ObjectId};
 pub use gix_object::bstr;
 use gix_object::bstr::{BStr, BString};
@@ -132,10 +130,6 @@ pub struct FullName(pub(crate) BString);
 #[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd)]
 #[repr(transparent)]
 pub struct FullNameRef(BStr);
-
-/// A validated and potentially partial reference name, safe to use for common operations.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct PartialNameCow<'a>(Cow<'a, BStr>);
 
 /// A validated and potentially partial reference name, safe to use for common operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]

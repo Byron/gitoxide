@@ -78,9 +78,9 @@ impl crate::index::File {
     ///
     /// * neither in-pack nor out-of-pack Ref Deltas are supported here, these must have been resolved beforehand.
     /// * `make_resolver()` will only be called after the iterator stopped returning elements and produces a function that
-    /// provides all bytes belonging to a pack entry writing them to the given mutable output `Vec`.
-    /// It should return `None` if the entry cannot be resolved from the pack that produced the `entries` iterator, causing
-    /// the write operation to fail.
+    ///   provides all bytes belonging to a pack entry writing them to the given mutable output `Vec`.
+    ///   It should return `None` if the entry cannot be resolved from the pack that produced the `entries` iterator, causing
+    ///   the write operation to fail.
     #[allow(clippy::too_many_arguments)]
     pub fn write_data_iter_to_stream<F, F2, R>(
         version: crate::index::Version,
