@@ -34,6 +34,9 @@ pub struct PrepareFetch {
     /// How to handle shallow clones
     #[cfg_attr(not(feature = "blocking-network-client"), allow(dead_code))]
     shallow: remote::fetch::Shallow,
+    /// The name of the reference to fetch. If `None`, the reference pointed to by `HEAD` will be checked out.
+    #[cfg_attr(not(feature = "blocking-network-client"), allow(dead_code))]
+    ref_name: Option<gix_ref::PartialName>,
 }
 
 /// The error returned by [`PrepareFetch::new()`].
@@ -132,17 +135,21 @@ impl PrepareFetch {
             #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
             configure_connection: None,
             shallow: remote::fetch::Shallow::NoChange,
+            ref_name: None,
         })
     }
 }
 
-/// A utility to collect configuration on how to perform a checkout into a working tree, and when dropped without checking out successfully
-/// the fetched repository will be dropped.
+/// A utility to collect configuration on how to perform a checkout into a working tree,
+/// and when dropped without checking out successfully the fetched repository will be deleted from disk.
 #[must_use]
 #[cfg(feature = "worktree-mutation")]
+#[derive(Debug)]
 pub struct PrepareCheckout {
-    /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
+    /// A freshly initialized repository which is owned by us, or `None` if it was successfully checked out.
     pub(self) repo: Option<crate::Repository>,
+    /// The name of the reference to check out. If `None`, the reference pointed to by `HEAD` will be checked out.
+    pub(self) ref_name: Option<gix_ref::PartialName>,
 }
 
 // This module encapsulates functionality that works with both feature toggles. Can be combined with `fetch`

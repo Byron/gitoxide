@@ -28,6 +28,8 @@ pub mod main_worktree {
         CheckoutOptions(#[from] crate::config::checkout_options::Error),
         #[error(transparent)]
         IndexCheckout(#[from] gix_worktree_state::checkout::Error),
+        #[error(transparent)]
+        Peel(#[from] crate::reference::peel::Error),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
         #[error("The HEAD reference could not be located")]
@@ -62,7 +64,13 @@ pub mod main_worktree {
         /// on thread per logical core.
         ///
         /// Note that this is a no-op if the remote was empty, leaving this repository empty as well. This can be validated by checking
-        /// if the `head()` of the returned repository is not unborn.
+        /// if the `head()` of the returned repository is *not* unborn.
+        ///
+        /// # Panics
+        ///
+        /// If called after it was successful. The reason here is that it auto-deletes the contained repository,
+        /// and keeps track of this by means of keeping just one repository instance, which is passed to the user
+        /// after success.
         pub fn main_worktree<P>(
             &mut self,
             mut progress: P,
@@ -84,19 +92,26 @@ pub mod main_worktree {
             let repo = self
                 .repo
                 .as_ref()
-                .expect("still present as we never succeeded the worktree checkout yet");
+                .expect("BUG: this method may only be called until it is successful");
             let workdir = repo.work_dir().ok_or_else(|| Error::BareRepository {
                 git_dir: repo.git_dir().to_owned(),
             })?;
-            let root_tree = match repo.head()?.try_peel_to_id_in_place()? {
+
+            let root_tree_id = match &self.ref_name {
+                Some(reference_val) => Some(repo.find_reference(reference_val)?.peel_to_id_in_place()?),
+                None => repo.head()?.try_peel_to_id_in_place()?,
+            };
+
+            let root_tree = match root_tree_id {
                 Some(id) => id.object().expect("downloaded from remote").peel_to_tree()?.id,
                 None => {
                     return Ok((
                         self.repo.take().expect("still present"),
                         gix_worktree_state::checkout::Outcome::default(),
-                    ))
+                    ));
                 }
             };
+
             let index = gix_index::State::from_tree(&root_tree, &repo.objects, repo.config.protect_options()?)
                 .map_err(|err| Error::IndexFromTree {
                     id: root_tree,
@@ -129,7 +144,7 @@ pub mod main_worktree {
             bytes.show_throughput(start);
 
             index.write(Default::default())?;
-            Ok((self.repo.take().expect("still present"), outcome))
+            Ok((self.repo.take().expect("still present").clone(), outcome))
         }
     }
 }

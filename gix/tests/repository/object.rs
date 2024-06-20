@@ -6,7 +6,7 @@ mod write_object {
     #[test]
     fn empty_tree() -> crate::Result {
         let (_tmp, repo) = empty_bare_repo()?;
-        let oid = repo.write_object(&gix::objs::TreeRef::empty())?;
+        let oid = repo.write_object(gix::objs::TreeRef::empty())?;
         assert_eq!(
             oid,
             gix::hash::ObjectId::empty_tree(repo.object_hash()),
@@ -280,7 +280,7 @@ mod commit {
             crate::restricted(),
         )?
         .to_thread_local();
-        let empty_tree_id = repo.write_object(&gix::objs::Tree::empty())?.detach();
+        let empty_tree_id = repo.write_object(gix::objs::Tree::empty())?.detach();
         let err = repo
             .commit("HEAD", "initial", empty_tree_id, [empty_tree_id])
             .unwrap_err();
@@ -304,7 +304,7 @@ mod commit {
             restricted_and_git(),
         )?
         .to_thread_local();
-        let empty_tree_id = repo.write_object(&gix::objs::Tree::empty())?;
+        let empty_tree_id = repo.write_object(gix::objs::Tree::empty())?;
         let commit_id = repo.commit("HEAD", "initial", empty_tree_id, gix::commit::NO_PARENT_IDS)?;
         assert_eq!(
             commit_id,

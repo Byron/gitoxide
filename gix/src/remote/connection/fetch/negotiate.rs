@@ -38,7 +38,7 @@ pub(crate) enum Action {
     SkipToRefUpdate,
     /// We can't know for sure if fetching *is not* needed, so we go ahead and negotiate.
     MustNegotiate {
-        /// Each `ref_map.mapping` has a slot here which is `true` if we have the object the remote ref points to locally.
+        /// Each `ref_map.mapping` has a slot here which is `true` if we have the object the remote ref points to, locally.
         remote_ref_target_known: Vec<bool>,
     },
 }
@@ -221,7 +221,7 @@ pub(crate) fn add_wants(
     shallow: &fetch::Shallow,
     mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
 ) {
-    // When using shallow, we can't exclude `wants` as the remote won't send anything then. Thus we have to resend everything
+    // When using shallow, we can't exclude `wants` as the remote won't send anything then. Thus, we have to resend everything
     // we have as want instead to get exactly the same graph, but possibly deepened.
     let is_shallow = !matches!(shallow, fetch::Shallow::NoChange);
     let wants = ref_map

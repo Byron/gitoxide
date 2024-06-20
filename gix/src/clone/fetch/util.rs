@@ -2,7 +2,7 @@ use std::{borrow::Cow, io::Write};
 
 use gix_ref::{
     transaction::{LogChange, RefLog},
-    FullNameRef,
+    FullNameRef, PartialName,
 };
 
 use super::Error;
@@ -60,35 +60,40 @@ pub fn append_config_to_repo_config(repo: &mut Repository, config: gix_config::F
 
 /// HEAD cannot be written by means of refspec by design, so we have to do it manually here. Also create the pointed-to ref
 /// if we have to, as it might not have been naturally included in the ref-specs.
+/// Lastly, use `ref_name` if it was provided instead, and let `HEAD` point to it.
 pub fn update_head(
     repo: &mut Repository,
-    remote_refs: &[gix_protocol::handshake::Ref],
+    ref_map: &crate::remote::fetch::RefMap,
     reflog_message: &BStr,
     remote_name: &BStr,
+    ref_name: Option<&PartialName>,
 ) -> Result<(), Error> {
     use gix_ref::{
         transaction::{PreviousValue, RefEdit},
         Target,
     };
-    let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| {
-        Some(match r {
-            gix_protocol::handshake::Ref::Symbolic {
-                full_ref_name,
-                target,
-                tag: _,
-                object,
-            } if full_ref_name == "HEAD" => (Some(object.as_ref()), Some(target)),
-            gix_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
-                (Some(object.as_ref()), None)
-            }
-            gix_protocol::handshake::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
-                (None, Some(target))
-            }
-            _ => return None,
-        })
-    }) {
-        Some(t) => t,
-        None => return Ok(()),
+    let head_info = match ref_name {
+        Some(ref_name) => Some(find_custom_refname(ref_map, ref_name)?),
+        None => ref_map.remote_refs.iter().find_map(|r| {
+            Some(match r {
+                gix_protocol::handshake::Ref::Symbolic {
+                    full_ref_name,
+                    target,
+                    tag: _,
+                    object,
+                } if full_ref_name == "HEAD" => (Some(object.as_ref()), Some(target.as_bstr())),
+                gix_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
+                    (Some(object.as_ref()), None)
+                }
+                gix_protocol::handshake::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
+                    (None, Some(target.as_bstr()))
+                }
+                _ => return None,
+            })
+        }),
+    };
+    let Some((head_peeled_id, head_ref)) = head_info else {
+        return Ok(());
     };
 
     let head: gix_ref::FullName = "HEAD".try_into().expect("valid");
@@ -178,7 +183,55 @@ pub fn update_head(
     Ok(())
 }
 
-/// Setup the remote configuration for `branch` so that it points to itself, but on the remote, if and only if currently
+pub(super) fn find_custom_refname<'a>(
+    ref_map: &'a crate::remote::fetch::RefMap,
+    ref_name: &PartialName,
+) -> Result<(Option<&'a gix_hash::oid>, Option<&'a BStr>), Error> {
+    let group = gix_refspec::MatchGroup::from_fetch_specs(Some(
+        gix_refspec::parse(ref_name.as_ref().as_bstr(), gix_refspec::parse::Operation::Fetch)
+            .expect("partial names are valid refs"),
+    ));
+    // TODO: to fix ambiguity, implement priority system
+    let filtered_items: Vec<_> = ref_map
+        .mappings
+        .iter()
+        .filter_map(|m| {
+            m.remote
+                .as_name()
+                .and_then(|name| m.remote.as_id().map(|id| (name, id)))
+        })
+        .map(|(full_ref_name, target)| gix_refspec::match_group::Item {
+            full_ref_name,
+            target,
+            object: None,
+        })
+        .collect();
+    let res = group.match_remotes(filtered_items.iter().copied());
+    match res.mappings.len() {
+        0 => Err(Error::RefNameMissing {
+            wanted: ref_name.clone(),
+        }),
+        1 => {
+            let item = filtered_items[res.mappings[0]
+                .item_index
+                .expect("we map by name only and have no object-id in refspec")];
+            Ok((Some(item.target), Some(item.full_ref_name)))
+        }
+        _ => Err(Error::RefNameAmbiguous {
+            wanted: ref_name.clone(),
+            candidates: res
+                .mappings
+                .iter()
+                .filter_map(|m| match m.lhs {
+                    gix_refspec::match_group::SourceRef::FullName(name) => Some(name.to_owned()),
+                    gix_refspec::match_group::SourceRef::ObjectId(_) => None,
+                })
+                .collect(),
+        }),
+    }
+}
+
+/// Set up the remote configuration for `branch` so that it points to itself, but on the remote, if and only if currently
 /// saved refspecs are able to match it.
 /// For that we reload the remote of `remote_name` and use its `ref_specs` for match.
 fn setup_branch_config(

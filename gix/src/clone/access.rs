@@ -11,7 +11,7 @@ impl PrepareFetch {
     ///
     /// It can also be used to configure additional options, like those for fetching tags. Note that
     /// [`with_fetch_tags()`](crate::Remote::with_fetch_tags()) should be called here to configure the clone as desired.
-    /// Otherwise a clone is configured to be complete and fetches all tags, not only those reachable from all branches.
+    /// Otherwise, a clone is configured to be complete and fetches all tags, not only those reachable from all branches.
     pub fn configure_remote(
         mut self,
         f: impl FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, Box<dyn std::error::Error + Send + Sync>> + 'static,
@@ -41,6 +41,19 @@ impl PrepareFetch {
     pub fn with_in_memory_config_overrides(mut self, values: impl IntoIterator<Item = impl Into<BString>>) -> Self {
         self.config_overrides = values.into_iter().map(Into::into).collect();
         self
+    }
+
+    /// Set the `name` of the reference to check out, instead of the remote `HEAD`.
+    /// If `None`, the `HEAD` will be used, which is the default.
+    ///
+    /// Note that `name` should be a partial name like `main` or `feat/one`, but can be a full ref name.
+    /// If a branch on the remote matches, it will automatically be retrieved even without a refspec.
+    pub fn with_ref_name<'a, Name, E>(mut self, name: Option<Name>) -> Result<Self, E>
+    where
+        Name: TryInto<&'a gix_ref::PartialNameRef, Error = E>,
+    {
+        self.ref_name = name.map(TryInto::try_into).transpose()?.map(ToOwned::to_owned);
+        Ok(self)
     }
 }
 

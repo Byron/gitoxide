@@ -1,7 +1,8 @@
 use crate::{remote, util::restricted};
 
-#[cfg(feature = "blocking-network-client")]
+#[cfg(all(feature = "worktree-mutation", feature = "blocking-network-client"))]
 mod blocking_io {
+    use std::path::Path;
     use std::{borrow::Cow, sync::atomic::AtomicBool};
 
     use gix::{
@@ -500,12 +501,128 @@ mod blocking_io {
         let index = repo.index()?;
         assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
 
-        let work_dir = repo.work_dir().expect("non-bare");
+        assure_index_entries_on_disk(&index, repo.work_dir().expect("non-bare"));
+        Ok(())
+    }
+    #[test]
+    fn fetch_and_checkout_specific_ref() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let remote_repo = remote::repo("base");
+        let ref_to_checkout = "a";
+        let mut prepare = gix::clone::PrepareFetch::new(
+            remote_repo.path(),
+            tmp.path(),
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
+        )?
+        .with_ref_name(Some(ref_to_checkout))?;
+        let (mut checkout, _out) =
+            prepare.fetch_then_checkout(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        let (repo, _) = checkout.main_worktree(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        assert_eq!(
+            repo.references()?.all()?.count() - 2,
+            remote_repo.references()?.all()?.count(),
+            "all references have been cloned, + remote HEAD + remote main (not listed in remote_repo)"
+        );
+        let checked_out_ref = repo.head_ref()?.expect("head points to ref");
+        let remote_ref_name = format!("refs/heads/{ref_to_checkout}");
+        assert_eq!(
+            checked_out_ref.name().as_bstr(),
+            remote_ref_name,
+            "it's possible to checkout anything with that name, but here we have an ordinary branch"
+        );
+
+        assert_eq!(
+            checked_out_ref
+                .remote_ref_name(gix::remote::Direction::Fetch)
+                .transpose()?
+                .unwrap()
+                .as_bstr(),
+            remote_ref_name,
+            "the merge configuration is using the given name"
+        );
+
+        let index = repo.index()?;
+        assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
+
+        assure_index_entries_on_disk(&index, repo.work_dir().expect("non-bare"));
+        Ok(())
+    }
+
+    #[test]
+    fn fetch_and_checkout_specific_non_existing() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let remote_repo = remote::repo("base");
+        let ref_to_checkout = "does-not-exist";
+        let mut prepare = gix::clone::PrepareFetch::new(
+            remote_repo.path(),
+            tmp.path(),
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
+        )?
+        .with_ref_name(Some(ref_to_checkout))?;
+
+        let err = prepare
+            .fetch_then_checkout(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())
+            .unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "The remote didn't have any ref that matched 'does-not-exist'",
+            "we don't test this, but it's important that it determines this before receiving a pack"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn fetch_and_checkout_specific_annotated_tag() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let remote_repo = remote::repo("base");
+        let ref_to_checkout = "annotated-detached-tag";
+        let mut prepare = gix::clone::PrepareFetch::new(
+            remote_repo.path(),
+            tmp.path(),
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
+        )?
+        .with_ref_name(Some(ref_to_checkout))?;
+        let (mut checkout, _out) =
+            prepare.fetch_then_checkout(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        let (repo, _) = checkout.main_worktree(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        assert_eq!(
+            repo.references()?.all()?.count() - 1,
+            remote_repo.references()?.all()?.count(),
+            "all references have been cloned, + remote HEAD (not listed in remote_repo)"
+        );
+        let checked_out_ref = repo.head_ref()?.expect("head points to ref");
+        let remote_ref_name = format!("refs/tags/{ref_to_checkout}");
+        assert_eq!(
+            checked_out_ref.name().as_bstr(),
+            remote_ref_name,
+            "it also works with tags"
+        );
+
+        assert_eq!(
+            checked_out_ref
+                .remote_ref_name(gix::remote::Direction::Fetch)
+                .transpose()?,
+            None,
+            "there is no merge configuration for tags"
+        );
+        Ok(())
+    }
+
+    fn assure_index_entries_on_disk(index: &gix::worktree::Index, work_dir: &Path) {
         for entry in index.entries() {
-            let entry_path = work_dir.join(gix_path::from_bstr(entry.path(&index)));
+            let entry_path = work_dir.join(gix_path::from_bstr(entry.path(index)));
             assert!(entry_path.is_file(), "{entry_path:?} not found on disk")
         }
-        Ok(())
     }
 
     #[test]

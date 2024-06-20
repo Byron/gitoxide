@@ -49,7 +49,7 @@ mod with_core_worktree_config {
             } else {
                 assert_eq!(
                     repo.work_dir().unwrap(),
-                    gix_path::realpath(&repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
+                    gix_path::realpath(repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
                     "absolute workdirs are left untouched"
                 );
             }
