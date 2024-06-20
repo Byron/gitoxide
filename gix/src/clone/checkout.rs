@@ -5,8 +5,6 @@ use crate::{clone::PrepareCheckout, Repository};
 pub mod main_worktree {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
-    use gix_ref::bstr::BStr;
-
     use crate::{clone::PrepareCheckout, Progress, Repository};
 
     /// The error returned by [`PrepareCheckout::main_worktree()`].
@@ -66,7 +64,7 @@ pub mod main_worktree {
         /// on thread per logical core.
         ///
         /// Note that this is a no-op if the remote was empty, leaving this repository empty as well. This can be validated by checking
-        /// if the `head()` of the returned repository is not unborn.
+        /// if the `head()` of the returned repository is *not* unborn.
         pub fn main_worktree<P>(
             &mut self,
             mut progress: P,
@@ -76,29 +74,13 @@ pub mod main_worktree {
             P: gix_features::progress::NestedProgress,
             P::SubProgress: gix_features::progress::NestedProgress + 'static,
         {
-            self.main_worktree_inner(&mut progress, should_interrupt, None)
-        }
-
-        /// Checkout the a worktree, determining how many threads to use by looking at `checkout.workers`, defaulting to using
-        /// on thread per logical core.
-        pub fn worktree<P>(
-            &mut self,
-            mut progress: P,
-            should_interrupt: &AtomicBool,
-            reference: Option<&BStr>,
-        ) -> Result<(Repository, gix_worktree_state::checkout::Outcome), Error>
-        where
-            P: gix_features::progress::NestedProgress,
-            P::SubProgress: gix_features::progress::NestedProgress + 'static,
-        {
-            self.main_worktree_inner(&mut progress, should_interrupt, reference)
+            self.main_worktree_inner(&mut progress, should_interrupt)
         }
 
         fn main_worktree_inner(
             &mut self,
             progress: &mut dyn gix_features::progress::DynNestedProgress,
             should_interrupt: &AtomicBool,
-            reference: Option<&BStr>,
         ) -> Result<(Repository, gix_worktree_state::checkout::Outcome), Error> {
             let _span = gix_trace::coarse!("gix::clone::PrepareCheckout::main_worktree()");
             let repo = self
@@ -109,7 +91,7 @@ pub mod main_worktree {
                 git_dir: repo.git_dir().to_owned(),
             })?;
 
-            let root_tree_id = match reference {
+            let root_tree_id = match &self.ref_name {
                 Some(reference_val) => Some(repo.find_reference(reference_val)?.peel_to_id_in_place()?),
                 None => repo.head()?.try_peel_to_id_in_place()?,
             };

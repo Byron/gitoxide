@@ -114,7 +114,7 @@ where
         gix_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
         let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
         let mut arguments = gix_protocol::fetch::Arguments::new(protocol_version, fetch_features, con.trace);
-        if matches!(con.remote.fetch_tags, crate::remote::fetch::Tags::Included) {
+        if matches!(con.remote.fetch_tags, fetch::Tags::Included) {
             if !arguments.can_use_include_tag() {
                 return Err(Error::MissingServerFeature {
                     feature: "include-tag",
