@@ -620,7 +620,7 @@ mod blocking_io {
 
     fn assure_index_entries_on_disk(index: &gix::worktree::Index, work_dir: &Path) {
         for entry in index.entries() {
-            let entry_path = work_dir.join(gix_path::from_bstr(entry.path(&index)));
+            let entry_path = work_dir.join(gix_path::from_bstr(entry.path(index)));
             assert!(entry_path.is_file(), "{entry_path:?} not found on disk")
         }
     }

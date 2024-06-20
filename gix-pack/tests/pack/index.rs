@@ -363,8 +363,8 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             },
         ),
     ] {
-        let idx = index::File::at(&fixture_path(index_path), gix_hash::Kind::Sha1)?;
-        let pack = pack::data::File::at(&fixture_path(pack_path), gix_hash::Kind::Sha1)?;
+        let idx = index::File::at(fixture_path(index_path), gix_hash::Kind::Sha1)?;
+        let pack = pack::data::File::at(fixture_path(pack_path), gix_hash::Kind::Sha1)?;
 
         assert_eq!(pack.version(), pack::data::Version::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
@@ -471,7 +471,7 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
             "0f3ea84cd1bba10c2a03d736a460635082833e59",
         ),
     ] {
-        let idx = index::File::at(&fixture_path(path), gix_hash::Kind::Sha1)?;
+        let idx = index::File::at(fixture_path(path), gix_hash::Kind::Sha1)?;
         assert_eq!(idx.version(), *kind);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
