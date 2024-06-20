@@ -65,6 +65,12 @@ pub mod main_worktree {
         ///
         /// Note that this is a no-op if the remote was empty, leaving this repository empty as well. This can be validated by checking
         /// if the `head()` of the returned repository is *not* unborn.
+        ///
+        /// # Panics
+        ///
+        /// If called after it was successful. The reason here is that it auto-deletes the contained repository,
+        /// and keeps track of this by means of keeping just one repository instance, which is passed to the user
+        /// after success.
         pub fn main_worktree<P>(
             &mut self,
             mut progress: P,
@@ -86,7 +92,7 @@ pub mod main_worktree {
             let repo = self
                 .repo
                 .as_ref()
-                .expect("still present as we never succeeded the worktree checkout yet");
+                .expect("BUG: this method may only be called until it is successful");
             let workdir = repo.work_dir().ok_or_else(|| Error::BareRepository {
                 git_dir: repo.git_dir().to_owned(),
             })?;
@@ -138,7 +144,7 @@ pub mod main_worktree {
             bytes.show_throughput(start);
 
             index.write(Default::default())?;
-            Ok((self.repo.take().expect("still present"), outcome))
+            Ok((self.repo.take().expect("still present").clone(), outcome))
         }
     }
 }
