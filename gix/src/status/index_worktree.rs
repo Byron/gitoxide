@@ -634,7 +634,7 @@ pub mod iter {
                 .repo
                 .config
                 .resolved
-                .boolean("index", None, "skipHash")
+                .boolean(crate::config::tree::Index::SKIP_HASH)
                 .map(|res| crate::config::tree::Index::SKIP_HASH.enrich_error(res))
                 .transpose()
                 .with_lenient_default(self.repo.config.lenient_config)?

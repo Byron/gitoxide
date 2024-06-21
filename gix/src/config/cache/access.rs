@@ -214,11 +214,14 @@ impl Cache {
     ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
         let path = self
             .resolved
-            .path_filter(key, &mut self.filter_config_section.clone())?;
+            .path_filter(&key, &mut self.filter_config_section.clone())?;
 
         if self.lenient_config && path.is_empty() {
             gix_trace::info!(
-                "Ignored empty path at {section_name}.{subsection_name:?}.{key} due to lenient configuration"
+                "Ignored empty path at {section_name}.{subsection_name:?}.{name} due to lenient configuration",
+                section_name = key.section_name(),
+                subsection_name = key.subsection_name(),
+                name = key.name()
             );
             return None;
         }

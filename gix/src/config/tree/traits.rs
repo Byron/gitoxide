@@ -54,7 +54,7 @@ pub trait Key: std::fmt::Debug {
     fn validate(&self, value: &BStr) -> Result<(), crate::config::tree::key::validate::Error>;
     /// The section containing this key. Git configuration has no free-standing keys, they are always underneath a section.
     fn section(&self) -> &dyn Section;
-    /// TODO
+    /// TODO(ST): fix this - each usage leads to more things to look into.
     fn as_config_key(&self) -> &dyn gix_config::Key;
     /// The return value encodes three possible states to indicate subsection requirements
     /// * `None` = subsections may or may not be used, the most flexible setting.

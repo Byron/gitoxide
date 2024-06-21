@@ -85,3 +85,20 @@ impl Key for &BStr {
         }
     }
 }
+
+impl<T> Key for &T
+where
+    T: Key,
+{
+    fn name(&self) -> &str {
+        (*self).name()
+    }
+
+    fn section_name(&self) -> &str {
+        (*self).section_name()
+    }
+
+    fn subsection_name(&self) -> Option<&BStr> {
+        (*self).subsection_name()
+    }
+}
