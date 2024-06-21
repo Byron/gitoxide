@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::pack::fixture_path;
 
 #[test]

@@ -23,13 +23,15 @@ pub(crate) mod function {
         io::{BufWriter, Write},
     };
 
+    use gix::index::entry::Stage;
     use gix::{
         bstr::{BStr, BString},
-        repository::IndexPersistedOrInMemory,
+        worktree::IndexPersistedOrInMemory,
         Repository,
     };
 
     use crate::{
+        is_dir_to_mode,
         repository::index::entries::{Attributes, Options},
         OutputFormat,
     };
@@ -173,7 +175,7 @@ pub(crate) mod function {
                                         }
                                         // The user doesn't want attributes, so we set the cache position on demand only
                                         None => cache
-                                            .at_entry(rela_path, Some(is_dir))
+                                            .at_entry(rela_path, Some(is_dir_to_mode(is_dir)))
                                             .ok()
                                             .map(|platform| platform.matching_attributes(out))
                                             .unwrap_or_default(),
@@ -317,7 +319,7 @@ pub(crate) mod function {
 
     #[cfg(feature = "serde")]
     fn to_json(
-        mut out: &mut impl std::io::Write,
+        out: &mut impl std::io::Write,
         index: &gix::index::File,
         entry: &gix::index::Entry,
         attrs: Option<Attrs>,
@@ -336,7 +338,7 @@ pub(crate) mod function {
         }
 
         serde_json::to_writer(
-            &mut out,
+            &mut *out,
             &Entry {
                 stat: &entry.stat,
                 hex_id: entry.id.to_hex().to_string(),
@@ -392,11 +394,10 @@ pub(crate) mod function {
             out,
             "{} {}{:?} {} {}{}{}",
             match entry.flags.stage() {
-                0 => "       ",
-                1 => "BASE   ",
-                2 => "OURS   ",
-                3 => "THEIRS ",
-                _ => "UNKNOWN",
+                Stage::Unconflicted => "       ",
+                Stage::Base => "BASE   ",
+                Stage::Ours => "OURS   ",
+                Stage::Theirs => "THEIRS ",
             },
             if entry.flags.is_empty() {
                 "".to_string()

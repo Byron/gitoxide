@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
 use gix_hash::ObjectId;
+use gix_index::entry::Stage;
 use gix_revision::spec::parse::{
     delegate,
     delegate::{PeelTo, Traversal},
 };
-use gix_traverse::commit::Sorting;
 
 use crate::{
     bstr::{BStr, ByteSlice},
@@ -192,7 +192,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     match oid
                         .attach(repo)
                         .ancestors()
-                        .sorting(Sorting::ByCommitTimeNewestFirst)
+                        .sorting(gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirst)
                         .all()
                     {
                         Ok(iter) => {
@@ -241,15 +241,10 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 references
                                     .peeled()
                                     .filter_map(Result::ok)
-                                    .filter(|r| {
-                                        r.id()
-                                            .object()
-                                            .ok()
-                                            .map_or(false, |obj| obj.kind == gix_object::Kind::Commit)
-                                    })
+                                    .filter(|r| r.id().header().ok().map_or(false, |obj| obj.kind().is_commit()))
                                     .filter_map(|r| r.detach().peeled),
                             )
-                            .sorting(Sorting::ByCommitTimeNewestFirst)
+                            .sorting(gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirst)
                             .all()
                         {
                             Ok(iter) => {
@@ -305,9 +300,18 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
     }
 
     fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()> {
+        let stage = match stage {
+            0 => Stage::Unconflicted,
+            1 => Stage::Base,
+            2 => Stage::Ours,
+            3 => Stage::Theirs,
+            _ => unreachable!(
+                "BUG: driver will not pass invalid stages (and it uses integer to avoid gix-index as dependency)"
+            ),
+        };
         self.unset_disambiguate_call();
         match self.repo.index() {
-            Ok(index) => match index.entry_by_path_and_stage(path, stage.into()) {
+            Ok(index) => match index.entry_by_path_and_stage(path, stage) {
                 Some(entry) => {
                     self.objs[self.idx]
                         .get_or_insert_with(HashSet::default)
@@ -323,21 +327,17 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     Some(())
                 }
                 None => {
-                    let stage_hint = [0, 1, 2]
+                    let stage_hint = [Stage::Unconflicted, Stage::Base, Stage::Ours]
                         .iter()
                         .filter(|our_stage| **our_stage != stage)
-                        .find_map(|stage| {
-                            index
-                                .entry_index_by_path_and_stage(path, (*stage).into())
-                                .map(|_| (*stage).into())
-                        });
+                        .find_map(|stage| index.entry_index_by_path_and_stage(path, *stage).map(|_| *stage));
                     let exists = self
                         .repo
                         .work_dir()
                         .map_or(false, |root| root.join(gix_path::from_bstr(path)).exists());
                     self.err.push(Error::IndexLookup {
                         desired_path: path.into(),
-                        desired_stage: stage.into(),
+                        desired_stage: stage,
                         exists,
                         stage_hint,
                     });

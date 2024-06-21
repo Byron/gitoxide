@@ -23,6 +23,7 @@ pub use blocking_io::{
 pub use connect::function::connect;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod capabilities;
 #[doc(inline)]
 pub use capabilities::Capabilities;

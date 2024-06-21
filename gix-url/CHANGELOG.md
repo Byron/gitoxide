@@ -5,6 +5,107 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.27.3 (2024-04-13)
+
+### New Features
+
+<csr-id-db40382328c373258aa3bd5f9551511a42af6be5/>
+
+ - <csr-id-545799882643532dd0b3e8ab436efd7722c74e3c/> Add `ArgumentSafety` and `Url::*_as_argument()` methods
+   This adds three methods to `Url`:
+   
+   - `Url::user_as_argument`
+- `Url::host_as_argument`
+- `Url::path_as_argument`
+1. There is no wrapped value (`Absent`).
+2. The wrapped value is usable and presumably safe (`Usable`).
+3. The wrapped value is dangerous and should not be passed as a
+      command-line argument because it could be interpreted as an
+      option due to starting with `-`. The value itself may still be
+      useful and safe to include in error messages.
+
+### Bug Fixes
+
+ - <csr-id-f56ad390a5569d0129b7b16632991d18b9ddb4f7/> Prevent usernames with leading `-` from being passed to SSH
+   This detects ambiguous usernames in dangerous cases where they
+   would be passed to external commands to form SSH connections, if
+   they would be misinterpreted as option arguments.
+   
+   This change is analogous to b06a0dd, hardening `gix-transport` and
+   applications that use it against options smuggled in URLs, but for
+   the non-mandatory username portion of a URL, rather than the host
+   and path portions that were covered there.
+   
+   For example, commands like these no longer pass `-F...` options to
+   `ssh`:
+   
+   gix clone 'ssh://-Fconfigfile@example.com/abc'
+   gix clone -- '-Fconfigfile@example.com:abc/def'
+   
+   Instead, they refuse to run `ssh`, producing the error:
+   
+   Error: Username '-Fconfigfile' could be mistaken for a command-line argument
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 1 calendar day.
+ - 29 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
+    - Merge branch 'strange-usernames' ([`1272542`](https://github.com/Byron/gitoxide/commit/1272542e79c29302ada47324d6bb02101393563d))
+    - Refactor `gix-url` ([`09311b0`](https://github.com/Byron/gitoxide/commit/09311b0e0039c5a82c871047ff24336ab1741d47))
+    - Give `ArgumentSafety` traits; test `*_as_argument` methods ([`1b0af07`](https://github.com/Byron/gitoxide/commit/1b0af07ffa122a2199d444b84512300ef578abb5))
+    - Add `ArgumentSafety` and `Url::*_as_argument()` methods ([`5457998`](https://github.com/Byron/gitoxide/commit/545799882643532dd0b3e8ab436efd7722c74e3c))
+    - Sketch *_as_argument methods and supporting enum ([`29941e6`](https://github.com/Byron/gitoxide/commit/29941e66b367ff1eac448ec4024b1a17246ffaac))
+    - Give `looks_like_argument` a more accurate name ([`beef8d2`](https://github.com/Byron/gitoxide/commit/beef8d2ce20af8b97fcd85c185cf9373d4897cdb))
+    - Prevent usernames with leading `-` from being passed to SSH ([`f56ad39`](https://github.com/Byron/gitoxide/commit/f56ad390a5569d0129b7b16632991d18b9ddb4f7))
+    - Clarify circumstances when *_argument_safe should be used ([`e8e2463`](https://github.com/Byron/gitoxide/commit/e8e2463ad1e2c3b9f604b744d554cfa6684eca2f))
+    - Expand and introduce tests of more combinations ([`169a698`](https://github.com/Byron/gitoxide/commit/169a698ce82df559253c0389a6fa6921a136bc9e))
+    - Add `Url::user_argument_safe()` ([`db40382`](https://github.com/Byron/gitoxide/commit/db40382328c373258aa3bd5f9551511a42af6be5))
+    - Prepare for adding Url::user_argument_safe ([`1bdfdd9`](https://github.com/Byron/gitoxide/commit/1bdfdd98c9a82eee7ac40b38fe05d54f1f93237e))
+    - Reorder tests and add username assertion placeholders ([`6cbe65d`](https://github.com/Byron/gitoxide/commit/6cbe65d3f25c5c00fb9248a5558ac74f6e77ff06))
+</details>
+
+<csr-unknown>
+They return ArgumentSafety values that distingiush three cases:user_as_argument and host_as_argument are the most useful ones,as they serve as alternatives to user_argument_safe andhost_argument_safe whose return values are unambiguous. Theuser_argument_safe and host_argument_safe methods don’tdistinguish between the absence of a username or host, and thepresence of a username or host that is unsafe to pass as anargument.path_as_argument included for parity, in case it is useful towrite code that handles the three cases similarly. However, thereis no underlying ambiguity in the return value of the correspondingpath_argument_safe method, since unlike user and host, thepath is not an option type. Add Url::user_argument_safe()This returns None if the username begins with a -, which wouldconfuse command-line applications.It is analogous to the Url::host_argument_safe() andUrl::path_argument_safe() methods (introduced in d80b5f6), butfor usernames rather than hosts or paths.<csr-unknown/>
+
+## 0.27.2 (2024-03-14)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 4 calendar days.
+ - 18 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
+    - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+</details>
+
 ## 0.27.1 (2024-02-25)
 
 A maintenance release without user-facing changes.
@@ -13,7 +114,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 30 calendar days.
+ - 5 commits contributed to the release over the course of 30 calendar days.
  - 36 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +126,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.4, gix-utils v0.1.10, gix-actor v0.30.1, gix-object v0.41.1, gix-path v0.10.6, gix-glob v0.16.1, gix-quote v0.4.11, gix-attributes v0.22.1, gix-command v0.3.5, gix-filter v0.10.0, gix-commitgraph v0.24.1, gix-worktree-stream v0.10.0, gix-archive v0.10.0, gix-config-value v0.14.5, gix-ref v0.42.0, gix-sec v0.10.5, gix-config v0.35.0, gix-prompt v0.8.3, gix-url v0.27.1, gix-credentials v0.24.1, gix-ignore v0.11.1, gix-index v0.30.0, gix-worktree v0.31.0, gix-diff v0.41.0, gix-discover v0.30.0, gix-pathspec v0.7.0, gix-dir v0.1.0, gix-pack v0.48.0, gix-odb v0.58.0, gix-transport v0.41.1, gix-protocol v0.44.1, gix-revision v0.26.1, gix-refspec v0.22.1, gix-status v0.6.0, gix-submodule v0.9.0, gix-worktree-state v0.8.0, gix v0.59.0, gix-fsck v0.3.0, gitoxide-core v0.36.0, gitoxide v0.34.0, safety bump 10 crates ([`45b4470`](https://github.com/Byron/gitoxide/commit/45b447045bc826f252129c300c531acde2652c64))
     - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'dirwalk' ([`face359`](https://github.com/Byron/gitoxide/commit/face359443ba33e8985ec1525d5ec38b743ea7a9))
     - Adjust gitignore files with precious declarations ([`ae86a6a`](https://github.com/Byron/gitoxide/commit/ae86a6a206074b85ff1eba32aea9c8b40c087b17))

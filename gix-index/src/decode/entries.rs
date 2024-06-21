@@ -1,4 +1,4 @@
-use std::{convert::TryInto, ops::Range};
+use std::ops::Range;
 
 use crate::{
     decode::{self, header},

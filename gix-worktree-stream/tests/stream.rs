@@ -67,7 +67,7 @@ mod from_tree {
             mutating_pipeline(true),
             move |rela_path, mode, attrs| {
                 cache
-                    .at_entry(rela_path, mode.is_tree().into(), &odb)
+                    .at_entry(rela_path, Some(mode.into()), &odb)
                     .map(|entry| entry.matching_attributes(attrs))
                     .map(|_| ())
             },
@@ -225,7 +225,7 @@ mod from_tree {
             mutating_pipeline(false),
             move |rela_path, mode, attrs| {
                 cache
-                    .at_entry(rela_path, mode.is_tree().into(), &odb)
+                    .at_entry(rela_path, Some(mode.into()), &odb)
                     .map(|entry| entry.matching_attributes(attrs))
                     .map(|_| ())
             },

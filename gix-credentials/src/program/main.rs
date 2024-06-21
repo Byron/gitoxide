@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, ffi::OsString};
+use std::ffi::OsString;
 
 use bstr::BString;
 
@@ -60,7 +60,7 @@ pub enum Error {
 }
 
 pub(crate) mod function {
-    use std::{convert::TryInto, ffi::OsString};
+    use std::ffi::OsString;
 
     use crate::{
         program::main::{Action, Error},

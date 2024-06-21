@@ -6,7 +6,7 @@ use crate::index_as_worktree::{EntryStatus, VisitEntry};
 /// A record of a change.
 ///
 /// It's created either if there is a conflict or a change, or both.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Record<'index, T, U> {
     /// The index entry that is changed.
     pub entry: &'index index::Entry,

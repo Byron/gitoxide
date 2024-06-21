@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use bstr::BString;
 use gix_hash::ObjectId;
 

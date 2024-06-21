@@ -2,6 +2,7 @@ use bstr::BStr;
 use gix_dir::{entry, walk, Entry};
 use gix_testtools::scripted_fixture_read_only;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::AtomicBool;
 
 pub fn fixture_in(filename: &str, name: &str) -> PathBuf {
     let root = scripted_fixture_read_only(format!("{filename}.sh")).expect("script works");
@@ -31,6 +32,7 @@ pub fn options_emit_all() -> walk::Options {
         emit_untracked: walk::EmissionMode::Matching,
         emit_empty_directories: true,
         emit_collapsed: None,
+        symlinks_to_directories_are_ignored_like_directories: false,
     }
 }
 
@@ -268,7 +270,11 @@ pub fn try_collect_filtered_opts(
     cb: impl FnOnce(&mut dyn walk::Delegate, walk::Context) -> Result<(walk::Outcome, PathBuf), walk::Error>,
     patterns: impl IntoIterator<Item = impl AsRef<BStr>>,
     delegate: &mut dyn gix_dir::walk::Delegate,
-    Options { fresh_index, git_dir }: Options<'_>,
+    Options {
+        fresh_index,
+        git_dir,
+        should_interrupt,
+    }: Options<'_>,
 ) -> Result<(walk::Outcome, PathBuf), walk::Error> {
     let git_dir = worktree_root.join(git_dir.unwrap_or(".git"));
     let mut index = std::fs::read(git_dir.join("index")).ok().map_or_else(
@@ -342,6 +348,7 @@ pub fn try_collect_filtered_opts(
             excludes: Some(&mut stack),
             objects: &gix_object::find::Never,
             explicit_traversal_root,
+            should_interrupt,
         },
     )
 }
@@ -349,6 +356,7 @@ pub fn try_collect_filtered_opts(
 pub struct Options<'a> {
     pub fresh_index: bool,
     pub git_dir: Option<&'a str>,
+    pub should_interrupt: Option<&'a AtomicBool>,
 }
 
 impl<'a> Options<'a> {
@@ -365,6 +373,7 @@ impl<'a> Default for Options<'a> {
         Options {
             fresh_index: true,
             git_dir: None,
+            should_interrupt: None,
         }
     }
 }

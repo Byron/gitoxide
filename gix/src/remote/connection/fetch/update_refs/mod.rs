@@ -1,5 +1,5 @@
 #![allow(clippy::result_large_err)]
-use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
+use std::{collections::BTreeMap, path::PathBuf};
 
 use gix_object::Exists;
 use gix_ref::{
@@ -20,6 +20,7 @@ use crate::{
 };
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod update;
 
 /// Information about the update of a single reference, corresponding the respective entry in [`RefMap::mappings`][crate::remote::fetch::RefMap::mappings].
@@ -161,7 +162,7 @@ pub(crate) fn update(
                                                     .to_owned()
                                                     .ancestors(&repo.objects)
                                                     .sorting(
-                                                        gix_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                                                        gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
                                                             seconds: local_commit_time
                                                         },
                                                     )

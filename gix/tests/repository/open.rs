@@ -268,8 +268,14 @@ mod object_caches {
     fn default_git_and_custom_caches() -> crate::Result {
         let opts = gix::open::Options::isolated();
         let repo = named_subrepo_opts("make_config_repos.sh", "object-caches", opts)?;
-        assert_eq!(repo.objects.has_object_cache(), cfg!(feature = "comfort"));
-        assert_eq!(repo.objects.has_pack_cache(), cfg!(feature = "comfort"));
+        assert_eq!(
+            repo.objects.has_object_cache(),
+            cfg!(all(feature = "parallel", feature = "comfort"))
+        );
+        assert_eq!(
+            repo.objects.has_pack_cache(),
+            cfg!(all(feature = "parallel", feature = "comfort"))
+        );
         Ok(())
     }
 

@@ -4,7 +4,6 @@ use winnow::{
     error::{AddContext, ParserError, StrContext},
     prelude::*,
     token::{take_till, take_until, take_while},
-    Parser,
 };
 
 use crate::ByteSlice;

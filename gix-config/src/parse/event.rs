@@ -33,7 +33,7 @@ impl Event<'_> {
 
     /// Stream ourselves to the given `out`, in order to reproduce this event mostly losslessly
     /// as it was parsed.
-    pub fn write_to(&self, mut out: &mut dyn std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(&self, out: &mut dyn std::io::Write) -> std::io::Result<()> {
         match self {
             Self::ValueNotDone(e) => {
                 out.write_all(e.as_ref())?;
@@ -42,8 +42,8 @@ impl Event<'_> {
             Self::Whitespace(e) | Self::Newline(e) | Self::Value(e) | Self::ValueDone(e) => out.write_all(e.as_ref()),
             Self::KeyValueSeparator => out.write_all(b"="),
             Self::SectionKey(k) => out.write_all(k.0.as_ref()),
-            Self::SectionHeader(h) => h.write_to(&mut out),
-            Self::Comment(c) => c.write_to(&mut out),
+            Self::SectionHeader(h) => h.write_to(out),
+            Self::Comment(c) => c.write_to(out),
         }
     }
 
@@ -72,7 +72,7 @@ impl Display for Event<'_> {
 
 impl From<Event<'_>> for BString {
     fn from(event: Event<'_>) -> Self {
-        event.into()
+        event.to_bstring()
     }
 }
 

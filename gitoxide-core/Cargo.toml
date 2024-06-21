@@ -2,7 +2,7 @@
 name = "gitoxide-core"
 description = "The library implementing all capabilities of the gitoxide CLI"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.36.0"
+version = "0.38.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -23,7 +23,7 @@ estimate-hours = ["dep:fs-err", "dep:crossbeam-channel", "dep:smallvec"]
 query = ["dep:rusqlite"]
 ## Run algorithms on a corpus of repositories and store their results for later comparison and intelligence gathering.
 ## *Note that* `organize` we need for finding git repositories fast.
-corpus = [ "dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel", "dep:serde_json", "dep:tracing-forest", "dep:tracing-subscriber", "tracing", "dep:parking_lot" ]
+corpus = ["dep:rusqlite", "dep:sysinfo", "organize", "dep:crossbeam-channel", "dep:serde_json", "dep:tracing-forest", "dep:tracing-subscriber", "tracing", "dep:parking_lot"]
 
 ## The ability to create archives from virtual worktrees, similar to `git archive`.
 archive = ["dep:gix-archive-for-configuration-only", "gix/worktree-archive"]
@@ -47,12 +47,12 @@ serde = ["gix/serde", "dep:serde_json", "dep:serde", "bytesize/serde"]
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-gix = { version = "^0.59.0", path = "../gix", default-features = false, features = ["blob-diff", "revision", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt", "status", "dirwalk"] }
-gix-pack-for-configuration-only = { package = "gix-pack", version = "^0.48.0", path = "../gix-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static", "generate", "streaming-input"] }
-gix-transport-configuration-only = { package = "gix-transport", version = "^0.41.1", path = "../gix-transport", default-features = false }
-gix-archive-for-configuration-only = { package = "gix-archive", version = "^0.10.0", path = "../gix-archive", optional = true, features = ["tar", "tar_gz"] }
-gix-status = { version = "^0.6.0", path = "../gix-status" }
-gix-fsck = { version = "^0.3.0", path = "../gix-fsck" }
+gix = { version = "^0.63.0", path = "../gix", default-features = false, features = ["blob-diff", "revision", "mailmap", "excludes", "attributes", "worktree-mutation", "credentials", "interrupt", "status", "dirwalk"] }
+gix-pack-for-configuration-only = { package = "gix-pack", version = "^0.51.0", path = "../gix-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static", "generate", "streaming-input"] }
+gix-transport-configuration-only = { package = "gix-transport", version = "^0.42.1", path = "../gix-transport", default-features = false }
+gix-archive-for-configuration-only = { package = "gix-archive", version = "^0.13.1", path = "../gix-archive", optional = true, features = ["tar", "tar_gz"] }
+gix-status = { version = "^0.10.0", path = "../gix-status" }
+gix-fsck = { version = "^0.4.0", path = "../gix-fsck" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
 thiserror = "1.0.34"
@@ -68,7 +68,7 @@ futures-io = { version = "0.3.16", optional = true }
 blocking = { version = "1.0.2", optional = true }
 
 # for 'organize' functionality
-gix-url = { version = "^0.27.1", path = "../gix-url", optional = true }
+gix-url = { version = "^0.27.3", path = "../gix-url", optional = true }
 jwalk = { version = "0.8.0", optional = true }
 
 # for 'hours'
@@ -77,7 +77,7 @@ crossbeam-channel = { version = "0.5.6", optional = true }
 smallvec = { version = "1.10.0", optional = true }
 
 # for 'query' and 'corpus'
-rusqlite = { version = "0.30.0", optional = true, features = ["bundled"] }
+rusqlite = { version = "0.31.0", optional = true, features = ["bundled"] }
 
 # for 'corpus'
 parking_lot = { version = "0.12.1", optional = true }

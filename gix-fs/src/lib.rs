@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Capabilities {
-    /// If `true`, the filesystem will consider the precomposed umlaut `ä` similiar to its decomposed form `"a\u{308}"` and consider them the same.
+    /// If `true`, the filesystem will consider the precomposed umlaut `ä` similar to its decomposed form `"a\u{308}"` and consider them the same.
     /// If `false`, the filesystem will only see bytes which means that the above example could live side-by-side.
     ///
     /// Even though a filesystem that treats both forms the same will still reproduce the exact same byte sequence during traversal for instance,
@@ -36,13 +36,16 @@ mod snapshot;
 pub use snapshot::{FileSnapshot, SharedFileSnapshot, SharedFileSnapshotMut};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod symlink;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod read_dir;
 pub use read_dir::function::read_dir;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod dir;
 
 /// Like [`std::env::current_dir()`], but it will `precompose_unicode` if that value is true, if the current directory
@@ -90,4 +93,5 @@ pub fn is_executable(_metadata: &std::fs::Metadata) -> bool {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod stack;

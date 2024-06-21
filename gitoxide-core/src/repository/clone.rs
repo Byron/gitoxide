@@ -6,6 +6,7 @@ pub struct Options {
     pub handshake_info: bool,
     pub no_tags: bool,
     pub shallow: gix::remote::fetch::Shallow,
+    pub ref_name: Option<gix::refs::PartialName>,
 }
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
@@ -31,6 +32,7 @@ pub(crate) mod function {
             handshake_info,
             bare,
             no_tags,
+            ref_name,
             shallow,
         }: Options,
     ) -> anyhow::Result<()>
@@ -75,6 +77,7 @@ pub(crate) mod function {
         }
         let (mut checkout, fetch_outcome) = prepare
             .with_shallow(shallow)
+            .with_ref_name(ref_name.as_ref())?
             .fetch_then_checkout(&mut progress, &gix::interrupt::IS_INTERRUPTED)?;
 
         let (repo, outcome) = if bare {

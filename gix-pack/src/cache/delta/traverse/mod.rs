@@ -26,6 +26,8 @@ pub enum Error {
     },
     #[error("The resolver failed to obtain the pack entry bytes for the entry at {pack_offset}")]
     ResolveFailed { pack_offset: u64 },
+    #[error(transparent)]
+    EntryType(#[from] crate::data::entry::decode::Error),
     #[error("One of the object inspectors failed")]
     Inspect(#[from] Box<dyn std::error::Error + Send + Sync>),
     #[error("Interrupted")]

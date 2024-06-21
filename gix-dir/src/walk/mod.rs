@@ -1,6 +1,7 @@
 use crate::{entry, EntryRef};
 use bstr::BStr;
 use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
 
 /// A type returned by the [`Delegate::emit()`] as passed to [`walk()`](function::walk()).
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -69,12 +70,24 @@ pub trait Delegate {
     /// Use `for_deletion` to specify if the seen entries should ultimately be deleted, which may affect the decision
     /// of whether to resource or not.
     ///
+    /// If `worktree_root_is_repository` is `true`, then this status is part of the root of an iteration, and the corresponding
+    /// worktree root is a repository itself. This typically happens for submodules. In this case, recursion rules are relaxed
+    /// to allow traversing submodule worktrees.
+    ///
     /// Note that this method will see all directories, even though not all of them may end up being [emitted](Self::emit()).
     /// If this method returns `false`, the `entry` will always be emitted.
-    fn can_recurse(&mut self, entry: EntryRef<'_>, for_deletion: Option<ForDeletionMode>) -> bool {
-        entry
-            .status
-            .can_recurse(entry.disk_kind, entry.pathspec_match, for_deletion)
+    fn can_recurse(
+        &mut self,
+        entry: EntryRef<'_>,
+        for_deletion: Option<ForDeletionMode>,
+        worktree_root_is_repository: bool,
+    ) -> bool {
+        entry.status.can_recurse(
+            entry.disk_kind,
+            entry.pathspec_match,
+            for_deletion,
+            worktree_root_is_repository,
+        )
     }
 }
 
@@ -85,7 +98,7 @@ pub trait Delegate {
 pub enum EmissionMode {
     /// Emit each entry as it matches exactly, without doing any kind of simplification.
     ///
-    /// Emissions in this mode are happening as they occour, without any buffering or ordering.
+    /// Emissions in this mode are happening as they occur, without any buffering or ordering.
     #[default]
     Matching,
     /// Emit only a containing directory if all of its entries are of the same type.
@@ -171,10 +184,22 @@ pub struct Options {
     pub emit_empty_directories: bool,
     /// If `None`, no entries inside of collapsed directories are emitted. Otherwise, act as specified by `Some(mode)`.
     pub emit_collapsed: Option<CollapsedEntriesEmissionMode>,
+    /// This is a `libgit2` compatibility flag, and if enabled, symlinks that point to directories will be considered a directory
+    /// when checking for exclusion.
+    ///
+    /// This is relevant if `src2` points to `src`, and is excluded with `src2/`. If `false`, `src2` will not be excluded,
+    /// if `true` it will be excluded as the symlink is considered a directory.
+    ///
+    /// In other words, for Git compatibility this flag should be `false`, the default, for `git2` compatibility it should be `true`.
+    pub symlinks_to_directories_are_ignored_like_directories: bool,
 }
 
 /// All information that is required to perform a dirwalk, and classify paths properly.
 pub struct Context<'a> {
+    /// If not `None`, it will be checked before entering any directory to trigger early interruption.
+    ///
+    /// If this flag is `true` at any point in the iteration, it will abort with an error.
+    pub should_interrupt: Option<&'a AtomicBool>,
     /// The `git_dir` of the parent repository, after a call to [`gix_path::realpath()`].
     ///
     /// It's used to help us differentiate our own `.git` directory from nested unrelated repositories,
@@ -190,7 +215,7 @@ pub struct Context<'a> {
     /// ### Important
     ///
     /// The index must have been validated so that each entry that is considered up-to-date will have the [gix_index::entry::Flags::UPTODATE] flag
-    /// set. Otherwise the index entry is not considered and a disk-access may occour which is costly.
+    /// set. Otherwise the index entry is not considered and a disk-access may occur which is costly.
     pub index: &'a gix_index::State,
     /// A utility to lookup index entries faster, and deal with ignore-case handling.
     ///
@@ -249,6 +274,8 @@ pub struct Outcome {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Interrupted")]
+    Interrupted,
     #[error("Worktree root at '{}' is not a directory", root.display())]
     WorktreeRootIsFile { root: PathBuf },
     #[error("Traversal root '{}' contains relative path components and could not be normalized", root.display())]

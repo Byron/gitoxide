@@ -1,0 +1,6 @@
+tree 7989dfb2ec2f41914611a22fb30bbc2b3849df9a
+parent 8845ae683e2688bc619baade49510c17e978518f
+author Name <name@example.com> 1312735823 +051800
+committer Name <name@example.com> 1312735823 +051800
+
+edit changelog to mention about x_sendfile_header default change

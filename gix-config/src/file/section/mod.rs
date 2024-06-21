@@ -75,7 +75,7 @@ impl<'a> Section<'a> {
     /// Stream ourselves to the given `out`, in order to reproduce this section mostly losslessly
     /// as it was parsed.
     pub fn write_to(&self, mut out: &mut dyn std::io::Write) -> std::io::Result<()> {
-        self.header.write_to(&mut out)?;
+        self.header.write_to(&mut *out)?;
 
         if self.body.0.is_empty() {
             return Ok(());

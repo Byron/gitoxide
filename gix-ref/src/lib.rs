@@ -23,8 +23,6 @@
 #![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
-use std::borrow::Cow;
-
 use gix_hash::{oid, ObjectId};
 pub use gix_object::bstr;
 use gix_object::bstr::{BStr, BString};
@@ -35,10 +33,13 @@ pub use store_impl::{file, packed};
 
 mod fullname;
 ///
+#[allow(clippy::empty_docs)]
 pub mod name;
 ///
+#[allow(clippy::empty_docs)]
 pub mod namespace;
 ///
+#[allow(clippy::empty_docs)]
 pub mod transaction;
 
 mod parse;
@@ -49,13 +50,35 @@ pub use raw::Reference;
 mod target;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod log;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod peel;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod store {
+    ///
+    #[allow(clippy::empty_docs)]
+    pub mod init {
+
+        /// Options for use during [initialization](crate::file::Store::at).
+        #[derive(Debug, Copy, Clone, Default)]
+        pub struct Options {
+            /// How to write the ref-log.
+            pub write_reflog: super::WriteReflog,
+            /// The kind of hash to expect in
+            pub object_hash: gix_hash::Kind,
+            /// The equivalent of `core.precomposeUnicode`.
+            pub precompose_unicode: bool,
+            /// If `true`, we will avoid reading from or writing to references that contains Windows device names
+            /// to avoid side effects. This only needs to be `true` on Windows, but can be `true` on other platforms
+            /// if they need to remain compatible with Windows.
+            pub prohibit_windows_device_names: bool,
+        }
+    }
     /// The way a file store handles the reflog
     #[derive(Default, Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
     pub enum WriteReflog {
@@ -87,9 +110,8 @@ pub mod store {
     ///
     #[path = "general/handle/mod.rs"]
     mod handle;
-    pub use handle::find;
-
     use crate::file;
+    pub use handle::find;
 }
 
 /// The git reference store.
@@ -108,10 +130,6 @@ pub struct FullName(pub(crate) BString);
 #[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd)]
 #[repr(transparent)]
 pub struct FullNameRef(BStr);
-
-/// A validated and potentially partial reference name, safe to use for common operations.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct PartialNameCow<'a>(Cow<'a, BStr>);
 
 /// A validated and potentially partial reference name, safe to use for common operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]

@@ -1,6 +1,4 @@
 #![allow(clippy::result_large_err)]
-use std::convert::TryInto;
-
 use crate::{bstr::BStr, config, remote, remote::find, Remote};
 
 impl crate::Repository {

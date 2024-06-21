@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 export GIT_INDEX_VERSION=2;
@@ -22,3 +22,5 @@ mkdir d
 
 git add .
 git commit -m "init"
+
+git rev-parse @^{tree} > head.tree

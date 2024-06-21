@@ -28,6 +28,7 @@ impl Cache {
             object_hash,
             reflog: _,
             precompose_unicode: _,
+            protect_windows: _,
         }: StageOne,
         git_dir: &std::path::Path,
         branch_name: Option<&gix_ref::FullNameRef>,
@@ -303,7 +304,7 @@ impl crate::Repository {
 
     fn apply_changed_values(&mut self) {
         self.refs.write_reflog = util::reflog_or_default(self.config.reflog, self.work_dir().is_some());
-        self.refs.namespace = self.config.refs_namespace.clone();
+        self.refs.namespace.clone_from(&self.config.refs_namespace);
     }
 }
 

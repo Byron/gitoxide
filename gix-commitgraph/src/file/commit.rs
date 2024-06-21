@@ -1,6 +1,5 @@
 //! Low-level operations on individual commits.
 use std::{
-    convert::TryInto,
     fmt::{Debug, Formatter},
     slice::Chunks,
 };

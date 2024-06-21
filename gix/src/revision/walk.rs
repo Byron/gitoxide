@@ -8,7 +8,7 @@ use crate::{ext::ObjectIdExt, revision, Repository};
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    AncestorIter(#[from] gix_traverse::commit::ancestors::Error),
+    SimpleTraversal(#[from] gix_traverse::commit::simple::Error),
     #[error(transparent)]
     ShallowCommits(#[from] crate::shallow::open::Error),
     #[error(transparent)]
@@ -22,8 +22,8 @@ pub struct Info<'repo> {
     pub id: gix_hash::ObjectId,
     /// All parent ids we have encountered. Note that these will be at most one if [`Parents::First`][gix_traverse::commit::Parents::First] is enabled.
     pub parent_ids: gix_traverse::commit::ParentIds,
-    /// The time at which the commit was created. It's only `Some(_)` if sorting is not [`Sorting::BreadthFirst`][gix_traverse::commit::Sorting::BreadthFirst],
-    /// as the walk needs to require the commit-date.
+    /// The time at which the commit was created. It will only be `Some(_)` if the chosen traversal was
+    /// taking dates into consideration.
     pub commit_time: Option<gix_date::SecondsSinceUnixEpoch>,
 
     repo: &'repo Repository,
@@ -91,7 +91,7 @@ impl<'repo> Info<'repo> {
 pub struct Platform<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) tips: Vec<ObjectId>,
-    pub(crate) sorting: gix_traverse::commit::Sorting,
+    pub(crate) sorting: gix_traverse::commit::simple::Sorting,
     pub(crate) parents: gix_traverse::commit::Parents,
     pub(crate) use_commit_graph: Option<bool>,
     pub(crate) commit_graph: Option<gix_commitgraph::Graph>,
@@ -113,7 +113,7 @@ impl<'repo> Platform<'repo> {
 /// Create-time builder methods
 impl<'repo> Platform<'repo> {
     /// Set the sort mode for commits to the given value. The default is to order topologically breadth-first.
-    pub fn sorting(mut self, sorting: gix_traverse::commit::Sorting) -> Self {
+    pub fn sorting(mut self, sorting: gix_traverse::commit::simple::Sorting) -> Self {
         self.sorting = sorting;
         self
     }
@@ -166,40 +166,35 @@ impl<'repo> Platform<'repo> {
         Ok(revision::Walk {
             repo,
             inner: Box::new(
-                gix_traverse::commit::Ancestors::filtered(
-                    tips,
-                    gix_traverse::commit::ancestors::State::default(),
-                    &repo.objects,
-                    {
-                        // Note that specific shallow handling for commit-graphs isn't needed as these contain
-                        // all information there is, and exclude shallow parents to be structurally consistent.
-                        let shallow_commits = repo.shallow_commits()?;
-                        let mut grafted_parents_to_skip = Vec::new();
-                        let mut buf = Vec::new();
-                        move |id| {
-                            if !filter(id) {
-                                return false;
-                            }
-                            match shallow_commits.as_ref() {
-                                Some(commits) => {
-                                    let id = id.to_owned();
-                                    if let Ok(idx) = grafted_parents_to_skip.binary_search(&id) {
-                                        grafted_parents_to_skip.remove(idx);
-                                        return false;
-                                    };
-                                    if commits.binary_search(&id).is_ok() {
-                                        if let Ok(commit) = repo.objects.find_commit_iter(&id, &mut buf) {
-                                            grafted_parents_to_skip.extend(commit.parent_ids());
-                                            grafted_parents_to_skip.sort();
-                                        }
-                                    };
-                                    true
-                                }
-                                None => true,
-                            }
+                gix_traverse::commit::Simple::filtered(tips, &repo.objects, {
+                    // Note that specific shallow handling for commit-graphs isn't needed as these contain
+                    // all information there is, and exclude shallow parents to be structurally consistent.
+                    let shallow_commits = repo.shallow_commits()?;
+                    let mut grafted_parents_to_skip = Vec::new();
+                    let mut buf = Vec::new();
+                    move |id| {
+                        if !filter(id) {
+                            return false;
                         }
-                    },
-                )
+                        match shallow_commits.as_ref() {
+                            Some(commits) => {
+                                let id = id.to_owned();
+                                if let Ok(idx) = grafted_parents_to_skip.binary_search(&id) {
+                                    grafted_parents_to_skip.remove(idx);
+                                    return false;
+                                };
+                                if commits.binary_search(&id).is_ok() {
+                                    if let Ok(commit) = repo.objects.find_commit_iter(&id, &mut buf) {
+                                        grafted_parents_to_skip.extend(commit.parent_ids());
+                                        grafted_parents_to_skip.sort();
+                                    }
+                                };
+                                true
+                            }
+                            None => true,
+                        }
+                    }
+                })
                 .sorting(sorting)?
                 .parents(parents)
                 .commit_graph(
@@ -226,13 +221,12 @@ pub(crate) mod iter {
     /// The iterator returned by [`crate::revision::walk::Platform::all()`].
     pub struct Walk<'repo> {
         pub(crate) repo: &'repo crate::Repository,
-        pub(crate) inner: Box<
-            dyn Iterator<Item = Result<gix_traverse::commit::Info, gix_traverse::commit::ancestors::Error>> + 'repo,
-        >,
+        pub(crate) inner:
+            Box<dyn Iterator<Item = Result<gix_traverse::commit::Info, gix_traverse::commit::simple::Error>> + 'repo>,
     }
 
     impl<'repo> Iterator for Walk<'repo> {
-        type Item = Result<super::Info<'repo>, gix_traverse::commit::ancestors::Error>;
+        type Item = Result<super::Info<'repo>, gix_traverse::commit::simple::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             self.inner

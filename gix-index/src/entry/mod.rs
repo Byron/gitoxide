@@ -1,11 +1,26 @@
-/// The stage of an entry, one of…
+/// The stage of an entry.
+#[derive(Default, Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub enum Stage {
+    /// This is the default, and most entries are in this stage.
+    #[default]
+    Unconflicted = 0,
+    /// The entry is the common base between 'our' change and 'their' change, for comparison.
+    Base = 1,
+    /// The entry represents our change.
+    Ours = 2,
+    /// The entry represents their change.
+    Theirs = 3,
+}
+
+// The stage of an entry, one of…
 /// * 0 = no conflict,
 /// * 1 = base,
 /// * 2 = ours,
 /// * 3 = theirs
-pub type Stage = u32;
+pub type StageRaw = u32;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod mode;
 
 mod flags;
@@ -13,14 +28,12 @@ pub(crate) use flags::at_rest;
 pub use flags::Flags;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod stat;
 mod write;
 
 use bitflags::bitflags;
 
-// TODO: we essentially treat this as an enum with the only exception being
-//      that `FILE_EXECUTABLE.contains(FILE)` works might want to turn this into an
-//      enum proper
 bitflags! {
     /// The kind of file of an entry.
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -78,6 +91,17 @@ mod access {
         /// Return an entry's stage. See [entry::Stage] for possible values.
         pub fn stage(&self) -> entry::Stage {
             self.flags.stage()
+        }
+
+        /// Return an entry's stage as raw number between 0 and 4.
+        /// Possible values are:
+        ///
+        /// * 0 = no conflict,
+        /// * 1 = base,
+        /// * 2 = ours,
+        /// * 3 = theirs
+        pub fn stage_raw(&self) -> u32 {
+            self.flags.stage_raw()
         }
     }
 }

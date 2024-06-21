@@ -95,7 +95,9 @@ impl std::fmt::Debug for Transaction<'_, '_> {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod prepare;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod commit;

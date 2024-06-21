@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::TryFrom};
+use std::borrow::Cow;
 
 use super::Name;
 use crate::bstr::{BStr, BString, ByteSlice, ByteVec};

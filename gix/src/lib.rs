@@ -72,7 +72,7 @@
 //!
 //! What follows is a list of methods you might be missing, along with workarounds if available.
 //! * [`git2::Repository::open_bare()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.open_bare) ➡ ❌ - use [`open()`] and discard if it is not bare.
-//! * [`git2::build::CheckoutBuilder::disable_filters()](https://docs.rs/git2/*/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
+//! * [`git2::build::CheckoutBuilder::disable_filters()`](https://docs.rs/git2/*/git2/build/struct.CheckoutBuilder.html#method.disable_filters) ➡ ❌ *(filters are always applied during checkouts)*
 //! * [`git2::Repository::submodule_status()`](https://docs.rs/git2/*/git2/struct.Repository.html#method.submodule_status) ➡ [`Submodule::state()`] - status provides more information and conveniences though, and an actual worktree status isn't performed.
 //!
 //! #### Integrity checks
@@ -133,8 +133,6 @@ pub use gix_ref as refs;
 pub use gix_refspec as refspec;
 pub use gix_revwalk as revwalk;
 pub use gix_sec as sec;
-#[cfg(feature = "status")]
-pub use gix_status as status;
 pub use gix_tempfile as tempfile;
 pub use gix_trace as trace;
 pub use gix_traverse as traverse;
@@ -148,12 +146,14 @@ pub mod interrupt;
 
 mod ext;
 ///
+#[allow(clippy::empty_docs)]
 pub mod prelude;
 
 #[cfg(feature = "excludes")]
 mod attribute_stack;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod path;
 
 /// The standard type for a store to handle git references.
@@ -174,10 +174,12 @@ pub use types::{
 pub use types::{Pathspec, PathspecDetached, Submodule};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod clone;
 pub mod commit;
-#[cfg(feature = "dirwalk")]
 ///
+#[cfg(feature = "dirwalk")]
+#[allow(clippy::empty_docs)]
 pub mod dirwalk;
 pub mod head;
 pub mod id;
@@ -189,13 +191,18 @@ pub mod repository;
 #[cfg(feature = "attributes")]
 pub mod submodule;
 pub mod tag;
+#[cfg(any(feature = "dirwalk", feature = "status"))]
+pub(crate) mod util;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod progress;
 ///
+#[allow(clippy::empty_docs)]
 pub mod push;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod diff;
 
 /// See [`ThreadSafeRepository::discover()`], but returns a [`Repository`] instead.
@@ -288,19 +295,24 @@ pub fn open_opts(directory: impl Into<std::path::PathBuf>, options: open::Option
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod create;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod open;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod config;
 
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(feature = "mailmap")]
 pub mod mailmap;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod worktree;
 
 pub mod revision;
@@ -309,18 +321,36 @@ pub mod revision;
 pub mod filter;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod remote;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod init;
 
 /// Not to be confused with 'status'.
 pub mod state;
 
 ///
+#[allow(clippy::empty_docs)]
+#[cfg(feature = "status")]
+pub mod status;
+
+///
+#[allow(clippy::empty_docs)]
 pub mod shallow;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod discover;
 
 pub mod env;
+
+#[cfg(feature = "attributes")]
+fn is_dir_to_mode(is_dir: bool) -> gix_index::entry::Mode {
+    if is_dir {
+        gix_index::entry::Mode::DIR
+    } else {
+        gix_index::entry::Mode::FILE
+    }
+}

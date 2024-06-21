@@ -5,6 +5,14 @@ use gix_features::decode::{leb64, leb64_from_read};
 use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, TAG, TREE};
 use crate::data;
 
+/// The error returned by [data::Entry::from_bytes()].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+#[error("Object type {type_id} is unsupported")]
+pub struct Error {
+    pub type_id: u8,
+}
+
 /// Decoding
 impl data::Entry {
     /// Decode an entry from the given entry data `d`, providing the `pack_offset` to allow tracking the start of the entry data section.
@@ -12,7 +20,7 @@ impl data::Entry {
     /// # Panics
     ///
     /// If we cannot understand the header, garbage data is likely to trigger this.
-    pub fn from_bytes(d: &[u8], pack_offset: data::Offset, hash_len: usize) -> data::Entry {
+    pub fn from_bytes(d: &[u8], pack_offset: data::Offset, hash_len: usize) -> Result<data::Entry, Error> {
         let (type_id, size, mut consumed) = parse_header_info(d);
 
         use crate::data::entry::Header::*;
@@ -36,21 +44,17 @@ impl data::Entry {
             TREE => Tree,
             COMMIT => Commit,
             TAG => Tag,
-            _ => panic!("We currently don't support any V3 features or extensions"),
+            other => return Err(Error { type_id: other }),
         };
-        data::Entry {
+        Ok(data::Entry {
             header: object,
             decompressed_size: size,
             data_offset: pack_offset + consumed as u64,
-        }
+        })
     }
 
     /// Instantiate an `Entry` from the reader `r`, providing the `pack_offset` to allow tracking the start of the entry data section.
-    pub fn from_read(
-        r: &mut dyn io::Read,
-        pack_offset: data::Offset,
-        hash_len: usize,
-    ) -> Result<data::Entry, io::Error> {
+    pub fn from_read(r: &mut dyn io::Read, pack_offset: data::Offset, hash_len: usize) -> io::Result<data::Entry> {
         let (type_id, size, mut consumed) = streaming_parse_header_info(r)?;
 
         use crate::data::entry::Header::*;
@@ -78,7 +82,12 @@ impl data::Entry {
             TREE => Tree,
             COMMIT => Commit,
             TAG => Tag,
-            _ => panic!("We currently don't support any V3 features or extensions"),
+            other => {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Object type {other} is unsupported"),
+                ))
+            }
         };
         Ok(data::Entry {
             header: object,

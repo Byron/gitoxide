@@ -33,18 +33,20 @@ impl Default for Options {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
-    /// The successful result of the index write operation
+    /// The successful result of the index write operation.
     pub index: crate::index::write::Outcome,
-    /// The version of the pack
+    /// The version of the pack.
     pub pack_version: crate::data::Version,
-    /// The kind of hash stored within the pack and indices
+    /// The kind of hash stored within the pack and indices.
     pub object_hash: gix_hash::Kind,
 
-    /// The path to the pack index file
+    /// The path to the pack index file.
     pub index_path: Option<PathBuf>,
-    /// The path to the pack data file
+    /// The path to the pack data file.
     pub data_path: Option<PathBuf>,
     /// The path to the `.keep` file to prevent collection of the newly written pack until refs are pointing to it.
+    /// It might be `None` if the file at `data_path` already existed, indicating that we have received a pack that
+    /// was already present locally.
     ///
     /// The file is created right before moving the pack data and index data into place (i.e. `data_path` and `index_path`)
     /// and is expected to be removed by the caller when ready.

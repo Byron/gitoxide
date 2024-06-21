@@ -12,6 +12,7 @@
 use bstr::BStr;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod parse;
 
 /// Parse the given `buf` of bytes line by line into mapping [Entries][Entry].
@@ -30,6 +31,7 @@ pub fn parse_ignore_errors(buf: &[u8]) -> impl Iterator<Item = Entry<'_>> {
 mod entry;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod snapshot;
 
 /// A data-structure to efficiently store a list of entries for optimal, case-insensitive lookup by email and

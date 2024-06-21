@@ -1,6 +1,6 @@
 # Development Guide
 
-## Practices 
+## Practices
 
  * **test-first development**
    * protect against regression and make implementing features easy.
@@ -9,12 +9,12 @@
      for the mundane things, like unhappy code paths.
    * *use git itself* as reference implementation, and use their test-cases and fixtures where
      appropriate. At the very least, try to learn from them.
-      * Run the same test against git whenever feasible to assure git agrees with our implementation. 
+      * Run the same test against git whenever feasible to assure git agrees with our implementation.
         See `gix-glob` for examples.
    * *use libgit2* test fixtures and cases where appropriate, or learn from them.
  * **safety first**
    * handle all errors, never `unwrap()`. If needed, `expect("why")`.
-   * provide an error chain and make it easy to understand what went wrong. 
+   * provide an error chain and make it easy to understand what went wrong.
    * We `thiserror` generally.
  * Adhere to the [stability guide](https://github.com/Byron/gitoxide/blob/main/STABILITY.md)
 
@@ -28,10 +28,10 @@ The _subject_ usually informs about the *what* and the body provides details and
 Commit messages _must_ show up in the changelog in case of breaking changes. Examples for that are:
 
 - change!: rename `Foo` to `Bar`. (#123)
-  
+
   And this is why we do it in the body.
 - remove!: `Repository::obsolete()`.
- 
+
   Nobody used this method.
 
 Features or other changes that are visible and people should know about look like this:
@@ -48,7 +48,7 @@ Examples could be:
 - `make fmt`
 - thanks clippy
 
-Please refrain from using `chore:` or `refactor:` prefixes as for the most part, users of the API don't care about those. When a `refactor` 
+Please refrain from using `chore:` or `refactor:` prefixes as for the most part, users of the API don't care about those. When a `refactor`
 changes the API in some way, prefer to use `feat`, `change`, `rename` or `remove` instead, and most of the time the ones that are not `feat`
 are breaking so would be seen with their _exclamation mark_ suffix, like `change!`.
 
@@ -63,20 +63,20 @@ Knowing that `cargo smart-release` is driven by commit messages and affects thei
 to split edits into multiple commits to clearly indicate which crate is actually broken.
 
 Typical patterns include making a breaking change in one crate and then fix all others to work with it. For changelogs to look proper
-and version bumps to be correct, the first commit would contain only the breaking changes themselves, 
+and version bumps to be correct, the first commit would contain only the breaking changes themselves,
 like "rename: `foo()` to `bar()`", and the second commit would contain all changes to adapt to that and look like "adapt to changes in `<crate name>`".
 
 ## Commit History
 
-We generally follow a 'track everything' approach and there is a lot of freedom leading to more commits rather than less. There 
+We generally follow a 'track everything' approach and there is a lot of freedom leading to more commits rather than less. There
 is no obligation to squash commits or to otherwise tune the history.
 
 We use feature branches and PRs most of the time to be able to take advantage of CI and GitHub review tools, and merge with merge commits
-to make individual efforts stand out. There is no need for linearizing history or tuning it in any other way. However, each commit 
+to make individual efforts stand out. There is no need for linearizing history or tuning it in any other way. However, each commit
 _must_ follow the guidelines laid out in the `Commit Messages` paragraph.
 
 There is value in organizing commits by topic and [_Stacked Git_](https://stacked-git.github.io) is hereby endorsed to do that.
-  
+
 ## Configuration and overrides
 
 As a general rule, respect and implement all applicable [git-config](https://git-scm.com/docs/git-config) by default, but allow the
@@ -102,11 +102,11 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
   * **User Interfaces**
     * User interfaces can greatly benefit from using async as it's much easier to maintain a responsive UI thread that way thanks
       to the wonderful future combinators.
-    * `blocking` can be used to make `Read` and `Iterator` async, or move any operation onto a thread which blends it into the 
-      async world. 
+    * `blocking` can be used to make `Read` and `Iterator` async, or move any operation onto a thread which blends it into the
+      async world.
        * Most operations are fast and 'interrupting' them is as easy as ignoring their result by cancelling their task.
        * Long-running operations can be roughly interacted with using `gix_features::interrupt::trigger()` function, and after a moment
-         of waiting the flag can be unset with the `…::uninterrupt()` function to allow new long-running operations to work. 
+         of waiting the flag can be unset with the `…::uninterrupt()` function to allow new long-running operations to work.
          Every long running operation supports this.
   * **server-side**
     * ~~Building a pack is CPU and at some point, IO bound, and it makes no sense to use async to handle more connections - git
@@ -119,7 +119,7 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
     * **Why not use it to generate blocking versions of traits automatically?**
       * This would require `maybe_async` and its dependencies to always be present, increasing compile times. For now we chose a little more code to handle
         over increasing compile times for everyone. This stance may change later once compile times don't matter that much anymore to allow the removal of code.
-      
+
 * **`Default` trait implementations**
   * These can change only if the effect is contained within the callers process.
     This means **changing the default of a file version** is a **breaking change**.
@@ -127,7 +127,7 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
   * When receiving a `Progress` implementation
      * without calling `add_child(…)` then use it directly to communicate progress, leaving
        control of the name to the caller. However, call `.init(…)` to configure the iteration.
-     * and when calling `add_child(…)` don't use the parent progress instance for anything else.  
+     * and when calling `add_child(…)` don't use the parent progress instance for anything else.
 * **interruption of long-running operations**
   * Use `gix-features::interrupt::*` for building support for interruptions of long-running operations only.
     * It's up to the author to decide how to best integrate it, generally we use a poll-based mechanism to check whether
@@ -136,9 +136,9 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
       * …temporary resources like files might otherwise be leaked.
     * **this is optional but desirable if…**
       * …there is no leakage otherwise to support user interfaces. They background long-running operations and need them to be cancellable.
-      
+
 * **prepare for SHA256 support by using `gix_hash::ObjectId` and `gix_hash::oid`**
-  * eventually there will be the need to support both Sha1 and Sha256. We anticipate it by using the `Id` type instead 
+  * eventually there will be the need to support both Sha1 and Sha256. We anticipate it by using the `Id` type instead
     of slices or arrays of 20 bytes. This way, eventually we can support multiple hash digest sizes.
   * Right now it's unclear how Sha256 is going to work in git, so we only support Sha1 for now. It might be an avenue to proactively
     implement it ahead of time once there is a specification to follow.
@@ -166,7 +166,7 @@ Parameters which are not available in git or specific to `gitoxide` or the needs
   - Assuming UTF8-ish bytes in paths produced by `git` even on windows due to `MSYS2`, we use `os_str_bytes` to convert these back into `OsStr` and derivatives like `Path`
     as needed even though it might not always be the case depending on the actual encoding used by `MSYS2` or other abstraction layers, or avoiding to use std types altogether
     using our own instead.
-    
+
 ## Sha256
 
 A bunch of notes collected to keep track of what's needed to eventually support it
@@ -181,7 +181,7 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 * don't use unwrap, not even in tests. Instead use `quick_error!()` or `Box<dyn std::error::Error>`.
 * Use `expect(…)` as assertion on Options, providing context on *why* the expectations should hold. Or in other words,
   answer "This should work _because_…<expect(…)>"
-  
+
 ## `Options` vs `Context`
 
 - Use `Options` whenever there is something to configure in terms of branching behaviour. It can be defaulted, and if it can't these fields should be parameters of the method
@@ -195,7 +195,7 @@ In _plumbing_ crates, prefer to default to keeping references if this is feasibl
 In _porcelain_ crates, like `gix`, we have `Platforms` which are typically cheap enough to create on demand as they configure one or more method calls. These
 should keep a reference to the `Repository` instance that created them as the user is expected to clone the `Repository` if there is the need.
 However, if these structures are more expensive, call them `Cache` or `<NotPlatform>` and prefer to clone the `Repository` into them or otherwise keep them free of lifetimes
-to allow the user to keep this structure around for repeated calls. References for this paragraph are [this PR](https://github.com/Canop/bacon/pull/98) and 
+to allow the user to keep this structure around for repeated calls. References for this paragraph are [this PR](https://github.com/Canop/bacon/pull/98) and
 [this discussion](https://github.com/Byron/gitoxide/discussions/675).
 
 ## Examples, Porcelain CLI and Plumbing CLI - which does what?
@@ -240,12 +240,12 @@ by humans.
   * make it compile quickly, so no extras
 * **Examples**
   * An implementation of ideas for actual occasional use and the first step towards getting integrated into Porcelain or Plumbing CLIs.
-  * Proper command-line parsing with Clap.  
-  * No tests or progress. 
-  * High quality Rust code along with idiomatic `gitoxide` usage so people can learn from it.  
-* **Plumbing CLI**    
+  * Proper command-line parsing with Clap.
+  * No tests or progress.
+  * High quality Rust code along with idiomatic `gitoxide` usage so people can learn from it.
+* **Plumbing CLI**
   * Use Clap AND Argh for command-line parsing via feature toggles to allow for tiny builds as plumbing is mostly for scripts.
-  * Journey tests 
+  * Journey tests
   * Progress can be turned on using the `--verbose` flag, quiet by default.
   * Examples can be turned into plumbing by adding journey tests and `argh` command-line parsing, as well as progress.
 * **Porcelain CLI**
@@ -262,9 +262,8 @@ get an overview.
 
 ## Reviewing PRs
 
-- be sure to clone locally and run tests with `GITOXIDE_TEST_IGNORE_ARCHIVES=1` to assure new fixture scripts (if there are any) are validated
-  on _MacOS_ and _Windows_. Note that linux doesn't need to be tested that way as CI on linux ignores them by merit of not checking them out
-  via `gix-lfs`.
+- Be sure to clone locally and run tests with `GIX_TEST_IGNORE_ARCHIVES=1` to assure new fixture scripts (if there are any) are validated
+  on _MacOS_ and _Windows_. Linux doesn't need to be tested locally that way, as CI on Linux includes it.
 
 ## Creating a release
 
@@ -309,5 +308,5 @@ GIT_SSH_COMMAND="ssh -VVV" \
 git <command>
 ```
 
-Consider adding `GIT_TRACE2_PERF=1` (possibly add `GIT_TRACE2_PERF_BRIEF=1` for brevity) as well for statistics and variables 
+Consider adding `GIT_TRACE2_PERF=1` (possibly add `GIT_TRACE2_PERF_BRIEF=1` for brevity) as well for statistics and variables
 (see [their source for more](https://github.com/git/git/blob/b50a608ba20348cb3dfc16a696816d51780e3f0f/trace2/tr2_sysenv.c#L50).

@@ -103,7 +103,7 @@ mod decode_entry {
         }
 
         let p = pack_at(SMALL_PACK);
-        let entry = p.entry(offset);
+        let entry = p.entry(offset).expect("valid object type");
         let mut buf = Vec::new();
         p.decode_entry(
             entry,
@@ -159,7 +159,7 @@ mod resolve_header {
         }
 
         let p = pack_at(SMALL_PACK);
-        let entry = p.entry(offset);
+        let entry = p.entry(offset).expect("valid object type");
         p.decode_header(entry, &mut Default::default(), &resolve_with_panic)
             .expect("valid offset provides valid entry")
     }
@@ -208,7 +208,7 @@ mod decompress_entry {
 
     fn decompress_entry_at_offset(offset: u64) -> Vec<u8> {
         let p = pack_at(SMALL_PACK);
-        let entry = p.entry(offset);
+        let entry = p.entry(offset).expect("valid object type");
 
         let size = entry.decompressed_size as usize;
         let mut buf = vec![0; size];

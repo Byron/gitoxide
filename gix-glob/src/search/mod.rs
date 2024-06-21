@@ -5,6 +5,7 @@
 use std::path::{Path, PathBuf};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod pattern;
 
 /// A trait to convert bytes into patterns and their associated value.

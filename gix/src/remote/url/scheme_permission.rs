@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::BTreeMap, convert::TryFrom};
+use std::{borrow::Cow, collections::BTreeMap};
 
 use crate::{
     bstr::{BStr, BString, ByteSlice},

@@ -57,6 +57,7 @@ mod util;
 pub use util::is_absolute;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod realpath;
 pub use realpath::function::{realpath, realpath_opts};
 

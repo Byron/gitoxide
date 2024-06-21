@@ -175,7 +175,7 @@ where
                         }
                         commit_idx += 1;
                     }
-                    Err(gix::traverse::commit::ancestors::Error::Find { .. }) => {
+                    Err(gix::traverse::commit::simple::Error::Find { .. }) => {
                         is_shallow = true;
                         break;
                     }

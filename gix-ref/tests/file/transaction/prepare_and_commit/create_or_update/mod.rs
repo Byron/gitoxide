@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use gix_hash::ObjectId;
 use gix_lock::acquire::Fail;
 use gix_object::bstr::{BString, ByteSlice};
@@ -12,6 +10,7 @@ use gix_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target,
 };
+use std::error::Error;
 
 use crate::{
     file::{
@@ -433,6 +432,63 @@ fn symbolic_reference_writes_reflog_if_previous_value_is_set() -> crate::Result 
 }
 
 #[test]
+fn windows_device_name_is_illegal_with_enabled_windows_protections() -> crate::Result {
+    let (_keep, mut store) = empty_store()?;
+    store.prohibit_windows_device_names = true;
+    let log_ignored = LogChange {
+        mode: RefLog::AndReference,
+        force_create_reflog: false,
+        message: "ignored".into(),
+    };
+
+    let new = Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"));
+    for invalid_name in ["refs/heads/CON", "refs/CON/still-invalid"] {
+        let err = store
+            .transaction()
+            .prepare(
+                Some(RefEdit {
+                    change: Change::Update {
+                        log: log_ignored.clone(),
+                        new: new.clone(),
+                        expected: PreviousValue::Any,
+                    },
+                    name: invalid_name.try_into()?,
+                    deref: false,
+                }),
+                Fail::Immediately,
+                Fail::Immediately,
+            )
+            .unwrap_err();
+        assert_eq!(
+            err.source().expect("inner").to_string(),
+            format!("Illegal use of reserved Windows device name in \"{invalid_name}\""),
+            "it's notable that the check also kicks in when the previous value doesn't matter - we expect a 'read' to happen anyway \
+            - it can't be optimized away as the previous value is stored in the transaction result right now."
+        );
+    }
+
+    #[cfg(not(windows))]
+    {
+        store.prohibit_windows_device_names = false;
+        let _prepared_transaction = store.transaction().prepare(
+            Some(RefEdit {
+                change: Change::Update {
+                    log: log_ignored.clone(),
+                    new,
+                    expected: PreviousValue::Any,
+                },
+                name: "refs/heads/CON".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+            Fail::Immediately,
+        )?;
+    }
+
+    Ok(())
+}
+
+#[test]
 fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
     for reflog_writemode in &[WriteReflog::Normal, WriteReflog::Disable, WriteReflog::Always] {
         let (_keep, mut store) = empty_store()?;
@@ -812,6 +868,42 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
         packed.find("newer-as-loose")?.target(),
         store.find("newer-as-loose")?.target.into_id(),
         "the packed ref is now up to date and the loose ref definitely still exists"
+    );
+    Ok(())
+}
+
+#[test]
+fn packed_refs_deletion_in_deletions_and_updates_mode() -> crate::Result {
+    let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
+    assert!(
+        store.try_find_loose("refs/heads/d1")?.is_none(),
+        "no loose d1 available, it's packed"
+    );
+    let odb = gix_odb::at(store.git_dir().join("objects"))?;
+    let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+    let edits = store
+        .transaction()
+        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(odb)))
+        .prepare(
+            Some(RefEdit {
+                change: Change::Delete {
+                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
+                    log: RefLog::AndReference,
+                },
+                name: "refs/heads/d1".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+            Fail::Immediately,
+        )?
+        .commit(committer().to_ref())?;
+
+    assert_eq!(edits.len(), 1, "only one edit was performed in the packed refs store");
+
+    let packed = store.open_packed_buffer().unwrap().expect("packed refs is available");
+    assert!(
+        packed.try_find("refs/heads/d1")?.is_none(),
+        "d1 should be removed from packed refs"
     );
     Ok(())
 }

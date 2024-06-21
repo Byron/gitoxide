@@ -1,6 +1,5 @@
 //!
-use std::convert::TryInto;
-
+#![allow(clippy::empty_docs)]
 use gix_hash::ObjectId;
 use gix_ref::FullNameRef;
 
@@ -118,7 +117,9 @@ mod remote {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod log;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod peel;

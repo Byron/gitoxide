@@ -26,6 +26,7 @@ pub struct Stream {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod entry;
 pub(crate) mod protocol;
 

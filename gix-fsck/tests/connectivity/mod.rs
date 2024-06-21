@@ -42,8 +42,8 @@ fn hex_to_objects<'a>(hex_ids: impl IntoIterator<Item = &'a str>, kind: Kind) ->
 fn all_commits() -> &'static [ObjectId] {
     static ALL_COMMITS: Lazy<Vec<ObjectId>> = Lazy::new(|| {
         hex_to_ids([
-            "5d18db2e2aabadf7b914435ef34f2faf8b4546dd",
-            "3a3dfaa55a515f3fb3a25751107bbb523af6a1b0",
+            "ebed23648b19484cb1f340c4ee04dda08479188a",
+            "8ff6d0f8891c3cb22827be142cc64606121d47b3",
             "734c926856a328d1168ffd7088532e0d1ad19bbe",
         ])
     });
@@ -59,7 +59,13 @@ fn no_missing() {
 #[test]
 fn missing_blobs() {
     // The "blobless" repo is cloned with `--filter=blob:none`, and is missing one blob
-    let expected = hex_to_objects(["c18147dc648481eeb65dc5e66628429a64843327"], Kind::Blob);
+    let expected = hex_to_objects(
+        [
+            "4cdeaab5b01f9a9fbbb2fb6c08404cf12b7bdab1",
+            "c18147dc648481eeb65dc5e66628429a64843327",
+        ],
+        Kind::Blob,
+    );
     assert_eq!(check_missing("blobless", all_commits()), expected);
 }
 
@@ -69,7 +75,7 @@ fn missing_trees() {
     // NOTE: This repo is also missing a blob, but we have no way of knowing that, as the tree referencing it is missing
     let expected = hex_to_objects(
         [
-            "9561cfbae43c5e2accdfcd423378588dd10d827f",
+            "20317ffa7614f49b2702a057bf2833918ea9fd24",
             "fc264b3b6875a46e9031483aeb9994a1b897ffd3",
         ],
         Kind::Tree,

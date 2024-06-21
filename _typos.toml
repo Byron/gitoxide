@@ -1,19 +1,32 @@
-[default]
-extend-ignore-identifiers-re = [
-    "[a-f0-9]{7,}", 
-    "[Ff][Oo][Oo]",
-    "[a-zA-Z0-9]{20,}",
-]
-
 [files]
 extend-exclude = [
     "**/CHANGELOG.md",
-    "**/tests/fixtures/**",
+    "*.response",
+    "etc/corpus/repo_metadata.sample.jsonl",
     "gix-config/benches/large_config_file.rs",
-    "gix-glob/tests/wildmatch/mod.rs"
+    "gix-config/tests/fixtures/clusterfuzz-testcase-minimized-gix-config-parse-6431708583690240",
+    "gix-glob/tests/wildmatch/mod.rs",
+    "gix-path/tests/fixtures/fuzzed/54k-path-components.path",
+]
+ignore-hidden = false
+
+[default]
+extend-ignore-re = [
+    # PGP signature
+    "[0-9A-Za-z+=]{44,}",
+    '"egal"',
+    '"bar", "bart", "ba"',
+    '"foo/ba"',
+    '"FO", "FO", &\[\], "FO"',
+    '"(BarFoO|BarFoOo|FoO|FoOo)"',
+    "\\|pn: &BStr\\| pn !=",
+]
+extend-ignore-identifiers-re = [
+    # Git commit hash
+    "[0-9a-f]{7,}",
+    "rela_[a-z_]+",
 ]
 
-
-[default.extend-words]
-rela = "rela"
-unter = "unter"
+[default.extend-identifiers]
+_pn = "_pn"
+ein = "ein"

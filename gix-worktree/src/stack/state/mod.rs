@@ -53,15 +53,21 @@ pub struct Ignore {
 #[cfg(feature = "attributes")]
 pub mod attributes;
 ///
+#[allow(clippy::empty_docs)]
 pub mod ignore;
 
 /// Initialization
 impl State {
     /// Configure a state to be suitable for checking out files, which only needs access to attribute files read from the index.
     #[cfg(feature = "attributes")]
-    pub fn for_checkout(unlink_on_collision: bool, attributes: Attributes) -> Self {
+    pub fn for_checkout(
+        unlink_on_collision: bool,
+        validate: gix_validate::path::component::Options,
+        attributes: Attributes,
+    ) -> Self {
         State::CreateDirectoryAndAttributesStack {
             unlink_on_collision,
+            validate,
             attributes,
         }
     }
@@ -130,7 +136,7 @@ impl State {
 
                 // Stage 0 means there is no merge going on, stage 2 means it's 'our' side of the merge, but then
                 // there won't be a stage 0.
-                if entry.mode == gix_index::entry::Mode::FILE && (entry.stage() == 0 || entry.stage() == 2) {
+                if entry.mode == gix_index::entry::Mode::FILE && (entry.stage_raw() == 0 || entry.stage_raw() == 2) {
                     let basename = path.rfind_byte(b'/').map_or(path, |pos| path[pos + 1..].as_bstr());
                     let ignore_source = names.iter().find_map(|t| {
                         match case {

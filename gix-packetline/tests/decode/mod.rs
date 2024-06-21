@@ -103,7 +103,7 @@ mod streaming {
     fn error_on_oversized_line() {
         assert_err_display(
             streaming(b"ffff"),
-            "The data received claims to be larger than than the maximum allowed size: got 65535, exceeds 65516",
+            "The data received claims to be larger than the maximum allowed size: got 65535, exceeds 65516",
         );
     }
 

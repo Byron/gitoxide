@@ -98,7 +98,7 @@ pub enum Error {
         desired: usize,
         available: usize,
     },
-    #[error("Path {desired_path:?} did not exist in index at stage {desired_stage}{}{}", stage_hint.map(|actual|format!(". It does exist at stage {actual}")).unwrap_or_default(), exists.then(|| ". It exists on disk").unwrap_or(". It does not exist on disk"))]
+    #[error("Path {desired_path:?} did not exist in index at stage {}{}{}", *desired_stage as u8, stage_hint.map(|actual|format!(". It does exist at stage {}", actual as u8)).unwrap_or_default(), exists.then(|| ". It exists on disk").unwrap_or(". It does not exist on disk"))]
     IndexLookup {
         desired_path: BString,
         desired_stage: gix_index::entry::Stage,
@@ -184,7 +184,7 @@ pub enum Error {
         next: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
     },
     #[error(transparent)]
-    Traverse(#[from] gix_traverse::commit::ancestors::Error),
+    Traverse(#[from] gix_traverse::commit::simple::Error),
     #[error(transparent)]
     Walk(#[from] crate::revision::walk::Error),
     #[error("Spec does not contain a single object id")]

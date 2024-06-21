@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use crate::Stack;
 
@@ -22,20 +22,22 @@ impl Stack {
 
 /// A delegate for use in a [`Stack`].
 pub trait Delegate {
-    /// Called whenever we push a directory on top of the stack, after the fact.
+    /// Called whenever we push a directory on top of the stack, and after the respective call to [`push()`](Self::push).
     ///
-    /// It is also called if the currently acted on path is a directory in itself.
-    /// Use `stack.current()` to see the directory.
+    /// It is only called if the currently acted on path is a directory in itself, which is determined by knowing
+    /// that it's not the last component of the path.
+    /// Use [`Stack::current()`] to see the directory.
     fn push_directory(&mut self, stack: &Stack) -> std::io::Result<()>;
 
-    /// Called after any component was pushed, with the path available at `stack.current()`.
+    /// Called after any component was pushed, with the path available at [`Stack::current()`].
     ///
-    /// `is_last_component` is true if the path is completely built.
+    /// `is_last_component` is `true` if the path is completely built, which typically means it's not a directory.
     fn push(&mut self, is_last_component: bool, stack: &Stack) -> std::io::Result<()>;
 
     /// Called right after a directory-component was popped off the stack.
     ///
-    /// Use it to pop information off internal data structures.
+    /// Use it to pop information off internal data structures. Note that no equivalent call exists for popping
+    /// the file-component.
     fn pop_directory(&mut self);
 }
 
@@ -58,12 +60,15 @@ impl Stack {
     /// The full path to `relative` will be returned along with the data returned by `push_comp`.
     /// Note that this only works correctly for the delegate's `push_directory()` and `pop_directory()` methods if
     /// `relative` paths are terminal, so point to their designated file or directory.
+    /// The path is also expected to be normalized, and should not contain extra separators, and must not contain `..`
+    /// or have leading or trailing slashes (or additionally backslashes on Windows).
     pub fn make_relative_path_current(&mut self, relative: &Path, delegate: &mut dyn Delegate) -> std::io::Result<()> {
-        debug_assert!(
-            relative.is_relative(),
-            "only index paths are handled correctly here, must be relative"
-        );
-
+        if self.valid_components != 0 && relative.as_os_str().is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "empty inputs are not allowed",
+            ));
+        }
         if self.valid_components == 0 {
             delegate.push_directory(self)?;
         }
@@ -95,6 +100,15 @@ impl Stack {
         }
 
         while let Some(comp) = components.next() {
+            if !matches!(comp, Component::Normal(_)) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Input path \"{}\" contains relative or absolute components",
+                        relative.display()
+                    ),
+                ));
+            }
             let is_last_component = components.peek().is_none();
             self.current_is_directory = !is_last_component;
             self.current.push(comp);

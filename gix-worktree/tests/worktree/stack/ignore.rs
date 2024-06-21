@@ -1,5 +1,7 @@
 use bstr::{BStr, ByteSlice};
+use gix_index::entry::Mode;
 use gix_worktree::{stack::state::ignore::Source, Stack};
+use std::fs::Metadata;
 
 use crate::{hex_to_id, worktree::stack::probe_case};
 
@@ -62,7 +64,7 @@ fn exclude_by_dir_is_handled_just_like_git() {
     for (relative_entry, source_and_line) in expectations {
         let (source, line, expected_pattern) = source_and_line.expect("every value is matched");
         let relative_path = gix_path::from_byte_slice(relative_entry);
-        let is_dir = dir.join(relative_path).metadata().ok().map(|m| m.is_dir());
+        let is_dir = dir.join(relative_path).metadata().ok().map(metadata_to_mode);
 
         let platform = cache.at_entry(relative_entry, is_dir, &FindError).unwrap();
         let match_ = platform.matching_exclude_pattern().expect("match all values");
@@ -84,6 +86,14 @@ fn exclude_by_dir_is_handled_just_like_git() {
         );
         assert_eq!(line, 2);
         assert_eq!(source, ".gitignore");
+    }
+}
+
+fn metadata_to_mode(meta: Metadata) -> Mode {
+    if meta.is_dir() {
+        gix_index::entry::Mode::DIR
+    } else {
+        gix_index::entry::Mode::FILE
     }
 }
 
@@ -127,7 +137,7 @@ fn check_against_baseline() -> crate::Result {
     };
     for (relative_entry, source_and_line) in expectations {
         let relative_path = gix_path::from_byte_slice(relative_entry);
-        let is_dir = worktree_dir.join(relative_path).metadata().ok().map(|m| m.is_dir());
+        let is_dir = worktree_dir.join(relative_path).metadata().ok().map(metadata_to_mode);
 
         let platform = cache.at_entry(relative_entry, is_dir, &odb)?;
 

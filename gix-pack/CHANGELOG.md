@@ -5,6 +5,122 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.51.0 (2024-05-22)
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-b32a847e10b742834169fac56c284645c1ed28f3/> don't panic when unknown entry types are encountered.
+   Related to https://github.com/helix-editor/helix/issues/10660
+   which runs into object types that are unknown.
+   
+   I have looked into this and [couldn't find evidence of a new pack-entry type](https://github.com/git/git/blob/0f3415f1f8478b05e64db11eb8aaa2915e48fef6/packfile.c#L1303-L1358)
+   in the Git codebase.
+   
+   It also looks like that Git [will never write packs that aren't V2](https://github.com/git/git/blob/0f3415f1f8478b05e64db11eb8aaa2915e48fef6/pack-write.c#L352)
+   - initially I thought it might write V3 based on some other criteria.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 9 calendar days.
+ - 38 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
+    - Merge branch 'status' ([`04ef31e`](https://github.com/Byron/gitoxide/commit/04ef31e9d6f5332d49037a5a4c248ebbb5aaf92b))
+    - Adapt to changes in `gix-pack` ([`bad5b48`](https://github.com/Byron/gitoxide/commit/bad5b48e4f0d865b0b0937f136d9a0041aa88046))
+    - Don't panic when unknown entry types are encountered. ([`b32a847`](https://github.com/Byron/gitoxide/commit/b32a847e10b742834169fac56c284645c1ed28f3))
+</details>
+
+<csr-unknown>
+For now, the thesis is that one would have to be able to mark bad objectsto be able to handle this more gracefully, but all we can do is try to fail.<csr-unknown/>
+
+## 0.50.0 (2024-04-13)
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48/> Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 5 calendar days.
+ - 29 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-trace v0.1.9, gix-utils v0.1.12, gix-packetline-blocking v0.17.4, gix-filter v0.11.1, gix-fs v0.10.2, gix-traverse v0.39.0, gix-worktree-stream v0.12.0, gix-archive v0.12.0, gix-config v0.36.1, gix-url v0.27.3, gix-index v0.32.0, gix-worktree v0.33.0, gix-diff v0.43.0, gix-pathspec v0.7.3, gix-dir v0.4.0, gix-pack v0.50.0, gix-odb v0.60.0, gix-transport v0.42.0, gix-protocol v0.45.0, gix-status v0.9.0, gix-worktree-state v0.10.0, gix v0.62.0, gix-fsck v0.4.0, gitoxide-core v0.37.0, gitoxide v0.35.0, safety bump 14 crates ([`095c673`](https://github.com/Byron/gitoxide/commit/095c6739b2722a8b9af90776b435ef2da454c0e6))
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
+    - Merge branch 'add-topo-walk' ([`b590a9d`](https://github.com/Byron/gitoxide/commit/b590a9d2b6a273f76f0320d2b9fe1f679c08f549))
+    - Adapt to changes in `gix-traverse` ([`1cfeb11`](https://github.com/Byron/gitoxide/commit/1cfeb11f1fe9ad9c7b9084840ed7f5c5877f2f9a))
+    - Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple` ([`2a9c178`](https://github.com/Byron/gitoxide/commit/2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48))
+    - Adapt to changes in `gix-traverse` ([`6154bf3`](https://github.com/Byron/gitoxide/commit/6154bf3a346d69f9749271d50e4f3aacdcbad4d0))
+    - Thanks clippy ([`7f6bee5`](https://github.com/Byron/gitoxide/commit/7f6bee5452ee01638f89a0cec2d4ee2a6f0d0136))
+</details>
+
+## 0.49.0 (2024-03-14)
+
+<csr-id-39879af6eaf2bf4fe159a5c6371c98d516c4febe/>
+
+### Chore
+
+ - <csr-id-39879af6eaf2bf4fe159a5c6371c98d516c4febe/> remove repetitive words
+
+### Bug Fixes
+
+ - <csr-id-88061a176b2f4b5a377a4cff513979ddb1e306a1/> assure memory maps are created with `MAP_PRIVATE`
+   That way, the mmap process should work under more circumstances.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 5 calendar days.
+ - 18 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1312](https://github.com/Byron/gitoxide/issues/1312)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1312](https://github.com/Byron/gitoxide/issues/1312)**
+    - Assure memory maps are created with `MAP_PRIVATE` ([`88061a1`](https://github.com/Byron/gitoxide/commit/88061a176b2f4b5a377a4cff513979ddb1e306a1))
+ * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
+    - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Merge pull request #1314 from avoidalone/main ([`5722e3a`](https://github.com/Byron/gitoxide/commit/5722e3aeeba5dd44e38a6cdbb70717a45345307e))
+    - Remove repetitive words ([`39879af`](https://github.com/Byron/gitoxide/commit/39879af6eaf2bf4fe159a5c6371c98d516c4febe))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+    - Merge branch 'mmap-mode' ([`9e9b9fe`](https://github.com/Byron/gitoxide/commit/9e9b9fe6f63759d3bf479a8ec2f9dd1fbef87a08))
+</details>
+
 ## 0.48.0 (2024-02-25)
 
 A maintenance release without user-facing changes.
@@ -13,7 +129,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 30 calendar days.
+ - 11 commits contributed to the release over the course of 30 calendar days.
  - 36 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -31,6 +147,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.4, gix-utils v0.1.10, gix-actor v0.30.1, gix-object v0.41.1, gix-path v0.10.6, gix-glob v0.16.1, gix-quote v0.4.11, gix-attributes v0.22.1, gix-command v0.3.5, gix-filter v0.10.0, gix-commitgraph v0.24.1, gix-worktree-stream v0.10.0, gix-archive v0.10.0, gix-config-value v0.14.5, gix-ref v0.42.0, gix-sec v0.10.5, gix-config v0.35.0, gix-prompt v0.8.3, gix-url v0.27.1, gix-credentials v0.24.1, gix-ignore v0.11.1, gix-index v0.30.0, gix-worktree v0.31.0, gix-diff v0.41.0, gix-discover v0.30.0, gix-pathspec v0.7.0, gix-dir v0.1.0, gix-pack v0.48.0, gix-odb v0.58.0, gix-transport v0.41.1, gix-protocol v0.44.1, gix-revision v0.26.1, gix-refspec v0.22.1, gix-status v0.6.0, gix-submodule v0.9.0, gix-worktree-state v0.8.0, gix v0.59.0, gix-fsck v0.3.0, gitoxide-core v0.36.0, gitoxide v0.34.0, safety bump 10 crates ([`45b4470`](https://github.com/Byron/gitoxide/commit/45b447045bc826f252129c300c531acde2652c64))
     - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Thanks clippy ([`13d5602`](https://github.com/Byron/gitoxide/commit/13d5602faa58aa6f520ebc6003ed54bc9c844f2b))
     - Merge branch 'tempfile-permissions' ([`7b44c7f`](https://github.com/Byron/gitoxide/commit/7b44c7ff1dc0b8875214d2673c7f52948cf04ff0))

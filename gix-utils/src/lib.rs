@@ -5,15 +5,19 @@
 #![forbid(unsafe_code)]
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod backoff;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod buffers;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod str;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod btoi;
 
 /// A utility to do buffer-swapping with.

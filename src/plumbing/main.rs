@@ -7,9 +7,9 @@ use std::{
     },
 };
 
+use crate::shared::pretty::prepare_and_run;
 use anyhow::{anyhow, Context, Result};
 use clap::{CommandFactory, Parser};
-use gitoxide::shared::pretty::prepare_and_run;
 use gitoxide_core as core;
 use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
 use gix::bstr::{io::BufReadExt, BString};
@@ -24,7 +24,7 @@ use crate::plumbing::{
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {
-    use gitoxide::shared::ProgressRange;
+    use crate::shared::ProgressRange;
 
     #[cfg(not(feature = "prodash-render-line"))]
     compile_error!("BUG: Need at least a line renderer in async mode");
@@ -38,7 +38,7 @@ pub mod async_util {
         Option<prodash::render::line::JoinHandle>,
         gix_features::progress::DoOrDiscard<prodash::tree::Item>,
     ) {
-        use gitoxide::shared::{self, STANDARD_RANGE};
+        use crate::shared::{self, STANDARD_RANGE};
         shared::init_env_logger();
 
         if verbose {
@@ -146,6 +146,24 @@ pub fn main() -> Result<()> {
     }
 
     match cmd {
+        Subcommands::IsClean | Subcommands::IsChanged => {
+            let mode = if matches!(cmd, Subcommands::IsClean) {
+                core::repository::dirty::Mode::IsClean
+            } else {
+                core::repository::dirty::Mode::IsDirty
+            };
+            prepare_and_run(
+                "clean",
+                trace,
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::repository::dirty::check(repository(Mode::Lenient)?, mode, out, format)
+                },
+            )
+        }
         #[cfg(feature = "gitoxide-core-tools-clean")]
         Subcommands::Clean(crate::plumbing::options::clean::Command {
             debug,
@@ -188,10 +206,13 @@ pub fn main() -> Result<()> {
             },
         ),
         Subcommands::Status(crate::plumbing::options::status::Platform {
+            ignored,
+            format: status_format,
             statistics,
             submodules,
             no_write,
             pathspec,
+            index_worktree_renames,
         }) => prepare_and_run(
             "status",
             trace,
@@ -208,31 +229,56 @@ pub fn main() -> Result<()> {
                     err,
                     progress,
                     core::repository::status::Options {
-                        format,
+                        format: match status_format.unwrap_or_default() {
+                            crate::plumbing::options::status::Format::Simplified => {
+                                core::repository::status::Format::Simplified
+                            }
+                            crate::plumbing::options::status::Format::PorcelainV2 => {
+                                core::repository::status::Format::PorcelainV2
+                            }
+                        },
+                        ignored: ignored.map(|ignored| match ignored.unwrap_or_default() {
+                            crate::plumbing::options::status::Ignored::Matching => {
+                                core::repository::status::Ignored::Matching
+                            }
+                            crate::plumbing::options::status::Ignored::Collapsed => {
+                                core::repository::status::Ignored::Collapsed
+                            }
+                        }),
+                        output_format: format,
                         statistics,
                         thread_limit: thread_limit.or(cfg!(target_os = "macos").then_some(3)), // TODO: make this a configurable when in `gix`, this seems to be optimal on MacOS, linux scales though! MacOS also scales if reading a lot of files for refresh index
                         allow_write: !no_write,
-                        submodules: match submodules {
+                        index_worktree_renames: index_worktree_renames.map(|percentage| percentage.unwrap_or(0.5)),
+                        submodules: submodules.map(|submodules| match submodules {
                             Submodules::All => core::repository::status::Submodules::All,
                             Submodules::RefChange => core::repository::status::Submodules::RefChange,
                             Submodules::Modifications => core::repository::status::Submodules::Modifications,
-                        },
+                            Submodules::None => core::repository::status::Submodules::None,
+                        }),
                     },
                 )
             },
         ),
         Subcommands::Submodule(platform) => match platform
             .cmds
-            .unwrap_or(crate::plumbing::options::submodule::Subcommands::List)
+            .unwrap_or(crate::plumbing::options::submodule::Subcommands::List { dirty_suffix: None })
         {
-            crate::plumbing::options::submodule::Subcommands::List => prepare_and_run(
+            crate::plumbing::options::submodule::Subcommands::List { dirty_suffix } => prepare_and_run(
                 "submodule-list",
                 trace,
                 verbose,
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| core::repository::submodule::list(repository(Mode::Lenient)?, out, format),
+                move |_progress, out, _err| {
+                    core::repository::submodule::list(
+                        repository(Mode::Lenient)?,
+                        out,
+                        format,
+                        dirty_suffix.map(|suffix| suffix.unwrap_or_else(|| "dirty".to_string())),
+                    )
+                },
             ),
         },
         #[cfg(feature = "gitoxide-core-tools-archive")]
@@ -358,6 +404,7 @@ pub fn main() -> Result<()> {
             handshake_info,
             bare,
             no_tags,
+            ref_name,
             remote,
             shallow,
             directory,
@@ -367,6 +414,7 @@ pub fn main() -> Result<()> {
                 bare,
                 handshake_info,
                 no_tags,
+                ref_name,
                 shallow: shallow.into(),
             };
             prepare_and_run(
@@ -686,7 +734,7 @@ pub fn main() -> Result<()> {
                         &url,
                         directory,
                         refs_directory,
-                        refs.into_iter().map(|s| s.into()).collect(),
+                        refs.into_iter().map(Into::into).collect(),
                         progress,
                         core::pack::receive::Context {
                             thread_limit,
@@ -1036,6 +1084,7 @@ pub fn main() -> Result<()> {
                 statistics,
                 max_candidates,
                 rev_spec,
+                dirty_suffix,
             } => prepare_and_run(
                 "commit-describe",
                 trace,
@@ -1057,6 +1106,7 @@ pub fn main() -> Result<()> {
                             statistics,
                             max_candidates,
                             always,
+                            dirty_suffix: dirty_suffix.map(|suffix| suffix.unwrap_or_else(|| "dirty".to_string())),
                         },
                     )
                 },
@@ -1105,7 +1155,7 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Odb(cmd) => match cmd {
-            odb::Subcommands::Stats => prepare_and_run(
+            odb::Subcommands::Stats { extra_header_lookup } => prepare_and_run(
                 "odb-stats",
                 trace,
                 auto_verbose,
@@ -1118,7 +1168,11 @@ pub fn main() -> Result<()> {
                         progress,
                         out,
                         err,
-                        core::repository::odb::statistics::Options { format, thread_limit },
+                        core::repository::odb::statistics::Options {
+                            format,
+                            thread_limit,
+                            extra_header_lookup,
+                        },
                     )
                 },
             ),

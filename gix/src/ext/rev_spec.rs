@@ -1,7 +1,3 @@
-pub trait Sealed {}
-
-impl Sealed for gix_ref::Reference {}
-
 /// Extensions for [revision specifications][gix_revision::Spec].
 pub trait RevSpecExt {
     /// Attach [`Repository`][crate::Repository] to the given rev-spec.

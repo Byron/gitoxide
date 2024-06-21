@@ -23,6 +23,7 @@ pub use events_type::{Events, FrontMatterEvents};
 mod comment;
 mod error;
 ///
+#[allow(clippy::empty_docs)]
 pub mod section;
 
 #[cfg(test)]

@@ -38,7 +38,7 @@ pub(crate) enum Action {
     SkipToRefUpdate,
     /// We can't know for sure if fetching *is not* needed, so we go ahead and negotiate.
     MustNegotiate {
-        /// Each `ref_map.mapping` has a slot here which is `true` if we have the object the remote ref points to locally.
+        /// Each `ref_map.mapping` has a slot here which is `true` if we have the object the remote ref points to, locally.
         remote_ref_target_known: Vec<bool>,
     },
 }
@@ -61,7 +61,7 @@ pub(crate) enum Action {
 /// Finally, we also mark tips in the `negotiator` in one go to avoid traversing all refs twice, since we naturally encounter all tips during
 /// our own walk.
 ///
-/// Return whether or not we should negotiate, along with a queue for later use.
+/// Return whether we should negotiate, along with a queue for later use.
 pub(crate) fn mark_complete_and_common_ref(
     repo: &crate::Repository,
     negotiator: &mut dyn gix_negotiate::Negotiator,
@@ -71,6 +71,9 @@ pub(crate) fn mark_complete_and_common_ref(
     mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
 ) -> Result<Action, Error> {
     let _span = gix_trace::detail!("mark_complete_and_common_ref", mappings = ref_map.mappings.len());
+    if ref_map.mappings.is_empty() {
+        return Ok(Action::NoChange);
+    }
     if let fetch::Shallow::Deepen(0) = shallow {
         // Avoid deepening (relative) with zero as it seems to upset the server. Git also doesn't actually
         // perform the negotiation for some reason (couldn't find it in code).
@@ -218,7 +221,7 @@ pub(crate) fn add_wants(
     shallow: &fetch::Shallow,
     mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
 ) {
-    // When using shallow, we can't exclude `wants` as the remote won't send anything then. Thus we have to resend everything
+    // When using shallow, we can't exclude `wants` as the remote won't send anything then. Thus, we have to resend everything
     // we have as want instead to get exactly the same graph, but possibly deepened.
     let is_shallow = !matches!(shallow, fetch::Shallow::NoChange);
     let wants = ref_map

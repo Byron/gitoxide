@@ -144,5 +144,6 @@ impl Program {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod main;
 pub use main::function::main;

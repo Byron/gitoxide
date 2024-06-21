@@ -4,8 +4,6 @@ use bstr::{BStr, BString, ByteSlice};
 #[derive(Default, Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum Ignore {
     /// Submodule changes won't be considered at all, which is the fastest option.
-    ///
-    /// Note that changes to the submodule hash in the superproject will still be observable.
     All,
     /// Ignore any changes to the submodule working tree, only show committed differences between the `HEAD` of the submodule
     /// compared to the recorded commit in the superproject.
@@ -151,6 +149,7 @@ pub struct Error {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod branch {
     use bstr::BString;
 
@@ -166,6 +165,7 @@ pub mod branch {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod update {
     use bstr::BString;
 
@@ -181,6 +181,7 @@ pub mod update {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod url {
     use bstr::BString;
 
@@ -199,6 +200,7 @@ pub mod url {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod path {
     use bstr::BString;
 

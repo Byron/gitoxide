@@ -1,3 +1,5 @@
+use crate::bstr::BString;
+use crate::bstr::ByteSlice;
 use crate::clone::PrepareFetch;
 
 /// The error returned by [`PrepareFetch::fetch_only()`].
@@ -35,6 +37,13 @@ pub enum Error {
     },
     #[error("Failed to update HEAD with values from remote")]
     HeadUpdate(#[from] crate::reference::edit::Error),
+    #[error("The remote didn't have any ref that matched '{}'", wanted.as_ref().as_bstr())]
+    RefNameMissing { wanted: gix_ref::PartialName },
+    #[error("The remote has {} refs for '{}', try to use a specific name: {}", candidates.len(), wanted.as_ref().as_bstr(), candidates.iter().filter_map(|n| n.to_str().ok()).collect::<Vec<_>>().join(", "))]
+    RefNameAmbiguous {
+        wanted: gix_ref::PartialName,
+        candidates: Vec<BString>,
+    },
 }
 
 /// Modification
@@ -117,7 +126,7 @@ impl PrepareFetch {
             remote = remote.with_fetch_tags(fetch_tags);
         }
 
-        // Add HEAD after the remote was written to config, we need it to know what to checkout later, and assure
+        // Add HEAD after the remote was written to config, we need it to know what to check out later, and assure
         // the ref that HEAD points to is present no matter what.
         let head_refspec = gix_refspec::parse(
             format!("HEAD:refs/remotes/{remote_name}/HEAD").as_str().into(),
@@ -136,10 +145,22 @@ impl PrepareFetch {
                     if !opts.extra_refspecs.contains(&head_refspec) {
                         opts.extra_refspecs.push(head_refspec)
                     }
+                    if let Some(ref_name) = &self.ref_name {
+                        opts.extra_refspecs.push(
+                            gix_refspec::parse(ref_name.as_ref().as_bstr(), gix_refspec::parse::Operation::Fetch)
+                                .expect("partial names are valid refspecs")
+                                .to_owned(),
+                        );
+                    }
                     opts
                 })
                 .await?
         };
+
+        // Assure problems with custom branch names fail early, not after getting the pack or during negotiation.
+        if let Some(ref_name) = &self.ref_name {
+            util::find_custom_refname(pending_pack.ref_map(), ref_name)?;
+        }
         if pending_pack.ref_map().object_hash != repo.object_hash() {
             unimplemented!("configure repository to expect a different object hash as advertised by the server")
         }
@@ -160,9 +181,10 @@ impl PrepareFetch {
         util::append_config_to_repo_config(repo, config);
         util::update_head(
             repo,
-            &outcome.ref_map.remote_refs,
+            &outcome.ref_map,
             reflog_message.as_ref(),
             remote_name.as_ref(),
+            self.ref_name.as_ref(),
         )?;
 
         Ok((self.repo.take().expect("still present"), outcome))
@@ -180,7 +202,13 @@ impl PrepareFetch {
         P::SubProgress: 'static,
     {
         let (repo, fetch_outcome) = self.fetch_only(progress, should_interrupt)?;
-        Ok((crate::clone::PrepareCheckout { repo: repo.into() }, fetch_outcome))
+        Ok((
+            crate::clone::PrepareCheckout {
+                repo: repo.into(),
+                ref_name: self.ref_name.clone(),
+            },
+            fetch_outcome,
+        ))
     }
 }
 

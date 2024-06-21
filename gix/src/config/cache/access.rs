@@ -111,7 +111,7 @@ impl Cache {
     }
 
     #[cfg(feature = "blob-diff")]
-    pub(crate) fn diff_renames(&self) -> Result<Option<crate::diff::Rewrites>, crate::diff::new_rewrites::Error> {
+    pub(crate) fn diff_renames(&self) -> Result<Option<gix_diff::Rewrites>, crate::diff::new_rewrites::Error> {
         self.diff_renames
             .get_or_try_init(|| crate::diff::new_rewrites(&self.resolved, self.lenient_config))
             .copied()
@@ -216,6 +216,13 @@ impl Cache {
             .resolved
             .path_filter(key, &mut self.filter_config_section.clone())?;
 
+        if self.lenient_config && path.is_empty() {
+            gix_trace::info!(
+                "Ignored empty path at {section_name}.{subsection_name:?}.{key} due to lenient configuration"
+            );
+            return None;
+        }
+
         let install_dir = crate::path::install_dir().ok();
         let home = self.home_dir();
         let ctx = config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
@@ -249,6 +256,36 @@ impl Cache {
                         .map(|v| Core::CHECK_STAT.try_into_checkstat(v)),
                 )?
                 .unwrap_or(true),
+        })
+    }
+
+    #[cfg(feature = "index")]
+    pub(crate) fn protect_options(&self) -> Result<gix_validate::path::component::Options, config::boolean::Error> {
+        const IS_WINDOWS: bool = cfg!(windows);
+        const IS_MACOS: bool = cfg!(target_os = "macos");
+        const ALWAYS_ON_FOR_SAFETY: bool = true;
+        Ok(gix_validate::path::component::Options {
+            protect_windows: config::tree::gitoxide::Core::PROTECT_WINDOWS
+                .enrich_error(
+                    self.resolved
+                        .boolean(config::tree::gitoxide::Core::PROTECT_WINDOWS)
+                        .unwrap_or(Ok(IS_WINDOWS)),
+                )
+                .with_lenient_default_value(self.lenient_config, IS_WINDOWS)?,
+            protect_hfs: config::tree::Core::PROTECT_HFS
+                .enrich_error(
+                    self.resolved
+                        .boolean(config::tree::Core::PROTECT_HFS)
+                        .unwrap_or(Ok(IS_MACOS)),
+                )
+                .with_lenient_default_value(self.lenient_config, IS_MACOS)?,
+            protect_ntfs: config::tree::Core::PROTECT_NTFS
+                .enrich_error(
+                    self.resolved
+                        .boolean(config::tree::Core::PROTECT_NTFS)
+                        .unwrap_or(Ok(ALWAYS_ON_FOR_SAFETY)),
+                )
+                .with_lenient_default_value(self.lenient_config, ALWAYS_ON_FOR_SAFETY)?,
         })
     }
 
@@ -291,6 +328,7 @@ impl Cache {
         };
         Ok(gix_worktree_state::checkout::Options {
             filter_process_delay,
+            validate: self.protect_options()?,
             filters,
             attributes: self
                 .assemble_attribute_globals(git_dir, attributes_source, self.attributes)?

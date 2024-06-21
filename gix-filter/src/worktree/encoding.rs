@@ -2,6 +2,7 @@ use bstr::BStr;
 use encoding_rs::Encoding;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod for_label {
     use bstr::BString;
 

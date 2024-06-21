@@ -8,8 +8,6 @@ fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
 }
 
 mod update {
-    use std::convert::TryInto;
-
     use gix_testtools::Result;
 
     use super::hex_to_id;

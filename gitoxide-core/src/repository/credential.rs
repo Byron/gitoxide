@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 #[derive(Debug, thiserror::Error)]
 enum Error {
     #[error(transparent)]

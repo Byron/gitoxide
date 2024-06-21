@@ -58,6 +58,31 @@ fn directory_matches_prefix_starting_wildcards_always_match() -> crate::Result {
 }
 
 #[test]
+fn empty_dir_always_matches() -> crate::Result {
+    for specs in [
+        &["*ir"] as &[_],
+        &[],
+        &["included", ":!excluded"],
+        &[":!all", ":!excluded"],
+    ] {
+        let mut search = gix_pathspec::Search::from_specs(pathspecs(specs), None, Path::new(""))?;
+        assert_eq!(
+            search
+                .pattern_matching_relative_path("".into(), None, &mut no_attrs)
+                .map(|m| m.kind),
+            Some(Always),
+            "{specs:?}"
+        );
+        assert!(search.directory_matches_prefix("".into(), false));
+        assert!(search.directory_matches_prefix("".into(), false));
+        for is_dir in [Some(true), Some(false), None] {
+            assert!(search.can_match_relative_path("".into(), is_dir));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn directory_matches_prefix_leading() -> crate::Result {
     let search = gix_pathspec::Search::from_specs(pathspecs(&["d/d/generated/b"]), None, Path::new(""))?;
     assert!(!search.directory_matches_prefix("di".into(), false));
@@ -132,6 +157,47 @@ fn no_pathspecs_match_everything() -> crate::Result {
     );
     assert!(search.can_match_relative_path("anything".into(), None));
     assert!(search.directory_matches_prefix("anything".into(), false));
+    Ok(())
+}
+
+#[test]
+fn included_directory_and_excluded_subdir_top_level_with_prefix() -> crate::Result {
+    let mut search = gix_pathspec::Search::from_specs(pathspecs(&[":/foo", ":!/foo/target/"]), None, Path::new("foo"))?;
+    let m = search
+        .pattern_matching_relative_path("foo".into(), Some(true), &mut no_attrs)
+        .expect("matches");
+    assert_eq!(m.kind, Verbatim);
+
+    let m = search
+        .pattern_matching_relative_path("foo/bar".into(), Some(false), &mut no_attrs)
+        .expect("matches");
+    assert_eq!(m.kind, Prefix);
+
+    let m = search
+        .pattern_matching_relative_path("foo/target".into(), Some(false), &mut no_attrs)
+        .expect("matches");
+    assert_eq!(m.kind, Prefix, "files named `target` are allowed");
+
+    let m = search
+        .pattern_matching_relative_path("foo/target".into(), Some(true), &mut no_attrs)
+        .expect("matches");
+    assert!(m.is_excluded(), "directories named `target` are excluded");
+    assert_eq!(m.kind, Verbatim);
+
+    let m = search
+        .pattern_matching_relative_path("foo/target/file".into(), Some(false), &mut no_attrs)
+        .expect("matches");
+    assert!(m.is_excluded(), "everything below `target/` is also excluded");
+    assert_eq!(m.kind, Prefix);
+
+    assert!(search.directory_matches_prefix("foo/bar".into(), false));
+    assert!(search.directory_matches_prefix("foo/bar".into(), true));
+    assert!(search.directory_matches_prefix("foo".into(), false));
+    assert!(search.directory_matches_prefix("foo".into(), true));
+    assert!(search.can_match_relative_path("foo".into(), Some(true)));
+    assert!(search.can_match_relative_path("foo".into(), Some(false)));
+    assert!(search.can_match_relative_path("foo/hi".into(), Some(true)));
+    assert!(search.can_match_relative_path("foo/hi".into(), Some(false)));
     Ok(())
 }
 
@@ -261,8 +327,14 @@ fn simplified_search_respects_all_excluded() -> crate::Result {
         None,
         Path::new(""),
     )?;
-    assert!(!search.can_match_relative_path("b".into(), None));
-    assert!(!search.can_match_relative_path("a".into(), None));
+    assert!(
+        search.can_match_relative_path("b".into(), None),
+        "non-trivial excludes are ignored in favor of false-positives"
+    );
+    assert!(
+        search.can_match_relative_path("a".into(), None),
+        "non-trivial excludes are ignored in favor of false-positives"
+    );
     assert!(search.can_match_relative_path("c".into(), None));
     assert!(search.can_match_relative_path("c/".into(), None));
 
@@ -370,7 +442,7 @@ fn init_with_exclude() -> crate::Result {
     assert_eq!(search.patterns().count(), 2, "nothing artificial is added");
     assert!(
         search.patterns().next().expect("first of two").is_excluded(),
-        "re-orded so that excluded are first"
+        "re-ordered so that excluded are first"
     );
     assert_eq!(search.common_prefix(), "tests");
     assert_eq!(

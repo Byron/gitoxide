@@ -5,6 +5,173 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 (2024-05-22)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 33 calendar days.
+ - 33 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
+    - Address review comments ([`fcc3b69`](https://github.com/Byron/gitoxide/commit/fcc3b69867db1628f6a44d0e0dad8f7417f566bc))
+    - Adapt to changes in `gix-worktree` ([`1ca6a3c`](https://github.com/Byron/gitoxide/commit/1ca6a3ce22887c7eb42ec3e0a19f6e1202715745))
+    - Merge branch 'status' ([`68fd5b3`](https://github.com/Byron/gitoxide/commit/68fd5b34e1214d5c2cc7d00dd06e19ee86c00c66))
+    - Cleanup path classificaiton after fixes in `gix-pathspec` ([`44a2e00`](https://github.com/Byron/gitoxide/commit/44a2e005ea8241d026ae542dd4a71cfb6cfd8308))
+    - Merge branch 'cargo-fixes' ([`977346e`](https://github.com/Byron/gitoxide/commit/977346ee61de6207c66f3de003db6e8c722fb81c))
+</details>
+
+## 0.4.1 (2024-04-18)
+
+### Bug Fixes
+
+ - <csr-id-7f2f3ff8adbecd631c2b4513995d6c94b21742eb/> assure worktree-roots aren't pruned with pathspecs that are never meant for them.
+   Previously, when pathspecs were defined, the classification of the worktree-root
+   would also be using them. This means that depending on the pathspec, worktree-roots would
+   be pruned, which in turn makes it impossible to recurse into them.
+   
+   Now pathspecs are disabled when classifying the worktree-root directory.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 4 calendar days.
+ - 5 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-index v0.32.1, gix-pathspec v0.7.4, gix-worktree v0.33.1, gix-dir v0.4.1 ([`54ac559`](https://github.com/Byron/gitoxide/commit/54ac55946bb04635cd74582a1ce2e4bee70f2e60))
+    - Prepare changelog prior to `gix-dir` patch release ([`6ca6fa6`](https://github.com/Byron/gitoxide/commit/6ca6fa69b5c21c8d8e9e07e21558e98201504cda))
+    - Assure worktree-roots aren't pruned with pathspecs that are never meant for them. ([`7f2f3ff`](https://github.com/Byron/gitoxide/commit/7f2f3ff8adbecd631c2b4513995d6c94b21742eb))
+    - Merge pull request #1345 from EliahKagan/shell-scripts ([`fe24c89`](https://github.com/Byron/gitoxide/commit/fe24c89e326670deaa3aaa643276d612d866072e))
+    - Add missing +x bit on scripts that are run and not sourced ([`41bf65a`](https://github.com/Byron/gitoxide/commit/41bf65adef6f7d2cdd28fede262173ec7ba10822))
+</details>
+
+## 0.4.0 (2024-04-13)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 10 calendar days.
+ - 26 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-trace v0.1.9, gix-utils v0.1.12, gix-packetline-blocking v0.17.4, gix-filter v0.11.1, gix-fs v0.10.2, gix-traverse v0.39.0, gix-worktree-stream v0.12.0, gix-archive v0.12.0, gix-config v0.36.1, gix-url v0.27.3, gix-index v0.32.0, gix-worktree v0.33.0, gix-diff v0.43.0, gix-pathspec v0.7.3, gix-dir v0.4.0, gix-pack v0.50.0, gix-odb v0.60.0, gix-transport v0.42.0, gix-protocol v0.45.0, gix-status v0.9.0, gix-worktree-state v0.10.0, gix v0.62.0, gix-fsck v0.4.0, gitoxide-core v0.37.0, gitoxide v0.35.0, safety bump 14 crates ([`095c673`](https://github.com/Byron/gitoxide/commit/095c6739b2722a8b9af90776b435ef2da454c0e6))
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge pull request #1334 from EliahKagan/nonstandard-worktree ([`37732fb`](https://github.com/Byron/gitoxide/commit/37732fb13efdff5a1b8a836943e9e575196724b5))
+    - Let nonstandard worktree fixtures work even if Git < 2.37.2 ([`01d6be9`](https://github.com/Byron/gitoxide/commit/01d6be997fced8695b60d0dc206f87e542037a8d))
+</details>
+
+## 0.3.0 (2024-03-18)
+
+### Bug Fixes
+
+ - <csr-id-e7e91cfaed6d40a773a65fc077b99d2e26bb28f5/> allow traversals to start from a symlink that points to a directory
+   Now symlinked repositories can be traversed as well.
+
+### New Features (BREAKING)
+
+ - <csr-id-35b74e7992a5a732b5ae8dbdc264479a91b1d60d/> allow directory walk to be interrupted with `should_interrupt` flag.
+   That way, it can be much more responsive to interruption.
+ - <csr-id-cd0c8af78fd7a4f06e33ec2ce06b094b5a490877/> assure symlinks to directories are ignored with `dir/` declarations in `.gitignore`.
+   Initially, symlinks appear like symlinks thanks to `lstat`, but to do
+   exclude handling correctly these need another `stat` call.
+   
+   However, this is also not done in Git, but done in `libgit2` only,
+   so a toggle was added to act like Git by default, but allow obtaining
+   the same behaviour as git2 for compatibility.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release.
+ - 3 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-actor v0.31.1, gix-object v0.42.1, gix-index v0.31.1, gix-pathspec v0.7.2, gix-dir v0.3.0, gix-status v0.8.0, gix v0.61.0, safety bump 2 crates ([`155cc45`](https://github.com/Byron/gitoxide/commit/155cc45730b259e662d7c4be42a469a3af3750e1))
+    - Prepare changelog prior to release ([`129ba3d`](https://github.com/Byron/gitoxide/commit/129ba3deccc9ada0dc571466458845939502763d))
+    - Merge branch 'improvements-for-cargo' ([`41cd53e`](https://github.com/Byron/gitoxide/commit/41cd53e2af76e35e047aac4eca6324774df4cb50))
+    - Allow directory walk to be interrupted with `should_interrupt` flag. ([`35b74e7`](https://github.com/Byron/gitoxide/commit/35b74e7992a5a732b5ae8dbdc264479a91b1d60d))
+    - Allow traversals to start from a symlink that points to a directory ([`e7e91cf`](https://github.com/Byron/gitoxide/commit/e7e91cfaed6d40a773a65fc077b99d2e26bb28f5))
+    - Assure symlinks to directories are ignored with `dir/` declarations in `.gitignore`. ([`cd0c8af`](https://github.com/Byron/gitoxide/commit/cd0c8af78fd7a4f06e33ec2ce06b094b5a490877))
+</details>
+
+## 0.2.0 (2024-03-14)
+
+### Bug Fixes
+
+ - <csr-id-434f5434d7242f7f3d6b595f767195c51a3acd86/> make it possible to use a submodule root for a full walk.
+   Previously, it would not allow to enter the repository, making
+   a walk impossible.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 4 calendar days.
+ - 18 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
+    - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Keep lower-bound of `thiserror` low in `gix-dir` ([`917634f`](https://github.com/Byron/gitoxide/commit/917634fa694a1e91d37f6407e57ae96b3b0aec4b))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+    - Make it possible to use a submodule root for a full walk. ([`434f543`](https://github.com/Byron/gitoxide/commit/434f5434d7242f7f3d6b595f767195c51a3acd86))
+</details>
+
 ## 0.1.0 (2024-02-25)
 
 ### Bug Fixes
@@ -34,7 +201,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 18 commits contributed to the release over the course of 57 calendar days.
+ - 19 commits contributed to the release over the course of 57 calendar days.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -45,6 +212,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.4, gix-utils v0.1.10, gix-actor v0.30.1, gix-object v0.41.1, gix-path v0.10.6, gix-glob v0.16.1, gix-quote v0.4.11, gix-attributes v0.22.1, gix-command v0.3.5, gix-filter v0.10.0, gix-commitgraph v0.24.1, gix-worktree-stream v0.10.0, gix-archive v0.10.0, gix-config-value v0.14.5, gix-ref v0.42.0, gix-sec v0.10.5, gix-config v0.35.0, gix-prompt v0.8.3, gix-url v0.27.1, gix-credentials v0.24.1, gix-ignore v0.11.1, gix-index v0.30.0, gix-worktree v0.31.0, gix-diff v0.41.0, gix-discover v0.30.0, gix-pathspec v0.7.0, gix-dir v0.1.0, gix-pack v0.48.0, gix-odb v0.58.0, gix-transport v0.41.1, gix-protocol v0.44.1, gix-revision v0.26.1, gix-refspec v0.22.1, gix-status v0.6.0, gix-submodule v0.9.0, gix-worktree-state v0.8.0, gix v0.59.0, gix-fsck v0.3.0, gitoxide-core v0.36.0, gitoxide v0.34.0, safety bump 10 crates ([`45b4470`](https://github.com/Byron/gitoxide/commit/45b447045bc826f252129c300c531acde2652c64))
     - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'status' ([`d53504a`](https://github.com/Byron/gitoxide/commit/d53504a1fad41cec7b6ca2a4abb7f185d8941e3f))
     - Make it even harder to remove your own CWD ([`4d5767c`](https://github.com/Byron/gitoxide/commit/4d5767cd394d755104aa7f0c1ed5b8e01bf74b12))

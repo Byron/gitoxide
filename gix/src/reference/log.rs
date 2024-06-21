@@ -1,4 +1,5 @@
 //!
+#![allow(clippy::empty_docs)]
 use gix_object::commit::MessageRef;
 use gix_ref::file::ReferenceExt;
 

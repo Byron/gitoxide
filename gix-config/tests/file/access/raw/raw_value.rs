@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use gix_config::{lookup, File};
 
 #[test]

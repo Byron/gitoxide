@@ -26,6 +26,7 @@ pub use credential::function as credential;
 pub mod attributes;
 #[cfg(feature = "clean")]
 pub mod clean;
+pub mod dirty;
 #[cfg(feature = "clean")]
 pub use clean::function::clean;
 #[cfg(feature = "blocking-client")]

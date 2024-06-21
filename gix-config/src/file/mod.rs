@@ -13,19 +13,23 @@ mod mutable;
 pub use mutable::{multi_value::MultiValueMut, section::SectionMut, value::ValueMut};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod init;
 
 mod access;
 mod impls;
 ///
+#[allow(clippy::empty_docs)]
 pub mod includes;
 mod meta;
 mod util;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod section;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod rename_section {
     /// The error returned by [`File::rename_section(…)`][crate::File::rename_section()].
     #[derive(Debug, thiserror::Error)]
@@ -39,6 +43,7 @@ pub mod rename_section {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod set_raw_value {
     /// The error returned by [`File::set_raw_value(…)`][crate::File::set_raw_value()].
     #[derive(Debug, thiserror::Error)]

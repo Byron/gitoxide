@@ -116,6 +116,7 @@ mod walkdir_precompose {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(feature = "fs-read-dir")]
 pub mod read_dir {
     use std::borrow::Cow;
@@ -142,6 +143,7 @@ pub mod read_dir {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(feature = "fs-walkdir-parallel")]
 pub mod walkdir {
     use std::borrow::Cow;
@@ -263,6 +265,7 @@ pub mod walkdir {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 #[cfg(all(feature = "walkdir", not(feature = "fs-walkdir-parallel")))]
 pub mod walkdir {
     use std::borrow::Cow;

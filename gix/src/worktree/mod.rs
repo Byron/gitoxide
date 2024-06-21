@@ -20,6 +20,31 @@ pub(crate) type IndexStorage = gix_features::threading::OwnShared<gix_fs::Shared
 #[cfg(feature = "index")]
 pub type Index = gix_fs::SharedFileSnapshot<gix_index::File>;
 
+/// A type to represent an index which either was loaded from disk as it was persisted there, or created on the fly in memory.
+#[cfg(feature = "index")]
+pub enum IndexPersistedOrInMemory {
+    /// The index as loaded from disk, and shared across clones of the owning `Repository`.
+    Persisted(Index),
+    /// A temporary index as created from the `HEAD^{tree}`, with the file path set to the place where it would be stored naturally.
+    ///
+    /// Note that unless saved explicitly, it will not persist.
+    InMemory(gix_index::File),
+}
+
+#[cfg(feature = "index")]
+impl From<Index> for IndexPersistedOrInMemory {
+    fn from(value: Index) -> Self {
+        IndexPersistedOrInMemory::Persisted(value)
+    }
+}
+
+#[cfg(feature = "index")]
+impl From<gix_index::File> for IndexPersistedOrInMemory {
+    fn from(value: gix_index::File) -> Self {
+        IndexPersistedOrInMemory::InMemory(value)
+    }
+}
+
 /// A stand-in to a worktree as result of a worktree iteration.
 ///
 /// It provides access to typical worktree state, but may not actually point to a valid checkout as the latter has been moved or
@@ -83,6 +108,7 @@ pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BSt
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod proxy;
 
 ///

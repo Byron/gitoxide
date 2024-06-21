@@ -22,6 +22,7 @@ pub enum Trust {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod trust;
 
 /// Allow, deny or forbid using a resource or performing an action.
@@ -37,6 +38,7 @@ pub enum Permission {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod permission;
 
 bitflags::bitflags! {

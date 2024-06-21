@@ -19,6 +19,7 @@ pub enum Subcommands {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod commitgraph {
     use std::path::PathBuf;
 
@@ -41,7 +42,7 @@ pub mod index {
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
         /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-        #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = gitoxide::shared::AsHashKind)]
+        #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
         pub object_hash: gix::hash::Kind,
 
         /// The path to the index file.
@@ -99,6 +100,7 @@ pub mod index {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod pack {
     use std::{ffi::OsString, path::PathBuf};
 
@@ -287,6 +289,7 @@ pub mod pack {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod multi_index {
         use std::path::PathBuf;
 
@@ -321,6 +324,7 @@ pub mod pack {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod index {
         use std::path::PathBuf;
 
@@ -458,6 +462,7 @@ pub mod pack {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod mailmap {
     use std::path::PathBuf;
 

@@ -126,9 +126,56 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
     }
 }
 
+impl Drop for SpawnProcessOnDemand {
+    fn drop(&mut self) {
+        if let Some(mut child) = self.child.take() {
+            // The child process (e.g. `ssh`) may still be running at this point, so kill it before joining/waiting.
+            // In the happy-path case, it should have already exited gracefully, but in error cases or if the user
+            // interrupted the operation, it will likely still be running.
+            child.kill().ok();
+            child.wait().ok();
+        }
+    }
+}
+
 struct ReadStdoutFailOnError {
     recv: std::sync::mpsc::Receiver<std::io::Error>,
     read: std::process::ChildStdout,
+}
+
+impl std::io::Read for ReadStdoutFailOnError {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let res = self.read.read(buf);
+        self.swap_err_if_present_in_stderr(buf.len(), res)
+    }
+}
+
+impl ReadStdoutFailOnError {
+    fn swap_err_if_present_in_stderr(&self, wanted: usize, res: std::io::Result<usize>) -> std::io::Result<usize> {
+        match self.recv.try_recv().ok() {
+            Some(err) => Err(err),
+            None => match res {
+                Ok(n) if n == wanted => Ok(n),
+                Ok(n) => {
+                    // TODO: fix this
+                    // When parsing refs this seems to happen legitimately
+                    // (even though we read packet lines only and should always know exactly how much to read)
+                    // Maybe this still happens in `read_exact()` as sometimes we just don't get enough bytes
+                    // despite knowing how many.
+                    // To prevent deadlock, we have to set a timeout which slows down legitimate parts of the protocol.
+                    // This code was specifically written to make the `cargo` test-suite pass, and we can reduce
+                    // the timeouts even more once there is a native ssh transport that is used by `cargo`, it will
+                    // be able to handle these properly.
+                    // Alternatively, one could implement something like `read2` to avoid blocking on stderr entirely.
+                    self.recv
+                        .recv_timeout(std::time::Duration::from_millis(5))
+                        .ok()
+                        .map_or(Ok(n), Err)
+                }
+                Err(err) => Err(self.recv.recv().ok().unwrap_or(err)),
+            },
+        }
+    }
 }
 
 fn supervise_stderr(
@@ -136,40 +183,6 @@ fn supervise_stderr(
     stderr: std::process::ChildStderr,
     stdout: std::process::ChildStdout,
 ) -> ReadStdoutFailOnError {
-    impl ReadStdoutFailOnError {
-        fn swap_err_if_present_in_stderr(&self, wanted: usize, res: std::io::Result<usize>) -> std::io::Result<usize> {
-            match self.recv.try_recv().ok() {
-                Some(err) => Err(err),
-                None => match res {
-                    Ok(n) if n == wanted => Ok(n),
-                    Ok(n) => {
-                        // TODO: fix this
-                        // When parsing refs this seems to happen legitimately
-                        // (even though we read packet lines only and should always know exactly how much to read)
-                        // Maybe this still happens in `read_exact()` as sometimes we just don't get enough bytes
-                        // despite knowing how many.
-                        // To prevent deadlock, we have to set a timeout which slows down legitimate parts of the protocol.
-                        // This code was specifically written to make the `cargo` test-suite pass, and we can reduce
-                        // the timeouts even more once there is a native ssh transport that is used by `cargo`, it will
-                        // be able to handle these properly.
-                        // Alternatively, one could implement something like `read2` to avoid blocking on stderr entirely.
-                        self.recv
-                            .recv_timeout(std::time::Duration::from_millis(5))
-                            .ok()
-                            .map_or(Ok(n), Err)
-                    }
-                    Err(err) => Err(self.recv.recv().ok().unwrap_or(err)),
-                },
-            }
-        }
-    }
-    impl std::io::Read for ReadStdoutFailOnError {
-        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-            let res = self.read.read(buf);
-            self.swap_err_if_present_in_stderr(buf.len(), res)
-        }
-    }
-
     let (send, recv) = std::sync::mpsc::sync_channel(1);
     std::thread::Builder::new()
         .name("supervise ssh stderr".into())
@@ -279,7 +292,7 @@ pub fn connect(
 mod tests {
     mod ssh {
         mod connect {
-            use crate::{client::blocking_io::ssh::connect, Protocol};
+            use crate::{client::blocking_io::ssh, Protocol};
 
             #[test]
             fn path() {
@@ -292,8 +305,27 @@ mod tests {
                     ("user@host.xy:~/repo", "~/repo"),
                 ] {
                     let url = gix_url::parse((*url).into()).expect("valid url");
-                    let cmd = connect(url, Protocol::V1, Default::default(), false).expect("parse success");
+                    let cmd = ssh::connect(url, Protocol::V1, Default::default(), false).expect("parse success");
                     assert_eq!(cmd.path, expected, "the path will be substituted by the remote shell");
+                }
+            }
+
+            #[test]
+            fn ambiguous_host_disallowed() {
+                for url in [
+                    "ssh://-oProxyCommand=open$IFS-aCalculator/foo",
+                    "user@-oProxyCommand=open$IFS-aCalculator:username/repo",
+                ] {
+                    let url = gix_url::parse((*url).into()).expect("valid url");
+                    let options = ssh::connect::Options {
+                        command: Some("unrecognized".into()),
+                        disallow_shell: false,
+                        kind: None,
+                    };
+                    assert!(matches!(
+                        ssh::connect(url, Protocol::V1, options, false),
+                        Err(ssh::Error::AmbiguousHostName { host }) if host == "-oProxyCommand=open$IFS-aCalculator",
+                    ));
                 }
             }
         }

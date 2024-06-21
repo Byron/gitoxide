@@ -3,7 +3,7 @@
 use anyhow::Result;
 use arbitrary::Arbitrary;
 use bstr::{BStr, BString};
-use gix_ref::{namespace::expand, FullName, FullNameRef, PartialName, PartialNameCow, PartialNameRef};
+use gix_ref::{namespace::expand, FullName, FullNameRef, PartialName};
 use libfuzzer_sys::fuzz_target;
 use std::hint::black_box;
 

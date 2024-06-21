@@ -1,4 +1,4 @@
-use std::{convert::TryInto, hash};
+use std::hash;
 
 use crate::{Kind, ObjectId, SIZE_OF_SHA1_DIGEST};
 

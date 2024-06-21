@@ -15,26 +15,13 @@ pub fn store_with_packed_refs() -> crate::Result<Store> {
 
 pub fn store_at(name: &str) -> crate::Result<Store> {
     let path = gix_testtools::scripted_fixture_read_only_standalone(name)?;
-    Ok(Store::at(
-        path.join(".git"),
-        gix_ref::store::WriteReflog::Normal,
-        gix_hash::Kind::Sha1,
-        false,
-    ))
+    Ok(Store::at(path.join(".git"), Default::default()))
 }
 
 fn store_writable(name: &str) -> crate::Result<(gix_testtools::tempfile::TempDir, Store)> {
     let dir = gix_testtools::scripted_fixture_writable_standalone(name)?;
     let git_dir = dir.path().join(".git");
-    Ok((
-        dir,
-        Store::at(
-            git_dir,
-            gix_ref::store::WriteReflog::Normal,
-            gix_hash::Kind::Sha1,
-            false,
-        ),
-    ))
+    Ok((dir, Store::at(git_dir, Default::default())))
 }
 
 struct EmptyCommit;

@@ -1,5 +1,6 @@
 use gix_dir::{walk, EntryRef};
 use pretty_assertions::assert_eq;
+use std::sync::atomic::AtomicBool;
 
 use crate::walk_utils::{
     collect, collect_filtered, collect_filtered_with_cwd, entry, entry_dirstat, entry_nokind, entry_nomatch, entryps,
@@ -15,6 +16,81 @@ use gix_dir::walk::CollapsedEntriesEmissionMode::{All, OnStatusMismatch};
 use gix_dir::walk::EmissionMode::*;
 use gix_dir::walk::ForDeletionMode;
 use gix_ignore::Kind::*;
+
+#[test]
+#[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
+fn symlink_to_dir_can_be_excluded() -> crate::Result {
+    let root = fixture_in("many-symlinks", "excluded-symlinks-to-dir");
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                ..options()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 9,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Untracked, Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "by default, symlinks are counted as files only, even if they point to a directory, when handled by the exclude machinery"
+    );
+
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                symlinks_to_directories_are_ignored_like_directories: true,
+                ..options()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 9,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Ignored(Expendable), Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "with libgit2 compatibility enabled, symlinks to directories are treated like a directory, not symlink"
+    );
+    Ok(())
+}
 
 #[test]
 #[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
@@ -41,6 +117,57 @@ fn root_may_not_lead_through_symlinks() -> crate::Result {
         );
     }
     Ok(())
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "symlinks the way they are organized don't yet work on windows")]
+fn root_may_be_a_symlink_if_it_is_the_worktree() -> crate::Result {
+    let root = fixture_in("many-symlinks", "worktree-root-is-symlink");
+    let ((_out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            gix_dir::walk::Options {
+                emit_ignored: Some(Matching),
+                symlinks_to_directories_are_ignored_like_directories: true,
+                ..options()
+            },
+            keep,
+        )
+    });
+
+    assert_eq!(
+        entries,
+        &[
+            entry("file1", Ignored(Expendable), Symlink),
+            entry("file2", Untracked, Symlink),
+            entry("ignored", Ignored(Expendable), Directory),
+            entry("ignored-must-be-dir", Ignored(Expendable), Directory),
+            entry("src/file", Untracked, File),
+            entry("src1", Ignored(Expendable), Symlink),
+            entry("src2", Ignored(Expendable), Symlink), /* marked as src2/ in .gitignore */
+        ],
+        "it traversed the directory normally - without this capability, symlinked repos can't be traversed"
+    );
+    Ok(())
+}
+
+#[test]
+fn should_interrupt_works_even_in_empty_directories() {
+    let root = fixture("empty");
+    let should_interrupt = AtomicBool::new(true);
+    let err = try_collect_filtered_opts_collect(
+        &root,
+        None,
+        |keep, ctx| walk(&root, ctx, gix_dir::walk::Options { ..options() }, keep),
+        None::<&str>,
+        Options {
+            should_interrupt: Some(&should_interrupt),
+            ..Default::default()
+        },
+    )
+    .unwrap_err();
+    assert!(matches!(err, gix_dir::walk::Error::Interrupted));
 }
 
 #[test]
@@ -1478,7 +1605,7 @@ fn expendable_and_precious_in_ignored_dir_with_pathspec() -> crate::Result {
         "with pathspec, we match what's inside and expect to have all the lowest-level paths that have 'ignored' in them.\
          It seems strange that 'precious' isn't precious, while 'all-precious' is. However, the ignore-search is special
          as it goes backward through directories (using directory-declarations), and aborts if it matched. Thus it finds
-         that '$/all-precious/' matched, but in the other cases it maches 'ignored/'.
+         that '$/all-precious/' matched, but in the other cases it matches 'ignored/'.
         'other' gets folded and inherits, just like before.
         Also, look how the ignore-state overrides the prune-default for DotGit kinds, to have more finegrained classification."
     );
@@ -2625,9 +2752,133 @@ fn root_may_not_go_through_dot_git() -> crate::Result {
                 e.0.pathspec_match = expected_pathspec;
                 e
             }],
-            "no traversal happened as root passes though .git"
+            "{dir}: no traversal happened as root passes though .git"
         );
     }
+    Ok(())
+}
+
+#[test]
+fn root_at_submodule_repository_allows_walk() -> crate::Result {
+    let root = fixture("repo-with-submodule");
+    let troot = root.join("submodule");
+    let ((out, _root), entries) = try_collect_filtered_opts_collect_with_root(
+        &troot,
+        None,
+        Some(&troot),
+        |keep, ctx| {
+            walk(
+                &troot,
+                ctx,
+                walk::Options {
+                    emit_tracked: true,
+                    emit_untracked: Matching,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Options::git_dir("../.git/modules/submodule"),
+    )?;
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 3,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [entry("dir/file", Tracked, File), entry("untracked", Untracked, File)],
+        "this is a special case to allow walking submodules specifically, like a normal repository"
+    );
+    Ok(())
+}
+
+#[test]
+fn root_in_submodule_repository_allows_walk() -> crate::Result {
+    let root = fixture("repo-with-submodule");
+    let troot = root.join("submodule");
+    let ((out, _root), entries) = try_collect_filtered_opts_collect_with_root(
+        &troot,
+        None,
+        Some(&troot.join("dir")),
+        |keep, ctx| {
+            walk(
+                &troot,
+                ctx,
+                walk::Options {
+                    emit_tracked: true,
+                    emit_untracked: Matching,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Options::git_dir("../.git/modules/submodule"),
+    )?;
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 1,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [entry("dir/file", Tracked, File)],
+        "it's also working if the traversal root is inside the subdmodule"
+    );
+    Ok(())
+}
+
+#[test]
+fn root_in_submodule_from_superproject_repository_allows_walk() -> crate::Result {
+    let root = fixture("repo-with-submodule");
+    let troot = root.join("submodule").join("dir");
+    let ((out, _root), entries) = try_collect_filtered_opts_collect_with_root(
+        &root,
+        None,
+        Some(&troot),
+        |keep, ctx| {
+            walk(
+                &troot,
+                ctx,
+                walk::Options {
+                    emit_tracked: true,
+                    emit_untracked: Matching,
+                    ..options()
+                },
+                keep,
+            )
+        },
+        None::<&str>,
+        Default::default(),
+    )?;
+
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 1,
+        }
+    );
+
+    assert_eq!(
+        entries,
+        [entry("file", Untracked, File)],
+        "there is no index that has 'file' in it (it's 'dir/file'), hence it's untracked.\
+        But the traversal is possible, even though it might not make the most sense."
+    );
     Ok(())
 }
 
@@ -2797,7 +3048,8 @@ fn root_may_not_go_through_submodule() -> crate::Result {
     assert_eq!(
         entries,
         [entry("submodule", Tracked, Repository)],
-        "it refuses to start traversal in a submodule, thus it ends in the directory that is the submodule"
+        "it refuses to start traversal in a submodule, thus it ends in the directory that is the submodule, \
+        if the root is another repository"
     );
     Ok(())
 }
@@ -3705,7 +3957,7 @@ fn root_cannot_pass_through_case_altered_capital_dot_git_if_case_insensitive() -
                 e.0.pathspec_match = expected_pathspec;
                 e
             }],
-            "no traversal happened as root passes though .git, it compares in a case-insensitive fashion"
+            "{dir}: no traversal happened as root passes though .git, it compares in a case-insensitive fashion"
         );
     }
 

@@ -30,16 +30,7 @@ mod canonicalized {
     }
 }
 
-#[test]
-fn password() -> crate::Result {
-    let mut url = gix_url::parse("https://user:password@host/path".into())?;
-
-    assert_eq!(url.password(), Some("password"));
-    assert_eq!(url.set_password(Some("new-pass".into())), Some("password".into()));
-    assert_eq!(url.password(), Some("new-pass"));
-
-    Ok(())
-}
+use gix_url::ArgumentSafety;
 
 #[test]
 fn user() -> crate::Result {
@@ -53,22 +44,118 @@ fn user() -> crate::Result {
 }
 
 #[test]
-fn host_argument_safe() -> crate::Result {
-    let url = gix_url::parse("ssh://-oProxyCommand=open$IFS-aCalculator/foo".into())?;
-    assert_eq!(url.host(), Some("-oProxyCommand=open$IFS-aCalculator"));
-    assert_eq!(url.host_argument_safe(), None);
-    assert_eq!(url.path, "/foo");
-    assert_eq!(url.path_argument_safe(), Some("/foo".into()));
+fn password() -> crate::Result {
+    let mut url = gix_url::parse("https://user:password@host/path".into())?;
+
+    assert_eq!(url.password(), Some("password"));
+    assert_eq!(url.set_password(Some("new-pass".into())), Some("password".into()));
+    assert_eq!(url.password(), Some("new-pass"));
+
     Ok(())
 }
 
 #[test]
-fn path_argument_safe() -> crate::Result {
-    let url = gix_url::parse("ssh://foo/-oProxyCommand=open$IFS-aCalculator".into())?;
+fn user_argument_safety() -> crate::Result {
+    let url = gix_url::parse("ssh://-Fconfigfile@foo/bar".into())?;
+
+    assert_eq!(url.user(), Some("-Fconfigfile"));
+    assert_eq!(url.user_as_argument(), ArgumentSafety::Dangerous("-Fconfigfile"));
+    assert_eq!(url.user_argument_safe(), None, "An unsafe username is blocked.");
+
     assert_eq!(url.host(), Some("foo"));
+    assert_eq!(url.host_as_argument(), ArgumentSafety::Usable("foo"));
     assert_eq!(url.host_argument_safe(), Some("foo"));
+
+    assert_eq!(url.path, "/bar");
+    assert_eq!(url.path_argument_safe(), Some("/bar".into()));
+
+    Ok(())
+}
+
+#[test]
+fn host_argument_safety() -> crate::Result {
+    let url = gix_url::parse("ssh://-oProxyCommand=open$IFS-aCalculator/foo".into())?;
+
+    assert_eq!(url.user(), None);
+    assert_eq!(url.user_as_argument(), ArgumentSafety::Absent);
+    assert_eq!(
+        url.user_argument_safe(),
+        None,
+        "As there is no user. See all_argument_safe_valid()"
+    );
+
+    assert_eq!(url.host(), Some("-oProxyCommand=open$IFS-aCalculator"));
+    assert_eq!(
+        url.host_as_argument(),
+        ArgumentSafety::Dangerous("-oProxyCommand=open$IFS-aCalculator")
+    );
+    assert_eq!(url.host_argument_safe(), None, "An unsafe host string is blocked");
+
+    assert_eq!(url.path, "/foo");
+    assert_eq!(url.path_argument_safe(), Some("/foo".into()));
+
+    Ok(())
+}
+
+#[test]
+fn path_argument_safety() -> crate::Result {
+    let url = gix_url::parse("ssh://foo/-oProxyCommand=open$IFS-aCalculator".into())?;
+
+    assert_eq!(url.user(), None);
+    assert_eq!(url.user_as_argument(), ArgumentSafety::Absent);
+    assert_eq!(
+        url.user_argument_safe(),
+        None,
+        "As there is no user. See all_argument_safe_valid()"
+    );
+
+    assert_eq!(url.host(), Some("foo"));
+    assert_eq!(url.host_as_argument(), ArgumentSafety::Usable("foo"));
+    assert_eq!(url.host_argument_safe(), Some("foo"));
+
     assert_eq!(url.path, "/-oProxyCommand=open$IFS-aCalculator");
-    assert_eq!(url.path_argument_safe(), None);
+    assert_eq!(url.path_argument_safe(), None, "An unsafe path is blocked");
+
+    Ok(())
+}
+
+#[test]
+fn all_argument_safety_safe() -> crate::Result {
+    let url = gix_url::parse("ssh://user.name@example.com/path/to/file".into())?;
+
+    assert_eq!(url.user(), Some("user.name"));
+    assert_eq!(url.user_as_argument(), ArgumentSafety::Usable("user.name"));
+    assert_eq!(url.user_argument_safe(), Some("user.name"));
+
+    assert_eq!(url.host(), Some("example.com"));
+    assert_eq!(url.host_as_argument(), ArgumentSafety::Usable("example.com"));
+    assert_eq!(url.host_argument_safe(), Some("example.com"));
+
+    assert_eq!(url.path, "/path/to/file");
+    assert_eq!(url.path_argument_safe(), Some("/path/to/file".into()));
+
+    Ok(())
+}
+
+#[test]
+fn all_argument_safety_not_safe() -> crate::Result {
+    let all_bad = "ssh://-Fconfigfile@-oProxyCommand=open$IFS-aCalculator/-oProxyCommand=open$IFS-aCalculator";
+    let url = gix_url::parse(all_bad.into())?;
+
+    assert_eq!(url.user(), Some("-Fconfigfile"));
+    assert_eq!(url.user_as_argument(), ArgumentSafety::Dangerous("-Fconfigfile"));
+    assert_eq!(url.user_argument_safe(), None); // An unsafe username is blocked.
+
+    assert_eq!(url.host(), Some("-oProxyCommand=open$IFS-aCalculator"));
+    assert_eq!(
+        url.host_as_argument(),
+        ArgumentSafety::Dangerous("-oProxyCommand=open$IFS-aCalculator")
+    );
+    assert_eq!(url.host_argument_safe(), None, "An unsafe host string is blocked");
+
+    assert_eq!(url.path, "/-oProxyCommand=open$IFS-aCalculator");
+    assert_eq!(url.path_argument_safe(), None, "An unsafe path is blocked");
+
     Ok(())
 }
 

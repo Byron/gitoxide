@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use crate::{tree, Blob, BlobRef, Commit, CommitRef, Object, ObjectRef, Tag, TagRef, Tree, TreeRef};
 
 impl From<TagRef<'_>> for Tag {

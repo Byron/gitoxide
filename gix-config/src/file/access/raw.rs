@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, convert::TryInto};
+use std::{borrow::Cow, collections::HashMap};
 
 use bstr::BStr;
 use smallvec::ToSmallVec;

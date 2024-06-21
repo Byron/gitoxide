@@ -132,10 +132,6 @@ pub trait ApplyLeniency {
     fn with_leniency(self, is_lenient: bool) -> Self;
 }
 
-pub trait IgnoreEmptyPath {
-    fn ignore_empty(self) -> Self;
-}
-
 pub trait ApplyLeniencyDefault {
     fn with_lenient_default(self, is_lenient: bool) -> Self;
 }
@@ -149,16 +145,6 @@ impl<T, E> ApplyLeniency for Result<Option<T>, E> {
         match self {
             Ok(v) => Ok(v),
             Err(_) if is_lenient => Ok(None),
-            Err(err) => Err(err),
-        }
-    }
-}
-
-impl IgnoreEmptyPath for Result<Option<std::borrow::Cow<'_, std::path::Path>>, gix_config::path::interpolate::Error> {
-    fn ignore_empty(self) -> Self {
-        match self {
-            Ok(maybe_path) => Ok(maybe_path),
-            Err(gix_config::path::interpolate::Error::Missing { .. }) => Ok(None),
             Err(err) => Err(err),
         }
     }

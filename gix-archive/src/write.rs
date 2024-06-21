@@ -126,7 +126,7 @@ where
     NextFn: FnMut(&mut Stream) -> Result<Option<Entry<'_>>, gix_worktree_stream::entry::Error>,
 {
     let compression_level = match opts.format {
-        Format::Zip { compression_level } => compression_level.map(|lvl| lvl as i32),
+        Format::Zip { compression_level } => compression_level.map(|lvl| lvl as i64),
         _other => return write_stream(stream, next_entry, out, opts),
     };
 
@@ -161,10 +161,10 @@ fn append_zip_entry<W: std::io::Write + std::io::Seek>(
     mut entry: gix_worktree_stream::Entry<'_>,
     buf: &mut Vec<u8>,
     mtime: zip::DateTime,
-    compression_level: Option<i32>,
+    compression_level: Option<i64>,
     tree_prefix: Option<&bstr::BString>,
 ) -> Result<(), Error> {
-    let file_opts = zip::write::FileOptions::default()
+    let file_opts = zip::write::FileOptions::<'_, ()>::default()
         .compression_method(zip::CompressionMethod::Deflated)
         .compression_level(compression_level)
         .large_file(entry.bytes_remaining().map_or(true, |len| len > u32::MAX as usize))

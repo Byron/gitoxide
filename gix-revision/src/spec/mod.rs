@@ -105,5 +105,6 @@ pub(crate) mod types {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod parse;
 pub use parse::function::parse;

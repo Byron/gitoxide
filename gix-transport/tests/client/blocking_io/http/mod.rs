@@ -160,6 +160,7 @@ fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted()
             .received_as_string()
             .lines()
             .map(str::to_lowercase)
+            .filter(ignore_reqwest_content_length)
             .collect::<HashSet<_>>(),
         format!(
             "GET /path/not-important/info/refs?service=git-upload-pack HTTP/1.1
@@ -187,6 +188,7 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
                 .lines()
                 .map(str::to_lowercase)
                 .filter(|l| !l.starts_with("expect: "))
+                .filter(ignore_reqwest_content_length)
                 .collect::<HashSet<_>>();
             // On linux on CI, for some reason, it won't have this chunk id here, but
             // it has it whenever and where-ever I run it.
@@ -337,6 +339,7 @@ fn handshake_v1() -> crate::Result {
             .received_as_string()
             .lines()
             .map(str::to_lowercase)
+            .filter(ignore_reqwest_content_length)
             .collect::<HashSet<_>>(),
         format!(
             "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
@@ -550,6 +553,7 @@ fn handshake_and_lsrefs_and_fetch_v2_impl(handshake_fixture: &str) -> crate::Res
             .received_as_string()
             .lines()
             .map(str::to_lowercase)
+            .filter(ignore_reqwest_content_length)
             .collect::<HashSet<_>>(),
         format!(
             "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
@@ -679,4 +683,8 @@ fn check_content_type_is_case_insensitive() -> crate::Result {
     let result = client.handshake(Service::UploadPack, &[]);
     assert!(result.is_ok());
     Ok(())
+}
+
+fn ignore_reqwest_content_length(header_line: &String) -> bool {
+    header_line != "content-length: 0"
 }

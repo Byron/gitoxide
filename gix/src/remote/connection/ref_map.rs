@@ -79,14 +79,14 @@ where
     /// for _fetching_.
     ///
     /// This comes in the form of all matching tips on the remote and the object they point to, along with
-    /// with the local tracking branch of these tips (if available).
+    /// the local tracking branch of these tips (if available).
     ///
     /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
     ///
     /// # Consumption
     ///
-    /// Due to management of the transport, it's cleanest to only use it for a single interaction. Thus it's consumed along with
-    /// the connection.
+    /// Due to management of the transport, it's cleanest to only use it for a single interaction. Thus, it's consumed
+    /// along with the connection.
     ///
     /// ### Configuration
     ///
@@ -145,6 +145,7 @@ where
                 }
             }))
             .validated()?;
+
         let mappings = res.mappings;
         let mappings = mappings
             .into_iter()

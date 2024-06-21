@@ -18,8 +18,6 @@ mod log {
     }
 }
 mod find {
-    use std::convert::TryInto;
-
     use gix_ref as refs;
     use gix_ref::{FullName, FullNameRef, Target};
 

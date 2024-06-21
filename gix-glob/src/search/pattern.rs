@@ -48,14 +48,27 @@ fn read_in_full_ignore_missing(path: &Path, follow_symlinks: bool, buf: &mut Vec
     };
     Ok(match file {
         Ok(mut file) => {
-            file.read_to_end(buf)?;
-            true
+            if let Err(err) = file.read_to_end(buf) {
+                if io_err_is_dir(&err) {
+                    false
+                } else {
+                    return Err(err);
+                }
+            } else {
+                true
+            }
         }
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound ||
-            // TODO: use the enum variant NotADirectory for this once stabilized
-            err.raw_os_error() == Some(20) /* Not a directory */ => false,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound || io_err_is_dir(&err) => false,
         Err(err) => return Err(err),
     })
+}
+
+fn io_err_is_dir(err: &std::io::Error) -> bool {
+    // TODO: use the enum variant NotADirectory for this once stabilized
+    let raw = err.raw_os_error();
+    raw == Some(if cfg!(windows) { 5 } else { 21 }) /* Not a directory */
+        /* Also that, but under different circumstances */
+        || raw == Some(20)
 }
 
 /// Instantiation

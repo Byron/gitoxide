@@ -7,6 +7,7 @@ use crate::{Commit, CommitRef, TagRef};
 
 mod decode;
 ///
+#[allow(clippy::empty_docs)]
 pub mod message;
 
 /// A parsed commit message that assumes a title separated from the body by two consecutive newlines.
@@ -53,6 +54,7 @@ impl From<SignedData<'_>> for BString {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod ref_iter;
 
 mod write;

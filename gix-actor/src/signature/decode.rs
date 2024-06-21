@@ -36,9 +36,14 @@ pub(crate) mod function {
                 take_while(1..=2, AsChar::is_dec_digit)
                     .verify_map(|v| to_signed::<OffsetInSeconds>(v).ok())
                     .context(StrContext::Expected("MM".into())),
+                take_while(0.., AsChar::is_dec_digit).map(|v: &[u8]| v),
             )
-                .map(|(time, sign, hours, minutes)| {
-                    let offset = (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 };
+                .map(|(time, sign, hours, minutes, trailing_digits)| {
+                    let offset = if trailing_digits.is_empty() {
+                        (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 }
+                    } else {
+                        0
+                    };
                     Time {
                         seconds: time,
                         offset,

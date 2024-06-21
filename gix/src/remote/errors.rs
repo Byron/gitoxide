@@ -1,4 +1,5 @@
 ///
+#[allow(clippy::empty_docs)]
 pub mod find {
     use crate::{bstr::BString, config, remote};
 
@@ -27,6 +28,7 @@ pub mod find {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod existing {
         use crate::bstr::BString;
 
@@ -44,6 +46,7 @@ pub mod find {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod for_fetch {
         /// The error returned by [`Repository::find_fetch_remote(…)`](crate::Repository::find_fetch_remote()).
         #[derive(Debug, thiserror::Error)]

@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use bstr::ByteSlice;
 use winnow::{
     combinator::{opt, preceded, terminated},

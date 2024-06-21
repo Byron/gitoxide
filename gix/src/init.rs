@@ -1,5 +1,5 @@
 #![allow(clippy::result_large_err)]
-use std::{borrow::Cow, convert::TryInto, path::Path};
+use std::{borrow::Cow, path::Path};
 
 use gix_macros::momo;
 use gix_ref::{

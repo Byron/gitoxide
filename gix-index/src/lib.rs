@@ -13,25 +13,33 @@ use filetime::FileTime;
 pub use gix_hash as hash;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod file;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod extension;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod entry;
 
 mod access;
 
-mod init;
+///
+#[allow(clippy::empty_docs)]
+pub mod init;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod verify;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod write;
 
 pub mod fs;
@@ -107,6 +115,21 @@ pub struct AccelerateLookup<'a> {
 ///
 /// As opposed to a snapshot, it's meant to be altered and eventually be written back to disk or converted into a tree.
 /// We treat index and its state synonymous.
+///
+/// # A note on safety
+///
+/// An index (i.e. [`State`]) created by hand is not guaranteed to have valid entry paths as they are entirely controlled
+/// by the caller, without applying any level of validation.
+///
+/// This means that before using these paths to recreate files on disk, *they must be validated*.
+///
+/// It's notable that it's possible to manufacture tree objects which contain names like `.git/hooks/pre-commit`
+/// which then will look like `.git/hooks/pre-commit` in the index, which doesn't care that the name came from a single
+/// tree instead of from trees named `.git`, `hooks` and a blob named `pre-commit`. The effect is still the same - an invalid
+/// path is presented in the index and its consumer must validate each path component before usage.
+///
+/// It's recommended to do that using `gix_worktree::Stack` which has it built-in if it's created `for_checkout()`. Alternatively
+/// one can validate component names with `gix_validate::path::component()`.
 #[derive(Clone)]
 pub struct State {
     /// The kind of object hash used when storing the underlying file.
@@ -138,6 +161,7 @@ pub struct State {
 }
 
 mod impls {
+    use crate::entry::Stage;
     use std::fmt::{Debug, Formatter};
 
     use crate::State;
@@ -149,11 +173,10 @@ mod impls {
                     f,
                     "{} {}{:?} {} {}",
                     match entry.flags.stage() {
-                        0 => "       ",
-                        1 => "BASE   ",
-                        2 => "OURS   ",
-                        3 => "THEIRS ",
-                        _ => "UNKNOWN",
+                        Stage::Unconflicted => "       ",
+                        Stage::Base => "BASE   ",
+                        Stage::Ours => "OURS   ",
+                        Stage::Theirs => "THEIRS ",
                     },
                     if entry.flags.is_empty() {
                         "".to_string()
@@ -171,8 +194,6 @@ mod impls {
 }
 
 pub(crate) mod util {
-    use std::convert::TryInto;
-
     #[inline]
     pub fn var_int(data: &[u8]) -> Option<(u64, &[u8])> {
         let (num, consumed) = gix_features::decode::leb64_from_read(data).ok()?;

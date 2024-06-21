@@ -25,4 +25,5 @@ pub struct Options {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod remote;

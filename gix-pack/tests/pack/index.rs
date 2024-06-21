@@ -108,7 +108,7 @@ mod version {
         }
     }
 
-    #[cfg(feature = "internal-testing-gix-features-parallel")]
+    #[cfg(feature = "gix-features-parallel")]
     mod any {
         use std::{fs, io, sync::atomic::AtomicBool};
 
@@ -133,7 +133,7 @@ mod version {
                 index_path: &&str,
                 data_path: &&str,
             ) -> Result<(), Box<dyn std::error::Error>> {
-                let pack_iter = pack::data::input::BytesToEntriesIter::new_from_header(
+                let mut pack_iter = pack::data::input::BytesToEntriesIter::new_from_header(
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
                     *mode,
                     *compressed,
@@ -148,12 +148,12 @@ mod version {
                     desired_kind,
                     || {
                         let file = std::fs::File::open(fixture_path(data_path))?;
-                        let map = unsafe { memmap2::Mmap::map(&file)? };
+                        let map = unsafe { memmap2::MmapOptions::new().map_copy_read_only(&file)? };
                         Ok((slice_map, map))
                     },
-                    pack_iter,
+                    &mut pack_iter,
                     None,
-                    progress::Discard,
+                    &mut progress::Discard,
                     &mut actual,
                     &AtomicBool::new(false),
                     gix_hash::Kind::Sha1,
@@ -210,7 +210,7 @@ mod version {
                 assert_eq!(outcome.index_version, desired_kind);
                 assert_eq!(
                     outcome.index_hash,
-                    gix_hash::ObjectId::from(&expected[end_of_pack_hash..end_of_index_hash])
+                    gix_hash::ObjectId::try_from(&expected[end_of_pack_hash..end_of_index_hash])?
                 );
                 Ok(())
             }
@@ -227,7 +227,7 @@ mod version {
         #[test]
         fn lookup_missing() {
             let file = index::File::at(&fixture_path(INDEX_V2), gix_hash::Kind::Sha1).unwrap();
-            let prefix = gix_hash::Prefix::new(gix_hash::ObjectId::null(gix_hash::Kind::Sha1), 7).unwrap();
+            let prefix = gix_hash::Prefix::new(&gix_hash::Kind::Sha1.null(), 7).unwrap();
             assert!(file.lookup_prefix(prefix, None).is_none());
 
             let mut candidates = 1..1;
@@ -363,8 +363,8 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             },
         ),
     ] {
-        let idx = index::File::at(&fixture_path(index_path), gix_hash::Kind::Sha1)?;
-        let pack = pack::data::File::at(&fixture_path(pack_path), gix_hash::Kind::Sha1)?;
+        let idx = index::File::at(fixture_path(index_path), gix_hash::Kind::Sha1)?;
+        let pack = pack::data::File::at(fixture_path(pack_path), gix_hash::Kind::Sha1)?;
 
         assert_eq!(pack.version(), pack::data::Version::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
@@ -398,7 +398,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
         let sorted_offsets = idx.sorted_offsets();
         assert_eq!(num_objects, sorted_offsets.len());
         for idx_entry in idx.iter() {
-            let pack_entry = pack.entry(idx_entry.pack_offset);
+            let pack_entry = pack.entry(idx_entry.pack_offset)?;
             assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);
             assert!(sorted_offsets.binary_search(&idx_entry.pack_offset).is_ok());
         }
@@ -410,7 +410,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             );
 
             let mut buf = vec![0u8; entry.decompressed_size as usize];
-            let pack_entry = pack.entry(offset_from_index);
+            let pack_entry = pack.entry(offset_from_index)?;
             assert_eq!(
                 pack_entry.pack_offset(),
                 entry.pack_offset,
@@ -471,7 +471,7 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
             "0f3ea84cd1bba10c2a03d736a460635082833e59",
         ),
     ] {
-        let idx = index::File::at(&fixture_path(path), gix_hash::Kind::Sha1)?;
+        let idx = index::File::at(fixture_path(path), gix_hash::Kind::Sha1)?;
         assert_eq!(idx.version(), *kind);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(

@@ -9,10 +9,12 @@ use crate::Graph;
 pub type IdMap<T> = gix_hashtable::HashMap<gix_hash::ObjectId, T>;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod commit;
 
 mod errors {
     ///
+    #[allow(clippy::empty_docs)]
     pub mod insert_parents {
         use crate::graph::commit::iter_parents;
 
@@ -30,6 +32,7 @@ mod errors {
     }
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod try_lookup_or_insert_default {
         use crate::graph::commit::to_owned;
 

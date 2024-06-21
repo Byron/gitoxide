@@ -1,6 +1,7 @@
-use crate::{filter, repository::IndexPersistedOrInMemory, Id, Repository};
+use crate::{filter, worktree::IndexPersistedOrInMemory, Id, Repository};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod pipeline {
     /// The error returned by [Repository::filter_pipeline()](super::Repository::filter_pipeline()).
     #[derive(Debug, thiserror::Error)]
@@ -11,7 +12,7 @@ pub mod pipeline {
         #[error(transparent)]
         DecodeCommit(#[from] gix_object::decode::Error),
         #[error("Could not create index from tree at HEAD^{{tree}}")]
-        TreeTraverse(#[from] gix_traverse::tree::breadthfirst::Error),
+        TreeTraverse(#[from] crate::repository::index_from_tree::Error),
         #[error(transparent)]
         BareAttributes(#[from] crate::config::attribute_stack::Error),
         #[error(transparent)]

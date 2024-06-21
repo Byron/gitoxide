@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.10.7 (2024-03-14)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 4 calendar days.
+ - 18 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+</details>
+
 ## 0.10.6 (2024-02-25)
 
 ### New Features
@@ -17,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 16 calendar days.
+ - 6 commits contributed to the release over the course of 16 calendar days.
  - 30 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -29,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.4, gix-utils v0.1.10, gix-actor v0.30.1, gix-object v0.41.1, gix-path v0.10.6, gix-glob v0.16.1, gix-quote v0.4.11, gix-attributes v0.22.1, gix-command v0.3.5, gix-filter v0.10.0, gix-commitgraph v0.24.1, gix-worktree-stream v0.10.0, gix-archive v0.10.0, gix-config-value v0.14.5, gix-ref v0.42.0, gix-sec v0.10.5, gix-config v0.35.0, gix-prompt v0.8.3, gix-url v0.27.1, gix-credentials v0.24.1, gix-ignore v0.11.1, gix-index v0.30.0, gix-worktree v0.31.0, gix-diff v0.41.0, gix-discover v0.30.0, gix-pathspec v0.7.0, gix-dir v0.1.0, gix-pack v0.48.0, gix-odb v0.58.0, gix-transport v0.41.1, gix-protocol v0.44.1, gix-revision v0.26.1, gix-refspec v0.22.1, gix-status v0.6.0, gix-submodule v0.9.0, gix-worktree-state v0.8.0, gix v0.59.0, gix-fsck v0.3.0, gitoxide-core v0.36.0, gitoxide v0.34.0, safety bump 10 crates ([`45b4470`](https://github.com/Byron/gitoxide/commit/45b447045bc826f252129c300c531acde2652c64))
     - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'status' ([`bb48c4c`](https://github.com/Byron/gitoxide/commit/bb48c4ce22650b8c76af3b147e252ebe7cedb205))
     - Add `relativize_with_prefix()`. ([`9ba8bca`](https://github.com/Byron/gitoxide/commit/9ba8bcab07f4b3d0048b5a125b632bd70fe788d9))
@@ -111,12 +137,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Chore
 
- - <csr-id-3bd09ef120945a9669321ea856db4079a5dab930/> change `rust-version` manifest field back to 1.65.
-   They didn't actually need to be higher to work, and changing them
-   unecessarily can break downstream CI.
-   
-   Let's keep this value as low as possible, and only increase it when
-   more recent features are actually used.
+- <csr-id-3bd09ef120945a9669321ea856db4079a5dab930/> change `rust-version` manifest field back to 1.65.
+  They didn't actually need to be higher to work, and changing them
+  unecessarily can break downstream CI.
+
+  Let's keep this value as low as possible, and only increase it when
+  more recent features are actually used.
 
 ### Commit Statistics
 
@@ -145,8 +171,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Chore
 
- - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
-   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+- <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+  Our MSRV follows the one of `helix`, which in turn follows Firefox.
 
 ### Commit Statistics
 
@@ -240,11 +266,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Chore
 
- - <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
+- <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
 
 ### Other
 
- - <csr-id-5b5983a9686e9fe61a29e9e1b9e905cd4dbd296a/> make clear that `normalize()` does not touch duplicate path separators nor single `.`.
+- <csr-id-5b5983a9686e9fe61a29e9e1b9e905cd4dbd296a/> make clear that `normalize()` does not touch duplicate path separators nor single `.`.
 
 ### New Features (BREAKING)
 
@@ -332,7 +358,7 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
+- <csr-id-bcad5c22049d56a25ef69d6c7a3344e78f9a1d4d/> Add `clippy::redundant-closure-for-method-calls` lint
 
 ### New Features
 
@@ -549,15 +575,15 @@ A maintenance release without user-facing changes.
 
 ### Refactor (BREAKING)
 
- - <csr-id-37cab07f283a368f323604372c84475d73d6c258/> Rename absolutize() to normalize()
-   The name absolutize implies strongly that the returned path will be
-   absolute, but the function only converts relative paths to absolute under a
-   few specific circumstances.
-   
-   The new name, normalize(), is inspired by Python's os.path.normpath(),
-   Java's java.nio.file.Path.normalize(), Node's Path.normalize(), and maybe
-   some others which have similar semantics to this function.
- - <csr-id-54801592488416ef2bb0f34c5061b62189c35c5e/> various name changes for more convenient API
+- <csr-id-37cab07f283a368f323604372c84475d73d6c258/> Rename absolutize() to normalize()
+  The name absolutize implies strongly that the returned path will be
+  absolute, but the function only converts relative paths to absolute under a
+  few specific circumstances.
+
+  The new name, normalize(), is inspired by Python's os.path.normpath(),
+  Java's java.nio.file.Path.normalize(), Node's Path.normalize(), and maybe
+  some others which have similar semantics to this function.
+- <csr-id-54801592488416ef2bb0f34c5061b62189c35c5e/> various name changes for more convenient API
 
 ### Bug Fixes (BREAKING)
 
@@ -593,20 +619,20 @@ A maintenance release without user-facing changes.
 
 ### Refactor
 
- - <csr-id-8ab47bbdac44c0fa738215d3cc457eb3b6f30504/> rename tests/convert/normalize.rs
-   This renames the test module to match the new function name.
+- <csr-id-8ab47bbdac44c0fa738215d3cc457eb3b6f30504/> rename tests/convert/normalize.rs
+  This renames the test module to match the new function name.
 
 ### Other
 
- - <csr-id-e4f4c4b2c75a63a40a174e3a006ea64ef8d78809/> :discover()` now returns the shortest path.
-   If and only if it canonicalized the source path. That way, users will
-   still get a familiar path. This is due to `parent()` not operating
-   in the file system, which otherwise would be equivalent to `..`,
-   but that's not how we work.
-   
-   Maybe we should overhaul the way this works to use `../` instead
-   and just 'absoluteize' the path later (std::path::absolute()) is
-   on the way for that.
+- <csr-id-e4f4c4b2c75a63a40a174e3a006ea64ef8d78809/> :discover()` now returns the shortest path.
+  If and only if it canonicalized the source path. That way, users will
+  still get a familiar path. This is due to `parent()` not operating
+  in the file system, which otherwise would be equivalent to `..`,
+  but that's not how we work.
+
+  Maybe we should overhaul the way this works to use `../` instead
+  and just 'absoluteize' the path later (std::path::absolute()) is
+  on the way for that.
 
 ### Bug Fixes
 
@@ -643,8 +669,8 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
- - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
+- <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+- <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
 
 ### Documentation
 
@@ -891,19 +917,19 @@ A maintenance release without user-facing changes.
 
 ### Refactor
 
- - <csr-id-8ab47bbdac44c0fa738215d3cc457eb3b6f30504/> rename tests/convert/normalize.rs
-   This renames the test module to match the new function name.
+- <csr-id-8ab47bbdac44c0fa738215d3cc457eb3b6f30504/> rename tests/convert/normalize.rs
+  This renames the test module to match the new function name.
 
 ### Refactor (BREAKING)
 
- - <csr-id-37cab07f283a368f323604372c84475d73d6c258/> Rename absolutize() to normalize()
-   The name absolutize implies strongly that the returned path will be
-   absolute, but the function only converts relative paths to absolute under a
-   few specific circumstances.
-   
-   The new name, normalize(), is inspired by Python's os.path.normpath(),
-   Java's java.nio.file.Path.normalize(), Node's Path.normalize(), and maybe
-   some others which have similar semantics to this function.
+- <csr-id-37cab07f283a368f323604372c84475d73d6c258/> Rename absolutize() to normalize()
+  The name absolutize implies strongly that the returned path will be
+  absolute, but the function only converts relative paths to absolute under a
+  few specific circumstances.
+
+  The new name, normalize(), is inspired by Python's os.path.normpath(),
+  Java's java.nio.file.Path.normalize(), Node's Path.normalize(), and maybe
+  some others which have similar semantics to this function.
 
 ## 0.6.0 (2022-11-21)
 
@@ -959,8 +985,8 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
- - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
+- <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+- <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
 
 ### Bug Fixes
 
@@ -1011,15 +1037,15 @@ A maintenance release without user-facing changes.
 
 ### Other
 
- - <csr-id-e4f4c4b2c75a63a40a174e3a006ea64ef8d78809/> :discover()` now returns the shortest path.
-   If and only if it canonicalized the source path. That way, users will
-   still get a familiar path. This is due to `parent()` not operating
-   in the file system, which otherwise would be equivalent to `..`,
-   but that's not how we work.
-   
-   Maybe we should overhaul the way this works to use `../` instead
-   and just 'absolutize' the path later (std::path::absolute()) is
-   on the way for that.
+- <csr-id-e4f4c4b2c75a63a40a174e3a006ea64ef8d78809/> :discover()` now returns the shortest path.
+  If and only if it canonicalized the source path. That way, users will
+  still get a familiar path. This is due to `parent()` not operating
+  in the file system, which otherwise would be equivalent to `..`,
+  but that's not how we work.
+
+  Maybe we should overhaul the way this works to use `../` instead
+  and just 'absolutize' the path later (std::path::absolute()) is
+  on the way for that.
 
 ## 0.1.0 (2022-04-28)
 
@@ -1027,7 +1053,7 @@ A maintenance release without user-facing changes.
 
 ### Refactor (BREAKING)
 
- - <csr-id-54801592488416ef2bb0f34c5061b62189c35c5e/> various name changes for more convenient API
+- <csr-id-54801592488416ef2bb0f34c5061b62189c35c5e/> various name changes for more convenient API
 
 ## 0.0.0 (2022-03-31)
 

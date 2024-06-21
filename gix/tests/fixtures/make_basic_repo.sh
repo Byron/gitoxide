@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 git init -q
@@ -31,4 +31,9 @@ git init all-untracked
   >a
   mkdir d
   >d/a
+)
+
+git init empty-core-excludes
+(cd empty-core-excludes
+  echo $'[core]\n\texcludesFile = ' >> .git/config
 )

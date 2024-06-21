@@ -5,6 +5,135 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.38.0 (2024-05-22)
+
+### Bug Fixes
+
+ - <csr-id-addf446f052ff74edcdb083f2b2968b313daa940/> more robustness in the face of a trampling-herd of threads loading a single index.
+   The motivating example is here: https://github.com/praetorian-inc/noseyparker/issues/179
+   
+   Previously, it was possible for a trampling herd of threads to consolidate the
+   disk state. Most of them would be 'needs-init' threads which could notice that
+   the initialization already happened, and just use that.
+   
+   But a thread might be late for the party and somehow manages to not get any
+   newly loaded index, and thus tries to consolidate with what's on disk again.
+   Then it would again determine no change, and return nothing, causing the caller
+   to abort and not find objects it should find because it wouldn't see the index
+   that it should have seen.
+   
+   The reason the thread got into this mess is that the 'is-load-ongoing' flagging
+   was racy itself, so it would not wait for ongoing loads and just conclude nothing
+   happened. An extra delay (by yielding) now assures it either seees the loading state
+   and waits for it, sees the newly loaded indices.
+   
+   Note that this issue can be reproduced with:
+   
+   ```
+   './target/release/gix -r repo-with-one-pack -t10 --trace odb stats --extra-header-lookup'
+   ```
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 10 calendar days.
+ - 38 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Update dependencies ([`cd4de83`](https://github.com/Byron/gitoxide/commit/cd4de8327fc195eb862ab6e138f2315a87374f85))
+    - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
+    - Adapt to changes in `gix-worktree` ([`1ca6a3c`](https://github.com/Byron/gitoxide/commit/1ca6a3ce22887c7eb42ec3e0a19f6e1202715745))
+    - Merge branch 'status' ([`04ef31e`](https://github.com/Byron/gitoxide/commit/04ef31e9d6f5332d49037a5a4c248ebbb5aaf92b))
+    - More robustness in the face of a trampling-herd of threads loading a single index. ([`addf446`](https://github.com/Byron/gitoxide/commit/addf446f052ff74edcdb083f2b2968b313daa940))
+</details>
+
+## 0.37.0 (2024-04-13)
+
+### New Features
+
+ - <csr-id-84c74ffa698d35f8395c63db6acd3d0e6700d07f/> add `gix status --ignored` support
+ - <csr-id-66e87cd31c060c3f97ac685ee0541c408f600362/> add `gix status --index-worktree-renames`
+   This enables rename-tracking between worktree and index, something
+   that Git also doesn't do or doesn't do by default.
+   It is, however, available in `git2`.
+ - <csr-id-61c002bc4ca5b5345c411e561fdcb492e7ae1d97/> `gix status` with submodule and rewrite support.
+   Submodule changes are now picked up as long as the submodule is
+   in the index.
+   Further, it's possible to enable rename-tracking between
+   index and worktree separately.
+ - <csr-id-98b368095ec99d1bc287da7f9294a9fce424deed/> add `gix is-clean|is-changed`
+   It's a good way to compare the time it takes to run a full status
+   compared to a quick is-dirty check.
+ - <csr-id-afd20caadb40b6b793f2099b7232669f9a8f9086/> `gix submodules list --dirty-suffix` for dirty-information
+   This is a submodule-centric and greatly simplified way of obtaining
+   describe information with dirty-suffix.
+   
+   Note that `status` information is also possible, but it seems
+   hard to display nicely, which this command isn't great at
+   in the first place.
+ - <csr-id-58231b418fa39ea122ef41bb7691289f5b0be855/> add `gix commit describe --dirty-suffix`
+   That way a suffix will be added depending on the dirty-state of the repository.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48/> Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 26 commits contributed to the release over the course of 34 calendar days.
+ - 47 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1330](https://github.com/Byron/gitoxide/issues/1330)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1330](https://github.com/Byron/gitoxide/issues/1330)**
+    - Fix unread-fields warnings on latest nightly ([`2e06a00`](https://github.com/Byron/gitoxide/commit/2e06a00800418a6f571ba1731ffe05074565af03))
+ * **Uncategorized**
+    - Release gix-trace v0.1.9, gix-utils v0.1.12, gix-packetline-blocking v0.17.4, gix-filter v0.11.1, gix-fs v0.10.2, gix-traverse v0.39.0, gix-worktree-stream v0.12.0, gix-archive v0.12.0, gix-config v0.36.1, gix-url v0.27.3, gix-index v0.32.0, gix-worktree v0.33.0, gix-diff v0.43.0, gix-pathspec v0.7.3, gix-dir v0.4.0, gix-pack v0.50.0, gix-odb v0.60.0, gix-transport v0.42.0, gix-protocol v0.45.0, gix-status v0.9.0, gix-worktree-state v0.10.0, gix v0.62.0, gix-fsck v0.4.0, gitoxide-core v0.37.0, gitoxide v0.35.0, safety bump 14 crates ([`095c673`](https://github.com/Byron/gitoxide/commit/095c6739b2722a8b9af90776b435ef2da454c0e6))
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge branch 'add-topo-walk' ([`b590a9d`](https://github.com/Byron/gitoxide/commit/b590a9d2b6a273f76f0320d2b9fe1f679c08f549))
+    - Adapt to changes in `gix-traverse` ([`1cfeb11`](https://github.com/Byron/gitoxide/commit/1cfeb11f1fe9ad9c7b9084840ed7f5c5877f2f9a))
+    - Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple` ([`2a9c178`](https://github.com/Byron/gitoxide/commit/2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48))
+    - Adapt to changes in `gix-traverse` ([`6154bf3`](https://github.com/Byron/gitoxide/commit/6154bf3a346d69f9749271d50e4f3aacdcbad4d0))
+    - Merge branch 'status' ([`45edd2e`](https://github.com/Byron/gitoxide/commit/45edd2ea66035adf526cb2f617873dcba60a2a9a))
+    - Adapt to changes in `gix-index` ([`1e1fce1`](https://github.com/Byron/gitoxide/commit/1e1fce11a968ebbcede1135ccbd0b03e749a1267))
+    - Release gix-packetline v0.17.5, gix-transport v0.41.3, gix v0.61.1 ([`57579f1`](https://github.com/Byron/gitoxide/commit/57579f1ee4ef12c214db36325a2a0b2e8b2b14fd))
+    - Release gix-actor v0.31.1, gix-object v0.42.1, gix-index v0.31.1, gix-pathspec v0.7.2, gix-dir v0.3.0, gix-status v0.8.0, gix v0.61.0, safety bump 2 crates ([`155cc45`](https://github.com/Byron/gitoxide/commit/155cc45730b259e662d7c4be42a469a3af3750e1))
+    - Merge branch 'improvements-for-cargo' ([`41cd53e`](https://github.com/Byron/gitoxide/commit/41cd53e2af76e35e047aac4eca6324774df4cb50))
+    - Adapt to changes in `gix` ([`eff82eb`](https://github.com/Byron/gitoxide/commit/eff82eb0c67a7e7153c6119623a8aec052661b7d))
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Add `gix status --format` to communicate the current format is very simple. ([`23bea36`](https://github.com/Byron/gitoxide/commit/23bea36f046a6f652cd1e06885ae132c85bb4f05))
+    - Add `gix status --ignored` support ([`84c74ff`](https://github.com/Byron/gitoxide/commit/84c74ffa698d35f8395c63db6acd3d0e6700d07f))
+    - Add `gix status --index-worktree-renames` ([`66e87cd`](https://github.com/Byron/gitoxide/commit/66e87cd31c060c3f97ac685ee0541c408f600362))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+    - `gix status` with submodule and rewrite support. ([`61c002b`](https://github.com/Byron/gitoxide/commit/61c002bc4ca5b5345c411e561fdcb492e7ae1d97))
+    - Add `gix is-clean|is-changed` ([`98b3680`](https://github.com/Byron/gitoxide/commit/98b368095ec99d1bc287da7f9294a9fce424deed))
+    - `gix submodules list --dirty-suffix` for dirty-information ([`afd20ca`](https://github.com/Byron/gitoxide/commit/afd20caadb40b6b793f2099b7232669f9a8f9086))
+    - Add `gix commit describe --dirty-suffix` ([`58231b4`](https://github.com/Byron/gitoxide/commit/58231b418fa39ea122ef41bb7691289f5b0be855))
+    - Adapt to changes in `gix` ([`2d40bdf`](https://github.com/Byron/gitoxide/commit/2d40bdf325ed5b09b0ef6fd21e8b3da47d710451))
+</details>
+
 ## 0.36.0 (2024-02-25)
 
 ### New Features
@@ -18,7 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 29 commits contributed to the release over the course of 57 calendar days.
+ - 30 commits contributed to the release over the course of 57 calendar days.
  - 58 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -30,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.4, gix-utils v0.1.10, gix-actor v0.30.1, gix-object v0.41.1, gix-path v0.10.6, gix-glob v0.16.1, gix-quote v0.4.11, gix-attributes v0.22.1, gix-command v0.3.5, gix-filter v0.10.0, gix-commitgraph v0.24.1, gix-worktree-stream v0.10.0, gix-archive v0.10.0, gix-config-value v0.14.5, gix-ref v0.42.0, gix-sec v0.10.5, gix-config v0.35.0, gix-prompt v0.8.3, gix-url v0.27.1, gix-credentials v0.24.1, gix-ignore v0.11.1, gix-index v0.30.0, gix-worktree v0.31.0, gix-diff v0.41.0, gix-discover v0.30.0, gix-pathspec v0.7.0, gix-dir v0.1.0, gix-pack v0.48.0, gix-odb v0.58.0, gix-transport v0.41.1, gix-protocol v0.44.1, gix-revision v0.26.1, gix-refspec v0.22.1, gix-status v0.6.0, gix-submodule v0.9.0, gix-worktree-state v0.8.0, gix v0.59.0, gix-fsck v0.3.0, gitoxide-core v0.36.0, gitoxide v0.34.0, safety bump 10 crates ([`45b4470`](https://github.com/Byron/gitoxide/commit/45b447045bc826f252129c300c531acde2652c64))
     - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge branch 'status' ([`d53504a`](https://github.com/Byron/gitoxide/commit/d53504a1fad41cec7b6ca2a4abb7f185d8941e3f))
     - Adapt to changes in `gix-dir` ([`aa7c190`](https://github.com/Byron/gitoxide/commit/aa7c1908b82e3e23859a4c663faa40ec54611919))

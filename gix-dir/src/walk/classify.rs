@@ -4,8 +4,7 @@ use std::borrow::Cow;
 use crate::entry::PathspecMatch;
 use crate::walk::{Context, Error, ForDeletionMode, Options};
 use bstr::{BStr, BString, ByteSlice};
-use std::ffi::OsStr;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
 /// Classify the `worktree_relative_root` path and return the first `PathKind` that indicates that
 /// it isn't a directory, leaving `buf` with the path matching the returned `PathKind`,
@@ -16,20 +15,18 @@ pub fn root(
     worktree_relative_root: &Path,
     options: Options,
     ctx: &mut Context<'_>,
-) -> Result<Outcome, Error> {
+) -> Result<(Outcome, bool), Error> {
     buf.clear();
     let mut last_length = None;
     let mut path_buf = worktree_root.to_owned();
     // These initial values kick in if worktree_relative_root.is_empty();
-    let mut out = None;
-    for component in worktree_relative_root
-        .components()
-        .chain(if worktree_relative_root.as_os_str().is_empty() {
-            Some(Component::Normal(OsStr::new("")))
-        } else {
-            None
-        })
-    {
+    let file_kind = path_buf.symlink_metadata().map(|m| m.file_type().into()).ok();
+    let mut out = path(&mut path_buf, buf, 0, file_kind, || None, options, ctx)?;
+    let worktree_root_is_repository = out
+        .disk_kind
+        .map_or(false, |kind| matches!(kind, entry::Kind::Repository));
+
+    for component in worktree_relative_root.components() {
         if last_length.is_some() {
             buf.push(b'/');
         }
@@ -37,7 +34,7 @@ pub fn root(
         buf.extend_from_slice(gix_path::os_str_into_bstr(component.as_os_str()).expect("no illformed UTF8"));
         let file_kind = path_buf.symlink_metadata().map(|m| m.file_type().into()).ok();
 
-        let res = path(
+        out = path(
             &mut path_buf,
             buf,
             last_length.map(|l| l + 1 /* slash */).unwrap_or_default(),
@@ -46,16 +43,17 @@ pub fn root(
             options,
             ctx,
         )?;
-        out = Some(res);
-        if !res
-            .status
-            .can_recurse(res.disk_kind, res.pathspec_match, options.for_deletion)
-        {
+        if !out.status.can_recurse(
+            out.disk_kind,
+            out.pathspec_match,
+            options.for_deletion,
+            worktree_root_is_repository,
+        ) {
             break;
         }
         last_length = Some(buf.len());
     }
-    Ok(out.expect("One iteration of the loop at least"))
+    Ok((out, worktree_root_is_repository))
 }
 /// The product of [`path()`] calls.
 #[derive(Debug, Copy, Clone)]
@@ -136,6 +134,7 @@ pub fn path(
         emit_ignored,
         for_deletion,
         classify_untracked_bare_repositories,
+        symlinks_to_directories_are_ignored_like_directories,
         ..
     }: Options,
     ctx: &mut Context<'_>,
@@ -162,7 +161,11 @@ pub fn path(
                 .as_mut()
                 .map_or(Ok(None), |stack| {
                     stack
-                        .at_entry(rela_path.as_bstr(), disk_kind.map(|ft| ft.is_dir()), ctx.objects)
+                        .at_entry(
+                            rela_path.as_bstr(),
+                            disk_kind.map(|ft| is_dir_to_mode(ft.is_dir())),
+                            ctx.objects,
+                        )
                         .map(|platform| platform.excluded_kind())
                 })
                 .map_err(Error::ExcludesAccess)?
@@ -173,10 +176,9 @@ pub fn path(
         out.property = entry::Property::DotGit.into();
         return Ok(out);
     }
-    let pathspec_could_match = rela_path.is_empty()
-        || ctx
-            .pathspec
-            .can_match_relative_path(rela_path.as_bstr(), disk_kind.map(|ft| ft.is_dir()));
+    let pathspec_could_match = ctx
+        .pathspec
+        .can_match_relative_path(rela_path.as_bstr(), disk_kind.map(|ft| ft.is_dir()));
     if !pathspec_could_match {
         return Ok(out.with_status(entry::Status::Pruned));
     }
@@ -200,6 +202,15 @@ pub fn path(
         .pathspec
         .pattern_matching_relative_path(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.pathspec_attributes)
         .map(Into::into);
+
+    let is_dir = if symlinks_to_directories_are_ignored_like_directories
+        && ctx.excludes.is_some()
+        && kind.map_or(false, |ft| ft == entry::Kind::Symlink)
+    {
+        path.metadata().ok().map(|md| is_dir_to_mode(md.is_dir()))
+    } else {
+        kind.map(|ft| is_dir_to_mode(ft.is_dir()))
+    };
 
     let mut maybe_upgrade_to_repository = |current_kind, find_harder: bool| {
         if recurse_repositories {
@@ -241,13 +252,13 @@ pub fn path(
         return Ok(out.with_status(status).with_kind(kind, index_kind));
     }
 
-    debug_assert!(maybe_status.is_none(), "It only communicates a single stae right now");
+    debug_assert!(maybe_status.is_none(), "It only communicates a single state right now");
     if let Some(excluded) = ctx
         .excludes
         .as_mut()
         .map_or(Ok(None), |stack| {
             stack
-                .at_entry(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.objects)
+                .at_entry(rela_path.as_bstr(), is_dir, ctx.objects)
                 .map(|platform| platform.excluded_kind())
         })
         .map_err(Error::ExcludesAccess)?
@@ -399,5 +410,13 @@ fn is_eq(lhs: &BStr, rhs: impl AsRef<BStr>, ignore_case: bool) -> bool {
         lhs.eq_ignore_ascii_case(rhs.as_ref().as_ref())
     } else {
         lhs == rhs.as_ref()
+    }
+}
+
+fn is_dir_to_mode(is_dir: bool) -> gix_index::entry::Mode {
+    if is_dir {
+        gix_index::entry::Mode::DIR
+    } else {
+        gix_index::entry::Mode::FILE
     }
 }

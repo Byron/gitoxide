@@ -5,6 +5,123 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.36.0 (2024-05-22)
+
+### New Features
+
+ - <csr-id-886d6b58e4612ac21cc660ea4ddf1dd0b49d1c6e/> checkout respects options for `core.protectHFS` and `core.protectNTFS`.
+   This also adds `gitoxide.core.protectWindows` as a way to enforce
+   additional restrictions that are usually only available on Windows.
+   
+   Note that `core.protectNFS` is always enabled by default, just like
+   [it is in Git](https://github.com/git/git/commit/9102f958ee5254b10c0be72672aa3305bf4f4704).
+
+### Bug Fixes
+
+ - <csr-id-addf446f052ff74edcdb083f2b2968b313daa940/> more robustness in the face of a trampling-herd of threads loading a single index.
+   The motivating example is here: https://github.com/praetorian-inc/noseyparker/issues/179
+   
+   Previously, it was possible for a trampling herd of threads to consolidate the
+   disk state. Most of them would be 'needs-init' threads which could notice that
+   the initialization already happened, and just use that.
+   
+   But a thread might be late for the party and somehow manages to not get any
+   newly loaded index, and thus tries to consolidate with what's on disk again.
+   Then it would again determine no change, and return nothing, causing the caller
+   to abort and not find objects it should find because it wouldn't see the index
+   that it should have seen.
+   
+   The reason the thread got into this mess is that the 'is-load-ongoing' flagging
+   was racy itself, so it would not wait for ongoing loads and just conclude nothing
+   happened. An extra delay (by yielding) now assures it either seees the loading state
+   and waits for it, sees the newly loaded indices.
+   
+   Note that this issue can be reproduced with:
+   
+   ```
+   './target/release/gix -r repo-with-one-pack -t10 --trace odb stats --extra-header-lookup'
+   ```
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 10 calendar days.
+ - 38 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
+    - Checkout respects options for `core.protectHFS` and `core.protectNTFS`. ([`886d6b5`](https://github.com/Byron/gitoxide/commit/886d6b58e4612ac21cc660ea4ddf1dd0b49d1c6e))
+    - Mark safety-related core-flags as planned ([`f3d5a69`](https://github.com/Byron/gitoxide/commit/f3d5a69bbe0ad14502ce617dc580cc2aa481bb0a))
+    - Merge branch 'status' ([`04ef31e`](https://github.com/Byron/gitoxide/commit/04ef31e9d6f5332d49037a5a4c248ebbb5aaf92b))
+    - More robustness in the face of a trampling-herd of threads loading a single index. ([`addf446`](https://github.com/Byron/gitoxide/commit/addf446f052ff74edcdb083f2b2968b313daa940))
+</details>
+
+## 0.35.0 (2024-04-13)
+
+### New Features
+
+ - <csr-id-84c74ffa698d35f8395c63db6acd3d0e6700d07f/> add `gix status --ignored` support
+ - <csr-id-66e87cd31c060c3f97ac685ee0541c408f600362/> add `gix status --index-worktree-renames`
+   This enables rename-tracking between worktree and index, something
+   that Git also doesn't do or doesn't do by default.
+   It is, however, available in `git2`.
+ - <csr-id-61c002bc4ca5b5345c411e561fdcb492e7ae1d97/> `gix status` with submodule and rewrite support.
+   Submodule changes are now picked up as long as the submodule is
+   in the index.
+   Further, it's possible to enable rename-tracking between
+   index and worktree separately.
+ - <csr-id-98b368095ec99d1bc287da7f9294a9fce424deed/> add `gix is-clean|is-changed`
+   It's a good way to compare the time it takes to run a full status
+   compared to a quick is-dirty check.
+ - <csr-id-afd20caadb40b6b793f2099b7232669f9a8f9086/> `gix submodules list --dirty-suffix` for dirty-information
+   This is a submodule-centric and greatly simplified way of obtaining
+   describe information with dirty-suffix.
+   
+   Note that `status` information is also possible, but it seems
+   hard to display nicely, which this command isn't great at
+   in the first place.
+ - <csr-id-58231b418fa39ea122ef41bb7691289f5b0be855/> add `gix commit describe --dirty-suffix`
+   That way a suffix will be added depending on the dirty-state of the repository.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 34 calendar days.
+ - 47 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Add `gix status --format` to communicate the current format is very simple. ([`23bea36`](https://github.com/Byron/gitoxide/commit/23bea36f046a6f652cd1e06885ae132c85bb4f05))
+    - Add `gix status --ignored` support ([`84c74ff`](https://github.com/Byron/gitoxide/commit/84c74ffa698d35f8395c63db6acd3d0e6700d07f))
+    - Add `gix status --index-worktree-renames` ([`66e87cd`](https://github.com/Byron/gitoxide/commit/66e87cd31c060c3f97ac685ee0541c408f600362))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+    - `gix status` with submodule and rewrite support. ([`61c002b`](https://github.com/Byron/gitoxide/commit/61c002bc4ca5b5345c411e561fdcb492e7ae1d97))
+    - Add `gix is-clean|is-changed` ([`98b3680`](https://github.com/Byron/gitoxide/commit/98b368095ec99d1bc287da7f9294a9fce424deed))
+    - `gix submodules list --dirty-suffix` for dirty-information ([`afd20ca`](https://github.com/Byron/gitoxide/commit/afd20caadb40b6b793f2099b7232669f9a8f9086))
+    - Add `gix commit describe --dirty-suffix` ([`58231b4`](https://github.com/Byron/gitoxide/commit/58231b418fa39ea122ef41bb7691289f5b0be855))
+</details>
+
 ## 0.34.0 (2024-02-25)
 
 ### New Features

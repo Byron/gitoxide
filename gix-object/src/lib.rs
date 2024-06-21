@@ -19,18 +19,23 @@ pub use gix_date as date;
 use smallvec::SmallVec;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod commit;
 mod object;
 ///
+#[allow(clippy::empty_docs)]
 pub mod tag;
 ///
+#[allow(clippy::empty_docs)]
 pub mod tree;
 
 mod blob;
 ///
+#[allow(clippy::empty_docs)]
 pub mod data;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod find;
 
 mod traits;
@@ -40,6 +45,7 @@ pub mod encode;
 pub(crate) mod parse;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod kind;
 
 /// The four types of objects that git differentiates.
@@ -267,6 +273,7 @@ pub struct Header {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode {
     #[cfg(feature = "verbose-object-parsing-errors")]
     mod _decode {

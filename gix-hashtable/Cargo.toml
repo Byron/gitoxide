@@ -1,6 +1,6 @@
 [package]
 name = "gix-hashtable"
-version = "0.5.1"
+version = "0.5.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate that provides hashtable based data structures optimized to utilize ObjectId keys"
@@ -18,5 +18,5 @@ hashbrown = { version = "0.14.0", default-features = false, features = [
   "inline-more",
   "raw"
 ] }
-gix-hash = { version = "^0.14.1", path = "../gix-hash" }
+gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 

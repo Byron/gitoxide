@@ -1,9 +1,8 @@
 use gix_hash::ObjectId;
-use gix_traverse::commit::{ancestors, Ancestors};
 
 pub trait Sealed {}
 
-pub type AncestorsIter<Find> = Ancestors<Find, fn(&gix_hash::oid) -> bool, ancestors::State>;
+pub type AncestorsIter<Find> = gix_traverse::commit::Simple<Find, fn(&gix_hash::oid) -> bool>;
 
 /// An extension trait to add functionality to [`ObjectId`]s.
 pub trait ObjectIdExt: Sealed {
@@ -23,7 +22,7 @@ impl ObjectIdExt for ObjectId {
     where
         Find: gix_object::Find,
     {
-        Ancestors::new(Some(self), ancestors::State::default(), find)
+        gix_traverse::commit::Simple::new(Some(self), find)
     }
 
     fn attach(self, repo: &crate::Repository) -> crate::Id<'_> {

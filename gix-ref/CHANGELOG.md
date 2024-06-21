@@ -5,6 +5,121 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.44.1 (2024-05-27)
+
+### Bug Fixes
+
+ - <csr-id-cd969f69d1b86030d4ea5c5a77100f36caffb8d8/> `LineRef` is now `Copy` and remove non-exhaustive
+   After all, this struct refers to what's in a reflog line, which is stable.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 4 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `LineRef` is now `Copy` and remove non-exhaustive ([`cd969f6`](https://github.com/Byron/gitoxide/commit/cd969f69d1b86030d4ea5c5a77100f36caffb8d8))
+</details>
+
+## 0.44.0 (2024-05-22)
+
+### New Features
+
+ - <csr-id-f2d8955eacc1a0ce8678f3e9026e696926bae654/> add `file::Store::force_refresh_packed_buffer()` to public API
+   That way it's possible to explicitly refresh if the caller knows that some other
+   operation might have invalidated the in-memory cache. The `mtime` based approach
+   doesn't work reliably on all filesystems due to coarse granularity of time.
+
+### Bug Fixes
+
+ - <csr-id-e33efa23c2ed45b3c2826fe2c3c70707fcb9100d/> don't ignore packed ref deletion in non-default transaction mode
+   Before, Change::Delete edits weren't propagated to packed refs if the mode was
+   DeletionsAndNonSymbolicUpdates/RemoveLooseSourceReference.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-9555efe8964d3de3c692f79cef390916e34daefb/> assure that special device names on Windows aren't allowed.
+   Otherwise it's possible to read or write to devices when interacting
+   with references of the 'right' name.
+   
+   This behaviour can be controlled with the new `prohibit_windows_device_names` flag,
+   which is adjustable on the `Store` instance as field, and which now has to be
+   passed during instantiation as part of the new `store::init::Options` struct.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 30 calendar days.
+ - 68 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1348](https://github.com/Byron/gitoxide/issues/1348)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1348](https://github.com/Byron/gitoxide/issues/1348)**
+    - Add `file::Store::force_refresh_packed_buffer()` to public API ([`f2d8955`](https://github.com/Byron/gitoxide/commit/f2d8955eacc1a0ce8678f3e9026e696926bae654))
+ * **Uncategorized**
+    - Release gix-features v0.38.2, gix-actor v0.31.2, gix-validate v0.8.5, gix-object v0.42.2, gix-command v0.3.7, gix-filter v0.11.2, gix-fs v0.11.0, gix-revwalk v0.13.1, gix-traverse v0.39.1, gix-worktree-stream v0.13.0, gix-archive v0.13.0, gix-tempfile v14.0.0, gix-lock v14.0.0, gix-ref v0.44.0, gix-config v0.37.0, gix-prompt v0.8.5, gix-index v0.33.0, gix-worktree v0.34.0, gix-diff v0.44.0, gix-discover v0.32.0, gix-pathspec v0.7.5, gix-dir v0.5.0, gix-macros v0.1.5, gix-mailmap v0.23.1, gix-negotiate v0.13.1, gix-pack v0.51.0, gix-odb v0.61.0, gix-transport v0.42.1, gix-protocol v0.45.1, gix-revision v0.27.1, gix-status v0.10.0, gix-submodule v0.11.0, gix-worktree-state v0.11.0, gix v0.63.0, gitoxide-core v0.38.0, gitoxide v0.36.0, safety bump 19 crates ([`4f98e94`](https://github.com/Byron/gitoxide/commit/4f98e94e0e8b79ed2899b35bef40f3c30b3025b0))
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Fix-CI ([`6f55f2a`](https://github.com/Byron/gitoxide/commit/6f55f2abd13078f94e8c4e10922806f195ae0d8b))
+    - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))
+    - Apply suggestions from code review ([`1242151`](https://github.com/Byron/gitoxide/commit/1242151079004ae99fae7b80966de151961a6159))
+    - Assure that special device names on Windows aren't allowed. ([`9555efe`](https://github.com/Byron/gitoxide/commit/9555efe8964d3de3c692f79cef390916e34daefb))
+    - Release gix-date v0.8.6 ([`d3588ca`](https://github.com/Byron/gitoxide/commit/d3588ca4fe0364c88e42cdac24ceae548355d99d))
+    - Merge branch 'push-wwxrqxuzmolm' ([`048e43e`](https://github.com/Byron/gitoxide/commit/048e43e26908b0572852a75780a451460dc152ff))
+    - Refactor - address fix suggested by `cargo check` ([`4faf10e`](https://github.com/Byron/gitoxide/commit/4faf10e27a942da3da25e659a43e97eb160e79f2))
+    - Don't ignore packed ref deletion in non-default transaction mode ([`e33efa2`](https://github.com/Byron/gitoxide/commit/e33efa23c2ed45b3c2826fe2c3c70707fcb9100d))
+    - Merge branch 'status' ([`68fd5b3`](https://github.com/Byron/gitoxide/commit/68fd5b34e1214d5c2cc7d00dd06e19ee86c00c66))
+</details>
+
+## 0.43.0 (2024-03-14)
+
+### Bug Fixes
+
+ - <csr-id-88061a176b2f4b5a377a4cff513979ddb1e306a1/> assure memory maps are created with `MAP_PRIVATE`
+   That way, the mmap process should work under more circumstances.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 5 calendar days.
+ - 18 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1312](https://github.com/Byron/gitoxide/issues/1312)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1312](https://github.com/Byron/gitoxide/issues/1312)**
+    - Assure memory maps are created with `MAP_PRIVATE` ([`88061a1`](https://github.com/Byron/gitoxide/commit/88061a176b2f4b5a377a4cff513979ddb1e306a1))
+ * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
+    - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+    - Merge branch 'mmap-mode' ([`9e9b9fe`](https://github.com/Byron/gitoxide/commit/9e9b9fe6f63759d3bf479a8ec2f9dd1fbef87a08))
+</details>
+
 ## 0.42.0 (2024-02-25)
 
 A maintenance release without user-facing changes.
@@ -13,7 +128,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 30 calendar days.
+ - 12 commits contributed to the release over the course of 30 calendar days.
  - 36 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +140,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.4, gix-utils v0.1.10, gix-actor v0.30.1, gix-object v0.41.1, gix-path v0.10.6, gix-glob v0.16.1, gix-quote v0.4.11, gix-attributes v0.22.1, gix-command v0.3.5, gix-filter v0.10.0, gix-commitgraph v0.24.1, gix-worktree-stream v0.10.0, gix-archive v0.10.0, gix-config-value v0.14.5, gix-ref v0.42.0, gix-sec v0.10.5, gix-config v0.35.0, gix-prompt v0.8.3, gix-url v0.27.1, gix-credentials v0.24.1, gix-ignore v0.11.1, gix-index v0.30.0, gix-worktree v0.31.0, gix-diff v0.41.0, gix-discover v0.30.0, gix-pathspec v0.7.0, gix-dir v0.1.0, gix-pack v0.48.0, gix-odb v0.58.0, gix-transport v0.41.1, gix-protocol v0.44.1, gix-revision v0.26.1, gix-refspec v0.22.1, gix-status v0.6.0, gix-submodule v0.9.0, gix-worktree-state v0.8.0, gix v0.59.0, gix-fsck v0.3.0, gitoxide-core v0.36.0, gitoxide v0.34.0, safety bump 10 crates ([`45b4470`](https://github.com/Byron/gitoxide/commit/45b447045bc826f252129c300c531acde2652c64))
     - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Merge pull request #1290 from epage/winnow ([`a663e9f`](https://github.com/Byron/gitoxide/commit/a663e9fcdb5a3aedc9200da77ebae17d5c3e7135))
     - Update winnow to 0.6 ([`e175b20`](https://github.com/Byron/gitoxide/commit/e175b20d431faa6859fbcc52f78400e50f91cad1))

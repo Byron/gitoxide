@@ -110,8 +110,6 @@ mod attribute {
 }
 
 mod from_git {
-    use std::convert::TryFrom;
-
     use bstr::BStr;
     use gix_config_value::Color;
 

@@ -1,12 +1,9 @@
-use std::{convert::TryInto, path::Path};
-
 use gix_actor::Signature;
 use gix_date::{time::Sign, Time};
 use gix_object::bstr::ByteSlice;
 use gix_testtools::tempfile::TempDir;
 
 use super::*;
-use crate::{file::WriteReflog, FullNameRef};
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -17,7 +14,13 @@ fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
 
 fn empty_store(writemode: WriteReflog) -> Result<(TempDir, file::Store)> {
     let dir = TempDir::new()?;
-    let store = file::Store::at(dir.path().into(), writemode, gix_hash::Kind::Sha1, false);
+    let store = file::Store::at(
+        dir.path().into(),
+        crate::store::init::Options {
+            write_reflog: writemode,
+            ..Default::default()
+        },
+    );
     Ok((dir, store))
 }
 

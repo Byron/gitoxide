@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 # Nothing here may use symlinks so these fixtures can be used on windows as well.
@@ -27,6 +27,13 @@ git init dir-with-tracked-file
   touch dir/file
   git add .
   git commit -m "init"
+)
+
+git init repo-with-submodule
+(cd repo-with-submodule
+  git submodule add ../dir-with-tracked-file submodule
+  git commit -m "add submodule"
+  touch submodule/untracked
 )
 
 git init ignored-dir
@@ -103,24 +110,22 @@ git clone dir-with-tracked-file with-submodule
 git init nonstandard-worktree
 (cd nonstandard-worktree
   mkdir dir-with-dot-git
-  mv .git dir-with-dot-git
-
-  git -C dir-with-dot-git config core.worktree "$PWD"
   touch dir-with-dot-git/inside
   touch seemingly-outside
-  git -C dir-with-dot-git add inside ../seemingly-outside
+  git add dir-with-dot-git/inside seemingly-outside
+  mv .git dir-with-dot-git
+  git -C dir-with-dot-git config core.worktree "$PWD"
   git -C dir-with-dot-git commit -m "init"
 )
 
 git init nonstandard-worktree-untracked
 (cd nonstandard-worktree-untracked
   mkdir dir-with-dot-git
-  mv .git dir-with-dot-git
-
-  git -C dir-with-dot-git config core.worktree "$PWD"
   touch dir-with-dot-git/inside
   touch seemingly-outside
-  git -C dir-with-dot-git add inside ../seemingly-outside
+  git add dir-with-dot-git/inside seemingly-outside
+  mv .git dir-with-dot-git
+  git -C dir-with-dot-git config core.worktree "$PWD"
   git -C dir-with-dot-git commit -m "init"
 
   rm dir-with-dot-git/.git/index

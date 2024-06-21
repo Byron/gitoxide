@@ -4,6 +4,48 @@ mod describe {
 
     use crate::named_repo;
 
+    #[cfg(feature = "status")]
+    mod with_dirty_suffix {
+        use crate::util::named_subrepo_opts;
+        use gix::commit::describe::SelectRef;
+
+        #[test]
+        fn dirty_suffix_applies_automatically_if_dirty() -> crate::Result {
+            let repo = named_subrepo_opts(
+                "make_submodules.sh",
+                "submodule-head-changed",
+                gix::open::Options::isolated(),
+            )?;
+
+            let actual = repo
+                .head_commit()?
+                .describe()
+                .names(SelectRef::AllRefs)
+                .try_resolve()?
+                .expect("resolution")
+                .format_with_dirty_suffix("dirty".to_owned())?
+                .to_string();
+            assert_eq!(actual, "main-dirty");
+            Ok(())
+        }
+
+        #[test]
+        fn dirty_suffix_does_not_apply_if_not_dirty() -> crate::Result {
+            let repo = named_subrepo_opts("make_submodules.sh", "module1", gix::open::Options::isolated())?;
+
+            let actual = repo
+                .head_commit()?
+                .describe()
+                .names(SelectRef::AllRefs)
+                .try_resolve()?
+                .expect("resolution")
+                .format_with_dirty_suffix("dirty".to_owned())?
+                .to_string();
+            assert_eq!(actual, "main");
+            Ok(())
+        }
+    }
+
     #[test]
     fn tags_are_sorted_by_date_and_lexicographically() -> crate::Result {
         let repo = named_repo("make_commit_describe_multiple_tags.sh")?;

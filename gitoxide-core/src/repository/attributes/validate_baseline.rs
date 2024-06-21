@@ -192,7 +192,7 @@ pub(crate) mod function {
         );
 
         for (rela_path, baseline) in rx_base {
-            let entry = cache.at_entry(rela_path.as_str(), Some(false))?;
+            let entry = cache.at_entry(rela_path.as_str(), None)?;
             match baseline {
                 Baseline::Attribute { assignments: expected } => {
                     entry.matching_attributes(&mut matches);
@@ -262,6 +262,8 @@ pub(crate) mod function {
     }
 
     #[derive(Debug)]
+    // See note on `Mismatch`
+    #[allow(dead_code)]
     pub struct ExcludeLocation {
         pub line: usize,
         pub rela_source_file: String,
@@ -269,6 +271,9 @@ pub(crate) mod function {
     }
 
     #[derive(Debug)]
+    // We debug-print this structure, which makes all fields 'used', but it doesn't count.
+    // TODO: find a way to not have to do more work, but make the warning go away.
+    #[allow(dead_code)]
     pub enum Mismatch {
         Attributes {
             actual: Vec<gix::attrs::Assignment>,
@@ -281,6 +286,8 @@ pub(crate) mod function {
     }
 
     #[derive(Debug)]
+    // See note on `Mismatch`
+    #[allow(dead_code)]
     pub struct ExcludeMatch {
         pub pattern: gix::glob::Pattern,
         pub source: Option<PathBuf>,
@@ -298,13 +305,13 @@ pub(crate) mod function {
     }
 
     fn parse_exclude(line: &str) -> Option<(String, Baseline)> {
-        let (left, value) = line.split_at(line.find(|c| c == '\t')?);
+        let (left, value) = line.split_at(line.find('\t')?);
         let value = &value[1..];
 
         let location = if left == "::" {
             None
         } else {
-            let mut tokens = left.split(|b| b == ':');
+            let mut tokens = left.split(':');
             let source = tokens.next()?;
             let line_number: usize = tokens.next()?.parse().ok()?;
             let pattern = tokens.next()?;
@@ -356,8 +363,8 @@ pub(crate) mod function {
                 "unspecified" => StateRef::Unspecified,
                 _ => StateRef::from_bytes(info.as_bytes()),
             };
-            path = path.trim_end_matches(|b| b == ':');
-            let attr = attr.trim_end_matches(|b| b == ':');
+            path = path.trim_end_matches(':');
+            let attr = attr.trim_end_matches(':');
             let assignment = gix::attrs::AssignmentRef {
                 name: gix::attrs::NameRef::try_from(attr.as_bytes().as_bstr()).ok()?,
                 state,

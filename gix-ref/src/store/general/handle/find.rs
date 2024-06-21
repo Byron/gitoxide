@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::{store, PartialNameRef, Reference};
 
 mod error {
@@ -56,8 +54,6 @@ mod existing {
             NotFound { name: PathBuf },
         }
     }
-
-    use std::convert::TryInto;
 
     pub use error::Error;
 

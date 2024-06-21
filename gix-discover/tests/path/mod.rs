@@ -4,7 +4,7 @@ mod from_git_dir_file {
         path::{Path, PathBuf},
     };
 
-    use gix_testtools::{tempfile, tempfile::NamedTempFile};
+    use gix_testtools::tempfile::NamedTempFile;
 
     #[cfg(not(windows))]
     #[test]

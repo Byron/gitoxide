@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::TryFrom, path::Path};
+use std::{borrow::Cow, path::Path};
 
 /// The error returned by [ask()][crate::ask()].
 #[derive(Debug, thiserror::Error)]

@@ -3,6 +3,7 @@ use std::{io::Read, path::PathBuf};
 use crate::DOT_GIT_DIR;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod from_gitdir_file {
     /// The error returned by [`from_gitdir_file()`][crate::path::from_gitdir_file()].
     #[derive(Debug, thiserror::Error)]

@@ -27,6 +27,9 @@ pub struct Store {
     pub write_reflog: WriteReflog,
     /// The namespace to use for edits and reads
     pub namespace: Option<Namespace>,
+    /// This is only needed on Windows, where some device names are reserved at any level of a path, so that
+    /// reading or writing `refs/heads/CON` for example would read from the console, or write to it.
+    pub prohibit_windows_device_names: bool,
     /// If set, we will convert decomposed unicode like `a\u308` into precomposed unicode like `ä` when reading
     /// ref names from disk.
     /// Note that this is an internal operation that isn't observable on the outside, but it's needed for lookups
@@ -95,29 +98,36 @@ pub(in crate::store_impl::file) fn path_to_name<'a>(path: impl Into<Cow<'a, Path
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod loose;
 mod overlay_iter;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod iter {
     pub use super::overlay_iter::{LooseThenPacked, Platform};
 
     ///
+    #[allow(clippy::empty_docs)]
     pub mod loose_then_packed {
         pub use super::super::overlay_iter::Error;
     }
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod log;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod find;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod transaction;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod packed;
 
 mod raw_ext;

@@ -5,6 +5,165 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.42.1 (2024-05-22)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 30 calendar days.
+ - 38 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
+    - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
+    - Update dependencies ([`cd4de83`](https://github.com/Byron/gitoxide/commit/cd4de8327fc195eb862ab6e138f2315a87374f85))
+    - Merge branch 'push-wwxrqxuzmolm' ([`048e43e`](https://github.com/Byron/gitoxide/commit/048e43e26908b0572852a75780a451460dc152ff))
+    - Refactor - address fix suggested by `cargo check` ([`4faf10e`](https://github.com/Byron/gitoxide/commit/4faf10e27a942da3da25e659a43e97eb160e79f2))
+</details>
+
+## 0.42.0 (2024-04-13)
+
+### Bug Fixes
+
+ - <csr-id-f56ad390a5569d0129b7b16632991d18b9ddb4f7/> Prevent usernames with leading `-` from being passed to SSH
+   This detects ambiguous usernames in dangerous cases where they
+   would be passed to external commands to form SSH connections, if
+   they would be misinterpreted as option arguments.
+   
+   This change is analogous to b06a0dd, hardening `gix-transport` and
+   applications that use it against options smuggled in URLs, but for
+   the non-mandatory username portion of a URL, rather than the host
+   and path portions that were covered there.
+   
+   For example, commands like these no longer pass `-F...` options to
+   `ssh`:
+   
+   gix clone 'ssh://-Fconfigfile@example.com/abc'
+   gix clone -- '-Fconfigfile@example.com:abc/def'
+   
+   Instead, they refuse to run `ssh`, producing the error:
+   
+   Error: Username '-Fconfigfile' could be mistaken for a command-line argument
+ - <csr-id-98cfbec51276bbd6caa48fd6d8942247df091c94/> forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`.
+   This removes the `curl` dependency just for configuring it, and removes
+   a hazard which became evident with reqwest.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-e30436982903e82a0c635bec58dfee1fff33fed8/> declare `reqwest` dependency update as breaking
+   Related to https://github.com/Byron/gitoxide/pull/1327 .
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 21 commits contributed to the release over the course of 20 calendar days.
+ - 22 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1328](https://github.com/Byron/gitoxide/issues/1328)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1328](https://github.com/Byron/gitoxide/issues/1328)**
+    - Forward `curl` rustls feature from `gix-transport` to avoid `curl` in `gix`. ([`98cfbec`](https://github.com/Byron/gitoxide/commit/98cfbec51276bbd6caa48fd6d8942247df091c94))
+    - Declare `reqwest` dependency update as breaking ([`e304369`](https://github.com/Byron/gitoxide/commit/e30436982903e82a0c635bec58dfee1fff33fed8))
+ * **Uncategorized**
+    - Release gix-trace v0.1.9, gix-utils v0.1.12, gix-packetline-blocking v0.17.4, gix-filter v0.11.1, gix-fs v0.10.2, gix-traverse v0.39.0, gix-worktree-stream v0.12.0, gix-archive v0.12.0, gix-config v0.36.1, gix-url v0.27.3, gix-index v0.32.0, gix-worktree v0.33.0, gix-diff v0.43.0, gix-pathspec v0.7.3, gix-dir v0.4.0, gix-pack v0.50.0, gix-odb v0.60.0, gix-transport v0.42.0, gix-protocol v0.45.0, gix-status v0.9.0, gix-worktree-state v0.10.0, gix v0.62.0, gix-fsck v0.4.0, gitoxide-core v0.37.0, gitoxide v0.35.0, safety bump 14 crates ([`095c673`](https://github.com/Byron/gitoxide/commit/095c6739b2722a8b9af90776b435ef2da454c0e6))
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
+    - Merge branch 'strange-usernames' ([`1272542`](https://github.com/Byron/gitoxide/commit/1272542e79c29302ada47324d6bb02101393563d))
+    - Refactor `gix-transport` with minor edits to comments ([`996310b`](https://github.com/Byron/gitoxide/commit/996310ba1408fe746c6de43cb24dc1e809fd4d57))
+    - (Re)add a short, more specific comment about user@ ([`03fb64a`](https://github.com/Byron/gitoxide/commit/03fb64ac8fca02bed9786b0e832764c1728e6e0e))
+    - Use `Url::host_as_argument()` in `ssh::connect()` ([`cf59f57`](https://github.com/Byron/gitoxide/commit/cf59f574f97f9a3ca489c603674d0ec76e498e1e))
+    - Test that leading-`-` host names aren't used in `-G` check ([`902367f`](https://github.com/Byron/gitoxide/commit/902367fb452787a8fd8305676fa9c5a827646490))
+    - Try, so far unsuccessfully, to add missing `-G` test ([`524739b`](https://github.com/Byron/gitoxide/commit/524739b9189d007dab2f0dde38ce59dabd20d737))
+    - Reallow `user@-arg...` in prepare_invocation ([`2911623`](https://github.com/Byron/gitoxide/commit/29116236de3ca0ee97f60f1ad4024f74490bb2cd))
+    - Start on using {user,host}_as_argument in prepare_invocation ([`4dda375`](https://github.com/Byron/gitoxide/commit/4dda375cb1e2b4c7bc656979ac718f919c391b94))
+    - Comment gix_transport::client::blocking_io::ssh::connect ([`2e7517e`](https://github.com/Byron/gitoxide/commit/2e7517e964af0a0d74e05049db6bcd2527199cb3))
+    - Prevent usernames with leading `-` from being passed to SSH ([`f56ad39`](https://github.com/Byron/gitoxide/commit/f56ad390a5569d0129b7b16632991d18b9ddb4f7))
+    - Add ambiguous user unit tests, and more for hostname ([`5428609`](https://github.com/Byron/gitoxide/commit/54286091ebc6e13a8f27f730fa88127e6334cf13))
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge pull request #1333 from cesfahani/fix_zombie_ssh_procs ([`16dc027`](https://github.com/Byron/gitoxide/commit/16dc027508d17a5ffb694328ec9218d4ecdaba51))
+    - Fix zombie ssh processes from accumulating ([`ba93ef2`](https://github.com/Byron/gitoxide/commit/ba93ef272317c697b3eb3e2202c6d7453ce2e5f8))
+    - Merge branch 'patch-1' ([`9e9c653`](https://github.com/Byron/gitoxide/commit/9e9c653a83df58f8cdfe3a7adb2d824c8a368e72))
+    - Remove dep reqwest from gix ([`e3eedd8`](https://github.com/Byron/gitoxide/commit/e3eedd8b5326b8de2e6fe8941e1851bdbad673ab))
+</details>
+
+## 0.41.3 (2024-03-22)
+
+A maintenance release without user-facing changes, but with a `reqwest` update that uses more recent tls and hyper versions.
+
+YANKED: This version requires that the used `gix` crate is also uses the most recently published `gix v0.61.1`, or else
+no HTTPS connection can be established at runtime. However, depending on the dependency tree, this isn't guaranteed to happen.
+Further, it will definitely not be working correctly when compiled with `gix v0.60.0`, which would also pull this release
+into its dependency tree.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 1 calendar day.
+ - 7 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-packetline v0.17.5, gix-transport v0.41.3, gix v0.61.1 ([`57579f1`](https://github.com/Byron/gitoxide/commit/57579f1ee4ef12c214db36325a2a0b2e8b2b14fd))
+    - Prepare changelogs prior to release ([`7018a92`](https://github.com/Byron/gitoxide/commit/7018a928a405ba0534442f0b538d58f520145376))
+    - Merge branch 'patch-1' ([`8fde62b`](https://github.com/Byron/gitoxide/commit/8fde62b2617985f835e2e2fa07c735a5158789cf))
+    - Turn`curl` into a workspace package ([`adee500`](https://github.com/Byron/gitoxide/commit/adee50016007619495c93580e845ae757377c4f0))
+    - Adjust expectations to deal with reqwest Content-Length ([`3b8f39d`](https://github.com/Byron/gitoxide/commit/3b8f39d64cdf44952fea9a45dc3d40df550e60ec))
+    - Make reqwest a workspace package ([`369cf1b`](https://github.com/Byron/gitoxide/commit/369cf1b03735617debe1527b3f23247685181e7d))
+    - Bump dep reqwest from 0.11.12 to 0.12.0 ([`cdb128c`](https://github.com/Byron/gitoxide/commit/cdb128c95b6d6bf26fa098d7f4495f0c6113319f))
+</details>
+
+## 0.41.2 (2024-03-14)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 4 calendar days.
+ - 18 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
+    - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+</details>
+
 ## 0.41.1 (2024-02-25)
 
 A maintenance release without user-facing changes.
@@ -13,7 +172,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 21 calendar days.
+ - 3 commits contributed to the release over the course of 21 calendar days.
  - 36 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +184,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.8.4, gix-utils v0.1.10, gix-actor v0.30.1, gix-object v0.41.1, gix-path v0.10.6, gix-glob v0.16.1, gix-quote v0.4.11, gix-attributes v0.22.1, gix-command v0.3.5, gix-filter v0.10.0, gix-commitgraph v0.24.1, gix-worktree-stream v0.10.0, gix-archive v0.10.0, gix-config-value v0.14.5, gix-ref v0.42.0, gix-sec v0.10.5, gix-config v0.35.0, gix-prompt v0.8.3, gix-url v0.27.1, gix-credentials v0.24.1, gix-ignore v0.11.1, gix-index v0.30.0, gix-worktree v0.31.0, gix-diff v0.41.0, gix-discover v0.30.0, gix-pathspec v0.7.0, gix-dir v0.1.0, gix-pack v0.48.0, gix-odb v0.58.0, gix-transport v0.41.1, gix-protocol v0.44.1, gix-revision v0.26.1, gix-refspec v0.22.1, gix-status v0.6.0, gix-submodule v0.9.0, gix-worktree-state v0.8.0, gix v0.59.0, gix-fsck v0.3.0, gitoxide-core v0.36.0, gitoxide v0.34.0, safety bump 10 crates ([`45b4470`](https://github.com/Byron/gitoxide/commit/45b447045bc826f252129c300c531acde2652c64))
     - Prepare changelogs prior to release ([`f2e111f`](https://github.com/Byron/gitoxide/commit/f2e111f768fc1bc6182355261c20b63610cffec7))
     - Release gix-command v0.3.4 ([`8a62fb5`](https://github.com/Byron/gitoxide/commit/8a62fb57f7751d3d57273d9430517487e555f999))
 </details>

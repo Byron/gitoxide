@@ -5,6 +5,7 @@ use bstr::ByteSlice;
 #[test]
 fn fuzzed() {
     for name in [
+        "short-panic",
         "very-long-abort2",
         "very-long-abort",
         "very-long6",

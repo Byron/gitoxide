@@ -129,5 +129,6 @@ pub(crate) mod write {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod decode;
 pub use decode::function::decode;

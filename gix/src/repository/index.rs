@@ -1,7 +1,5 @@
 use crate::{
-    config::{cache::util::ApplyLeniencyDefault, tree::Index},
-    repository::IndexPersistedOrInMemory,
-    worktree,
+    config::cache::util::ApplyLeniencyDefault, config::tree::Index, worktree, worktree::IndexPersistedOrInMemory,
 };
 
 /// Index access
@@ -43,6 +41,11 @@ impl crate::Repository {
 
     /// Return a shared worktree index which is updated automatically if the in-memory snapshot has become stale as the underlying file
     /// on disk has changed.
+    ///
+    /// ### Notes
+    ///
+    /// * This will fail if the file doesn't exist, like in a newly initialized repository. If that is the case, use
+    ///   [index_or_empty()](Self::index_or_empty) or [try_index()](Self::try_index) instead.
     ///
     /// The index file is shared across all clones of this repository.
     pub fn index(&self) -> Result<worktree::Index, worktree::open_index::Error> {
@@ -110,12 +113,14 @@ impl crate::Repository {
     /// Create new index-file, which would live at the correct location, in memory from the given `tree`.
     ///
     /// Note that this is an expensive operation as it requires recursively traversing the entire tree to unpack it into the index.
-    pub fn index_from_tree(
-        &self,
-        tree: &gix_hash::oid,
-    ) -> Result<gix_index::File, gix_traverse::tree::breadthfirst::Error> {
+    pub fn index_from_tree(&self, tree: &gix_hash::oid) -> Result<gix_index::File, super::index_from_tree::Error> {
         Ok(gix_index::File::from_state(
-            gix_index::State::from_tree(tree, &self.objects)?,
+            gix_index::State::from_tree(tree, &self.objects, self.config.protect_options()?).map_err(|err| {
+                super::index_from_tree::Error::IndexFromTree {
+                    id: tree.into(),
+                    source: err,
+                }
+            })?,
             self.git_dir().join("index"),
         ))
     }

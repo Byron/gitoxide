@@ -4,7 +4,7 @@ use gix_object::tree::{EntryKind, EntryMode};
 
 mod tracker;
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Change {
     id: ObjectId,
     kind: ChangeKind,

@@ -104,9 +104,11 @@ impl Status {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod client;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod server;
 
 type PacketlineReader<'a, T = std::process::ChildStdout> =

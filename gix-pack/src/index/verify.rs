@@ -6,6 +6,7 @@ use gix_object::WriteTo;
 use crate::index;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod integrity {
     use std::marker::PhantomData;
 
@@ -88,6 +89,7 @@ pub mod integrity {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod checksum {
     /// Returned by [`index::File::verify_checksum()`][crate::index::File::verify_checksum()].
     pub type Error = crate::verify::checksum::Error;

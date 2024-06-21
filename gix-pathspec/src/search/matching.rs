@@ -20,7 +20,7 @@ impl Search {
     ///
     /// ### Deviation
     ///
-    /// The case-sensivity of the attribute match is controlled by the sensitivity of the pathspec, instead of being based on the
+    /// The case-sensitivity of the attribute match is controlled by the sensitivity of the pathspec, instead of being based on the
     /// case folding settings of the repository. That way we assure that the matching is consistent.
     /// Higher-level crates should control this default case folding of pathspecs when instantiating them, which is when they can
     /// set it to match the repository setting for more natural behaviour when, for instance, adding files to a repository:
@@ -31,6 +31,21 @@ impl Search {
         is_dir: Option<bool>,
         attributes: &mut dyn FnMut(&BStr, Case, bool, &mut gix_attributes::search::Outcome) -> bool,
     ) -> Option<Match<'_>> {
+        static MATCH_ALL_STAND_IN: Pattern = Pattern {
+            path: BString::new(Vec::new()),
+            signature: MagicSignature::empty(),
+            search_mode: SearchMode::ShellGlob,
+            attributes: Vec::new(),
+            prefix_len: 0,
+            nil: true,
+        };
+        if relative_path.is_empty() {
+            return Some(Match {
+                pattern: &MATCH_ALL_STAND_IN,
+                sequence_number: 0,
+                kind: Always,
+            });
+        }
         let basename_not_important = None;
         if relative_path
             .get(..self.common_prefix_len)
@@ -106,14 +121,6 @@ impl Search {
         });
 
         if res.is_none() && self.all_patterns_are_excluded {
-            static MATCH_ALL_STAND_IN: Pattern = Pattern {
-                path: BString::new(Vec::new()),
-                signature: MagicSignature::empty(),
-                search_mode: SearchMode::ShellGlob,
-                attributes: Vec::new(),
-                prefix_len: 0,
-                nil: true,
-            };
             Some(Match {
                 pattern: &MATCH_ALL_STAND_IN,
                 sequence_number: patterns_len,
@@ -133,7 +140,7 @@ impl Search {
     /// is ignored.
     /// Returns `false` if this pathspec has no chance of ever matching `relative_path`.
     pub fn can_match_relative_path(&self, relative_path: &BStr, is_dir: Option<bool>) -> bool {
-        if self.patterns.is_empty() {
+        if self.patterns.is_empty() || relative_path.is_empty() {
             return true;
         }
         let common_prefix_len = self.common_prefix_len.min(relative_path.len());
@@ -176,11 +183,11 @@ impl Search {
                             matches!(pattern.path.get(common_len), None | Some(&b'/'))
                         } else {
                             relative_path.get(common_len) == Some(&b'/')
-                        }
+                        };
                     }
                 }
             }
-            if is_match {
+            if is_match && (!pattern.is_excluded() || pattern.always_matches()) {
                 return !pattern.is_excluded();
             }
         }
@@ -191,10 +198,10 @@ impl Search {
     /// Returns `true` if `relative_path` matches the prefix of this pathspec.
     ///
     /// For example, the relative path `d` matches `d/`, `d*/`, `d/` and `d/*`, but not `d/d/*` or `dir`.
-    /// When `leading` is `true`, then `d` matches `d/d` as well. Thus `relative_path` must may be
+    /// When `leading` is `true`, then `d` matches `d/d` as well. Thus, `relative_path` must may be
     /// partially included in `pathspec`, otherwise it has to be fully included.
     pub fn directory_matches_prefix(&self, relative_path: &BStr, leading: bool) -> bool {
-        if self.patterns.is_empty() {
+        if self.patterns.is_empty() || relative_path.is_empty() {
             return true;
         }
         let common_prefix_len = self.common_prefix_len.min(relative_path.len());
@@ -233,7 +240,7 @@ impl Search {
                     };
                 }
             }
-            if is_match {
+            if is_match && (!pattern.is_excluded() || pattern.always_matches()) {
                 return !pattern.is_excluded();
             }
         }

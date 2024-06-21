@@ -95,14 +95,6 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned("")
     },
     Record {
-        config: "core.protectHFS",
-        usage: Planned("relevant for checkout on MacOS")
-    },
-    Record {
-        config: "core.protectNTFS",
-        usage: NotPlanned("lack of demand")
-    },
-    Record {
         config: "core.sparseCheckout",
         usage: Planned("we want to support huge repos and be the fastest in doing so")
     },
@@ -263,7 +255,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "fetch.showForcedUpdates",
-        usage: NotApplicable("we don't support advices")
+        usage: NotApplicable("we don't support advice")
     },
     Record {
         config: "fetch.output",

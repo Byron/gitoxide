@@ -16,7 +16,7 @@ fn can_find(db: impl gix_object::Find, hex_id: &str) {
 
 #[test]
 fn loose_object() {
-    can_find(&db(), "37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+    can_find(db(), "37d4e6c5c48ba0d245164c4e10d5f41140cab980");
 }
 
 #[test]

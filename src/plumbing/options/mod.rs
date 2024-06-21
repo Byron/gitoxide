@@ -17,7 +17,7 @@ pub struct Args {
     ///
     /// For example, if `key` is `core.abbrev`, set configuration like `[core] abbrev = key`,
     /// or `remote.origin.url = foo` to set `[remote "origin"] url = foo`.
-    #[clap(long, short = 'c', value_parser = gitoxide::shared::AsBString)]
+    #[clap(long, short = 'c', value_parser = crate::shared::AsBString)]
     pub config: Vec<BString>,
 
     #[clap(long, short = 't')]
@@ -64,12 +64,12 @@ pub struct Args {
         long,
         short = 'f',
         default_value = "human",
-        value_parser = gitoxide::shared::AsOutputFormat
+        value_parser = crate::shared::AsOutputFormat
     )]
     pub format: core::OutputFormat,
 
     /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-    #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = gitoxide::shared::AsHashKind)]
+    #[clap(long, default_value_t = gix::hash::Kind::default(), value_parser = crate::shared::AsHashKind)]
     pub object_hash: gix::hash::Kind,
 
     #[clap(subcommand)]
@@ -130,6 +130,8 @@ pub enum Subcommands {
     /// Interact with submodules.
     #[clap(alias = "submodules")]
     Submodule(submodule::Platform),
+    IsClean,
+    IsChanged,
     /// Show which git configuration values are used or planned.
     ConfigTree,
     Status(status::Platform),
@@ -199,7 +201,7 @@ pub mod archive {
 }
 
 pub mod status {
-    use gitoxide::shared::CheckPathSpec;
+    use crate::shared::{CheckPathSpec, ParseRenameFraction};
     use gix::bstr::BString;
 
     #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
@@ -211,20 +213,54 @@ pub mod status {
         RefChange,
         /// See if there are worktree modifications compared to the index, but do not check for untracked files.
         Modifications,
+        /// Ignore all submodule changes.
+        None,
+    }
+
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Ignored {
+        /// display all ignored files and directories, but collapse them if possible to simplify.
+        #[default]
+        Collapsed,
+        /// Show exact matches. Note that this may show directories if these are a match as well.
+        ///
+        /// Simplification will not happen in this mode.
+        Matching,
+        // TODO: figure out how to implement traditional, which right now can't be done as it requires ignored folders
+        //       to be fully expanded. This should probably be implemented in `gix_dir` which then simply works by not
+        //       allowing to ignore directories, naturally traversing the entire content.
+    }
+
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum Format {
+        /// A basic format that is easy to read, and useful for a first glimpse as flat list.
+        #[default]
+        Simplified,
+        /// Output very similar to `git status --porcelain=2`.
+        PorcelainV2,
     }
 
     #[derive(Debug, clap::Parser)]
     #[command(about = "compute repository status similar to `git status`")]
     pub struct Platform {
-        /// Define how to display submodule status.
-        #[clap(long, default_value = "all")]
-        pub submodules: Submodules,
+        /// The way status data is displayed.
+        #[clap(long, short = 'f')]
+        pub format: Option<Format>,
+        /// If enabled, show ignored files and directories.
+        #[clap(long)]
+        pub ignored: Option<Option<Ignored>>,
+        /// Define how to display the submodule status. Defaults to git configuration if unset.
+        #[clap(long)]
+        pub submodules: Option<Submodules>,
         /// Print additional statistics to help understanding performance.
         #[clap(long, short = 's')]
         pub statistics: bool,
         /// Don't write back a changed index, which forces this operation to always be idempotent.
         #[clap(long)]
         pub no_write: bool,
+        /// Enable rename tracking between the index and the working tree, preventing the collapse of folders as well.
+        #[clap(long, value_parser = ParseRenameFraction)]
+        pub index_worktree_renames: Option<Option<f32>>,
         /// The git path specifications to list attributes for, or unset to read from stdin one per line.
         #[clap(value_parser = CheckPathSpec)]
         pub pathspec: Vec<BString>,
@@ -284,7 +320,7 @@ pub mod config {
         ///
         /// Typical filters are `branch` or `remote.origin` or `remote.or*` - git-style globs are supported
         /// and comparisons are case-insensitive.
-        #[clap(value_parser = gitoxide::shared::AsBString)]
+        #[clap(value_parser = crate::shared::AsBString)]
         pub filter: Vec<BString>,
     }
 }
@@ -323,7 +359,7 @@ pub mod fetch {
         pub remote: Option<String>,
 
         /// Override the built-in and configured ref-specs with one or more of the given ones.
-        #[clap(value_parser = gitoxide::shared::AsBString)]
+        #[clap(value_parser = crate::shared::AsBString)]
         pub ref_spec: Vec<gix::bstr::BString>,
     }
 
@@ -338,11 +374,11 @@ pub mod fetch {
         pub deepen: Option<u32>,
 
         /// Cutoff all history past the given date. Can be combined with shallow-exclude.
-        #[clap(long, help_heading = Some("SHALLOW"), value_parser = gitoxide::shared::AsTime, value_name = "DATE", conflicts_with_all = ["depth", "deepen", "unshallow"])]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsTime, value_name = "DATE", conflicts_with_all = ["depth", "deepen", "unshallow"])]
         pub shallow_since: Option<gix::date::Time>,
 
         /// Cutoff all history past the tag-name or ref-name. Can be combined with shallow-since.
-        #[clap(long, help_heading = Some("SHALLOW"), value_parser = gitoxide::shared::AsPartialRefName, value_name = "REF_NAME", conflicts_with_all = ["depth", "deepen", "unshallow"])]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME", conflicts_with_all = ["depth", "deepen", "unshallow"])]
         pub shallow_exclude: Vec<gix::refs::PartialName>,
 
         /// Remove the shallow boundary and fetch the entire history available on the remote.
@@ -398,6 +434,10 @@ pub mod clone {
         /// The url of the remote to connect to, like `https://github.com/byron/gitoxide`.
         pub remote: OsString,
 
+        /// The name of the reference to check out.
+        #[clap(long = "ref", value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME")]
+        pub ref_name: Option<gix::refs::PartialName>,
+
         /// The directory to initialize with the new repository and to which all data should be written.
         pub directory: Option<PathBuf>,
     }
@@ -409,11 +449,11 @@ pub mod clone {
         pub depth: Option<NonZeroU32>,
 
         /// Cutoff all history past the given date. Can be combined with shallow-exclude.
-        #[clap(long, help_heading = Some("SHALLOW"), value_parser = gitoxide::shared::AsTime, value_name = "DATE")]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsTime, value_name = "DATE")]
         pub shallow_since: Option<gix::date::Time>,
 
         /// Cutoff all history past the tag-name or ref-name. Can be combined with shallow-since.
-        #[clap(long, help_heading = Some("SHALLOW"), value_parser = gitoxide::shared::AsPartialRefName, value_name = "REF_NAME")]
+        #[clap(long, help_heading = Some("SHALLOW"), value_parser = crate::shared::AsPartialRefName, value_name = "REF_NAME")]
         pub shallow_exclude: Vec<gix::refs::PartialName>,
     }
 
@@ -465,7 +505,7 @@ pub mod remote {
             #[clap(long, short = 'u')]
             show_unmapped_remote_refs: bool,
             /// Override the built-in and configured ref-specs with one or more of the given ones.
-            #[clap(value_parser = gitoxide::shared::AsBString)]
+            #[clap(value_parser = crate::shared::AsBString)]
             ref_spec: Vec<gix::bstr::BString>,
         },
     }
@@ -481,7 +521,7 @@ pub mod mailmap {
 
 #[cfg(feature = "gitoxide-core-tools-clean")]
 pub mod clean {
-    use gitoxide::shared::CheckPathSpec;
+    use crate::shared::CheckPathSpec;
     use gix::bstr::BString;
 
     #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
@@ -550,7 +590,11 @@ pub mod odb {
         Info,
         /// Count and obtain information on all, possibly duplicate, objects in the database.
         #[clap(visible_alias = "statistics")]
-        Stats,
+        Stats {
+            /// Lookup headers again, but without preloading indices.
+            #[clap(long)]
+            extra_header_lookup: bool,
+        },
     }
 }
 
@@ -627,6 +671,10 @@ pub mod commit {
             /// If there was no way to describe the commit, fallback to using the abbreviated input revision.
             always: bool,
 
+            /// Set the suffix to append if the repository is dirty (not counting untracked files).
+            #[clap(short = 'd', long)]
+            dirty_suffix: Option<Option<String>>,
+
             /// A specification of the revision to use, or the current `HEAD` if unset.
             rev_spec: Option<String>,
         },
@@ -649,6 +697,7 @@ pub mod credential {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod commitgraph {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -742,7 +791,7 @@ pub mod revision {
 }
 
 pub mod attributes {
-    use gitoxide::shared::CheckPathSpec;
+    use crate::shared::CheckPathSpec;
     use gix::bstr::BString;
 
     #[derive(Debug, clap::Subcommand)]
@@ -772,7 +821,7 @@ pub mod attributes {
 pub mod exclude {
     use std::ffi::OsString;
 
-    use gitoxide::shared::CheckPathSpec;
+    use crate::shared::CheckPathSpec;
     use gix::bstr::BString;
 
     #[derive(Debug, clap::Subcommand)]
@@ -802,16 +851,16 @@ pub mod exclude {
 pub mod index {
     use std::path::PathBuf;
 
-    use gitoxide::shared::CheckPathSpec;
+    use crate::shared::CheckPathSpec;
     use gix::bstr::BString;
 
     pub mod entries {
         #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
         pub enum Format {
-            ///
+            /// Show only minimal information, useful for first glances.
             #[default]
             Simple,
-            /// Use the `.tar` file format, uncompressed.
+            /// Show much more information that is still human-readable.
             Rich,
         }
     }
@@ -871,9 +920,14 @@ pub mod submodule {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// Print all direct submodules to standard output
-        List,
+        List {
+            /// Set the suffix to append if the repository is dirty (not counting untracked files).
+            #[clap(short = 'd', long)]
+            dirty_suffix: Option<Option<String>>,
+        },
     }
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod free;

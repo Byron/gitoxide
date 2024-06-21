@@ -5,6 +5,100 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.39.1 (2024-05-22)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 8 calendar days.
+ - 38 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
+    - Release gix-date v0.8.6 ([`d3588ca`](https://github.com/Byron/gitoxide/commit/d3588ca4fe0364c88e42cdac24ceae548355d99d))
+</details>
+
+## 0.39.0 (2024-04-13)
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48/> Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple`
+ - <csr-id-3f938faf9e6323b8056ee286f299747e15e6a0d3/> adjust the structure of `commit::ancestors` to be more consistent with other plumbing crates.
+   This makes sure that each time is reached by only a single path.
+ - <csr-id-e0969c3cc928b31345c4f3a122466193697eb0fc/> simplify ancestor module..
+   We remove ability to reuse `State` as ultimately,this capability
+   wasn't all that useful.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 14 commits contributed to the release over the course of 6 calendar days.
+ - 29 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1336](https://github.com/Byron/gitoxide/issues/1336)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1336](https://github.com/Byron/gitoxide/issues/1336)**
+    - Improve documentation of Topological DateOrder sorting and add baseline test ([`1f6c8ab`](https://github.com/Byron/gitoxide/commit/1f6c8abe9a0055631369ed6e03a6ce308b42242f))
+ * **Uncategorized**
+    - Release gix-trace v0.1.9, gix-utils v0.1.12, gix-packetline-blocking v0.17.4, gix-filter v0.11.1, gix-fs v0.10.2, gix-traverse v0.39.0, gix-worktree-stream v0.12.0, gix-archive v0.12.0, gix-config v0.36.1, gix-url v0.27.3, gix-index v0.32.0, gix-worktree v0.33.0, gix-diff v0.43.0, gix-pathspec v0.7.3, gix-dir v0.4.0, gix-pack v0.50.0, gix-odb v0.60.0, gix-transport v0.42.0, gix-protocol v0.45.0, gix-status v0.9.0, gix-worktree-state v0.10.0, gix v0.62.0, gix-fsck v0.4.0, gitoxide-core v0.37.0, gitoxide v0.35.0, safety bump 14 crates ([`095c673`](https://github.com/Byron/gitoxide/commit/095c6739b2722a8b9af90776b435ef2da454c0e6))
+    - Prepare changelogs prior to release ([`5755271`](https://github.com/Byron/gitoxide/commit/57552717f46f96c35ba4ddc0a64434354ef845e9))
+    - Use `u8` for `WalkFlags` in the hopes that this can save memory. ([`a5751bc`](https://github.com/Byron/gitoxide/commit/a5751bc10a414c6d7ad5f280e23962784faa4fc4))
+    - Merge pull request #1341 from szepeviktor/typos ([`55f379b`](https://github.com/Byron/gitoxide/commit/55f379bc47065822d078393d83d30c0835a89782))
+    - Fix typos ([`f72ecce`](https://github.com/Byron/gitoxide/commit/f72ecce45babcad2a0c9b73c79d01ff502907a57))
+    - Merge branch 'add-topo-walk' ([`b590a9d`](https://github.com/Byron/gitoxide/commit/b590a9d2b6a273f76f0320d2b9fe1f679c08f549))
+    - Make `topo` more similar to `Ancestors`, but also rename `Ancestors` to `Simple` ([`2a9c178`](https://github.com/Byron/gitoxide/commit/2a9c178326b7f13ba6bc1f89fc2b9d9facbecf48))
+    - Adjust the structure of `commit::ancestors` to be more consistent with other plumbing crates. ([`3f938fa`](https://github.com/Byron/gitoxide/commit/3f938faf9e6323b8056ee286f299747e15e6a0d3))
+    - Refactor ([`ee13bdb`](https://github.com/Byron/gitoxide/commit/ee13bdb94e574a35c43cc6b6353f39e6c2d5c786))
+    - Simplify ancestor module.. ([`e0969c3`](https://github.com/Byron/gitoxide/commit/e0969c3cc928b31345c4f3a122466193697eb0fc))
+    - Initial implementation of topological commit walk ([`25b3d23`](https://github.com/Byron/gitoxide/commit/25b3d23bc370825ee15c68fd869b3ee5f4f79a1f))
+    - Move some utilities to super module to make them sharable ([`5b3dfbb`](https://github.com/Byron/gitoxide/commit/5b3dfbb129ae5e53fd63ce1a8637a35d7836b909))
+    - Move [Aa]ncestors to under commit module ([`ecc049c`](https://github.com/Byron/gitoxide/commit/ecc049cf14187d751c4d33b4c4b5d71bcce620b9))
+</details>
+
+## 0.38.0 (2024-03-14)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 4 calendar days.
+ - 54 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-date v0.8.5, gix-hash v0.14.2, gix-trace v0.1.8, gix-utils v0.1.11, gix-features v0.38.1, gix-actor v0.31.0, gix-validate v0.8.4, gix-object v0.42.0, gix-path v0.10.7, gix-glob v0.16.2, gix-quote v0.4.12, gix-attributes v0.22.2, gix-command v0.3.6, gix-filter v0.11.0, gix-fs v0.10.1, gix-chunk v0.4.8, gix-commitgraph v0.24.2, gix-hashtable v0.5.2, gix-revwalk v0.13.0, gix-traverse v0.38.0, gix-worktree-stream v0.11.0, gix-archive v0.11.0, gix-config-value v0.14.6, gix-tempfile v13.1.1, gix-lock v13.1.1, gix-ref v0.43.0, gix-sec v0.10.6, gix-config v0.36.0, gix-prompt v0.8.4, gix-url v0.27.2, gix-credentials v0.24.2, gix-ignore v0.11.2, gix-bitmap v0.2.11, gix-index v0.31.0, gix-worktree v0.32.0, gix-diff v0.42.0, gix-discover v0.31.0, gix-pathspec v0.7.1, gix-dir v0.2.0, gix-macros v0.1.4, gix-mailmap v0.23.0, gix-negotiate v0.13.0, gix-pack v0.49.0, gix-odb v0.59.0, gix-packetline v0.17.4, gix-transport v0.41.2, gix-protocol v0.44.2, gix-revision v0.27.0, gix-refspec v0.23.0, gix-status v0.7.0, gix-submodule v0.10.0, gix-worktree-state v0.9.0, gix v0.60.0, safety bump 26 crates ([`b050327`](https://github.com/Byron/gitoxide/commit/b050327e76f234b19be921b78b7b28e034319fdb))
+    - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
+    - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
+    - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+</details>
+
 ## 0.37.0 (2024-01-20)
 
 A maintenance release without user-facing changes.
@@ -13,7 +107,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 4 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +119,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-utils v0.1.9, gix-features v0.38.0, gix-actor v0.30.0, gix-object v0.41.0, gix-path v0.10.4, gix-glob v0.16.0, gix-attributes v0.22.0, gix-command v0.3.3, gix-packetline-blocking v0.17.3, gix-filter v0.9.0, gix-fs v0.10.0, gix-commitgraph v0.24.0, gix-revwalk v0.12.0, gix-traverse v0.37.0, gix-worktree-stream v0.9.0, gix-archive v0.9.0, gix-config-value v0.14.4, gix-tempfile v13.0.0, gix-lock v13.0.0, gix-ref v0.41.0, gix-sec v0.10.4, gix-config v0.34.0, gix-url v0.27.0, gix-credentials v0.24.0, gix-ignore v0.11.0, gix-index v0.29.0, gix-worktree v0.30.0, gix-diff v0.40.0, gix-discover v0.29.0, gix-mailmap v0.22.0, gix-negotiate v0.12.0, gix-pack v0.47.0, gix-odb v0.57.0, gix-pathspec v0.6.0, gix-packetline v0.17.3, gix-transport v0.41.0, gix-protocol v0.44.0, gix-revision v0.26.0, gix-refspec v0.22.0, gix-status v0.5.0, gix-submodule v0.8.0, gix-worktree-state v0.7.0, gix v0.58.0, safety bump 39 crates ([`eb6aa8f`](https://github.com/Byron/gitoxide/commit/eb6aa8f502314f886fc4ea3d52ab220763968208))
     - Prepare changelogs prior to release ([`6a2e0be`](https://github.com/Byron/gitoxide/commit/6a2e0bebfdf012dc2ed0ff2604086081f2a0f96d))
 </details>
 
@@ -60,12 +155,12 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-3bd09ef120945a9669321ea856db4079a5dab930/> change `rust-version` manifest field back to 1.65.
-   They didn't actually need to be higher to work, and changing them
-   unecessarily can break downstream CI.
-   
-   Let's keep this value as low as possible, and only increase it when
-   more recent features are actually used.
+- <csr-id-3bd09ef120945a9669321ea856db4079a5dab930/> change `rust-version` manifest field back to 1.65.
+  They didn't actually need to be higher to work, and changing them
+  unecessarily can break downstream CI.
+
+  Let's keep this value as low as possible, and only increase it when
+  more recent features are actually used.
 
 ### Commit Statistics
 
@@ -93,8 +188,8 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
-   Our MSRV follows the one of `helix`, which in turn follows Firefox.
+- <csr-id-aea89c3ad52f1a800abb620e9a4701bdf904ff7d/> upgrade MSRV to v1.70
+  Our MSRV follows the one of `helix`, which in turn follows Firefox.
 
 ### Commit Statistics
 
@@ -239,7 +334,7 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
+- <csr-id-229bd4899213f749a7cc124aa2b82a1368fba40f/> don't call crate 'WIP' in manifest anymore.
 
 ### Commit Statistics
 
@@ -611,16 +706,16 @@ A maintenance release without user-facing changes.
 
 ### Refactor (BREAKING)
 
- - <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/> remove pack-cache from `Find::try_find(…)`
-   With the new architecture this can be an implementation detail without
-   forcing it to be Sync.
- - <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/> move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait
-   This will break a lot, but has to happen to prepare these traits for the
-   next generation of object databases.
+- <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/> remove pack-cache from `Find::try_find(…)`
+  With the new architecture this can be an implementation detail without
+  forcing it to be Sync.
+- <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/> move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait
+  This will break a lot, but has to happen to prepare these traits for the
+  next generation of object databases.
 
 ### Other (BREAKING)
 
- - <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> Avoid duplicate module paths in 'tree' and 'commit'
+- <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> Avoid duplicate module paths in 'tree' and 'commit'
 
 ### Bug Fixes (BREAKING)
 
@@ -660,24 +755,24 @@ A maintenance release without user-facing changes.
 
 ### Test
 
- - <csr-id-1d5ab44145ccbc2064ee8cc7acebb62db82c45aa/> ensure tests use 'merge.ff false' and recreate fixtures on each run
+- <csr-id-1d5ab44145ccbc2064ee8cc7acebb62db82c45aa/> ensure tests use 'merge.ff false' and recreate fixtures on each run
 
 ### Other
 
- - <csr-id-7bce49c1d27cb279b61ff51de0038e01fcf3561e/> commit traversal along the first parent…
-   …which allows to traverse only the 'mainline' part of the commit
-   ancestry, ignoring merges entirely.
-   
-   This kind of traversal is more suited to algorithms which want
-   to see a linear history as well as segments of commits between
-   references.
- - <csr-id-cbc5b8171cdef5933d684c481300d9fcff43cf4b/> try git-cliff…
-   …but to no avail as it simpy won't work for us if we don't follow
-   conventional commits properly, especially the absence of breaking
-   changes support is a real issue.
-   
-   It's probably better to just implement it ourselves in smart-release.
- - <csr-id-329d183ad4e256a4f9cdeb34589b5f3432495f79/> object_id
+- <csr-id-7bce49c1d27cb279b61ff51de0038e01fcf3561e/> commit traversal along the first parent…
+  …which allows to traverse only the 'mainline' part of the commit
+  ancestry, ignoring merges entirely.
+
+  This kind of traversal is more suited to algorithms which want
+  to see a linear history as well as segments of commits between
+  references.
+- <csr-id-cbc5b8171cdef5933d684c481300d9fcff43cf4b/> try git-cliff…
+  …but to no avail as it simpy won't work for us if we don't follow
+  conventional commits properly, especially the absence of breaking
+  changes support is a real issue.
+
+  It's probably better to just implement it ourselves in smart-release.
+- <csr-id-329d183ad4e256a4f9cdeb34589b5f3432495f79/> object_id
 
 ### Bug Fixes
 
@@ -704,8 +799,8 @@ A maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
- - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
+- <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+- <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
 
 ### Documentation
 
@@ -1085,8 +1180,8 @@ Maintenance release without user-facing changes.
 
 ### Chore
 
- - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
- - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
+- <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+- <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
 
 ## 0.16.1 (2022-08-17)
 
@@ -1140,7 +1235,7 @@ A maintenance release without user-facing changes.
 
 ### Test
 
- - <csr-id-1d5ab44145ccbc2064ee8cc7acebb62db82c45aa/> ensure tests use 'merge.ff false' and recreate fixtures on each run
+- <csr-id-1d5ab44145ccbc2064ee8cc7acebb62db82c45aa/> ensure tests use 'merge.ff false' and recreate fixtures on each run
 
 ### New Features
 
@@ -1150,12 +1245,12 @@ A maintenance release without user-facing changes.
 
  - <csr-id-5cf9323dbe09789e806ed55d865281298af1a11b/> rename `commit::Ancestors::mode()` to `*::parents()`
    The previous name was too generic to be helpful or discoverable.
- - remove pack-cache from `Find::try_find(…)`
-   With the new architecture this can be an implementation detail without
-   forcing it to be Sync.
- -  move gix_pack::data::Object to gix_object::Data, massively alter gix_odb::Find trait
-   This will break a lot, but has to happen to prepare these traits for the
-   next generation of object databases.
+- remove pack-cache from `Find::try_find(…)`
+  With the new architecture this can be an implementation detail without
+  forcing it to be Sync.
+- move gix_pack::data::Object to gix_object::Data, massively alter gix_odb::Find trait
+  This will break a lot, but has to happen to prepare these traits for the
+  next generation of object databases.
 
 ## 0.11.0 (2021-11-29)
 
@@ -1180,24 +1275,24 @@ Some module paths have been removed to avoid path duplication, possibly leading 
 
 ### Other
 
- - <csr-id-cbc5b8171cdef5933d684c481300d9fcff43cf4b/> try git-cliff…
-   …but to no avail as it simpy won't work for us if we don't follow
-   conventional commits properly, especially the absence of breaking
-   changes support is a real issue.
-   
-   It's probably better to just implement it ourselves in smart-release.
- - <csr-id-329d183ad4e256a4f9cdeb34589b5f3432495f79/> object_id
- - <csr-id-7bce49c1d27cb279b61ff51de0038e01fcf3561e/> commit traversal along the first parent…
-   …which allows to traverse only the 'mainline' part of the commit
-   ancestry, ignoring merges entirely.
-   
-   This kind of traversal is more suited to algorithms which want
-   to see a linear history as well as segments of commits between
-   references.
+- <csr-id-cbc5b8171cdef5933d684c481300d9fcff43cf4b/> try git-cliff…
+  …but to no avail as it simpy won't work for us if we don't follow
+  conventional commits properly, especially the absence of breaking
+  changes support is a real issue.
+
+  It's probably better to just implement it ourselves in smart-release.
+- <csr-id-329d183ad4e256a4f9cdeb34589b5f3432495f79/> object_id
+- <csr-id-7bce49c1d27cb279b61ff51de0038e01fcf3561e/> commit traversal along the first parent…
+  …which allows to traverse only the 'mainline' part of the commit
+  ancestry, ignoring merges entirely.
+
+  This kind of traversal is more suited to algorithms which want
+  to see a linear history as well as segments of commits between
+  references.
 
 ### BREAKING
 
- - Avoid duplicate module paths in `tree` and `commit`
+- Avoid duplicate module paths in `tree` and `commit`
 
 ## v0.8.2 (2021-09-08)
 

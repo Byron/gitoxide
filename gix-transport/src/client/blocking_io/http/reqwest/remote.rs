@@ -1,6 +1,5 @@
 use std::{
     any::Any,
-    convert::TryFrom,
     io::{Read, Write},
     str::FromStr,
     sync::{atomic, Arc},

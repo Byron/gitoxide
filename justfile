@@ -92,6 +92,8 @@ check:
     cargo check -p gix-revision --no-default-features --features describe
     cargo check -p gix-mailmap --features serde
     cargo check -p gix-url --all-features
+    cargo check -p gix-status
+    cargo check -p gix-status --all-features
     cargo check -p gix-features --all-features
     cargo check -p gix-features --features parallel
     cargo check -p gix-features --features fs-walkdir-parallel
@@ -179,6 +181,7 @@ unit-tests:
     cargo test -p gix-protocol --features blocking-client
     cargo test -p gix-protocol --features async-client
     cargo test -p gix --no-default-features
+    cargo test -p gix --no-default-features --features basic,extras,comfort
     cargo test -p gix --features async-network-client
     cargo test -p gix --features blocking-network-client
     cargo test -p gitoxide-core --lib
@@ -249,3 +252,7 @@ fmt:
 # Cancel this after the first few seconds, as yanked crates will appear in warnings.
 find-yanked:
     cargo install --debug --locked --no-default-features --features max-pure --path .
+
+# Delete gix-packetline-blocking/src and regenerate from gix-packetline/src
+copy-packetline:
+    ./etc/copy-packetline.sh

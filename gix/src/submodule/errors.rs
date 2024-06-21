@@ -1,4 +1,5 @@
 ///
+#[allow(clippy::empty_docs)]
 pub mod open_modules_file {
     /// The error returned by [Repository::open_modules_file()](crate::Repository::open_modules_file()).
     #[derive(Debug, thiserror::Error)]
@@ -12,6 +13,7 @@ pub mod open_modules_file {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod modules {
     /// The error returned by [Repository::modules()](crate::Repository::modules()).
     #[derive(Debug, thiserror::Error)]
@@ -31,6 +33,7 @@ pub mod modules {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod is_active {
     /// The error returned by [Submodule::is_active()](crate::Submodule::is_active()).
     #[derive(Debug, thiserror::Error)]
@@ -50,6 +53,7 @@ pub mod is_active {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod fetch_recurse {
     /// The error returned by [Submodule::fetch_recurse()](crate::Submodule::fetch_recurse()).
     #[derive(Debug, thiserror::Error)]
@@ -63,6 +67,7 @@ pub mod fetch_recurse {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod open {
     /// The error returned by [Submodule::open()](crate::Submodule::open()).
     #[derive(Debug, thiserror::Error)]
@@ -76,6 +81,7 @@ pub mod open {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod index_id {
     /// The error returned by [Submodule::index_id()](crate::Submodule::index_id()).
     #[derive(Debug, thiserror::Error)]
@@ -89,6 +95,7 @@ pub mod index_id {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod head_id {
     /// The error returned by [Submodule::head_id()](crate::Submodule::head_id()).
     #[derive(Debug, thiserror::Error)]

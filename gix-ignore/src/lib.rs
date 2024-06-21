@@ -12,6 +12,7 @@
 pub use gix_glob as glob;
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod search;
 /// A grouping of lists of patterns while possibly keeping associated to their base path in order to find matches.
 ///
@@ -45,6 +46,7 @@ pub enum Kind {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod parse;
 
 /// Parse git ignore patterns, line by line, from `bytes`.

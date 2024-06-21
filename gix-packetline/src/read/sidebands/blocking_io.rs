@@ -208,10 +208,8 @@ where
     F: FnMut(bool, &[u8]) -> ProgressAction,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let nread = {
-            let mut rem = self.fill_buf()?;
-            rem.read(buf)?
-        };
+        let mut rem = self.fill_buf()?;
+        let nread = rem.read(buf)?;
         self.consume(nread);
         Ok(nread)
     }

@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 /// Run like this `echo url=https://example.com | cargo run --example git-credential-light -- fill`
 pub fn main() -> Result<(), gix_credentials::program::main::Error> {
     gix_credentials::program::main(

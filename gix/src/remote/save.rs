@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use gix_macros::momo;
 
 use crate::{

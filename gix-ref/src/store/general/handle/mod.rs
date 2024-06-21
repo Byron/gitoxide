@@ -34,6 +34,7 @@ impl crate::Store {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod find;
 
 mod iter {

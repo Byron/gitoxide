@@ -1,12 +1,8 @@
-use anyhow::{bail, Context};
-use gix::bstr::ByteSlice;
-use gix::{
-    bstr::{BStr, BString},
-    index::Entry,
-    Progress,
-};
-use gix_status::index_as_worktree::{traits::FastEq, Change, Conflict, EntryStatus};
-use std::path::{Path, PathBuf};
+use anyhow::bail;
+use gix::bstr::{BStr, BString};
+use gix::status::index_worktree::iter::Item;
+use gix_status::index_as_worktree::{Change, Conflict, EntryStatus};
+use std::path::Path;
 
 use crate::OutputFormat;
 
@@ -17,226 +13,196 @@ pub enum Submodules {
     RefChange,
     /// See if there are worktree modifications compared to the index, but do not check for untracked files.
     Modifications,
+    /// Ignore all submodule changes.
+    None,
+}
+
+#[derive(Copy, Clone)]
+pub enum Ignored {
+    Collapsed,
+    Matching,
+}
+
+#[derive(Copy, Clone)]
+pub enum Format {
+    Simplified,
+    PorcelainV2,
 }
 
 pub struct Options {
-    pub format: OutputFormat,
-    pub submodules: Submodules,
+    pub ignored: Option<Ignored>,
+    pub format: Format,
+    pub output_format: OutputFormat,
+    pub submodules: Option<Submodules>,
     pub thread_limit: Option<usize>,
     pub statistics: bool,
     pub allow_write: bool,
+    pub index_worktree_renames: Option<f32>,
 }
 
 pub fn show(
     repo: gix::Repository,
     pathspecs: Vec<BString>,
-    out: impl std::io::Write,
+    mut out: impl std::io::Write,
     mut err: impl std::io::Write,
-    mut progress: impl gix::NestedProgress,
+    mut progress: impl gix::NestedProgress + 'static,
     Options {
+        ignored,
         format,
-        // TODO: implement this
-        submodules: _,
+        output_format,
+        submodules,
         thread_limit,
         allow_write,
         statistics,
+        index_worktree_renames,
     }: Options,
 ) -> anyhow::Result<()> {
-    if format != OutputFormat::Human {
+    if output_format != OutputFormat::Human {
         bail!("Only human format is supported right now");
     }
-    let mut index = repo.index_or_empty()?;
-    let index = gix::threading::make_mut(&mut index);
-    let mut progress = progress.add_child("traverse index");
-    let start = std::time::Instant::now();
-    let stack = repo
-        .attributes_only(
-            index,
-            gix::worktree::stack::state::attributes::Source::WorktreeThenIdMapping,
-        )?
-        .detach();
-    let pathspec = gix::Pathspec::new(&repo, false, pathspecs.iter().map(|p| p.as_bstr()), true, || {
-        Ok(stack.clone())
-    })?;
-    let options = gix_status::index_as_worktree::Options {
-        fs: repo.filesystem_options()?,
-        thread_limit,
-        stat: repo.stat_options()?,
-    };
-    let prefix = repo.prefix()?.unwrap_or(Path::new(""));
-    let mut printer = Printer {
-        out,
-        changes: Vec::new(),
-        prefix: prefix.to_owned(),
-    };
-    let filter_pipeline = repo
-        .filter_pipeline(Some(gix::hash::ObjectId::empty_tree(repo.object_hash())))?
-        .0
-        .into_parts()
-        .0;
-    let ctx = gix_status::index_as_worktree::Context {
-        pathspec: pathspec.into_parts().0,
-        stack,
-        filter: filter_pipeline,
-        should_interrupt: &gix::interrupt::IS_INTERRUPTED,
-    };
-    let mut collect = gix::dir::walk::delegate::Collect::default();
-    let (outcome, walk_outcome) = gix::features::parallel::threads(|scope| -> anyhow::Result<_> {
-        // TODO: it's either this, or not running both in parallel and setting UPTODATE flags whereever
-        //       there is no modification. This can save disk queries as dirwalk can then trust what's in
-        //       the index regarding the type.
-        // NOTE: collect here as rename-tracking needs that anyway.
-        let walk_outcome = gix::features::parallel::build_thread()
-            .name("gix status::dirwalk".into())
-            .spawn_scoped(scope, {
-                let repo = repo.clone().into_sync();
-                let index = &index;
-                let collect = &mut collect;
-                move || -> anyhow::Result<_> {
-                    let repo = repo.to_thread_local();
-                    let outcome = repo.dirwalk(
-                        index,
-                        pathspecs,
-                        repo.dirwalk_options()?
-                            .emit_untracked(gix::dir::walk::EmissionMode::CollapseDirectory),
-                        collect,
-                    )?;
-                    Ok(outcome.dirwalk)
-                }
-            })?;
-
-        let outcome = gix_status::index_as_worktree(
-            index,
-            repo.work_dir()
-                .context("This operation cannot be run on a bare repository")?,
-            &mut printer,
-            FastEq,
-            Submodule,
-            repo.objects.clone().into_arc()?,
-            &mut progress,
-            ctx,
-            options,
-        )?;
-
-        let walk_outcome = walk_outcome.join().expect("no panic")?;
-        Ok((outcome, walk_outcome))
-    })?;
-
-    for entry in collect
-        .into_entries_by_path()
-        .into_iter()
-        .filter_map(|(entry, dir_status)| dir_status.is_none().then_some(entry))
-    {
-        writeln!(
-            printer.out,
-            "{status: >3} {rela_path}",
-            status = "?",
-            rela_path = gix::path::relativize_with_prefix(&gix::path::from_bstr(entry.rela_path), prefix).display()
-        )?;
+    if !matches!(format, Format::Simplified) {
+        bail!("Only the simplified format is currently implemented");
     }
 
-    if outcome.entries_to_update != 0 && allow_write {
-        {
-            let entries = index.entries_mut();
-            for (entry_index, change) in printer.changes {
-                let entry = &mut entries[entry_index];
-                match change {
-                    ApplyChange::SetSizeToZero => {
-                        entry.stat.size = 0;
-                    }
-                    ApplyChange::NewStat(new_stat) => {
-                        entry.stat = new_stat;
+    let start = std::time::Instant::now();
+    let prefix = repo.prefix()?.unwrap_or(Path::new(""));
+    let index_progress = progress.add_child("traverse index");
+    let mut iter = repo
+        .status(index_progress)?
+        .should_interrupt_shared(&gix::interrupt::IS_INTERRUPTED)
+        .index_worktree_options_mut(|opts| {
+            if let Some((opts, ignored)) = opts.dirwalk_options.as_mut().zip(ignored) {
+                opts.set_emit_ignored(Some(match ignored {
+                    Ignored::Collapsed => gix::dir::walk::EmissionMode::CollapseDirectory,
+                    Ignored::Matching => gix::dir::walk::EmissionMode::Matching,
+                }));
+            }
+            opts.rewrites = index_worktree_renames.map(|percentage| gix::diff::Rewrites {
+                copies: None,
+                percentage: Some(percentage),
+                limit: 0,
+            });
+            if opts.rewrites.is_some() {
+                if let Some(opts) = opts.dirwalk_options.as_mut() {
+                    opts.set_emit_untracked(gix::dir::walk::EmissionMode::Matching);
+                    if ignored.is_some() {
+                        opts.set_emit_ignored(Some(gix::dir::walk::EmissionMode::Matching));
                     }
                 }
             }
+            opts.thread_limit = thread_limit;
+            opts.sorting = Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive);
+        })
+        .index_worktree_submodules(match submodules {
+            Some(mode) => {
+                let ignore = match mode {
+                    Submodules::All => gix::submodule::config::Ignore::None,
+                    Submodules::RefChange => gix::submodule::config::Ignore::Dirty,
+                    Submodules::Modifications => gix::submodule::config::Ignore::Untracked,
+                    Submodules::None => gix::submodule::config::Ignore::All,
+                };
+                gix::status::Submodule::Given {
+                    ignore,
+                    check_dirty: false,
+                }
+            }
+            None => gix::status::Submodule::AsConfigured { check_dirty: false },
+        })
+        .into_index_worktree_iter(pathspecs)?;
+
+    for item in iter.by_ref() {
+        let item = item?;
+        match item {
+            Item::Modification {
+                entry: _,
+                entry_index: _,
+                rela_path,
+                status,
+            } => print_index_entry_status(&mut out, prefix, rela_path.as_ref(), status)?,
+            Item::DirectoryContents {
+                entry,
+                collapsed_directory_status,
+            } => {
+                if collapsed_directory_status.is_none() {
+                    writeln!(
+                        out,
+                        "{status: >3} {rela_path}{slash}",
+                        status = "?",
+                        rela_path =
+                            gix::path::relativize_with_prefix(&gix::path::from_bstr(entry.rela_path), prefix).display(),
+                        slash = if entry.disk_kind.unwrap_or(gix::dir::entry::Kind::File).is_dir() {
+                            "/"
+                        } else {
+                            ""
+                        }
+                    )?;
+                }
+            }
+            Item::Rewrite {
+                source,
+                dirwalk_entry,
+                copy: _, // TODO: how to visualize copies?
+                ..
+            } => {
+                // TODO: handle multi-status characters, there can also be modifications at the same time as determined by their ID and potentially diffstats.
+                writeln!(
+                    out,
+                    "{status: >3} {source_rela_path} → {dest_rela_path}",
+                    status = "R",
+                    source_rela_path =
+                        gix::path::relativize_with_prefix(&gix::path::from_bstr(source.rela_path()), prefix).display(),
+                    dest_rela_path = gix::path::relativize_with_prefix(
+                        &gix::path::from_bstr(dirwalk_entry.rela_path.as_ref()),
+                        prefix
+                    )
+                    .display(),
+                )?;
+            }
         }
-        index.write(gix::index::write::Options {
-            extensions: Default::default(),
-            skip_hash: false, // TODO: make this based on configuration
-        })?;
+    }
+    if gix::interrupt::is_triggered() {
+        bail!("interrupted by user");
+    }
+
+    let out = iter.outcome_mut().expect("successful iteration has outcome");
+
+    if out.has_changes() && allow_write {
+        out.write_changes().transpose()?;
     }
 
     if statistics {
-        writeln!(err, "{outcome:#?}").ok();
-        writeln!(err, "{walk_outcome:#?}").ok();
+        writeln!(err, "{outcome:#?}", outcome = out.index_worktree).ok();
     }
 
-    writeln!(err, "\nhead -> index and untracked files aren't implemented yet")?;
+    writeln!(err, "\nhead -> index isn't implemented yet")?;
+    progress.init(Some(out.index.entries().len()), gix::progress::count("files"));
+    progress.set(out.index.entries().len());
     progress.show_throughput(start);
     Ok(())
 }
 
-#[derive(Clone)]
-struct Submodule;
+fn print_index_entry_status(
+    out: &mut dyn std::io::Write,
+    prefix: &Path,
+    rela_path: &BStr,
+    status: EntryStatus<(), gix::submodule::Status>,
+) -> std::io::Result<()> {
+    let char_storage;
+    let status = match status {
+        EntryStatus::Conflict(conflict) => as_str(conflict),
+        EntryStatus::Change(change) => {
+            char_storage = change_to_char(&change);
+            std::str::from_utf8(std::slice::from_ref(&char_storage)).expect("valid ASCII")
+        }
+        EntryStatus::NeedsUpdate(_stat) => {
+            return Ok(());
+        }
+        EntryStatus::IntentToAdd => "A",
+    };
 
-impl gix_status::index_as_worktree::traits::SubmoduleStatus for Submodule {
-    type Output = ();
-    type Error = std::convert::Infallible;
-
-    fn status(&mut self, _entry: &Entry, _rela_path: &BStr) -> Result<Option<Self::Output>, Self::Error> {
-        Ok(None)
-    }
-}
-
-struct Printer<W> {
-    out: W,
-    changes: Vec<(usize, ApplyChange)>,
-    prefix: PathBuf,
-}
-
-enum ApplyChange {
-    SetSizeToZero,
-    NewStat(gix::index::entry::Stat),
-}
-
-impl<'index, W> gix_status::index_as_worktree::VisitEntry<'index> for Printer<W>
-where
-    W: std::io::Write,
-{
-    type ContentChange = ();
-    type SubmoduleStatus = ();
-
-    fn visit_entry(
-        &mut self,
-        _entries: &'index [Entry],
-        _entry: &'index Entry,
-        entry_index: usize,
-        rela_path: &'index BStr,
-        status: EntryStatus<Self::ContentChange>,
-    ) {
-        self.visit_inner(entry_index, rela_path, status).ok();
-    }
-}
-
-impl<W: std::io::Write> Printer<W> {
-    fn visit_inner(&mut self, entry_index: usize, rela_path: &BStr, status: EntryStatus<()>) -> std::io::Result<()> {
-        let char_storage;
-        let status = match status {
-            EntryStatus::Conflict(conflict) => as_str(conflict),
-            EntryStatus::Change(change) => {
-                if matches!(
-                    change,
-                    Change::Modification {
-                        set_entry_stat_size_zero: true,
-                        ..
-                    }
-                ) {
-                    self.changes.push((entry_index, ApplyChange::SetSizeToZero))
-                }
-                char_storage = change_to_char(&change);
-                std::str::from_utf8(std::slice::from_ref(&char_storage)).expect("valid ASCII")
-            }
-            EntryStatus::NeedsUpdate(stat) => {
-                self.changes.push((entry_index, ApplyChange::NewStat(stat)));
-                return Ok(());
-            }
-            EntryStatus::IntentToAdd => "A",
-        };
-
-        let rela_path = gix::path::from_bstr(rela_path);
-        let display_path = gix::path::relativize_with_prefix(&rela_path, &self.prefix);
-        writeln!(&mut self.out, "{status: >3} {}", display_path.display())
-    }
+    let rela_path = gix::path::from_bstr(rela_path);
+    let display_path = gix::path::relativize_with_prefix(&rela_path, prefix);
+    writeln!(out, "{status: >3} {}", display_path.display())
 }
 
 fn as_str(c: Conflict) -> &'static str {
@@ -251,7 +217,7 @@ fn as_str(c: Conflict) -> &'static str {
     }
 }
 
-fn change_to_char(change: &Change<()>) -> u8 {
+fn change_to_char(change: &Change<(), gix::submodule::Status>) -> u8 {
     // Known status letters: https://github.com/git/git/blob/6807fcfedab84bc8cd0fbf721bc13c4e68cda9ae/diff.h#L613
     match change {
         Change::Removed => b'D',

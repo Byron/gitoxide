@@ -195,9 +195,9 @@ pub fn to_signed<I: MinNumTraits>(bytes: &[u8]) -> Result<I, ParseIntegerError> 
 /// Returns [`ParseIntegerError`] for any of the following conditions:
 ///
 /// * `bytes` has no digits
-/// * not all characters of `bytes` are `0-9`, `a-z`, `A-Z`, exluding an
+/// * not all characters of `bytes` are `0-9`, `a-z`, `A-Z`, excluding an
 ///   optional leading sign
-/// * not all characters refer to digits in the given `radix`, exluding an
+/// * not all characters refer to digits in the given `radix`, excluding an
 ///   optional leading sign
 /// * the number overflows or underflows `I`
 ///
@@ -272,7 +272,7 @@ pub fn to_signed_with_radix<I: MinNumTraits>(bytes: &[u8], radix: u32) -> Result
 pub trait MinNumTraits: Sized + Copy + TryFrom<u32> {
     /// the 0 value for this type
     const ZERO: Self;
-    /// convert from a unsinged 32-bit word
+    /// convert from a unsigned 32-bit word
     fn from_u32(n: u32) -> Option<Self> {
         Self::try_from(n).ok()
     }

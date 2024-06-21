@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use bstr::ByteVec;
 use gix_config::file::{init, Metadata};
 

@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::{bstr::BStr, remote, Remote};
 
 /// Builder methods

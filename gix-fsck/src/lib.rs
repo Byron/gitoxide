@@ -80,9 +80,7 @@ where
             match entry_ref.mode.kind() {
                 EntryKind::Tree => {
                     let tree_id = entry_ref.oid.to_owned();
-                    if self.seen.insert(tree_id) {
-                        tree_ids.push_back(tree_id);
-                    }
+                    tree_ids.push_back(tree_id);
                 }
                 EntryKind::Blob | EntryKind::BlobExecutable | EntryKind::Link => {
                     let blob_id = entry_ref.oid.to_owned();
@@ -91,7 +89,7 @@ where
                     }
                 }
                 EntryKind::Commit => {
-                    // Skip submodules as it's not in this repository!
+                    // Skip submodules as they wouldn't be in this repository!
                 }
             }
         }

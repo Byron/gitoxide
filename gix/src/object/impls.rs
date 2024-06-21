@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use crate::{object, Blob, Commit, Object, ObjectDetached, Tag, Tree};
 
 impl<'repo> From<Object<'repo>> for ObjectDetached {

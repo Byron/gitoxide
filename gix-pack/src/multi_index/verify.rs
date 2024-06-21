@@ -5,6 +5,7 @@ use gix_features::progress::{Count, DynNestedProgress, Progress};
 use crate::{index, multi_index::File};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod integrity {
     use crate::multi_index::EntryIndex;
 
@@ -68,6 +69,7 @@ pub mod integrity {
 }
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod checksum {
     /// Returned by [`multi_index::File::verify_checksum()`][crate::multi_index::File::verify_checksum()].
     pub type Error = crate::verify::checksum::Error;
@@ -284,6 +286,7 @@ impl File {
                             TreeTraversal(err) => TreeTraversal(err),
                             PackDecode { id, offset, source } => PackDecode { id, offset, source },
                             PackMismatch { expected, actual } => PackMismatch { expected, actual },
+                            EntryType(err) => EntryType(err),
                             PackObjectMismatch {
                                 expected,
                                 actual,

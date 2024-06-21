@@ -1,6 +1,6 @@
 [package]
 name = "gix-fs"
-version = "0.10.0"
+version = "0.11.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate providing file system specific utilities to `gitoxide`"
@@ -17,9 +17,13 @@ doctest = false
 serde = ["dep:serde"]
 
 [dependencies]
-gix-features = { version = "^0.38.0", path = "../gix-features", features = ["fs-read-dir"] }
-gix-utils = { version = "^0.1.9", path = "../gix-utils" }
+gix-features = { version = "^0.38.2", path = "../gix-features", features = ["fs-read-dir"] }
+gix-utils = { version = "^0.1.12", path = "../gix-utils" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"] }
+
+# For `Capabilities` to assure parallel operation works.
+fastrand = { version = "2.1.0", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 tempfile = "3.5.0"
+crossbeam-channel = "0.5.0"

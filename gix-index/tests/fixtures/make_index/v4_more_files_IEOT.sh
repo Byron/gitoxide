@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eu -o pipefail
 
 export GIT_INDEX_VERSION=4
@@ -12,3 +12,5 @@ touch x
 
 git add .
 git commit -m "empty"
+
+git rev-parse @^{tree} > head.tree

@@ -60,7 +60,7 @@ jobs:
         run: echo "${{ env.ARTIFACT_VERSION }}" > artifacts/release-version
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artifacts
           path: artifacts
@@ -129,7 +129,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
@@ -161,7 +161,7 @@ jobs:
           echo "target dir is: ${{ env.TARGET_DIR }}"
 
       - name: Get release download URL
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: artifacts
           path: artifacts
@@ -211,7 +211,7 @@ jobs:
           fi
 
       - name: Upload release archive
-        uses: actions/upload-release-asset@v1.0.1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

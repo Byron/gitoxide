@@ -1,7 +1,4 @@
-use std::{
-    convert::TryInto,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use gix_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 

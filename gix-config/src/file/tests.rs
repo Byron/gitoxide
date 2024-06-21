@@ -6,7 +6,7 @@ use crate::{
 };
 
 mod try_from {
-    use std::{borrow::Cow, collections::HashMap, convert::TryFrom};
+    use std::{borrow::Cow, collections::HashMap};
 
     use super::{bodies, headers};
     use crate::{

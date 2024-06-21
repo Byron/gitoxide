@@ -5,6 +5,7 @@ mod section {
     use std::borrow::Cow;
 
     #[test]
+    #[cfg(target_pointer_width = "64")]
     fn size_of_events() {
         assert_eq!(
             std::mem::size_of::<Section<'_>>(),
@@ -109,7 +110,7 @@ pub(crate) mod util {
     //! This module is only included for tests, and contains common unit test helper
     //! functions.
 
-    use std::{borrow::Cow, convert::TryFrom};
+    use std::borrow::Cow;
 
     use crate::parse::{section, Comment, Event};
 

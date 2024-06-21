@@ -7,6 +7,7 @@ use crate::{
 };
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod body;
 mod decode;
 

@@ -91,6 +91,15 @@ where
         let _span = gix_trace::coarse!("fetch::Prepare::receive()");
         let mut con = self.con.take().expect("receive() can only be called once");
 
+        if self.ref_map.mappings.is_empty() && !self.ref_map.remote_refs.is_empty() {
+            let mut specs = con.remote.fetch_specs.clone();
+            specs.extend(self.ref_map.extra_refspecs.clone());
+            return Err(Error::NoMapping {
+                refspecs: specs,
+                num_remote_refs: self.ref_map.remote_refs.len(),
+            });
+        }
+
         let handshake = &self.ref_map.handshake;
         let protocol_version = handshake.server_protocol_version;
 
@@ -105,7 +114,7 @@ where
         gix_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
         let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
         let mut arguments = gix_protocol::fetch::Arguments::new(protocol_version, fetch_features, con.trace);
-        if matches!(con.remote.fetch_tags, crate::remote::fetch::Tags::Included) {
+        if matches!(con.remote.fetch_tags, fetch::Tags::Included) {
             if !arguments.can_use_include_tag() {
                 return Err(Error::MissingServerFeature {
                     feature: "include-tag",
@@ -287,7 +296,7 @@ where
                     #[cfg(not(feature = "async-network-client"))]
                     let has_read_to_end = { rd.stopped_at().is_some() };
                     if !has_read_to_end {
-                        std::io::copy(&mut rd, &mut std::io::sink()).unwrap();
+                        std::io::copy(&mut rd, &mut std::io::sink()).map_err(Error::ReadRemainingBytes)?;
                     }
                     #[cfg(feature = "async-network-client")]
                     {

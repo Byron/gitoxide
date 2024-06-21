@@ -128,7 +128,7 @@ where
         let bytes = resolve(slice.clone(), resolve_data).ok_or(Error::ResolveFailed {
             pack_offset: slice.start,
         })?;
-        let entry = data::Entry::from_bytes(bytes, slice.start, hash_len);
+        let entry = data::Entry::from_bytes(bytes, slice.start, hash_len)?;
         let compressed = &bytes[entry.header_size()..];
         let decompressed_len = entry.decompressed_size as usize;
         decompress_all_at_once_with(&mut inflate, compressed, decompressed_len, out)?;
@@ -304,7 +304,7 @@ where
                                     let bytes = resolve(slice.clone(), resolve_data).ok_or(Error::ResolveFailed {
                                         pack_offset: slice.start,
                                     })?;
-                                    let entry = data::Entry::from_bytes(bytes, slice.start, hash_len);
+                                    let entry = data::Entry::from_bytes(bytes, slice.start, hash_len)?;
                                     let compressed = &bytes[entry.header_size()..];
                                     let decompressed_len = entry.decompressed_size as usize;
                                     decompress_all_at_once_with(&mut inflate, compressed, decompressed_len, out)?;

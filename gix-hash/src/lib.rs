@@ -17,9 +17,10 @@ mod object_id;
 pub use object_id::{decode, ObjectId};
 
 ///
+#[allow(clippy::empty_docs)]
 pub mod prefix;
 
-/// An partial, owned hash possibly identifying an object uniquely, whose non-prefix bytes are zeroed.
+/// A partial, owned hash possibly identifying an object uniquely, whose non-prefix bytes are zeroed.
 ///
 /// An example would `0000000000000000000000000000000032bd3242`, where `32bd3242` is the prefix,
 /// which would be able to match all hashes that *start with* `32bd3242`.

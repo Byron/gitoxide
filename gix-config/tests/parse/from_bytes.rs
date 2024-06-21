@@ -1,5 +1,3 @@
-use gix_config::parse::Events;
-
 use super::*;
 
 #[test]
