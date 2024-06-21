@@ -92,7 +92,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
-/// Event::SectionKey(section::Key::try_from("autocrlf")?),
+/// Event::SectionValueName(section::ValueName::try_from("autocrlf")?),
 /// Event::Whitespace(Cow::Borrowed(" ".into())),
 /// Event::KeyValueSeparator,
 /// Event::Whitespace(Cow::Borrowed(" ".into())),
@@ -129,7 +129,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
-/// Event::SectionKey(section::Key::try_from("autocrlf")?),
+/// Event::SectionValueName(section::ValueName::try_from("autocrlf")?),
 /// Event::Value(Cow::Borrowed("".into())),
 /// # ]);
 /// # Ok::<_, Box<dyn std::error::Error>>(())
@@ -160,11 +160,11 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::SectionKey(section::Key::try_from("autocrlf")?),
+/// Event::SectionValueName(section::ValueName::try_from("autocrlf")?),
 /// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(r#"true"""#.into())),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::SectionKey(section::Key::try_from("filemode")?),
+/// Event::SectionValueName(section::ValueName::try_from("filemode")?),
 /// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(r#"fa"lse""#.into())),
 /// # ]);
@@ -195,7 +195,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::SectionKey(section::Key::try_from("file")?),
+/// Event::SectionValueName(section::ValueName::try_from("file")?),
 /// Event::KeyValueSeparator,
 /// Event::ValueNotDone(Cow::Borrowed("a".into())),
 /// Event::Newline(Cow::Borrowed("\n".into())),

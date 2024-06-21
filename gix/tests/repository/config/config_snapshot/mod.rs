@@ -62,7 +62,7 @@ fn values_are_set_in_memory_only() {
 
     {
         let mut config = repo.config_snapshot_mut();
-        config.set_raw_value_by("hallo", None, "welt", "true").unwrap();
+        config.set_raw_value(&"hallo.welt", "true").unwrap();
         config
             .set_subsection_value(&Branch::MERGE, "main", "refs/heads/foo")
             .unwrap();
@@ -94,9 +94,6 @@ fn set_value_in_subsection() {
         config
             .set_value(&gitoxide::Credentials::TERMINAL_PROMPT, "yes")
             .unwrap();
-        // TODO: this should probably be symmetric then and take a key. Figure out how non-keyed access would then be possible.
-        //       Maybe there could be different SnapshotMut types? Maybe there could be a prefix for methods for better separation?
-        //       Maybe a sub-type?
         assert_eq!(
             config
                 .string(&*gitoxide::Credentials::TERMINAL_PROMPT.logical_name())

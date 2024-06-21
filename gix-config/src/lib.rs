@@ -48,14 +48,10 @@ pub mod parse;
 pub mod value;
 pub use gix_config_value::{color, integer, path, Boolean, Color, Integer, Path};
 
-mod impls;
-mod traits;
-pub use traits::Key;
+mod key;
+pub use key::{AsKey, KeyRef};
 mod types;
 pub use types::{File, Source};
 ///
 #[allow(clippy::empty_docs)]
 pub mod source;
-
-#[cfg(test)]
-pub(crate) mod tests;

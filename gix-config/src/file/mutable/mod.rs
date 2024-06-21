@@ -71,7 +71,7 @@ impl<'a> Whitespace<'a> {
         let key_pos =
             s.0.iter()
                 .enumerate()
-                .find_map(|(idx, e)| matches!(e, Event::SectionKey(_)).then(|| idx));
+                .find_map(|(idx, e)| matches!(e, Event::SectionValueName(_)).then(|| idx));
         key_pos
             .map(|key_pos| {
                 let pre_key = s.0[..key_pos].iter().next_back().and_then(|e| match e {

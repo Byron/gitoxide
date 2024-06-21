@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use bstr::ByteSlice;
 
-use crate::{file, file::init, parse::section, path::interpolate, File, Key};
+use crate::{file, file::init, parse::section, path::interpolate, File, KeyRef};
 
 /// Represents the errors that may occur when calling [`File::from_env()`].
 #[derive(Debug, thiserror::Error)]
@@ -25,7 +25,7 @@ pub enum Error {
     #[error(transparent)]
     Section(#[from] section::header::Error),
     #[error(transparent)]
-    Key(#[from] section::key::Error),
+    ValueName(#[from] section::value_name::Error),
 }
 
 /// Instantiation from environment variables
@@ -59,13 +59,16 @@ impl File<'static> {
                 env::var_os(format!("GIT_CONFIG_KEY_{i}")).ok_or(Error::InvalidKeyId { key_id: i })?,
             )
             .map_err(|_| Error::IllformedUtf8 { index: i, kind: "key" })?;
-            let key = key.as_bstr();
             let value = env::var_os(format!("GIT_CONFIG_VALUE_{i}")).ok_or(Error::InvalidValueId { value_id: i })?;
+            let key = KeyRef::parse_unvalidated(key.as_ref()).ok_or_else(|| Error::InvalidKeyValue {
+                key_id: i,
+                key_val: key.to_string(),
+            })?;
 
             config
-                .section_mut_or_create_new(key.section_name(), key.subsection_name())?
+                .section_mut_or_create_new(key.section_name, key.subsection_name)?
                 .push(
-                    section::Key::try_from(key.name().to_owned())?,
+                    section::ValueName::try_from(key.value_name.to_owned())?,
                     Some(
                         gix_path::os_str_into_bstr(&value)
                             .map_err(|_| Error::IllformedUtf8 {

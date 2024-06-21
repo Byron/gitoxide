@@ -210,18 +210,19 @@ impl Cache {
     /// if present.
     pub(crate) fn trusted_file_path(
         &self,
-        key: impl gix_config::Key,
+        key: impl gix_config::AsKey,
     ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
         let path = self
             .resolved
             .path_filter(&key, &mut self.filter_config_section.clone())?;
 
         if self.lenient_config && path.is_empty() {
+            let _key = key.as_key();
             gix_trace::info!(
                 "Ignored empty path at {section_name}.{subsection_name:?}.{name} due to lenient configuration",
-                section_name = key.section_name(),
-                subsection_name = key.subsection_name(),
-                name = key.name()
+                section_name = _key.section_name,
+                subsection_name = _key.subsection_name,
+                name = _key.value_name
             );
             return None;
         }
@@ -425,10 +426,7 @@ impl Cache {
             .find(|key| key.environment_override().expect("set") == name)
             .expect("we must know all possible input variable names");
 
-            let val = self
-                .resolved
-                .string(&format!("gitoxide.pathspec.{key}"))
-                .map(gix_path::from_bstr)?;
+            let val = self.resolved.string(key).map(gix_path::from_bstr)?;
             Some(val.into_owned().into())
         });
         if res.is_err() && self.lenient_config {
