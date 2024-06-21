@@ -208,7 +208,7 @@ fn key_value_pair<'i>(
 ) -> PResult<(), NomError<&'i [u8]>> {
     *node = ParseNode::Name;
     if let Some(name) = opt(config_name).parse_next(i)? {
-        dispatch(Event::SectionKey(section::Key(Cow::Borrowed(name))));
+        dispatch(Event::SectionValueName(section::ValueName(Cow::Borrowed(name))));
 
         if let Some(whitespace) = opt(take_spaces1).parse_next(i)? {
             dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));

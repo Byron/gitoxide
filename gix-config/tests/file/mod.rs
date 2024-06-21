@@ -35,7 +35,7 @@ fn fuzzed() {
     )
     .unwrap();
     for section in file.sections() {
-        for key in section.keys() {
+        for key in section.value_names() {
             section
                 .value_implicit(key.as_ref())
                 .expect("The key exists, so should the value.");

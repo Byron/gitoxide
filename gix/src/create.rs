@@ -241,8 +241,8 @@ pub fn into(
     .expect("by now the `dot_git` dir is valid as we have accessed it"))
 }
 
-fn key(name: &'static str) -> section::Key<'static> {
-    section::Key::try_from(name).expect("valid key name")
+fn key(name: &'static str) -> section::ValueName<'static> {
+    section::ValueName::try_from(name).expect("valid key name")
 }
 
 fn bool(v: bool) -> &'static str {

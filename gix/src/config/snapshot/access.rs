@@ -5,6 +5,7 @@ use std::ffi::OsStr;
 use gix_features::threading::OwnShared;
 use gix_macros::momo;
 
+use crate::bstr::ByteSlice;
 use crate::{
     bstr::{BStr, BString},
     config::{CommitAutoRollback, Snapshot, SnapshotMut},
@@ -156,9 +157,14 @@ impl<'repo> SnapshotMut<'repo> {
         let value = new_value.into();
         key.validate(value)?;
 
-        let current = self
-            .config
-            .set_raw_value_in_subsection(key.as_config_key(), subsection.into(), value)?;
+        let name = key
+            .full_name(Some(subsection.into()))
+            .expect("we know it needs a subsection");
+        let key = gix_config::KeyRef::parse_unvalidated((**name).as_bstr())
+            .expect("statically known keys can always be parsed");
+        let current =
+            self.config
+                .set_raw_value_by(key.section_name, key.subsection_name, key.value_name.to_owned(), value)?;
         Ok(current.map(std::borrow::Cow::into_owned))
     }
 

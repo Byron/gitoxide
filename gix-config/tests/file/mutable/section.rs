@@ -46,7 +46,7 @@ mod remove {
         let mut section = config.section_mut("a", None)?;
 
         assert_eq!(section.num_values(), 5);
-        assert_eq!(section.keys().count(), 5);
+        assert_eq!(section.value_names().count(), 5);
 
         let prev_values = vec!["v", "", "", "", "a        b        c"];
         let mut num_values = section.num_values();
@@ -72,10 +72,10 @@ mod pop {
         let mut section = config.section_mut_by_key("a")?;
 
         assert_eq!(section.num_values(), 5);
-        assert_eq!(section.keys().count(), 5);
+        assert_eq!(section.value_names().count(), 5);
 
         for key in b'a'..=b'e' {
-            assert!(section.contains_key(std::str::from_utf8(&[key])?));
+            assert!(section.contains_value_name(std::str::from_utf8(&[key])?));
         }
         let mut num_values = section.num_values();
         for _ in 0..section.num_values() {
@@ -119,7 +119,7 @@ mod set {
 }
 
 mod push {
-    use gix_config::parse::section::Key;
+    use gix_config::parse::section::ValueName;
 
     use crate::file::cow_str;
 
@@ -185,7 +185,7 @@ mod push {
             let mut config = gix_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
-            section.push(Key::try_from("k").unwrap(), Some(value.into()));
+            section.push(ValueName::try_from("k").unwrap(), Some(value.into()));
             let expected = expected
                 .replace("$head", &format!("[a]{nl}", nl = section.newline()))
                 .replace("$nl", &section.newline().to_string());
@@ -195,7 +195,7 @@ mod push {
 }
 
 mod push_with_comment {
-    use gix_config::parse::section::Key;
+    use gix_config::parse::section::ValueName;
 
     #[test]
     fn various_comments_and_escaping() {
@@ -216,7 +216,7 @@ mod push_with_comment {
             let mut config = gix_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
-            section.push_with_comment(Key::try_from("k").unwrap(), Some("v".into()), comment);
+            section.push_with_comment(ValueName::try_from("k").unwrap(), Some("v".into()), comment);
             let expected = expected
                 .replace("$head", &format!("[a]{nl}", nl = section.newline()))
                 .replace("$nl", &section.newline().to_string());
@@ -229,7 +229,7 @@ mod set_leading_whitespace {
     use std::borrow::Cow;
 
     use bstr::BString;
-    use gix_config::parse::section::Key;
+    use gix_config::parse::section::ValueName;
 
     use crate::file::cow_str;
 
@@ -240,7 +240,7 @@ mod set_leading_whitespace {
 
         let nl = section.newline().to_owned();
         section.set_leading_whitespace(Some(Cow::Owned(BString::from(format!("{nl}\t")))));
-        section.push(Key::try_from("a")?, Some("v".into()));
+        section.push(ValueName::try_from("a")?, Some("v".into()));
 
         assert_eq!(config.to_string(), format!("[core]{nl}{nl}\ta = v{nl}"));
         Ok(())

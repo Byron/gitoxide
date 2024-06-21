@@ -53,7 +53,7 @@ fn comment_included() {
 #[test]
 fn non_existing_values_cannot_be_set() -> crate::Result {
     let mut file = gix_config::File::default();
-    file.set_raw_value(&"new.key", "value")?;
+    file.set_raw_value_by("new", None, "key", "value")?;
     file.set_raw_value_by("new", Some("subsection".into()), "key", "subsection-value")?;
 
     assert_eq!(file.string("new.key").expect("present").as_ref(), "value");

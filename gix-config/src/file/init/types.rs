@@ -42,7 +42,7 @@ fn discard_nonessential_events(e: &Event<'_>) -> bool {
     match e {
         Event::Whitespace(_) | Event::Comment(_) | Event::Newline(_) => false,
         Event::SectionHeader(_)
-        | Event::SectionKey(_)
+        | Event::SectionValueName(_)
         | Event::KeyValueSeparator
         | Event::Value(_)
         | Event::ValueNotDone(_)

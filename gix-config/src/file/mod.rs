@@ -52,7 +52,7 @@ pub mod set_raw_value {
         #[error(transparent)]
         Header(#[from] crate::parse::section::header::Error),
         #[error(transparent)]
-        Key(#[from] crate::parse::section::key::Error),
+        ValueName(#[from] crate::parse::section::value_name::Error),
     }
 }
 

@@ -90,19 +90,19 @@ mod name {
 mod key {
     use std::cmp::Ordering;
 
-    use gix_config::parse::section::Key;
+    use gix_config::parse::section::ValueName;
 
-    fn key(k: &str) -> Key<'_> {
-        Key::try_from(k).unwrap()
+    fn key(k: &str) -> ValueName<'_> {
+        ValueName::try_from(k).unwrap()
     }
 
     #[test]
     fn rejects_invalid_format() {
-        assert!(Key::try_from("").is_err());
-        assert!(Key::try_from("1a").is_err());
-        assert!(Key::try_from("a.2").is_err());
-        assert!(Key::try_from("##").is_err());
-        assert!(Key::try_from("\"").is_err());
+        assert!(ValueName::try_from("").is_err());
+        assert!(ValueName::try_from("1a").is_err());
+        assert!(ValueName::try_from("a.2").is_err());
+        assert!(ValueName::try_from("##").is_err());
+        assert!(ValueName::try_from("\"").is_err());
     }
 
     #[test]

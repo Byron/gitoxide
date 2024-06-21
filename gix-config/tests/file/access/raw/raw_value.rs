@@ -4,7 +4,7 @@ use gix_config::{lookup, File};
 fn single_section() -> crate::Result {
     let config = File::try_from("[core]\na=b\nc=d")?;
     assert_eq!(config.raw_value("core.a")?.as_ref(), "b");
-    assert_eq!(config.raw_value("core.c")?.as_ref(), "d");
+    assert_eq!(config.raw_value_by("core", None, "c")?.as_ref(), "d");
     Ok(())
 }
 

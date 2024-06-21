@@ -105,18 +105,10 @@ impl PrepareFetch {
         if repo.committer().is_none() {
             let mut config = gix_config::File::new(gix_config::file::Metadata::api());
             config
-                .set_raw_value_in_subsection(
-                    &gitoxide::Committer::NAME_FALLBACK,
-                    "committer".into(),
-                    "no name configured during clone",
-                )
+                .set_raw_value(&gitoxide::Committer::NAME_FALLBACK, "no name configured during clone")
                 .expect("works - statically known");
             config
-                .set_raw_value_in_subsection(
-                    &gitoxide::Committer::EMAIL_FALLBACK,
-                    "committer".into(),
-                    "noEmailAvailable@example.com",
-                )
+                .set_raw_value(&gitoxide::Committer::EMAIL_FALLBACK, "noEmailAvailable@example.com")
                 .expect("works - statically known");
             let mut repo_config = repo.config_snapshot_mut();
             repo_config.append(config);

@@ -46,7 +46,7 @@ impl crate::Repository {
                 let short_name = name.shorten();
                 self.config
                     .resolved
-                    .string(&format!("branch.{}.{}", short_name, Branch::MERGE.name))
+                    .string_by("branch", Some(short_name), Branch::MERGE.name)
                     .map(|name| crate::config::tree::branch::Merge::try_into_fullrefname(name).map_err(Into::into))
             }
             remote::Direction::Push => {
@@ -149,11 +149,11 @@ impl crate::Repository {
         (direction == remote::Direction::Push)
             .then(|| {
                 config
-                    .string(&format!("branch.{}.{}", name, Branch::PUSH_REMOTE.name))
+                    .string_by("branch", Some(name), Branch::PUSH_REMOTE.name)
                     .or_else(|| config.string(crate::config::tree::Remote::PUSH_DEFAULT))
             })
             .flatten()
-            .or_else(|| config.string(&format!("branch.{}.{}", name, Branch::REMOTE.name)))
+            .or_else(|| config.string_by("branch", Some(name), Branch::REMOTE.name))
             .and_then(|name| name.try_into().ok())
     }
 
