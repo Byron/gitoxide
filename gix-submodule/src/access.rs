@@ -78,7 +78,7 @@ impl File {
         defaults: gix_pathspec::Defaults,
     ) -> Result<IsActivePlatform, crate::is_active_platform::Error> {
         let search = config
-            .strings_by_key("submodule.active")
+            .strings("submodule.active")
             .map(|patterns| -> Result<_, crate::is_active_platform::Error> {
                 let patterns = patterns
                     .into_iter()
@@ -119,7 +119,7 @@ impl File {
     pub fn path(&self, name: &BStr) -> Result<Cow<'_, BStr>, config::path::Error> {
         let path_bstr =
             self.config
-                .string("submodule", Some(name), "path")
+                .string(format!("submodule.{name}.path"))
                 .ok_or_else(|| config::path::Error::Missing {
                     submodule: name.to_owned(),
                 })?;
@@ -148,7 +148,7 @@ impl File {
     pub fn url(&self, name: &BStr) -> Result<gix_url::Url, config::url::Error> {
         let url = self
             .config
-            .string("submodule", Some(name), "url")
+            .string(format!("submodule.{name}.url"))
             .ok_or_else(|| config::url::Error::Missing {
                 submodule: name.to_owned(),
             })?;
@@ -166,7 +166,7 @@ impl File {
 
     /// Retrieve the `update` field of the submodule named `name`, if present.
     pub fn update(&self, name: &BStr) -> Result<Option<Update>, config::update::Error> {
-        let value: Update = match self.config.string("submodule", Some(name), "update") {
+        let value: Update = match self.config.string(format!("submodule.{name}.update")) {
             Some(v) => v.as_ref().try_into().map_err(|()| config::update::Error::Invalid {
                 submodule: name.to_owned(),
                 actual: v.into_owned(),
@@ -196,7 +196,7 @@ impl File {
     ///
     /// Note that `Default` is implemented for [`Branch`].
     pub fn branch(&self, name: &BStr) -> Result<Option<Branch>, config::branch::Error> {
-        let branch = match self.config.string("submodule", Some(name), "branch") {
+        let branch = match self.config.string(format!("submodule.{name}.branch")) {
             Some(v) => v,
             None => return Ok(None),
         };
@@ -215,7 +215,7 @@ impl File {
     /// Note that if it's unset, it should be retrieved from `fetch.recurseSubmodules` in the configuration.
     pub fn fetch_recurse(&self, name: &BStr) -> Result<Option<FetchRecurse>, config::Error> {
         self.config
-            .boolean("submodule", Some(name), "fetchRecurseSubmodules")
+            .boolean(format!("submodule.{name}.fetchRecurseSubmodules"))
             .map(FetchRecurse::new)
             .transpose()
             .map_err(|value| config::Error {
@@ -228,7 +228,7 @@ impl File {
     /// Retrieve the `ignore` field of the submodule named `name`, or `None` if unset.
     pub fn ignore(&self, name: &BStr) -> Result<Option<Ignore>, config::Error> {
         self.config
-            .string("submodule", Some(name), "ignore")
+            .string(format!("submodule.{name}.ignore"))
             .map(|value| {
                 Ignore::try_from(value.as_ref()).map_err(|()| config::Error {
                     field: "ignore",
@@ -243,6 +243,6 @@ impl File {
     ///
     /// If `true`, the submodule will be checked out with `depth = 1`. If unset, `false` is assumed.
     pub fn shallow(&self, name: &BStr) -> Result<Option<bool>, gix_config::value::Error> {
-        self.config.boolean("submodule", Some(name), "shallow").transpose()
+        self.config.boolean(format!("submodule.{name}.shallow")).transpose()
     }
 }

@@ -4,7 +4,7 @@ use std::borrow::Cow;
 
 use gix_protocol::transport::client::Transport;
 
-use crate::{remote::Connection, Remote};
+use crate::{config::tree::Protocol, remote::Connection, Remote};
 
 mod error {
     use crate::{bstr::BString, config, remote};
@@ -137,7 +137,7 @@ impl<'repo> Remote<'repo> {
         }
 
         let version = crate::config::tree::Protocol::VERSION
-            .try_into_protocol_version(self.repo.config.resolved.integer("protocol", None, "version"))
+            .try_into_protocol_version(self.repo.config.resolved.integer(Protocol::VERSION))
             .map_err(|err| Error::UnknownProtocol { source: err })?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();

@@ -12,7 +12,7 @@ fn commit_auto_rollback() -> crate::Result {
 
     {
         let mut config = repo.config_snapshot_mut();
-        config.set_raw_value("core", None, "abbrev", "4")?;
+        config.set_raw_value(&Core::ABBREV, "4")?;
         let repo = config.commit_auto_rollback()?;
         assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
     }
@@ -21,7 +21,7 @@ fn commit_auto_rollback() -> crate::Result {
 
     let repo = {
         let mut config = repo.config_snapshot_mut();
-        config.set_raw_value("core", None, "abbrev", "4")?;
+        config.set_raw_value(&Core::ABBREV, "4")?;
         let mut repo = config.commit_auto_rollback()?;
         assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
         // access to the mutable repo underneath
@@ -41,15 +41,10 @@ fn snapshot_mut_commit_and_forget() -> crate::Result {
         repo.set_value(&Core::ABBREV, "4")?;
         repo.commit()?
     };
-    assert_eq!(
-        repo.config_snapshot()
-            .integer(Core::ABBREV.logical_name().as_str())
-            .expect("set"),
-        4
-    );
+    assert_eq!(repo.config_snapshot().integer("core.abbrev").expect("set"), 4);
     {
         let mut repo = repo.config_snapshot_mut();
-        repo.set_raw_value("core", None, "abbrev", "8")?;
+        repo.set_raw_value(&Core::ABBREV, "8")?;
         repo.forget();
     }
     assert_eq!(repo.config_snapshot().integer("core.abbrev"), Some(4));
@@ -67,7 +62,7 @@ fn values_are_set_in_memory_only() {
 
     {
         let mut config = repo.config_snapshot_mut();
-        config.set_raw_value("hallo", None, "welt", "true").unwrap();
+        config.set_raw_value(&"hallo.welt", "true").unwrap();
         config
             .set_subsection_value(&Branch::MERGE, "main", "refs/heads/foo")
             .unwrap();
@@ -99,12 +94,9 @@ fn set_value_in_subsection() {
         config
             .set_value(&gitoxide::Credentials::TERMINAL_PROMPT, "yes")
             .unwrap();
-        // TODO: this should probably be symmetric then and take a key. Figure out how non-keyed access would then be possible.
-        //       Maybe there could be different SnapshotMut types? Maybe there could be a prefix for methods for better separation?
-        //       Maybe a sub-type?
         assert_eq!(
             config
-                .string_by_key(&*gitoxide::Credentials::TERMINAL_PROMPT.logical_name())
+                .string(&*gitoxide::Credentials::TERMINAL_PROMPT.logical_name())
                 .expect("just set")
                 .as_ref(),
             "yes"

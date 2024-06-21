@@ -89,7 +89,7 @@ pub enum Source {
 /// # use std::borrow::Cow;
 /// # use std::convert::TryFrom;
 /// # let git_config = gix_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-/// assert_eq!(git_config.raw_value("core", None, "a").unwrap().as_ref(), "d");
+/// assert_eq!(git_config.raw_value("core.a").unwrap().as_ref(), "d");
 /// ```
 ///
 /// Consider the `multi` variants of the methods instead, if you want to work

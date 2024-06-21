@@ -259,7 +259,7 @@ pub mod pathspec {
                 .parent
                 .config
                 .resolved
-                .boolean_by_key("gitoxide.pathspec.inheritIgnoreCase")
+                .boolean("gitoxide.pathspec.inheritIgnoreCase")
                 .map(|res| {
                     gitoxide::Pathspec::INHERIT_IGNORE_CASE
                         .enrich_error(res)

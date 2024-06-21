@@ -1,6 +1,6 @@
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod blocking_and_async_io {
-    use gix::remote::Direction::Fetch;
+    use gix::{config::tree::Protocol, remote::Direction::Fetch};
     use gix_features::progress;
     use gix_protocol::maybe_async;
 
@@ -56,12 +56,8 @@ mod blocking_and_async_io {
         ] {
             let mut repo = remote::repo("clone");
             if let Some(version) = version {
-                repo.config_snapshot_mut().set_raw_value(
-                    "protocol",
-                    None,
-                    "version",
-                    (version as u8).to_string().as_str(),
-                )?;
+                repo.config_snapshot_mut()
+                    .set_raw_value(&Protocol::VERSION, (version as u8).to_string().as_str())?;
             }
 
             let remote = into_daemon_remote_if_async(

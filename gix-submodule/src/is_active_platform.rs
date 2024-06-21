@@ -34,7 +34,7 @@ impl IsActivePlatform {
             &mut gix_pathspec::attributes::search::Outcome,
         ) -> bool,
     ) -> Result<bool, gix_config::value::Error> {
-        if let Some(val) = config.boolean("submodule", Some(name), "active").transpose()? {
+        if let Some(val) = config.boolean(format!("submodule.{name}.active")).transpose()? {
             return Ok(val);
         };
         if let Some(val) = self.search.as_mut().map(|search| {
@@ -44,6 +44,6 @@ impl IsActivePlatform {
         }) {
             return Ok(val);
         }
-        Ok(config.string("submodule", Some(name), "url").is_some())
+        Ok(config.string(format!("submodule.{name}.url")).is_some())
     }
 }

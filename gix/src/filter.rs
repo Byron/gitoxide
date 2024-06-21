@@ -83,9 +83,9 @@ impl<'repo> Pipeline<'repo> {
     pub fn options(repo: &'repo Repository) -> Result<gix_filter::pipeline::Options, pipeline::options::Error> {
         let config = &repo.config.resolved;
         let encodings =
-            Core::CHECK_ROUND_TRIP_ENCODING.try_into_encodings(config.string_by_key("core.checkRoundtripEncoding"))?;
+            Core::CHECK_ROUND_TRIP_ENCODING.try_into_encodings(config.string("core.checkRoundtripEncoding"))?;
         let safe_crlf = config
-            .string_by_key("core.safecrlf")
+            .string("core.safecrlf")
             .map(|value| Core::SAFE_CRLF.try_into_safecrlf(value))
             .transpose()
             .map(Option::unwrap_or_default)
@@ -95,13 +95,13 @@ impl<'repo> Pipeline<'repo> {
                 gix_filter::pipeline::CrlfRoundTripCheck::Fail,
             )?;
         let auto_crlf = config
-            .string_by_key("core.autocrlf")
+            .string("core.autocrlf")
             .map(|value| Core::AUTO_CRLF.try_into_autocrlf(value))
             .transpose()
             .with_leniency(repo.config.lenient_config)?
             .unwrap_or_default();
         let eol = config
-            .string_by_key("core.eol")
+            .string("core.eol")
             .map(|value| Core::EOL.try_into_eol(value))
             .transpose()?;
         let drivers = extract_drivers(repo)?;

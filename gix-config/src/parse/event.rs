@@ -25,7 +25,7 @@ impl Event<'_> {
                 e.as_ref()
             }
             Self::KeyValueSeparator => "=".into(),
-            Self::SectionKey(k) => k.0.as_ref(),
+            Self::SectionValueName(k) => k.0.as_ref(),
             Self::SectionHeader(h) => h.name.0.as_ref(),
             Self::Comment(c) => c.text.as_ref(),
         }
@@ -41,7 +41,7 @@ impl Event<'_> {
             }
             Self::Whitespace(e) | Self::Newline(e) | Self::Value(e) | Self::ValueDone(e) => out.write_all(e.as_ref()),
             Self::KeyValueSeparator => out.write_all(b"="),
-            Self::SectionKey(k) => out.write_all(k.0.as_ref()),
+            Self::SectionValueName(k) => out.write_all(k.0.as_ref()),
             Self::SectionHeader(h) => h.write_to(out),
             Self::Comment(c) => c.write_to(out),
         }
@@ -53,7 +53,7 @@ impl Event<'_> {
         match self {
             Event::Comment(e) => Event::Comment(e.to_owned()),
             Event::SectionHeader(e) => Event::SectionHeader(e.to_owned()),
-            Event::SectionKey(e) => Event::SectionKey(e.to_owned()),
+            Event::SectionValueName(e) => Event::SectionValueName(e.to_owned()),
             Event::Value(e) => Event::Value(Cow::Owned(e.clone().into_owned())),
             Event::ValueNotDone(e) => Event::ValueNotDone(Cow::Owned(e.clone().into_owned())),
             Event::ValueDone(e) => Event::ValueDone(Cow::Owned(e.clone().into_owned())),

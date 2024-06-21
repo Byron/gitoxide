@@ -13,7 +13,7 @@ use crate::{
         Index, Section, Size,
     },
     lookup, parse,
-    parse::{section::Key, Event},
+    parse::{section::ValueName, Event},
     value::{normalize, normalize_bstr, normalize_bstring},
 };
 
@@ -28,34 +28,34 @@ pub struct SectionMut<'a, 'event> {
 
 /// Mutating methods.
 impl<'a, 'event> SectionMut<'a, 'event> {
-    /// Adds an entry to the end of this section name `key` and `value`. If `value` is `None`, no equal sign will be written leaving
+    /// Adds an entry to the end of this section name `value_name` and `value`. If `value` is `None`, no equal sign will be written leaving
     /// just the key. This is useful for boolean values which are true if merely the key exists.
-    pub fn push<'b>(&mut self, key: Key<'event>, value: Option<&'b BStr>) -> &mut Self {
-        self.push_with_comment_inner(key, value, None);
+    pub fn push<'b>(&mut self, value_name: ValueName<'event>, value: Option<&'b BStr>) -> &mut Self {
+        self.push_with_comment_inner(value_name, value, None);
         self
     }
 
-    /// Adds an entry to the end of this section name `key` and `value`. If `value` is `None`, no equal sign will be written leaving
+    /// Adds an entry to the end of this section name `value_name` and `value`. If `value` is `None`, no equal sign will be written leaving
     /// just the key. This is useful for boolean values which are true if merely the key exists.
     /// `comment` has to be the text to put right after the value and behind a `#` character. Note that newlines are silently transformed
     /// into spaces.
     pub fn push_with_comment<'b, 'c>(
         &mut self,
-        key: Key<'event>,
+        value_name: ValueName<'event>,
         value: Option<&'b BStr>,
         comment: impl Into<&'c BStr>,
     ) -> &mut Self {
-        self.push_with_comment_inner(key, value, comment.into().into());
+        self.push_with_comment_inner(value_name, value, comment.into().into());
         self
     }
 
-    fn push_with_comment_inner(&mut self, key: Key<'event>, value: Option<&BStr>, comment: Option<&BStr>) {
+    fn push_with_comment_inner(&mut self, value_name: ValueName<'event>, value: Option<&BStr>, comment: Option<&BStr>) {
         let body = &mut self.section.body.0;
         if let Some(ws) = &self.whitespace.pre_key {
             body.push(Event::Whitespace(ws.clone()));
         }
 
-        body.push(Event::SectionKey(key));
+        body.push(Event::SectionValueName(value_name));
         match value {
             Some(value) => {
                 body.extend(self.whitespace.key_value_separators());
@@ -85,13 +85,13 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 
     /// Removes all events until a key value pair is removed. This will also
     /// remove the whitespace preceding the key value pair, if any is found.
-    pub fn pop(&mut self) -> Option<(Key<'_>, Cow<'event, BStr>)> {
+    pub fn pop(&mut self) -> Option<(ValueName<'_>, Cow<'event, BStr>)> {
         let mut values = Vec::new();
         // events are popped in reverse order
         let body = &mut self.section.body.0;
         while let Some(e) = body.pop() {
             match e {
-                Event::SectionKey(k) => {
+                Event::SectionValueName(k) => {
                     // pop leading whitespace
                     if let Some(Event::Whitespace(_)) = body.last() {
                         body.pop();
@@ -123,10 +123,10 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     /// Sets the last key value pair if it exists, or adds the new value.
     /// Returns the previous value if it replaced a value, or None if it adds
     /// the value.
-    pub fn set(&mut self, key: Key<'event>, value: &BStr) -> Option<Cow<'event, BStr>> {
-        match self.key_and_value_range_by(&key) {
+    pub fn set(&mut self, value_name: ValueName<'event>, value: &BStr) -> Option<Cow<'event, BStr>> {
+        match self.key_and_value_range_by(&value_name) {
             None => {
-                self.push(key, Some(value));
+                self.push(value_name, Some(value));
                 None
             }
             Some((key_range, value_range)) => {
@@ -143,8 +143,8 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     }
 
     /// Removes the latest value by key and returns it, if it exists.
-    pub fn remove(&mut self, key: &str) -> Option<Cow<'event, BStr>> {
-        let key = Key::from_str_unchecked(key);
+    pub fn remove(&mut self, value_name: &str) -> Option<Cow<'event, BStr>> {
+        let key = ValueName::from_str_unchecked(value_name);
         let (key_range, _value_range) = self.key_and_value_range_by(&key)?;
         Some(self.remove_internal(key_range, true))
     }
@@ -224,7 +224,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 
     pub(crate) fn get(
         &self,
-        key: &Key<'_>,
+        key: &ValueName<'_>,
         start: Index,
         end: Index,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
@@ -233,7 +233,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 
         for event in &self.section.0[start.0..end.0] {
             match event {
-                Event::SectionKey(event_key) if event_key == key => expect_value = true,
+                Event::SectionValueName(event_key) if event_key == key => expect_value = true,
                 Event::Value(v) if expect_value => return Ok(normalize_bstr(v.as_ref())),
                 Event::ValueNotDone(v) if expect_value => {
                     concatenated_value.push_str(v.as_ref());
@@ -253,7 +253,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
         self.section.body.0.drain(start.0..end.0);
     }
 
-    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: &BStr) -> Size {
+    pub(crate) fn set_internal(&mut self, index: Index, key: ValueName<'event>, value: &BStr) -> Size {
         let mut size = 0;
 
         let body = &mut self.section.body.0;
@@ -265,7 +265,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
         body.splice(index.0..index.0, sep_events.into_iter().rev())
             .for_each(|_| {});
 
-        body.insert(index.0, Event::SectionKey(key));
+        body.insert(index.0, Event::SectionValueName(key));
         size += 1;
 
         Size(size)

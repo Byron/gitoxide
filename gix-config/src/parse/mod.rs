@@ -26,11 +26,6 @@ mod error;
 #[allow(clippy::empty_docs)]
 pub mod section;
 
-///
-#[allow(clippy::empty_docs)]
-mod key;
-pub use key::{parse_unvalidated as key, Key};
-
 #[cfg(test)]
 pub(crate) mod tests;
 
@@ -55,7 +50,7 @@ pub enum Event<'a> {
     /// name and `origin` as subsection name.
     SectionHeader(section::Header<'a>),
     /// A name to a value in a section, like `url` in `remote.origin.url`.
-    SectionKey(section::Key<'a>),
+    SectionValueName(section::ValueName<'a>),
     /// A completed value. This may be any single-line string, including the empty string
     /// if an implicit boolean value is used.
     /// Note that these values may contain spaces and any special character. This value is

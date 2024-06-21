@@ -141,7 +141,7 @@ where
         let mut negotiator = repo
             .config
             .resolved
-            .string_by_key(Fetch::NEGOTIATION_ALGORITHM.logical_name().as_str())
+            .string(Fetch::NEGOTIATION_ALGORITHM.logical_name().as_str())
             .map(|n| Fetch::NEGOTIATION_ALGORITHM.try_into_negotiation_algorithm(n))
             .transpose()
             .with_leniency(repo.config.lenient_config)?
@@ -257,7 +257,7 @@ where
                     let reject_shallow_remote = repo
                         .config
                         .resolved
-                        .boolean_filter_by_key("clone.rejectShallow", &mut repo.filter_config_section())
+                        .boolean_filter("clone.rejectShallow", &mut repo.filter_config_section())
                         .map(|val| Clone::REJECT_SHALLOW.enrich_error(val))
                         .transpose()?
                         .unwrap_or(false);

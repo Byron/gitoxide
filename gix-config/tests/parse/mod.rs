@@ -4,7 +4,6 @@ use gix_config::parse::{Event, Events, Section};
 
 mod error;
 mod from_bytes;
-mod key;
 mod section;
 
 #[test]
@@ -49,7 +48,7 @@ fn consecutive_newlines() {
 }
 
 fn name(name: &'static str) -> Event<'static> {
-    Event::SectionKey(gix_config::parse::section::Key::try_from(name).unwrap())
+    Event::SectionValueName(gix_config::parse::section::ValueName::try_from(name).unwrap())
 }
 
 fn value(value: &'static str) -> Event<'static> {

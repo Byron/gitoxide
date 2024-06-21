@@ -115,7 +115,7 @@ impl Repository {
         let untracked = self
             .config
             .resolved
-            .string("status", None, "showUntrackedFiles")
+            .string(config::tree::Status::SHOW_UNTRACKED_FILES)
             .map(|value| {
                 config::tree::Status::SHOW_UNTRACKED_FILES
                     .try_into_show_untracked_files(value)

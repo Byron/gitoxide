@@ -24,7 +24,7 @@ pub(crate) struct EntryData {
 #[derive(PartialEq, Eq, Debug)]
 pub struct MultiValueMut<'borrow, 'lookup, 'event> {
     pub(crate) section: &'borrow mut HashMap<SectionId, Section<'event>>,
-    pub(crate) key: section::Key<'lookup>,
+    pub(crate) key: section::ValueName<'lookup>,
     /// Each entry data struct provides sufficient information to index into
     /// [`Self::offsets`]. This layer of indirection is used for users to index
     /// into the offsets rather than leaking the internal data structures.
@@ -50,7 +50,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
             let (offset, size) = MultiValueMut::index_and_size(&self.offsets, *section_id, *offset_index);
             for event in &self.section.get(section_id).expect("known section id").as_ref()[offset..offset + size] {
                 match event {
-                    Event::SectionKey(section_key) if *section_key == self.key => expect_value = true,
+                    Event::SectionValueName(section_key) if *section_key == self.key => expect_value = true,
                     Event::Value(v) if expect_value => {
                         expect_value = false;
                         values.push(normalize_bstr(v.as_ref()));
@@ -167,7 +167,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
     }
 
     fn set_value_inner<'a: 'event>(
-        key: &section::Key<'lookup>,
+        value_name: &section::ValueName<'lookup>,
         offsets: &mut HashMap<SectionId, Vec<usize>>,
         section: &mut file::section::Body<'event>,
         section_id: SectionId,
@@ -185,7 +185,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
         section
             .splice(offset..offset, key_sep_events.into_iter().rev())
             .for_each(|_| {});
-        section.insert(offset, Event::SectionKey(key.to_owned()));
+        section.insert(offset, Event::SectionValueName(value_name.to_owned()));
     }
 
     /// Removes the value at the given index. Does nothing when called multiple

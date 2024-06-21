@@ -2,7 +2,7 @@
 
 use super::{util, Error};
 use crate::config::cache::util::{ApplyLeniency, ApplyLeniencyDefaultValue};
-use crate::config::tree::{Core, Extensions, Key};
+use crate::config::tree::{gitoxide, Core, Extensions};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
@@ -41,7 +41,7 @@ impl StageOne {
         // the repo doesn't have a configuration file.
         let is_bare = util::config_bool(&config, &Core::BARE, "core.bare", true, lenient)?;
         let repo_format_version = config
-            .integer_by_key("core.repositoryFormatVersion")
+            .integer("core.repositoryFormatVersion")
             .map(|version| Core::REPOSITORY_FORMAT_VERSION.try_into_usize(version))
             .transpose()?
             .unwrap_or_default();
@@ -49,7 +49,7 @@ impl StageOne {
             .then_some(Ok(gix_hash::Kind::Sha1))
             .or_else(|| {
                 config
-                    .string("extensions", None, "objectFormat")
+                    .string(Extensions::OBJECT_FORMAT)
                     .map(|format| Extensions::OBJECT_FORMAT.try_into_object_format(format))
             })
             .transpose()?
@@ -74,7 +74,7 @@ impl StageOne {
             config.append(worktree_config);
         };
         let precompose_unicode = config
-            .boolean("core", None, Core::PRECOMPOSE_UNICODE.name())
+            .boolean(&Core::PRECOMPOSE_UNICODE)
             .map(|v| Core::PRECOMPOSE_UNICODE.enrich_error(v))
             .transpose()
             .with_leniency(lenient)
@@ -82,10 +82,10 @@ impl StageOne {
             .unwrap_or_default();
 
         const IS_WINDOWS: bool = cfg!(windows);
-        let protect_windows = crate::config::tree::gitoxide::Core::PROTECT_WINDOWS
+        let protect_windows = gitoxide::Core::PROTECT_WINDOWS
             .enrich_error(
                 config
-                    .boolean("gitoxide", Some("core".into()), "protectWindows")
+                    .boolean(gitoxide::Core::PROTECT_WINDOWS)
                     .unwrap_or(Ok(IS_WINDOWS)),
             )
             .with_lenient_default_value(lenient, IS_WINDOWS)?;

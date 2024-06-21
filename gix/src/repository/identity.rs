@@ -115,11 +115,11 @@ impl Personas {
             });
             (
                 config
-                    .string(name_key.section.name(), None, name_key.name)
+                    .string(name_key)
                     .or_else(|| fallback.as_ref().and_then(|(s, name_key, _)| s.value(name_key.name)))
                     .map(std::borrow::Cow::into_owned),
                 config
-                    .string(email_key.section.name(), None, email_key.name)
+                    .string(email_key)
                     .or_else(|| fallback.as_ref().and_then(|(s, _, email_key)| s.value(email_key.name)))
                     .map(std::borrow::Cow::into_owned),
             )
@@ -131,9 +131,7 @@ impl Personas {
                 date.logical_name(),
                 "BUG: drift of expected name and actual name of the key (we hardcode it to save an allocation)"
             );
-            config
-                .string_by_key(key)
-                .map(|time| date.try_into_time(time, now.into()))
+            config.string(key).map(|time| date.try_into_time(time, now.into()))
         };
 
         let fallback = (
@@ -151,7 +149,7 @@ impl Personas {
 
         user_email = user_email.or_else(|| {
             config
-                .string_by_key(gitoxide::User::EMAIL_FALLBACK.logical_name().as_str())
+                .string(gitoxide::User::EMAIL_FALLBACK.logical_name().as_str())
                 .map(std::borrow::Cow::into_owned)
         });
         Personas {

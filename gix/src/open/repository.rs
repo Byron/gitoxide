@@ -261,10 +261,7 @@ impl ThreadSafeRepository {
 
         // core.worktree might be used to overwrite the worktree directory
         if !config.is_bare {
-            if let Some(wt) = config
-                .resolved
-                .path_filter("core", None, Core::WORKTREE.name, &mut filter_config_section)
-            {
+            if let Some(wt) = config.resolved.path_filter(Core::WORKTREE, &mut filter_config_section) {
                 let wt_clone = wt.clone();
                 let wt_path = wt
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
@@ -280,7 +277,7 @@ impl ThreadSafeRepository {
             } else if !config.lenient_config
                 && config
                     .resolved
-                    .boolean_filter("core", None, Core::WORKTREE.name, &mut filter_config_section)
+                    .boolean_filter(Core::WORKTREE, &mut filter_config_section)
                     .is_some()
             {
                 return Err(Error::from(config::Error::ConfigTypedString(
@@ -365,7 +362,7 @@ fn replacement_objects_refs_prefix(
         let key = "gitoxide.objects.replaceRefBase";
         debug_assert_eq!(gitoxide::Objects::REPLACE_REF_BASE.logical_name(), key);
         config
-            .string_filter_by_key(key, &mut filter_config_section)
+            .string_filter(key, &mut filter_config_section)
             .unwrap_or_else(|| Cow::Borrowed("refs/replace/".into()))
     })
     .into_owned();
@@ -386,7 +383,7 @@ fn check_safe_directories(
     };
     for safe_dir in config
         .resolved
-        .strings_filter("safe", None, Safe::DIRECTORY.name, &mut Safe::directory_filter)
+        .strings_filter(Safe::DIRECTORY, &mut Safe::directory_filter)
         .unwrap_or_default()
     {
         if safe_dir.as_ref() == "*" {

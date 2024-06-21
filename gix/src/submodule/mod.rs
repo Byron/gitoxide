@@ -125,7 +125,7 @@ impl<'repo> Submodule<'repo> {
                 .repo
                 .config
                 .resolved
-                .boolean_by_key("fetch.recurseSubmodules")
+                .boolean("fetch.recurseSubmodules")
                 .map(|res| crate::config::tree::Fetch::RECURSE_SUBMODULES.try_into_recurse_submodules(res))
                 .transpose()?,
         })

@@ -116,7 +116,7 @@ mod to_filter {
     #[test]
     fn allows_only_selected_sections() -> crate::Result {
         let mut config = gix_config::File::new(Metadata::api());
-        config.set_raw_value("a", None, "b", "c")?;
+        config.set_raw_value_by("a", None, "b", "c")?;
 
         let meta: Metadata = gix_config::Source::Local.into();
         config.set_meta(meta);

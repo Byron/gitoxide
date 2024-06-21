@@ -153,7 +153,7 @@ mod types {
     fn is_valid_name(n: &bstr::BStr) -> bool {
         !n.is_empty() && n.iter().all(|b| b.is_ascii_alphanumeric() || *b == b'-')
     }
-    fn is_valid_key(n: &bstr::BStr) -> bool {
+    fn is_valid_value_name(n: &bstr::BStr) -> bool {
         is_valid_name(n) && n[0].is_ascii_alphabetic()
     }
 
@@ -167,15 +167,15 @@ mod types {
     );
 
     generate_case_insensitive!(
-        Key,
-        key,
-        "Valid keys consist alphanumeric characters or dashes, starting with an alphabetic character.",
-        is_valid_key,
+        ValueName,
+        value_name,
+        "Valid value names consist of alphanumeric characters or dashes, starting with an alphabetic character.",
+        is_valid_value_name,
         bstr::BStr,
-        "Wrapper struct for key names, like `path` in `include.path`, since keys are case-insensitive."
+        "Wrapper struct for value names, like `path` in `include.path`, since keys are case-insensitive."
     );
 }
-pub use types::{key, name, Key, Name};
+pub use types::{name, value_name, Name, ValueName};
 
 pub(crate) fn into_cow_bstr(c: Cow<'_, str>) -> Cow<'_, BStr> {
     match c {

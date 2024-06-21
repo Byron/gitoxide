@@ -17,7 +17,7 @@ fn fuzz_immutable_section(section: &gix_config::file::Section<'_>, buf: &mut Vec
         let _ = black_box((key, value));
     }
     let mut seen = BTreeSet::new();
-    for key in section.keys() {
+    for key in section.value_names() {
         if seen.insert(key) {
             let _ = black_box(section.values(key.as_ref()));
         }
@@ -37,7 +37,7 @@ fn fuzz_mutable_section(
     // Mutate section.
     let section_id = {
         let mut section = file.section_mut(section_name, subsection_name)?;
-        let key = section.keys().next().cloned();
+        let key = section.value_names().next().cloned();
 
         if let Some(key) = key {
             section.push_newline();

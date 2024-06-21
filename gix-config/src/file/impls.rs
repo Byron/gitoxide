@@ -54,9 +54,9 @@ impl Display for File<'_> {
 
 impl PartialEq for File<'_> {
     fn eq(&self, other: &Self) -> bool {
-        fn find_key<'a>(mut it: impl Iterator<Item = &'a Event<'a>>) -> Option<&'a section::Key<'a>> {
+        fn find_key<'a>(mut it: impl Iterator<Item = &'a Event<'a>>) -> Option<&'a section::ValueName<'a>> {
             it.find_map(|e| match e {
-                Event::SectionKey(k) => Some(k),
+                Event::SectionValueName(k) => Some(k),
                 _ => None,
             })
         }
@@ -66,7 +66,7 @@ impl PartialEq for File<'_> {
 
             for event in it {
                 match event {
-                    Event::SectionKey(_) => break,
+                    Event::SectionValueName(_) => break,
                     Event::Value(v) => {
                         value = v.clone().into();
                         break;

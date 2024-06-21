@@ -5,7 +5,7 @@ mod get {
     fn single_lines() -> crate::Result {
         let mut config = init_config();
 
-        let value = config.raw_values_mut("core", None, "a")?;
+        let value = config.raw_values_mut_by("core", None, "a")?;
         assert_eq!(&*value.get()?, vec![cow_str("b100"), cow_str("d"), cow_str("f"),]);
         Ok(())
     }
@@ -23,7 +23,7 @@ c
    a"#
         .parse()?;
 
-        let mut values = config.raw_values_mut("core", None, "a")?;
+        let mut values = config.raw_values_mut_by("core", None, "a")?;
         assert_eq!(
             &*values.get()?,
             vec![cow_str("b100"), cow_str("db  c"), cow_str("f   a"),]
@@ -42,8 +42,8 @@ mod access {
     #[test]
     fn non_empty_sizes() -> crate::Result {
         let mut config = init_config();
-        assert_eq!(config.raw_values_mut("core", None, "a")?.len(), 3);
-        assert!(!config.raw_values_mut("core", None, "a")?.is_empty());
+        assert_eq!(config.raw_values_mut_by("core", None, "a")?.len(), 3);
+        assert!(!config.raw_values_mut_by("core", None, "a")?.is_empty());
         Ok(())
     }
 }
@@ -55,13 +55,13 @@ mod set {
     fn values_are_escaped() -> crate::Result {
         for value in ["a b", " a b", "a b\t", ";c", "#c", "a\nb\n\tc"] {
             let mut config = init_config();
-            let mut values = config.raw_values_mut("core", None, "a")?;
+            let mut values = config.raw_values_mut_by("core", None, "a")?;
             values.set_all(value);
 
             let config_str = config.to_string();
             let config: gix_config::File = config_str.parse()?;
             assert_eq!(
-                config.raw_values("core", None, "a")?,
+                config.raw_values("core.a")?,
                 vec![cow_str(value), cow_str(value), cow_str(value)],
                 "{config_str:?}"
             );
@@ -72,7 +72,7 @@ mod set {
     #[test]
     fn single_at_start() -> crate::Result {
         let mut config = init_config();
-        let mut values = config.raw_values_mut("core", None, "a")?;
+        let mut values = config.raw_values_mut_by("core", None, "a")?;
         values.set_string_at(0, "Hello");
         assert_eq!(
             config.to_string(),
@@ -84,7 +84,7 @@ mod set {
     #[test]
     fn single_at_end() -> crate::Result {
         let mut config = init_config();
-        let mut values = config.raw_values_mut("core", None, "a")?;
+        let mut values = config.raw_values_mut_by("core", None, "a")?;
         values.set_string_at(2, "Hello");
         assert_eq!(
             config.to_string(),
@@ -96,7 +96,7 @@ mod set {
     #[test]
     fn all() -> crate::Result {
         let mut config = init_config();
-        let mut values = config.raw_values_mut("core", None, "a")?;
+        let mut values = config.raw_values_mut_by("core", None, "a")?;
         values.set_all("Hello");
         assert_eq!(
             config.to_string(),
@@ -108,7 +108,7 @@ mod set {
     #[test]
     fn all_empty() -> crate::Result {
         let mut config = init_config();
-        let mut values = config.raw_values_mut("core", None, "a")?;
+        let mut values = config.raw_values_mut_by("core", None, "a")?;
         values.set_all("");
         assert_eq!(
             config.to_string(),
@@ -125,7 +125,7 @@ mod delete {
     fn single_at_start_and_end() -> crate::Result {
         let mut config = init_config();
         {
-            let mut values = config.raw_values_mut("core", None, "a")?;
+            let mut values = config.raw_values_mut_by("core", None, "a")?;
             values.delete(0);
             assert_eq!(
                 config.to_string(),
@@ -133,7 +133,7 @@ mod delete {
             );
         }
 
-        let mut values = config.raw_values_mut("core", None, "a")?;
+        let mut values = config.raw_values_mut_by("core", None, "a")?;
         values.delete(1);
         assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        a =d\n        ");
         Ok(())
@@ -142,7 +142,7 @@ mod delete {
     #[test]
     fn all() -> crate::Result {
         let mut config = init_config();
-        let mut values = config.raw_values_mut("core", None, "a")?;
+        let mut values = config.raw_values_mut_by("core", None, "a")?;
         values.delete_all();
         values.delete_all();
         assert!(values.get().is_err());

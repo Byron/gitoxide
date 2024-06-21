@@ -96,7 +96,7 @@ fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<gix_url::Url>> {
     let config = gix::config::File::from_path_no_includes(non_bare.as_path().into(), local)
         .or_else(|_| gix::config::File::from_path_no_includes(repo.join("config"), local))?;
     Ok(config
-        .string_by_key("remote.origin.url")
+        .string("remote.origin.url")
         .map(|url| gix_url::Url::from_bytes(url.as_ref()))
         .transpose()?)
 }

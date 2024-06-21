@@ -2,126 +2,130 @@ use std::borrow::Cow;
 
 use bstr::BStr;
 
-use crate::{file::MetadataFilter, value, File};
+use crate::{file::MetadataFilter, value, AsKey, File};
 
 /// Comfortable API for accessing values
 impl<'event> File<'event> {
-    /// Like [`value()`][File::value()], but returning `None` if the string wasn't found.
+    /// Like [`string_by()`](File::string_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn string(&self, key: impl AsKey) -> Option<Cow<'_, BStr>> {
+        self.string_filter(key, &mut |_| true)
+    }
+
+    /// Like [`value()`](File::value()), but returning `None` if the string wasn't found.
     ///
     /// As strings perform no conversions, this will never fail.
-    pub fn string(
+    pub fn string_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
     ) -> Option<Cow<'_, BStr>> {
-        self.string_filter(section_name, subsection_name, key, &mut |_| true)
+        self.string_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), &mut |_| {
+            true
+        })
     }
 
-    /// Like [`string()`][File::string()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn string_by_key<'a>(&self, key: impl Into<&'a BStr>) -> Option<Cow<'_, BStr>> {
-        self.string_filter_by_key(key, &mut |_| true)
+    /// Like [`string_filter_by()`](File::string_filter_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn string_filter(&self, key: impl AsKey, filter: &mut MetadataFilter) -> Option<Cow<'_, BStr>> {
+        let key = key.try_as_key()?;
+        self.raw_value_filter_by(key.section_name, key.subsection_name, key.value_name, filter)
+            .ok()
     }
 
-    /// Like [`string()`][File::string()], but the section containing the returned value must pass `filter` as well.
-    pub fn string_filter(
+    /// Like [`string()`](File::string()), but the section containing the returned value must pass `filter` as well.
+    pub fn string_filter_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Cow<'_, BStr>> {
-        self.raw_value_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+        self.raw_value_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), filter)
             .ok()
     }
 
-    /// Like [`string_filter()`][File::string_filter()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn string_filter_by_key<'a>(
-        &self,
-        key: impl Into<&'a BStr>,
-        filter: &mut MetadataFilter,
-    ) -> Option<Cow<'_, BStr>> {
-        let key = crate::parse::key(key.into())?;
-        self.raw_value_filter(key.section_name, key.subsection_name, key.value_name, filter)
-            .ok()
+    /// Like [`path_by()`](File::path_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn path(&self, key: impl AsKey) -> Option<crate::Path<'_>> {
+        self.path_filter(key, &mut |_| true)
     }
 
-    /// Like [`value()`][File::value()], but returning `None` if the path wasn't found.
+    /// Like [`value()`](File::value()), but returning `None` if the path wasn't found.
     ///
     /// Note that this path is not vetted and should only point to resources which can't be used
-    /// to pose a security risk. Prefer using [`path_filter()`][File::path_filter()] instead.
+    /// to pose a security risk. Prefer using [`path_filter()`](File::path_filter()) instead.
     ///
     /// As paths perform no conversions, this will never fail.
-    pub fn path(
+    pub fn path_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
     ) -> Option<crate::Path<'_>> {
-        self.path_filter(section_name, subsection_name, key, &mut |_| true)
+        self.path_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), &mut |_| {
+            true
+        })
     }
 
-    /// Like [`path()`][File::path()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn path_by_key<'a>(&self, key: impl Into<&'a BStr>) -> Option<crate::Path<'_>> {
-        self.path_filter_by_key(key, &mut |_| true)
+    /// Like [`path_filter_by()`](File::path_filter_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn path_filter(&self, key: impl AsKey, filter: &mut MetadataFilter) -> Option<crate::Path<'_>> {
+        let key = key.try_as_key()?;
+        self.path_filter_by(key.section_name, key.subsection_name, key.value_name, filter)
     }
 
-    /// Like [`path()`][File::path()], but the section containing the returned value must pass `filter` as well.
+    /// Like [`path()`](File::path()), but the section containing the returned value must pass `filter` as well.
     ///
     /// This should be the preferred way of accessing paths as those from untrusted
     /// locations can be
     ///
     /// As paths perform no conversions, this will never fail.
-    pub fn path_filter(
+    pub fn path_filter_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<crate::Path<'_>> {
-        self.raw_value_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+        self.raw_value_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), filter)
             .ok()
             .map(crate::Path::from)
     }
 
-    /// Like [`path_filter()`][File::path_filter()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn path_filter_by_key<'a>(
-        &self,
-        key: impl Into<&'a BStr>,
-        filter: &mut MetadataFilter,
-    ) -> Option<crate::Path<'_>> {
-        let key = crate::parse::key(key.into())?;
-        self.path_filter(key.section_name, key.subsection_name, key.value_name, filter)
+    /// Like [`boolean_by()`](File::boolean_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn boolean(&self, key: impl AsKey) -> Option<Result<bool, value::Error>> {
+        self.boolean_filter(key, &mut |_| true)
     }
 
-    /// Like [`value()`][File::value()], but returning `None` if the boolean value wasn't found.
-    pub fn boolean(
+    /// Like [`value()`](File::value()), but returning `None` if the boolean value wasn't found.
+    pub fn boolean_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
     ) -> Option<Result<bool, value::Error>> {
-        self.boolean_filter(section_name, subsection_name, key, &mut |_| true)
+        self.boolean_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), &mut |_| {
+            true
+        })
     }
 
-    /// Like [`boolean()`][File::boolean()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn boolean_by_key<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<bool, value::Error>> {
-        self.boolean_filter_by_key(key, &mut |_| true)
+    /// Like [`boolean_filter_by()`](File::boolean_filter_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn boolean_filter(&self, key: impl AsKey, filter: &mut MetadataFilter) -> Option<Result<bool, value::Error>> {
+        let key = key.try_as_key()?;
+        self.boolean_filter_by(key.section_name, key.subsection_name, key.value_name, filter)
     }
 
-    /// Like [`boolean()`][File::boolean()], but the section containing the returned value must pass `filter` as well.
-    pub fn boolean_filter(
+    /// Like [`boolean_by()`](File::boolean_by()), but the section containing the returned value must pass `filter` as well.
+    pub fn boolean_filter_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<bool, value::Error>> {
         let section_name = section_name.as_ref();
         let section_ids = self
             .section_ids_by_name_and_subname(section_name, subsection_name)
             .ok()?;
-        let key = key.as_ref();
+        let key = value_name.as_ref();
         for section_id in section_ids.rev() {
             let section = self.sections.get(&section_id).expect("known section id");
             if !filter(section.meta()) {
@@ -136,41 +140,37 @@ impl<'event> File<'event> {
         None
     }
 
-    /// Like [`boolean_filter()`][File::boolean_filter()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn boolean_filter_by_key<'a>(
-        &self,
-        key: impl Into<&'a BStr>,
-        filter: &mut MetadataFilter,
-    ) -> Option<Result<bool, value::Error>> {
-        let key = crate::parse::key(key.into())?;
-        self.boolean_filter(key.section_name, key.subsection_name, key.value_name, filter)
+    /// Like [`integer_by()`](File::integer_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn integer(&self, key: impl AsKey) -> Option<Result<i64, value::Error>> {
+        self.integer_filter(key, &mut |_| true)
     }
 
-    /// Like [`value()`][File::value()], but returning an `Option` if the integer wasn't found.
-    pub fn integer(
+    /// Like [`value()`](File::value()), but returning an `Option` if the integer wasn't found.
+    pub fn integer_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
     ) -> Option<Result<i64, value::Error>> {
-        self.integer_filter(section_name, subsection_name, key, &mut |_| true)
+        self.integer_filter_by(section_name, subsection_name, value_name, &mut |_| true)
     }
 
-    /// Like [`integer()`][File::integer()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn integer_by_key<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<i64, value::Error>> {
-        self.integer_filter_by_key(key, &mut |_| true)
+    /// Like [`integer_filter_by()`](File::integer_filter_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn integer_filter(&self, key: impl AsKey, filter: &mut MetadataFilter) -> Option<Result<i64, value::Error>> {
+        let key = key.try_as_key()?;
+        self.integer_filter_by(key.section_name, key.subsection_name, key.value_name, filter)
     }
 
-    /// Like [`integer()`][File::integer()], but the section containing the returned value must pass `filter` as well.
-    pub fn integer_filter(
+    /// Like [`integer_by()`](File::integer_by()), but the section containing the returned value must pass `filter` as well.
+    pub fn integer_filter_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Result<i64, value::Error>> {
         let int = self
-            .raw_value_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+            .raw_value_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), filter)
             .ok()?;
         Some(crate::Integer::try_from(int.as_ref()).and_then(|b| {
             b.to_decimal()
@@ -178,81 +178,79 @@ impl<'event> File<'event> {
         }))
     }
 
-    /// Like [`integer_filter()`][File::integer_filter()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn integer_filter_by_key<'a>(
-        &self,
-        key: impl Into<&'a BStr>,
-        filter: &mut MetadataFilter,
-    ) -> Option<Result<i64, value::Error>> {
-        let key = crate::parse::key(key.into())?;
-        self.integer_filter(key.section_name, key.subsection_name, key.value_name, filter)
+    /// Like [`strings_by()`](File::strings_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn strings(&self, key: impl AsKey) -> Option<Vec<Cow<'_, BStr>>> {
+        let key = key.try_as_key()?;
+        self.strings_by(key.section_name, key.subsection_name, key.value_name)
     }
 
-    /// Similar to [`values(…)`][File::values()] but returning strings if at least one of them was found.
-    pub fn strings(
+    /// Similar to [`values_by(…)`](File::values_by()) but returning strings if at least one of them was found.
+    pub fn strings_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
     ) -> Option<Vec<Cow<'_, BStr>>> {
-        self.raw_values(section_name.as_ref(), subsection_name, key.as_ref())
+        self.raw_values_by(section_name.as_ref(), subsection_name, value_name.as_ref())
             .ok()
     }
 
-    /// Like [`strings()`][File::strings()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn strings_by_key<'a>(&self, key: impl Into<&'a BStr>) -> Option<Vec<Cow<'_, BStr>>> {
-        let key = crate::parse::key(key.into())?;
-        self.strings(key.section_name, key.subsection_name, key.value_name)
+    /// Like [`strings_filter_by()`](File::strings_filter_by()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn strings_filter(&self, key: impl AsKey, filter: &mut MetadataFilter) -> Option<Vec<Cow<'_, BStr>>> {
+        let key = key.try_as_key()?;
+        self.strings_filter_by(key.section_name, key.subsection_name, key.value_name, filter)
     }
 
-    /// Similar to [`strings(…)`][File::strings()], but all values are in sections that passed `filter`.
-    pub fn strings_filter(
+    /// Similar to [`strings_by(…)`](File::strings_by()), but all values are in sections that passed `filter`.
+    pub fn strings_filter_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
         filter: &mut MetadataFilter,
     ) -> Option<Vec<Cow<'_, BStr>>> {
-        self.raw_values_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+        self.raw_values_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), filter)
             .ok()
     }
 
-    /// Like [`strings_filter()`][File::strings_filter()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn strings_filter_by_key<'a>(
-        &self,
-        key: impl Into<&'a BStr>,
-        filter: &mut MetadataFilter,
-    ) -> Option<Vec<Cow<'_, BStr>>> {
-        let key = crate::parse::key(key.into())?;
-        self.strings_filter(key.section_name, key.subsection_name, key.value_name, filter)
+    /// Like [`integers()`](File::integers()), but suitable for statically known `key`s like `remote.origin.url`.
+    pub fn integers(&self, key: impl AsKey) -> Option<Result<Vec<i64>, value::Error>> {
+        self.integers_filter(key, &mut |_| true)
     }
 
-    /// Similar to [`values(…)`][File::values()] but returning integers if at least one of them was found
+    /// Similar to [`values_by(…)`](File::values_by()) but returning integers if at least one of them was found
     /// and if none of them overflows.
-    pub fn integers(
+    pub fn integers_by(
         &self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        value_name: impl AsRef<str>,
     ) -> Option<Result<Vec<i64>, value::Error>> {
-        self.integers_filter(section_name, subsection_name, key, &mut |_| true)
+        self.integers_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), &mut |_| {
+            true
+        })
     }
 
-    /// Like [`integers()`][File::integers()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn integers_by_key<'a>(&self, key: impl Into<&'a BStr>) -> Option<Result<Vec<i64>, value::Error>> {
-        self.integers_filter_by_key(key, &mut |_| true)
-    }
-
-    /// Similar to [`integers(…)`][File::integers()] but all integers are in sections that passed `filter`
-    /// and that are not overflowing.
+    /// Like [`integers_filter_by()`](File::integers_filter_by()), but suitable for statically known `key`s like `remote.origin.url`.
     pub fn integers_filter(
         &self,
-        section_name: impl AsRef<str>,
-        subsection_name: Option<&BStr>,
-        key: impl AsRef<str>,
+        key: impl AsKey,
         filter: &mut MetadataFilter,
     ) -> Option<Result<Vec<i64>, value::Error>> {
-        self.raw_values_filter(section_name.as_ref(), subsection_name, key.as_ref(), filter)
+        let key = key.try_as_key()?;
+        self.integers_filter_by(key.section_name, key.subsection_name, key.value_name, filter)
+    }
+
+    /// Similar to [`integers_by(…)`](File::integers_by()) but all integers are in sections that passed `filter`
+    /// and that are not overflowing.
+    pub fn integers_filter_by(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&BStr>,
+        value_name: impl AsRef<str>,
+        filter: &mut MetadataFilter,
+    ) -> Option<Result<Vec<i64>, value::Error>> {
+        self.raw_values_filter_by(section_name.as_ref(), subsection_name, value_name.as_ref(), filter)
             .ok()
             .map(|values| {
                 values
@@ -265,15 +263,5 @@ impl<'event> File<'event> {
                     })
                     .collect()
             })
-    }
-
-    /// Like [`integers_filter()`][File::integers_filter()], but suitable for statically known `key`s like `remote.origin.url`.
-    pub fn integers_filter_by_key<'a>(
-        &self,
-        key: impl Into<&'a BStr>,
-        filter: &mut MetadataFilter,
-    ) -> Option<Result<Vec<i64>, value::Error>> {
-        let key = crate::parse::key(key.into())?;
-        self.integers_filter(key.section_name, key.subsection_name, key.value_name, filter)
     }
 }

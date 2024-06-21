@@ -4,7 +4,7 @@ use gix_ref::{FullName, FullNameRef};
 
 use crate::bstr::BStr;
 use crate::config::cache::util::ApplyLeniencyDefault;
-use crate::config::tree::{Branch, Push, Section};
+use crate::config::tree::{Branch, Push};
 use crate::repository::{branch_remote_ref_name, branch_remote_tracking_ref_name};
 use crate::{push, remote};
 
@@ -46,7 +46,7 @@ impl crate::Repository {
                 let short_name = name.shorten();
                 self.config
                     .resolved
-                    .string("branch", Some(short_name), Branch::MERGE.name)
+                    .string_by("branch", Some(short_name), Branch::MERGE.name)
                     .map(|name| crate::config::tree::branch::Merge::try_into_fullrefname(name).map_err(Into::into))
             }
             remote::Direction::Push => {
@@ -55,18 +55,19 @@ impl crate::Repository {
                     Err(err) => return Some(Err(err.into())),
                 };
                 if remote.push_specs.is_empty() {
-                    let push_default = match self
-                        .config
-                        .resolved
-                        .string(Push.name(), None, Push::DEFAULT.name)
-                        .map_or(Ok(Default::default()), |v| {
-                            Push::DEFAULT
-                                .try_into_default(v)
-                                .with_lenient_default(self.config.lenient_config)
-                        }) {
-                        Ok(v) => v,
-                        Err(err) => return Some(Err(err.into())),
-                    };
+                    let push_default =
+                        match self
+                            .config
+                            .resolved
+                            .string(Push::DEFAULT)
+                            .map_or(Ok(Default::default()), |v| {
+                                Push::DEFAULT
+                                    .try_into_default(v)
+                                    .with_lenient_default(self.config.lenient_config)
+                            }) {
+                            Ok(v) => v,
+                            Err(err) => return Some(Err(err.into())),
+                        };
                     match push_default {
                         push::Default::Nothing => None,
                         push::Default::Current | push::Default::Matching => Some(Ok(Cow::Owned(name.to_owned()))),
@@ -148,11 +149,11 @@ impl crate::Repository {
         (direction == remote::Direction::Push)
             .then(|| {
                 config
-                    .string("branch", Some(name), Branch::PUSH_REMOTE.name)
-                    .or_else(|| config.string("remote", None, crate::config::tree::Remote::PUSH_DEFAULT.name))
+                    .string_by("branch", Some(name), Branch::PUSH_REMOTE.name)
+                    .or_else(|| config.string(crate::config::tree::Remote::PUSH_DEFAULT))
             })
             .flatten()
-            .or_else(|| config.string("branch", Some(name), Branch::REMOTE.name))
+            .or_else(|| config.string_by("branch", Some(name), Branch::REMOTE.name))
             .and_then(|name| name.try_into().ok())
     }
 

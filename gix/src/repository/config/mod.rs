@@ -56,22 +56,17 @@ impl crate::Repository {
         let mut trusted = self.filter_config_section();
         let mut fallback_active = false;
         let ssh_command = config
-            .string_filter("core", None, Core::SSH_COMMAND.name, &mut trusted)
+            .string_filter(Core::SSH_COMMAND, &mut trusted)
             .or_else(|| {
                 fallback_active = true;
-                config.string_filter(
-                    "gitoxide",
-                    Some("ssh".into()),
-                    gitoxide::Ssh::COMMAND_WITHOUT_SHELL_FALLBACK.name,
-                    &mut trusted,
-                )
+                config.string_filter(gitoxide::Ssh::COMMAND_WITHOUT_SHELL_FALLBACK, &mut trusted)
             })
             .map(|cmd| gix_path::from_bstr(cmd).into_owned().into());
         let opts = gix_protocol::transport::client::ssh::connect::Options {
             disallow_shell: fallback_active,
             command: ssh_command,
             kind: config
-                .string_filter_by_key("ssh.variant", &mut trusted)
+                .string_filter("ssh.variant", &mut trusted)
                 .and_then(|variant| Ssh::VARIANT.try_into_variant(variant).transpose())
                 .transpose()
                 .with_leniency(self.options.lenient_config)?,
@@ -83,15 +78,12 @@ impl crate::Repository {
     /// hooks or filters.
     #[cfg(feature = "attributes")]
     pub fn command_context(&self) -> Result<gix_command::Context, config::command_context::Error> {
-        use crate::config::{
-            cache::util::ApplyLeniency,
-            tree::{gitoxide, Key},
-        };
+        use crate::config::{cache::util::ApplyLeniency, tree::gitoxide};
 
         let pathspec_boolean = |key: &'static config::tree::keys::Boolean| {
             self.config
                 .resolved
-                .boolean("gitoxide", Some("pathspec".into()), key.name())
+                .boolean(key)
                 .map(|value| key.enrich_error(value))
                 .transpose()
                 .with_leniency(self.config.lenient_config)
@@ -99,11 +91,10 @@ impl crate::Repository {
 
         Ok(gix_command::Context {
             stderr: {
-                let key = &gitoxide::Core::EXTERNAL_COMMAND_STDERR;
                 self.config
                     .resolved
-                    .boolean("gitoxide", Some("core".into()), key.name())
-                    .map(|value| key.enrich_error(value))
+                    .boolean(gitoxide::Core::EXTERNAL_COMMAND_STDERR)
+                    .map(|value| gitoxide::Core::EXTERNAL_COMMAND_STDERR.enrich_error(value))
                     .transpose()
                     .with_leniency(self.config.lenient_config)?
                     .unwrap_or(true)

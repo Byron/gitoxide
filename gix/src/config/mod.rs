@@ -648,7 +648,7 @@ pub(crate) mod shared {
         mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
     ) -> Result<Option<bool>, config::boolean::Error> {
         config
-            .boolean_filter_by_key("core.useReplaceRefs", &mut filter_config_section)
+            .boolean_filter("core.useReplaceRefs", &mut filter_config_section)
             .map(|b| Core::USE_REPLACE_REFS.enrich_error(b))
             .transpose()
             .with_leniency(lenient)

@@ -252,7 +252,7 @@ value = branch-override-by-include
     )?
     .expect("non-empty");
     assert_eq!(
-        config.string("section", None, "value"),
+        config.string_by("section", None, "value"),
         Some(cow_str(match expect {
             Value::OverrideByInclude => "branch-override-by-include",
             Value::Base => "base-value",

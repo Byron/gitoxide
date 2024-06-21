@@ -30,7 +30,7 @@ mod from_path_no_includes {
 
         let config = gix_config::File::from_path_no_includes(config_path, gix_config::Source::Local).unwrap();
 
-        assert_eq!(config.raw_value("core", None, "boolean").unwrap().as_ref(), "true");
+        assert_eq!(config.raw_value("core.boolean").unwrap().as_ref(), "true");
         assert_eq!(config.num_values(), 1);
     }
 }
@@ -54,9 +54,9 @@ fn multiple_paths_single_value() -> crate::Result {
     let paths = vec![a_path, b_path, c_path, d_path];
     let config = File::from_paths_metadata(into_meta(paths), Default::default())?.expect("non-empty");
 
-    assert_eq!(config.boolean("core", None, "a"), Some(Ok(false)));
-    assert_eq!(config.boolean("core", None, "b"), Some(Ok(true)));
-    assert_eq!(config.boolean("core", None, "c"), Some(Ok(true)));
+    assert_eq!(config.boolean("core.a"), Some(Ok(false)));
+    assert_eq!(config.boolean("core.b"), Some(Ok(true)));
+    assert_eq!(config.boolean("core.c"), Some(Ok(true)));
     assert_eq!(config.num_values(), 4);
     assert_eq!(config.sections().count(), 4, "each value is in a dedicated section");
 
@@ -86,16 +86,8 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
         config.to_string(),
         ";before a\n[core]\na = true\n;before b\n [core]\nb\n# nothing in c\n; nothing in d\n"
     );
-    assert_eq!(
-        config.strings("core", None, "a").expect("present").len(),
-        1,
-        "precondition"
-    );
-    assert_eq!(
-        config.strings("core", None, "b").expect("present").len(),
-        1,
-        "precondition"
-    );
+    assert_eq!(config.strings("core.a").expect("present").len(), 1, "precondition");
+    assert_eq!(config.strings("core.b").expect("present").len(), 1, "precondition");
 
     config.append(config.clone());
     assert_eq!(
@@ -104,12 +96,12 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
         "other files post-section matter works as well, adding newlines as needed"
     );
     assert_eq!(
-        config.strings("core", None, "a").expect("present").len(),
+        config.strings("core.a").expect("present").len(),
         2,
         "the same value is now present twice"
     );
     assert_eq!(
-        config.strings("core", None, "b").expect("present").len(),
+        config.strings("core.b").expect("present").len(),
         2,
         "the same value is now present twice"
     );
@@ -168,32 +160,31 @@ fn multiple_paths_multi_value_and_filter() -> crate::Result {
     .expect("non-empty");
 
     assert_eq!(
-        config.strings("core", None, "key"),
+        config.strings("core.key"),
         Some(vec![cow_str("a"), cow_str("b"), cow_str("c"),])
     );
 
     assert_eq!(
-        config.string_filter("core", None, "key", &mut |m| m.source == Source::System),
+        config.string_filter("core.key", &mut |m| m.source == Source::System),
         Some(cow_str("a")),
         "the filter discards all values with higher priority"
     );
     assert_eq!(
-        config.string_filter_by_key("core.key", &mut |m| m.source == Source::System),
+        config.string_filter("core.key", &mut |m| m.source == Source::System),
         Some(cow_str("a")),
     );
 
     assert_eq!(
-        config.strings_filter("core", None, "key", &mut |m| m.source == Source::Git
-            || m.source == Source::User),
+        config.strings_filter("core.key", &mut |m| m.source == Source::Git || m.source == Source::User),
         Some(vec![cow_str("b"), cow_str("c")])
     );
     assert_eq!(
-        config.strings_filter_by_key("core.key", &mut |m| m.source == Source::Git || m.source == Source::User),
+        config.strings_filter("core.key", &mut |m| m.source == Source::Git || m.source == Source::User),
         Some(vec![cow_str("b"), cow_str("c")])
     );
 
     assert_eq!(
-        config.strings("include", None, "path"),
+        config.strings_by("include", None, "path"),
         Some(vec![cow_str("d_path"), cow_str("e_path")])
     );
 

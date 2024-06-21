@@ -73,7 +73,7 @@ mod utils {
     ) -> Result<Option<Rewrites>, new_rewrites::Error> {
         let key = "diff.renames";
         let copies = match config
-            .boolean_by_key(key)
+            .boolean(key)
             .map(|value| Diff::RENAMES.try_into_renames(value))
             .transpose()
             .with_leniency(lenient)?
@@ -90,7 +90,7 @@ mod utils {
         Ok(Rewrites {
             copies,
             limit: config
-                .integer_by_key("diff.renameLimit")
+                .integer("diff.renameLimit")
                 .map(|value| Diff::RENAME_LIMIT.try_into_usize(value))
                 .transpose()
                 .with_leniency(lenient)?
