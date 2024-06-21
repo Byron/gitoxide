@@ -310,26 +310,35 @@ impl crate::Bundle {
                 } else {
                     let data_path = directory.join(format!("pack-{}.pack", outcome.data_hash.to_hex()));
                     let index_path = data_path.with_extension("idx");
-                    let keep_path = data_path.with_extension("keep");
+                    let keep_path = if data_path.is_file() {
+                        // avoid trying to overwrite existing files, we know they have the same content
+                        // and this is likely to fail on Windows as negotiation opened the pack.
+                        None
+                    } else {
+                        let keep_path = data_path.with_extension("keep");
 
-                    std::fs::write(&keep_path, b"")?;
-                    Arc::try_unwrap(data_file)
-                        .expect("only one handle left after pack was consumed")
-                        .into_inner()
-                        .into_inner()
-                        .map_err(|err| Error::from(err.into_error()))?
-                        .persist(&data_path)?;
-                    index_file
-                        .persist(&index_path)
-                        .map_err(|err| {
-                            gix_features::trace::warn!("pack file at \"{}\" is retained despite failing to move the index file into place. You can use plumbing to make it usable.",data_path.display());
-                            err
-                        })?;
+                        std::fs::write(&keep_path, b"")?;
+                        Arc::try_unwrap(data_file)
+                            .expect("only one handle left after pack was consumed")
+                            .into_inner()
+                            .into_inner()
+                            .map_err(|err| Error::from(err.into_error()))?
+                            .persist(&data_path)?;
+                        Some(keep_path)
+                    };
+                    if !index_path.is_file() {
+                        index_file
+                            .persist(&index_path)
+                            .map_err(|err| {
+                                gix_features::trace::warn!("pack file at \"{}\" is retained despite failing to move the index file into place. You can use plumbing to make it usable.",data_path.display());
+                                err
+                            })?;
+                    }
                     WriteOutcome {
                         outcome,
                         data_path: Some(data_path),
                         index_path: Some(index_path),
-                        keep_path: Some(keep_path),
+                        keep_path,
                     }
                 }
             }
