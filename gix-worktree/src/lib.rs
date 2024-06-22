@@ -18,6 +18,8 @@ pub use gix_glob as glob;
 /// Provides types needed for using [`stack::Platform::excluded_kind()`].
 pub use gix_ignore as ignore;
 /// Provides types needed for using [`Stack::at_path()`] and [`Stack::at_entry()`].
+pub use gix_index as index;
+/// Provides types needed for using [`Stack::at_path()`] and [`Stack::at_entry()`].
 pub use gix_object as object;
 /// Provides types needed for using [`stack::State::for_checkout()`].
 #[cfg(feature = "attributes")]
