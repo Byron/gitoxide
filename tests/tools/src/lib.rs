@@ -3,7 +3,6 @@
 
 use std::{
     collections::BTreeMap,
-    convert::Infallible,
     ffi::OsString,
     io::Read,
     path::{Path, PathBuf},
@@ -593,8 +592,8 @@ fn is_excluded(archive: &Path) -> bool {
             cache
                 .at_path(
                     relative_path,
-                    Some(false),
-                    |_oid, _buf| -> std::result::Result<_, Infallible> { unreachable!("") },
+                    Some(gix_index::entry::Mode::FILE),
+                    &gix_worktree::object::find::Never,
                 )
                 .ok()?
                 .is_excluded()
