@@ -5,6 +5,7 @@ version = "0.14.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
+include = ["/src/**/*", "/LICENSE-*"]
 
 [[bin]]
 name = "jtt"
