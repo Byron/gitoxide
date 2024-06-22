@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.14.0 (2024-06-22)
 
 A maintenance release with updated dependencies, and possibly minor improvements.
 
@@ -13,7 +13,7 @@ A maintenance release with updated dependencies, and possibly minor improvements
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 175 calendar days.
+ - 21 commits contributed to the release over the course of 175 calendar days.
  - 176 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release with updated dependencies, and possibly minor improvements
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelog prior to release of `gix-testtools` ([`ae012ba`](https://github.com/Byron/gitoxide/commit/ae012ba8627a8ea2f0145c53c42972db1d875662))
     - Merge branch 'gix-testtools-license-file' ([`c50af65`](https://github.com/Byron/gitoxide/commit/c50af65bf84963cb430538915f8eca9bd4481012))
     - Update `gix-testtools` dependencies to the latest version. ([`ddaacda`](https://github.com/Byron/gitoxide/commit/ddaacda6667092ccea100180f70d2ccb9bb79dbc))
     - Add include directive to test-tools, to avoid CHANGELOG.md ([`c668bdd`](https://github.com/Byron/gitoxide/commit/c668bdd0b29f513df75c96f09c84abac612b8e6a))
