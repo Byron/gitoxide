@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+Now by default, `tar` files will be written which works better when checking them into
+Git. Those who need the previous behaviour, can use the `xz` feature instead.
+
+### New Features (BREAKING)
+
+ - <csr-id-55382c0aa6f04a3bb689299c613df2a39f261289/> make `xz2` optional to write uncompressed tar files by default.
+   Previously, compression was beneficial due to storage in `git-lfs`.
+   Now, storing (mostly) non-binary files is actually better moving forward.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'tar-only' ([`1dfa90d`](https://github.com/Byron/gitoxide/commit/1dfa90d641306b4099a6ecd52e2056b231467807))
+    - Make `xz2` optional to write uncompressed tar files by default. ([`55382c0`](https://github.com/Byron/gitoxide/commit/55382c0aa6f04a3bb689299c613df2a39f261289))
+</details>
+
 ## 0.14.0 (2024-06-22)
 
 A maintenance release with updated dependencies, and possibly minor improvements.
@@ -13,7 +43,7 @@ A maintenance release with updated dependencies, and possibly minor improvements
 
 <csr-read-only-do-not-edit/>
 
- - 21 commits contributed to the release over the course of 175 calendar days.
+ - 22 commits contributed to the release over the course of 175 calendar days.
  - 176 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +55,7 @@ A maintenance release with updated dependencies, and possibly minor improvements
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-testtools v0.14.0 ([`f6eaba3`](https://github.com/Byron/gitoxide/commit/f6eaba3a465720819f2ef7844648699195dd8341))
     - Prepare changelog prior to release of `gix-testtools` ([`ae012ba`](https://github.com/Byron/gitoxide/commit/ae012ba8627a8ea2f0145c53c42972db1d875662))
     - Merge branch 'gix-testtools-license-file' ([`c50af65`](https://github.com/Byron/gitoxide/commit/c50af65bf84963cb430538915f8eca9bd4481012))
     - Update `gix-testtools` dependencies to the latest version. ([`ddaacda`](https://github.com/Byron/gitoxide/commit/ddaacda6667092ccea100180f70d2ccb9bb79dbc))
