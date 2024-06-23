@@ -512,10 +512,17 @@ pub mod remote {
 }
 
 pub mod mailmap {
+    use gix::bstr::BString;
+
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// Print all entries in configured mailmaps, inform about errors as well.
         Entries,
+        /// Print the canonical form of contacts according to the configured mailmaps.
+        Check {
+            /// One or more `Name <email>` or `<email>` to pass through the mailmap.
+            contacts: Vec<BString>,
+        },
     }
 }
 

@@ -31,6 +31,11 @@ fn try_resolve() {
         Some(signature("Jane Doe", "jane@example.com")),
         "name and email can be mapped specifically, case insensitive matching of name"
     );
+    assert_eq!(
+        snapshot.resolve(signature("janE", "jane@ipad.(none)").to_ref()),
+        signature("janE", "jane@example.com"),
+        "an email can be mapped by name and email specifically, both match case-insensitively"
+    );
 
     let sig = signature("Jane", "other@example.com");
     assert_eq!(snapshot.try_resolve(sig.to_ref()), None, "unmatched email");
@@ -49,7 +54,7 @@ fn try_resolve() {
     );
     assert_eq!(snapshot.resolve(sig.to_ref()), sig);
 
-    assert_eq!(snapshot.entries().len(), 5);
+    assert_eq!(snapshot.entries().len(), 6);
 }
 
 #[test]
