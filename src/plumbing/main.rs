@@ -1216,6 +1216,17 @@ pub fn main() -> Result<()> {
                     core::repository::mailmap::entries(repository(Mode::Lenient)?, format, out, err)
                 },
             ),
+            mailmap::Subcommands::Check { contacts } => prepare_and_run(
+                "mailmap-check",
+                trace,
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, err| {
+                    core::repository::mailmap::check(repository(Mode::Lenient)?, format, contacts, out, err)
+                },
+            ),
         },
         Subcommands::Attributes(cmd) => match cmd {
             attributes::Subcommands::Query { statistics, pathspec } => prepare_and_run(
