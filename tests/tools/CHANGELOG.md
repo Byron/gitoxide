@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.15.0 (2024-06-23)
 
 Now by default, `tar` files will be written which works better when checking them into
 Git. Those who need the previous behaviour, can use the `xz` feature instead.
@@ -20,7 +20,7 @@ Git. Those who need the previous behaviour, can use the `xz` feature instead.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +31,7 @@ Git. Those who need the previous behaviour, can use the `xz` feature instead.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Update changelog prior to `gix-testtools` release ([`88eb841`](https://github.com/Byron/gitoxide/commit/88eb841b7e3991b6f228390433f58333c6d4b85f))
     - Merge branch 'tar-only' ([`1dfa90d`](https://github.com/Byron/gitoxide/commit/1dfa90d641306b4099a6ecd52e2056b231467807))
     - Make `xz2` optional to write uncompressed tar files by default. ([`55382c0`](https://github.com/Byron/gitoxide/commit/55382c0aa6f04a3bb689299c613df2a39f261289))
 </details>
