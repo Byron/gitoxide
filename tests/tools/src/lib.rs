@@ -1,4 +1,11 @@
 //! Utilities for testing `gitoxide` crates, many of which might be useful for testing programs that use `git` in general.
+//!
+//! ## Feature Flags
+#![cfg_attr(
+    all(doc, feature = "document-features"),
+    doc = ::document_features::document_features!()
+)]
+#![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs)]
 
 use std::{
@@ -269,7 +276,7 @@ fn fixture_bytes_inner(path: impl AsRef<Path>, root: DirectoryRoot) -> Vec<u8> {
 /// #### Disable Archive Creation
 ///
 /// If archives aren't useful, they can be disabled by using `.gitignore` specifications.
-/// That way it's trivial to prevent creation of all archives with `generated-archives/*.tar.xz` in the root
+/// That way it's trivial to prevent creation of all archives with `generated-archives/*.tar{.xz}` in the root
 /// or more specific `.gitignore` configurations in lower levels of the work tree.
 ///
 /// The latter is useful if the script's output is platform specific.
@@ -407,7 +414,11 @@ fn scripted_fixture_read_only_with_args_inner(
 
     let script_basename = script_location.file_stem().unwrap_or(script_location.as_os_str());
     let archive_file_path = fixture_path_inner(
-        Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
+        Path::new("generated-archives").join(format!(
+            "{}.tar{}",
+            script_basename.to_str().expect("valid UTF-8"),
+            if cfg!(feature = "xz") { ".xz" } else { "" }
+        )),
         root,
     );
     let (force_run, script_result_directory) = destination_dir.map_or_else(
@@ -566,14 +577,24 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
             ar.append_dir_all(".", source_dir)?;
             ar.finish()?;
         }
-        let archive = std::fs::OpenOptions::new()
+        #[cfg_attr(feature = "xz", allow(unused_mut))]
+        let mut archive = std::fs::OpenOptions::new()
             .write(true)
             .create(true)
             .truncate(true)
             .open(archive)?;
-        let mut xz_write = xz2::write::XzEncoder::new(archive, 3);
-        std::io::copy(&mut &*buf, &mut xz_write)?;
-        xz_write.finish()?.close()
+        #[cfg(feature = "xz")]
+        {
+            let mut xz_write = xz2::write::XzEncoder::new(archive, 3);
+            std::io::copy(&mut &*buf, &mut xz_write)?;
+            xz_write.finish()?.close()
+        }
+        #[cfg(not(feature = "xz"))]
+        {
+            use std::io::Write;
+            archive.write_all(&buf)?;
+            archive.close()
+        }
     })();
     #[cfg(not(windows))]
     std::fs::remove_dir_all(meta_dir)?;
@@ -629,7 +650,8 @@ fn extract_archive(
 ) -> std::io::Result<(u32, Option<String>)> {
     let archive_buf: Vec<u8> = {
         let mut buf = Vec::new();
-        let input_archive = std::fs::File::open(archive)?;
+        #[cfg_attr(feature = "xz", allow(unused_mut))]
+        let mut input_archive = std::fs::File::open(archive)?;
         if std::env::var_os("GIX_TEST_IGNORE_ARCHIVES").is_some() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
@@ -639,8 +661,16 @@ fn extract_archive(
                 ),
             ));
         }
-        let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(input_archive));
-        std::io::copy(&mut decoder, &mut buf)?;
+        #[cfg(feature = "xz")]
+        {
+            let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(input_archive));
+            std::io::copy(&mut decoder, &mut buf)?;
+        }
+        #[cfg(not(feature = "xz"))]
+        {
+            use std::io::Read;
+            input_archive.read_to_end(&mut buf)?;
+        }
         buf
     };
 

@@ -14,6 +14,13 @@ path = "src/main.rs"
 [lib]
 doctest = false
 
+[features]
+default = []
+## Use instead of plain `tar` files, compress these to produce `tar.xz` files instead.
+## This is useful if archives are uploaded into `git-lfs`, which doesn't have built-in compression
+## and metering counts towards uncompressed bytes transferred.
+xz = ["dep:xz2"]
+
 [dependencies]
 gix-lock = "14.0.0"
 gix-discover = "0.32.0"
@@ -35,4 +42,10 @@ parking_lot = { version = "0.12.0" }
 is_ci = "1.1.1"
 io-close = "0.3.7"
 tar = { version = "0.4.38", default-features = false }
-xz2 = "0.1.6"
+xz2 = { version = "0.1.6", optional = true }
+
+document-features = { version = "0.2.1", optional = true }
+
+[package.metadata.docs.rs]
+all-features = true
+features = ["document-features"]

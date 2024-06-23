@@ -2542,6 +2542,7 @@ version = "0.14.0"
 dependencies = [
  "bstr",
  "crc",
+ "document-features",
  "fastrand 2.1.0",
  "fs_extra",
  "gix-discover 0.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
