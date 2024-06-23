@@ -153,6 +153,8 @@ doc $RUSTDOCFLAGS="-D warnings":
 # run all unit tests
 unit-tests:
     cargo test --all
+    cargo test -p gix-testtools
+    cargo test -p gix-testtools --features xz
     cargo test -p gix-archive --no-default-features
     cargo test -p gix-archive --features tar
     cargo test -p gix-archive --features tar_gz
