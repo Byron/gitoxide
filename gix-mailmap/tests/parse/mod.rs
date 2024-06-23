@@ -31,6 +31,7 @@ fn a_typical_mailmap() {
             Entry::change_name_and_email_by_email("Jane Doe", "jane@example.com", "jane@laptop.(none)"),
             Entry::change_name_and_email_by_email("Jane Doe", "jane@example.com", "jane@desktop.(none)"),
             Entry::change_name_and_email_by_name_and_email("Jane Doe", "jane@example.com", "Jane", "bugs@example.com"),
+            Entry::change_email_by_name_and_email("jane@example.com", "Jane", "Jane@ipad.(none)"),
         ]
     );
 }
@@ -76,8 +77,8 @@ fn valid_entries() {
         Entry::change_name_and_email_by_email("proper name", "proper email", "commit-email")
     );
     assert_eq!(
-        line(" proper name  <proper email>\tcommit name\t<commit-email>\t"),
-        Entry::change_name_and_email_by_name_and_email("proper name", "proper email", "commit name", "commit-email")
+        line("<proper-email> commit name <commit-email>"),
+        Entry::change_email_by_name_and_email("proper-email", "commit name", "commit-email")
     );
 }
 

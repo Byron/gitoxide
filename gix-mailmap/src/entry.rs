@@ -41,6 +41,18 @@ impl<'a> Entry<'a> {
             ..Default::default()
         }
     }
+    pub fn change_email_by_name_and_email(
+        proper_email: impl Into<&'a BStr>,
+        commit_name: impl Into<&'a BStr>,
+        commit_email: impl Into<&'a BStr>,
+    ) -> Self {
+        Entry {
+            new_email: Some(proper_email.into()),
+            old_email: commit_email.into(),
+            old_name: Some(commit_name.into()),
+            ..Default::default()
+        }
+    }
     pub fn change_name_and_email_by_email(
         proper_name: impl Into<&'a BStr>,
         proper_email: impl Into<&'a BStr>,
