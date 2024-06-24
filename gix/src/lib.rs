@@ -110,6 +110,7 @@ pub use gix_features::{
     progress::{Count, DynNestedProgress, NestedProgress, Progress},
     threading,
 };
+pub use gix_validate as validate;
 pub use gix_fs as fs;
 pub use gix_glob as glob;
 pub use gix_hash as hash;
