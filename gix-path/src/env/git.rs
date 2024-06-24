@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{
     path::Path,
     process::{Command, Stdio},
@@ -5,12 +6,54 @@ use std::{
 
 use bstr::{BStr, BString, ByteSlice};
 
+/// Other places to find Git in.
+#[cfg(windows)]
+pub(super) static ALTERNATIVE_LOCATIONS: &[&str] = &[
+    "C:/Program Files/Git/mingw64/bin",
+    "C:/Program Files (x86)/Git/mingw32/bin",
+];
+#[cfg(not(windows))]
+pub(super) static ALTERNATIVE_LOCATIONS: &[&str] = &[];
+
+#[cfg(windows)]
+pub(super) static EXE_NAME: &str = "git.exe";
+#[cfg(not(windows))]
+pub(super) static EXE_NAME: &str = "git";
+
+/// Invoke the git executable in PATH to obtain the origin configuration, which is cached and returned.
+pub(super) static EXE_INFO: once_cell::sync::Lazy<Option<BString>> = once_cell::sync::Lazy::new(|| {
+    let git_cmd = |executable: PathBuf| {
+        let mut cmd = Command::new(executable);
+        cmd.args(["config", "-l", "--show-origin"])
+            .stdin(Stdio::null())
+            .stderr(Stdio::null());
+        cmd
+    };
+    let mut cmd = git_cmd(EXE_NAME.into());
+    gix_trace::debug!(cmd = ?cmd, "invoking git for installation config path");
+    let cmd_output = match cmd.output() {
+        Ok(out) => out.stdout,
+        #[cfg(windows)]
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+            let executable = ALTERNATIVE_LOCATIONS.into_iter().find_map(|prefix| {
+                let candidate = Path::new(prefix).join(EXE_NAME);
+                candidate.is_file().then_some(candidate)
+            })?;
+            gix_trace::debug!(cmd = ?cmd, "invoking git for installation config path in alternate location");
+            git_cmd(executable).output().ok()?.stdout
+        }
+        Err(_) => return None,
+    };
+
+    first_file_from_config_with_origin(cmd_output.as_slice().into()).map(ToOwned::to_owned)
+});
+
 /// Returns the file that contains git configuration coming with the installation of the `git` file in the current `PATH`, or `None`
 /// if no `git` executable was found or there were other errors during execution.
-pub(crate) fn install_config_path() -> Option<&'static BStr> {
+pub(super) fn install_config_path() -> Option<&'static BStr> {
     let _span = gix_trace::detail!("gix_path::git::install_config_path()");
     static PATH: once_cell::sync::Lazy<Option<BString>> = once_cell::sync::Lazy::new(|| {
-        // Shortcut: in Msys shells this variable is set which allows to deduce the installation directory
+        // Shortcut: in Msys shells this variable is set which allows to deduce the installation directory,
         // so we can save the `git` invocation.
         #[cfg(windows)]
         if let Some(mut exec_path) = std::env::var_os("EXEPATH").map(std::path::PathBuf::from) {
@@ -18,12 +61,7 @@ pub(crate) fn install_config_path() -> Option<&'static BStr> {
             exec_path.push("gitconfig");
             return crate::os_string_into_bstring(exec_path.into()).ok();
         }
-        let mut cmd = Command::new(if cfg!(windows) { "git.exe" } else { "git" });
-        cmd.args(["config", "-l", "--show-origin"])
-            .stdin(Stdio::null())
-            .stderr(Stdio::null());
-        gix_trace::debug!(cmd = ?cmd, "invoking git for installation config path");
-        first_file_from_config_with_origin(cmd.output().ok()?.stdout.as_slice().into()).map(ToOwned::to_owned)
+        EXE_INFO.clone()
     });
     PATH.as_ref().map(AsRef::as_ref)
 }
@@ -35,7 +73,7 @@ fn first_file_from_config_with_origin(source: &BStr) -> Option<&BStr> {
 }
 
 /// Given `config_path` as obtained from `install_config_path()`, return the path of the git installation base.
-pub(crate) fn config_to_base_path(config_path: &Path) -> &Path {
+pub(super) fn config_to_base_path(config_path: &Path) -> &Path {
     config_path
         .parent()
         .expect("config file paths always have a file name to pop")

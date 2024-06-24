@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::env::git::EXE_NAME;
 use bstr::{BString, ByteSlice};
 
 mod git;
@@ -25,6 +26,39 @@ pub fn installation_config() -> Option<&'static Path> {
 /// This invokes the git binary which is slow on windows.
 pub fn installation_config_prefix() -> Option<&'static Path> {
     installation_config().map(git::config_to_base_path)
+}
+
+/// Return the name of the Git executable to invoke it.
+/// If it's in the `PATH`, it will always be a short name.
+///
+/// Note that on Windows, we will find the executable in the `PATH` if it exists there, or search it
+/// in alternative locations which when found yields the full path to it.
+pub fn exe_invocation() -> &'static Path {
+    if cfg!(windows) {
+        /// The path to the Git executable as located in the `PATH` or in other locations that it's known to be installed to.
+        /// It's `None` if environment variables couldn't be read or if no executable could be found.
+        static EXECUTABLE_PATH: once_cell::sync::Lazy<Option<PathBuf>> = once_cell::sync::Lazy::new(|| {
+            std::env::split_paths(&std::env::var_os("PATH")?)
+                .chain(git::ALTERNATIVE_LOCATIONS.iter().map(Into::into))
+                .find_map(|prefix| {
+                    let full_path = prefix.join(EXE_NAME);
+                    full_path.is_file().then_some(full_path)
+                })
+                .map(|exe_path| {
+                    let is_in_alternate_location = git::ALTERNATIVE_LOCATIONS
+                        .iter()
+                        .any(|prefix| exe_path.strip_prefix(prefix).is_ok());
+                    if is_in_alternate_location {
+                        exe_path
+                    } else {
+                        EXE_NAME.into()
+                    }
+                })
+        });
+        EXECUTABLE_PATH.as_deref().unwrap_or(Path::new(git::EXE_NAME))
+    } else {
+        Path::new("git")
+    }
 }
 
 /// Returns the fully qualified path in the *xdg-home* directory (or equivalent in the home dir) to `file`,
@@ -55,7 +89,7 @@ pub fn xdg_config(file: &str, env_var: &mut dyn FnMut(&str) -> Option<OsString>)
 ///
 /// ### Performance
 ///
-/// On windows, the slowest part is the launch of the `git.exe` executable in the PATH, which only happens when launched
+/// On windows, the slowest part is the launch of the Git executable in the PATH, which only happens when launched
 /// from outside of the `msys2` shell.
 ///
 /// ### When `None` is returned
@@ -74,7 +108,7 @@ pub fn system_prefix() -> Option<&'static Path> {
                 }
             }
 
-            let mut cmd = std::process::Command::new("git.exe");
+            let mut cmd = std::process::Command::new(exe_invocation());
             cmd.arg("--exec-path").stderr(std::process::Stdio::null());
             gix_trace::debug!(cmd = ?cmd, "invoking git to get system prefix/exec path");
             let path = cmd.output().ok()?.stdout;

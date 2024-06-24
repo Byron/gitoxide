@@ -1583,6 +1583,7 @@ dependencies = [
  "gix-testtools",
  "gix-trace 0.1.9",
  "gix-url",
+ "once_cell",
  "serde",
  "thiserror",
 ]
