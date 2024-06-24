@@ -16,7 +16,7 @@ mod home_dir {
 
 mod env {
     #[test]
-    fn executable_invocation() {
+    fn exe_invocation() {
         let actual = gix_path::env::exe_invocation();
         assert!(
             !actual.as_os_str().is_empty(),

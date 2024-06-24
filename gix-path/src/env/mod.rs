@@ -89,7 +89,7 @@ pub fn xdg_config(file: &str, env_var: &mut dyn FnMut(&str) -> Option<OsString>)
 ///
 /// ### Performance
 ///
-/// On windows, the slowest part is the launch of the `git.exe` executable in the PATH, which only happens when launched
+/// On windows, the slowest part is the launch of the Git executable in the PATH, which only happens when launched
 /// from outside of the `msys2` shell.
 ///
 /// ### When `None` is returned

@@ -1,9 +1,7 @@
 use gix_credentials::{helper, program::Kind, Program};
 
-#[cfg(windows)]
-const GIT: &str = "git.exe";
-#[cfg(not(windows))]
-const GIT: &str = "git";
+static GIT: once_cell::sync::Lazy<&'static str> =
+    once_cell::sync::Lazy::new(|| gix_path::env::exe_invocation().to_str().expect("not illformed"));
 
 #[cfg(windows)]
 const SH: &str = "sh";
@@ -13,10 +11,11 @@ const SH: &str = "/bin/sh";
 #[test]
 fn empty() {
     let prog = Program::from_custom_definition("");
+    let git = *GIT;
     assert!(matches!(&prog.kind, Kind::ExternalName { name_and_args } if name_and_args == ""));
     assert_eq!(
         format!("{:?}", prog.to_command(&helper::Action::Store("egal".into()))),
-        format!(r#""{GIT}" "credential-" "store""#),
+        format!(r#""{git}" "credential-" "store""#),
         "not useful, but allowed, would have to be caught elsewhere"
     );
 }
@@ -36,10 +35,11 @@ fn simple_script_in_path() {
 fn name_with_args() {
     let input = "name --arg --bar=\"a b\"";
     let prog = Program::from_custom_definition(input);
+    let git = *GIT;
     assert!(matches!(&prog.kind, Kind::ExternalName{name_and_args} if name_and_args == input));
     assert_eq!(
         format!("{:?}", prog.to_command(&helper::Action::Store("egal".into()))),
-        format!(r#""{GIT}" "credential-name" "--arg" "--bar=a b" "store""#)
+        format!(r#""{git}" "credential-name" "--arg" "--bar=a b" "store""#)
     );
 }
 
@@ -47,10 +47,11 @@ fn name_with_args() {
 fn name_with_special_args() {
     let input = "name --arg --bar=~/folder/in/home";
     let prog = Program::from_custom_definition(input);
+    let git = *GIT;
     assert!(matches!(&prog.kind, Kind::ExternalName{name_and_args} if name_and_args == input));
     assert_eq!(
         format!("{:?}", prog.to_command(&helper::Action::Store("egal".into()))),
-        format!(r#""{SH}" "-c" "{GIT} credential-name --arg --bar=~/folder/in/home \"$@\"" "--" "store""#)
+        format!(r#""{SH}" "-c" "{git} credential-name --arg --bar=~/folder/in/home \"$@\"" "--" "store""#)
     );
 }
 
@@ -58,10 +59,11 @@ fn name_with_special_args() {
 fn name() {
     let input = "name";
     let prog = Program::from_custom_definition(input);
+    let git = *GIT;
     assert!(matches!(&prog.kind, Kind::ExternalName{name_and_args} if name_and_args == input));
     assert_eq!(
         format!("{:?}", prog.to_command(&helper::Action::Store("egal".into()))),
-        format!(r#""{GIT}" "credential-name" "store""#),
+        format!(r#""{git}" "credential-name" "store""#),
         "we detect that this can run without shell, which is also more portable on windows"
     );
 }

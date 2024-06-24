@@ -68,7 +68,7 @@ impl Program {
 
     /// Convert the program into the respective command, suitable to invoke `action`.
     pub fn to_command(&self, action: &helper::Action) -> std::process::Command {
-        let git_program = cfg!(windows).then(|| "git.exe").unwrap_or("git");
+        let git_program = gix_path::env::exe_invocation();
         let mut cmd = match &self.kind {
             Kind::Builtin => {
                 let mut cmd = Command::new(git_program);
@@ -79,7 +79,7 @@ impl Program {
                 let mut args = name_and_args.clone();
                 args.insert_str(0, "credential-");
                 args.insert_str(0, " ");
-                args.insert_str(0, git_program);
+                args.insert_str(0, git_program.to_string_lossy().as_ref());
                 gix_command::prepare(gix_path::from_bstr(args.as_ref()).into_owned())
                     .arg(action.as_arg(true))
                     .with_shell_allow_argument_splitting()

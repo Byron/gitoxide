@@ -74,7 +74,7 @@ pub(crate) mod function {
                 let tx_base = tx_base.clone();
                 let mut progress = progress.add_child("attributes");
                 move || -> anyhow::Result<()> {
-                    let mut child = std::process::Command::new(GIT_NAME)
+                    let mut child = std::process::Command::new(gix::path::env::exe_invocation())
                         .args(["check-attr", "--stdin", "-a"])
                         .stdin(std::process::Stdio::piped())
                         .stdout(std::process::Stdio::piped())
@@ -125,7 +125,7 @@ pub(crate) mod function {
                 let tx_base = tx_base.clone();
                 let mut progress = progress.add_child("excludes");
                 move || -> anyhow::Result<()> {
-                    let mut child = std::process::Command::new(GIT_NAME)
+                    let mut child = std::process::Command::new(gix::path::env::exe_invocation())
                         .args(["check-ignore", "--stdin", "-nv", "--no-index"])
                         .stdin(std::process::Stdio::piped())
                         .stdout(std::process::Stdio::piped())
@@ -253,8 +253,6 @@ pub(crate) mod function {
             );
         }
     }
-
-    static GIT_NAME: &str = if cfg!(windows) { "git.exe" } else { "git" };
 
     enum Baseline {
         Attribute { assignments: Vec<gix::attrs::Assignment> },
