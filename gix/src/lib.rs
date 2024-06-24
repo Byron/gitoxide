@@ -110,7 +110,6 @@ pub use gix_features::{
     progress::{Count, DynNestedProgress, NestedProgress, Progress},
     threading,
 };
-pub use gix_validate as validate;
 pub use gix_fs as fs;
 pub use gix_glob as glob;
 pub use gix_hash as hash;
@@ -141,6 +140,7 @@ pub use gix_url as url;
 #[doc(inline)]
 pub use gix_url::Url;
 pub use gix_utils as utils;
+pub use gix_validate as validate;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
