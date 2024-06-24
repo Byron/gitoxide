@@ -10,7 +10,10 @@ use bstr::{BStr, ByteSlice};
 use std::{ops::Range, path::PathBuf};
 
 use filetime::FileTime;
+/// `gix_hash` is made available as it's part of the public API in various places.
 pub use gix_hash as hash;
+/// A re-export to allow calling [`State::from_tree()`].
+pub use gix_validate as validate;
 
 ///
 #[allow(clippy::empty_docs)]
