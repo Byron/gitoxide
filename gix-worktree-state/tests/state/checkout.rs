@@ -292,6 +292,54 @@ fn dangling_symlinks_can_be_created() -> crate::Result {
 }
 
 #[test]
+fn dangling_symlink_to_windows_invalid_target_can_be_created() -> crate::Result {
+    let opts = opts_from_probe();
+    if !opts.fs.symlink {
+        eprintln!("Skipping dangling symlink test on filesystem that doesn't support it");
+        return Ok(());
+    }
+
+    let (_source_tree, destination, _index, outcome) =
+        checkout_index_in_tmp_dir(opts.clone(), "make_dangling_symlink_to_windows_invalid", None)?;
+    let worktree_files = dir_structure(&destination);
+    let worktree_files_stripped = stripped_prefix(&destination, &worktree_files);
+
+    assert_eq!(worktree_files_stripped, paths(["dangling-qmarks-symlink"]));
+    let symlink_path = &worktree_files[0];
+    assert!(symlink_path
+        .symlink_metadata()
+        .expect("dangling symlink is on disk")
+        .is_symlink());
+    assert_eq!(std::fs::read_link(symlink_path)?, Path::new("???"));
+    assert!(outcome.collisions.is_empty());
+    Ok(())
+}
+
+#[test]
+fn dangling_symlink_to_windows_reserved_target_can_be_created() -> crate::Result {
+    let opts = opts_from_probe();
+    if !opts.fs.symlink {
+        eprintln!("Skipping dangling symlink test on filesystem that doesn't support it");
+        return Ok(());
+    }
+
+    let (_source_tree, destination, _index, outcome) =
+        checkout_index_in_tmp_dir(opts.clone(), "make_dangling_symlink_to_windows_reserved", None)?;
+    let worktree_files = dir_structure(&destination);
+    let worktree_files_stripped = stripped_prefix(&destination, &worktree_files);
+
+    assert_eq!(worktree_files_stripped, paths(["dangling-con-symlink"]));
+    let symlink_path = &worktree_files[0];
+    assert!(symlink_path
+        .symlink_metadata()
+        .expect("dangling symlink is on disk")
+        .is_symlink());
+    assert_eq!(std::fs::read_link(symlink_path)?, Path::new("CON"));
+    assert!(outcome.collisions.is_empty());
+    Ok(())
+}
+
+#[test]
 fn allow_or_disallow_symlinks() -> crate::Result {
     let mut opts = opts_from_probe();
     for allowed in &[false, true] {
