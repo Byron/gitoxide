@@ -38,7 +38,7 @@ pub mod snapshot;
 /// optionally name to find mappings to new names and/or emails.
 ///
 /// The memory layout is efficient, even though lots of small allocations are performed to store strings of emails and names.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub struct Snapshot {
     /// Sorted by `old_email`
     entries_by_old_email: Vec<snapshot::EmailEntry>,

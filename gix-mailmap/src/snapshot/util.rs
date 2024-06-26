@@ -2,8 +2,7 @@ use std::{cmp::Ordering, ops::Deref};
 
 use bstr::{BStr, BString, ByteSlice};
 
-#[cfg_attr(test, derive(Debug))]
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum EncodedString {
     Utf8(String),
     Unknown(BString),

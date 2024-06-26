@@ -2,14 +2,14 @@ use bstr::BString;
 
 use crate::snapshot::util::{EncodedString, EncodedStringRef};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct NameEntry {
     pub(crate) new_name: Option<BString>,
     pub(crate) new_email: Option<BString>,
     pub(crate) old_name: EncodedString,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct EmailEntry {
     pub(crate) new_name: Option<BString>,
     pub(crate) new_email: Option<BString>,
