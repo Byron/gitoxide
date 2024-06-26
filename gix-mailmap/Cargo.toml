@@ -1,6 +1,6 @@
 [package]
 name = "gix-mailmap"
-version = "0.23.2"
+version = "0.23.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project for parsing mailmap files"

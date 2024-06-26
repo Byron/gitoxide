@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.23.3 (2024-06-26)
+
+### Bug Fixes
+
+ - <csr-id-98007e600095fcd4df48a0a4e75d2b342ef906e2/> add standard traits (Debug, Eq) to `Snapshot`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 2 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1424](https://github.com/Byron/gitoxide/issues/1424)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1424](https://github.com/Byron/gitoxide/issues/1424)**
+    - Add standard traits (Debug, Eq) to `Snapshot` ([`98007e6`](https://github.com/Byron/gitoxide/commit/98007e600095fcd4df48a0a4e75d2b342ef906e2))
+</details>
+
 ## 0.23.2 (2024-06-23)
 
 ### Bug Fixes
@@ -15,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 2 calendar days.
+ - 6 commits contributed to the release over the course of 2 calendar days.
  - 32 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1416](https://github.com/Byron/gitoxide/issues/1416), [#1417](https://github.com/Byron/gitoxide/issues/1417)
@@ -31,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1417](https://github.com/Byron/gitoxide/issues/1417)**
     - Allow mailmaps to change the email by name and email ([`ca05471`](https://github.com/Byron/gitoxide/commit/ca054713f5aed6c66d55d612a58786eb0b439fb4))
  * **Uncategorized**
+    - Release gix-date v0.8.7, gix-mailmap v0.23.2 ([`c1d7c02`](https://github.com/Byron/gitoxide/commit/c1d7c023d595eb04891b65295f001d85c9ba8074))
     - Prepare release of `gix-mailmap` ([`14c3396`](https://github.com/Byron/gitoxide/commit/14c339614b76706dfbf77fe97319f0c3452390e6))
     - Merge branch 'fix-mailmap' ([`f107014`](https://github.com/Byron/gitoxide/commit/f107014022a62271f02790a83336aed186ad38a3))
     - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
