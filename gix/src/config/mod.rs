@@ -627,7 +627,7 @@ pub(crate) struct Cache {
     /// If true, we are on a case-insensitive file system.
     pub ignore_case: bool,
     /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.
-    /// Also available in options! Keep in sync!
+    /// Also, available in options! Keep in sync!
     pub lenient_config: bool,
     #[cfg_attr(not(feature = "worktree-mutation"), allow(dead_code))]
     attributes: crate::open::permissions::Attributes,

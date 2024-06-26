@@ -212,25 +212,13 @@ impl Cache {
         &self,
         key: impl gix_config::AsKey,
     ) -> Option<Result<Cow<'_, std::path::Path>, gix_config::path::interpolate::Error>> {
-        let path = self
-            .resolved
-            .path_filter(&key, &mut self.filter_config_section.clone())?;
-
-        if self.lenient_config && path.is_empty() {
-            let _key = key.as_key();
-            gix_trace::info!(
-                "Ignored empty path at {section_name}.{subsection_name:?}.{name} due to lenient configuration",
-                section_name = _key.section_name,
-                subsection_name = _key.subsection_name,
-                name = _key.value_name
-            );
-            return None;
-        }
-
-        let install_dir = crate::path::install_dir().ok();
-        let home = self.home_dir();
-        let ctx = config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
-        Some(path.interpolate(ctx))
+        trusted_file_path(
+            &self.resolved,
+            key,
+            &mut self.filter_config_section.clone(),
+            self.lenient_config,
+            self.environment,
+        )
     }
 
     pub(crate) fn apply_leniency<T, E>(&self, res: Option<Result<T, E>>) -> Result<Option<T>, E> {
@@ -465,9 +453,43 @@ impl Cache {
     ///
     /// We never fail for here even if the permission is set to deny as we `gix-config` will fail later
     /// if it actually wants to use the home directory - we don't want to fail prematurely.
+    #[cfg(any(
+        feature = "blocking-http-transport-reqwest",
+        feature = "blocking-http-transport-curl"
+    ))]
     pub(crate) fn home_dir(&self) -> Option<PathBuf> {
-        gix_path::env::home_dir().and_then(|path| self.environment.home.check_opt(path))
+        home_dir(self.environment)
     }
+}
+
+pub(crate) fn trusted_file_path<'config>(
+    config: &'config gix_config::File<'_>,
+    key: impl gix_config::AsKey,
+    filter: &mut gix_config::file::MetadataFilter,
+    lenient_config: bool,
+    environment: crate::open::permissions::Environment,
+) -> Option<Result<Cow<'config, std::path::Path>, gix_config::path::interpolate::Error>> {
+    let path = config.path_filter(&key, filter)?;
+
+    if lenient_config && path.is_empty() {
+        let _key = key.as_key();
+        gix_trace::info!(
+            "Ignored empty path at {section_name}.{subsection_name:?}.{name} due to lenient configuration",
+            section_name = _key.section_name,
+            subsection_name = _key.subsection_name,
+            name = _key.value_name
+        );
+        return None;
+    }
+
+    let install_dir = crate::path::install_dir().ok();
+    let home = home_dir(environment);
+    let ctx = config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
+    Some(path.interpolate(ctx))
+}
+
+pub(crate) fn home_dir(environment: crate::open::permissions::Environment) -> Option<PathBuf> {
+    gix_path::env::home_dir().and_then(|path| environment.home.check_opt(path))
 }
 
 fn boolean(
