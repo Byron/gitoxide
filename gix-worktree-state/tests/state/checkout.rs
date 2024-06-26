@@ -305,11 +305,18 @@ fn dangling_symlinks_can_be_created() -> crate::Result {
 
     for (fixture, symlink_name, target_name) in [
         ("make_dangling_symlink", "dangling", "non-existing-target"),
-        ("make_dangling_symlink_to_windows_invalid", "dangling-qmarks-symlink", "???"),
-        ("make_dangling_symlink_to_windows_reserved", "dangling-con-symlink", "CON"),
+        (
+            "make_dangling_symlink_to_windows_invalid",
+            "dangling-qmarks-symlink",
+            "???",
+        ),
+        (
+            "make_dangling_symlink_to_windows_reserved",
+            "dangling-con-symlink",
+            "CON",
+        ),
     ] {
-        let (_source_tree, destination, _index, outcome) =
-            checkout_index_in_tmp_dir(opts.clone(), fixture, None)?;
+        let (_source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir(opts.clone(), fixture, None)?;
         let worktree_files = dir_structure(&destination);
         let worktree_files_stripped = stripped_prefix(&destination, &worktree_files);
 
