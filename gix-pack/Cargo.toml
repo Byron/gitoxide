@@ -16,16 +16,16 @@ doctest = false
 [features]
 default = ["generate", "streaming-input"]
 ## generate new packs from a set of objects.
-generate = ["dep:gix-traverse", "dep:gix-diff"]
+generate = ["dep:gix-traverse", "dep:gix-diff", "dep:parking_lot", "dep:gix-hashtable"]
 ## Receive a pack as datastream and resolve it
-streaming-input = []
+streaming-input = ["dep:parking_lot", "dep:gix-tempfile"]
 ## Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
 ## for the LRU-cache itself low.
 pack-cache-lru-static = ["dep:uluru"]
 ## Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
 pack-cache-lru-dynamic = ["dep:clru"]
 ## If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
-object-cache-dynamic = ["dep:clru"]
+object-cache-dynamic = ["dep:clru", "dep:gix-hashtable"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = ["dep:serde", "gix-object/serde"]
 ## Make it possible to compile to the `wasm32-unknown-unknown` target.
@@ -37,7 +37,7 @@ gix-path = { version = "^0.10.8", path = "../gix-path" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-chunk = { version = "^0.4.8", path = "../gix-chunk" }
 gix-object = { version = "^0.42.2", path = "../gix-object" }
-gix-hashtable = { version = "^0.5.2", path = "../gix-hashtable" }
+gix-hashtable = { version = "^0.5.2", path = "../gix-hashtable", optional = true }
 
 # for streaming of packs (input, output)
 gix-traverse = { version = "^0.39.1", path = "../gix-traverse", optional = true }
@@ -45,7 +45,7 @@ gix-diff = { version = "^0.44.0", path = "../gix-diff", default-features = false
 
 memmap2 = "0.9.0"
 smallvec = "1.3.0"
-parking_lot = { version = "0.12.0", default-features = false }
+parking_lot = { version = "0.12.0", default-features = false, optional = true }
 thiserror = "1.0.26"
 
 # for caching
@@ -58,7 +58,7 @@ document-features = { version = "0.2.0", optional = true }
 
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-gix-tempfile = { version = "^14.0.0", default-features = false, path = "../gix-tempfile" }
+gix-tempfile = { version = "^14.0.0", default-features = false, path = "../gix-tempfile", optional = true }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools"}
