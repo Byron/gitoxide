@@ -268,6 +268,34 @@ fn symlinks_become_files_if_disabled() -> crate::Result {
 }
 
 #[test]
+fn symlinks_to_directories_are_usable() -> crate::Result {
+    let opts = opts_from_probe();
+    if !opts.fs.symlink {
+        eprintln!("Skipping directory symlink test on filesystem that doesn't support it");
+        return Ok(());
+    }
+
+    let (_source_tree, destination, _index, outcome) =
+        checkout_index_in_tmp_dir(opts.clone(), "make_dir_symlink", None)?;
+    let worktree_files = dir_structure(&destination);
+    let worktree_files_stripped = stripped_prefix(&destination, &worktree_files);
+
+    assert_eq!(worktree_files_stripped, paths(["symlink"]));
+    let symlink_path = &worktree_files[0];
+    assert!(symlink_path
+        .symlink_metadata()
+        .expect("symlink is on disk")
+        .is_symlink());
+    assert!(symlink_path
+        .metadata()
+        .expect("metadata accessible through symlink")
+        .is_dir());
+    assert_eq!(std::fs::read_link(symlink_path)?, Path::new("."));
+    assert!(outcome.collisions.is_empty());
+    Ok(())
+}
+
+#[test]
 fn dangling_symlinks_can_be_created() -> crate::Result {
     let opts = opts_from_probe();
     if !opts.fs.symlink {
@@ -275,19 +303,33 @@ fn dangling_symlinks_can_be_created() -> crate::Result {
         return Ok(());
     }
 
-    let (_source_tree, destination, _index, outcome) =
-        checkout_index_in_tmp_dir(opts.clone(), "make_dangling_symlink", None)?;
-    let worktree_files = dir_structure(&destination);
-    let worktree_files_stripped = stripped_prefix(&destination, &worktree_files);
+    for (fixture, symlink_name, target_name) in [
+        ("make_dangling_symlink", "dangling", "non-existing-target"),
+        (
+            "make_dangling_symlink_to_windows_invalid",
+            "dangling-qmarks-symlink",
+            "???",
+        ),
+        (
+            "make_dangling_symlink_to_windows_reserved",
+            "dangling-con-symlink",
+            "CON",
+        ),
+    ] {
+        let (_source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir(opts.clone(), fixture, None)?;
+        let worktree_files = dir_structure(&destination);
+        let worktree_files_stripped = stripped_prefix(&destination, &worktree_files);
 
-    assert_eq!(worktree_files_stripped, paths(["dangling"]));
-    let symlink_path = &worktree_files[0];
-    assert!(symlink_path
-        .symlink_metadata()
-        .expect("dangling symlink is on disk")
-        .is_symlink());
-    assert_eq!(std::fs::read_link(symlink_path)?, Path::new("non-existing-target"));
-    assert!(outcome.collisions.is_empty());
+        assert_eq!(worktree_files_stripped, paths([symlink_name]));
+        let symlink_path = &worktree_files[0];
+        assert!(symlink_path
+            .symlink_metadata()
+            .expect("dangling symlink is on disk")
+            .is_symlink());
+        assert_eq!(std::fs::read_link(symlink_path)?, Path::new(target_name));
+        assert!(outcome.collisions.is_empty());
+    }
+
     Ok(())
 }
 

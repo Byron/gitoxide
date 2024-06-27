@@ -41,12 +41,7 @@ pub fn create(original: &Path, link: &Path) -> io::Result<()> {
     use std::os::windows::fs::{symlink_dir, symlink_file};
     // TODO: figure out if links to links count as files or whatever they point at
     let orig_abs = link.parent().expect("dir for link").join(original);
-    let is_dir = match std::fs::metadata(orig_abs) {
-        Ok(m) => m.is_dir(),
-        Err(err) if err.kind() == io::ErrorKind::NotFound => false,
-        Err(err) => return Err(err),
-    };
-    if is_dir {
+    if orig_abs.is_dir() {
         symlink_dir(original, link)
     } else {
         symlink_file(original, link)
