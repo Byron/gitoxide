@@ -23,7 +23,6 @@ gix-features = { version = "^0.38.2", path = "../gix-features", features = ["wal
 gix-fs = { version = "^0.11.1", path = "../gix-fs" }
 gix-path = { version = "^0.10.8", path = "../gix-path" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-gix-date = { version = "^0.8.7", path = "../gix-date" }
 gix-object = { version = "^0.42.2", path = "../gix-object" }
 gix-utils = { version = "^0.1.11", path = "../gix-utils" }
 gix-validate = { version = "^0.8.5", path = "../gix-validate" }
@@ -42,7 +41,7 @@ document-features = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
-
+gix-date = { version = "^0.8.7", path = "../gix-date" }
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde"]
