@@ -1360,7 +1360,6 @@ dependencies = [
  "bstr",
  "document-features",
  "gix-date 0.8.7",
- "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-testtools",
  "gix-utils 0.1.12",
