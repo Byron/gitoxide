@@ -59,6 +59,7 @@ mod mutate {
             let url = gix_url::parse(self.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
             self.protocol = Some(url.scheme.as_str().into());
             self.username = url.user().map(ToOwned::to_owned);
+            self.password = url.password().map(ToOwned::to_owned);
             self.host = url.host().map(ToOwned::to_owned).map(|mut host| {
                 if let Some(port) = url.port {
                     use std::fmt::Write;
