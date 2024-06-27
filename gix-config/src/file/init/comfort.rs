@@ -17,31 +17,35 @@ use crate::{
 impl File<'static> {
     /// Open all global configuration files which involves the following sources:
     ///
-    /// * [system][crate::Source::System]
-    /// * [git][crate::Source::Git]
-    /// * [user][crate::Source::User]
+    /// * [git-installation](source::Kind::GitInstallation)
+    /// * [system](source::Kind::System)
+    /// * [globals](source::Kind::Global)
     ///
     /// which excludes repository local configuration, as well as override-configuration from environment variables.
     ///
     /// Note that the file might [be empty][File::is_void()] in case no configuration file was found.
     pub fn from_globals() -> Result<File<'static>, init::from_paths::Error> {
-        let metas = [source::Kind::System, source::Kind::Global]
-            .iter()
-            .flat_map(|kind| kind.sources())
-            .filter_map(|source| {
-                let path = source
-                    .storage_location(&mut gix_path::env::var)
-                    .and_then(|p| p.is_file().then_some(p))
-                    .map(Cow::into_owned);
+        let metas = [
+            source::Kind::GitInstallation,
+            source::Kind::System,
+            source::Kind::Global,
+        ]
+        .iter()
+        .flat_map(|kind| kind.sources())
+        .filter_map(|source| {
+            let path = source
+                .storage_location(&mut gix_path::env::var)
+                .and_then(|p| p.is_file().then_some(p))
+                .map(Cow::into_owned);
 
-                Metadata {
-                    path,
-                    source: *source,
-                    level: 0,
-                    trust: gix_sec::Trust::Full,
-                }
-                .into()
-            });
+            Metadata {
+                path,
+                source: *source,
+                level: 0,
+                trust: gix_sec::Trust::Full,
+            }
+            .into()
+        });
 
         let home = gix_path::env::home_dir();
         let options = init::Options {

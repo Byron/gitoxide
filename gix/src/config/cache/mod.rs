@@ -11,7 +11,7 @@ impl std::fmt::Debug for Cache {
     }
 }
 
-mod access;
+pub(crate) mod access;
 
 pub(crate) mod util;
 

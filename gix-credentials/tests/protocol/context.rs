@@ -36,6 +36,15 @@ mod destructure_url_in_place {
         assert_eq_parts("ssh://user@host:21/path", "ssh", "user", "host:21", "path", false);
         assert_eq_parts("ssh://host.org/path", "ssh", None, "host.org", "path", true);
     }
+
+    #[test]
+    fn passwords_are_placed_in_context_too() -> crate::Result {
+        let mut ctx = url_ctx("http://user:password@host/path");
+        ctx.destructure_url_in_place(false)?;
+        assert_eq!(ctx.password.as_deref(), Some("password"));
+        Ok(())
+    }
+
     #[test]
     fn http_and_https_ignore_the_path_by_default() {
         assert_eq_parts(
