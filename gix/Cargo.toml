@@ -83,7 +83,7 @@ command = ["dep:gix-command"]
 status = ["gix-status", "dirwalk", "index", "blob-diff"]
 
 ## Utilities for interrupting computations and cleaning up tempfiles.
-interrupt = ["dep:signal-hook", "gix-tempfile/signals"]
+interrupt = ["dep:signal-hook", "gix-tempfile/signals", "dep:parking_lot"]
 
 ## Access to `.git/index` files.
 index = ["dep:gix-index"]
@@ -371,8 +371,8 @@ regex = { version = "1.6.0", optional = true, default-features = false, features
     "std",
 ] }
 
-# for `interrupt` module
-parking_lot = "0.12.1"
+# for `interrupt` feature
+parking_lot = { version = "0.12.1", optional = true }
 
 document-features = { version = "0.2.0", optional = true }
 
