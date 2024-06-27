@@ -17,10 +17,10 @@ gix-command = { version = "^0.3.7", path = "../gix-command" }
 gix-config-value = { version = "^0.14.6", path = "../gix-config-value" }
 
 thiserror = "1.0.32"
-parking_lot = "0.12.1"
 
 [target.'cfg(unix)'.dependencies]
 rustix = { version = "0.38.4", features = ["termios"] }
+parking_lot = "0.12.1"
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
