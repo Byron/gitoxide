@@ -256,6 +256,12 @@ zlib-stock = ["gix-features/zlib-stock"]
 #!
 #! The catch-all of feature toggles.
 
+## Enable tracing using the `tracing` crate for coarse tracing.
+tracing = ["gix-features/tracing"]
+
+## Enable tracing using the `tracing` crate for detailed tracing. Also enables coarse tracing.
+tracing-detail = ["gix-features/tracing-detail", "tracing"]
+
 ## When parsing objects by default errors will only be available on the granularity of success or failure, and with the above flag enabled
 ## details information about the error location will be collected.
 ## Use it in applications which expect broken or invalid objects or for debugging purposes.
