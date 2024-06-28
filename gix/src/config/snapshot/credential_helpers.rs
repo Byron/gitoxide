@@ -43,6 +43,7 @@ impl Snapshot<'_> {
             repo.config.lenient_config,
             &mut repo.filter_config_section(),
             repo.config.environment,
+            false,
         )
     }
 }
@@ -72,6 +73,9 @@ pub(super) mod function {
     /// * `environment`
     ///     - Determines how environment variables can be used.
     ///     - Actually used are `GIT_*` and `SSH_*` environment variables to configure git prompting capabilities.
+    /// * `use_http_path`
+    ///     - Typically, this should be false to let the `url` configuration decide if the value should be enabled.
+    ///     - If `false`, credentials are effectively per host.
     ///
     /// # Deviation
     ///
@@ -88,6 +92,7 @@ pub(super) mod function {
         is_lenient_config: bool,
         filter: &mut gix_config::file::MetadataFilter,
         environment: crate::open::permissions::Environment,
+        mut use_http_path: bool,
     ) -> Result<
         (
             gix_credentials::helper::Cascade,
@@ -97,7 +102,6 @@ pub(super) mod function {
         Error,
     > {
         let mut programs = Vec::new();
-        let mut use_http_path = false;
         let url_had_user_initially = url.user().is_some();
         normalize(&mut url);
 
