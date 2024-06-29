@@ -45,10 +45,7 @@ pub fn entries(
     }
 
     #[cfg(feature = "serde")]
-    serde_json::to_writer_pretty(
-        out,
-        &mailmap.entries().into_iter().map(JsonEntry::from).collect::<Vec<_>>(),
-    )?;
+    serde_json::to_writer_pretty(out, &mailmap.iter().map(JsonEntry::from).collect::<Vec<_>>())?;
 
     Ok(())
 }
