@@ -1,4 +1,4 @@
-use gix_mailmap::Snapshot;
+use gix_mailmap::{Entry, Snapshot};
 use gix_testtools::fixture_bytes;
 
 #[test]
@@ -54,7 +54,22 @@ fn try_resolve() {
     );
     assert_eq!(snapshot.resolve(sig.to_ref()), sig);
 
-    assert_eq!(snapshot.entries().len(), 6);
+    assert_eq!(
+        snapshot.entries(),
+        &[
+            Entry::change_name_and_email_by_name_and_email("Jane Doe", "jane@example.com", "Jane", "bugs@example.com"),
+            Entry::change_name_and_email_by_name_and_email(
+                "Joe R. Developer",
+                "joe@example.com",
+                "Joe",
+                "bugs@example.com",
+            ),
+            Entry::change_name_and_email_by_email("Jane Doe", "jane@example.com", "jane@desktop.(none)"),
+            Entry::change_email_by_name_and_email("jane@example.com", "Jane", "Jane@ipad.(none)"),
+            Entry::change_name_and_email_by_email("Jane Doe", "jane@example.com", "jane@laptop.(none)"),
+            Entry::change_name_by_email("Joe R. Developer", "joe@example.com"),
+        ]
+    );
 }
 
 #[test]
@@ -84,7 +99,18 @@ fn non_name_and_name_mappings_will_not_clash() {
             "it can match by email and name as well"
         );
 
-        assert_eq!(snapshot.entries().len(), 2);
+        assert_eq!(
+            snapshot.entries(),
+            &[
+                Entry::change_name_by_email("new-name", "old-email"),
+                Entry::change_name_and_email_by_name_and_email(
+                    "other-new-name",
+                    "other-new-email",
+                    "old-name",
+                    "old-email"
+                )
+            ]
+        );
     }
 }
 
@@ -115,7 +141,20 @@ fn overwrite_entries() {
         "email by email"
     );
 
-    assert_eq!(snapshot.entries().len(), 4);
+    assert_eq!(
+        snapshot.entries(),
+        &[
+            Entry::change_name_by_email("A-overwritten", "old-a-email"),
+            Entry::change_name_and_email_by_email("B-overwritten", "new-b-email-overwritten", "old-b-email"),
+            Entry::change_name_and_email_by_name_and_email(
+                "C-overwritten",
+                "new-c-email-overwritten",
+                "old-C",
+                "old-c-email"
+            ),
+            Entry::change_email_by_email("new-d-email-overwritten", "old-d-email")
+        ]
+    );
 }
 
 fn signature(name: &str, email: &str) -> gix_actor::Signature {
