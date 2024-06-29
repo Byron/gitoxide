@@ -51,32 +51,40 @@ impl Snapshot {
         self
     }
 
+    /// Transform our acceleration structure into an iterator of entries.
+    ///
+    /// Note that the order is different from how they were obtained initially, and are explicitly ordered by
+    /// (`old_email`, `old_name`).
+    pub fn iter(&self) -> impl Iterator<Item = crate::Entry<'_>> {
+        self.entries_by_old_email.iter().flat_map(|entry| {
+            let initial = if entry.new_email.is_some() || entry.new_name.is_some() {
+                Some(crate::Entry {
+                    new_name: entry.new_name.as_ref().map(|b| b.as_bstr()),
+                    new_email: entry.new_email.as_ref().map(|b| b.as_bstr()),
+                    old_name: None,
+                    old_email: entry.old_email.as_bstr(),
+                })
+            } else {
+                None
+            };
+
+            let rest = entry.entries_by_old_name.iter().map(|name_entry| crate::Entry {
+                new_name: name_entry.new_name.as_ref().map(|b| b.as_bstr()),
+                new_email: name_entry.new_email.as_ref().map(|b| b.as_bstr()),
+                old_name: name_entry.old_name.as_bstr().into(),
+                old_email: entry.old_email.as_bstr(),
+            });
+
+            initial.into_iter().chain(rest)
+        })
+    }
+
     /// Transform our acceleration structure into a list of entries.
     ///
     /// Note that the order is different from how they were obtained initially, and are explicitly ordered by
     /// (`old_email`, `old_name`).
     pub fn entries(&self) -> Vec<crate::Entry<'_>> {
-        let mut out = Vec::with_capacity(self.entries_by_old_email.len());
-        for entry in &self.entries_by_old_email {
-            if entry.new_email.is_some() || entry.new_name.is_some() {
-                out.push(crate::Entry {
-                    new_name: entry.new_name.as_ref().map(|b| b.as_bstr()),
-                    new_email: entry.new_email.as_ref().map(|b| b.as_bstr()),
-                    old_name: None,
-                    old_email: entry.old_email.as_bstr(),
-                });
-            }
-
-            for name_entry in &entry.entries_by_old_name {
-                out.push(crate::Entry {
-                    new_name: name_entry.new_name.as_ref().map(|b| b.as_bstr()),
-                    new_email: name_entry.new_email.as_ref().map(|b| b.as_bstr()),
-                    old_name: name_entry.old_name.as_bstr().into(),
-                    old_email: entry.old_email.as_bstr(),
-                });
-            }
-        }
-        out
+        self.iter().collect()
     }
 
     /// Try to resolve `signature` by its contained email and name and provide resolved/mapped names as reference.
