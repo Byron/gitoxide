@@ -1291,7 +1291,7 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "gix-actor 0.31.2",
+ "gix-actor 0.31.3",
  "gix-archive",
  "gix-attributes 0.22.2",
  "gix-command",
@@ -1356,6 +1356,20 @@ dependencies = [
 [[package]]
 name = "gix-actor"
 version = "0.31.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d69c59d392c7e6c94385b6fd6089d6df0fe945f32b4357687989f3aee253cd7f"
+dependencies = [
+ "bstr",
+ "gix-date 0.8.6",
+ "gix-utils 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itoa",
+ "thiserror",
+ "winnow 0.6.0",
+]
+
+[[package]]
+name = "gix-actor"
+version = "0.31.3"
 dependencies = [
  "bstr",
  "document-features",
@@ -1366,20 +1380,6 @@ dependencies = [
  "itoa",
  "pretty_assertions",
  "serde",
- "thiserror",
- "winnow 0.6.0",
-]
-
-[[package]]
-name = "gix-actor"
-version = "0.31.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d69c59d392c7e6c94385b6fd6089d6df0fe945f32b4357687989f3aee253cd7f"
-dependencies = [
- "bstr",
- "gix-date 0.8.6",
- "gix-utils 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
- "itoa",
  "thiserror",
  "winnow 0.6.0",
 ]
@@ -2009,11 +2009,11 @@ dependencies = [
 
 [[package]]
 name = "gix-mailmap"
-version = "0.23.3"
+version = "0.23.4"
 dependencies = [
  "bstr",
  "document-features",
- "gix-actor 0.31.2",
+ "gix-actor 0.31.3",
  "gix-date 0.8.7",
  "gix-testtools",
  "serde",
@@ -2048,7 +2048,7 @@ dependencies = [
  "bstr",
  "criterion",
  "document-features",
- "gix-actor 0.31.2",
+ "gix-actor 0.31.3",
  "gix-date 0.8.7",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
@@ -2070,7 +2070,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fe2dc4a41191c680c942e6ebd630c8107005983c4679214fdb1007dcf5ae1df"
 dependencies = [
  "bstr",
- "gix-actor 0.31.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-actor 0.31.2",
  "gix-date 0.8.6",
  "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2108,7 +2108,7 @@ version = "0.0.0"
 dependencies = [
  "crossbeam-channel",
  "filetime",
- "gix-actor 0.31.2",
+ "gix-actor 0.31.3",
  "gix-date 0.8.7",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
@@ -2300,7 +2300,7 @@ name = "gix-ref"
 version = "0.44.1"
 dependencies = [
  "document-features",
- "gix-actor 0.31.2",
+ "gix-actor 0.31.3",
  "gix-date 0.8.7",
  "gix-features 0.38.2",
  "gix-fs 0.11.1",
@@ -2324,7 +2324,7 @@ version = "0.44.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3394a2997e5bc6b22ebc1e1a87b41eeefbcfcff3dbfa7c4bd73cb0ac8f1f3e2e"
 dependencies = [
- "gix-actor 0.31.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-actor 0.31.2",
  "gix-date 0.8.6",
  "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-fs 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2344,7 +2344,7 @@ dependencies = [
 name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
- "gix-actor 0.31.2",
+ "gix-actor 0.31.3",
  "gix-date 0.8.7",
  "gix-discover 0.32.0",
  "gix-features 0.38.2",

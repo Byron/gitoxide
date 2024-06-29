@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.23.4 (2024-06-29)
+
+### New Features
+
+ - <csr-id-c083f861f95c495c508ac6ca1aaeec465bb266b5/> add `mailmap::Snapshot::iter()`
+   Allow iterating through entries without allocation.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 2 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'push-oqpkttmvqxvx' ([`b38c6ed`](https://github.com/Byron/gitoxide/commit/b38c6ed6714b89b52c98e2a4bba3198e23055f6f))
+    - Add `mailmap::Snapshot::iter()` ([`c083f86`](https://github.com/Byron/gitoxide/commit/c083f861f95c495c508ac6ca1aaeec465bb266b5))
+    - Add a baseline for `entries()` to know more about its ordering. ([`ae2b9ce`](https://github.com/Byron/gitoxide/commit/ae2b9ce37509f8adcf3f5af2d9dad738f6ea50cf))
+</details>
+
 ## 0.23.3 (2024-06-26)
 
 ### Bug Fixes
@@ -15,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 2 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1424](https://github.com/Byron/gitoxide/issues/1424)
@@ -28,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **[#1424](https://github.com/Byron/gitoxide/issues/1424)**
     - Add standard traits (Debug, Eq) to `Snapshot` ([`98007e6`](https://github.com/Byron/gitoxide/commit/98007e600095fcd4df48a0a4e75d2b342ef906e2))
+ * **Uncategorized**
+    - Release gix-mailmap v0.23.3 ([`0c5d1ff`](https://github.com/Byron/gitoxide/commit/0c5d1ff3f48aab43119f86501b14974f92c2017d))
 </details>
 
 ## 0.23.2 (2024-06-23)
