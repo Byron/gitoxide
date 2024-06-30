@@ -1,5 +1,4 @@
 # Must be sourced into the main journey test
-set -eu
 
 title plumbing "${kind}"
 snapshot="$snapshot/plumbing"
