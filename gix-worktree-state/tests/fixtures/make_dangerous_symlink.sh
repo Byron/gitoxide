@@ -11,7 +11,7 @@ empty_oid=$(git hash-object -w --stdin </dev/null)
 fake_dir_target=$(echo -n 'A-dir' | git hash-object -w --stdin)
 fake_file_target=$(echo -n 'A-file' | git hash-object -w --stdin)
 
-git update-index --index-info <<-EOF
+git update-index --index-info <<EOF
 100644 $empty_oid	A-dir/a
 100644 $empty_oid	A-file
 120000 $fake_dir_target	FAKE-DIR

@@ -101,7 +101,7 @@ git init ambiguous_blob_tree_commit
   # create one tree 0000000000cdc
   git write-tree
 
-  sed -e "s/|$//" >patch <<-EOF
+  sed -e "s/|$//" >patch <<EOF
 diff --git a/frotz b/frotz
 index 000000000..ffffff 100644
 --- a/frotz

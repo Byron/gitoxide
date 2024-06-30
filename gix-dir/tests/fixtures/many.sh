@@ -324,7 +324,7 @@ git init type-mismatch-icase
 git init type-mismatch-icase-clash-dir-is-file
 (cd type-mismatch-icase-clash-dir-is-file
   empty_oid=$(git hash-object -w --stdin </dev/null)
-  git update-index --index-info <<-EOF
+  git update-index --index-info <<EOF
 100644 $empty_oid	D/a
 100644 $empty_oid	d
 EOF

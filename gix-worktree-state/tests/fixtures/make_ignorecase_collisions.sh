@@ -10,7 +10,7 @@ symlink_target=$(echo -n 'X' | git hash-object -w --stdin)
 echo "FILE_? filter=arrow" > .gitattributes
 git add -A
 
-git update-index --index-info <<-EOF
+git update-index --index-info <<EOF
 100644 $content_oid	FILE_X
 100644 $content_oid	FILE_x
 100644 $content_oid	file_X
