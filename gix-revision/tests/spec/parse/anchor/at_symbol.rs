@@ -11,7 +11,7 @@ fn braces_must_be_closed() {
 }
 
 #[test]
-#[cfg_attr(target_pointer_width = "32", ignore = "Only works this way on 64 bit systems")]
+#[cfg(target_pointer_width = "64")] // Only works this way on 64-bit systems.
 fn fuzzed() {
     let rec = parse("@{-9223372036854775808}");
     assert_eq!(rec.nth_checked_out_branch, [Some(9223372036854775808), None]);
