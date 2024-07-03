@@ -1,7 +1,10 @@
 pub(crate) mod function {
+    use crate::{IdentityRef, SignatureRef};
     use bstr::ByteSlice;
     use gix_date::{time::Sign, OffsetInSeconds, SecondsSinceUnixEpoch, Time};
     use gix_utils::btoi::to_signed;
+    use winnow::error::{ErrMode, ErrorKind};
+    use winnow::stream::Stream;
     use winnow::{
         combinator::{alt, separated_pair, terminated},
         error::{AddContext, ParserError, StrContext},
@@ -9,8 +12,6 @@ pub(crate) mod function {
         stream::AsChar,
         token::{take, take_until, take_while},
     };
-
-    use crate::{IdentityRef, SignatureRef};
 
     const SPACE: &[u8] = b" ";
 
@@ -64,16 +65,47 @@ pub(crate) mod function {
     pub fn identity<'a, E: ParserError<&'a [u8]> + AddContext<&'a [u8], StrContext>>(
         i: &mut &'a [u8],
     ) -> PResult<IdentityRef<'a>, E> {
-        (
-            terminated(take_until(0.., &b" <"[..]), take(2usize)).context(StrContext::Expected("<name>".into())),
-            terminated(take_until(0.., &b">"[..]), take(1usize)).context(StrContext::Expected("<email>".into())),
-        )
-            .map(|(name, email): (&[u8], &[u8])| IdentityRef {
-                name: name.as_bstr(),
-                email: email.as_bstr(),
-            })
-            .context(StrContext::Expected("<name> <<email>>".into()))
-            .parse_next(i)
+        let start = i.checkpoint();
+        let eol_idx = i.find_byte(b'\n').unwrap_or(i.len());
+        let right_delim_idx =
+            i[..eol_idx]
+                .rfind_byte(b'>')
+                .ok_or(ErrMode::Cut(E::from_error_kind(i, ErrorKind::Eof).add_context(
+                    i,
+                    &start,
+                    StrContext::Label("Closing '>' not found"),
+                )))?;
+        let i_name_and_email = &i[..right_delim_idx];
+        let skip_from_right = i_name_and_email
+            .iter()
+            .rev()
+            .take_while(|b| b.is_ascii_whitespace() || **b == b'>')
+            .count();
+        let left_delim_idx =
+            i_name_and_email
+                .find_byte(b'<')
+                .ok_or(ErrMode::Cut(E::from_error_kind(i, ErrorKind::Eof).add_context(
+                    &i_name_and_email,
+                    &start,
+                    StrContext::Label("Opening '<' not found"),
+                )))?;
+        let skip_from_left = i[left_delim_idx..]
+            .iter()
+            .take_while(|b| b.is_ascii_whitespace() || **b == b'<')
+            .count();
+        let mut name = i[..left_delim_idx].as_bstr();
+        name = name.strip_suffix(b" ").unwrap_or(name).as_bstr();
+
+        let email = i
+            .get(left_delim_idx + skip_from_left..right_delim_idx - skip_from_right)
+            .ok_or(ErrMode::Cut(E::from_error_kind(i, ErrorKind::Eof).add_context(
+                &i_name_and_email,
+                &start,
+                StrContext::Label("Skipped parts run into each other"),
+            )))?
+            .as_bstr();
+        *i = i.get(right_delim_idx + 1..).unwrap_or(&[]);
+        Ok(IdentityRef { name, email })
     }
 }
 pub use function::identity;
@@ -167,7 +199,7 @@ mod tests {
                             .map_err(to_bstr_err)
                             .expect_err("parse fails as > is missing")
                             .to_string(),
-                        "in slice at ' 12345 -1215'\n  0: expected `<email>` at ' 12345 -1215'\n  1: expected `<name> <<email>>` at 'hello < 12345 -1215'\n  2: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at 'hello < 12345 -1215'\n"
+                        "in end of file at 'hello < 12345 -1215'\n  0: invalid Closing '>' not found at 'hello < 12345 -1215'\n  1: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at 'hello < 12345 -1215'\n"
                     );
         }
 
