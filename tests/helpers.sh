@@ -1,3 +1,4 @@
+# Must be sourced into the main journey test
 
 function set-static-git-environment() {
   set -a
@@ -66,4 +67,3 @@ function launch-git-daemon() {
     done
     trap 'kill $daemon_pid' EXIT
 }
-

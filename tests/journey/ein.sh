@@ -1,5 +1,4 @@
 # Must be sourced into the main journey test
-set -eu
 
 if test "$kind" = "max" || test "$kind" = "max-pure"; then
 title "Porcelain ${kind}"

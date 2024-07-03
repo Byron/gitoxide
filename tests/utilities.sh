@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# Must be sourced into the main journey test
 
 WHITE="$(tput setaf 9 2>/dev/null || echo -n '')"
 YELLOW="$(tput setaf 3 2>/dev/null || echo -n '')"
