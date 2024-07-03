@@ -38,10 +38,10 @@ fn invalid_timestsamp() {
 #[test]
 fn invalid_email_of_committer() {
     let actor = gix_actor::SignatureRef {
-        name: b"Gregor Hartmann<gh".as_bstr(),
-        email: b"Gregor Hartmann<gh@openoffice.org>".as_bstr(),
+        name: b"Gregor Hartmann".as_bstr(),
+        email: b"gh <Gregor Hartmann<gh@openoffice.org".as_bstr(),
         time: Time {
-            seconds: 1270814970,
+            seconds: 1282910542,
             offset: 2 * 60 * 60,
             sign: Sign::Plus,
         },
@@ -50,12 +50,12 @@ fn invalid_email_of_committer() {
         CommitRef::from_bytes(&fixture_name("commit", "invalid-actor.txt"))
             .expect("ignore strangely formed actor format"),
         CommitRef {
-            tree: b"aee896327aa08c20f9ce80c9060aefe47edc65be".as_bstr(),
-            parents: [b"d93091832789fc586916720da62a341a731fbd66".as_bstr()].into(),
+            tree: b"220738fd4199e95a2b244465168366a73ebdf271".as_bstr(),
+            parents: [b"209fbe2d632761b30b7b17422914e11b93692833".as_bstr()].into(),
             author: actor,
             committer: actor,
             encoding: None,
-            message: b"add methods for tablecontrol".as_bstr(),
+            message: b"build breakers".as_bstr(),
             extra_headers: vec![]
         }
     );
