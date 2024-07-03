@@ -15,7 +15,7 @@ test = false
 
 [dependencies]
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-gix-object = { version = "^0.42.2", path = "../gix-object" }
+gix-object = { version = "^0.42.3", path = "../gix-object" }
 gix-date = { version = "^0.8.7", path = "../gix-date" }
 gix-commitgraph = { version = "^0.24.2", path = "../gix-commitgraph" }
 gix-revwalk = { version = "^0.13.1", path = "../gix-revwalk" }

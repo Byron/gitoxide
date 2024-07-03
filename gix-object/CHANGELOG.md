@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.42.3 (2024-07-03)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 31 calendar days.
+ - 12 commits contributed to the release over the course of 31 calendar days.
  - 42 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1438](https://github.com/Byron/gitoxide/issues/1438)
@@ -27,6 +27,7 @@ A maintenance release without user-facing changes.
  * **[#1438](https://github.com/Byron/gitoxide/issues/1438)**
     - Reproduce failure when parsing malformed commit ([`6c5861d`](https://github.com/Byron/gitoxide/commit/6c5861dff0986ca68c474be65738eda47ca28927))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`255920e`](https://github.com/Byron/gitoxide/commit/255920ecffd47f221702aaec29de966b120f8fc5))
     - Merge branch 'fix-1438' ([`9717a25`](https://github.com/Byron/gitoxide/commit/9717a255b7c817c9f6cde44eedba232e309a6e0f))
     - Adapt to changes in `gix-actor` ([`8dca2d4`](https://github.com/Byron/gitoxide/commit/8dca2d4de9f40839148fe545cf2f52d2fb9fa496))
     - Release gix-actor v0.31.3, gix-mailmap v0.23.4 ([`1e79c5c`](https://github.com/Byron/gitoxide/commit/1e79c5cdf20fc0440e9a497c9d01b0c0ca3ce424))

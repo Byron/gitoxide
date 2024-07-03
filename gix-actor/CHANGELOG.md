@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.31.4 (2024-07-03)
 
 ### Bug Fixes
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 4 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1438](https://github.com/Byron/gitoxide/issues/1438)
@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1438](https://github.com/Byron/gitoxide/issues/1438)**
     - Make actor parsing even more lenient ([`40be214`](https://github.com/Byron/gitoxide/commit/40be2145ceb938186363a2c6e074448a5a8f4707))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`255920e`](https://github.com/Byron/gitoxide/commit/255920ecffd47f221702aaec29de966b120f8fc5))
     - Merge branch 'fix-1438' ([`9717a25`](https://github.com/Byron/gitoxide/commit/9717a255b7c817c9f6cde44eedba232e309a6e0f))
 </details>
 

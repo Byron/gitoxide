@@ -36,7 +36,7 @@ gix-features = { version = "^0.38.2", path = "../gix-features", features = ["crc
 gix-path = { version = "^0.10.8", path = "../gix-path" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-chunk = { version = "^0.4.8", path = "../gix-chunk" }
-gix-object = { version = "^0.42.2", path = "../gix-object" }
+gix-object = { version = "^0.42.3", path = "../gix-object" }
 gix-hashtable = { version = "^0.5.2", path = "../gix-hashtable", optional = true }
 
 # for streaming of packs (input, output)
