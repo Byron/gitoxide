@@ -124,14 +124,14 @@ fn invalid() {
     assert_eq!(
         TagRef::from_bytes(partial_tag).unwrap_err().to_string(),
         if cfg!(feature = "verbose-object-parsing-errors") {
-            "object parsing failed at `tagger Sebasti`"
+            "object parsing failed at `Sebasti`\ninvalid Closing '>' not found\nexpected `<name> <<email>> <timestamp> <+|-><HHMM>`, `tagger <signature>`"
         } else {
             "object parsing failed"
         }
     );
     assert_eq!(
         TagRefIter::from_bytes(partial_tag).take_while(Result::is_ok).count(),
-        4,
+        3,
         "we can decode some fields before failing"
     );
 }
