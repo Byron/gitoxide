@@ -5,7 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-40be2145ceb938186363a2c6e074448a5a8f4707/> make actor parsing even more lenient
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 4 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1438](https://github.com/Byron/gitoxide/issues/1438)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1438](https://github.com/Byron/gitoxide/issues/1438)**
+    - Make actor parsing even more lenient ([`40be214`](https://github.com/Byron/gitoxide/commit/40be2145ceb938186363a2c6e074448a5a8f4707))
+ * **Uncategorized**
+    - Merge branch 'fix-1438' ([`9717a25`](https://github.com/Byron/gitoxide/commit/9717a255b7c817c9f6cde44eedba232e309a6e0f))
+</details>
+
 ## 0.31.3 (2024-06-29)
+
+<csr-id-e82a13eeb10fb4525c39d88b91ce356ada9a57dd/>
 
 ### Other
 
@@ -15,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 7 calendar days.
+ - 4 commits contributed to the release over the course of 7 calendar days.
  - 37 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-actor v0.31.3, gix-mailmap v0.23.4 ([`1e79c5c`](https://github.com/Byron/gitoxide/commit/1e79c5cdf20fc0440e9a497c9d01b0c0ca3ce424))
     - Merge pull request #1430 from klensy/deps ([`ab02aa9`](https://github.com/Byron/gitoxide/commit/ab02aa99842c17d68b8ee37e05e2f35720291e42))
     - Remove unused gix-features ([`e82a13e`](https://github.com/Byron/gitoxide/commit/e82a13eeb10fb4525c39d88b91ce356ada9a57dd))
     - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
