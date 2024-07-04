@@ -11,7 +11,7 @@ mod baseline {
         if cfg!(windows) {
             exe = exe.replace('\\', "/");
         }
-        gix_testtools::scripted_fixture_read_only_with_args("baseline.sh", [exe])?;
+        gix_testtools::scripted_fixture_read_only_with_args_single_archive("baseline.sh", [exe])?;
         Ok(())
     }
 }

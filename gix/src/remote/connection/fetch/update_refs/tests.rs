@@ -25,8 +25,11 @@ mod update {
     }
 
     fn repo(name: &str) -> gix::Repository {
-        let dir =
-            gix_testtools::scripted_fixture_read_only_with_args("make_fetch_repos.sh", [base_repo_path()]).unwrap();
+        let dir = gix_testtools::scripted_fixture_read_only_with_args_single_archive(
+            "make_fetch_repos.sh",
+            [base_repo_path()],
+        )
+        .unwrap();
         gix::open_opts(dir.join(name), restricted()).unwrap()
     }
     fn named_repo(name: &str) -> gix::Repository {
@@ -34,7 +37,7 @@ mod update {
         gix::open_opts(dir.join(name), restricted()).unwrap()
     }
     fn repo_rw(name: &str) -> (gix::Repository, gix_testtools::tempfile::TempDir) {
-        let dir = gix_testtools::scripted_fixture_writable_with_args(
+        let dir = gix_testtools::scripted_fixture_writable_with_args_single_archive(
             "make_fetch_repos.sh",
             [base_repo_path()],
             gix_testtools::Creation::ExecuteScript,
@@ -189,7 +192,7 @@ mod update {
 
     #[test]
     fn checked_out_branches_in_worktrees_are_rejected_with_additional_information() -> Result {
-        let root = gix_path::realpath(gix_testtools::scripted_fixture_read_only_with_args(
+        let root = gix_path::realpath(gix_testtools::scripted_fixture_read_only_with_args_single_archive(
             "make_fetch_repos.sh",
             [base_repo_path()],
         )?)?;

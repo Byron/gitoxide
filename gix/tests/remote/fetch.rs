@@ -63,7 +63,7 @@ mod blocking_and_async_io {
         args: impl IntoIterator<Item = S>,
         mode: Mode,
     ) -> Result<(gix::Repository, gix_testtools::tempfile::TempDir), gix::open::Error> {
-        let dir = gix_testtools::scripted_fixture_writable_with_args(
+        let dir = gix_testtools::scripted_fixture_writable_with_args_single_archive(
             "make_fetch_repos.sh",
             [{
                 let mut url = base_repo_path();
