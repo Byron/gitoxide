@@ -1,4 +1,5 @@
 /make_worktree_repo.tar
+/make_worktree_repo_bare.tar
 /make_worktree_repo_with_configs.tar
 /make_remote_repos.tar
 /make_complex_shallow_repo.tar

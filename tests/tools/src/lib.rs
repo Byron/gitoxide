@@ -224,6 +224,15 @@ enum DirectoryRoot {
     StandaloneTest,
 }
 
+/// Don't add a suffix to the archive name as `args` are platform dependent, none-deterministic,
+/// or otherwise don't influence the content of the archive.
+/// Note that this also means that `args` won't be used to control the hash of the archive itself.
+#[derive(Copy, Clone)]
+enum ArgsInHash {
+    Yes,
+    No,
+}
+
 /// Return the path to the `<crate-root>/tests/fixtures/<path>` directory.
 pub fn fixture_path(path: impl AsRef<Path>) -> PathBuf {
     fixture_path_inner(path, DirectoryRoot::IntegrationTest)
@@ -309,7 +318,19 @@ pub fn scripted_fixture_writable_with_args(
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
 ) -> Result<tempfile::TempDir> {
-    scripted_fixture_writable_with_args_inner(script_name, args, mode, DirectoryRoot::IntegrationTest)
+    scripted_fixture_writable_with_args_inner(script_name, args, mode, DirectoryRoot::IntegrationTest, ArgsInHash::Yes)
+}
+
+/// Like [`scripted_fixture_writable()`], but passes `args` to `script_name` while providing control over
+/// the way files are created with `mode`.
+///
+/// See [`scripted_fixture_read_only_with_args_single_archive()`] for important details on what `single_archive` means.
+pub fn scripted_fixture_writable_with_args_single_archive(
+    script_name: impl AsRef<Path>,
+    args: impl IntoIterator<Item = impl Into<String>>,
+    mode: Creation,
+) -> Result<tempfile::TempDir> {
+    scripted_fixture_writable_with_args_inner(script_name, args, mode, DirectoryRoot::IntegrationTest, ArgsInHash::No)
 }
 
 /// Like [`scripted_fixture_writable_with_args`], but does not prefix the fixture directory with `tests`
@@ -318,7 +339,18 @@ pub fn scripted_fixture_writable_with_args_standalone(
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
 ) -> Result<tempfile::TempDir> {
-    scripted_fixture_writable_with_args_inner(script_name, args, mode, DirectoryRoot::StandaloneTest)
+    scripted_fixture_writable_with_args_inner(script_name, args, mode, DirectoryRoot::StandaloneTest, ArgsInHash::Yes)
+}
+
+/// Like [`scripted_fixture_writable_with_args`], but does not prefix the fixture directory with `tests`
+///
+/// See [`scripted_fixture_read_only_with_args_single_archive()`] for important details on what `single_archive` means.
+pub fn scripted_fixture_writable_with_args_standalone_single_archive(
+    script_name: &str,
+    args: impl IntoIterator<Item = impl Into<String>>,
+    mode: Creation,
+) -> Result<tempfile::TempDir> {
+    scripted_fixture_writable_with_args_inner(script_name, args, mode, DirectoryRoot::StandaloneTest, ArgsInHash::No)
 }
 
 fn scripted_fixture_writable_with_args_inner(
@@ -326,16 +358,17 @@ fn scripted_fixture_writable_with_args_inner(
     args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
     root: DirectoryRoot,
+    args_in_hash: ArgsInHash,
 ) -> Result<tempfile::TempDir> {
     let dst = tempfile::TempDir::new()?;
     Ok(match mode {
         Creation::CopyFromReadOnly => {
-            let ro_dir = scripted_fixture_read_only_with_args_inner(script_name, args, None, root)?;
+            let ro_dir = scripted_fixture_read_only_with_args_inner(script_name, args, None, root, args_in_hash)?;
             copy_recursively_into_existing_dir(ro_dir, dst.path())?;
             dst
         }
         Creation::ExecuteScript => {
-            scripted_fixture_read_only_with_args_inner(script_name, args, dst.path().into(), root)?;
+            scripted_fixture_read_only_with_args_inner(script_name, args, dst.path().into(), root, args_in_hash)?;
             dst
         }
     })
@@ -365,7 +398,25 @@ pub fn scripted_fixture_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
 ) -> Result<PathBuf> {
-    scripted_fixture_read_only_with_args_inner(script_name, args, None, DirectoryRoot::IntegrationTest)
+    scripted_fixture_read_only_with_args_inner(script_name, args, None, DirectoryRoot::IntegrationTest, ArgsInHash::Yes)
+}
+
+/// Like `scripted_fixture_read_only()`], but passes `args` to `script_name`.
+///
+/// Also, don't add a suffix to the archive name as `args` are platform dependent, none-deterministic,
+/// or otherwise don't influence the content of the archive.
+/// Note that this also means that `args` won't be used to control the hash of the archive itself.
+///
+/// Sometimes, this should be combined with adding the archive name to `.gitignore` to prevent its creation
+/// in the first place.
+///
+/// Note that suffixing archives by default helps to learn what calls are made, and forces the author to
+/// think about what should be done to get it right.
+pub fn scripted_fixture_read_only_with_args_single_archive(
+    script_name: impl AsRef<Path>,
+    args: impl IntoIterator<Item = impl Into<String>>,
+) -> Result<PathBuf> {
+    scripted_fixture_read_only_with_args_inner(script_name, args, None, DirectoryRoot::IntegrationTest, ArgsInHash::No)
 }
 
 /// Like [`scripted_fixture_read_only_with_args()`], but does not prefix the fixture directory with `tests`
@@ -373,7 +424,15 @@ pub fn scripted_fixture_read_only_with_args_standalone(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = impl Into<String>>,
 ) -> Result<PathBuf> {
-    scripted_fixture_read_only_with_args_inner(script_name, args, None, DirectoryRoot::StandaloneTest)
+    scripted_fixture_read_only_with_args_inner(script_name, args, None, DirectoryRoot::StandaloneTest, ArgsInHash::Yes)
+}
+
+/// Like [`scripted_fixture_read_only_with_args_standalone()`], only has a single archive.
+pub fn scripted_fixture_read_only_with_args_standalone_single_archive(
+    script_name: impl AsRef<Path>,
+    args: impl IntoIterator<Item = impl Into<String>>,
+) -> Result<PathBuf> {
+    scripted_fixture_read_only_with_args_inner(script_name, args, None, DirectoryRoot::StandaloneTest, ArgsInHash::No)
 }
 
 fn scripted_fixture_read_only_with_args_inner(
@@ -381,6 +440,7 @@ fn scripted_fixture_read_only_with_args_inner(
     args: impl IntoIterator<Item = impl Into<String>>,
     destination_dir: Option<&Path>,
     root: DirectoryRoot,
+    args_in_hash: ArgsInHash,
 ) -> Result<PathBuf> {
     // Assure tempfiles get removed when aborting the test.
     gix_tempfile::signal::setup(
@@ -414,11 +474,23 @@ fn scripted_fixture_read_only_with_args_inner(
 
     let script_basename = script_location.file_stem().unwrap_or(script_location.as_os_str());
     let archive_file_path = fixture_path_inner(
-        Path::new("generated-archives").join(format!(
-            "{}.tar{}",
-            script_basename.to_str().expect("valid UTF-8"),
-            if cfg!(feature = "xz") { ".xz" } else { "" }
-        )),
+        {
+            let suffix = match args_in_hash {
+                ArgsInHash::Yes => {
+                    let mut suffix = args.join("_");
+                    if !suffix.is_empty() {
+                        suffix.insert(0, '_');
+                    }
+                    suffix.replace(['\\', '/', ' ', '.'], "_")
+                }
+                ArgsInHash::No => "".into(),
+            };
+            Path::new("generated-archives").join(format!(
+                "{}{suffix}.tar{}",
+                script_basename.to_str().expect("valid UTF-8"),
+                if cfg!(feature = "xz") { ".xz" } else { "" }
+            ))
+        },
         root,
     );
     let (force_run, script_result_directory) = destination_dir.map_or_else(
@@ -447,7 +519,15 @@ fn scripted_fixture_read_only_with_args_inner(
             std::fs::remove_dir_all(&script_result_directory).map_err(|err| format!("Failed to remove '{script_result_directory:?}', please try to do that by hand. Original error: {err}"))?
         }
         std::fs::create_dir_all(&script_result_directory)?;
-        match extract_archive(&archive_file_path, &script_result_directory, script_identity) {
+        let script_identity_for_archive = match args_in_hash {
+            ArgsInHash::Yes => script_identity,
+            ArgsInHash::No => 0,
+        };
+        match extract_archive(
+            &archive_file_path,
+            &script_result_directory,
+            script_identity_for_archive,
+        ) {
             Ok((archive_id, platform)) => {
                 eprintln!(
                     "Extracted fixture from archive '{}' ({}, {:?})",
@@ -489,12 +569,15 @@ fn scripted_fixture_read_only_with_args_inner(
                     output.stdout.as_bstr(),
                     output.stderr.as_bstr()
                 );
-                create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity).map_err(
-                    |err| {
-                        write_failure_marker(&failure_marker);
-                        err
-                    },
-                )?;
+                create_archive_if_not_on_ci(
+                    &script_result_directory,
+                    &archive_file_path,
+                    script_identity_for_archive,
+                )
+                .map_err(|err| {
+                    write_failure_marker(&failure_marker);
+                    err
+                })?;
             }
         }
     }
