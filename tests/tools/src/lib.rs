@@ -590,6 +590,8 @@ fn configure_command<'a>(
     script_result_directory: &Path,
 ) -> &'a mut std::process::Command {
     let never_path = if cfg!(windows) { "-" } else { ":" };
+    let mut msys_for_git_bash_on_windows = std::env::var("MSYS").unwrap_or_default();
+    msys_for_git_bash_on_windows.push_str(" winsymlinks:nativestrict");
     cmd.args(args)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
@@ -597,6 +599,7 @@ fn configure_command<'a>(
         .env_remove("GIT_DIR")
         .env_remove("GIT_ASKPASS")
         .env_remove("SSH_ASKPASS")
+        .env("MSYS", msys_for_git_bash_on_windows)
         .env("GIT_CONFIG_SYSTEM", never_path)
         .env("GIT_CONFIG_GLOBAL", never_path)
         .env("GIT_TERMINAL_PROMPT", "false")
@@ -751,7 +754,6 @@ fn extract_archive(
         }
         #[cfg(not(feature = "xz"))]
         {
-            use std::io::Read;
             input_archive.read_to_end(&mut buf)?;
         }
         buf

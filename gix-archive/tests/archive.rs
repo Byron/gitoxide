@@ -17,7 +17,7 @@ mod from_tree {
     #[test]
     fn basic_usage_internal() -> gix_testtools::Result {
         basic_usage(gix_archive::Format::InternalTransientNonPersistable, |buf| {
-            assert_eq!(buf.len(), if cfg!(windows) { 565 } else { 551 });
+            assert_eq!(buf.len(), 551);
 
             let mut stream = gix_worktree_stream::Stream::from_read(std::io::Cursor::new(buf));
             let mut paths_and_modes = Vec::new();
@@ -27,11 +27,7 @@ mod from_tree {
                 entry.read_to_end(&mut buf).expect("stream can always be read");
             }
 
-            let expected_link_mode = if cfg!(windows) {
-                EntryKind::Blob
-            } else {
-                EntryKind::Link
-            };
+            let expected_link_mode = EntryKind::Link;
             let expected_exe_mode = if cfg!(windows) {
                 EntryKind::Blob
             } else {
@@ -53,11 +49,7 @@ mod from_tree {
                     (
                         "symlink-to-a".into(),
                         expected_link_mode,
-                        hex_to_id(if cfg!(windows) {
-                            "45b983be36b73c0788dc9cbcb76cbb80fc7bb057"
-                        } else {
-                            "2e65efe2a145dda7ee51d1741299f848e5bf752e"
-                        })
+                        hex_to_id("2e65efe2a145dda7ee51d1741299f848e5bf752e")
                     ),
                     (
                         "dir/b".into(),
@@ -119,34 +111,20 @@ mod from_tree {
                     header.mode()?,
                 ));
             }
-            let expected_symlink_type = if cfg!(windows) {
-                EntryType::Regular
-            } else {
-                EntryType::Symlink
-            };
+            let expected_symlink_type = EntryType::Symlink;
             let expected_exe_mode = if cfg!(windows) { 420 } else { 493 };
             assert_eq!(
                 out,
                 [
                     ("prefix/.gitattributes", EntryType::Regular, 56, 420),
                     ("prefix/a", EntryType::Regular, 3, 420),
-                    (
-                        "prefix/symlink-to-a",
-                        expected_symlink_type,
-                        if cfg!(windows) { 3 } else { 0 },
-                        420
-                    ),
+                    ("prefix/symlink-to-a", expected_symlink_type, 0, 420),
                     ("prefix/dir/b", EntryType::Regular, 3, 420),
                     ("prefix/dir/subdir/exe", EntryType::Regular, 0, expected_exe_mode),
                     ("prefix/extra-file", EntryType::Regular, 21, 420),
                     ("prefix/extra-exe", EntryType::Regular, 0, expected_exe_mode),
                     ("prefix/extra-dir-empty", EntryType::Directory, 0, 420),
-                    (
-                        "prefix/extra-dir/symlink-to-extra",
-                        expected_symlink_type,
-                        if cfg!(windows) { 21 } else { 0 },
-                        420
-                    )
+                    ("prefix/extra-dir/symlink-to-extra", expected_symlink_type, 0, 420)
                 ]
                 .into_iter()
                 .map(|(path, b, c, d)| (bstr::BStr::new(path).to_owned(), b, c, d))
@@ -183,7 +161,7 @@ mod from_tree {
             },
             |buf| {
                 assert!(
-                    buf.len() < 1270,
+                    buf.len() < 1280,
                     "much bigger than uncompressed for some reason (565): {} < 1270",
                     buf.len()
                 );
@@ -208,19 +186,11 @@ mod from_tree {
                 );
                 let mut link = ar.by_name("prefix/symlink-to-a")?;
                 assert!(!link.is_dir());
-                assert_eq!(
-                    link.is_symlink(),
-                    cfg!(not(windows)),
-                    "symlinks are supported as well, but only on Unix"
-                );
-                assert_eq!(
-                    link.unix_mode(),
-                    Some(if cfg!(windows) { 0o100644 } else { 0o120644 }),
-                    "the mode specifies what it should be"
-                );
+                assert!(link.is_symlink(), "symlinks are supported as well, but only on Unix");
+                assert_eq!(link.unix_mode(), Some(0o120644), "the mode specifies what it should be");
                 let mut buf = Vec::new();
                 link.read_to_end(&mut buf)?;
-                assert_eq!(buf.as_bstr(), if cfg!(windows) { "hi\n" } else { "a" });
+                assert_eq!(buf.as_bstr(), "a");
                 Ok(())
             },
         )

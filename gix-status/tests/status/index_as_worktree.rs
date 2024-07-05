@@ -469,16 +469,7 @@ fn refresh() {
                     }
                     .into(),
                 ),
-                (
-                    BStr::new("empty"),
-                    3,
-                    Change::Modification {
-                        executable_bit_changed: false,
-                        content_change: Some(()),
-                        set_entry_stat_size_zero: false
-                    }
-                    .into(),
-                ),
+                (BStr::new("empty"), 3, Change::Type.into()),
                 (
                     BStr::new("executable"),
                     4,
@@ -551,16 +542,7 @@ fn modified() {
                 }
                 .into(),
             ),
-            (
-                BStr::new("empty"),
-                3,
-                Change::Modification {
-                    executable_bit_changed: false,
-                    content_change: Some(()),
-                    set_entry_stat_size_zero: false,
-                }
-                .into(),
-            ),
+            (BStr::new("empty"), 3, Change::Type.into()),
             (
                 BStr::new("executable"),
                 4,
