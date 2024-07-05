@@ -115,11 +115,7 @@ mod from_tree {
         } else {
             EntryKind::BlobExecutable
         };
-        let expected_link_mode = if cfg!(windows) {
-            EntryKind::Blob
-        } else {
-            EntryKind::Link
-        };
+        let expected_link_mode = EntryKind::Link;
         assert_eq!(
             paths_and_modes,
             &[
@@ -141,11 +137,7 @@ mod from_tree {
                 (
                     "symlink-to-a".into(),
                     expected_link_mode,
-                    hex_to_id(if cfg!(windows) {
-                        "45b983be36b73c0788dc9cbcb76cbb80fc7bb057"
-                    } else {
-                        "2e65efe2a145dda7ee51d1741299f848e5bf752e"
-                    })
+                    hex_to_id("2e65efe2a145dda7ee51d1741299f848e5bf752e")
                 ),
                 (
                     "dir/.gitattributes".into(),

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     fs::OpenOptions,
     io::Write,
@@ -145,12 +146,19 @@ where
                     err,
                     path: dest.to_path_buf(),
                 })?;
-            let symlink_destination = gix_path::try_from_byte_slice(obj.data)
-                .map_err(|_| crate::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
-
             if symlink {
+                #[cfg_attr(not(windows), allow(unused_mut))]
+                let mut symlink_destination = Cow::Borrowed(
+                    gix_path::try_from_byte_slice(obj.data)
+                        .map_err(|_| crate::checkout::Error::IllformedUtf8 { path: obj.data.into() })?,
+                );
+                #[cfg(windows)]
+                {
+                    symlink_destination = gix_path::to_native_path_on_windows(gix_path::into_bstr(symlink_destination))
+                }
+
                 try_op_or_unlink(dest, overwrite_existing, |p| {
-                    gix_fs::symlink::create(symlink_destination, p)
+                    gix_fs::symlink::create(symlink_destination.as_ref(), p)
                 })?;
             } else {
                 let mut file = try_op_or_unlink(dest, overwrite_existing, |p| {

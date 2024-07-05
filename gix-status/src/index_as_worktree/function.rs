@@ -424,12 +424,19 @@ impl<'index> State<'_, 'index> {
 
         self.buf.clear();
         self.buf2.clear();
+        let file_size_bytes = if cfg!(windows) && metadata.is_symlink() {
+            // symlinks on Windows seem to have a length of zero, so just pretend
+            // they have the correct length to avoid short-cutting, and enforce a full buffer check.
+            entry.stat.size as u64
+        } else {
+            metadata.len()
+        };
         let fetch_data = ReadDataImpl {
             buf: &mut self.buf,
             path: worktree_path,
             rela_path,
             entry,
-            file_len: metadata.len(),
+            file_len: file_size_bytes,
             filter: &mut self.filter,
             attr_stack: &mut self.attr_stack,
             options: self.options,
@@ -440,7 +447,7 @@ impl<'index> State<'_, 'index> {
             odb_reads: self.odb_reads,
             odb_bytes: self.odb_bytes,
         };
-        let content_change = diff.compare_blobs(entry, metadata.len(), fetch_data, &mut self.buf2)?;
+        let content_change = diff.compare_blobs(entry, file_size_bytes, fetch_data, &mut self.buf2)?;
         // This file is racy clean! Set the size to 0 so we keep detecting this as the file is updated.
         if content_change.is_some() || executable_bit_changed {
             let set_entry_stat_size_zero = content_change.is_some() && racy_clean;
@@ -531,7 +538,8 @@ where
         let out = if is_symlink && self.options.fs.symlink {
             // conversion to bstr can never fail because symlinks are only used
             // on unix (by git) so no reason to use the try version here
-            let symlink_path = gix_path::into_bstr(std::fs::read_link(self.path)?);
+            let symlink_path =
+                gix_path::to_unix_separators_on_windows(gix_path::into_bstr(std::fs::read_link(self.path)?));
             self.buf.extend_from_slice(&symlink_path);
             self.worktree_bytes.fetch_add(self.buf.len() as u64, Ordering::Relaxed);
             Stream {

@@ -83,21 +83,11 @@ fn paths_leading_through_symlinks_are_rejected() {
 }
 
 fn is_symlink(m: &std::fs::Metadata) -> bool {
-    if cfg!(windows) {
-        // On windows, symlinks can't be seen, at least not through std
-        m.is_file()
-    } else {
-        m.is_symlink()
-    }
+    m.is_symlink()
 }
 
 fn is_symlinked_dir(m: &std::fs::Metadata) -> bool {
-    if cfg!(windows) {
-        // On windows, symlinks can't be seen, at least not through std
-        m.is_dir()
-    } else {
-        m.is_symlink()
-    }
+    m.is_symlink()
 }
 fn is_file(m: &std::fs::Metadata) -> bool {
     m.is_file()
