@@ -754,7 +754,6 @@ fn extract_archive(
         }
         #[cfg(not(feature = "xz"))]
         {
-            use std::io::Read;
             input_archive.read_to_end(&mut buf)?;
         }
         buf
