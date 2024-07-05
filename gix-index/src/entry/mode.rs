@@ -74,6 +74,7 @@ impl From<gix_object::tree::EntryMode> for Mode {
 }
 
 /// A change of a [`Mode`].
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Change {
     /// The type of mode changed, like symlink => file.
     Type {
