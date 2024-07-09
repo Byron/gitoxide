@@ -12,3 +12,6 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
+
+[dev-dependencies]
+gix-testtools = { path = "../tests/tools" }
