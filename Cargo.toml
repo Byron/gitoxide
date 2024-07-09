@@ -276,6 +276,7 @@ members = [
     "gix-path",
     "gix-utils",
     "gix-fs",
+    "gix-blame",
     "gix",
     "gitoxide-core",
     "gix-hashtable",

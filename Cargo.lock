@@ -1461,6 +1461,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-blame"
+version = "0.0.0"
+dependencies = [
+ "gix-testtools",
+]
+
+[[package]]
 name = "gix-chunk"
 version = "0.4.8"
 dependencies = [
