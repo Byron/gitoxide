@@ -128,8 +128,9 @@ impl PrepareFetch {
 
         // Add HEAD after the remote was written to config, we need it to know what to check out later, and assure
         // the ref that HEAD points to is present no matter what.
+        let head_local_tracking_branch = format!("refs/remotes/{remote_name}/HEAD");
         let head_refspec = gix_refspec::parse(
-            format!("HEAD:refs/remotes/{remote_name}/HEAD").as_str().into(),
+            format!("HEAD:{head_local_tracking_branch}").as_str().into(),
             gix_refspec::parse::Operation::Fetch,
         )
         .expect("valid")
@@ -139,22 +140,48 @@ impl PrepareFetch {
             if let Some(f) = self.configure_connection.as_mut() {
                 f(&mut connection).map_err(Error::RemoteConnection)?;
             }
-            connection
-                .prepare_fetch(&mut *progress, {
-                    let mut opts = self.fetch_options.clone();
-                    if !opts.extra_refspecs.contains(&head_refspec) {
-                        opts.extra_refspecs.push(head_refspec)
-                    }
-                    if let Some(ref_name) = &self.ref_name {
-                        opts.extra_refspecs.push(
-                            gix_refspec::parse(ref_name.as_ref().as_bstr(), gix_refspec::parse::Operation::Fetch)
-                                .expect("partial names are valid refspecs")
-                                .to_owned(),
-                        );
-                    }
-                    opts
-                })
-                .await?
+            let mut fetch_opts = {
+                let mut opts = self.fetch_options.clone();
+                if !opts.extra_refspecs.contains(&head_refspec) {
+                    opts.extra_refspecs.push(head_refspec.clone())
+                }
+                if let Some(ref_name) = &self.ref_name {
+                    opts.extra_refspecs.push(
+                        gix_refspec::parse(ref_name.as_ref().as_bstr(), gix_refspec::parse::Operation::Fetch)
+                            .expect("partial names are valid refspecs")
+                            .to_owned(),
+                    );
+                }
+                opts
+            };
+            match connection.prepare_fetch(&mut *progress, fetch_opts.clone()).await {
+                Ok(prepare) => prepare,
+                Err(remote::fetch::prepare::Error::RefMap(remote::ref_map::Error::MappingValidation(err)))
+                    if err.issues.len() == 1
+                        && fetch_opts.extra_refspecs.contains(&head_refspec)
+                        && matches!(
+                            err.issues.first(),
+                            Some(gix_refspec::match_group::validate::Issue::Conflict {
+                                destination_full_ref_name,
+                                ..
+                            }) if *destination_full_ref_name == head_local_tracking_branch
+                        ) =>
+                {
+                    let head_refspec_idx = fetch_opts
+                        .extra_refspecs
+                        .iter()
+                        .enumerate()
+                        .find_map(|(idx, spec)| (*spec == head_refspec).then_some(idx))
+                        .expect("it's contained");
+                    // On the very special occasion that we fail as there is a remote `refs/heads/HEAD` reference that clashes
+                    // with our implicit refspec, retry without it. Maybe this tells us that we shouldn't have that implicit
+                    // refspec, as git can do this without connecting twice.
+                    let connection = remote.connect(remote::Direction::Fetch).await?;
+                    fetch_opts.extra_refspecs.remove(head_refspec_idx);
+                    connection.prepare_fetch(&mut *progress, fetch_opts).await?
+                }
+                Err(err) => return Err(err.into()),
+            }
         };
 
         // Assure problems with custom branch names fail early, not after getting the pack or during negotiation.

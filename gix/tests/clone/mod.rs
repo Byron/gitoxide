@@ -578,6 +578,24 @@ mod blocking_io {
     }
 
     #[test]
+    fn fetch_succeeds_despite_remote_head_ref() -> crate::Result {
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let remote_repo = remote::repo("head-ref");
+        let mut prepare = gix::clone::PrepareFetch::new(
+            remote_repo.path(),
+            tmp.path(),
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
+        )?;
+
+        let (mut checkout, _out) = prepare.fetch_then_checkout(gix::progress::Discard, &AtomicBool::default())?;
+        let (repo, _) = checkout.main_worktree(gix::progress::Discard, &AtomicBool::default())?;
+        assert!(repo.head().is_ok(), "we could handle the HEAD normaller");
+        Ok(())
+    }
+
+    #[test]
     fn fetch_and_checkout_specific_annotated_tag() -> crate::Result {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let remote_repo = remote::repo("base");
