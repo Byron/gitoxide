@@ -116,6 +116,11 @@ git clone --shared base clone
   git remote add myself .
 )
 
+git clone --shared base head-ref
+(cd head-ref
+  git rev-parse @ > .git/refs/heads/HEAD
+)
+
 git clone --no-tags --shared base clone-no-tags
 (cd clone-no-tags
   git remote add --no-tags myself-no-tags .
