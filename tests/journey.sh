@@ -29,6 +29,10 @@ SUCCESSFULLY=0
 WITH_FAILURE=1
 WITH_CLAP_FAILURE=2
 
+# `sort` which is used in some of the snapshots tests depends on the value of
+# `LC_ALL` when it comes to the order of dotfiles and non-dotfiles. It sorts
+# differently when `LC_ALL=C` vs. when it is not set at all.
+export LC_ALL=C
 
 set-static-git-environment
 

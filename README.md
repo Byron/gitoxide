@@ -324,7 +324,7 @@ Project non-goals can change over time as we learn more, and they can be challen
 
 If what you have seen so far sparked your interest to contribute, then let us say: We are happy to have you and help you to get started.
 
-We recommend running `just test check-size` during the development process to assure CI is green before pushing.
+We recommend running `just test` during the development process to assure CI is green before pushing.
 
 A backlog for work ready to be picked up is [available in the Project's Kanban board][project-board], which contains instructions on how
 to pick a task. If it's empty or you have other questions, feel free to [start a discussion][discussions] or reach out to @Byron [privately][keybase].
@@ -335,6 +335,7 @@ For additional details, also take a look at the [collaboration guide].
 [project-board]: https://github.com/Byron/gitoxide/projects
 [discussions]: https://github.com/Byron/gitoxide/discussions
 [keybase]: https://keybase.io/byronbates
+[cargo-diet]: https://crates.io/crates/cargo-diet
 
 ### Getting started with Video Tutorials
 
