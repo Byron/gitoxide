@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::{
+    ffi::OsString,
     path::Path,
     process::{Command, Stdio},
 };
@@ -8,12 +9,14 @@ use bstr::{BStr, BString, ByteSlice};
 
 /// Other places to find Git in.
 #[cfg(windows)]
-pub(super) static ALTERNATIVE_LOCATIONS: &[&str] = &[
-    "C:/Program Files/Git/mingw64/bin",
-    "C:/Program Files (x86)/Git/mingw32/bin",
-];
+pub(super) static ALTERNATIVE_LOCATIONS: once_cell::sync::Lazy<Vec<OsString>> = once_cell::sync::Lazy::new(|| {
+    vec![
+        "C:/Program Files/Git/mingw64/bin".into(),
+        "C:/Program Files (x86)/Git/mingw32/bin".into(),
+    ]
+});
 #[cfg(not(windows))]
-pub(super) static ALTERNATIVE_LOCATIONS: &[&str] = &[];
+pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<OsString>> = Lazy::new(|| vec![]);
 
 #[cfg(windows)]
 pub(super) static EXE_NAME: &str = "git.exe";
@@ -35,7 +38,7 @@ pub(super) static EXE_INFO: once_cell::sync::Lazy<Option<BString>> = once_cell::
         Ok(out) => out.stdout,
         #[cfg(windows)]
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-            let executable = ALTERNATIVE_LOCATIONS.into_iter().find_map(|prefix| {
+            let executable = ALTERNATIVE_LOCATIONS.iter().find_map(|prefix| {
                 let candidate = Path::new(prefix).join(EXE_NAME);
                 candidate.is_file().then_some(candidate)
             })?;
