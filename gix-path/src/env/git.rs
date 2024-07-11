@@ -1,15 +1,13 @@
-use std::path::PathBuf;
-use std::{
-    ffi::OsString,
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 use bstr::{BStr, BString, ByteSlice};
+use once_cell::sync::Lazy;
 
 /// Other places to find Git in.
 #[cfg(windows)]
-pub(super) static ALTERNATIVE_LOCATIONS: once_cell::sync::Lazy<Vec<OsString>> = once_cell::sync::Lazy::new(|| {
+pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<OsString>> = Lazy::new(|| {
     vec![
         "C:/Program Files/Git/mingw64/bin".into(),
         "C:/Program Files (x86)/Git/mingw32/bin".into(),
@@ -24,7 +22,7 @@ pub(super) static EXE_NAME: &str = "git.exe";
 pub(super) static EXE_NAME: &str = "git";
 
 /// Invoke the git executable in PATH to obtain the origin configuration, which is cached and returned.
-pub(super) static EXE_INFO: once_cell::sync::Lazy<Option<BString>> = once_cell::sync::Lazy::new(|| {
+pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
     let git_cmd = |executable: PathBuf| {
         let mut cmd = Command::new(executable);
         cmd.args(["config", "-l", "--show-origin"])
@@ -55,7 +53,7 @@ pub(super) static EXE_INFO: once_cell::sync::Lazy<Option<BString>> = once_cell::
 /// if no `git` executable was found or there were other errors during execution.
 pub(super) fn install_config_path() -> Option<&'static BStr> {
     let _span = gix_trace::detail!("gix_path::git::install_config_path()");
-    static PATH: once_cell::sync::Lazy<Option<BString>> = once_cell::sync::Lazy::new(|| {
+    static PATH: Lazy<Option<BString>> = Lazy::new(|| {
         // Shortcut: in Msys shells this variable is set which allows to deduce the installation directory,
         // so we can save the `git` invocation.
         #[cfg(windows)]

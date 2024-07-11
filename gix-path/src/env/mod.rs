@@ -1,10 +1,10 @@
-use std::{
-    ffi::OsString,
-    path::{Path, PathBuf},
-};
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
+
+use bstr::{BString, ByteSlice};
+use once_cell::sync::Lazy;
 
 use crate::env::git::EXE_NAME;
-use bstr::{BString, ByteSlice};
 
 mod git;
 
@@ -37,7 +37,7 @@ pub fn exe_invocation() -> &'static Path {
     if cfg!(windows) {
         /// The path to the Git executable as located in the `PATH` or in other locations that it's known to be installed to.
         /// It's `None` if environment variables couldn't be read or if no executable could be found.
-        static EXECUTABLE_PATH: once_cell::sync::Lazy<Option<PathBuf>> = once_cell::sync::Lazy::new(|| {
+        static EXECUTABLE_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
             std::env::split_paths(&std::env::var_os("PATH")?)
                 .chain(git::ALTERNATIVE_LOCATIONS.iter().map(Into::into))
                 .find_map(|prefix| {
@@ -98,7 +98,7 @@ pub fn xdg_config(file: &str, env_var: &mut dyn FnMut(&str) -> Option<OsString>)
 /// wasn't built with a well-known directory structure or environment.
 pub fn system_prefix() -> Option<&'static Path> {
     if cfg!(windows) {
-        static PREFIX: once_cell::sync::Lazy<Option<PathBuf>> = once_cell::sync::Lazy::new(|| {
+        static PREFIX: Lazy<Option<PathBuf>> = Lazy::new(|| {
             if let Some(root) = std::env::var_os("EXEPATH").map(PathBuf::from) {
                 for candidate in ["mingw64", "mingw32"] {
                     let candidate = root.join(candidate);
