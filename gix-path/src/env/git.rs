@@ -181,26 +181,27 @@ mod tests {
         Some(text.to_str()?.to_lowercase().ends_with(&suffix.to_lowercase()))
     }
 
+    /// The common global program files paths on this system, by process and system architecture.
     #[cfg(windows)]
     #[derive(Clone, Debug)]
-    struct PathsByRole {
+    struct ProgramFilesPaths {
         /// The program files directory used for whatever architecture this program was built for.
-        pf_current: PathBuf,
+        current: PathBuf,
 
         /// The x86 program files directory regardless of the architecture of the program.
         ///
         /// If Rust gains Windows targets like ARMv7 where this is unavailable, this could fail.
-        pf_x86: PathBuf,
+        x86: PathBuf,
 
         /// The 64-bit program files directory if there is one.
         ///
         /// This is present on x64 and also ARM64 systems. On an ARM64 system, ARM64 and AMD64
         /// programs use the same program files directory while 32-bit x86 and ARM programs use two
         /// others. Only a 32-bit has no 64-bit program files directory.
-        maybe_pf_64bit: Option<PathBuf>,
+        maybe_64bit: Option<PathBuf>,
     }
 
-    impl PathsByRole {
+    impl ProgramFilesPaths {
         /// Gets the three common kinds of global program files paths without environment variables.
         ///
         /// The idea here is to obtain this information, which the `alternative_locations()` unit
@@ -237,9 +238,9 @@ mod tests {
                 .ok();
 
             Self {
-                pf_current,
-                pf_x86,
-                maybe_pf_64bit,
+                current: pf_current,
+                x86: pf_x86,
+                maybe_64bit: maybe_pf_64bit,
             }
         }
 
@@ -248,21 +249,15 @@ mod tests {
         /// This checks that `obtain_envlessly()` returned paths that are likely to be correct and
         /// that satisfy the most important properties based on the current system and process.
         fn validate(self) -> Self {
-            let PathsByRole {
-                pf_current,
-                pf_x86,
-                maybe_pf_64bit,
-            } = self;
-
             match PlatformArchitecture::current().expect("Process and system 'bitness' should be available.") {
                 PlatformArchitecture::Is32on32 => {
                     assert_eq!(
-                        pf_current.as_os_str(),
-                        pf_x86.as_os_str(),
+                        self.current.as_os_str(),
+                        self.x86.as_os_str(),
                         "Our program files path is exactly identical to the 32-bit one.",
                     );
                     for arch_suffix in [" (x86)", " (Arm)"] {
-                        let has_arch_suffix = ends_with_case_insensitive(pf_current.as_os_str(), arch_suffix)
+                        let has_arch_suffix = ends_with_case_insensitive(self.current.as_os_str(), arch_suffix)
                             .expect("Assume the test system's important directories are valid Unicode.");
                         assert!(
                             !has_arch_suffix,
@@ -270,58 +265,58 @@ mod tests {
                         );
                     }
                     assert_eq!(
-                        maybe_pf_64bit, None,
+                        self.maybe_64bit, None,
                         "A 32-bit system has no 64-bit program files directory.",
                     );
                 }
                 PlatformArchitecture::Is32on64 => {
                     assert_eq!(
-                        pf_current.as_os_str(),
-                        pf_x86.as_os_str(),
+                        self.current.as_os_str(),
+                        self.x86.as_os_str(),
                         "Our program files path is exactly identical to the 32-bit one.",
                     );
-                    let pf_64bit = maybe_pf_64bit
+                    let pf_64bit = self
+                        .maybe_64bit
                         .as_ref()
                         .expect("The 64-bit program files directory exists.");
                     assert_ne!(
-                        &pf_x86, pf_64bit,
+                        &self.x86, pf_64bit,
                         "The 32-bit and 64-bit program files directories have different locations.",
                     );
                 }
                 PlatformArchitecture::Is64on64 => {
-                    let pf_64bit = maybe_pf_64bit
+                    let pf_64bit = self
+                        .maybe_64bit
                         .as_ref()
                         .expect("The 64-bit program files directory exists.");
                     assert_eq!(
-                        pf_current.as_os_str(),
+                        self.current.as_os_str(),
                         pf_64bit.as_os_str(),
                         "Our program files path is exactly identical to the 64-bit one.",
                     );
                     assert_ne!(
-                        &pf_x86, pf_64bit,
+                        &self.x86, pf_64bit,
                         "The 32-bit and 64-bit program files directories have different locations.",
                     );
                 }
             }
 
-            Self {
-                pf_current,
-                pf_x86,
-                maybe_pf_64bit,
-            }
+            self
         }
     }
 
     #[test]
     #[cfg(windows)]
     fn alternative_locations() {
-        let PathsByRole {
-            pf_current,
-            pf_x86,
-            maybe_pf_64bit,
-        } = PathsByRole::obtain_envlessly().validate();
+        let pf = ProgramFilesPaths::obtain_envlessly().validate();
 
-        // FIXME: Assert the relationships between the above values and ALTERNATIVE_LOCATIONS contents!
+        let primary_suffix = super::ALTERNATIVE_LOCATIONS
+            .get(0)
+            .expect("It gave at least one path (assuming normal conditions).")
+            .strip_prefix(pf.current)
+            .expect("It gave a process architecture specific directory and listed it first.");
+
+        // FIXME: Assert the other relationships between pf values and ALTERNATIVE_LOCATIONS contents!
     }
 
     #[test]
