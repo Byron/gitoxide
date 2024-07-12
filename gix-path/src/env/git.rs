@@ -195,10 +195,6 @@ mod tests {
         /// programs use the same program files directory while 32-bit x86 and ARM programs use two
         /// others. Only a 32-bit has no 64-bit program files directory.
         maybe_pf_64bit: Result<PathBuf, std::io::Error>,
-        // While
-        // KnownFolder::ProgramFilesX64 exists, it's unfortunately unavailable to 32-bit
-        // processes; see
-        // https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid#remarks.
     }
 
     impl PathsByRole {
