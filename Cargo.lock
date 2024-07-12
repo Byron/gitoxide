@@ -1364,7 +1364,7 @@ dependencies = [
  "gix-utils 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "itoa",
  "thiserror",
- "winnow 0.6.0",
+ "winnow 0.6.13",
 ]
 
 [[package]]
@@ -1381,7 +1381,7 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "thiserror",
- "winnow 0.6.0",
+ "winnow 0.6.13",
 ]
 
 [[package]]
@@ -1543,7 +1543,7 @@ dependencies = [
  "smallvec",
  "thiserror",
  "unicode-bom",
- "winnow 0.6.0",
+ "winnow 0.6.13",
 ]
 
 [[package]]
@@ -2064,7 +2064,7 @@ dependencies = [
  "itoa",
  "smallvec",
  "thiserror",
- "winnow 0.6.0",
+ "winnow 0.6.13",
 ]
 
 [[package]]
@@ -2086,7 +2086,7 @@ dependencies = [
  "serde",
  "smallvec",
  "thiserror",
- "winnow 0.6.0",
+ "winnow 0.6.13",
 ]
 
 [[package]]
@@ -2275,7 +2275,7 @@ dependencies = [
  "maybe-async",
  "serde",
  "thiserror",
- "winnow 0.6.0",
+ "winnow 0.6.13",
 ]
 
 [[package]]
@@ -2322,7 +2322,7 @@ dependencies = [
  "memmap2",
  "serde",
  "thiserror",
- "winnow 0.6.0",
+ "winnow 0.6.13",
 ]
 
 [[package]]
@@ -2344,7 +2344,7 @@ dependencies = [
  "gix-validate 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "memmap2",
  "thiserror",
- "winnow 0.6.0",
+ "winnow 0.6.13",
 ]
 
 [[package]]
@@ -2565,7 +2565,7 @@ dependencies = [
  "parking_lot",
  "tar",
  "tempfile",
- "winnow 0.6.0",
+ "winnow 0.6.13",
  "xz2",
 ]
 
@@ -5322,9 +5322,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "0.6.0"
+version = "0.6.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b1dbce9e90e5404c5a52ed82b1d13fc8cfbdad85033b6f57546ffd1265f8451"
+checksum = "59b5e5f6c299a3c7890b876a2a587f3115162487e704907d9b6cd29473052ba1"
 dependencies = [
  "memchr",
 ]

@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use bstr::{BStr, ByteSlice};
 use gix_config::File;
+use gix_testtools::fixture_path_standalone;
 
 pub fn cow_str(s: &str) -> Cow<'_, BStr> {
     Cow::Borrowed(s.as_bytes().as_bstr())
@@ -27,7 +28,7 @@ mod open {
 }
 
 #[test]
-fn fuzzed() {
+fn fuzzed_stackoverflow() {
     let file = File::from_bytes_no_includes(
         include_bytes!("../fixtures/fuzzed/stackoverflow-01.config"),
         gix_config::file::Metadata::default(),
@@ -41,6 +42,27 @@ fn fuzzed() {
                 .expect("The key exists, so should the value.");
         }
     }
+}
+
+#[test]
+fn fuzzed_long_runtime() -> crate::Result {
+    let config = std::fs::read(fixture_path_standalone("fuzzed/long-parsetime.config"))?;
+    let file = File::from_bytes_no_includes(&config, gix_config::file::Metadata::default(), Default::default())?;
+    assert_eq!(file.sections().count(), 52);
+    assert!(file.to_bstring().len() < 1200000);
+    File::from_bytes_no_includes(
+        &file.to_bstring(),
+        gix_config::file::Metadata::default(),
+        Default::default(),
+    )?;
+
+    let mut mutated_file = file.clone();
+    mutated_file.append(file);
+    assert_eq!(mutated_file.sections().count(), 52 * 2);
+    let serialized = mutated_file.to_bstring();
+    assert!(serialized.len() < 2400000);
+    File::from_bytes_no_includes(&serialized, gix_config::file::Metadata::default(), Default::default())?;
+    Ok(())
 }
 
 mod access;

@@ -59,7 +59,7 @@ pub enum Event<'a> {
     Value(Cow<'a, BStr>),
     /// Represents any token used to signify a newline character. On Unix
     /// platforms, this is typically just `\n`, but can be any valid newline
-    /// sequence. Multiple newlines (such as `\n\n`) will be merged as a single
+    /// *sequence*. Multiple newlines (such as `\n\n`) will be merged as a single
     /// newline event containing a string of multiple newline characters.
     Newline(Cow<'a, BStr>),
     /// Any value that isn't completed. This occurs when the value is continued
