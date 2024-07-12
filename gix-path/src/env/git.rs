@@ -36,7 +36,7 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
         #[cfg(windows)]
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
             let executable = ALTERNATIVE_LOCATIONS.iter().find_map(|prefix| {
-                let candidate = Path::new(prefix).join(EXE_NAME);
+                let candidate = prefix.join(EXE_NAME);
                 candidate.is_file().then_some(candidate)
             })?;
             gix_trace::debug!(cmd = ?cmd, "invoking git for installation config path in alternate location");
