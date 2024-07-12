@@ -255,14 +255,14 @@ mod tests {
                     assert_eq!(
                         pf_current.as_os_str(),
                         pf_x86.as_os_str(),
-                        "Ours is identical to 32-bit path."
+                        "Our program files path is exactly identical to the 32-bit one.",
                     );
                     for arch_suffix in [" (x86)", " (Arm)"] {
                         let has_arch_suffix = ends_with_case_insensitive(pf_current.as_os_str(), arch_suffix)
-                            .expect("Assume the test systems key dirs are valid Unicode.");
+                            .expect("Assume the test system's important directories are valid Unicode.");
                         assert!(
                             !has_arch_suffix,
-                            "32-bit program files on 32-bit system has unadorned name."
+                            "The 32-bit program files directory name on a 32-bit system mentions no architecture.",
                         );
                     }
                     maybe_pf_64bit
@@ -273,19 +273,29 @@ mod tests {
                     assert_eq!(
                         pf_current.as_os_str(),
                         pf_x86.as_os_str(),
-                        "Ours is identical to 32-bit path."
+                        "Our program files path is exactly identical to the 32-bit one.",
                     );
-                    let pf_64bit = maybe_pf_64bit.as_ref().expect("64-bit program files exists.");
-                    assert_ne!(&pf_x86, pf_64bit, "32-bit and 64-bit program files directories differ.");
+                    let pf_64bit = maybe_pf_64bit
+                        .as_ref()
+                        .expect("The 64-bit program files directory exists.");
+                    assert_ne!(
+                        &pf_x86, pf_64bit,
+                        "The 32-bit and 64-bit program files directories have different locations.",
+                    );
                 }
                 PlatformArchitecture::Is64on64 => {
-                    let pf_64bit = maybe_pf_64bit.as_ref().expect("64-bit program files exists.");
+                    let pf_64bit = maybe_pf_64bit
+                        .as_ref()
+                        .expect("The 64-bit program files directory exists.");
                     assert_eq!(
                         pf_current.as_os_str(),
                         pf_64bit.as_os_str(),
-                        "Ours is identical to 64-bit path."
+                        "Our program files path is exactly identical to the 64-bit one.",
                     );
-                    assert_ne!(&pf_x86, pf_64bit, "32-bit and 64-bit program files directories differ.");
+                    assert_ne!(
+                        &pf_x86, pf_64bit,
+                        "The 32-bit and 64-bit program files directories have different locations.",
+                    );
                 }
             }
 
