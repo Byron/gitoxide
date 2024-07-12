@@ -71,6 +71,16 @@ mod save;
 mod name {
 
     #[test]
+    fn origin_is_valid() {
+        assert!(gix::remote::name::validated("origin").is_ok());
+    }
+
+    #[test]
+    fn multiple_slashes_are_valid() {
+        assert!(gix::remote::name::validated("origin/another").is_ok());
+    }
+
+    #[test]
     fn empty_is_invalid() {
         assert!(gix::remote::name::validated("").is_err());
     }
