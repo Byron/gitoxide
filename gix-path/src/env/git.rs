@@ -98,6 +98,7 @@ mod tests {
             assert_eq!(super::config_to_base_path(Path::new(input)), Path::new(expected));
         }
     }
+
     #[test]
     fn first_file_from_config_with_origin() {
         let macos = "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig	credential.helper=osxkeychain\nfile:/Users/byron/.gitconfig	push.default=simple\n";
@@ -126,5 +127,192 @@ mod tests {
                 expected.map(Into::into)
             );
         }
+    }
+
+    #[cfg(windows)]
+    use {
+        known_folders::{get_known_folder_path, KnownFolder},
+        std::ffi::{OsStr, OsString},
+        std::path::PathBuf,
+        windows::core::Result as WindowsResult,
+        windows::Win32::Foundation::BOOL,
+        windows::Win32::System::Threading::{GetCurrentProcess, IsWow64Process},
+        winreg::enums::{HKEY_LOCAL_MACHINE, KEY_QUERY_VALUE},
+        winreg::RegKey,
+    };
+
+    #[cfg(windows)]
+    trait Current: Sized {
+        fn current() -> WindowsResult<Self>;
+    }
+
+    #[cfg(windows)]
+    enum PlatformArchitecture {
+        Is32on32,
+        Is32on64,
+        Is64on64,
+    }
+
+    #[cfg(windows)]
+    impl Current for PlatformArchitecture {
+        fn current() -> WindowsResult<Self> {
+            // Ordinarily, we would check the target pointer width first to avoid doing extra work,
+            // because if this is a 64-bit executable then the operating system is 64-bit. But this
+            // is for the test suite, and doing it this way allows problems to be caught earlier if
+            // a change made on a 64-bit development machine breaks the IsWow64Process() call.
+            let mut wow64process = BOOL::default();
+            unsafe { IsWow64Process(GetCurrentProcess(), &mut wow64process)? };
+
+            let platform_architecture = if wow64process.as_bool() {
+                Self::Is32on64
+            } else if cfg!(target_pointer_width = "32") {
+                Self::Is32on32
+            } else {
+                assert!(cfg!(target_pointer_width = "64"));
+                Self::Is64on64
+            };
+            Ok(platform_architecture)
+        }
+    }
+
+    #[cfg(windows)]
+    fn ends_with_case_insensitive(text: &OsStr, suffix: &str) -> Option<bool> {
+        Some(text.to_str()?.to_lowercase().ends_with(&suffix.to_lowercase()))
+    }
+
+    #[cfg(windows)]
+    struct PathsByRole {
+        /// The program files directory relative to what architecture this program was built for.
+        pf_current: PathBuf,
+
+        /// The x86 program files directory regardless of the architecture of the program.
+        ///
+        /// If Rust gains Windows targets like ARMv7 where this is unavailable, this could fail.
+        pf_x86: PathBuf,
+
+        /// The 64-bit program files directory if there is one.
+        ///
+        /// This is present on x64 and also ARM64 systems. On an ARM64 system, ARM64 and AMD64
+        /// programs use the same program files directory while 32-bit x86 and ARM programs use two
+        /// others. Only a 32-bit has no 64-bit program files directory.
+        maybe_pf_64bit: Result<PathBuf, std::io::Error>,
+        // While
+        // KnownFolder::ProgramFilesX64 exists, it's unfortunately unavailable to 32-bit
+        // processes; see
+        // https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid#remarks.
+    }
+
+    impl PathsByRole {
+        /// Gets the three common kinds of global program files paths without environment variables.
+        ///
+        /// The idea here is to obtain this information, which the `alternative_locations()` unit
+        /// test uses to learn the expected alternative locations, without duplicating *any* of the
+        /// approach used for `ALTERNATIVE_LOCATIONS`, so it can be used to test that. The approach
+        /// here is also be more reliable than using environment variables, but it is a bit more
+        /// complex, and it requires either additional dependencies or the use of unsafe code.
+        ///
+        /// This obtains `pf_current` and `pf_x86` by the [known folders][known-folders] system,
+        /// and `maybe_pf_64bit` from the registry since the corresponding known folder is not
+        /// available to 32-bit processes, per the [KNOWNFOLDDERID][knownfolderid] documentation.
+        ///
+        /// If in the future the implementation of `ALTERNATIVE_LOCATIONS` uses these techniques,
+        /// then this function can be changed to use environment variables and renamed accordingly.
+        ///
+        /// [known-folders]: https://learn.microsoft.com/en-us/windows/win32/shell/known-folders
+        /// [knownfolderid]: https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid#remarks
+        fn obtain_envlessly() -> Self {
+            let pf_current = get_known_folder_path(KnownFolder::ProgramFiles)
+                .expect("The process architecture specific program files folder is always available.");
+
+            let pf_x86 = get_known_folder_path(KnownFolder::ProgramFilesX86)
+                .expect("The x86 program files folder will in practice always be available.");
+
+            let maybe_pf_64bit = RegKey::predef(HKEY_LOCAL_MACHINE)
+                .open_subkey_with_flags(r#"SOFTWARE\Microsoft\Windows\CurrentVersion"#, KEY_QUERY_VALUE)
+                .expect("The `CurrentVersion` key exists and allows reading.")
+                .get_value::<OsString, _>("ProgramW6432Dir")
+                .map(PathBuf::from);
+
+            Self {
+                pf_current,
+                pf_x86,
+                maybe_pf_64bit,
+            }
+        }
+
+        /// Checks that the paths we got for testing are reasonable.
+        ///
+        /// This checks that `obtain_envlessly()` returned paths that are likely to be correct and
+        /// that satisfy the most important properties based on the current system and process.
+        fn validate(self) -> Self {
+            let PathsByRole {
+                pf_current,
+                pf_x86,
+                maybe_pf_64bit,
+            } = self;
+
+            match PlatformArchitecture::current().expect("Process and system 'bitness' should be available.") {
+                PlatformArchitecture::Is32on32 => {
+                    assert_eq!(
+                        pf_current.as_os_str(),
+                        pf_x86.as_os_str(),
+                        "Ours is identical to 32-bit path."
+                    );
+                    for arch_suffix in [" (x86)", " (Arm)"] {
+                        let has_arch_suffix = ends_with_case_insensitive(pf_current.as_os_str(), arch_suffix)
+                            .expect("Assume the test systems key dirs are valid Unicode.");
+                        assert!(
+                            !has_arch_suffix,
+                            "32-bit program files on 32-bit system has unadorned name."
+                        );
+                    }
+                    maybe_pf_64bit
+                        .as_ref()
+                        .expect_err("A 32-bit system has no 64-bit program files directory.");
+                }
+                PlatformArchitecture::Is32on64 => {
+                    assert_eq!(
+                        pf_current.as_os_str(),
+                        pf_x86.as_os_str(),
+                        "Ours is identical to 32-bit path."
+                    );
+                    let pf_64bit = maybe_pf_64bit.as_ref().expect("64-bit program files exists.");
+                    assert_ne!(&pf_x86, pf_64bit, "32-bit and 64-bit program files directories differ.");
+                }
+                PlatformArchitecture::Is64on64 => {
+                    let pf_64bit = maybe_pf_64bit.as_ref().expect("64-bit program files exists.");
+                    assert_eq!(
+                        pf_current.as_os_str(),
+                        pf_64bit.as_os_str(),
+                        "Ours is identical to 64-bit path."
+                    );
+                    assert_ne!(&pf_x86, pf_64bit, "32-bit and 64-bit program files directories differ.");
+                }
+            }
+
+            Self {
+                pf_current,
+                pf_x86,
+                maybe_pf_64bit,
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn alternative_locations() {
+        let PathsByRole {
+            pf_current,
+            pf_x86,
+            maybe_pf_64bit,
+        } = PathsByRole::obtain_envlessly().validate();
+
+        // FIXME: Assert the relationships between the above values and ALTERNATIVE_LOCATIONS contents!
+    }
+
+    #[test]
+    #[cfg(not(windows))]
+    fn alternative_locations() {
+        assert!(super::ALTERNATIVE_LOCATIONS.is_empty());
     }
 }
