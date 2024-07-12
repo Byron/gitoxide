@@ -207,12 +207,12 @@ mod tests {
         /// The idea here is to obtain this information, which the `alternative_locations()` unit
         /// test uses to learn the expected alternative locations, without duplicating *any* of the
         /// approach used for `ALTERNATIVE_LOCATIONS`, so it can be used to test that. The approach
-        /// here is also be more reliable than using environment variables, but it is a bit more
+        /// here is also more reliable than using environment variables, but it is a bit more
         /// complex, and it requires either additional dependencies or the use of unsafe code.
         ///
-        /// This obtains `pf_current` and `pf_x86` by the [known folders][known-folders] system,
-        /// and `maybe_pf_64bit` from the registry since the corresponding known folder is not
-        /// available to 32-bit processes, per the [KNOWNFOLDDERID][knownfolderid] documentation.
+        /// This gets `pf_current` and `pf_x86` by the [known folders][known-folders] system. But
+        /// it gets `maybe_pf_64bit` from the registry, as the corresponding known folder is not
+        /// available to 32-bit processes. See the [`KNOWNFOLDDERID`][knownfolderid] documentation.
         ///
         /// If in the future the implementation of `ALTERNATIVE_LOCATIONS` uses these techniques,
         /// then this function can be changed to use environment variables and renamed accordingly.
