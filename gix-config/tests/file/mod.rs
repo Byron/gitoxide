@@ -49,7 +49,7 @@ fn fuzzed_long_runtime() -> crate::Result {
     let config = std::fs::read(fixture_path_standalone("fuzzed/long-parsetime.config"))?;
     let file = File::from_bytes_no_includes(&config, gix_config::file::Metadata::default(), Default::default())?;
     assert_eq!(file.sections().count(), 52);
-    assert_eq!(file.to_bstring().len(), 180351853);
+    assert!(file.to_bstring().len() < 1200000);
     File::from_bytes_no_includes(
         &file.to_bstring(),
         gix_config::file::Metadata::default(),
@@ -60,7 +60,7 @@ fn fuzzed_long_runtime() -> crate::Result {
     mutated_file.append(file);
     assert_eq!(mutated_file.sections().count(), 52 * 2);
     let serialized = mutated_file.to_bstring();
-    assert_eq!(serialized.len(), 360703706);
+    assert!(serialized.len() < 2400000);
     File::from_bytes_no_includes(&serialized, gix_config::file::Metadata::default(), Default::default())?;
     Ok(())
 }

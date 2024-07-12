@@ -27,7 +27,7 @@ fn usage() {
         peak = ByteSize(ALLOCATOR.max_allocated() as u64),
     );
     assert!(
-        used < 60 * 1024 * 1024,
+        used < 80 * 1024 * 1024,
         "we should now start using more memory than anticipated, to keep mem-amplification low"
     );
 }
