@@ -132,6 +132,7 @@ mod tests {
     use {
         known_folders::{get_known_folder_path, KnownFolder},
         std::ffi::{OsStr, OsString},
+        std::io::ErrorKind,
         std::path::PathBuf,
         windows::core::Result as WindowsResult,
         windows::Win32::Foundation::BOOL,
@@ -146,6 +147,7 @@ mod tests {
     }
 
     #[cfg(windows)]
+    #[derive(Clone, Copy, Debug)]
     enum PlatformArchitecture {
         Is32on32,
         Is32on64,
@@ -180,6 +182,7 @@ mod tests {
     }
 
     #[cfg(windows)]
+    #[derive(Clone, Debug)]
     struct PathsByRole {
         /// The program files directory relative to what architecture this program was built for.
         pf_current: PathBuf,
@@ -194,7 +197,7 @@ mod tests {
         /// This is present on x64 and also ARM64 systems. On an ARM64 system, ARM64 and AMD64
         /// programs use the same program files directory while 32-bit x86 and ARM programs use two
         /// others. Only a 32-bit has no 64-bit program files directory.
-        maybe_pf_64bit: Result<PathBuf, std::io::Error>,
+        maybe_pf_64bit: Option<PathBuf>,
     }
 
     impl PathsByRole {
@@ -226,7 +229,12 @@ mod tests {
                 .open_subkey_with_flags(r#"SOFTWARE\Microsoft\Windows\CurrentVersion"#, KEY_QUERY_VALUE)
                 .expect("The `CurrentVersion` key exists and allows reading.")
                 .get_value::<OsString, _>("ProgramW6432Dir")
-                .map(PathBuf::from);
+                .map(PathBuf::from)
+                .map_err(|error| {
+                    assert_eq!(error.kind(), ErrorKind::NotFound);
+                    error
+                })
+                .ok();
 
             Self {
                 pf_current,
@@ -261,9 +269,10 @@ mod tests {
                             "The 32-bit program files directory name on a 32-bit system mentions no architecture.",
                         );
                     }
-                    maybe_pf_64bit
-                        .as_ref()
-                        .expect_err("A 32-bit system has no 64-bit program files directory.");
+                    assert_eq!(
+                        maybe_pf_64bit, None,
+                        "A 32-bit system has no 64-bit program files directory.",
+                    );
                 }
                 PlatformArchitecture::Is32on64 => {
                     assert_eq!(
