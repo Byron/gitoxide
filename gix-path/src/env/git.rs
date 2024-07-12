@@ -184,7 +184,7 @@ mod tests {
     #[cfg(windows)]
     #[derive(Clone, Debug)]
     struct PathsByRole {
-        /// The program files directory relative to what architecture this program was built for.
+        /// The program files directory used for whatever architecture this program was built for.
         pf_current: PathBuf,
 
         /// The x86 program files directory regardless of the architecture of the program.
