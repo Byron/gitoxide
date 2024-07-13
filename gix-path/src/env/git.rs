@@ -62,8 +62,10 @@ where
         if let Some(value) = var_os_func(name) {
             let pf = Path::new(&value);
             if pf.is_relative() {
+                // This should never happen, but if it does then we should not use the path.
                 continue;
             };
+            // Chain components to weakly normalize the path, mostly just for its separators.
             let components = pf.iter().chain(suffix.iter());
             let location = PathBuf::from_iter(components);
             if !locations.contains(&location) {
@@ -429,8 +431,6 @@ mod tests {
 
         // Check that `ALTERNATIVE_LOCATIONS` correspond to them, with the correct subdirectories.
         GitBinSuffixes::assert_from(&pf, locations).assert_architectures();
-
-        // FIXME: Assert that the directory separators are `/` in the underlying `OsString`s.
     }
 
     #[test]
