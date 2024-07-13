@@ -423,12 +423,11 @@ mod tests {
     #[test]
     #[cfg(windows)]
     fn alternative_locations() {
-        let locations = super::ALTERNATIVE_LOCATIONS.as_slice();
-
         // Obtain program files directory paths by other means and check that they seem correct.
         let pf = ProgramFilesPaths::obtain_envlessly().validate();
 
         // Check that `ALTERNATIVE_LOCATIONS` correspond to them, with the correct subdirectories.
+        let locations = super::ALTERNATIVE_LOCATIONS.as_slice();
         GitBinSuffixes::assert_from(&pf, locations).assert_architectures();
     }
 
