@@ -323,15 +323,15 @@ mod tests {
                         .maybe_64bit
                         .as_ref()
                         .expect("It gives two paths only if one can be 64-bit.");
-                    let got_64bit = primary
+                    let suffix_64bit = primary
                         .strip_prefix(prefix_64bit)
                         .expect("It gives the 64-bit path and lists it first.");
-                    let x86 = secondary
+                    let suffix_x86 = secondary
                         .strip_prefix(pf.x86.as_path())
                         .expect("It gives the 32-bit path and lists it second.");
                     Self {
-                        x86,
-                        maybe_64bit: Some(got_64bit),
+                        x86: suffix_x86,
+                        maybe_64bit: Some(suffix_64bit),
                     }
                 }
                 [only] => {
@@ -344,13 +344,29 @@ mod tests {
                 other => panic!("Got length {}, expected 1 or 2.", other.len()),
             }
         }
+
+        /// Assert that the suffixes are the common per-architecture Git install locations.
+        fn validate(&self) {
+            assert_eq!(self.x86, Path::new("Git/mingw32/bin"));
+
+            if let Some(suffix_64bit) = self.maybe_64bit {
+                // When Git for Windows releases ARM64 builds, there will be another 64-bit suffix,
+                // likely clangarm64. In that case, this and other assertions will need updating,
+                // as there will be two separate paths to check under the same 64-bit program files
+                // directory. (See the definition of ProgramFilesPaths::maybe_64bit for details.)
+                assert_eq!(suffix_64bit, Path::new("Git/mingw64/bin"));
+            }
+        }
     }
 
     #[test]
     #[cfg(windows)]
     fn alternative_locations() {
+        // Obtain program files directory paths by other means and check that they seem correct.
         let pf = ProgramFilesPaths::obtain_envlessly().validate();
-        let suffixes = GitBinSuffixes::assert_from(&pf);
+
+        // Check that `ALTERNATIVE_LOCATIONS` correspond to them, with the correct subdirectories.
+        GitBinSuffixes::assert_from(&pf).validate();
 
         // FIXME: Assert the other relationships between pf values and ALTERNATIVE_LOCATIONS contents!
     }
