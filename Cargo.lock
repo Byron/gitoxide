@@ -1464,6 +1464,8 @@ dependencies = [
 name = "gix-blame"
 version = "0.0.0"
 dependencies = [
+ "gix-odb",
+ "gix-ref 0.44.1",
  "gix-testtools",
 ]
 
