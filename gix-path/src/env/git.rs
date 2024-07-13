@@ -15,67 +15,11 @@ pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| {
 #[cfg(not(windows))]
 pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| vec![]);
 
-#[cfg(any(windows, test))] // So this can always be tested.
-fn alternative_locations_from_env<F>(var_os_func: F) -> Vec<PathBuf>
+#[cfg(any(windows, test))]
+fn alternative_windows_locations_from_environment<F>(var_os_func: F) -> Vec<PathBuf>
 where
     F: Fn(&str) -> Option<std::ffi::OsString>,
 {
-    // I am not really sure what this should do to handle the ProgramFiles environment variable and
-    // figure out if it is 64-bit or 32-bit -- which we need in order to know whether to append
-    // `Git/mingw64/bin` or `Git/mingw32/bin`. We do need to look at the ProgramFiles environment
-    // variable in addition to the other two preferable architecture-specific ones (for which the
-    // mingw64 vs. mingw32 decision is easy), at least some of the time, for two reasons.
-    //
-    // First, we may be on a 32-bit system. Then we do not have either of the other two variables.
-    //
-    // Second, the others may also absent on a 64-bit system, if a parent process whittles down the
-    // variables to pass to this child process, out of an erroneous belief about which ones are
-    // needed to provide access to the program files directory.
-    //
-    // On a 64-bit system, the way a child process inherits its ProgramFiles variable to be for its
-    // own architecture -- since after all its parent's architecture could be different -- is:
-    //
-    //  - The value of a 64-bit child's ProgramFiles variable comes from whatever the parent passed
-    //    down as ProgramW6432, if that variable was passed down.
-    //
-    //  - The value of a 32-bit child's ProgramFiles variable comes from whatever the parent passed
-    //    down as ProgramFiles(x86), if that variable was passed down.
-    //
-    //  - If the variable corresponding to the child's architecture was not passed down by the
-    //    parent, but ProgramFiles was passed down, then the child receives that as the value of
-    //    its ProgramFiles variable. Only in this case does ProgramFiles come from ProgramFiles.
-    //
-    // The problem -- besides that those rules are not well known, and parent processes that seek
-    // to pass down minimal environments often do not take heed of them, such that a child process
-    // will get the wrong architecture's value for its ProgramFiles environment variable -- is that
-    // the point of this function is to make use of environment variables in order to avoid:
-    //
-    //  - Calling Windows API functions explicitly, even via the higher level `windows` crate.
-    //  - Accessing the Windows registry, even through the very widely used `winreg` crate.
-    //  - Adding any significant new production dependencies, such as the `known-folders` crate.
-    //
-    // Possible solutions:
-    //
-    //  1. Abandon at least one of those goals.
-    //  2. Check both `mingw*` subdirectories regardless of which program files Git is in.
-    //  3. Inspect the names for substrings like ` (x86)` in an expected position.
-    //  4. Assume the value of `ProgramFiles` is correct, i.e., is for the process's architecture.
-    //
-    // I think (4) is the way to go, at least until (1) is assessed. With (2), we would be checking
-    // paths that there is no specific reason to think have *working* Git executables...though this
-    // does have the advantage that its logic would be the same as would be needed in the local
-    // program files directory (usually `%LocalAppData$/Programs`) if we ever add that. With (3),
-    // the risk of getting it wrong is low, but the logic is more complex, and we lose the
-    // simplicity of getting the paths from outside rather than applying assumptions about them.
-    //
-    // With (4), we take the ProgramFiles environment variable at its word. This is good not just
-    // for abstract correctness, but also if the parent modifies these variables intentionally on a
-    // 64-bit system. A parent process can't reasonably expect this to be followed, because a child
-    // process may use another mechanism such as known folders. However, following it, when we are
-    // using environment variables already, satisfies a weaker expectation that the environment
-    // value *or* actual value (obtainable via known folders or the registry), rather than some
-    // third value, is used. (4) is also a simple way to do the right thing on a 32-bit system.
-
     // Should give a 64-bit program files path from a 32-bit or 64-bit process on a 64-bit system.
     let varname_64bit = "ProgramW6432";
 
@@ -83,14 +27,20 @@ where
     // This variable is x86-specific, but neither Git nor Rust target 32-bit ARM on Windows.
     let varname_x86 = "ProgramFiles(x86)";
 
-    // Should give a 32-bit program files path on a 32-bit system. We also need to check it on a
-    // 64-bit system. [FIXME: Somehow briefly explain why we still need to do that.]
+    // Should give a 32-bit program files path on a 32-bit system. We also check this on a 64-bit
+    // system, even though it *should* equal the process architecture specific variable, so that we
+    // cover the case of a parent process that passes down an overly sanitized environment that
+    // lacks the architecture-specific variable. On a 64-bit system, because parent and child
+    // processes' architectures can be different, Windows sets the child's ProgramFiles variable
+    // from the ProgramW6432 or ProgramFiles(x86) variable applicable to the child's architecture.
+    // Only if the parent does not pass that down is the passed-down ProgramFiles variable even
+    // used. But this behavior is not well known, so that situation does sometimes happen.
     let varname_current = "ProgramFiles";
 
     // 64-bit relative bin dir. So far, this is always mingw64, not ucrt64, clang64, or clangarm64.
     let suffix_64 = Path::new("bin/mingw64");
 
-    // 32-bit relative bin dir. This is always mingw32, not clang32.
+    // 32-bit relative bin dir. So far, this is always mingw32, not clang32.
     let suffix_32 = Path::new("bin/mingw32");
 
     // Whichever of the 64-bit or 32-bit relative bin better matches this process's architecture.
