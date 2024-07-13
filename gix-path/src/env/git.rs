@@ -238,8 +238,10 @@ mod tests {
     }
 
     #[cfg(windows)]
-    fn ends_with_case_insensitive(text: &OsStr, suffix: &str) -> Option<bool> {
-        Some(text.to_str()?.to_lowercase().ends_with(&suffix.to_lowercase()))
+    fn ends_with_case_insensitive(full_text: &OsStr, literal_pattern: &str) -> Option<bool> {
+        let folded_text = full_text.to_str()?.to_lowercase();
+        let folded_pattern = literal_pattern.to_lowercase();
+        Some(folded_text.ends_with(&folded_pattern))
     }
 
     /// The common global program files paths on this system, by process and system architecture.
@@ -317,11 +319,11 @@ mod tests {
                         self.x86.as_os_str(),
                         "Our program files path is exactly identical to the 32-bit one.",
                     );
-                    for arch_suffix in [" (x86)", " (Arm)"] {
-                        let has_arch_suffix = ends_with_case_insensitive(self.current.as_os_str(), arch_suffix)
+                    for trailing_arch in [" (x86)", " (Arm)"] {
+                        let is_adorned = ends_with_case_insensitive(self.current.as_os_str(), trailing_arch)
                             .expect("Assume the test system's important directories are valid Unicode.");
                         assert!(
-                            !has_arch_suffix,
+                            !is_adorned,
                             "The 32-bit program files directory name on a 32-bit system mentions no architecture.",
                         );
                     }
@@ -369,14 +371,14 @@ mod tests {
     /// Paths relative to process architecture specific program files directories.
     #[cfg(windows)]
     #[derive(Clone, Debug)]
-    struct GitBinSuffixes<'a> {
+    struct RelativeGitBinPaths<'a> {
         x86: &'a Path,
         maybe_64bit: Option<&'a Path>,
     }
 
     #[cfg(windows)]
-    impl<'a> GitBinSuffixes<'a> {
-        /// Assert that `locations` has the given prefixes, and extract the suffixes.
+    impl<'a> RelativeGitBinPaths<'a> {
+        /// Assert that `locations` has the given path prefixes, and extract the suffixes.
         fn assert_from(pf: &'a ProgramFilesPaths, locations: &'static [PathBuf]) -> Self {
             match locations {
                 [primary, secondary] => {
@@ -402,11 +404,11 @@ mod tests {
                         maybe_64bit: None,
                     }
                 }
-                other => panic!("Got length {}, expected 1 or 2.", other.len()),
+                other => panic!("{:?} has length {}, expected 1 or 2.", other, other.len()),
             }
         }
 
-        /// Assert that the suffixes are the common per-architecture Git install locations.
+        /// Assert that the suffixes (relative subdirectories) are the common per-architecture Git install locations.
         fn assert_architectures(&self) {
             assert_eq!(self.x86, Path::new("Git/mingw32/bin"));
 
@@ -428,7 +430,7 @@ mod tests {
 
         // Check that `ALTERNATIVE_LOCATIONS` correspond to them, with the correct subdirectories.
         let locations = super::ALTERNATIVE_LOCATIONS.as_slice();
-        GitBinSuffixes::assert_from(&pf, locations).assert_architectures();
+        RelativeGitBinPaths::assert_from(&pf, locations).assert_architectures();
     }
 
     #[test]
