@@ -315,9 +315,9 @@ mod tests {
 
     #[cfg(windows)]
     impl<'a> GitBinSuffixes<'a> {
-        /// Assert that `ALTERNATIVE_LOCATIONS` has the given prefixes, and extract the suffixes.
-        fn assert_from(pf: &'a ProgramFilesPaths) -> Self {
-            match super::ALTERNATIVE_LOCATIONS.as_slice() {
+        /// Assert that `locations` has the given prefixes, and extract the suffixes.
+        fn assert_from(pf: &'a ProgramFilesPaths, locations: &'static [PathBuf]) -> Self {
+            match locations {
                 [primary, secondary] => {
                     let prefix_64bit = pf
                         .maybe_64bit
@@ -346,7 +346,7 @@ mod tests {
         }
 
         /// Assert that the suffixes are the common per-architecture Git install locations.
-        fn validate(&self) {
+        fn assert_architectures(&self) {
             assert_eq!(self.x86, Path::new("Git/mingw32/bin"));
 
             if let Some(suffix_64bit) = self.maybe_64bit {
@@ -362,11 +362,13 @@ mod tests {
     #[test]
     #[cfg(windows)]
     fn alternative_locations() {
+        let locations = super::ALTERNATIVE_LOCATIONS.as_slice();
+
         // Obtain program files directory paths by other means and check that they seem correct.
         let pf = ProgramFilesPaths::obtain_envlessly().validate();
 
         // Check that `ALTERNATIVE_LOCATIONS` correspond to them, with the correct subdirectories.
-        GitBinSuffixes::assert_from(&pf).validate();
+        GitBinSuffixes::assert_from(&pf, locations).assert_architectures();
 
         // FIXME: Assert the other relationships between pf values and ALTERNATIVE_LOCATIONS contents!
     }
