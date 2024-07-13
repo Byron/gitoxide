@@ -2,8 +2,14 @@ use std::{
     io,
     path::Path,
     slice::Chunks,
-    sync::atomic::{AtomicU64, AtomicUsize, Ordering},
+    sync::atomic::{AtomicUsize, Ordering},
 };
+
+#[cfg(target_has_atomic = "64")]
+use std::sync::atomic::AtomicU64;
+
+#[cfg(not(target_has_atomic = "64"))]
+use portable_atomic::AtomicU64;
 
 use bstr::BStr;
 use filetime::FileTime;
