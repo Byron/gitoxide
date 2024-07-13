@@ -370,7 +370,7 @@ mod tests {
         // Check that `ALTERNATIVE_LOCATIONS` correspond to them, with the correct subdirectories.
         GitBinSuffixes::assert_from(&pf, locations).assert_architectures();
 
-        // FIXME: Assert the other relationships between pf values and ALTERNATIVE_LOCATIONS contents!
+        // FIXME: Assert that the directory separators are `/` in the underlying `OsString`s.
     }
 
     #[test]
