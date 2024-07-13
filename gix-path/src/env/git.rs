@@ -305,16 +305,52 @@ mod tests {
         }
     }
 
+    /// Paths relative to process architecture specific program files directories.
+    #[cfg(windows)]
+    #[derive(Clone, Debug)]
+    struct GitBinSuffixes<'a> {
+        x86: &'a Path,
+        maybe_64bit: Option<&'a Path>,
+    }
+
+    #[cfg(windows)]
+    impl<'a> GitBinSuffixes<'a> {
+        /// Assert that `ALTERNATIVE_LOCATIONS` has the given prefixes, and extract the suffixes.
+        fn assert_from(pf: &'a ProgramFilesPaths) -> Self {
+            match super::ALTERNATIVE_LOCATIONS.as_slice() {
+                [primary, secondary] => {
+                    let prefix_64bit = pf
+                        .maybe_64bit
+                        .as_ref()
+                        .expect("It gives two paths only if one can be 64-bit.");
+                    let got_64bit = primary
+                        .strip_prefix(prefix_64bit)
+                        .expect("It gives the 64-bit path and lists it first.");
+                    let x86 = secondary
+                        .strip_prefix(pf.x86.as_path())
+                        .expect("It gives the 32-bit path and lists it second.");
+                    Self {
+                        x86,
+                        maybe_64bit: Some(got_64bit),
+                    }
+                }
+                [only] => {
+                    assert_eq!(pf.maybe_64bit, None, "It gives one path only if none can be 64-bit.");
+                    Self {
+                        x86: only,
+                        maybe_64bit: None,
+                    }
+                }
+                other => panic!("Got length {}, expected 1 or 2.", other.len()),
+            }
+        }
+    }
+
     #[test]
     #[cfg(windows)]
     fn alternative_locations() {
         let pf = ProgramFilesPaths::obtain_envlessly().validate();
-
-        let primary_suffix = super::ALTERNATIVE_LOCATIONS
-            .get(0)
-            .expect("It gave at least one path (assuming normal conditions).")
-            .strip_prefix(pf.current)
-            .expect("It gave a process architecture specific directory and listed it first.");
+        let suffixes = GitBinSuffixes::assert_from(&pf);
 
         // FIXME: Assert the other relationships between pf values and ALTERNATIVE_LOCATIONS contents!
     }
