@@ -15,7 +15,7 @@ pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| {
 #[cfg(not(windows))]
 pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| vec![]);
 
-#[cfg(any(windows, test))]
+#[cfg(windows)]
 fn alternative_windows_locations_from_environment<F>(var_os_func: F) -> Vec<PathBuf>
 where
     F: Fn(&str) -> Option<std::ffi::OsString>,
@@ -38,10 +38,10 @@ where
     let varname_current = "ProgramFiles";
 
     // 64-bit relative bin dir. So far, this is always mingw64, not ucrt64, clang64, or clangarm64.
-    let suffix_64 = Path::new("Git/bin/mingw64");
+    let suffix_64 = Path::new(r"Git\bin\mingw64");
 
     // 32-bit relative bin dir. So far, this is always mingw32, not clang32.
-    let suffix_32 = Path::new("Git/bin/mingw32");
+    let suffix_32 = Path::new(r"Git\bin\mingw32");
 
     // Whichever of the 64-bit or 32-bit relative bin better matches this process's architecture.
     // Unlike the system architecture, the process architecture is always known at compile time.
@@ -62,12 +62,11 @@ where
         if let Some(value) = var_os_func(name) {
             let pf = Path::new(&value);
             if pf.is_relative() {
-                // This should never happen, but if it does then we should not use the path.
+                // This shouldn't happen, but if it does then don't use the path. This is mainly in
+                // case we are accidentally invoked with the environment variable set but empty.
                 continue;
             };
-            // Chain components to weakly normalize the path, mostly just for its separators.
-            let components = pf.iter().chain(suffix.iter());
-            let location = PathBuf::from_iter(components);
+            let location = pf.join(suffix);
             if !locations.contains(&location) {
                 locations.push(location);
             }
@@ -289,7 +288,7 @@ mod tests {
                 .expect("The x86 program files folder will in practice always be available.");
 
             let maybe_pf_64bit = RegKey::predef(HKEY_LOCAL_MACHINE)
-                .open_subkey_with_flags(r#"SOFTWARE\Microsoft\Windows\CurrentVersion"#, KEY_QUERY_VALUE)
+                .open_subkey_with_flags(r"SOFTWARE\Microsoft\Windows\CurrentVersion", KEY_QUERY_VALUE)
                 .expect("The `CurrentVersion` key exists and allows reading.")
                 .get_value::<OsString, _>("ProgramW6432Dir")
                 .map(PathBuf::from)
