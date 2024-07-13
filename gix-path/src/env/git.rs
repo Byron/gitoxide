@@ -38,10 +38,10 @@ where
     let varname_current = "ProgramFiles";
 
     // 64-bit relative bin dir. So far, this is always mingw64, not ucrt64, clang64, or clangarm64.
-    let suffix_64 = Path::new("bin/mingw64");
+    let suffix_64 = Path::new("Git/bin/mingw64");
 
     // 32-bit relative bin dir. So far, this is always mingw32, not clang32.
-    let suffix_32 = Path::new("bin/mingw32");
+    let suffix_32 = Path::new("Git/bin/mingw32");
 
     // Whichever of the 64-bit or 32-bit relative bin better matches this process's architecture.
     // Unlike the system architecture, the process architecture is always known at compile time.
