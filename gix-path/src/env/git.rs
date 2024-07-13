@@ -20,12 +20,8 @@ fn alternative_locations_from_env<F>(var_os_func: F) -> Vec<PathBuf>
 where
     F: Fn(&str) -> Option<std::ffi::OsString>,
 {
-    // FIXME: Define pairs of the environment variable name and the path suffix to apply, or
-    // something, because right now this new function is totally wrong because it returns the
-    // program files directory paths instead of the Git for Windows bin directory paths under them.
-    //
-    // But I am not really sure what this should do to handle the ProgramFiles environment variable
-    // and figure out if it is 64-bit or 32-bit -- which we need in order to know whether to append
+    // I am not really sure what this should do to handle the ProgramFiles environment variable and
+    // figure out if it is 64-bit or 32-bit -- which we need in order to know whether to append
     // `Git/mingw64/bin` or `Git/mingw32/bin`. We do need to look at the ProgramFiles environment
     // variable in addition to the other two preferable architecture-specific ones (for which the
     // mingw64 vs. mingw32 decision is easy), at least some of the time, for two reasons.
@@ -79,22 +75,50 @@ where
     // using environment variables already, satisfies a weaker expectation that the environment
     // value *or* actual value (obtainable via known folders or the registry), rather than some
     // third value, is used. (4) is also a simple way to do the right thing on a 32-bit system.
-    let suffix_x86 =
+
+    // Should give a 64-bit program files path from a 32-bit or 64-bit process on a 64-bit system.
+    let varname_64bit = "ProgramW6432";
+
+    // Should give a 32-bit program files path from a 32-bit or 64-bit process on a 64-bit system.
+    // This variable is x86-specific, but neither Git nor Rust target 32-bit ARM on Windows.
+    let varname_x86 = "ProgramFiles(x86)";
+
+    // Should give a 32-bit program files path on a 32-bit system. We also need to check it on a
+    // 64-bit system. [FIXME: Somehow briefly explain why we still need to do that.]
+    let varname_current = "ProgramFiles";
+
+    // 64-bit relative bin dir. So far, this is always mingw64, not ucrt64, clang64, or clangarm64.
+    let suffix_64 = Path::new("bin/mingw64");
+
+    // 32-bit relative bin dir. This is always mingw32, not clang32.
+    let suffix_32 = Path::new("bin/mingw32");
+
+    // Whichever of the 64-bit or 32-bit relative bin better matches this process's architecture.
+    // Unlike the system architecture, the process architecture is always known at compile time.
+    #[cfg(target_pointer_width = "64")]
+    let suffix_current = suffix_64;
+    #[cfg(target_pointer_width = "32")]
+    let suffix_current = suffix_32;
+
     let rules = [
-
-    ];
-
-    let names = [
-        "ProgramW6432",      // 64-bit path from a 32-bit or 64-bit process on a 64-bit system.
-        "ProgramFiles(x86)", // 32-bit path from a 32-bit or 64-bit process on a 64-bit system.
-        "ProgramFiles",      // 32-bit path on 32-bit system. Or if the parent cleared the others.
+        (varname_64bit, suffix_64),
+        (varname_x86, suffix_32),
+        (varname_current, suffix_current),
     ];
 
     let mut locations = vec![];
 
-    for path in names.into_iter().filter_map(var_os_func).map(PathBuf::from) {
-        if !locations.contains(&path) {
-            locations.push(path);
+    for (name, suffix) in rules {
+        if let Some(value) = var_os_func(name) {
+            let pf = Path::new(&value);
+            if pf.is_relative() {
+                continue;
+            };
+            let components = pf.iter().chain(suffix.iter());
+            let location = PathBuf::from_iter(components);
+            if !locations.contains(&location) {
+                locations.push(location);
+            }
         }
     }
 
