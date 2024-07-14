@@ -1,5 +1,6 @@
-use std::path::PathBuf;
+use std::{ops::Range, path::PathBuf};
 
+use gix_diff::blob::intern::Token;
 use gix_odb::pack::FindExt;
 use gix_ref::{file::ReferenceExt, store::WriteReflog};
 
@@ -71,14 +72,112 @@ fn it_works() {
         .unwrap();
 
     let mut recorder = gix_diff::tree::Recorder::default();
-    let _result = gix_diff::tree::Changes::from(head_tree_iter)
-        .needed_to_obtain(
-            last_parent_tree_iter,
-            gix_diff::tree::State::default(),
-            odb,
-            &mut recorder,
+    let _result = gix_diff::tree::Changes::from(last_parent_tree_iter)
+        .needed_to_obtain(head_tree_iter, gix_diff::tree::State::default(), &odb, &mut recorder)
+        .unwrap();
+
+    assert!(matches!(
+        recorder.records[..],
+        [gix_diff::tree::recorder::Change::Modification { .. }]
+    ));
+
+    let [ref modification]: [gix_diff::tree::recorder::Change] = recorder.records[..] else {
+        todo!()
+    };
+    let gix_diff::tree::recorder::Change::Modification { previous_oid, oid, .. } = modification else {
+        todo!()
+    };
+
+    // The following lines are trying to get a line-diff between two commits.
+    let git_dir = fixture_path().join(".git");
+    let index = gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, false, Default::default()).unwrap();
+    let stack = gix_worktree::Stack::from_state_and_ignore_case(
+        worktree.clone(),
+        false,
+        gix_worktree::stack::State::AttributesAndIgnoreStack {
+            attributes: Default::default(),
+            ignore: Default::default(),
+        },
+        &index,
+        index.path_backing(),
+    );
+    let capabilities = gix_fs::Capabilities::probe(&git_dir);
+    let mut resource_cache = gix_diff::blob::Platform::new(
+        Default::default(),
+        gix_diff::blob::Pipeline::new(
+            gix_diff::blob::pipeline::WorktreeRoots {
+                old_root: None,
+                new_root: None,
+            },
+            gix_filter::Pipeline::new(Default::default(), Default::default()),
+            vec![],
+            gix_diff::blob::pipeline::Options {
+                large_file_threshold_bytes: 0,
+                fs: capabilities,
+            },
+        ),
+        gix_diff::blob::pipeline::Mode::ToGit,
+        stack,
+    );
+
+    resource_cache
+        .set_resource(
+            *previous_oid,
+            gix_object::tree::EntryKind::Blob,
+            "file.txt".into(),
+            gix_diff::blob::ResourceKind::OldOrSource,
+            &odb,
         )
         .unwrap();
+    resource_cache
+        .set_resource(
+            *oid,
+            gix_object::tree::EntryKind::Blob,
+            "file.txt".into(),
+            gix_diff::blob::ResourceKind::NewOrDestination,
+            &odb,
+        )
+        .unwrap();
+
+    let outcome = resource_cache.prepare_diff().unwrap();
+    let input = outcome.interned_input();
+
+    assert_eq!(input.before, [Token(0), Token(1), Token(2),]);
+    assert_eq!(input.after, [Token(0), Token(1), Token(2), Token(3)]);
+
+    let mut lines = Vec::new();
+
+    use gix_ref::bstr::ByteSlice;
+
+    // The following lines were inspired by `gix::object::blob::diff::Platform::lines`.
+    gix_diff::blob::diff(
+        gix_diff::blob::Algorithm::Histogram,
+        &input,
+        |before: Range<u32>, after: Range<u32>| {
+            lines.clear();
+            lines.extend(
+                input.before[before.start as usize..before.end as usize]
+                    .iter()
+                    .map(|&line| input.interner[line].as_bstr()),
+            );
+            let end_of_before = lines.len();
+            lines.extend(
+                input.after[after.start as usize..after.end as usize]
+                    .iter()
+                    .map(|&line| input.interner[line].as_bstr()),
+            );
+            let hunk_before = &lines[..end_of_before];
+            let hunk_after = &lines[end_of_before..];
+            if hunk_after.is_empty() {
+                // Intentionally empty.
+            } else if hunk_before.is_empty() {
+                assert_eq!(hunk_after, ["line 4\n"]);
+            } else {
+            }
+        },
+    );
+
+    assert_eq!(lines, ["line 4\n"]);
 }
 
 fn odb_at(name: &str) -> gix_odb::Handle {
