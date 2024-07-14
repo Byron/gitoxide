@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> =
     Lazy::new(|| locations_under_program_files(|key| std::env::var_os(key)));
 #[cfg(not(windows))]
-pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| vec![]);
+pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(Vec::new);
 
 #[cfg(windows)]
 fn locations_under_program_files<F>(var_os_func: F) -> Vec<PathBuf>
