@@ -542,7 +542,7 @@ mod tests {
     mod loc {
         #[test]
         fn alternative_locations() {
-            assert!(super::ALTERNATIVE_LOCATIONS.is_empty());
+            assert!(super::super::ALTERNATIVE_LOCATIONS.is_empty());
         }
     }
 }
