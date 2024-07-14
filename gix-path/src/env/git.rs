@@ -16,7 +16,7 @@ pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| {
 pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| vec![]);
 
 #[cfg(windows)]
-fn alternative_windows_locations_from_environment<F>(var_os_func: F) -> Vec<PathBuf>
+fn locations_under_program_files<F>(var_os_func: F) -> Vec<PathBuf>
 where
     F: Fn(&str) -> Option<std::ffi::OsString>,
 {
@@ -28,8 +28,8 @@ where
     let varname_x86 = "ProgramFiles(x86)";
 
     // Should give a 32-bit program files path on a 32-bit system. We also check this on a 64-bit
-    // system, even though it *should* equal the process architecture specific variable, so that we
-    // cover the case of a parent process that passes down an overly sanitized environment that
+    // system, even though it *should* equal the process's architecture specific variable, so that
+    // we cover the case of a parent process that passes down an overly sanitized environment that
     // lacks the architecture-specific variable. On a 64-bit system, because parent and child
     // processes' architectures can be different, Windows sets the child's ProgramFiles variable
     // from the ProgramW6432 or ProgramFiles(x86) variable applicable to the child's architecture.
@@ -38,10 +38,10 @@ where
     let varname_current = "ProgramFiles";
 
     // 64-bit relative bin dir. So far, this is always mingw64, not ucrt64, clang64, or clangarm64.
-    let suffix_64 = Path::new(r"Git\bin\mingw64");
+    let suffix_64 = Path::new(r"Git\mingw64\bin");
 
     // 32-bit relative bin dir. So far, this is always mingw32, not clang32.
-    let suffix_32 = Path::new(r"Git\bin\mingw32");
+    let suffix_32 = Path::new(r"Git\mingw32\bin");
 
     // Whichever of the 64-bit or 32-bit relative bin better matches this process's architecture.
     // Unlike the system architecture, the process architecture is always known at compile time.
@@ -187,6 +187,124 @@ mod tests {
                 expected.map(Into::into)
             );
         }
+    }
+
+    #[cfg(windows)]
+    macro_rules! var_os_stub {
+        { $($name:expr => $value:expr),* $(,)? } => {
+            |key| {
+                match key {
+                    $(
+                        $name => Some(OsString::from($value)),
+                    )*
+                    _ => None,
+                }
+            }
+        };
+    }
+
+    #[cfg(windows)]
+    macro_rules! locations_from {
+        ($($name:expr => $value:expr),* $(,)?) => {
+            super::locations_under_program_files(var_os_stub! {
+                $(
+                    $name => $value,
+                )*
+            })
+        }
+    }
+
+    #[cfg(windows)]
+    macro_rules! pathbuf_vec {
+        [$($path:expr),* $(,)?] => {
+            vec![$(
+                PathBuf::from($path),
+            )*]
+        }
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn locations_under_program_files_ordinary() {
+        assert_eq!(
+            locations_from!(
+                "ProgramFiles" => r"C:\Program Files",
+            ),
+            if cfg!(target_pointer_width = "64") {
+                pathbuf_vec![r"C:\Program Files\Git\mingw64\bin"]
+            } else {
+                pathbuf_vec![r"C:\Program Files\Git\mingw32\bin"]
+            },
+        );
+        assert_eq!(
+            locations_from!(
+                "ProgramFiles" => {
+                    if cfg!(target_pointer_width = "64") {
+                        r"C:\Program Files"
+                    } else {
+                        r"C:\Program Files (x86)"
+                    }
+                },
+                "ProgramFiles(x86)" => r"C:\Program Files (x86)",
+                "ProgramW6432" => r"C:\Program Files",
+            ),
+            pathbuf_vec![
+                r"C:\Program Files\Git\mingw64\bin",
+                r"C:\Program Files (x86)\Git\mingw32\bin",
+            ],
+        );
+        assert_eq!(locations_from!(), Vec::<PathBuf>::new());
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn locations_under_program_files_strange() {
+        assert_eq!(
+            locations_from!(
+                "ProgramFiles" => r"X:\cur\rent",
+                "ProgramFiles(x86)" => r"Y:\nar\row",
+                "ProgramW6432" => r"Z:\wi\de",
+            ),
+            pathbuf_vec![
+                r"Z:\wi\de\Git\mingw64\bin",
+                r"Y:\nar\row\Git\mingw32\bin",
+                if cfg!(target_pointer_width = "64") {
+                    r"X:\cur\rent\Git\mingw64\bin"
+                } else {
+                    r"X:\cur\rent\Git\mingw32\bin"
+                },
+            ],
+        );
+        assert_eq!(
+            locations_from!(
+                "ProgramW6432" => r"Z:\wi\de",
+            ),
+            pathbuf_vec![r"Z:\wi\de\Git\mingw64\bin"],
+        );
+        assert_eq!(
+            locations_from!(
+                "ProgramFiles" => r"Z:/wi//de/",
+                "ProgramFiles(x86)" => r"Y:/\nar\/row",
+                "ProgramW6432" => r"Z:\wi\.\de",
+            ),
+            if cfg!(target_pointer_width = "64") {
+                pathbuf_vec![r"Z:\wi\de\Git\mingw64\bin", r"Y:\nar\row\Git\mingw32\bin"]
+            } else {
+                pathbuf_vec![
+                    r"Z:\wi\de\Git\mingw64\bin",
+                    r"Y:\nar\row\Git\mingw32\bin",
+                    r"Z:\wi\de\Git\mingw32\bin",
+                ]
+            },
+        );
+        assert_eq!(
+            locations_from!(
+                "ProgramFiles" => r"foo\bar",
+                "ProgramFiles(x86)" => r"\\host\share\subdir",
+                "ProgramW6432" => r"",
+            ),
+            pathbuf_vec![r"\\host\share\subdir\Git\mingw32\bin"],
+        );
     }
 
     #[cfg(windows)]
