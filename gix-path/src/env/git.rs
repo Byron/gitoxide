@@ -505,8 +505,11 @@ mod tests {
                     }
                     [only] => {
                         assert_eq!(pf.maybe_64bit, None, "It gives one path only if none can be 64-bit.");
+                        let suffix_x86 = only
+                            .strip_prefix(pf.x86.as_path())
+                            .expect("The one path it gives is the 32-bit path.");
                         Self {
-                            x86: only,
+                            x86: suffix_x86,
                             maybe_64bit: None,
                         }
                     }
