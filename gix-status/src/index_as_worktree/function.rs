@@ -5,12 +5,6 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-#[cfg(target_has_atomic = "64")]
-use std::sync::atomic::AtomicU64;
-
-#[cfg(not(target_has_atomic = "64"))]
-use portable_atomic::AtomicU64;
-
 use bstr::BStr;
 use filetime::FileTime;
 use gix_features::parallel::{in_parallel_if, Reduce};
@@ -25,7 +19,7 @@ use crate::{
         types::{Error, Options},
         Change, Conflict, EntryStatus, Outcome, VisitEntry,
     },
-    is_dir_to_mode, SymlinkCheck,
+    is_dir_to_mode, AtomicU64, SymlinkCheck,
 };
 
 /// Calculates the changes that need to be applied to an `index` to match the state of the `worktree` and makes them

@@ -15,6 +15,12 @@
 #![cfg_attr(all(doc, feature = "document-features"), feature(doc_cfg, doc_auto_cfg))]
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
+#[cfg(target_has_atomic = "64")]
+use std::sync::atomic::AtomicU64;
+
+#[cfg(not(target_has_atomic = "64"))]
+use portable_atomic::AtomicU64;
+
 pub mod index_as_worktree;
 pub use index_as_worktree::function::index_as_worktree;
 
