@@ -1467,6 +1467,7 @@ dependencies = [
  "gix-odb",
  "gix-ref 0.44.1",
  "gix-testtools",
+ "gix-traverse 0.39.1",
 ]
 
 [[package]]

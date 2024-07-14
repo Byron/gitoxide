@@ -17,3 +17,4 @@ doctest = false
 gix-testtools = { path = "../tests/tools" }
 gix-ref = { path = "../gix-ref" }
 gix-odb = { path = "../gix-odb" }
+gix-traverse = { path = "../gix-traverse" }

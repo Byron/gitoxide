@@ -38,15 +38,18 @@ fn it_works() {
 
     let head = reference.peel_to_id_in_place(&store, &odb).unwrap();
 
+    let mut traverse = gix_traverse::commit::Simple::new(Some(head), &odb);
+
+    traverse.next();
+
+    let iter = traverse.commit_iter();
+    let parent_ids = iter.parent_ids().collect::<Vec<_>>();
+
+    let last_parent = parent_ids.last().unwrap();
+
     let mut buffer = Vec::new();
 
-    let (commit, _) = odb.find_commit(&head, &mut buffer).unwrap();
-
-    let last_parent = commit.parents().last().unwrap();
-
-    let mut buffer = Vec::new();
-
-    let (last_parent, _) = odb.find_commit(&last_parent, &mut buffer).unwrap();
+    let (_last_parent, _) = odb.find_commit(&last_parent, &mut buffer).unwrap();
 }
 
 fn odb_at(name: &str) -> gix_odb::Handle {
