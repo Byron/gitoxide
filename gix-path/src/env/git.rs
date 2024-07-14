@@ -6,12 +6,8 @@ use once_cell::sync::Lazy;
 
 /// Other places to find Git in.
 #[cfg(windows)]
-pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| {
-    vec![
-        "C:/Program Files/Git/mingw64/bin".into(),
-        "C:/Program Files (x86)/Git/mingw32/bin".into(),
-    ]
-});
+pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> =
+    Lazy::new(|| locations_under_program_files(|key| std::env::var_os(key)));
 #[cfg(not(windows))]
 pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(|| vec![]);
 
