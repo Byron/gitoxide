@@ -36,20 +36,49 @@ fn it_works() {
 
     let mut reference = gix_ref::file::Store::find(&store, "HEAD").unwrap();
 
-    let head = reference.peel_to_id_in_place(&store, &odb).unwrap();
+    let mut buffer = Vec::new();
 
-    let mut traverse = gix_traverse::commit::Simple::new(Some(head), &odb);
+    let head_id = reference.peel_to_id_in_place(&store, &odb).unwrap();
+    let (head, _) = odb.find_commit(&head_id, &mut buffer).unwrap();
+
+    let mut buffer = Vec::new();
+    let head_tree_iter = odb
+        .find(&head.tree(), &mut buffer)
+        .unwrap()
+        .0
+        .try_into_tree_iter()
+        .unwrap();
+
+    let mut traverse = gix_traverse::commit::Simple::new(Some(head_id), &odb);
 
     traverse.next();
 
     let iter = traverse.commit_iter();
     let parent_ids = iter.parent_ids().collect::<Vec<_>>();
 
-    let last_parent = parent_ids.last().unwrap();
+    let last_parent_id = parent_ids.last().unwrap();
 
     let mut buffer = Vec::new();
 
-    let (_last_parent, _) = odb.find_commit(&last_parent, &mut buffer).unwrap();
+    let (last_parent, _) = odb.find_commit(&last_parent_id, &mut buffer).unwrap();
+
+    let mut buffer = Vec::new();
+    let last_parent_tree_iter = odb
+        .find(&last_parent.tree(), &mut buffer)
+        .unwrap()
+        .0
+        .try_into_tree_iter()
+        .unwrap();
+
+    let mut recorder = gix_diff::tree::Recorder::default();
+    let _result = gix_diff::tree::Changes::from(head_tree_iter)
+        .needed_to_obtain(
+            last_parent_tree_iter,
+            gix_diff::tree::State::default(),
+            odb,
+            &mut recorder,
+        )
+        .unwrap();
 }
 
 fn odb_at(name: &str) -> gix_odb::Handle {

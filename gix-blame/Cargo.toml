@@ -14,7 +14,8 @@ doctest = false
 [dependencies]
 
 [dev-dependencies]
-gix-testtools = { path = "../tests/tools" }
-gix-ref = { path = "../gix-ref" }
+gix-diff = { path = "../gix-diff" }
 gix-odb = { path = "../gix-odb" }
+gix-ref = { path = "../gix-ref" }
+gix-testtools = { path = "../tests/tools" }
 gix-traverse = { path = "../gix-traverse" }
