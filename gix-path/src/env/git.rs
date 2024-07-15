@@ -192,6 +192,17 @@ mod tests {
 
     #[cfg(windows)]
     mod loc {
+        use std::ffi::{OsStr, OsString};
+        use std::io::ErrorKind;
+        use std::path::{Path, PathBuf};
+
+        use known_folders::{get_known_folder_path, KnownFolder};
+        use windows::core::Result as WindowsResult;
+        use windows::Win32::Foundation::BOOL;
+        use windows::Win32::System::Threading::{GetCurrentProcess, IsWow64Process};
+        use winreg::enums::{HKEY_LOCAL_MACHINE, KEY_QUERY_VALUE};
+        use winreg::RegKey;
+
         macro_rules! var_os_stub {
             { $($name:expr => $value:expr),* $(,)? } => {
                 |key| {
@@ -304,17 +315,6 @@ mod tests {
                 pathbuf_vec![r"\\host\share\subdir\Git\mingw32\bin"],
             );
         }
-
-        use std::ffi::{OsStr, OsString};
-        use std::io::ErrorKind;
-        use std::path::{Path, PathBuf};
-
-        use known_folders::{get_known_folder_path, KnownFolder};
-        use windows::core::Result as WindowsResult;
-        use windows::Win32::Foundation::BOOL;
-        use windows::Win32::System::Threading::{GetCurrentProcess, IsWow64Process};
-        use winreg::enums::{HKEY_LOCAL_MACHINE, KEY_QUERY_VALUE};
-        use winreg::RegKey;
 
         trait Current: Sized {
             fn current() -> WindowsResult<Self>;
