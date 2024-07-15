@@ -61,7 +61,7 @@ where
                 // This shouldn't happen, but if it does then don't use the path. This is mainly in
                 // case we are accidentally invoked with the environment variable set but empty.
                 continue;
-            };
+            }
             let location = pf.join(suffix);
             if !locations.contains(&location) {
                 locations.push(location);
@@ -77,7 +77,9 @@ pub(super) static EXE_NAME: &str = "git.exe";
 #[cfg(not(windows))]
 pub(super) static EXE_NAME: &str = "git";
 
-/// Invoke the git executable in PATH to obtain the origin configuration, which is cached and returned.
+/// Invoke the git executable to obtain the origin configuration, which is cached and returned.
+///
+/// The git executable is the one found in PATH or an alternative location.
 pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
     let git_cmd = |executable: PathBuf| {
         let mut cmd = Command::new(executable);
@@ -105,15 +107,18 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
     first_file_from_config_with_origin(cmd_output.as_slice().into()).map(ToOwned::to_owned)
 });
 
-/// Returns the file that contains git configuration coming with the installation of the `git` file in the current `PATH`, or `None`
-/// if no `git` executable was found or there were other errors during execution.
+/// Try to find the file that contains git configuration coming with the git installation.
+///
+/// This returns the configuration associated with the `git` executable found in the current `PATH`
+/// or an alternative location, or `None` if no `git` executable was found or there were other
+/// errors during execution.
 pub(super) fn install_config_path() -> Option<&'static BStr> {
     let _span = gix_trace::detail!("gix_path::git::install_config_path()");
     static PATH: Lazy<Option<BString>> = Lazy::new(|| {
-        // Shortcut: in Msys shells this variable is set which allows to deduce the installation directory,
-        // so we can save the `git` invocation.
+        // Shortcut: Specifically in Git for Windows 'Git Bash' shells, this variable is set. It
+        // may let us deduce the installation directory, so we can save the `git` invocation.
         #[cfg(windows)]
-        if let Some(mut exec_path) = std::env::var_os("EXEPATH").map(std::path::PathBuf::from) {
+        if let Some(mut exec_path) = std::env::var_os("EXEPATH").map(PathBuf::from) {
             exec_path.push("etc");
             exec_path.push("gitconfig");
             return crate::os_string_into_bstring(exec_path.into()).ok();
@@ -197,7 +202,7 @@ mod tests {
                         _ => None,
                     }
                 }
-            };
+            }
         }
 
         macro_rules! locations_from {
