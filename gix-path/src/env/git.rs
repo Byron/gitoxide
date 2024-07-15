@@ -388,14 +388,14 @@ mod tests {
             /// [knownfolderid]: https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid#remarks
             fn obtain_envlessly() -> Self {
                 let pf_current = get_known_folder_path(KnownFolder::ProgramFiles)
-                    .expect("The process architecture specific program files folder is always available.");
+                    .expect("The process architecture specific program files folder is always available");
 
                 let pf_x86 = get_known_folder_path(KnownFolder::ProgramFilesX86)
-                    .expect("The x86 program files folder will in practice always be available.");
+                    .expect("The x86 program files folder will in practice always be available");
 
                 let maybe_pf_64bit = RegKey::predef(HKEY_LOCAL_MACHINE)
                     .open_subkey_with_flags(r"SOFTWARE\Microsoft\Windows\CurrentVersion", KEY_QUERY_VALUE)
-                    .expect("The `CurrentVersion` key exists and allows reading.")
+                    .expect("The `CurrentVersion` registry key exists and allows reading")
                     .get_value::<OsString, _>("ProgramW6432Dir")
                     .map(PathBuf::from)
                     .map_err(|error| {
@@ -416,7 +416,7 @@ mod tests {
             /// This checks that `obtain_envlessly()` returned paths that are likely to be correct and
             /// that satisfy the most important properties based on the current system and process.
             fn validate(self) -> Self {
-                match PlatformArchitecture::current().expect("Process and system 'bitness' should be available.") {
+                match PlatformArchitecture::current().expect("Process and system 'bitness' should be available") {
                     PlatformArchitecture::Is32on32 => {
                         assert_eq!(
                             self.current.as_os_str(),
@@ -425,7 +425,7 @@ mod tests {
                         );
                         for trailing_arch in [" (x86)", " (Arm)"] {
                             let is_adorned = ends_with_case_insensitive(self.current.as_os_str(), trailing_arch)
-                                .expect("Assume the test system's important directories are valid Unicode.");
+                                .expect("Assume the test system's important directories are valid Unicode");
                             assert!(
                                 !is_adorned,
                                 "The 32-bit program files directory name on a 32-bit system mentions no architecture.",
@@ -445,7 +445,7 @@ mod tests {
                         let pf_64bit = self
                             .maybe_64bit
                             .as_ref()
-                            .expect("The 64-bit program files directory exists.");
+                            .expect("The 64-bit program files directory exists");
                         assert_ne!(
                             &self.x86, pf_64bit,
                             "The 32-bit and 64-bit program files directories have different locations.",
@@ -455,7 +455,7 @@ mod tests {
                         let pf_64bit = self
                             .maybe_64bit
                             .as_ref()
-                            .expect("The 64-bit program files directory exists.");
+                            .expect("The 64-bit program files directory exists");
                         assert_eq!(
                             self.current.as_os_str(),
                             pf_64bit.as_os_str(),
@@ -487,13 +487,13 @@ mod tests {
                         let prefix_64bit = pf
                             .maybe_64bit
                             .as_ref()
-                            .expect("It gives two paths only if one can be 64-bit.");
+                            .expect("It gives two paths only if one can be 64-bit");
                         let suffix_64bit = primary
                             .strip_prefix(prefix_64bit)
-                            .expect("It gives the 64-bit path and lists it first.");
+                            .expect("It gives the 64-bit path and lists it first");
                         let suffix_x86 = secondary
                             .strip_prefix(pf.x86.as_path())
-                            .expect("It gives the 32-bit path and lists it second.");
+                            .expect("It gives the 32-bit path and lists it second");
                         Self {
                             x86: suffix_x86,
                             maybe_64bit: Some(suffix_64bit),
@@ -503,7 +503,7 @@ mod tests {
                         assert_eq!(pf.maybe_64bit, None, "It gives one path only if none can be 64-bit.");
                         let suffix_x86 = only
                             .strip_prefix(pf.x86.as_path())
-                            .expect("The one path it gives is the 32-bit path.");
+                            .expect("The one path it gives is the 32-bit path");
                         Self {
                             x86: suffix_x86,
                             maybe_64bit: None,
