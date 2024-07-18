@@ -14,7 +14,7 @@ doctest = false
 
 [dependencies]
 gix-sec = { version = "^0.10.6", path = "../gix-sec" }
-gix-path = { version = "^0.10.8", path = "../gix-path" }
+gix-path = { version = "^0.10.9", path = "../gix-path" }
 gix-ref = { version = "^0.44.1", path = "../gix-ref" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-fs = { version = "^0.11.1", path = "../gix-fs" }

@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.10.9 (2024-07-18)
+
+### Bug Fixes
+
+ - <csr-id-15235bf7968042da0493d431bbc955d6f9f54188/> Don't assume program files folder locations
+   This checks where *program files* directories are located on a
+   Windows system, which are used for a fallback check after `git`
+   has not been found in a `PATH` search (to invoke `git` to find out
+   information such as the location of its system config file).
+   
+   Previously, two hard-coded paths were used. These were correct for
+   the vast majority of 64-bit Windows systems, but were in practice
+   never correct on 32-bit Windows systems. Checking programmatically
+   for the locations should thus enable detection to succeed on more
+   systems and under more circumstances, and avoid other problems.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 35 commits contributed to the release over the course of 3 calendar days.
+ - 23 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'program-files' ([`ffe6b60`](https://github.com/Byron/gitoxide/commit/ffe6b60be3c0361d38fd6634a7fbc299665a6a0c))
+    - Refactor ([`73ed340`](https://github.com/Byron/gitoxide/commit/73ed3402861c88092b9a2cb2502e0f20d8bbcd36))
+    - Move `test::loc`'s `use` statements up ([`dd53408`](https://github.com/Byron/gitoxide/commit/dd534087fd7829eee1a9b426ee8bcdaca9c352e1))
+    - Update/refine comments and do some minor cleanup ([`dea1746`](https://github.com/Byron/gitoxide/commit/dea1746b06483796398441de391567f9ac115d21))
+    - Omit excess punctuation in `expect` messages ([`76e3b28`](https://github.com/Byron/gitoxide/commit/76e3b28b8824c00a545faa9079751c8d445c4574))
+    - Thanks clippy ([`464e0a2`](https://github.com/Byron/gitoxide/commit/464e0a266aa7f3de29750f1c4f77cc4dacf37d91))
+    - Add second `super::` in non-Windows `alternative_locations` test ([`8ae54e8`](https://github.com/Byron/gitoxide/commit/8ae54e850463da417dfc87a68d8ca0025f997b7a))
+    - Don't assume program files folder locations ([`15235bf`](https://github.com/Byron/gitoxide/commit/15235bf7968042da0493d431bbc955d6f9f54188))
+    - Fix test bug generating expected value on 32-bit system ([`98db88b`](https://github.com/Byron/gitoxide/commit/98db88bb81f8b47fe83011aa9ecf1d709b9680c9))
+    - Put the new tests in their own nested mod ([`d254e62`](https://github.com/Byron/gitoxide/commit/d254e62819b66e5385b633f0670f8456ad2d0b6e))
+    - Rename helper, write its tests (and their helpers), fix a bug ([`e990bcd`](https://github.com/Byron/gitoxide/commit/e990bcd48212db0d5b39c1a2c5b3cf1aa22faa6d))
+    - Call fewer different things "suffixes" ([`de7c49f`](https://github.com/Byron/gitoxide/commit/de7c49fbd61ae518db0eb0ad5ec862569e6dae61))
+    - Reorder statements in alternative_locations test for clarity ([`4d98535`](https://github.com/Byron/gitoxide/commit/4d9853549fa4750de35f8a5b4306ccb105dfff0e))
+    - Simplify path construction and config; improve comments ([`c8b2eb3`](https://github.com/Byron/gitoxide/commit/c8b2eb35f880d1257318327bc6980f753a45e3b6))
+    - Add the missing `Git` component in the suffixes ([`1f0c3bf`](https://github.com/Byron/gitoxide/commit/1f0c3bf87905ead954646c045c846422cffcf67c))
+    - Remove a fixme that should no longer be done ([`00127a7`](https://github.com/Byron/gitoxide/commit/00127a7195cd9552ec9ee7377872b5ae32a87408))
+    - Rename helper; condense huge comment and move into position ([`df175bc`](https://github.com/Byron/gitoxide/commit/df175bc1a8d11a72dd059464a6553f675570dddd))
+    - Fix the helper to join the `mingw*/bin` subdirs ([`c486a7d`](https://github.com/Byron/gitoxide/commit/c486a7d8b2ad669e9d6daaee53a151b0dea4920b))
+    - Start implementing a helper for ALTERNATIVE_LOCATIONS ([`167dc14`](https://github.com/Byron/gitoxide/commit/167dc14f917c23104e01ab591bb00ccd26ba1c11))
+    - Narrow assert_architectures fixme to just what's left ([`e9eabeb`](https://github.com/Byron/gitoxide/commit/e9eabeb58c33ebed05d2ae72842da5898badcc3b))
+    - Adjust GitBinSuffixes so uses in the test method are clearer ([`671c476`](https://github.com/Byron/gitoxide/commit/671c47609f9726d629ab34d93630dcb882ceea94))
+    - Assert that the corresponding suffixes are correct ([`5258f7a`](https://github.com/Byron/gitoxide/commit/5258f7ab1ec02a1f64e2fa4e3e1bf646012a4dea))
+    - Assert `ALTERNATIVE_LOCATIONS` count and prefixes ([`dd1e5c8`](https://github.com/Byron/gitoxide/commit/dd1e5c8d30fb1326a96172e886fb03c3533453c8))
+    - Rename PathsByRole to ProgramFilesPaths ([`3dd1d1f`](https://github.com/Byron/gitoxide/commit/3dd1d1fd4e9f98d842ad70ca181160a51b87e844))
+    - Clarify what pf_current represents ([`95708dd`](https://github.com/Byron/gitoxide/commit/95708dd754482db9afe4ec417f6d5ebdd35bc539))
+    - Make PathsByRole::maybe_pf_64bit an Option<PathBuf> ([`5701145`](https://github.com/Byron/gitoxide/commit/5701145bafae708f9c43e2c6947c11037f1349e0))
+    - Remove extra comment left over from before ([`518fd27`](https://github.com/Byron/gitoxide/commit/518fd2709ea3606da07a7fa9fb634d19df3425d5))
+    - Improve expect and assert messages in PathsByRole::validate() ([`5df0cf5`](https://github.com/Byron/gitoxide/commit/5df0cf581e7bdcacaf6e630a3653ac449e01e30b))
+    - Revise obtain_envlessly() doc comment for clarity ([`a5a5342`](https://github.com/Byron/gitoxide/commit/a5a5342c7f94e3e53e2a4969beee81fadc8592ef))
+    - Do a minor simplification now that it's PathBuf ([`99a8eb3`](https://github.com/Byron/gitoxide/commit/99a8eb3748db9f50f11491ce3c9ebb197e70a942))
+    - Make ALTERNATIVE_LOCATIONS items PathBuf ([`5b206bc`](https://github.com/Byron/gitoxide/commit/5b206bce8149349f9b4390ca04c1304def225dff))
+    - Start on unit test for ALTERNATIVE_LOCATIONS ([`edc1351`](https://github.com/Byron/gitoxide/commit/edc1351d66f9ae1482193228d00a2b555a1ee979))
+    - Add dev dependencies for soon to be added unit test ([`6af59ca`](https://github.com/Byron/gitoxide/commit/6af59cab05183472a1843e867bce894b8c07557c))
+    - Restyle just-changed and related code for clarity ([`98b3d90`](https://github.com/Byron/gitoxide/commit/98b3d901bd770cc8cf178fce52695306ca48f403))
+    - Make ALTERNATIVE_LOCATIONS dynamic and OsString-based ([`9eaa0d9`](https://github.com/Byron/gitoxide/commit/9eaa0d90470192104def649d0e317b0b55f0d7a6))
+</details>
+
 ## 0.10.8 (2024-06-24)
 
 ### New Features
@@ -17,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 3 calendar days.
+ - 5 commits contributed to the release over the course of 3 calendar days.
  - 101 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -29,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.10.8 ([`8d89b86`](https://github.com/Byron/gitoxide/commit/8d89b865c84d1fb153d93343d1ce4e1d64e53541))
     - Merge branch 'git-executable' ([`f0a4431`](https://github.com/Byron/gitoxide/commit/f0a44319e546670180197ba32a848d608d9ca7e9))
     - Use `gix_path::env::executable_invocation()` where possible. ([`5bf7f89`](https://github.com/Byron/gitoxide/commit/5bf7f898b5e92207812dd950bdd37f856cdd9d9e))
     - Provide `env::executable_invocation()` to know how to invoke Git. ([`fee775c`](https://github.com/Byron/gitoxide/commit/fee775ca083189cd8909e8af143a69071cb71ecd))
