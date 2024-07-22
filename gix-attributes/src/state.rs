@@ -37,7 +37,7 @@ impl ValueRef<'_> {
 
 impl<'a> From<&'a str> for ValueRef<'a> {
     fn from(v: &'a str) -> Self {
-        ValueRef(v.as_bytes().into())
+        ValueRef(v.as_bytes())
     }
 }
 

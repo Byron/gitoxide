@@ -193,10 +193,7 @@ impl crate::Repository {
                         remote_name
                             .and_then(|name| {
                                 config
-                                    .string_filter(
-                                        &format!("remote.{}.{}", name, Remote::PROXY.name),
-                                        &mut trusted_only,
-                                    )
+                                    .string_filter(format!("remote.{}.{}", name, Remote::PROXY.name), &mut trusted_only)
                                     .map(|v| (v, Cow::Owned(format!("remote.{name}.proxy").into()), &Remote::PROXY))
                             })
                             .or_else(|| {
@@ -254,7 +251,7 @@ impl crate::Repository {
                                 remote_name
                                     .and_then(|name| {
                                         config
-                                            .string_filter(&format!("remote.{name}.proxyAuthMethod"), &mut trusted_only)
+                                            .string_filter(format!("remote.{name}.proxyAuthMethod"), &mut trusted_only)
                                             .map(|v| {
                                                 (
                                                     v,
