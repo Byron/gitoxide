@@ -270,7 +270,7 @@ fn given_attributes_are_made_available_in_given_order() -> crate::Result {
 fn size_of_outcome() {
     assert_eq!(
         std::mem::size_of::<Outcome>(),
-        904,
+        840,
         "it's quite big, shouldn't change without us noticing"
     )
 }

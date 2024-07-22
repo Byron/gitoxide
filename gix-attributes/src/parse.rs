@@ -1,9 +1,8 @@
 use std::borrow::Cow;
 
+use crate::{name, AssignmentRef, Name, NameRef, StateRef};
 use bstr::{BStr, ByteSlice};
 use kstring::KStringRef;
-
-use crate::{name, AssignmentRef, Name, NameRef, StateRef};
 
 /// The kind of attribute that was parsed.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
