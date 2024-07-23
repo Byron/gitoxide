@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 19 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Fix-up version fo `gix-date` depndend on in `gix-actor` ([`2358364`](https://github.com/Byron/gitoxide/commit/2358364819949d49e5076a4ff3849a8ee1520675))
+</details>
+
 ## 0.31.4 (2024-07-03)
 
 ### Bug Fixes
@@ -15,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 4 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1438](https://github.com/Byron/gitoxide/issues/1438)
@@ -29,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1438](https://github.com/Byron/gitoxide/issues/1438)**
     - Make actor parsing even more lenient ([`40be214`](https://github.com/Byron/gitoxide/commit/40be2145ceb938186363a2c6e074448a5a8f4707))
  * **Uncategorized**
+    - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))
     - Prepare changelogs prior to release ([`255920e`](https://github.com/Byron/gitoxide/commit/255920ecffd47f221702aaec29de966b120f8fc5))
     - Merge branch 'fix-1438' ([`9717a25`](https://github.com/Byron/gitoxide/commit/9717a255b7c817c9f6cde44eedba232e309a6e0f))
 </details>
