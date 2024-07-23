@@ -5,7 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 58 calendar days.
+ - 58 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
+    - Merge branch 'fix-windows-tests' ([`c2753b8`](https://github.com/Byron/gitoxide/commit/c2753b8425c285c6b53f46eba9bc3584aa85eb01))
+    - Fix gix-archive tests for when symlinks are allowed ([`93e088a`](https://github.com/Byron/gitoxide/commit/93e088a619db0d4b81e444922f375de65c94a317))
+    - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))
+    - Release gix-path v0.10.8 ([`8d89b86`](https://github.com/Byron/gitoxide/commit/8d89b865c84d1fb153d93343d1ce4e1d64e53541))
+    - Release gix-date v0.8.7, gix-mailmap v0.23.2 ([`c1d7c02`](https://github.com/Byron/gitoxide/commit/c1d7c023d595eb04891b65295f001d85c9ba8074))
+    - Merge branch 'tar-only' ([`1dfa90d`](https://github.com/Byron/gitoxide/commit/1dfa90d641306b4099a6ecd52e2056b231467807))
+    - Remove binary files in favor of `tar` files ([`dcab79a`](https://github.com/Byron/gitoxide/commit/dcab79a6958cbf5cd69184c24497dc27c6f94961))
+    - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
+    - Merge pull request #1361 from EliahKagan/freebsd ([`9c65d98`](https://github.com/Byron/gitoxide/commit/9c65d9886328f53129b966aecdc91644297c54be))
+    - Make bash script shebangs more portable ([`68cbea8`](https://github.com/Byron/gitoxide/commit/68cbea815aa979acb0b86943db83ab77bbc728c4))
+    - Fix CI on Windows ([`b29f0d2`](https://github.com/Byron/gitoxide/commit/b29f0d26ce3be39116662ec3d40bf46726c1a61a))
+</details>
+
 ## 0.13.1 (2024-05-25)
+
+<csr-id-7f0a08f31661b917859dd761bf6610a303c1d432/>
 
 ### Chore
 
@@ -16,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 3 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-archive v0.13.1 ([`bd32c7a`](https://github.com/Byron/gitoxide/commit/bd32c7a40f53f4cff57e600bc350f8ca7ed624cc))
     - Merge pull request #1379 from belt/main ([`b4ab6f7`](https://github.com/Byron/gitoxide/commit/b4ab6f77596ae54f68743bbd93228dca08cc0440))
     - Adjust expectations in `gix-archive` ([`67bc66c`](https://github.com/Byron/gitoxide/commit/67bc66c1bb670971211968186ede27d4860f444b))
     - Version bump dependency zip-2.0.0 ([`7f0a08f`](https://github.com/Byron/gitoxide/commit/7f0a08f31661b917859dd761bf6610a303c1d432))

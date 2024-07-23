@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-1e81220824bd139db01a81de516eee7e0bc23715/> Always fall back to creating file symlinks on Windows
+   When the metadata of a symlink's target cannot be obtained, even if
+   the error is something other than `NotFound`, this falls back to
+   creating file symbolic links. This only affects scenarios where
+   either the checkout would fail entirely or where the symlink would
+   have been treated as a collision and skipped (even though it was
+   not really a collision, since only its target had an error). Other
+   cases are not affected, and all exisitng scenarios where directory
+   symlink would be created will still create directory symlinks.
+   
+   This builds on 31d02a8 (#1363) by supporting dangling symlinks even
+   when the target filenames are unusual, such as when the name is
+   invalid or reserved. Windows permits such symlinks to be created,
+   and going ahead and creating the matches the Git behavior.
+   
+   This should also support other errors beisdes `NotFound`. For
+   example, some permissions-related errors, in some cases where
+   traversal or acccess (even to access metadata) are not allowed,
+   would fail to create a symlink. This should address that as well.
+   
+   This works by using `Path::is_dir()` in the standard library, which
+   automatically converts all errors (not just `NotFound`) into
+   `false`. The logic here is thus quite similar to what was already
+   present, just more tolerant, even though the code itself is shorter
+   and simpler.
+   
+   This fixes #1420, and also fixes #1421.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 34 calendar days.
+ - 55 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #1425 from EliahKagan/strange-symlink-targets ([`6df6e84`](https://github.com/Byron/gitoxide/commit/6df6e845e0d16ad3305f88157999a9564848d04f))
+    - Always fall back to creating file symlinks on Windows ([`1e81220`](https://github.com/Byron/gitoxide/commit/1e81220824bd139db01a81de516eee7e0bc23715))
+    - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
+    - Merge branch 'status' ([`2f9f0ac`](https://github.com/Byron/gitoxide/commit/2f9f0ac36eb37b1736e21ee09e5a91833b80fc65))
+    - Avoid condition that is always false in `is_collision_error` ([`8644d0f`](https://github.com/Byron/gitoxide/commit/8644d0ff8111233a8ffcf722393a98eb83578177))
+</details>
+
 ## 0.11.1 (2024-05-28)
 
 A maintenance release without user-facing changes.
@@ -13,7 +68,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 6 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +80,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-fs v0.11.1, gix-glob v0.16.3 ([`2cefe77`](https://github.com/Byron/gitoxide/commit/2cefe77203131878d0d8f5346f20f0e25b76cbea))
     - Prepare gix-fs changelog prior to release ([`eb7880b`](https://github.com/Byron/gitoxide/commit/eb7880b32803d5d91a1be563da07f80d3213f7d0))
     - Merge branch 'dir-as-ignore' ([`31d2f0a`](https://github.com/Byron/gitoxide/commit/31d2f0a742257d7031df114f0c92197a0781921e))
     - Adapt to changes in `gix-glob` ([`5fbbaaa`](https://github.com/Byron/gitoxide/commit/5fbbaaa10d919dd216badb05b2fae32d5dd955c9))

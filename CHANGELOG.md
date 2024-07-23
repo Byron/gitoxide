@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-2a563870fc4d2f65e34c4e4a448b446fc05a43b2/> add `mailmap check` similar to `git check-mailmap`.
+   That way it becomes a little easier to maybe try out other special cases
+   in the wild.
+ - <csr-id-9bf01e42b8d8964dfd1e099d645082c10bdabcdf/> `gix clone` with `--ref` support.
+   `--ref` is similar to `--branch`, but was renamed as it also supports
+   tags for example.
+
+### Other
+
+ - <csr-id-202f3e48a96b38d32b11d28449358c7d1f3546ff/> Make it easier to compile gitoxide as dynlib
+   And also optimize compilation time: By making `plumbing` and `porcelain`
+   as modules the `lib.rs`, they can be compiled after the rmeta for the
+   dependencies are generated.
+   
+   For the `uni.rs` which uses both `plumbing` and `porcelain`, this would avoid
+   compiling these two modules twice.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 57 calendar days.
+ - 62 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'fix-mailmap' ([`f107014`](https://github.com/Byron/gitoxide/commit/f107014022a62271f02790a83336aed186ad38a3))
+    - Add descriptive docs for `mailmap check` ([`3e08fa3`](https://github.com/Byron/gitoxide/commit/3e08fa313c490f4ff299724a9363e0f3b370eea6))
+    - Add `mailmap check` similar to `git check-mailmap`. ([`2a56387`](https://github.com/Byron/gitoxide/commit/2a563870fc4d2f65e34c4e4a448b446fc05a43b2))
+    - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
+    - Merge branch 'feat/checkout-other-refs' ([`ecfde07`](https://github.com/Byron/gitoxide/commit/ecfde07d0887322db34f5ea531891c92676e1ff4))
+    - `gix clone` with `--ref` support. ([`9bf01e4`](https://github.com/Byron/gitoxide/commit/9bf01e42b8d8964dfd1e099d645082c10bdabcdf))
+    - Merge branch 'status' ([`2f9f0ac`](https://github.com/Byron/gitoxide/commit/2f9f0ac36eb37b1736e21ee09e5a91833b80fc65))
+    - Thanks clippy ([`acc1331`](https://github.com/Byron/gitoxide/commit/acc13318731fabac8f65d604baf7e47814f92ad4))
+    - Merge pull request #1384 from NobodyXu/feat/easier-to-compile-gix-as-dynlib ([`bb30e52`](https://github.com/Byron/gitoxide/commit/bb30e52112a1b738afae557f6ba7bc23889cdcb7))
+    - Fix clippy warning ([`bf5a111`](https://github.com/Byron/gitoxide/commit/bf5a1112245b6d60ceaf5591acf15acd0c8c6363))
+    - Fix compilation error in `src/plumbing/main.rs` ([`4596a39`](https://github.com/Byron/gitoxide/commit/4596a3949cdeb7c6953c2a9b8ac1e51609e1b160))
+    - Fix compilation errors ([`0b5dc74`](https://github.com/Byron/gitoxide/commit/0b5dc744b951a2ff49ddc4d2c10aaeaf10da2c4b))
+    - Make it easier to compile gitoxide as dynlib ([`202f3e4`](https://github.com/Byron/gitoxide/commit/202f3e48a96b38d32b11d28449358c7d1f3546ff))
+</details>
+
 ## 0.36.0 (2024-05-22)
 
 ### New Features

@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-0dc2a0c467d2bee7f345c68a56e6c89ce10faf9c/> prevent newline amplification
+   A fuzzer found input sized 780kb, but the output becomes
+   180MB in size, ultimately taking 48s to parse on M1 Pro.
+   
+   Note that the parsing itself is fast, but we seem to modify
+   the input in such a way that parsing takes way longer than it
+   should. That might be another issue which it will probably find
+   next, let's wait for it.
+ - <csr-id-a9a3545db2b2cfa37f685666046c2ffd5f3fa806/> `File::from_globals()` now also provides options of the Git installation.
+   That way, it's usable for learning everything about credentials for example.
+
+### New Features (BREAKING)
+
+ - <csr-id-0ec2389e4e3c457f87cff2cbdd394a94f7d0d54a/> `gix-config` convenience initiative
+   A new `gix_config::AsKey` trait allows all `gix_config::File` methods
+   to receive an implementation of `AsKey` instead of the tuple of
+   `(section, subsection, value_name)`. This is the default, and all
+   methods that take a tuple have been renamed to `<name>_by()`, note the `_by` suffix.
+   
+   The terminology was reworked so that `key` is now only used to identify a value.
+   
+   This change also affects the public API of `gix`, which provides
+   ways to set values on configuration snapshots which now by default
+   will only take a `AsKey` implementation.
+   
+   Note that `gix::config::tree::*` keys now also implement `AsKey`,
+   which allows them to be used more conveniently when setting values,
+   too.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 22 commits contributed to the release over the course of 57 calendar days.
+ - 62 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
+    - Be more generous with `mem::usage()` expected peak ([`7dd58b8`](https://github.com/Byron/gitoxide/commit/7dd58b845a7bf55a0aced5cca075a22fbebec978))
+    - Merge branch 'config-fuzz' ([`ed66357`](https://github.com/Byron/gitoxide/commit/ed663574c35b7227ce2b2ca241c68dcd04088a9d))
+    - Prevent newline amplification ([`0dc2a0c`](https://github.com/Byron/gitoxide/commit/0dc2a0c467d2bee7f345c68a56e6c89ce10faf9c))
+    - Reproduce a fuzz issue causing the config parsing to take too long ([`6c0364a`](https://github.com/Byron/gitoxide/commit/6c0364a01f9c714b0616b13417bf3bbec0d747e7))
+    - Merge branch 'config-globals' ([`929744a`](https://github.com/Byron/gitoxide/commit/929744ab628c8a32ce8e357c1000df20175a5b41))
+    - `File::from_globals()` now also provides options of the Git installation. ([`a9a3545`](https://github.com/Byron/gitoxide/commit/a9a3545db2b2cfa37f685666046c2ffd5f3fa806))
+    - Release gix-path v0.10.8 ([`8d89b86`](https://github.com/Byron/gitoxide/commit/8d89b865c84d1fb153d93343d1ce4e1d64e53541))
+    - Merge branch 'tar-only' ([`1dfa90d`](https://github.com/Byron/gitoxide/commit/1dfa90d641306b4099a6ecd52e2056b231467807))
+    - Remove binary files in favor of `tar` files ([`dcab79a`](https://github.com/Byron/gitoxide/commit/dcab79a6958cbf5cd69184c24497dc27c6f94961))
+    - Merge branch 'config-key' ([`5663a2c`](https://github.com/Byron/gitoxide/commit/5663a2c9f3b23c189af7f0a30664639df4acd411))
+    - `gix-config` convenience initiative ([`0ec2389`](https://github.com/Byron/gitoxide/commit/0ec2389e4e3c457f87cff2cbdd394a94f7d0d54a))
+    - Addditional fixes on top of the merge commit ([`dbe1f22`](https://github.com/Byron/gitoxide/commit/dbe1f22373a8e60d5b124e10fd131d3921134aa5))
+    - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
+    - Merge branch 'status' ([`2f9f0ac`](https://github.com/Byron/gitoxide/commit/2f9f0ac36eb37b1736e21ee09e5a91833b80fc65))
+    - Thanks clippy ([`acc1331`](https://github.com/Byron/gitoxide/commit/acc13318731fabac8f65d604baf7e47814f92ad4))
+    - Merge pull request #1361 from EliahKagan/freebsd ([`9c65d98`](https://github.com/Byron/gitoxide/commit/9c65d9886328f53129b966aecdc91644297c54be))
+    - Regenerate archives for changed scripts ([`ea12fc2`](https://github.com/Byron/gitoxide/commit/ea12fc234e898eb15013da40d2a82f69c2d20482))
+    - Make bash script shebangs more portable ([`68cbea8`](https://github.com/Byron/gitoxide/commit/68cbea815aa979acb0b86943db83ab77bbc728c4))
+    - Release gix-fs v0.11.1, gix-glob v0.16.3 ([`2cefe77`](https://github.com/Byron/gitoxide/commit/2cefe77203131878d0d8f5346f20f0e25b76cbea))
+    - Merge pull request #1385 from Byron/fix-gix-ref ([`8da55a3`](https://github.com/Byron/gitoxide/commit/8da55a3488a3389ec02c56cb79d0f93d600905e7))
+    - Release gix-ref v0.44.1 ([`2d0a352`](https://github.com/Byron/gitoxide/commit/2d0a3520e1df80f8f6edece0884a672cbc18839d))
+</details>
+
 ## 0.37.0 (2024-05-22)
 
 A maintenance release without user-facing changes.
@@ -13,7 +92,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 8 calendar days.
+ - 6 commits contributed to the release over the course of 8 calendar days.
  - 38 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +104,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-features v0.38.2, gix-actor v0.31.2, gix-validate v0.8.5, gix-object v0.42.2, gix-command v0.3.7, gix-filter v0.11.2, gix-fs v0.11.0, gix-revwalk v0.13.1, gix-traverse v0.39.1, gix-worktree-stream v0.13.0, gix-archive v0.13.0, gix-tempfile v14.0.0, gix-lock v14.0.0, gix-ref v0.44.0, gix-config v0.37.0, gix-prompt v0.8.5, gix-index v0.33.0, gix-worktree v0.34.0, gix-diff v0.44.0, gix-discover v0.32.0, gix-pathspec v0.7.5, gix-dir v0.5.0, gix-macros v0.1.5, gix-mailmap v0.23.1, gix-negotiate v0.13.1, gix-pack v0.51.0, gix-odb v0.61.0, gix-transport v0.42.1, gix-protocol v0.45.1, gix-revision v0.27.1, gix-status v0.10.0, gix-submodule v0.11.0, gix-worktree-state v0.11.0, gix v0.63.0, gitoxide-core v0.38.0, gitoxide v0.36.0, safety bump 19 crates ([`4f98e94`](https://github.com/Byron/gitoxide/commit/4f98e94e0e8b79ed2899b35bef40f3c30b3025b0))
     - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
     - Update dependencies ([`cd4de83`](https://github.com/Byron/gitoxide/commit/cd4de8327fc195eb862ab6e138f2315a87374f85))
@@ -81,7 +161,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 4 calendar days.
+ - 12 commits contributed to the release over the course of 12 calendar days.
  - 18 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -97,6 +177,14 @@ A maintenance release without user-facing changes.
     - Prepare changelogs prior to release ([`52c3bbd`](https://github.com/Byron/gitoxide/commit/52c3bbd36b9e94a0f3a78b4ada84d0c08eba27f6))
     - Merge branch 'status' ([`3e5c974`](https://github.com/Byron/gitoxide/commit/3e5c974dd62ac134711c6c2f5a5490187a6ea55e))
     - Fix lints for nightly, and clippy ([`f8ce3d0`](https://github.com/Byron/gitoxide/commit/f8ce3d0721b6a53713a9392f2451874f520bc44c))
+    - Fix docs for gix-config _by() methods. ([`e09a4ec`](https://github.com/Byron/gitoxide/commit/e09a4ecf4d6ae342abddd037d9beabad496ec326))
+    - Fixup! cargo fmt ([`e5f815a`](https://github.com/Byron/gitoxide/commit/e5f815a3ffc284f20a92edd3fca57b7ab60c6d30))
+    - Fixup! gix-config now uses a Key trait rather than Into<&BStr> ([`29e470b`](https://github.com/Byron/gitoxide/commit/29e470b88356dbc11be4a5922269043d333f9089))
+    - Use .as_refs() in gix-config to avoid unnecessary monomorphization. ([`819d7eb`](https://github.com/Byron/gitoxide/commit/819d7ebf043d5129ef27726297a78b918c42b771))
+    - Cargo fmt ([`b3556b2`](https://github.com/Byron/gitoxide/commit/b3556b2237f4fd8298999fd6ba08a411c3a9471c))
+    - Key trait docs. ([`096fd12`](https://github.com/Byron/gitoxide/commit/096fd1215bacfaa8c798c2746716eecb1b655ac6))
+    - Update gix-config setters. ([`ba3bf65`](https://github.com/Byron/gitoxide/commit/ba3bf65808fbde44254e55955110ad43c9baedc5))
+    - Gix-config now uses a Key trait rather than Into<&BStr> ([`6281e1a`](https://github.com/Byron/gitoxide/commit/6281e1ac140c939b046ac88d536f16e076a3206c))
 </details>
 
 ## 0.35.0 (2024-02-25)
@@ -3152,6 +3240,24 @@ This is a maintenance release without functional changes.
   - `len`
   - `from_env`
   - `open`
+  - `len`
+  - `from_env`
+  - `open`
+  - `len`
+  - `from_env`
+  - `open`
+  - `len`
+  - `from_env`
+  - `open`
+- `len`
+- `from_env`
+- `open`
+- `len`
+- `from_env`
+- `open`
+- `len`
+- `from_env`
+- `open`
 - `len`
 - `from_env`
 - `open`
@@ -3200,7 +3306,7 @@ This is a maintenance release without functional changes.
 - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)

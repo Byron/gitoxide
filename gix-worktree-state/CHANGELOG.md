@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 22 commits contributed to the release over the course of 55 calendar days.
+ - 62 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
+    - Merge branch 'fix-windows-tests' ([`c2753b8`](https://github.com/Byron/gitoxide/commit/c2753b8425c285c6b53f46eba9bc3584aa85eb01))
+    - Allow tests to work with symlinks on Windows ([`f48ed0c`](https://github.com/Byron/gitoxide/commit/f48ed0c123db7ac6e1b03d012a6eec963873393b))
+    - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))
+    - Merge branch 'heredocs' ([`7330844`](https://github.com/Byron/gitoxide/commit/73308446e5ffee053af35b108e3d49c71db31e99))
+    - Regenerate archives ([`a4bb7b9`](https://github.com/Byron/gitoxide/commit/a4bb7b9b7f15992644171bb06865637e18e1141f))
+    - Use `<<` rather than `<<-` heredoc operator ([`2641f8b`](https://github.com/Byron/gitoxide/commit/2641f8b36008ade04d59d76bd6d546005ad76a21))
+    - Merge pull request #1425 from EliahKagan/strange-symlink-targets ([`6df6e84`](https://github.com/Byron/gitoxide/commit/6df6e845e0d16ad3305f88157999a9564848d04f))
+    - Fix formatting with `cargo fmt` ([`f964cb9`](https://github.com/Byron/gitoxide/commit/f964cb904b38d8fa9a49b337aa5cd74dc2a27fc4))
+    - Consolidate the 3 dangling symlink test functions ([`87422ab`](https://github.com/Byron/gitoxide/commit/87422ab34922131e3243d5d7db7910a3f68978a4))
+    - Add generated archives for new tests ([`55c635a`](https://github.com/Byron/gitoxide/commit/55c635a6dd692d6765d3a8e0e6f9ed5b0fbcf9c7))
+    - Test that symlinks to directories are usable ([`fbc51df`](https://github.com/Byron/gitoxide/commit/fbc51df5fea4e64e2c108518b4a6602b473c7b0f))
+    - Test symlinks to invalid and reserved Windows targets ([`fb1e614`](https://github.com/Byron/gitoxide/commit/fb1e614ebb907012e21f69c176710ee117bdbae9))
+    - Add missing executable bits on two fixture scripts ([`d944598`](https://github.com/Byron/gitoxide/commit/d944598d17e8663e3aca2fecf993e433aff07f8b))
+    - Release gix-path v0.10.8 ([`8d89b86`](https://github.com/Byron/gitoxide/commit/8d89b865c84d1fb153d93343d1ce4e1d64e53541))
+    - Merge branch 'tar-only' ([`1dfa90d`](https://github.com/Byron/gitoxide/commit/1dfa90d641306b4099a6ecd52e2056b231467807))
+    - Remove binary files in favor of `tar` files ([`dcab79a`](https://github.com/Byron/gitoxide/commit/dcab79a6958cbf5cd69184c24497dc27c6f94961))
+    - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
+    - Merge pull request #1361 from EliahKagan/freebsd ([`9c65d98`](https://github.com/Byron/gitoxide/commit/9c65d9886328f53129b966aecdc91644297c54be))
+    - Regenerate archives for changed scripts ([`ea12fc2`](https://github.com/Byron/gitoxide/commit/ea12fc234e898eb15013da40d2a82f69c2d20482))
+    - Make bash script shebangs more portable ([`68cbea8`](https://github.com/Byron/gitoxide/commit/68cbea815aa979acb0b86943db83ab77bbc728c4))
+    - Release gix-fs v0.11.1, gix-glob v0.16.3 ([`2cefe77`](https://github.com/Byron/gitoxide/commit/2cefe77203131878d0d8f5346f20f0e25b76cbea))
+</details>
+
 ## 0.11.0 (2024-05-22)
 
 ### Bug Fixes
@@ -16,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 33 calendar days.
+ - 11 commits contributed to the release over the course of 33 calendar days.
  - 38 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1354](https://github.com/Byron/gitoxide/issues/1354), [#1373](https://github.com/Byron/gitoxide/issues/1373)
@@ -32,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1373](https://github.com/Byron/gitoxide/issues/1373)**
     - Better detection of pre-requisites for symlink test ([`00a1c47`](https://github.com/Byron/gitoxide/commit/00a1c47e7f3566feb14a4926b0cd3834f7007686))
  * **Uncategorized**
+    - Release gix-features v0.38.2, gix-actor v0.31.2, gix-validate v0.8.5, gix-object v0.42.2, gix-command v0.3.7, gix-filter v0.11.2, gix-fs v0.11.0, gix-revwalk v0.13.1, gix-traverse v0.39.1, gix-worktree-stream v0.13.0, gix-archive v0.13.0, gix-tempfile v14.0.0, gix-lock v14.0.0, gix-ref v0.44.0, gix-config v0.37.0, gix-prompt v0.8.5, gix-index v0.33.0, gix-worktree v0.34.0, gix-diff v0.44.0, gix-discover v0.32.0, gix-pathspec v0.7.5, gix-dir v0.5.0, gix-macros v0.1.5, gix-mailmap v0.23.1, gix-negotiate v0.13.1, gix-pack v0.51.0, gix-odb v0.61.0, gix-transport v0.42.1, gix-protocol v0.45.1, gix-revision v0.27.1, gix-status v0.10.0, gix-submodule v0.11.0, gix-worktree-state v0.11.0, gix v0.63.0, gitoxide-core v0.38.0, gitoxide v0.36.0, safety bump 19 crates ([`4f98e94`](https://github.com/Byron/gitoxide/commit/4f98e94e0e8b79ed2899b35bef40f3c30b3025b0))
     - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
     - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))

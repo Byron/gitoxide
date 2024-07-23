@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release over the course of 19 calendar days.
+ - 24 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))
+</details>
+
 ## 0.23.4 (2024-06-29)
 
 ### New Features
@@ -16,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 2 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-actor v0.31.3, gix-mailmap v0.23.4 ([`1e79c5c`](https://github.com/Byron/gitoxide/commit/1e79c5cdf20fc0440e9a497c9d01b0c0ca3ce424))
     - Merge branch 'push-oqpkttmvqxvx' ([`b38c6ed`](https://github.com/Byron/gitoxide/commit/b38c6ed6714b89b52c98e2a4bba3198e23055f6f))
     - Add `mailmap::Snapshot::iter()` ([`c083f86`](https://github.com/Byron/gitoxide/commit/c083f861f95c495c508ac6ca1aaeec465bb266b5))
     - Add a baseline for `entries()` to know more about its ordering. ([`ae2b9ce`](https://github.com/Byron/gitoxide/commit/ae2b9ce37509f8adcf3f5af2d9dad738f6ea50cf))

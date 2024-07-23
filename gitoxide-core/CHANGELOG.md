@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-2a563870fc4d2f65e34c4e4a448b446fc05a43b2/> add `mailmap check` similar to `git check-mailmap`.
+   That way it becomes a little easier to maybe try out other special cases
+   in the wild.
+ - <csr-id-9bf01e42b8d8964dfd1e099d645082c10bdabcdf/> `gix clone` with `--ref` support.
+   `--ref` is similar to `--branch`, but was renamed as it also supports
+   tags for example.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 16 commits contributed to the release over the course of 58 calendar days.
+ - 62 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'fix-1428' ([`caae926`](https://github.com/Byron/gitoxide/commit/caae9260ef3d66998d6826c493631f3d7296c73f))
+    - Improve wording of error message ([`4883eb1`](https://github.com/Byron/gitoxide/commit/4883eb18383062d082303cb61fba807fe25ffb4c))
+    - Merge branch 'push-oqpkttmvqxvx' ([`b38c6ed`](https://github.com/Byron/gitoxide/commit/b38c6ed6714b89b52c98e2a4bba3198e23055f6f))
+    - Avoid allocation by using new entries-iterator ([`acd46ea`](https://github.com/Byron/gitoxide/commit/acd46eaf4f0ef04b8cc9fc79237b01f40aaf3cbe))
+    - Merge branch 'git-executable' ([`f0a4431`](https://github.com/Byron/gitoxide/commit/f0a44319e546670180197ba32a848d608d9ca7e9))
+    - Use `gix_path::env::executable_invocation()` where possible. ([`5bf7f89`](https://github.com/Byron/gitoxide/commit/5bf7f898b5e92207812dd950bdd37f856cdd9d9e))
+    - Merge branch 'fix-mailmap' ([`f107014`](https://github.com/Byron/gitoxide/commit/f107014022a62271f02790a83336aed186ad38a3))
+    - Add `mailmap check` similar to `git check-mailmap`. ([`2a56387`](https://github.com/Byron/gitoxide/commit/2a563870fc4d2f65e34c4e4a448b446fc05a43b2))
+    - Merge branch 'config-key' ([`5663a2c`](https://github.com/Byron/gitoxide/commit/5663a2c9f3b23c189af7f0a30664639df4acd411))
+    - Adapt to changes in `gix-config` ([`78e48f2`](https://github.com/Byron/gitoxide/commit/78e48f2151c1448cd53f224938ac25416a819bcf))
+    - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
+    - Merge branch 'feat/checkout-other-refs' ([`ecfde07`](https://github.com/Byron/gitoxide/commit/ecfde07d0887322db34f5ea531891c92676e1ff4))
+    - `gix clone` with `--ref` support. ([`9bf01e4`](https://github.com/Byron/gitoxide/commit/9bf01e42b8d8964dfd1e099d645082c10bdabcdf))
+    - Merge branch 'status' ([`2f9f0ac`](https://github.com/Byron/gitoxide/commit/2f9f0ac36eb37b1736e21ee09e5a91833b80fc65))
+    - Thanks clippy ([`acc1331`](https://github.com/Byron/gitoxide/commit/acc13318731fabac8f65d604baf7e47814f92ad4))
+    - Release gix-archive v0.13.1 ([`bd32c7a`](https://github.com/Byron/gitoxide/commit/bd32c7a40f53f4cff57e600bc350f8ca7ed624cc))
+</details>
+
 ## 0.38.0 (2024-05-22)
 
 ### Bug Fixes
@@ -37,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 10 calendar days.
+ - 8 commits contributed to the release over the course of 10 calendar days.
  - 38 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -49,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-features v0.38.2, gix-actor v0.31.2, gix-validate v0.8.5, gix-object v0.42.2, gix-command v0.3.7, gix-filter v0.11.2, gix-fs v0.11.0, gix-revwalk v0.13.1, gix-traverse v0.39.1, gix-worktree-stream v0.13.0, gix-archive v0.13.0, gix-tempfile v14.0.0, gix-lock v14.0.0, gix-ref v0.44.0, gix-config v0.37.0, gix-prompt v0.8.5, gix-index v0.33.0, gix-worktree v0.34.0, gix-diff v0.44.0, gix-discover v0.32.0, gix-pathspec v0.7.5, gix-dir v0.5.0, gix-macros v0.1.5, gix-mailmap v0.23.1, gix-negotiate v0.13.1, gix-pack v0.51.0, gix-odb v0.61.0, gix-transport v0.42.1, gix-protocol v0.45.1, gix-revision v0.27.1, gix-status v0.10.0, gix-submodule v0.11.0, gix-worktree-state v0.11.0, gix v0.63.0, gitoxide-core v0.38.0, gitoxide v0.36.0, safety bump 19 crates ([`4f98e94`](https://github.com/Byron/gitoxide/commit/4f98e94e0e8b79ed2899b35bef40f3c30b3025b0))
     - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
     - Update dependencies ([`cd4de83`](https://github.com/Byron/gitoxide/commit/cd4de8327fc195eb862ab6e138f2315a87374f85))
@@ -93,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 34 calendar days.
+ - 28 commits contributed to the release over the course of 41 calendar days.
  - 47 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1330](https://github.com/Byron/gitoxide/issues/1330)
@@ -132,6 +184,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `gix submodules list --dirty-suffix` for dirty-information ([`afd20ca`](https://github.com/Byron/gitoxide/commit/afd20caadb40b6b793f2099b7232669f9a8f9086))
     - Add `gix commit describe --dirty-suffix` ([`58231b4`](https://github.com/Byron/gitoxide/commit/58231b418fa39ea122ef41bb7691289f5b0be855))
     - Adapt to changes in `gix` ([`2d40bdf`](https://github.com/Byron/gitoxide/commit/2d40bdf325ed5b09b0ef6fd21e8b3da47d710451))
+    - Update gix-config setters. ([`ba3bf65`](https://github.com/Byron/gitoxide/commit/ba3bf65808fbde44254e55955110ad43c9baedc5))
+    - Gix-config now uses a Key trait rather than Into<&BStr> ([`6281e1a`](https://github.com/Byron/gitoxide/commit/6281e1ac140c939b046ac88d536f16e076a3206c))
 </details>
 
 ## 0.36.0 (2024-02-25)

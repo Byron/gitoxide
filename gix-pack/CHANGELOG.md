@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-36d96f124bae7282da69883dc4c8e145261fb0f9/> assure duplicate packs and indices aren't overwriting existing ones.
+   That way, on Windows there is no chance for access-denied errors.
+   Maybe there are other advantages as well even for Unix.
+   
+   Since packs are usually written rarely, in comparison to loose objects,
+   the extra file accesss seems acceptable.
+ - <csr-id-36d1b69ae6d8765936ebb0dc590a14704dc41e64/> do not write empty packs and indices
+   Failure can occour on Windows as it's likely such a pack or index is already opened
+   during negotiation. Then, when an empty fetch via `--depth 1` is repeated,
+   a temporary file would be renamed onto one an mmapped pack or index, causing
+   a failure.
+   
+   Now packs or indices aren't written anymore if they are empty.
+
+### Other
+
+ - <csr-id-a2da5373fada6c1a90d139bba6db7b238ae6504c/> gate few deps
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 18 commits contributed to the release over the course of 51 calendar days.
+ - 62 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1404](https://github.com/Byron/gitoxide/issues/1404)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1404](https://github.com/Byron/gitoxide/issues/1404)**
+    - Assure duplicate packs and indices aren't overwriting existing ones. ([`36d96f1`](https://github.com/Byron/gitoxide/commit/36d96f124bae7282da69883dc4c8e145261fb0f9))
+    - Do not write empty packs and indices ([`36d1b69`](https://github.com/Byron/gitoxide/commit/36d1b69ae6d8765936ebb0dc590a14704dc41e64))
+ * **Uncategorized**
+    - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
+    - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))
+    - Merge pull request #1430 from klensy/deps ([`ab02aa9`](https://github.com/Byron/gitoxide/commit/ab02aa99842c17d68b8ee37e05e2f35720291e42))
+    - Gate few deps ([`a2da537`](https://github.com/Byron/gitoxide/commit/a2da5373fada6c1a90d139bba6db7b238ae6504c))
+    - Release gix-path v0.10.8 ([`8d89b86`](https://github.com/Byron/gitoxide/commit/8d89b865c84d1fb153d93343d1ce4e1d64e53541))
+    - Merge branch 'tar-only' ([`1dfa90d`](https://github.com/Byron/gitoxide/commit/1dfa90d641306b4099a6ecd52e2056b231467807))
+    - Remove binary files in favor of `tar` files ([`dcab79a`](https://github.com/Byron/gitoxide/commit/dcab79a6958cbf5cd69184c24497dc27c6f94961))
+    - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
+    - Merge branch 'fix-1404' ([`9923542`](https://github.com/Byron/gitoxide/commit/99235426058b208c59fe9d67051dc4fe26b45af6))
+    - Merge branch 'feat/checkout-other-refs' ([`ecfde07`](https://github.com/Byron/gitoxide/commit/ecfde07d0887322db34f5ea531891c92676e1ff4))
+    - Thanks clippy ([`f36b9bd`](https://github.com/Byron/gitoxide/commit/f36b9bd28052131401d048b5aa55c5ae1f9248db))
+    - Merge branch 'status' ([`2f9f0ac`](https://github.com/Byron/gitoxide/commit/2f9f0ac36eb37b1736e21ee09e5a91833b80fc65))
+    - Thanks clippy ([`acc1331`](https://github.com/Byron/gitoxide/commit/acc13318731fabac8f65d604baf7e47814f92ad4))
+    - Merge pull request #1361 from EliahKagan/freebsd ([`9c65d98`](https://github.com/Byron/gitoxide/commit/9c65d9886328f53129b966aecdc91644297c54be))
+    - Regenerate archives for changed scripts ([`ea12fc2`](https://github.com/Byron/gitoxide/commit/ea12fc234e898eb15013da40d2a82f69c2d20482))
+    - Make bash script shebangs more portable ([`68cbea8`](https://github.com/Byron/gitoxide/commit/68cbea815aa979acb0b86943db83ab77bbc728c4))
+</details>
+
 ## 0.51.0 (2024-05-22)
 
 ### Bug Fixes (BREAKING)
@@ -23,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 9 calendar days.
+ - 5 commits contributed to the release over the course of 9 calendar days.
  - 38 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -35,14 +100,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-features v0.38.2, gix-actor v0.31.2, gix-validate v0.8.5, gix-object v0.42.2, gix-command v0.3.7, gix-filter v0.11.2, gix-fs v0.11.0, gix-revwalk v0.13.1, gix-traverse v0.39.1, gix-worktree-stream v0.13.0, gix-archive v0.13.0, gix-tempfile v14.0.0, gix-lock v14.0.0, gix-ref v0.44.0, gix-config v0.37.0, gix-prompt v0.8.5, gix-index v0.33.0, gix-worktree v0.34.0, gix-diff v0.44.0, gix-discover v0.32.0, gix-pathspec v0.7.5, gix-dir v0.5.0, gix-macros v0.1.5, gix-mailmap v0.23.1, gix-negotiate v0.13.1, gix-pack v0.51.0, gix-odb v0.61.0, gix-transport v0.42.1, gix-protocol v0.45.1, gix-revision v0.27.1, gix-status v0.10.0, gix-submodule v0.11.0, gix-worktree-state v0.11.0, gix v0.63.0, gitoxide-core v0.38.0, gitoxide v0.36.0, safety bump 19 crates ([`4f98e94`](https://github.com/Byron/gitoxide/commit/4f98e94e0e8b79ed2899b35bef40f3c30b3025b0))
     - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'status' ([`04ef31e`](https://github.com/Byron/gitoxide/commit/04ef31e9d6f5332d49037a5a4c248ebbb5aaf92b))
     - Adapt to changes in `gix-pack` ([`bad5b48`](https://github.com/Byron/gitoxide/commit/bad5b48e4f0d865b0b0937f136d9a0041aa88046))
     - Don't panic when unknown entry types are encountered. ([`b32a847`](https://github.com/Byron/gitoxide/commit/b32a847e10b742834169fac56c284645c1ed28f3))
 </details>
-
-<csr-unknown>
-For now, the thesis is that one would have to be able to mark bad objectsto be able to handle this more gracefully, but all we can do is try to fail.<csr-unknown/>
 
 ## 0.50.0 (2024-04-13)
 
