@@ -1687,7 +1687,7 @@ checksum = "fc27c699b63da66b50d50c00668bc0b7e90c3a382ef302865e891559935f3dbf"
 dependencies = [
  "bstr",
  "dunce",
- "gix-fs 0.11.1",
+ "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-path 0.10.7",
  "gix-ref 0.44.1",
@@ -1782,17 +1782,6 @@ dependencies = [
 
 [[package]]
 name = "gix-fs"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3338ff92a2164f5209f185ec0cd316f571a72676bb01d27e22f2867ba69f77a"
-dependencies = [
- "fastrand 2.1.0",
- "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-utils 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "gix-fs"
 version = "0.11.2"
 dependencies = [
  "crossbeam-channel",
@@ -1801,6 +1790,17 @@ dependencies = [
  "gix-utils 0.1.12",
  "serde",
  "tempfile",
+]
+
+[[package]]
+name = "gix-fs"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6adf99c27cdf17b1c4d77680c917e0d94d8783d4e1c73d3be0d1d63107163d7a"
+dependencies = [
+ "fastrand 2.1.0",
+ "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-utils 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1921,7 +1921,7 @@ dependencies = [
  "fnv",
  "gix-bitmap 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-fs 0.11.1",
+ "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-lock 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-object 0.42.2",
@@ -2314,7 +2314,7 @@ dependencies = [
  "gix-actor 0.31.2",
  "gix-date 0.8.6",
  "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-fs 0.11.1",
+ "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-lock 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-object 0.42.2",
@@ -2523,7 +2523,7 @@ version = "14.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3b0e276cd08eb2a22e9f286a4f13a222a01be2defafa8621367515375644b99"
 dependencies = [
- "gix-fs 0.11.1",
+ "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc",
  "once_cell",
  "parking_lot",
@@ -2557,7 +2557,7 @@ dependencies = [
  "fastrand 2.1.0",
  "fs_extra",
  "gix-discover 0.32.0",
- "gix-fs 0.11.1",
+ "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-ignore 0.11.2",
  "gix-index 0.33.0",
  "gix-lock 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2731,7 +2731,7 @@ dependencies = [
  "bstr",
  "gix-attributes 0.22.2",
  "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-fs 0.11.1",
+ "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-glob 0.16.3",
  "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-ignore 0.11.2",
