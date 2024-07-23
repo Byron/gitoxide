@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 34 calendar days.
+ - 7 commits contributed to the release over the course of 34 calendar days.
  - 55 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Update manifests (by cargo-smart-release) ([`0470df3`](https://github.com/Byron/gitoxide/commit/0470df3b8ebb136b219f0057f1e9a7031975cce5))
     - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Merge pull request #1425 from EliahKagan/strange-symlink-targets ([`6df6e84`](https://github.com/Byron/gitoxide/commit/6df6e845e0d16ad3305f88157999a9564848d04f))
     - Always fall back to creating file symlinks on Windows ([`1e81220`](https://github.com/Byron/gitoxide/commit/1e81220824bd139db01a81de516eee7e0bc23715))

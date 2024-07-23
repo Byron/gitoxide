@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 49 commits contributed to the release over the course of 58 calendar days.
+ - 50 commits contributed to the release over the course of 58 calendar days.
  - 62 days passed between releases.
  - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1405](https://github.com/Byron/gitoxide/issues/1405), [#1428](https://github.com/Byron/gitoxide/issues/1428)
@@ -92,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1428](https://github.com/Byron/gitoxide/issues/1428)**
     - Make sure that `refs/heads/HEAD` isn't considered conflicting ([`40d1881`](https://github.com/Byron/gitoxide/commit/40d18816a85c41eb2b9075752b092ae68f4d979c))
  * **Uncategorized**
+    - Update manifests (by cargo-smart-release) ([`0470df3`](https://github.com/Byron/gitoxide/commit/0470df3b8ebb136b219f0057f1e9a7031975cce5))
     - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Merge branch 'fixes' ([`b4dba1c`](https://github.com/Byron/gitoxide/commit/b4dba1c187baba44ee927daa538783f7f424b2f2))
     - Add more tests for remote name validation ([`1267712`](https://github.com/Byron/gitoxide/commit/126771270e7a2d08c5d702a6903e8b9b326b2f39))
