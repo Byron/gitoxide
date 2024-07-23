@@ -4285,15 +4285,21 @@ fn top_level_slash_with_negations() -> crate::Result {
         assert_eq!(
             out,
             walk::Outcome {
-                read_dir_calls: 0,
+                read_dir_calls: 2,
                 returned_entries: entries.len(),
-                seen_entries: 1,
+                seen_entries: 5,
             }
         );
         assert_eq!(
             entries,
-            &[entry("", Ignored(Expendable), Directory)],
-            "This is wrong - the root can never be listed"
+            &[
+                entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+                entry(".github/workflow.yml", Tracked, File),
+                entry(".gitignore", Tracked, File),
+                entry("file", Untracked, File),
+                entry("readme.md", Tracked, File),
+            ],
+            "the top-level is never considered ignored"
         );
 
         let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
@@ -4319,14 +4325,10 @@ fn top_level_slash_with_negations() -> crate::Result {
         assert_eq!(
             entries,
             &[
-                entry_nokind(".git", Ignored(Expendable))
-                    .with_property(DotGit)
-                    .with_match(Always),
-                entry("file", Ignored(Expendable), File)
+                entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+                entry("file", Untracked, File)
             ],
-            "This is still wrong, but consistent within what it should do.\
-            Top-level `.git` should always be Pruned, even if ignored.\
-            Except for `file` which should be untracked."
+            "And the negated file is correctly detected as untracked"
         );
     }
     Ok(())
