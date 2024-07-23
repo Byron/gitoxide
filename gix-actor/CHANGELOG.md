@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.31.5 (2024-07-23)
 
 A maintenance release without user-facing changes.
 
@@ -25,7 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Fix-up version fo `gix-date` depndend on in `gix-actor` ([`2358364`](https://github.com/Byron/gitoxide/commit/2358364819949d49e5076a4ff3849a8ee1520675))
+    - Fix-up version of `gix-date` depndend on in `gix-actor` ([`5fb6a2d`](https://github.com/Byron/gitoxide/commit/5fb6a2dec61b7fcd8e5f0f6ff9e5cc41975f2d52))
 </details>
 
 ## 0.31.4 (2024-07-03)

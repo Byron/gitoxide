@@ -1291,7 +1291,7 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
- "gix-actor 0.31.4",
+ "gix-actor 0.31.5",
  "gix-archive",
  "gix-attributes 0.22.3",
  "gix-command",
@@ -1369,7 +1369,7 @@ dependencies = [
 
 [[package]]
 name = "gix-actor"
-version = "0.31.4"
+version = "0.31.5"
 dependencies = [
  "bstr",
  "document-features",
@@ -2020,7 +2020,7 @@ version = "0.23.5"
 dependencies = [
  "bstr",
  "document-features",
- "gix-actor 0.31.4",
+ "gix-actor 0.31.5",
  "gix-date 0.8.7",
  "gix-testtools",
  "serde",
@@ -2074,7 +2074,7 @@ dependencies = [
  "bstr",
  "criterion",
  "document-features",
- "gix-actor 0.31.4",
+ "gix-actor 0.31.5",
  "gix-date 0.8.7",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
@@ -2115,7 +2115,7 @@ version = "0.0.0"
 dependencies = [
  "crossbeam-channel",
  "filetime",
- "gix-actor 0.31.4",
+ "gix-actor 0.31.5",
  "gix-date 0.8.7",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
@@ -2332,7 +2332,7 @@ name = "gix-ref"
 version = "0.45.0"
 dependencies = [
  "document-features",
- "gix-actor 0.31.4",
+ "gix-actor 0.31.5",
  "gix-date 0.8.7",
  "gix-features 0.38.2",
  "gix-fs 0.11.2",
@@ -2354,7 +2354,7 @@ dependencies = [
 name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
- "gix-actor 0.31.4",
+ "gix-actor 0.31.5",
  "gix-date 0.8.7",
  "gix-discover 0.33.0",
  "gix-features 0.38.2",

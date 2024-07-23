@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 24 commits contributed to the release over the course of 57 calendar days.
+ - 25 commits contributed to the release over the course of 57 calendar days.
  - 62 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-glob v0.16.4, gix-attributes v0.22.3, gix-command v0.3.8, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`a1b73a6`](https://github.com/Byron/gitoxide/commit/a1b73a67c19d9102a2c5a7f574a7a53a86d0094c))
     - Update manifests (by cargo-smart-release) ([`0470df3`](https://github.com/Byron/gitoxide/commit/0470df3b8ebb136b219f0057f1e9a7031975cce5))
     - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
@@ -3269,6 +3270,24 @@ This is a maintenance release without functional changes.
   - `len`
   - `from_env`
   - `open`
+  - `len`
+  - `from_env`
+  - `open`
+  - `len`
+  - `from_env`
+  - `open`
+  - `len`
+  - `from_env`
+  - `open`
+- `len`
+- `from_env`
+- `open`
+- `len`
+- `from_env`
+- `open`
+- `len`
+- `from_env`
+- `open`
 - `len`
 - `from_env`
 - `open`
@@ -3344,7 +3363,7 @@ This is a maintenance release without functional changes.
 - _None._
 
 <csr-unknown>
-lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
+lenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopenlenfrom_envopen<csr-unknown/>
 <csr-unknown/>
 
 ## v0.1.1 (2021-05-09)
