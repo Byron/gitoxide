@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use kstring::KString;
 use smallvec::SmallVec;
+use std::collections::HashMap;
 
 use crate::{Assignment, AssignmentRef};
 

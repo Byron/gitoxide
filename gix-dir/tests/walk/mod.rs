@@ -4276,3 +4276,161 @@ fn type_mismatch_ignore_case_clash_file_is_dir() {
          If there was no special handling for this, it would have found the file (`d` in the index, icase), which would have been wrong."
     );
 }
+
+#[test]
+fn top_level_slash_with_negations() -> crate::Result {
+    for repo_name in ["slash-in-root-and-negated", "star-in-root-and-negated"] {
+        let root = fixture(repo_name);
+        let ((out, _root), entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
+        assert_eq!(
+            out,
+            walk::Outcome {
+                read_dir_calls: 2,
+                returned_entries: entries.len(),
+                seen_entries: 5,
+            }
+        );
+        assert_eq!(
+            entries,
+            &[
+                entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+                entry(".github/workflow.yml", Tracked, File),
+                entry(".gitignore", Tracked, File),
+                entry("file", Untracked, File),
+                entry("readme.md", Tracked, File),
+            ],
+            "the top-level is never considered ignored"
+        );
+
+        let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(ForDeletionMode::FindRepositoriesInIgnoredDirectories),
+                    emit_tracked: false,
+                    ..options_emit_all()
+                },
+                keep,
+            )
+        });
+        assert_eq!(
+            out,
+            walk::Outcome {
+                read_dir_calls: 2,
+                returned_entries: entries.len(),
+                seen_entries: 5,
+            }
+        );
+        assert_eq!(
+            entries,
+            &[
+                entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+                entry("file", Untracked, File)
+            ],
+            "And the negated file is correctly detected as untracked"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn subdir_slash_with_negations() -> crate::Result {
+    for repo_name in ["slash-in-subdir-and-negated", "star-in-subdir-and-negated"] {
+        let root = fixture(repo_name);
+        let ((out, _root), entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
+        assert_eq!(
+            out,
+            walk::Outcome {
+                read_dir_calls: 3,
+                returned_entries: entries.len(),
+                seen_entries: 5,
+            }
+        );
+        assert_eq!(
+            entries,
+            &[
+                entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+                entry("sub/.github/workflow.yml", Tracked, File),
+                entry("sub/.gitignore", Tracked, File),
+                entry("sub/file", Untracked, File),
+                entry("sub/readme.md", Tracked, File),
+            ],
+            "subdirectory matches work as expected, also with a `/` which has no bearing."
+        );
+
+        let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+            walk(
+                &root,
+                ctx,
+                walk::Options {
+                    for_deletion: Some(ForDeletionMode::FindRepositoriesInIgnoredDirectories),
+                    emit_tracked: false,
+                    ..options_emit_all()
+                },
+                keep,
+            )
+        });
+        assert_eq!(
+            out,
+            walk::Outcome {
+                read_dir_calls: 3,
+                returned_entries: entries.len(),
+                seen_entries: 5,
+            }
+        );
+        assert_eq!(
+            entries,
+            &[
+                entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+                entry("sub/file", Untracked, File)
+            ],
+            "This is expected, and the `.git` top-level is pruned."
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn one_ignored_submodule() -> crate::Result {
+    let root = fixture("one-ignored-submodule");
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 5,
+        }
+    );
+    assert_eq!(
+        entries,
+        &[
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+            entry(".gitignore", Untracked, File),
+            entry(".gitmodules", Tracked, File),
+            entry("empty", Tracked, File),
+            entry("submodule", Tracked, Repository),
+        ],
+        "when traversing the worktree root, this is correct, the submodule doesn't count as ignored"
+    );
+
+    let troot = root.join("submodule");
+    let ((out, _root), entries) = collect(&root, Some(&troot), |keep, ctx| {
+        walk(&root, ctx, options_emit_all(), keep)
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 0,
+            returned_entries: entries.len(),
+            seen_entries: 1
+        }
+    );
+    assert_eq!(
+        entries,
+        &[entryps("submodule", Tracked, Repository, Verbatim)],
+        "The submodule is simply tracked, it doesn't count as ignored"
+    );
+    Ok(())
+}

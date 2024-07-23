@@ -15,9 +15,8 @@ a/b/*
 z/x
 EOF
 
-mkdir repo;
+git init -q repo;
 (cd repo
-  git init -q
   git config core.excludesFile ../user.exclude
 
   cat <<EOF >.git/info/exclude
@@ -91,5 +90,72 @@ e/f
 e/F
 E/f
 E/F
+EOF
+)
+
+git init slash-and-excludes
+(cd slash-and-excludes
+  cat <<EOF >.gitignore
+# a lone slash does nothing
+/
+# a file that was never ignored to begin
+!file
+EOF
+
+  git check-ignore -vn --stdin 2>&1 <<EOF >git-check-ignore.baseline || :
+file
+a-file-not-mentioned-in-gitignore
+EOF
+)
+
+git init slash-and-excludes-in-subdir
+(cd slash-and-excludes-in-subdir
+  mkdir sub
+  (cd sub
+    cat <<EOF >.gitignore
+# a lone slash does nothing
+/
+# a file that was never ignored to begin
+!file
+EOF
+  )
+  git check-ignore -vn --stdin 2>&1 <<EOF >git-check-ignore.baseline || :
+sub/file
+sub/a-file-not-mentioned-in-gitignore
+a-file-not-mentioned-in-gitignore
+EOF
+)
+
+git init star-and-excludes
+(cd star-and-excludes
+  cat <<EOF >.gitignore
+# everything is excluded by default
+*
+# And negations are used as an allow-list
+!file
+EOF
+
+  git check-ignore -vn --stdin 2>&1 <<EOF >git-check-ignore.baseline || :
+file
+a-file-not-mentioned-in-gitignore
+EOF
+)
+
+git init star-and-excludes-in-subdir
+(cd star-and-excludes-in-subdir
+  mkdir sub
+  (cd sub
+    cat <<EOF >.gitignore
+# everything is excluded by default
+*
+# And negations are used as an allow-list
+!file
+EOF
+  )
+
+  git check-ignore -vn --stdin 2>&1 <<EOF >git-check-ignore.baseline || :
+sub/file
+sub/a-file-not-mentioned-in-gitignore
+a-file-not-mentioned-in-gitignore
 EOF
 )

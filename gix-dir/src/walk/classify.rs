@@ -169,6 +169,7 @@ pub fn path(
                         .map(|platform| platform.excluded_kind())
                 })
                 .map_err(Error::ExcludesAccess)?
+                .filter(|_| filename_start_idx > 0)
             {
                 out.status = entry::Status::Ignored(excluded);
             }
@@ -256,6 +257,7 @@ pub fn path(
     if let Some(excluded) = ctx
         .excludes
         .as_mut()
+        .filter(|_| !rela_path.is_empty())
         .map_or(Ok(None), |stack| {
             stack
                 .at_entry(rela_path.as_bstr(), is_dir, ctx.objects)

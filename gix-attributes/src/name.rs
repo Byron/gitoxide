@@ -1,7 +1,6 @@
+use crate::{Name, NameRef};
 use bstr::{BStr, BString, ByteSlice};
 use kstring::KStringRef;
-
-use crate::{Name, NameRef};
 
 impl<'a> NameRef<'a> {
     /// Turn this ref into its owned counterpart.

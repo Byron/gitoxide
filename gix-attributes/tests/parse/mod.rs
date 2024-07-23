@@ -1,4 +1,5 @@
 use bstr::BString;
+use gix_attributes::state::ValueRef;
 use gix_attributes::{parse, StateRef};
 use gix_glob::pattern::Mode;
 use gix_testtools::fixture_bytes;
@@ -276,6 +277,19 @@ fn attributes_can_have_values() {
 }
 
 #[test]
+fn attributes_can_have_illformed_utf8() {
+    assert_eq!(
+        byte_line(b"p a=one b=\xC3\x28\x41 c=d "),
+        (
+            pattern("p", Mode::NO_SUB_DIR, None),
+            vec![value("a", "one"), byte_value("b", b"\xC3\x28\x41"), value("c", "d")],
+            1
+        ),
+        "illformed UTF8 is fully supported"
+    );
+}
+
+#[test]
 fn attributes_see_state_adjustments_over_value_assignments() {
     assert_eq!(
         line(r#"p set -unset=a !unspecified=b"#),
@@ -325,6 +339,10 @@ fn value<'b>(attr: &str, value: &'b str) -> (BString, StateRef<'b>) {
     (attr.into(), StateRef::Value(value.into()))
 }
 
+fn byte_value<'b>(attr: &str, value: &'b [u8]) -> (BString, StateRef<'b>) {
+    (attr.into(), StateRef::Value(ValueRef::from_bytes(value)))
+}
+
 fn pattern(name: &str, flags: gix_glob::pattern::Mode, first_wildcard_pos: Option<usize>) -> parse::Kind {
     parse::Kind::Pattern(gix_glob::Pattern {
         text: name.into(),
@@ -342,6 +360,17 @@ fn try_line(input: &str) -> Result<ExpandedAttribute, parse::Error> {
 
 fn line(input: &str) -> ExpandedAttribute {
     try_line(input).unwrap()
+}
+
+fn byte_line(input: &[u8]) -> ExpandedAttribute {
+    try_byte_line(input).unwrap()
+}
+
+fn try_byte_line(input: &[u8]) -> Result<ExpandedAttribute, parse::Error> {
+    let mut lines = gix_attributes::parse(input);
+    let res = expand(lines.next().unwrap())?;
+    assert!(lines.next().is_none(), "expected only one line");
+    Ok(res)
 }
 
 fn lenient_lines(input: &str) -> Vec<ExpandedAttribute> {

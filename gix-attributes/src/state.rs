@@ -1,29 +1,24 @@
-use bstr::{BStr, ByteSlice};
-use kstring::{KString, KStringRef};
-
 use crate::{State, StateRef};
+use bstr::{BStr, BString, ByteSlice};
 
 /// A container to encapsulate a tightly packed and typically unallocated byte value that isn't necessarily UTF8 encoded.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Value(KString);
+// TODO: This should be some sort of 'smallbstring' - but can't use `kstring` here due to UTF8 requirement. 5% performance boost possible.
+//       What's really needed here is a representation that displays as string when serialized which helps with JSON.
+//       Maybe `smallvec` with display and serialization wrapper would do the trick?
+pub struct Value(BString);
 
 /// A reference container to encapsulate a tightly packed and typically unallocated byte value that isn't necessarily UTF8 encoded.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ValueRef<'a>(#[cfg_attr(feature = "serde", serde(borrow))] KStringRef<'a>);
+pub struct ValueRef<'a>(#[cfg_attr(feature = "serde", serde(borrow))] &'a [u8]);
 
 /// Lifecycle
 impl<'a> ValueRef<'a> {
     /// Keep `input` as our value.
     pub fn from_bytes(input: &'a [u8]) -> Self {
-        Self(KStringRef::from_ref(
-            // SAFETY: our API makes accessing that value as `str` impossible, so illformed UTF8 is never exposed as such.
-            #[allow(unsafe_code)]
-            unsafe {
-                std::str::from_utf8_unchecked(input)
-            },
-        ))
+        Self(input)
     }
 }
 
@@ -42,7 +37,7 @@ impl ValueRef<'_> {
 
 impl<'a> From<&'a str> for ValueRef<'a> {
     fn from(v: &'a str) -> Self {
-        ValueRef(v.into())
+        ValueRef(v.as_bytes())
     }
 }
 
@@ -54,7 +49,7 @@ impl<'a> From<ValueRef<'a>> for Value {
 
 impl From<&str> for Value {
     fn from(v: &str) -> Self {
-        Value(KString::from_ref(v))
+        Value(v.as_bytes().into())
     }
 }
 
