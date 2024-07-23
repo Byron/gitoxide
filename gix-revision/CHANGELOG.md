@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.27.2 (2024-07-23)
+
+<csr-id-287455f60f198b29997960897b411665b5e47f06/>
 
 ### Other
 
@@ -15,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 51 calendar days.
+ - 13 commits contributed to the release over the course of 51 calendar days.
  - 62 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))
     - Merge pull request #1434 from EliahKagan/fix-32bit-test-build ([`85019d0`](https://github.com/Byron/gitoxide/commit/85019d02a0a331c67d7987e9e550557da23df68c))
     - Conditionally compile gix-revision at_symbol fuzzed test ([`904262d`](https://github.com/Byron/gitoxide/commit/904262ddecc88ad35dc95701f481d9f770e77a6a))

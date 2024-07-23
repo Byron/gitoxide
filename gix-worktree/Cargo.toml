@@ -1,6 +1,6 @@
 [package]
 name = "gix-worktree"
-version = "0.34.0"
+version = "0.34.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project for shared worktree related types and utilities."
@@ -21,15 +21,15 @@ attributes = ["dep:gix-attributes", "dep:gix-validate"]
 serde = ["dep:serde", "bstr/serde", "gix-index/serde", "gix-hash/serde", "gix-object/serde", "gix-attributes?/serde", "gix-ignore/serde"]
 
 [dependencies]
-gix-index = { version = "^0.33.0", path = "../gix-index" }
-gix-fs = { version = "^0.11.1", path = "../gix-fs" }
+gix-index = { version = "^0.33.1", path = "../gix-index" }
+gix-fs = { version = "^0.11.2", path = "../gix-fs" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-object = { version = "^0.42.3", path = "../gix-object" }
-gix-glob = { version = "^0.16.3", path = "../gix-glob" }
+gix-glob = { version = "^0.16.4", path = "../gix-glob" }
 gix-path = { version = "^0.10.9", path = "../gix-path" }
-gix-attributes = { version = "^0.22.2", path = "../gix-attributes", optional = true }
+gix-attributes = { version = "^0.22.3", path = "../gix-attributes", optional = true }
 gix-validate = { version = "^0.8.5", path = "../gix-validate", optional = true }
-gix-ignore = { version = "^0.11.2", path = "../gix-ignore" }
+gix-ignore = { version = "^0.11.3", path = "../gix-ignore" }
 gix-features = { version = "^0.38.2", path = "../gix-features" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }

@@ -1,6 +1,6 @@
 [package]
 name = "gix-prompt"
-version = "0.8.5"
+version = "0.8.6"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project for handling prompts in the terminal"
@@ -13,8 +13,8 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-command = { version = "^0.3.7", path = "../gix-command" }
-gix-config-value = { version = "^0.14.6", path = "../gix-config-value" }
+gix-command = { version = "^0.3.8", path = "../gix-command" }
+gix-config-value = { version = "^0.14.7", path = "../gix-config-value" }
 
 thiserror = "1.0.32"
 

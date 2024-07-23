@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.8.6 (2024-07-23)
+
+<csr-id-923d14dea5a9fa9ba6ef298da0a761082b8814ed/>
 
 ### Other
 
@@ -15,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 32 calendar days.
+ - 4 commits contributed to the release over the course of 32 calendar days.
  - 62 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -27,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Merge pull request #1430 from klensy/deps ([`ab02aa9`](https://github.com/Byron/gitoxide/commit/ab02aa99842c17d68b8ee37e05e2f35720291e42))
     - Gate parking_lot behind unix cfg ([`923d14d`](https://github.com/Byron/gitoxide/commit/923d14dea5a9fa9ba6ef298da0a761082b8814ed))
     - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))

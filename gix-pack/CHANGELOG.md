@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.51.1 (2024-07-23)
+
+<csr-id-a2da5373fada6c1a90d139bba6db7b238ae6504c/>
 
 ### Bug Fixes
 
@@ -31,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 18 commits contributed to the release over the course of 51 calendar days.
+ - 19 commits contributed to the release over the course of 51 calendar days.
  - 62 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1404](https://github.com/Byron/gitoxide/issues/1404)
@@ -52,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Assure duplicate packs and indices aren't overwriting existing ones. ([`36d96f1`](https://github.com/Byron/gitoxide/commit/36d96f124bae7282da69883dc4c8e145261fb0f9))
     - Do not write empty packs and indices ([`36d1b69`](https://github.com/Byron/gitoxide/commit/36d1b69ae6d8765936ebb0dc590a14704dc41e64))
  * **Uncategorized**
+    - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
     - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))
     - Merge pull request #1430 from klensy/deps ([`ab02aa9`](https://github.com/Byron/gitoxide/commit/ab02aa99842c17d68b8ee37e05e2f35720291e42))

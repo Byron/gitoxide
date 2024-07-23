@@ -1,6 +1,6 @@
 [package]
 name = "gix-command"
-version = "0.3.7"
+version = "0.3.8"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project handling internal git command execution"

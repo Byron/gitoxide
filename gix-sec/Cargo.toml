@@ -1,6 +1,6 @@
 [package]
 name = "gix-sec"
-version = "0.10.6"
+version = "0.10.7"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project providing a shared trust model"

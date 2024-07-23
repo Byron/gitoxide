@@ -1,6 +1,6 @@
 [package]
 name = "gix-glob"
-version = "0.16.3"
+version = "0.16.4"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing with pattern matching"

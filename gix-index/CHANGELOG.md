@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.33.1 (2024-07-23)
+
+<csr-id-daf3844c8f5ce6d0812e35677b1a46d568e226db/>
 
 ### Bug Fixes
 
@@ -21,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 19 commits contributed to the release over the course of 57 calendar days.
+ - 20 commits contributed to the release over the course of 57 calendar days.
  - 62 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Merge branch 'fix-windows-tests' ([`c2753b8`](https://github.com/Byron/gitoxide/commit/c2753b8425c285c6b53f46eba9bc3584aa85eb01))
     - Add more standard traits to `Change` type. ([`b3973e4`](https://github.com/Byron/gitoxide/commit/b3973e4bd5e0ea1bf40a5b12ef44647021392d55))
     - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))

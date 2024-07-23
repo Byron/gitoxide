@@ -1,6 +1,6 @@
 [package]
 name = "gix-ignore"
-version = "0.11.2"
+version = "0.11.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing .gitignore files"
@@ -17,7 +17,7 @@ doctest = false
 serde = ["dep:serde", "bstr/serde", "gix-glob/serde"]
 
 [dependencies]
-gix-glob = { version = "^0.16.3", path = "../gix-glob" }
+gix-glob = { version = "^0.16.4", path = "../gix-glob" }
 gix-path = { version = "^0.10.9", path = "../gix-path" }
 gix-trace = { version = "^0.1.8", path = "../gix-trace" }
 

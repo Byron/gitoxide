@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.22.3 (2024-07-23)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 13 commits contributed to the release over the course of 55 calendar days.
+ - 14 commits contributed to the release over the course of 55 calendar days.
  - 130 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1460](https://github.com/Byron/gitoxide/issues/1460)
@@ -33,6 +33,7 @@ A maintenance release without user-facing changes.
  * **[#1460](https://github.com/Byron/gitoxide/issues/1460)**
     - Remove `kstring` in favor of `BString` ([`3cb216e`](https://github.com/Byron/gitoxide/commit/3cb216edcaab67b5de9ccc97cdcf2468a466f0d7))
  * **Uncategorized**
+    - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Merge branch 'fixes' ([`b4dba1c`](https://github.com/Byron/gitoxide/commit/b4dba1c187baba44ee927daa538783f7f424b2f2))
     - Thanks clippy ([`113cbcc`](https://github.com/Byron/gitoxide/commit/113cbcc3028e6c6ed6d15980e11d2bf67d033066))
     - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))

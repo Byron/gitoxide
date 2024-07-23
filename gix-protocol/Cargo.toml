@@ -1,6 +1,6 @@
 [package]
 name = "gix-protocol"
-version = "0.45.1"
+version = "0.45.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project for implementing git protocols"
@@ -48,10 +48,10 @@ required-features = ["async-client"]
 gix-features = { version = "^0.38.2", path = "../gix-features", features = [
     "progress",
 ] }
-gix-transport = { version = "^0.42.1", path = "../gix-transport" }
+gix-transport = { version = "^0.42.2", path = "../gix-transport" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-date = { version = "^0.8.7", path = "../gix-date" }
-gix-credentials = { version = "^0.24.2", path = "../gix-credentials" }
+gix-credentials = { version = "^0.24.3", path = "../gix-credentials" }
 gix-utils = { version = "^0.1.12", path = "../gix-utils" }
 
 thiserror = "1.0.32"

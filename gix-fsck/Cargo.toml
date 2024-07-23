@@ -1,6 +1,6 @@
 [package]
 name = "gix-fsck"
-version = "0.4.0"
+version = "0.4.1"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Cameron Esfahani <cesfahani@gmail.com>", "Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"

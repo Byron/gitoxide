@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.6.0 (2024-07-23)
 
 ### Bug Fixes
 
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 55 calendar days.
+ - 15 commits contributed to the release over the course of 55 calendar days.
  - 62 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1458](https://github.com/Byron/gitoxide/issues/1458)
@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Assure that worktree-roots are never considered ignored. ([`1e92d1e`](https://github.com/Byron/gitoxide/commit/1e92d1ed3f23e9de84203252d64e701e2c7fb941))
     - Add tests that show what happens with allow-lists and `/` in root ([`1ebd6c7`](https://github.com/Byron/gitoxide/commit/1ebd6c71457b292cdef97c218fb3e4176d10d502))
  * **Uncategorized**
+    - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Merge branch 'fixes' ([`b4dba1c`](https://github.com/Byron/gitoxide/commit/b4dba1c187baba44ee927daa538783f7f424b2f2))
     - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
     - Release gix-actor v0.31.4, gix-object v0.42.3 ([`bf3d82a`](https://github.com/Byron/gitoxide/commit/bf3d82abc7c875109f9a5d6b6713ce68153b6456))

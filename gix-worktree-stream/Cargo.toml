@@ -1,6 +1,6 @@
 [package]
 name = "gix-worktree-stream"
-version = "0.13.0"
+version = "0.13.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "generate a byte-stream from a git-tree"
@@ -16,10 +16,10 @@ doctest = false
 gix-features = { version = "^0.38.2", path = "../gix-features", features = ["progress", "io-pipe"] }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
 gix-object = { version = "^0.42.3", path = "../gix-object" }
-gix-attributes = { version = "^0.22.2", path = "../gix-attributes" }
-gix-filter = { version = "^0.11.2", path = "../gix-filter" }
-gix-traverse = { version = "^0.39.1", path = "../gix-traverse" }
-gix-fs = { version = "^0.11.1", path = "../gix-fs" }
+gix-attributes = { version = "^0.22.3", path = "../gix-attributes" }
+gix-filter = { version = "^0.11.3", path = "../gix-filter" }
+gix-traverse = { version = "^0.39.2", path = "../gix-traverse" }
+gix-fs = { version = "^0.11.2", path = "../gix-fs" }
 gix-path = { version = "^0.10.9", path = "../gix-path" }
 
 thiserror = "1.0.26"

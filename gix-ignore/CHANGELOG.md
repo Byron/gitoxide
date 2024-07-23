@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.11.3 (2024-07-23)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 55 calendar days.
+ - 13 commits contributed to the release over the course of 55 calendar days.
  - 130 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1458](https://github.com/Byron/gitoxide/issues/1458)
@@ -33,6 +33,7 @@ A maintenance release without user-facing changes.
  * **[#1458](https://github.com/Byron/gitoxide/issues/1458)**
     - Add another test to learn how `/` behaves, and `*` + excludes ([`4f67be4`](https://github.com/Byron/gitoxide/commit/4f67be40b7749481f969f07b3254b71ccfe3a40a))
  * **Uncategorized**
+    - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))
     - Merge branch 'fixes' ([`b4dba1c`](https://github.com/Byron/gitoxide/commit/b4dba1c187baba44ee927daa538783f7f424b2f2))
     - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
     - Release gix-path v0.10.8 ([`8d89b86`](https://github.com/Byron/gitoxide/commit/8d89b865c84d1fb153d93343d1ce4e1d64e53541))

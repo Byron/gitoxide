@@ -1,6 +1,6 @@
 [package]
 name = "gix-config-value"
-version = "0.14.6"
+version = "0.14.7"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project providing git-config value parsing"
