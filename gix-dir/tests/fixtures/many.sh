@@ -431,3 +431,10 @@ EOF
     git commit -m "init"
   )
 )
+
+git init with-sub-repo
+(cd with-sub-repo
+  echo '*' > .gitignore
+  git add -f .gitignore
+  git clone ../dir-with-file sub-repo
+)

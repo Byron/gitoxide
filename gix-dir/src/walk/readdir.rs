@@ -6,7 +6,9 @@ use std::sync::atomic::Ordering;
 use crate::entry::{PathspecMatch, Status};
 use crate::walk::function::{can_recurse, emit_entry};
 use crate::walk::EmissionMode::CollapseDirectory;
-use crate::walk::{classify, Action, CollapsedEntriesEmissionMode, Context, Delegate, Error, Options, Outcome};
+use crate::walk::{
+    classify, Action, CollapsedEntriesEmissionMode, Context, Delegate, Error, ForDeletionMode, Options, Outcome,
+};
 use crate::{entry, walk, Entry, EntryRef};
 
 /// ### Deviation
@@ -57,7 +59,7 @@ pub(super) fn recursive(
         );
         current.push(file_name);
 
-        let info = classify::path(
+        let mut info = classify::path(
             current,
             current_bstr,
             if prev_len == 0 { 0 } else { prev_len + 1 },
@@ -90,10 +92,25 @@ pub(super) fn recursive(
             if action != Action::Continue {
                 return Ok((action, prevent_collapse));
             }
-        } else if !state.held_for_directory_collapse(current_bstr.as_bstr(), info, &opts) {
-            let action = emit_entry(Cow::Borrowed(current_bstr.as_bstr()), info, None, opts, out, delegate);
-            if action != Action::Continue {
-                return Ok((action, prevent_collapse));
+        } else {
+            if opts.for_deletion == Some(ForDeletionMode::IgnoredDirectoriesCanHideNestedRepositories)
+                && info.disk_kind == Some(entry::Kind::Directory)
+                && matches!(info.status, Status::Ignored(_))
+            {
+                info.disk_kind = classify::maybe_upgrade_to_repository(
+                    info.disk_kind,
+                    true,
+                    false,
+                    current,
+                    ctx.current_dir,
+                    ctx.git_dir_realpath,
+                );
+            }
+            if !state.held_for_directory_collapse(current_bstr.as_bstr(), info, &opts) {
+                let action = emit_entry(Cow::Borrowed(current_bstr.as_bstr()), info, None, opts, out, delegate);
+                if action != Action::Continue {
+                    return Ok((action, prevent_collapse));
+                }
             }
         }
         current_bstr.truncate(prev_len);
