@@ -1,5 +1,6 @@
 use gix_dir::{walk, EntryRef};
 use pretty_assertions::assert_eq;
+use std::collections::BTreeSet;
 use std::sync::atomic::AtomicBool;
 
 use crate::walk_utils::{
@@ -4491,5 +4492,61 @@ fn ignored_sub_repo() -> crate::Result {
             );
         }
     }
+    Ok(())
+}
+
+#[test]
+fn in_repo_worktree() -> crate::Result {
+    let root = fixture("in-repo-worktree");
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 4,
+        }
+    );
+    assert_eq!(
+        entries,
+        &[
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+            entry("dir/file", Tracked, File),
+            entry("dir/worktree", Untracked, Repository),
+            entry("worktree", Untracked, Repository),
+        ],
+        "without passing worktree information, they count as untracked repositories, making them vulnerable"
+    );
+
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            walk::Options {
+                worktree_relative_worktree_dirs: Some(&BTreeSet::from(["worktree".into(), "dir/worktree".into()])),
+                ..options_emit_all()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 4,
+        }
+    );
+    assert_eq!(
+        entries,
+        &[
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+            entry("dir/file", Tracked, File),
+            entry("dir/worktree", Tracked, Repository).no_index_kind(),
+            entry("worktree", Tracked, Repository).no_index_kind(),
+        ],
+        "But when worktree information is passed, it is identified as tracked to look similarly to a submodule.\
+         What gives it away is that the index-kind is None, which is unusual for a tracked file."
+    );
     Ok(())
 }

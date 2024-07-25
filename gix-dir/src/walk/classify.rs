@@ -13,7 +13,7 @@ pub fn root(
     worktree_root: &Path,
     buf: &mut BString,
     worktree_relative_root: &Path,
-    options: Options,
+    options: Options<'_>,
     ctx: &mut Context<'_>,
 ) -> Result<(Outcome, bool), Error> {
     buf.clear();
@@ -135,8 +135,9 @@ pub fn path(
         for_deletion,
         classify_untracked_bare_repositories,
         symlinks_to_directories_are_ignored_like_directories,
+        worktree_relative_worktree_dirs,
         ..
-    }: Options,
+    }: Options<'_>,
     ctx: &mut Context<'_>,
 ) -> Result<Outcome, Error> {
     let mut out = Outcome {
@@ -191,18 +192,24 @@ pub fn path(
     );
     let mut kind = uptodate_index_kind.or(disk_kind).or_else(on_demand_disk_kind);
 
+    // We always check the pathspec to have the value filled in reliably.
+    out.pathspec_match = ctx
+        .pathspec
+        .pattern_matching_relative_path(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.pathspec_attributes)
+        .map(Into::into);
+
+    if worktree_relative_worktree_dirs.map_or(false, |worktrees| worktrees.contains(&*rela_path)) {
+        return Ok(out
+            .with_kind(Some(entry::Kind::Repository), None)
+            .with_status(entry::Status::Tracked));
+    }
+
     let maybe_status = if property.is_none() {
         (index_kind.map(|k| k.is_dir()) == kind.map(|k| k.is_dir())).then_some(entry::Status::Tracked)
     } else {
         out.property = property;
         Some(entry::Status::Pruned)
     };
-
-    // We always check the pathspec to have the value filled in reliably.
-    out.pathspec_match = ctx
-        .pathspec
-        .pattern_matching_relative_path(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.pathspec_attributes)
-        .map(Into::into);
 
     let is_dir = if symlinks_to_directories_are_ignored_like_directories
         && ctx.excludes.is_some()

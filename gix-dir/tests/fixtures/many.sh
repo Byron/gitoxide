@@ -438,3 +438,9 @@ git init with-sub-repo
   git add -f .gitignore
   git clone ../dir-with-file sub-repo
 )
+
+git clone dir-with-tracked-file in-repo-worktree
+(cd in-repo-worktree
+  git worktree add worktree
+  git worktree add -b other-worktree dir/worktree
+)

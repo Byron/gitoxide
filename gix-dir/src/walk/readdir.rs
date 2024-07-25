@@ -21,7 +21,7 @@ pub(super) fn recursive(
     current_bstr: &mut BString,
     current_info: classify::Outcome,
     ctx: &mut Context<'_>,
-    opts: Options,
+    opts: Options<'_>,
     delegate: &mut dyn Delegate,
     out: &mut Outcome,
     state: &mut State,
@@ -141,7 +141,7 @@ pub(super) struct State {
 
 impl State {
     /// Hold the entry with the given `status` if it's a candidate for collapsing the containing directory.
-    fn held_for_directory_collapse(&mut self, rela_path: &BStr, info: classify::Outcome, opts: &Options) -> bool {
+    fn held_for_directory_collapse(&mut self, rela_path: &BStr, info: classify::Outcome, opts: &Options<'_>) -> bool {
         if opts.should_hold(info.status) {
             self.on_hold
                 .push(EntryRef::from_outcome(Cow::Borrowed(rela_path), info).into_owned());
@@ -186,7 +186,7 @@ impl State {
     pub(super) fn emit_remaining(
         &mut self,
         may_collapse: bool,
-        opts: Options,
+        opts: Options<'_>,
         out: &mut walk::Outcome,
         delegate: &mut dyn walk::Delegate,
     ) {
@@ -217,7 +217,7 @@ impl Mark {
         dir_path: &Path,
         dir_rela_path: &BStr,
         dir_info: classify::Outcome,
-        opts: Options,
+        opts: Options<'_>,
         out: &mut walk::Outcome,
         ctx: &mut Context<'_>,
         delegate: &mut dyn walk::Delegate,
@@ -266,7 +266,7 @@ impl Mark {
     fn emit_all_held(
         &mut self,
         state: &mut State,
-        opts: Options,
+        opts: Options<'_>,
         out: &mut walk::Outcome,
         delegate: &mut dyn walk::Delegate,
     ) -> Action {
@@ -287,7 +287,7 @@ impl Mark {
         dir_info: classify::Outcome,
         state: &mut State,
         out: &mut walk::Outcome,
-        opts: Options,
+        opts: Options<'_>,
         ctx: &mut Context<'_>,
         delegate: &mut dyn walk::Delegate,
     ) -> Option<Action> {
@@ -408,7 +408,7 @@ fn filter_dir_pathspec(current: Option<PathspecMatch>) -> Option<PathspecMatch> 
     })
 }
 
-impl Options {
+impl Options<'_> {
     fn should_hold(&self, status: entry::Status) -> bool {
         if status.is_pruned() {
             return false;

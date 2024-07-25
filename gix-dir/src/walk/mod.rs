@@ -1,5 +1,6 @@
 use crate::{entry, EntryRef};
-use bstr::BStr;
+use bstr::{BStr, BString};
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 
@@ -143,12 +144,12 @@ pub enum ForDeletionMode {
 
 /// Options for use in [`walk()`](function::walk()) function.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct Options {
-    /// If true, the filesystem will store paths as decomposed unicode, i.e. `ä` becomes `"a\u{308}"`, which means that
+pub struct Options<'a> {
+    /// If `true`, the filesystem will store paths as decomposed unicode, i.e. `ä` becomes `"a\u{308}"`, which means that
     /// we have to turn these forms back from decomposed to precomposed unicode before storing it in the index or generally
     /// using it. This also applies to input received from the command-line, so callers may have to be aware of this and
     /// perform conversions accordingly.
-    /// If false, no conversions will be performed.
+    /// If `false`, no conversions will be performed.
     pub precompose_unicode: bool,
     /// If true, the filesystem ignores the case of input, which makes `A` the same file as `a`.
     /// This is also called case-folding.
@@ -192,6 +193,11 @@ pub struct Options {
     ///
     /// In other words, for Git compatibility this flag should be `false`, the default, for `git2` compatibility it should be `true`.
     pub symlinks_to_directories_are_ignored_like_directories: bool,
+    /// A set of all git worktree checkouts that are located within the main worktree directory.
+    ///
+    /// They will automatically be detected as 'tracked', but without providing index information (as there is no actual index entry).
+    /// Note that the unicode composition must match the `precompose_unicode` field so that paths will match verbatim.
+    pub worktree_relative_worktree_dirs: Option<&'a BTreeSet<BString>>,
 }
 
 /// All information that is required to perform a dirwalk, and classify paths properly.
