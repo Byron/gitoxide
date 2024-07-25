@@ -146,6 +146,17 @@ pub fn main() -> Result<()> {
     }
 
     match cmd {
+        Subcommands::Worktree(crate::plumbing::options::worktree::Platform { cmd }) => match cmd {
+            crate::plumbing::options::worktree::SubCommands::List => prepare_and_run(
+                "worktree-list",
+                trace,
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| core::repository::worktree::list(repository(Mode::Lenient)?, out, format),
+            ),
+        },
         Subcommands::IsClean | Subcommands::IsChanged => {
             let mode = if matches!(cmd, Subcommands::IsClean) {
                 core::repository::dirty::Mode::IsClean

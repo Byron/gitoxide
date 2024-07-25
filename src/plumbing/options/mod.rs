@@ -138,6 +138,7 @@ pub enum Subcommands {
     Config(config::Platform),
     #[cfg(feature = "gitoxide-core-tools-corpus")]
     Corpus(corpus::Platform),
+    Worktree(worktree::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
@@ -264,6 +265,21 @@ pub mod status {
         /// The git path specifications to list attributes for, or unset to read from stdin one per line.
         #[clap(value_parser = CheckPathSpec)]
         pub pathspec: Vec<BString>,
+    }
+}
+
+pub mod worktree {
+    #[derive(Debug, clap::Parser)]
+    #[command(about = "Commands for handling worktrees")]
+    pub struct Platform {
+        #[clap(subcommand)]
+        pub cmd: SubCommands,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum SubCommands {
+        /// List all worktrees, along with some accompanying information
+        List,
     }
 }
 

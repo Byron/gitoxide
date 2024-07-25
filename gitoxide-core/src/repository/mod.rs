@@ -51,3 +51,4 @@ pub mod status;
 pub mod submodule;
 pub mod tree;
 pub mod verify;
+pub mod worktree;
