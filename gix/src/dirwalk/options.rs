@@ -22,7 +22,7 @@ impl Options {
     }
 }
 
-impl From<Options> for gix_dir::walk::Options {
+impl From<Options> for gix_dir::walk::Options<'static> {
     fn from(v: Options) -> Self {
         gix_dir::walk::Options {
             precompose_unicode: v.precompose_unicode,
@@ -38,6 +38,7 @@ impl From<Options> for gix_dir::walk::Options {
             emit_collapsed: v.emit_collapsed,
             symlinks_to_directories_are_ignored_like_directories: v
                 .symlinks_to_directories_are_ignored_like_directories,
+            worktree_relative_worktree_dirs: None,
         }
     }
 }

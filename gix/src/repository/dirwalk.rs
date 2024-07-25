@@ -20,6 +20,12 @@ impl Repository {
     /// lookup. Note that items will only count as tracked if they have the [`gix_index::entry::Flags::UPTODATE`]
     /// flag set.
     ///
+    /// Note that dirwalks for the purpose of deletion will be initialized with the worktrees of this repository
+    /// if they fall into the working directory of this repository as well to mark them as `tracked`. That way
+    /// it's hard to accidentally flag them for deletion.
+    /// This is intentionally not the case when deletion is not intended so they look like
+    /// untracked repositories instead.
+    ///
     /// See [`gix_dir::walk::delegate::Collect`] for a delegate that collects all seen entries.
     pub fn dirwalk(
         &self,
@@ -48,6 +54,27 @@ impl Repository {
             crate::path::realpath_opts(self.git_dir(), self.current_dir(), crate::path::realpath::MAX_SYMLINKS)?;
         let fs_caps = self.filesystem_options()?;
         let accelerate_lookup = fs_caps.ignore_case.then(|| index.prepare_icase_backing());
+        let mut opts = gix_dir::walk::Options::from(options);
+        let worktree_relative_worktree_dirs_storage;
+        if let Some(workdir) = self.work_dir().filter(|_| opts.for_deletion.is_some()) {
+            let linked_worktrees = self.worktrees()?;
+            if !linked_worktrees.is_empty() {
+                let real_workdir = gix_path::realpath_opts(
+                    workdir,
+                    self.options.current_dir_or_empty(),
+                    gix_path::realpath::MAX_SYMLINKS,
+                )?;
+                worktree_relative_worktree_dirs_storage = linked_worktrees
+                    .into_iter()
+                    .filter_map(|proxy| proxy.base().ok())
+                    .filter_map(|base| base.strip_prefix(&real_workdir).map(ToOwned::to_owned).ok())
+                    .map(|rela_path| {
+                        gix_path::to_unix_separators_on_windows(gix_path::into_bstr(rela_path)).into_owned()
+                    })
+                    .collect();
+                opts.worktree_relative_worktree_dirs = Some(&worktree_relative_worktree_dirs_storage);
+            }
+        }
         let (outcome, traversal_root) = gix_dir::walk(
             workdir,
             gix_dir::walk::Context {
@@ -71,7 +98,7 @@ impl Repository {
                 objects: &self.objects,
                 explicit_traversal_root: (!options.empty_patterns_match_prefix).then_some(workdir),
             },
-            options.into(),
+            opts,
             delegate,
         )?;
 
