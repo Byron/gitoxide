@@ -53,6 +53,8 @@ pub struct Entry {
     /// Further specify what the entry is on disk, similar to a file mode.
     pub disk_kind: Option<entry::Kind>,
     /// The kind of entry according to the index, if tracked. *Usually* the same as `disk_kind`.
+    /// Note that even if tracked, this might be `None` which indicates this is a worktree placed
+    /// within the parent repository.
     pub index_kind: Option<entry::Kind>,
     /// Indicate how the pathspec matches the entry. See more in [`EntryRef::pathspec_match`].
     pub pathspec_match: Option<entry::PathspecMatch>,

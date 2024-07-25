@@ -49,7 +49,7 @@ pub(super) mod function {
         objects: Find,
         progress: &mut dyn gix_features::progress::Progress,
         mut ctx: Context<'_>,
-        options: Options,
+        options: Options<'_>,
     ) -> Result<Outcome, Error>
     where
         T: Send + Clone,

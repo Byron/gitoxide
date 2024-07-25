@@ -13,7 +13,7 @@ pub fn root(
     worktree_root: &Path,
     buf: &mut BString,
     worktree_relative_root: &Path,
-    options: Options,
+    options: Options<'_>,
     ctx: &mut Context<'_>,
 ) -> Result<(Outcome, bool), Error> {
     buf.clear();
@@ -135,8 +135,9 @@ pub fn path(
         for_deletion,
         classify_untracked_bare_repositories,
         symlinks_to_directories_are_ignored_like_directories,
+        worktree_relative_worktree_dirs,
         ..
-    }: Options,
+    }: Options<'_>,
     ctx: &mut Context<'_>,
 ) -> Result<Outcome, Error> {
     let mut out = Outcome {
@@ -191,18 +192,24 @@ pub fn path(
     );
     let mut kind = uptodate_index_kind.or(disk_kind).or_else(on_demand_disk_kind);
 
+    // We always check the pathspec to have the value filled in reliably.
+    out.pathspec_match = ctx
+        .pathspec
+        .pattern_matching_relative_path(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.pathspec_attributes)
+        .map(Into::into);
+
+    if worktree_relative_worktree_dirs.map_or(false, |worktrees| worktrees.contains(&*rela_path)) {
+        return Ok(out
+            .with_kind(Some(entry::Kind::Repository), None)
+            .with_status(entry::Status::Tracked));
+    }
+
     let maybe_status = if property.is_none() {
         (index_kind.map(|k| k.is_dir()) == kind.map(|k| k.is_dir())).then_some(entry::Status::Tracked)
     } else {
         out.property = property;
         Some(entry::Status::Pruned)
     };
-
-    // We always check the pathspec to have the value filled in reliably.
-    out.pathspec_match = ctx
-        .pathspec
-        .pattern_matching_relative_path(rela_path.as_bstr(), kind.map(|ft| ft.is_dir()), ctx.pathspec_attributes)
-        .map(Into::into);
 
     let is_dir = if symlinks_to_directories_are_ignored_like_directories
         && ctx.excludes.is_some()
@@ -214,37 +221,14 @@ pub fn path(
     };
 
     let mut maybe_upgrade_to_repository = |current_kind, find_harder: bool| {
-        if recurse_repositories {
-            return current_kind;
-        }
-        if find_harder {
-            let mut is_nested_repo = gix_discover::is_git(path).is_ok();
-            if is_nested_repo {
-                let git_dir_is_our_own =
-                    gix_path::realpath_opts(path, ctx.current_dir, gix_path::realpath::MAX_SYMLINKS)
-                        .ok()
-                        .map_or(false, |realpath_candidate| realpath_candidate == ctx.git_dir_realpath);
-                is_nested_repo = !git_dir_is_our_own;
-            }
-            if is_nested_repo {
-                return Some(entry::Kind::Repository);
-            }
-        }
-        path.push(gix_discover::DOT_GIT_DIR);
-        let mut is_nested_nonbare_repo = gix_discover::is_git(path).is_ok();
-        if is_nested_nonbare_repo {
-            let git_dir_is_our_own = gix_path::realpath_opts(path, ctx.current_dir, gix_path::realpath::MAX_SYMLINKS)
-                .ok()
-                .map_or(false, |realpath_candidate| realpath_candidate == ctx.git_dir_realpath);
-            is_nested_nonbare_repo = !git_dir_is_our_own;
-        }
-        path.pop();
-
-        if is_nested_nonbare_repo {
-            Some(entry::Kind::Repository)
-        } else {
-            current_kind
-        }
+        maybe_upgrade_to_repository(
+            current_kind,
+            find_harder,
+            recurse_repositories,
+            path,
+            ctx.current_dir,
+            ctx.git_dir_realpath,
+        )
     };
     if let Some(status) = maybe_status {
         if kind == Some(entry::Kind::Directory) && index_kind == Some(entry::Kind::Repository) {
@@ -300,6 +284,46 @@ pub fn path(
         status = entry::Status::Pruned;
     }
     Ok(out.with_status(status).with_kind(kind, index_kind))
+}
+
+pub fn maybe_upgrade_to_repository(
+    current_kind: Option<entry::Kind>,
+    find_harder: bool,
+    recurse_repositories: bool,
+    path: &mut PathBuf,
+    current_dir: &Path,
+    git_dir_realpath: &Path,
+) -> Option<entry::Kind> {
+    if recurse_repositories {
+        return current_kind;
+    }
+    if find_harder {
+        let mut is_nested_repo = gix_discover::is_git(path).is_ok();
+        if is_nested_repo {
+            let git_dir_is_our_own = gix_path::realpath_opts(path, current_dir, gix_path::realpath::MAX_SYMLINKS)
+                .ok()
+                .map_or(false, |realpath_candidate| realpath_candidate == git_dir_realpath);
+            is_nested_repo = !git_dir_is_our_own;
+        }
+        if is_nested_repo {
+            return Some(entry::Kind::Repository);
+        }
+    }
+    path.push(gix_discover::DOT_GIT_DIR);
+    let mut is_nested_nonbare_repo = gix_discover::is_git(path).is_ok();
+    if is_nested_nonbare_repo {
+        let git_dir_is_our_own = gix_path::realpath_opts(path, current_dir, gix_path::realpath::MAX_SYMLINKS)
+            .ok()
+            .map_or(false, |realpath_candidate| realpath_candidate == git_dir_realpath);
+        is_nested_nonbare_repo = !git_dir_is_our_own;
+    }
+    path.pop();
+
+    if is_nested_nonbare_repo {
+        Some(entry::Kind::Repository)
+    } else {
+        current_kind
+    }
 }
 
 /// Note that `rela_path` is used as buffer for convenience, but will be left as is when this function returns.

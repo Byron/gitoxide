@@ -1,5 +1,5 @@
 use anyhow::bail;
-use gix::bstr::{BStr, BString};
+use gix::bstr::{BStr, BString, ByteSlice};
 use gix::status::index_worktree::iter::Item;
 use gix_status::index_as_worktree::{Change, Conflict, EntryStatus};
 use std::path::Path;
@@ -152,7 +152,7 @@ pub fn show(
                     source_rela_path =
                         gix::path::relativize_with_prefix(&gix::path::from_bstr(source.rela_path()), prefix).display(),
                     dest_rela_path = gix::path::relativize_with_prefix(
-                        &gix::path::from_bstr(dirwalk_entry.rela_path.as_ref()),
+                        &gix::path::from_bstr(dirwalk_entry.rela_path.as_bstr()),
                         prefix
                     )
                     .display(),

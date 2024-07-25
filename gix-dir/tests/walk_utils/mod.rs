@@ -14,12 +14,12 @@ pub fn fixture(name: &str) -> PathBuf {
 }
 
 /// Default options
-pub fn options() -> walk::Options {
+pub fn options() -> walk::Options<'static> {
     walk::Options::default()
 }
 
 /// Default options
-pub fn options_emit_all() -> walk::Options {
+pub fn options_emit_all() -> walk::Options<'static> {
     walk::Options {
         precompose_unicode: false,
         ignore_case: false,
@@ -33,6 +33,7 @@ pub fn options_emit_all() -> walk::Options {
         emit_empty_directories: true,
         emit_collapsed: None,
         symlinks_to_directories_are_ignored_like_directories: false,
+        worktree_relative_worktree_dirs: None,
     }
 }
 
@@ -145,6 +146,7 @@ pub trait EntryExt {
     fn with_match(self, m: entry::PathspecMatch) -> Self;
     fn no_match(self) -> Self;
     fn no_kind(self) -> Self;
+    fn no_index_kind(self) -> Self;
 }
 
 impl EntryExt for (Entry, Option<entry::Status>) {
@@ -167,6 +169,10 @@ impl EntryExt for (Entry, Option<entry::Status>) {
     }
     fn no_kind(mut self) -> Self {
         self.0.disk_kind = None;
+        self
+    }
+    fn no_index_kind(mut self) -> Self {
+        self.0.index_kind = None;
         self
     }
 }

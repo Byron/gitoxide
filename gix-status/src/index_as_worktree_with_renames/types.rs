@@ -274,7 +274,7 @@ impl<ContentChange, SubmoduleStatus> Entry<'_, ContentChange, SubmoduleStatus> {
 
 /// Options for use in [index_as_worktree_with_renames()](crate::index_as_worktree_with_renames()).
 #[derive(Clone, Default)]
-pub struct Options {
+pub struct Options<'a> {
     /// The way all output should be sorted.
     ///
     /// If `None`, and depending on the `rewrites` field, output will be immediate but the output order
@@ -299,7 +299,7 @@ pub struct Options {
     ///
     /// If `None`, the directory walk portion will not run at all, yielding data similar
     /// to a bare [index_as_worktree()](crate::index_as_worktree()) call.
-    pub dirwalk: Option<gix_dir::walk::Options>,
+    pub dirwalk: Option<gix_dir::walk::Options<'a>>,
     /// The configuration for the rewrite tracking. Note that if set, the [`dirwalk`](Self::dirwalk) should be configured
     /// to *not* collapse untracked and ignored entries, as rewrite tracking is on a file-by-file basis.
     /// Also note that when `Some(_)`, it will collect certain changes depending on the exact configuration, which typically increases

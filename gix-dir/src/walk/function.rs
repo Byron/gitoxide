@@ -42,7 +42,7 @@ use crate::{entry, EntryRef};
 pub fn walk(
     worktree_root: &Path,
     mut ctx: Context<'_>,
-    options: Options,
+    options: Options<'_>,
     delegate: &mut dyn Delegate,
 ) -> Result<(Outcome, PathBuf), Error> {
     let root = match ctx.explicit_traversal_root {
@@ -182,7 +182,7 @@ pub(super) fn emit_entry(
         emit_ignored,
         emit_empty_directories,
         ..
-    }: Options,
+    }: Options<'_>,
     out: &mut Outcome,
     delegate: &mut dyn Delegate,
 ) -> Action {

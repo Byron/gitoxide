@@ -1,5 +1,6 @@
 use gix_dir::{walk, EntryRef};
 use pretty_assertions::assert_eq;
+use std::collections::BTreeSet;
 use std::sync::atomic::AtomicBool;
 
 use crate::walk_utils::{
@@ -4431,6 +4432,121 @@ fn one_ignored_submodule() -> crate::Result {
         entries,
         &[entryps("submodule", Tracked, Repository, Verbatim)],
         "The submodule is simply tracked, it doesn't count as ignored"
+    );
+    Ok(())
+}
+
+#[test]
+fn ignored_sub_repo() -> crate::Result {
+    let root = fixture("with-sub-repo");
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 1,
+            returned_entries: entries.len(),
+            seen_entries: 3,
+        }
+    );
+    assert_eq!(
+        entries,
+        &[
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+            entry(".gitignore", Tracked, File),
+            entry("sub-repo", Ignored(Expendable), Directory),
+        ],
+        "without intent to delete, this looks like just like an untracked directory"
+    );
+
+    for ignored_emission_mode in [Matching, CollapseDirectory] {
+        for untracked_emission_mode in [Matching, CollapseDirectory] {
+            let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+                walk(
+                    &root,
+                    ctx,
+                    walk::Options {
+                        for_deletion: Some(ForDeletionMode::IgnoredDirectoriesCanHideNestedRepositories),
+                        emit_tracked: false,
+                        emit_ignored: Some(ignored_emission_mode),
+                        emit_untracked: untracked_emission_mode,
+                        ..options_emit_all()
+                    },
+                    keep,
+                )
+            });
+            assert_eq!(
+                out,
+                walk::Outcome {
+                    read_dir_calls: 1,
+                    returned_entries: entries.len(),
+                    seen_entries: 3,
+                }
+            );
+            assert_eq!(
+                entries,
+                &[
+                    entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+                    entry("sub-repo", Ignored(Expendable), Repository),
+                ],
+                "Even when ignored directories can hide repositories, we are able to detect top-level repositories"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn in_repo_worktree() -> crate::Result {
+    let root = fixture("in-repo-worktree");
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 4,
+        }
+    );
+    assert_eq!(
+        entries,
+        &[
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+            entry("dir/file", Tracked, File),
+            entry("dir/worktree", Untracked, Repository),
+            entry("worktree", Untracked, Repository),
+        ],
+        "without passing worktree information, they count as untracked repositories, making them vulnerable"
+    );
+
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            walk::Options {
+                worktree_relative_worktree_dirs: Some(&BTreeSet::from(["worktree".into(), "dir/worktree".into()])),
+                ..options_emit_all()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 4,
+        }
+    );
+    assert_eq!(
+        entries,
+        &[
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+            entry("dir/file", Tracked, File),
+            entry("dir/worktree", Tracked, Repository).no_index_kind(),
+            entry("worktree", Tracked, Repository).no_index_kind(),
+        ],
+        "But when worktree information is passed, it is identified as tracked to look similarly to a submodule.\
+         What gives it away is that the index-kind is None, which is unusual for a tracked file."
     );
     Ok(())
 }

@@ -54,6 +54,8 @@ pub enum Error {
     Prefix(#[from] gix_path::realpath::Error),
     #[error(transparent)]
     FilesystemOptions(#[from] config::boolean::Error),
+    #[error("Could not list worktrees to assure they are no candidates for deletion")]
+    ListWorktrees(#[from] std::io::Error),
 }
 
 /// The outcome of the [dirwalk()](crate::Repository::dirwalk).
