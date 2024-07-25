@@ -335,7 +335,7 @@ gix-features = { version = "^0.38.2", path = "../gix-features", features = [
 gix-trace = { version = "^0.1.9", path = "../gix-trace" }
 
 gix-glob = { version = "^0.16.4", path = "../gix-glob" }
-gix-credentials = { version = "^0.24.3", path = "../gix-credentials", optional = true }
+gix-credentials = { version = "^0.24.4", path = "../gix-credentials", optional = true }
 gix-prompt = { version = "^0.8.6", path = "../gix-prompt", optional = true }
 gix-index = { version = "^0.33.1", path = "../gix-index", optional = true }
 gix-attributes = { version = "^0.22.3", path = "../gix-attributes", optional = true }

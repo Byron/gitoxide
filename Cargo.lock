@@ -1577,7 +1577,7 @@ dependencies = [
 
 [[package]]
 name = "gix-credentials"
-version = "0.24.3"
+version = "0.24.4"
 dependencies = [
  "bstr",
  "document-features",

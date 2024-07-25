@@ -1,6 +1,6 @@
 [package]
 name = "gix-credentials"
-version = "0.24.3"
+version = "0.24.4"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project to interact with git credentials helpers"
