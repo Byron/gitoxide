@@ -4550,3 +4550,58 @@ fn in_repo_worktree() -> crate::Result {
     );
     Ok(())
 }
+
+#[test]
+fn in_repo_hidden_worktree() -> crate::Result {
+    let root = fixture("in-repo-hidden-worktree");
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| walk(&root, ctx, options_emit_all(), keep));
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 4,
+        }
+    );
+    assert_eq!(
+        entries,
+        &[
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+            entry(".gitignore", Untracked, File),
+            entry("dir/file", Tracked, File),
+            entry("hidden", Ignored(Expendable), Directory),
+        ],
+        "if worktree information isn't provided, they would not be discovered in hidden directories"
+    );
+
+    let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+        walk(
+            &root,
+            ctx,
+            walk::Options {
+                worktree_relative_worktree_dirs: Some(&BTreeSet::from(["hidden/subdir/worktree".into()])),
+                ..options_emit_all()
+            },
+            keep,
+        )
+    });
+    assert_eq!(
+        out,
+        walk::Outcome {
+            read_dir_calls: 2,
+            returned_entries: entries.len(),
+            seen_entries: 4,
+        }
+    );
+    assert_eq!(
+        entries,
+        &[
+            entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+            entry(".gitignore", Untracked, File),
+            entry("dir/file", Tracked, File),
+            entry("hidden", Ignored(Expendable), Directory),
+        ],
+        "Currently, worktrees can't be found in ignored directories, even though hit should"
+    );
+    Ok(())
+}

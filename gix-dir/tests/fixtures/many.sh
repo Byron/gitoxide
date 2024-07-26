@@ -444,3 +444,10 @@ git clone dir-with-tracked-file in-repo-worktree
   git worktree add worktree
   git worktree add -b other-worktree dir/worktree
 )
+
+git clone dir-with-tracked-file in-repo-hidden-worktree
+(cd in-repo-hidden-worktree
+  echo '/hidden/' > .gitignore
+  mkdir -p hidden/sbudir
+  git worktree add -b worktree-branch hidden/subdir/worktree
+)
