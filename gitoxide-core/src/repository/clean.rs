@@ -325,7 +325,7 @@ pub(crate) mod function {
                     wrote_nl = true;
                     writeln!(
                         err,
-                        "WARNING: would remove repositories and worktrees hidden inside ignored directories - use --skip-hidden-repositories to skip{}",
+                        "WARNING: would remove repositories hidden inside ignored directories - use --skip-hidden-repositories to skip{}",
                         wrap_in_parens(msg.take().unwrap_or_default())
                     )?;
                 }
