@@ -448,6 +448,7 @@ git clone dir-with-tracked-file in-repo-worktree
 git clone dir-with-tracked-file in-repo-hidden-worktree
 (cd in-repo-hidden-worktree
   echo '/hidden/' > .gitignore
-  mkdir -p hidden/sbudir
+  mkdir -p hidden/subdir
+  touch hidden/file
   git worktree add -b worktree-branch hidden/subdir/worktree
 )

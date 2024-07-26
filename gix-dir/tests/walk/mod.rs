@@ -4579,6 +4579,7 @@ fn in_repo_hidden_worktree() -> crate::Result {
             &root,
             ctx,
             walk::Options {
+                for_deletion: None,
                 worktree_relative_worktree_dirs: Some(&BTreeSet::from(["hidden/subdir/worktree".into()])),
                 ..options_emit_all()
             },
@@ -4601,7 +4602,48 @@ fn in_repo_hidden_worktree() -> crate::Result {
             entry("dir/file", Tracked, File),
             entry("hidden", Ignored(Expendable), Directory),
         ],
-        "Currently, worktrees can't be found in ignored directories, even though hit should"
+        "Without the intend to delete, the worktree remains hidden, which is what we want to see in a `status` for example"
     );
+
+    for ignored_emission_mode in [Matching, CollapseDirectory] {
+        for deletion_mode in [
+            ForDeletionMode::IgnoredDirectoriesCanHideNestedRepositories,
+            ForDeletionMode::FindRepositoriesInIgnoredDirectories,
+            ForDeletionMode::FindNonBareRepositoriesInIgnoredDirectories,
+        ] {
+            let ((out, _root), entries) = collect(&root, None, |keep, ctx| {
+                walk(
+                    &root,
+                    ctx,
+                    walk::Options {
+                        emit_ignored: Some(ignored_emission_mode),
+                        for_deletion: Some(deletion_mode),
+                        worktree_relative_worktree_dirs: Some(&BTreeSet::from(["hidden/subdir/worktree".into()])),
+                        ..options_emit_all()
+                    },
+                    keep,
+                )
+            });
+            assert_eq!(
+                out,
+                walk::Outcome {
+                    read_dir_calls: 4,
+                    returned_entries: entries.len(),
+                    seen_entries: 5,
+                }
+            );
+            assert_eq!(
+                entries,
+                &[
+                    entry_nokind(".git", Pruned).with_property(DotGit).with_match(Always),
+                    entry(".gitignore", Untracked, File),
+                    entry("dir/file", Tracked, File),
+                    entry("hidden/file", Ignored(Expendable), File),
+                    entry("hidden/subdir/worktree", Tracked, Repository).no_index_kind(),
+                ],
+                "Worktrees within hidden directories are also detected and protected by counting them as tracked (like submodules)"
+            );
+        }
+    }
     Ok(())
 }
