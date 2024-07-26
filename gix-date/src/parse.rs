@@ -32,18 +32,18 @@ pub(crate) mod function {
             return Ok(Time::new(42, 1800));
         }
 
-        Ok(if let Ok(val) = Date::parse(input, SHORT) {
+        Ok(if let Ok(val) = Date::parse(input, SHORT.0) {
             let val = val.with_hms(0, 0, 0).expect("date is in range").assume_utc();
             Time::new(val.unix_timestamp(), val.offset().whole_seconds())
         } else if let Ok(val) = OffsetDateTime::parse(input, &well_known::Rfc2822) {
             Time::new(val.unix_timestamp(), val.offset().whole_seconds())
-        } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601) {
+        } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601.0) {
             Time::new(val.unix_timestamp(), val.offset().whole_seconds())
-        } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601_STRICT) {
+        } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601_STRICT.0) {
             Time::new(val.unix_timestamp(), val.offset().whole_seconds())
-        } else if let Ok(val) = OffsetDateTime::parse(input, GITOXIDE) {
+        } else if let Ok(val) = OffsetDateTime::parse(input, GITOXIDE.0) {
             Time::new(val.unix_timestamp(), val.offset().whole_seconds())
-        } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT) {
+        } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT.0) {
             Time::new(val.unix_timestamp(), val.offset().whole_seconds())
         } else if let Ok(val) = SecondsSinceUnixEpoch::from_str(input) {
             // Format::Unix
