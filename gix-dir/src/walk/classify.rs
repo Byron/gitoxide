@@ -265,8 +265,17 @@ pub fn path(
                     ),
                 );
             }
-            if kind.map_or(false, |d| d.is_recursable_dir()) && out.pathspec_match.is_none() {
-                // we have patterns that didn't match at all, *yet*. We want to look inside.
+            if kind.map_or(false, |d| d.is_recursable_dir())
+                && (out.pathspec_match.is_none()
+                    || worktree_relative_worktree_dirs.map_or(false, |worktrees| {
+                        for_deletion.is_some()
+                            && worktrees
+                                .iter()
+                                .any(|dir| dir.starts_with_str(&*rela_path) && dir.get(rela_path.len()) == Some(&b'/'))
+                    }))
+            {
+                // We have patterns that didn't match at all, *yet*, or there are contained worktrees.
+                // We want to look inside.
                 out.pathspec_match = Some(PathspecMatch::Prefix);
             }
         }
