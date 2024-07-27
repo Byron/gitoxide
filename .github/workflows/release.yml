@@ -12,11 +12,6 @@
 
 name: release
 
-env:
-  RUST_BACKTRACE: 1
-  CARGO_TERM_COLOR: always
-  CLICOLOR: 1
-
 on:
   workflow_dispatch:
   push:
@@ -25,6 +20,16 @@ on:
      #  - fix-releases
     tags:
       - "v.*"
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+  CLICOLOR: 1
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   create-release:
     name: create-release
@@ -167,7 +172,6 @@ jobs:
           path: artifacts
 
       - name: Set release upload URL and release version
-        shell: bash
         run: |
           release_upload_url="$(cat artifacts/release-upload-url)"
           echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
@@ -193,7 +197,6 @@ jobs:
             /target/arm-unknown-linux-gnueabihf/release/${{ env.EXE_NAME }} \
             /target/arm-unknown-linux-gnueabihf/release/gix
       - name: Build archive
-        shell: bash
         run: |
           staging="gitoxide-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
