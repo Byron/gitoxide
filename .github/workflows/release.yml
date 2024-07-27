@@ -201,7 +201,7 @@ jobs:
           cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp target/release/ein.exe target/release/gix.exe "$staging/"
+            cp target/${{ matrix.target }}/release/ein.exe target/${{ matrix.target }}/release/gix.exe "$staging/"
             7z a "$staging.zip" "$staging"
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
           else
