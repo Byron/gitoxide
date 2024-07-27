@@ -152,7 +152,6 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Use Cross
-        # if: matrix.os != 'windows-latest'
         run: |
           cargo install cross
           echo "CARGO=cross" >> $GITHUB_ENV
