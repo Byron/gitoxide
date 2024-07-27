@@ -134,10 +134,22 @@ where
     {
         let mut ar = zip::write::ZipWriter::new(out);
         let mut buf = Vec::new();
-        let mtime = time::OffsetDateTime::from_unix_timestamp(opts.modification_time)
+        let zdt = jiff::Timestamp::from_second(opts.modification_time)
             .map_err(|err| Error::InvalidModificationTime(Box::new(err)))?
-            .try_into()
-            .map_err(|err| Error::InvalidModificationTime(Box::new(err)))?;
+            .to_zoned(jiff::tz::TimeZone::UTC);
+        let mtime = zip::DateTime::from_date_and_time(
+            zdt.year()
+                .try_into()
+                .map_err(|err| Error::InvalidModificationTime(Box::new(err)))?,
+            // These are all OK because month, day, hour, minute and second
+            // are always positive.
+            zdt.month().try_into().expect("non-negative"),
+            zdt.day().try_into().expect("non-negative"),
+            zdt.hour().try_into().expect("non-negative"),
+            zdt.minute().try_into().expect("non-negative"),
+            zdt.second().try_into().expect("non-negative"),
+        )
+        .map_err(|err| Error::InvalidModificationTime(Box::new(err)))?;
         while let Some(entry) = next_entry(stream)? {
             append_zip_entry(
                 &mut ar,

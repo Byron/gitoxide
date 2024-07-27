@@ -12,11 +12,6 @@ use crate::porcelain::options::{Args, Subcommands};
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse_from(gix::env::args_os());
-    #[allow(unsafe_code)]
-    unsafe {
-        // SAFETY: we don't manipulate the environment from any thread
-        time::util::local_offset::set_soundness(time::util::local_offset::Soundness::Unsound);
-    }
     let should_interrupt = Arc::new(AtomicBool::new(false));
     #[allow(unsafe_code)]
     unsafe {

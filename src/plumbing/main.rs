@@ -54,11 +54,6 @@ pub mod async_util {
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse_from(gix::env::args_os());
-    #[allow(unsafe_code)]
-    unsafe {
-        // SAFETY: we don't manipulate the environment from any thread
-        time::util::local_offset::set_soundness(time::util::local_offset::Soundness::Unsound);
-    }
     let thread_limit = args.threads;
     let verbose = args.verbose;
     let format = args.format;

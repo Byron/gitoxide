@@ -31,7 +31,7 @@ pub enum Format {
 
 /// A custom format for printing and parsing time.
 #[derive(Clone, Copy, Debug)]
-pub struct CustomFormat(pub(crate) &'static [time::format_description::FormatItem<'static>]);
+pub struct CustomFormat(pub(crate) &'static str);
 
 impl From<CustomFormat> for Format {
     fn from(custom_format: CustomFormat) -> Format {
