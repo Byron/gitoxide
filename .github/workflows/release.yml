@@ -145,6 +145,9 @@ jobs:
         run: |
           cargo install cross
           echo 'CARGO=cross' >> "$GITHUB_ENV"
+
+      - name: Set target variables
+        run: |
           echo 'TARGET_FLAGS=--target ${{ matrix.target }}' >> "$GITHUB_ENV"
           echo 'TARGET_DIR=./target/${{ matrix.target }}' >> "$GITHUB_ENV"
 
