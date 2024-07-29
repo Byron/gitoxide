@@ -56,7 +56,7 @@ pub fn message<'a, E: ParserError<&'a [u8]>>(i: &mut &'a [u8]) -> PResult<(&'a B
                         PGP_SIGNATURE_END,
                         rest,
                     )
-                        .recognize()
+                        .take()
                         .map(|signature: &[u8]| {
                             if signature.is_empty() {
                                 None
