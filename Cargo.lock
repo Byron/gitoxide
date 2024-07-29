@@ -1297,7 +1297,7 @@ dependencies = [
  "gix-commitgraph 0.24.3",
  "gix-config",
  "gix-credentials",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-diff",
  "gix-dir",
  "gix-discover 0.33.0",
@@ -1372,7 +1372,7 @@ version = "0.31.5"
 dependencies = [
  "bstr",
  "document-features",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-testtools",
  "gix-utils 0.1.12",
@@ -1391,7 +1391,7 @@ dependencies = [
  "document-features",
  "flate2",
  "gix-attributes 0.22.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-filter",
  "gix-hash 0.14.2",
  "gix-object 0.42.3",
@@ -1514,7 +1514,7 @@ dependencies = [
  "bstr",
  "document-features",
  "gix-chunk 0.4.8",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-testtools",
@@ -1607,7 +1607,7 @@ dependencies = [
 
 [[package]]
 name = "gix-date"
-version = "0.8.7"
+version = "0.9.0"
 dependencies = [
  "bstr",
  "document-features",
@@ -2020,7 +2020,7 @@ dependencies = [
  "bstr",
  "document-features",
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-testtools",
  "serde",
  "thiserror",
@@ -2032,7 +2032,7 @@ version = "0.13.2"
 dependencies = [
  "bitflags 2.4.1",
  "gix-commitgraph 0.24.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-object 0.42.3",
  "gix-odb",
@@ -2074,7 +2074,7 @@ dependencies = [
  "criterion",
  "document-features",
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-testtools",
@@ -2094,7 +2094,7 @@ version = "0.61.1"
 dependencies = [
  "arc-swap",
  "document-features",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-fs 0.11.2",
  "gix-hash 0.14.2",
@@ -2115,7 +2115,7 @@ dependencies = [
  "crossbeam-channel",
  "filetime",
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-object 0.42.3",
@@ -2267,7 +2267,7 @@ dependencies = [
  "futures-io",
  "futures-lite 2.1.0",
  "gix-credentials",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-packetline",
@@ -2332,7 +2332,7 @@ version = "0.45.0"
 dependencies = [
  "document-features",
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-fs 0.11.2",
  "gix-hash 0.14.2",
@@ -2354,7 +2354,7 @@ name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-discover 0.33.0",
  "gix-features 0.38.2",
  "gix-fs 0.11.2",
@@ -2387,7 +2387,7 @@ dependencies = [
  "bstr",
  "document-features",
  "gix-commitgraph 0.24.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-hashtable 0.5.2",
  "gix-object 0.42.3",
@@ -2419,7 +2419,7 @@ name = "gix-revwalk"
 version = "0.13.2"
 dependencies = [
  "gix-commitgraph 0.24.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-hashtable 0.5.2",
  "gix-object 0.42.3",
@@ -2642,7 +2642,7 @@ version = "0.39.2"
 dependencies = [
  "bitflags 2.4.1",
  "gix-commitgraph 0.24.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-hashtable 0.5.2",
  "gix-object 0.42.3",
