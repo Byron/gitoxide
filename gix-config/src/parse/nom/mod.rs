@@ -190,7 +190,7 @@ fn subsection_unescaped<'i>(i: &mut &'i [u8]) -> PResult<&'i [u8], NomError<&'i 
 }
 
 fn subsection_escaped_char<'i>(i: &mut &'i [u8]) -> PResult<&'i [u8], NomError<&'i [u8]>> {
-    preceded('\\', one_of(is_subsection_escapable_char).recognize()).parse_next(i)
+    preceded('\\', one_of(is_subsection_escapable_char).take()).parse_next(i)
 }
 
 fn is_subsection_escapable_char(c: u8) -> bool {
@@ -228,7 +228,7 @@ fn config_name<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
         one_of(|c: u8| c.is_ascii_alphabetic()),
         take_while(0.., |c: u8| c.is_ascii_alphanumeric() || c == b'-'),
     )
-        .recognize()
+        .take()
         .map(bstr::ByteSlice::as_bstr)
         .parse_next(i)
 }
@@ -369,7 +369,7 @@ fn take_spaces1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
 fn take_newlines1<'i>(i: &mut &'i [u8]) -> PResult<&'i BStr, NomError<&'i [u8]>> {
     repeat(1..1024, alt(("\r\n", "\n")))
         .map(|()| ())
-        .recognize()
+        .take()
         .map(bstr::ByteSlice::as_bstr)
         .parse_next(i)
 }

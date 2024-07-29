@@ -22,7 +22,7 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParserError<&'a [u8]> + AddCont
             NL,
             repeat(1.., terminated((SPACE, take_until(0.., NL)), NL)).map(|()| ()),
         )
-            .recognize()
+            .take()
             .map(|o: &[u8]| {
                 let bytes = o.as_bstr();
                 let mut out = BString::from(Vec::with_capacity(bytes.len()));
