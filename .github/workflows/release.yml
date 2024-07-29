@@ -69,9 +69,9 @@ jobs:
       # For some builds, we use cross to test on 32-bit and big-endian
       # systems.
       CARGO: cargo
-      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
+      # Whether CARGO is `cargo` or `cross`, TARGET_FLAGS will be set to `--target matrix.target`.
       TARGET_FLAGS: ''
-      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
+      # Whether CARGO is `cargo` or `cross`, TARGET_DIR will include matrix.target.
       TARGET_DIR: ./target
       # Emit backtraces on panics.
       RUST_BACKTRACE: 1
