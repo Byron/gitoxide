@@ -75,32 +75,26 @@ jobs:
           - build: linux
             os: ubuntu-latest
             rust: stable
-            cargo: cargo
             target: x86_64-unknown-linux-musl
           - build: linux-arm
             os: ubuntu-latest
             rust: nightly
-            cargo: cross
             target: arm-unknown-linux-gnueabihf
           - build: macos
             os: macos-latest
             rust: stable
-            cargo: cargo
             target: x86_64-apple-darwin
           - build: win-msvc
             os: windows-latest
             rust: nightly
-            cargo: cargo
             target: x86_64-pc-windows-msvc
           - build: win-gnu
             os: windows-latest
             rust: nightly-x86_64-gnu
-            cargo: cargo
             target: x86_64-pc-windows-gnu
           - build: win32-msvc
             os: windows-latest
             rust: nightly
-            cargo: cargo
             target: i686-pc-windows-msvc
         # on linux we build with musl which causes trouble with open-ssl. For now, just build max-pure there
         # even though we could also build with `--features max-control,http-client-reqwest,gitoxide-core-blocking-client,gix-features/fast-sha1` for fast hashing.
@@ -145,7 +139,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Use Cross
-        if: matrix.cargo == 'cross'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           cargo install cross
           echo 'CARGO=cross' >> "$GITHUB_ENV"
