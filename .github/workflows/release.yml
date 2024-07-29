@@ -64,17 +64,9 @@ jobs:
 
   build-release:
     name: build-release
+
     needs: [ create-release ]
-    env:
-      # For some builds, we use cross to test on 32-bit and big-endian
-      # systems.
-      CARGO: cargo
-      # Whether CARGO is `cargo` or `cross`, TARGET_FLAGS will be set to `--target matrix.target`.
-      TARGET_FLAGS: ''
-      # Whether CARGO is `cargo` or `cross`, TARGET_DIR will include matrix.target.
-      TARGET_DIR: ./target
-      # Emit backtraces on panics.
-      RUST_BACKTRACE: 1
+
     strategy:
       matrix:
         build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc ]
@@ -123,6 +115,16 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    env:
+      # For some builds, we use cross to test on 32-bit, and maybe later big-endian, systems.
+      CARGO: cargo
+      # Whether CARGO is `cargo` or `cross`, TARGET_FLAGS will be set to `--target matrix.target`.
+      TARGET_FLAGS: ''
+      # Whether CARGO is `cargo` or `cross`, TARGET_DIR will include matrix.target.
+      TARGET_DIR: ./target
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -141,7 +143,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Use Cross
-        if: matrix.os == 'ubuntu-latest' && matrix.target != ''
+        if: matrix.os == 'ubuntu-latest'
         run: |
           cargo install cross
           echo 'CARGO=cross' >> "$GITHUB_ENV"
