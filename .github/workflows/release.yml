@@ -173,7 +173,7 @@ jobs:
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip -- "$TARGET_DIR"/release/{ein,gix}
+        run: strip "$TARGET_DIR"/release/{ein,gix}
 
       - name: Strip release binary (arm)
         if: matrix.build == 'linux-arm'
