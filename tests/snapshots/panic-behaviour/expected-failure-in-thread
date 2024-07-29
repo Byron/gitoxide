@@ -1,4 +1,4 @@
-thread 'main' panicked at src/porcelain/main.rs:45:42:
+thread 'main' panicked at src/porcelain/main.rs:40:42:
 something went very wrong
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 [2K
