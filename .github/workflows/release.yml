@@ -122,7 +122,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CARGO: ${{ matrix.cargo }}
+      CARGO: cargo  # Sometimes changes to `cross` later (such as when building linux-arm).
       TARGET_FLAGS: --target=${{ matrix.target }}
       TARGET_DIR: ./target/${{ matrix.target }}
       RUST_BACKTRACE: 1  # Emit backtraces on panics.
@@ -144,9 +144,11 @@ jobs:
           toolchain: ${{ matrix.rust }}
           targets: ${{ matrix.target }}
 
-      - name: Install Cross
+      - name: Use Cross
         if: matrix.cargo == 'cross'
-        run: cargo install cross
+        run: |
+          cargo install cross
+          echo 'CARGO=cross' >> "$GITHUB_ENV"
 
       - name: Show command used for Cargo
         run: |
