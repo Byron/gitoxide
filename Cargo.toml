@@ -32,7 +32,7 @@ default = ["max"]
 
 ## Everything, all at once.
 ##
-## As fast as possible, tracing, with TUI progress, progress line rendering with auto-configuration, all transports based on their most mature implementation (HTTP), all `ein` tools, CLI colors and local-time support, JSON output, regex support for rev-specs.
+## As fast as possible, tracing, with TUI progress, progress line rendering with autoconfiguration, all transports based on their most mature implementation (HTTP), all `ein` tools, CLI colors and local-time support, JSON output, regex support for rev-specs.
 ## Can be amended with the `http-client-curl-rustls` feature to avoid `openssl` as backend.
 max = ["max-control", "fast", "gitoxide-core-blocking-client", "http-client-curl"]
 

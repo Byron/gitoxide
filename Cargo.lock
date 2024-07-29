@@ -381,9 +381,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.4.1"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "327762f6e5a765692301e5bb513e0d9fef63be86bbc14528052b1cd3e6f03e07"
+checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 dependencies = [
  "serde",
 ]
@@ -474,12 +474,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.83"
+version = "1.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1174fb0b6ec23863f8b971027804a42614e347eafb0a95bf0b12cdae21fc4d0"
-dependencies = [
- "libc",
-]
+checksum = "26a5c3fd7bfa1ce3897a3a3501d362b2d87b7f2583ebcb4a949ec25911025cbc"
 
 [[package]]
 name = "cfg-if"
@@ -767,7 +764,7 @@ version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f476fe445d41c9e991fd07515a6f463074b782242ccf4a5b7b1d1012e70824df"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "crossterm_winapi",
  "futures-core",
  "libc",
@@ -846,11 +843,12 @@ dependencies = [
 
 [[package]]
 name = "dashmap"
-version = "5.5.3"
+version = "6.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856"
+checksum = "804c8821570c3f8b70230c2ba75ffa5c0f9a4189b9a432b6656c536712acae28"
 dependencies = [
  "cfg-if",
+ "crossbeam-utils",
  "hashbrown",
  "lock_api",
  "once_cell",
@@ -1587,7 +1585,7 @@ dependencies = [
 name = "gix-config-value"
 version = "0.14.7"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "bstr",
  "document-features",
  "gix-path 0.10.9",
@@ -1841,7 +1839,7 @@ version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a29ad0990cf02c48a7aac76ed0dbddeb5a0d070034b83675cc3bbf937eace4"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "bstr",
  "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-path 0.10.7",
@@ -1851,7 +1849,7 @@ dependencies = [
 name = "gix-glob"
 version = "0.16.4"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "bstr",
  "document-features",
  "gix-features 0.38.2",
@@ -1936,7 +1934,7 @@ version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d8c5a5f1c58edcbc5692b174cda2703aba82ed17d7176ff4c1752eb48b1b167"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "bstr",
  "filetime",
  "fnv",
@@ -1962,7 +1960,7 @@ dependencies = [
 name = "gix-index"
 version = "0.33.1"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "bstr",
  "document-features",
  "filetime",
@@ -2052,7 +2050,7 @@ dependencies = [
 name = "gix-negotiate"
 version = "0.13.2"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "gix-commitgraph 0.24.3",
  "gix-date 0.9.0",
  "gix-hash 0.14.2",
@@ -2252,7 +2250,7 @@ dependencies = [
 name = "gix-pathspec"
 version = "0.7.6"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "bstr",
  "gix-attributes 0.22.3",
  "gix-config-value",
@@ -2455,7 +2453,7 @@ version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fddc27984a643b20dd03e97790555804f98cf07404e0e552c0ad8133266a79a1"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "gix-path 0.10.7",
  "libc",
  "windows-sys 0.52.0",
@@ -2465,7 +2463,7 @@ dependencies = [
 name = "gix-sec"
 version = "0.10.7"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "document-features",
  "gix-path 0.10.9",
  "libc",
@@ -2647,7 +2645,7 @@ version = "0.39.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f20cb69b63eb3e4827939f42c05b7756e3488ef49c25c412a876691d568ee2a0"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "gix-commitgraph 0.24.2",
  "gix-date 0.8.6",
  "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2662,7 +2660,7 @@ dependencies = [
 name = "gix-traverse"
 version = "0.39.2"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "gix-commitgraph 0.24.3",
  "gix-date 0.9.0",
  "gix-hash 0.14.2",
@@ -3305,9 +3303,9 @@ checksum = "9c198f91728a82281a64e1f4f9eeb25d82cb32a5de251c6bd1b5154d63a8e7bd"
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.28.0"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c10584274047cb335c23d3e61bcef8e323adae7c5c8c760540f73610177fc3f"
+checksum = "2e99fb7a497b1e3339bc746195567ed8d3e24945ecd636e3619d20b9de9e9149"
 dependencies = [
  "cc",
  "pkg-config",
@@ -3611,7 +3609,7 @@ version = "0.10.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9529f4786b70a3e8c61e11179af17ab6188ad8d0ded78c5529441ed39d4bd9c1"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "cfg-if",
  "foreign-types",
  "libc",
@@ -3904,7 +3902,7 @@ version = "0.26.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f44c9e68fd46eda15c646fbb85e1040b657a58cdc8c98db1d97a55930d991eef"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "cassowary",
  "compact_str",
  "crossterm",
@@ -4055,11 +4053,11 @@ dependencies = [
 
 [[package]]
 name = "rusqlite"
-version = "0.31.0"
+version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b838eba278d213a8beaf485bd313fd580ca4505a00d5871caeb1457c55322cae"
+checksum = "7753b721174eb8ff87a9a0e799e2d7bc3749323e773db92e0984debb00019d6e"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "fallible-iterator",
  "fallible-streaming-iterator",
  "hashlink",
@@ -4093,7 +4091,7 @@ version = "0.38.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ea3e1a662af26cd7a3ba09c0297a31af215563ecf42817c98df621387f4e949"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.6.0",
  "errno",
  "libc",
  "linux-raw-sys 0.4.12",
