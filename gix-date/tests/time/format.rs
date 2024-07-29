@@ -2,7 +2,6 @@ use gix_date::{
     time::{format, Format, Sign},
     Time,
 };
-use time::macros::format_description;
 
 #[test]
 fn short() {
@@ -70,14 +69,6 @@ fn git_default() {
         time_dec1().format(gix_date::time::format::DEFAULT),
         "Sat Dec 1 00:03:09 1973 +0230"
     )
-}
-
-#[test]
-fn custom_compile_time() {
-    assert_eq!(
-        time().format(format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")),
-        "1973-11-30 00:03:09",
-    );
 }
 
 fn time() -> Time {

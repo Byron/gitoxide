@@ -19,7 +19,7 @@ test = true
 serde = ["dep:serde", "gix-hash/serde", "gix-actor/serde", "gix-object/serde"]
 
 [dependencies]
-gix-features = { version = "^0.38.2", path = "../gix-features", features = ["walkdir"]}
+gix-features = { version = "^0.38.2", path = "../gix-features", features = ["walkdir"] }
 gix-fs = { version = "^0.11.2", path = "../gix-fs" }
 gix-path = { version = "^0.10.9", path = "../gix-path" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
@@ -32,7 +32,7 @@ gix-tempfile = { version = "^14.0.0", default-features = false, path = "../gix-t
 
 thiserror = "1.0.34"
 winnow = { version = "0.6.0", features = ["simd"] }
-serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 
 # packed refs
 memmap2 = "0.9.0"
@@ -41,7 +41,7 @@ document-features = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
 gix-testtools = { path = "../tests/tools" }
-gix-date = { version = "^0.8.7", path = "../gix-date" }
+gix-date = { version = "^0.9.0", path = "../gix-date" }
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde"]

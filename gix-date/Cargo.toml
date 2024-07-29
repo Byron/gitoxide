@@ -1,32 +1,32 @@
 [package]
 name = "gix-date"
-version = "0.8.7"
+version = "0.9.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project parsing dates the way git does"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 include = ["src/**/*", "LICENSE-*"]
-rust-version = "1.65"
+rust-version = "1.70"
 
 [lib]
 doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde= ["dep:serde", "bstr/serde"]
+serde = ["dep:serde", "bstr/serde"]
 
 [dependencies]
-bstr = { version = "1.3.0", default-features = false, features = ["std"]}
-serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+bstr = { version = "1.3.0", default-features = false, features = ["std"] }
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 itoa = "1.0.1"
-time = { version = "0.3.23", default-features = false, features = ["local-offset", "formatting", "macros", "parsing"] }
+jiff = "0.1.1"
 thiserror = "1.0.32"
 
 document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
-gix-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools" }
 once_cell = "1.12.0"
 gix-hash = { path = "../gix-hash" }
 

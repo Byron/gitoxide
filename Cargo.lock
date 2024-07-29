@@ -1240,7 +1240,6 @@ dependencies = [
  "prodash",
  "serde_derive",
  "terminal_size",
- "time",
  "tracing",
  "tracing-forest",
  "tracing-subscriber",
@@ -1298,7 +1297,7 @@ dependencies = [
  "gix-commitgraph 0.24.3",
  "gix-config",
  "gix-credentials",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-diff",
  "gix-dir",
  "gix-discover 0.33.0",
@@ -1373,7 +1372,7 @@ version = "0.31.5"
 dependencies = [
  "bstr",
  "document-features",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-testtools",
  "gix-utils 0.1.12",
@@ -1392,7 +1391,7 @@ dependencies = [
  "document-features",
  "flate2",
  "gix-attributes 0.22.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-filter",
  "gix-hash 0.14.2",
  "gix-object 0.42.3",
@@ -1401,9 +1400,9 @@ dependencies = [
  "gix-testtools",
  "gix-worktree 0.34.1",
  "gix-worktree-stream",
+ "jiff",
  "tar",
  "thiserror",
- "time",
  "zip",
 ]
 
@@ -1515,7 +1514,7 @@ dependencies = [
  "bstr",
  "document-features",
  "gix-chunk 0.4.8",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-testtools",
@@ -1608,17 +1607,17 @@ dependencies = [
 
 [[package]]
 name = "gix-date"
-version = "0.8.7"
+version = "0.9.0"
 dependencies = [
  "bstr",
  "document-features",
  "gix-hash 0.14.2",
  "gix-testtools",
  "itoa",
+ "jiff",
  "once_cell",
  "serde",
  "thiserror",
- "time",
 ]
 
 [[package]]
@@ -2021,7 +2020,7 @@ dependencies = [
  "bstr",
  "document-features",
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-testtools",
  "serde",
  "thiserror",
@@ -2033,7 +2032,7 @@ version = "0.13.2"
 dependencies = [
  "bitflags 2.4.1",
  "gix-commitgraph 0.24.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-object 0.42.3",
  "gix-odb",
@@ -2075,7 +2074,7 @@ dependencies = [
  "criterion",
  "document-features",
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-testtools",
@@ -2095,7 +2094,7 @@ version = "0.61.1"
 dependencies = [
  "arc-swap",
  "document-features",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-fs 0.11.2",
  "gix-hash 0.14.2",
@@ -2116,7 +2115,7 @@ dependencies = [
  "crossbeam-channel",
  "filetime",
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-object 0.42.3",
@@ -2268,7 +2267,7 @@ dependencies = [
  "futures-io",
  "futures-lite 2.1.0",
  "gix-credentials",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
  "gix-packetline",
@@ -2333,7 +2332,7 @@ version = "0.45.0"
 dependencies = [
  "document-features",
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-fs 0.11.2",
  "gix-hash 0.14.2",
@@ -2355,7 +2354,7 @@ name = "gix-ref-tests"
 version = "0.0.0"
 dependencies = [
  "gix-actor 0.31.5",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-discover 0.33.0",
  "gix-features 0.38.2",
  "gix-fs 0.11.2",
@@ -2388,7 +2387,7 @@ dependencies = [
  "bstr",
  "document-features",
  "gix-commitgraph 0.24.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-hashtable 0.5.2",
  "gix-object 0.42.3",
@@ -2420,7 +2419,7 @@ name = "gix-revwalk"
 version = "0.13.2"
 dependencies = [
  "gix-commitgraph 0.24.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-hashtable 0.5.2",
  "gix-object 0.42.3",
@@ -2643,7 +2642,7 @@ version = "0.39.2"
 dependencies = [
  "bitflags 2.4.1",
  "gix-commitgraph 0.24.3",
- "gix-date 0.8.7",
+ "gix-date 0.9.0",
  "gix-hash 0.14.2",
  "gix-hashtable 0.5.2",
  "gix-object 0.42.3",
@@ -3077,9 +3076,9 @@ dependencies = [
 
 [[package]]
 name = "indoc"
-version = "2.0.4"
+version = "2.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e186cfbae8084e513daff4240b4797e342f988cecda4fb6c939150f96315fd8"
+checksum = "b248f5224d1d606005e02c97f5aa4e88eeb230488bcc03bc9ca4d7991399f2b5"
 
 [[package]]
 name = "instant"
@@ -3182,6 +3181,31 @@ name = "itoa"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1a46d1a171d865aa5f83f92695765caa047a9b4cbae2cbf37dbd613a793fd4c"
+
+[[package]]
+name = "jiff"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c33f2189d126c374d29641af39a0dc73daa1c8292403645575ce32e22e768a4"
+dependencies = [
+ "jiff-tzdb-platform",
+ "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "jiff-tzdb"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05fac328b3df1c0f18a3c2ab6cb7e06e4e549f366017d796e3e66b6d6889abe6"
+
+[[package]]
+name = "jiff-tzdb-platform"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8da387d5feaf355954c2c122c194d6df9c57d865125a67984bb453db5336940"
+dependencies = [
+ "jiff-tzdb",
+]
 
 [[package]]
 name = "js-sys"
@@ -5499,7 +5523,6 @@ dependencies = [
  "indexmap",
  "memchr",
  "thiserror",
- "time",
  "zopfli",
 ]
 

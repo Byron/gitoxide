@@ -19,13 +19,24 @@ pub enum Sign {
 
 /// Various ways to describe a time format.
 #[derive(Debug, Clone, Copy)]
-pub enum Format<'a> {
-    /// A custom format typically defined with the [`format_description`][time::format_description] macro.
-    Custom(&'a [time::format_description::FormatItem<'a>]),
+pub enum Format {
+    /// A custom format limited to what's in the
+    /// [`format`](mod@crate::time::format) submodule.
+    Custom(CustomFormat),
     /// The seconds since 1970, also known as unix epoch, like `1660874655`.
     Unix,
     /// The seconds since 1970, followed by the offset, like `1660874655 +0800`
     Raw,
+}
+
+/// A custom format for printing and parsing time.
+#[derive(Clone, Copy, Debug)]
+pub struct CustomFormat(pub(crate) &'static str);
+
+impl From<CustomFormat> for Format {
+    fn from(custom_format: CustomFormat) -> Format {
+        Format::Custom(custom_format)
+    }
 }
 
 ///
