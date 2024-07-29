@@ -1,21 +1,7 @@
-# The way this works is a little weird. But basically, the create-release job
-# runs purely to initialize the GitHub release itself. Once done, the upload
-# URL of the release is saved as an artifact.
-#
-# The build-release job runs only once create-release is finished. It gets
-# the release upload URL by downloading the corresponding artifact (which was
-# uploaded by create-release). It then builds the release executables for each
-# supported platform and attaches them as release assets to the previously
-# created release.
-#
-# The key here is that we create the release only once.
+# This is largely adapted from past and recent versions of the ripgrep release workflow.
+# https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
 name: release
-
-env:
-  RUST_BACKTRACE: 1
-  CARGO_TERM_COLOR: always
-  CLICOLOR: 1
 
 on:
   workflow_dispatch:
@@ -24,40 +10,51 @@ on:
     # branches:
      #  - fix-releases
     tags:
-      - "v.*"
+      - 'v*'
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+  CLICOLOR: 1
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
+  # The create-release job runs purely to initialize the GitHub release itself,
+  # and names the release after the version tag that was pushed. It's separate
+  # from building the release so that we only create the release once.
   create-release:
     name: create-release
     runs-on: ubuntu-latest
 #    env:
 #      # Set to force version number, e.g., when no tag exists.
-#      ARTIFACT_VERSION: TEST-0.0.0
+#      VERSION: TEST-0.0.0
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
 
       - name: Get the release version from the tag
-        if: env.ARTIFACT_VERSION == ''
-        run: |
-          echo "ARTIFACT_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo "version is: ${{ env.ARTIFACT_VERSION }}"
+        if: env.VERSION == ''
+        run: echo 'VERSION=${{ github.ref_name }}' >> "$GITHUB_ENV"
 
       - name: Create GitHub release
         id: release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ env.ARTIFACT_VERSION }}
-          name: ${{ env.ARTIFACT_VERSION }}
+          tag: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
           allowUpdates: true
           omitBody: true
           omitPrereleaseDuringUpdate: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Save release upload URL to artifact
-        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+        run: echo '${{ steps.release.outputs.upload_url }}' > artifacts/release-upload-url
 
       - name: Save version number to artifact
-        run: echo "${{ env.ARTIFACT_VERSION }}" > artifacts/release-version
+        run: echo "$VERSION" > artifacts/release-version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -67,23 +64,13 @@ jobs:
 
   build-release:
     name: build-release
-    needs: [ "create-release" ]
-    env:
-      # For some builds, we use cross to test on 32-bit and big-endian
-      # systems.
-      CARGO: cargo
-      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
-      TARGET_FLAGS: ""
-      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
-      TARGET_DIR: ./target
-      # Emit backtraces on panics.
-      RUST_BACKTRACE: 1
-      # The name of the executable to expect
-      EXE_NAME: ein
+
+    needs: [ create-release ]
+
     strategy:
       matrix:
         build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc ]
-        feature: [ "small", "lean", "max", "max-pure" ]
+        feature: [ small, lean, max, max-pure ]
         include:
           - build: linux
             os: ubuntu-latest
@@ -127,11 +114,16 @@ jobs:
             feature: max
 
     runs-on: ${{ matrix.os }}
+
+    env:
+      CARGO: cargo  # Sometimes changes to `cross` later (such as when building linux-arm).
+      TARGET_FLAGS: --target=${{ matrix.target }}
+      TARGET_DIR: ./target/${{ matrix.target }}
+      RUST_BACKTRACE: 1  # Emit backtraces on panics.
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - name: Install packages (Ubuntu)
         # Because openssl doesn't work on musl by default, we resort to max-pure. And that won't need any dependency, so we can skip this.continue-on-error
@@ -147,18 +139,16 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Use Cross
-        # if: matrix.os != 'windows-latest'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           cargo install cross
-          echo "CARGO=cross" >> $GITHUB_ENV
-          echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
-          echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
+          echo 'CARGO=cross' >> "$GITHUB_ENV"
 
       - name: Show command used for Cargo
         run: |
-          echo "cargo command is: ${{ env.CARGO }}"
-          echo "target flag is: ${{ env.TARGET_FLAGS }}"
-          echo "target dir is: ${{ env.TARGET_DIR }}"
+          echo "cargo command is: $CARGO"
+          echo "target flag is: $TARGET_FLAGS"
+          echo "target dir is: $TARGET_DIR"
 
       - name: Get release download URL
         uses: actions/download-artifact@v4
@@ -167,21 +157,17 @@ jobs:
           path: artifacts
 
       - name: Set release upload URL and release version
-        shell: bash
         run: |
-          release_upload_url="$(cat artifacts/release-upload-url)"
-          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          echo "release upload url: $RELEASE_UPLOAD_URL"
-          release_version="$(cat artifacts/release-version)"
-          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
-          echo "release version: $RELEASE_VERSION"
+          echo "UPLOAD_URL=$(< artifacts/release-upload-url)" >> "$GITHUB_ENV"
+          echo "VERSION=$(< artifacts/release-version)" >> "$GITHUB_ENV"
 
       - name: Build release binary
-        run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }} --no-default-features --features ${{ matrix.feature }}
+        run: |
+          "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features ${{ matrix.feature }}
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip target/${{ matrix.target }}/release/${{ env.EXE_NAME }} target/${{ matrix.target }}/release/gix
+        run: strip "$TARGET_DIR"/release/{ein,gix}
 
       - name: Strip release binary (arm)
         if: matrix.build == 'linux-arm'
@@ -190,24 +176,26 @@ jobs:
             "$PWD/target:/target:Z" \
             rustembedded/cross:arm-unknown-linux-gnueabihf \
             arm-linux-gnueabihf-strip \
-            /target/arm-unknown-linux-gnueabihf/release/${{ env.EXE_NAME }} \
+            /target/arm-unknown-linux-gnueabihf/release/ein \
             /target/arm-unknown-linux-gnueabihf/release/gix
+
       - name: Build archive
-        shell: bash
         run: |
-          staging="gitoxide-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
-          mkdir -p "$staging"
+          staging='gitoxide-${{ matrix.feature }}-${{ env.VERSION }}-${{ matrix.target }}'
+          mkdir -p -- "$staging"
 
           cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp target/release/${{ env.EXE_NAME }}.exe target/release/gix.exe "$staging/"
+          if [ '${{ matrix.os }}' = 'windows-latest' ]; then
+            file -- "$TARGET_DIR"/release/{ein,gix}.exe
+            cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$staging/"
             7z a "$staging.zip" "$staging"
-            echo "ASSET=$staging.zip" >> $GITHUB_ENV
+            echo "ASSET=$staging.zip" >> "$GITHUB_ENV"
           else
-            cp target/${{ matrix.target }}/release/${{ env.EXE_NAME }} target/${{ matrix.target }}/release/gix "$staging/"
+            file -- "$TARGET_DIR"/release/{ein,gix}
+            cp -- "$TARGET_DIR"/release/{ein,gix} "$staging/"
             tar czf "$staging.tar.gz" "$staging"
-            echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
+            echo "ASSET=$staging.tar.gz" >> "$GITHUB_ENV"
           fi
 
       - name: Upload release archive
@@ -215,7 +203,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          upload_url: ${{ env.UPLOAD_URL }}
           asset_path: ${{ env.ASSET }}
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
