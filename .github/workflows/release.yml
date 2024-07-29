@@ -54,7 +54,7 @@ jobs:
         run: echo '${{ steps.release.outputs.upload_url }}' > artifacts/release-upload-url
 
       - name: Save version number to artifact
-        run: echo '${{ env.VERSION }}' > artifacts/release-version
+        run: echo "$VERSION" > artifacts/release-version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -152,9 +152,9 @@ jobs:
 
       - name: Show command used for Cargo
         run: |
-          echo 'cargo command is: ${{ env.CARGO }}'
-          echo 'target flag is: ${{ env.TARGET_FLAGS }}'
-          echo 'target dir is: ${{ env.TARGET_DIR }}'
+          echo "cargo command is: $CARGO"
+          echo "target flag is: $TARGET_FLAGS"
+          echo "target dir is: $TARGET_DIR"
 
       - name: Get release download URL
         uses: actions/download-artifact@v4
@@ -168,11 +168,12 @@ jobs:
           echo "VERSION=$(< artifacts/release-version)" >> "$GITHUB_ENV"
 
       - name: Build release binary
-        run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }} --no-default-features --features ${{ matrix.feature }}
+        run: |
+          "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features ${{ matrix.feature }}
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip 'target/${{ matrix.target }}/release/ein' 'target/${{ matrix.target }}/release/gix'
+        run: strip -- "$TARGET_DIR"/release/{ein,gix}
 
       - name: Strip release binary (arm)
         if: matrix.build == 'linux-arm'
@@ -192,13 +193,13 @@ jobs:
           cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
           if [ '${{ matrix.os }}' = 'windows-latest' ]; then
-            file 'target/${{ matrix.target }}/release/ein.exe' 'target/${{ matrix.target }}/release/gix.exe'
-            cp 'target/${{ matrix.target }}/release/ein.exe' 'target/${{ matrix.target }}/release/gix.exe' "$staging/"
+            file -- "$TARGET_DIR"/release/{ein,gix}.exe
+            cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$staging/"
             7z a "$staging.zip" "$staging"
             echo "ASSET=$staging.zip" >> "$GITHUB_ENV"
           else
-            file 'target/${{ matrix.target }}/release/ein' 'target/${{ matrix.target }}/release/gix'
-            cp 'target/${{ matrix.target }}/release/ein' 'target/${{ matrix.target }}/release/gix' "$staging/"
+            file -- "$TARGET_DIR"/release/{ein,gix}
+            cp -- "$TARGET_DIR"/release/{ein,gix} "$staging/"
             tar czf "$staging.tar.gz" "$staging"
             echo "ASSET=$staging.tar.gz" >> "$GITHUB_ENV"
           fi
