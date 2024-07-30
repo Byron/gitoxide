@@ -116,7 +116,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CARGO: cargo  # Sometimes changes to `cross` later (such as when building linux-arm).
+      CARGO: cargo  # On Linux, this will be changed to `cross` later.
       TARGET_FLAGS: --target=${{ matrix.target }}
       TARGET_DIR: ./target/${{ matrix.target }}
       RUST_BACKTRACE: 1  # Emit backtraces on panics.
