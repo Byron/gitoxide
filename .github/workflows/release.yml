@@ -73,6 +73,7 @@ jobs:
           - x86_64-unknown-linux-musl
           - arm-unknown-linux-gnueabihf
           - x86_64-apple-darwin
+          - aarch64-apple-darwin
           - x86_64-pc-windows-msvc
           - x86_64-pc-windows-gnu
           - i686-pc-windows-msvc
@@ -89,6 +90,9 @@ jobs:
             os: ubuntu-latest
             rust: nightly
           - target: x86_64-apple-darwin
+            os: macos-latest
+            rust: stable
+          - target: aarch64-apple-darwin
             os: macos-latest
             rust: stable
           - target: x86_64-pc-windows-msvc
@@ -169,8 +173,8 @@ jobs:
         run: |
           "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features ${{ matrix.feature }}
 
-      - name: Strip release binary (x86-64 Linux, and macOS)
-        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.target == 'x86_64-apple-darwin'
+      - name: Strip release binary (x86-64 Linux, and all macOS)
+        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.os == 'macos-latest'
         run: strip "$TARGET_DIR"/release/{ein,gix}
 
       - name: Strip release binary (ARM Linux)
