@@ -77,6 +77,7 @@ jobs:
           - x86_64-pc-windows-msvc
           - x86_64-pc-windows-gnu
           - i686-pc-windows-msvc
+          - aarch64-pc-windows-msvc
         feature:
           - small
           - lean
@@ -102,6 +103,9 @@ jobs:
             os: windows-latest
             rust: nightly-x86_64-gnu
           - target: i686-pc-windows-msvc
+            os: windows-latest
+            rust: nightly
+          - target: aarch64-pc-windows-msvc
             os: windows-latest
             rust: nightly
         # on linux we build with musl which causes trouble with open-ssl. For now, just build max-pure there
