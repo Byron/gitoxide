@@ -69,54 +69,66 @@ jobs:
 
     strategy:
       matrix:
-        build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc ]
-        feature: [ small, lean, max, max-pure ]
+        target:
+          - x86_64-unknown-linux-musl
+          - arm-unknown-linux-gnueabihf
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - x86_64-pc-windows-gnu
+          - i686-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+        feature:
+          - small
+          - lean
+          - max
+          - max-pure
         include:
-          - build: linux
+          - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
             rust: stable
-            target: x86_64-unknown-linux-musl
-          - build: linux-arm
+          - target: arm-unknown-linux-gnueabihf
             os: ubuntu-latest
             rust: nightly
-            target: arm-unknown-linux-gnueabihf
-          - build: macos
+          - target: x86_64-apple-darwin
             os: macos-latest
             rust: stable
-            target: x86_64-apple-darwin
-          - build: win-msvc
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            rust: stable
+          - target: x86_64-pc-windows-msvc
             os: windows-latest
             rust: nightly
-            target: x86_64-pc-windows-msvc
-          - build: win-gnu
+          - target: x86_64-pc-windows-gnu
             os: windows-latest
             rust: nightly-x86_64-gnu
-            target: x86_64-pc-windows-gnu
-          - build: win32-msvc
+          - target: i686-pc-windows-msvc
             os: windows-latest
             rust: nightly
-            target: i686-pc-windows-msvc
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
+            rust: nightly
         # on linux we build with musl which causes trouble with open-ssl. For now, just build max-pure there
         # even though we could also build with `--features max-control,http-client-reqwest,gitoxide-core-blocking-client,gix-features/fast-sha1` for fast hashing.
         # It's a TODO.
         exclude:
-          - build: linux
+          - target: x86_64-unknown-linux-musl
             feature: small
-          - build: linux
+          - target: x86_64-unknown-linux-musl
             feature: lean
-          - build: linux
+          - target: x86_64-unknown-linux-musl
             feature: max
-          - build: linux-arm
+          - target: arm-unknown-linux-gnueabihf
             feature: small
-          - build: linux-arm
+          - target: arm-unknown-linux-gnueabihf
             feature: lean
-          - build: linux-arm
+          - target: arm-unknown-linux-gnueabihf
             feature: max
 
     runs-on: ${{ matrix.os }}
 
     env:
-      CARGO: cargo  # Sometimes changes to `cross` later (such as when building linux-arm).
+      CARGO: cargo  # On Linux, this will be changed to `cross` later.
       TARGET_FLAGS: --target=${{ matrix.target }}
       TARGET_DIR: ./target/${{ matrix.target }}
       RUST_BACKTRACE: 1  # Emit backtraces on panics.
@@ -165,12 +177,12 @@ jobs:
         run: |
           "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features ${{ matrix.feature }}
 
-      - name: Strip release binary (linux and macos)
-        if: matrix.build == 'linux' || matrix.build == 'macos'
+      - name: Strip release binary (x86-64 Linux, and all macOS)
+        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.os == 'macos-latest'
         run: strip "$TARGET_DIR"/release/{ein,gix}
 
-      - name: Strip release binary (arm)
-        if: matrix.build == 'linux-arm'
+      - name: Strip release binary (ARM Linux)
+        if: matrix.target == 'arm-unknown-linux-gnueabihf'
         run: |
           docker run --rm -v \
             "$PWD/target:/target:Z" \
