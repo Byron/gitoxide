@@ -41,7 +41,7 @@ jobs:
         run: |
           manifest_version="$(yq -r .package.version Cargo.toml)"
           echo "version to give the release: $VERSION"
-          echo "version Cargo.toml declares: $manifest_version"
+          echo "version Cargo.toml suggests: v$manifest_version"
 
           case "$VERSION" in
           "v$manifest_version")
