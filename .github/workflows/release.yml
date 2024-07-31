@@ -12,11 +12,6 @@ on:
     tags:
       - 'v*'
 
-env:
-  RUST_BACKTRACE: 1
-  CARGO_TERM_COLOR: always
-  CLICOLOR: 1
-
 defaults:
   run:
     shell: bash
@@ -27,10 +22,13 @@ jobs:
   # from building the release so that we only create the release once.
   create-release:
     name: create-release
+
     runs-on: ubuntu-latest
+
 #    env:
 #      # Set to force version number, e.g., when no tag exists.
 #      VERSION: TEST-0.0.0
+
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -133,10 +131,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CARGO: cargo  # On Linux, this will be changed to `cross` later.
+      CARGO: cargo  # On Linux, this will be changed to `cross` in a later step.
       TARGET_FLAGS: --target=${{ matrix.target }}
       TARGET_DIR: ./target/${{ matrix.target }}
-      RUST_BACKTRACE: 1  # Emit backtraces on panics.
+      RUST_BACKTRACE: '1'  # Emit backtraces on panics.
+      CARGO_TERM_COLOR: always
+      CLICOLOR: '1'
 
     steps:
       - name: Checkout repository
