@@ -133,7 +133,7 @@ jobs:
     env:
       CARGO: cargo  # On Linux, this will be changed to `cross` in a later step.
       TARGET_FLAGS: --target=${{ matrix.target }}
-      TARGET_DIR: ./target/${{ matrix.target }}
+      TARGET_DIR: target/${{ matrix.target }}
       RUST_BACKTRACE: '1'  # Emit backtraces on panics.
       CARGO_TERM_COLOR: always
       CLICOLOR: '1'
