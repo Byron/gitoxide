@@ -46,6 +46,7 @@ jobs:
           tag: ${{ env.VERSION }}
           name: ${{ env.VERSION }}
           allowUpdates: true
+          draft: true
           omitBody: true
           omitPrereleaseDuringUpdate: true
           token: ${{ secrets.GITHUB_TOKEN }}
