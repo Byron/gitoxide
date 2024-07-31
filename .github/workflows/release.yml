@@ -40,15 +40,22 @@ jobs:
       - name: Validate version against Cargo.toml
         run: |
           manifest_version="$(yq -r .package.version Cargo.toml)"
-          echo "version to give the release: $VERSION"
+          echo "version to name the release: $VERSION"
           echo "version Cargo.toml suggests: v$manifest_version"
 
           case "$VERSION" in
-          "v$manifest_version")
-            echo "OK: Version to give the relase agrees with top-level Cargo.toml."
+          "v$manifest_version" )
+            echo 'OK: Version to name the relase agrees with top-level Cargo.toml.'
             ;;
-          *)
-            echo "STOPPING: Version to give the release seems mistaken."
+          TEST-* | *-DO-NOT-USE )
+            echo 'OK: Version to name the release is strange but marked as such.'
+            ;;
+          "$manifest_version" )
+            echo 'STOPPING: Version to name the release is missing the leading "v".'
+            exit 1
+            ;;
+          * )
+            echo 'STOPPING: Version to name the release seems mistaken.'
             exit 1
             ;;
           esac
