@@ -60,6 +60,20 @@ pub mod main_worktree {
 
     /// Modification
     impl PrepareCheckout {
+        /// Set the `name` of the reference to check out, instead of the remote `HEAD`.
+        /// If `None`, the `HEAD` will be used, which is the default.
+        ///
+        /// Note that `name` should be a partial name like `main` or `feat/one`, but can be a full ref name.
+        /// If a branch on the remote matches, it will automatically be retrieved even without a refspec.
+        /// It can also be a commit id.
+        pub fn with_ref_name<'a, Name, E>(mut self, ref_name: Option<Name>) -> Result<PrepareCheckout, E>
+        where
+            Name: TryInto<&'a gix_ref::PartialNameRef, Error = E>,
+        {
+            self.ref_name = ref_name.map(TryInto::try_into).transpose()?.map(ToOwned::to_owned);
+            Ok(self)
+        }
+
         /// Checkout the main worktree, determining how many threads to use by looking at `checkout.workers`, defaulting to using
         /// on thread per logical core.
         ///
