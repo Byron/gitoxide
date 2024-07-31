@@ -30,16 +30,31 @@ jobs:
 #      VERSION: TEST-0.0.0
 
     steps:
-      - name: Create artifacts directory
-        run: mkdir artifacts
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Get the release version from the tag
         if: env.VERSION == ''
         run: echo 'VERSION=${{ github.ref_name }}' >> "$GITHUB_ENV"
 
-      - name: Show the version
+      - name: Validate version against Cargo.toml
         run: |
-          echo "version is: $VERSION"
+          manifest_version="$(yq -r .package.version Cargo.toml)"
+          echo "version to give the release: $VERSION"
+          echo "version Cargo.toml declares: $manifest_version"
+
+          case "$VERSION" in
+          "$manifest_version")
+            echo "OK: Version to give the relase agrees with top-level Cargo.toml."
+            ;;
+          *)
+            echo "STOPPING: Version to give the release seems mistaken."
+            exit 1
+            ;;
+          esac
+
+      - name: Create artifacts directory
+        run: mkdir artifacts
 
       - name: Create GitHub release
         id: release
