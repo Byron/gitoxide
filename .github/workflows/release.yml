@@ -39,6 +39,10 @@ jobs:
         if: env.VERSION == ''
         run: echo 'VERSION=${{ github.ref_name }}' >> "$GITHUB_ENV"
 
+      - name: Show the version
+        run: |
+          echo "version is: $VERSION"
+
       - name: Create GitHub release
         id: release
         uses: ncipollo/release-action@v1
