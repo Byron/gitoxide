@@ -44,7 +44,7 @@ jobs:
           echo "version Cargo.toml declares: $manifest_version"
 
           case "$VERSION" in
-          "$manifest_version")
+          "v$manifest_version")
             echo "OK: Version to give the relase agrees with top-level Cargo.toml."
             ;;
           *)
