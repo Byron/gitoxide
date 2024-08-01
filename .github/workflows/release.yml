@@ -45,17 +45,19 @@ jobs:
 
           case "$VERSION" in
           "v$manifest_version" )
-            echo 'OK: Version to name the relase agrees with top-level Cargo.toml.'
+            echo 'OK: Release name/version agrees with Cargo.toml version.'
             ;;
           TEST-* | *-DO-NOT-USE )
-            echo 'OK: Version to name the release is strange but marked as such.'
+            echo 'OK: Release name/version is strange but marked as such.'
             ;;
           "$manifest_version" )
-            echo 'STOPPING: Version to name the release is missing the leading "v".'
+            echo 'STOPPING: Release name/version is missing the leading "v".'
             exit 1
             ;;
           * )
-            echo 'STOPPING: Version to name the release seems mistaken.'
+            echo 'STOPPING: Release name/version and Cargo.toml version do not match.'
+            echo 'STOPPING: Usually this means either a wrong tag name or wrong version in Cargo.toml.'
+            echo 'STOPPING: If intended, prepend `TEST-` or append `-DO-NOT-USE` to the release name.'
             exit 1
             ;;
           esac
