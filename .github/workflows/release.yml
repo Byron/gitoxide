@@ -235,6 +235,7 @@ jobs:
 
     env:
       BASH_ENV: ./helpers.sh
+      REPOSITORY: ${{ github.repository }}
       FEATURE: ${{ matrix.feature }}
       VERSION: ${{ needs.create-release.outputs.version }}
 
@@ -246,7 +247,7 @@ jobs:
 
       - name: Obtain single-architecture releases
         run: |
-          gh release download "$VERSION" --pattern="$(name aarch64).tar.gz" --pattern="$(name x86_64).tar.gz"
+          gh release --repo "$REPOSITORY" download "$VERSION" --pattern="$(name aarch64).tar.gz" --pattern="$(name x86_64).tar.gz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -273,6 +274,6 @@ jobs:
           echo "ASSET=$(name universal).tar.gz" >> "$GITHUB_ENV"
 
       - name: Upload release archive
-        run: gh release upload "$VERSION" "$ASSET"
+        run: gh release --repo "$REPOSITORY" upload "$VERSION" "$ASSET"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
