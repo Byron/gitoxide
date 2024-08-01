@@ -5,7 +5,7 @@ use crate::{clone::PrepareCheckout, Repository};
 pub mod main_worktree {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
-    use crate::ext::ReferenceExt;
+    use crate::ext::{ObjectIdExt, ReferenceExt};
     use crate::{clone::PrepareCheckout, Progress, Repository};
 
     /// The error returned by [`PrepareCheckout::main_worktree()`].
@@ -66,32 +66,47 @@ pub mod main_worktree {
         ///
         /// Note that `name` should be a partial name like `main` or `feat/one`, but can be a full ref name.
         /// If a branch on the remote matches, it will automatically be retrieved even without a refspec.
-        pub fn with_ref_name<'a, Name, E>(mut self, ref_name: Option<Name>) -> Result<PrepareCheckout, Error>
+        pub fn with_ref_name<'a, Name, E>(self, ref_name: Option<Name>) -> Result<PrepareCheckout, Error>
         where
             Name: TryInto<&'a gix_ref::PartialNameRef, Error = E>,
-            gix_ref::file::find::Error: std::convert::From<E>
+            gix_ref::file::find::Error: std::convert::From<E>,
         {
             let repo = self
                 .repo
                 .as_ref()
                 .expect("BUG: this method may only be called until it is successful");
 
-            self.ref_val = ref_name
+            let reference = ref_name
                 .map(|ref_name| repo.try_find_reference(ref_name))
                 .transpose()
                 .map_err(|e| Error::FindHead(crate::reference::find::existing::Error::Find(e)))?
                 .flatten()
                 .map(|r| r.detach());
 
-            Ok(self)
+            self.with_ref(reference)
         }
-        
+
         /// Set the reference to checkout from the tree.
-        pub fn with_ref<'a, Name, E>(mut self, ref_val: Option<gix_ref::Reference>) -> Result<PrepareCheckout, Error>
-        {
-            self.ref_val = ref_val;
+        pub fn with_ref<'a>(mut self, ref_val: Option<gix_ref::Reference>) -> Result<PrepareCheckout, Error> {
+            let repo = self
+                .repo
+                .as_ref()
+                .expect("BUG: this method may only be called until it is successful");
+
+            self.checkout_object = ref_val
+                .map(|r| r.attach(repo))
+                .map(|r| r.into_fully_peeled_id())
+                .transpose()?
+                .map(|r| r.inner);
 
             Ok(self)
+        }
+
+        /// Set the reference to checkout from the tree.
+        pub fn with_object_id(mut self, object_id: Option<crate::ObjectId>) -> PrepareCheckout {
+            self.checkout_object = object_id;
+
+            self
         }
 
         /// Checkout the main worktree, determining how many threads to use by looking at `checkout.workers`, defaulting to using
@@ -131,8 +146,8 @@ pub mod main_worktree {
                 git_dir: repo.git_dir().to_owned(),
             })?;
 
-            let root_tree_id = match self.ref_val.clone() {
-                Some(reference_val) => Some(reference_val.attach(repo).peel_to_id_in_place()?), //Some(repo.find_reference(reference_val)?.peel_to_id_in_place()?),
+            let root_tree_id = match self.checkout_object {
+                Some(reference_val) => Some(reference_val.attach(repo)),
                 None => repo.head()?.try_peel_to_id_in_place()?,
             };
 
