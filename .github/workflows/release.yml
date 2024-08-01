@@ -88,11 +88,7 @@ jobs:
           - x86_64-pc-windows-gnu
           - i686-pc-windows-msvc
           - aarch64-pc-windows-msvc
-        feature: &features
-          - small
-          - lean
-          - max
-          - max-pure
+        feature: [ small, lean, max, max-pure ]
         include:
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
@@ -239,7 +235,7 @@ jobs:
 
     strategy:
       matrix:
-        feature: *features
+        feature: [ small, lean, max, max-pure ]
 
     steps:
       - name: Placeholder
