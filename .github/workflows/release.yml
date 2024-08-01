@@ -174,11 +174,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install packages (Ubuntu)
-        # Because openssl doesn't work on musl by default, we resort to max-pure. And that won't need any dependency, so we can skip this.continue-on-error
+        # Because openssl doesn't work on musl by default, we resort to max-pure.
+        # And that won't need any dependency, so we can skip this or use `continue-on-error`.
         # Once we want to support better zlib performance, we might have to re-add it.
         if: matrix.os == 'ubuntu-latest-disabled'
         run: |
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
