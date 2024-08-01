@@ -35,10 +35,9 @@ jobs:
 
       - name: Get the release version from the tag
         if: env.VERSION == ''
-        run: echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+        run: echo "VERSION=$REF_NAME" >> "$GITHUB_ENV"
         env:
-          VERSION: ${{ github.ref_name }}
-
+          REF_NAME: ${{ github.ref_name }}
 
       - name: Validate version against Cargo.toml
         run: |
