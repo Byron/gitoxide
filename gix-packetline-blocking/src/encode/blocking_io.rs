@@ -37,7 +37,7 @@ pub fn data_to_write(data: &[u8], out: impl io::Write) -> io::Result<usize> {
 
 /// Write a `text` message to `out`, which is assured to end in a newline.
 pub fn text_to_write(text: &[u8], out: impl io::Write) -> io::Result<usize> {
-    prefixed_and_suffixed_data_to_write(&[], text, &[b'\n'], out)
+    prefixed_and_suffixed_data_to_write(&[], text, b"\n", out)
 }
 
 fn prefixed_data_to_write(prefix: &[u8], data: &[u8], out: impl io::Write) -> io::Result<usize> {
