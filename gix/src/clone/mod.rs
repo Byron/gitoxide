@@ -139,7 +139,7 @@ pub struct PrepareCheckout {
     /// A freshly initialized repository which is owned by us, or `None` if it was successfully checked out.
     pub(self) repo: Option<crate::Repository>,
     /// The name of the reference to check out. If `None`, the reference pointed to by `HEAD` will be checked out.
-    pub(self) ref_name: Option<gix_ref::PartialName>,
+    pub(self) ref_val: Option<gix_ref::Reference>,
 }
 
 // This module encapsulates functionality that works with both feature toggles. Can be combined with `fetch`
