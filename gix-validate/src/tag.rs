@@ -21,6 +21,8 @@ pub mod name {
         Asterisk,
         #[error("A ref must not start with a '.'")]
         StartsWithDot,
+        #[error("A ref must not end with a '.'")]
+        EndsWithDot,
         #[error("A ref must not end with a '/'")]
         EndsWithSlash,
         #[error("A ref must not be empty")]
@@ -29,6 +31,7 @@ pub mod name {
 }
 
 /// Assure the given `input` resemble a valid git tag name, which is returned unchanged on success.
+/// Tag names are provided as names, lik` v1.0` or `alpha-1`, without paths.
 pub fn name(input: &BStr) -> Result<&BStr, name::Error> {
     if input.is_empty() {
         return Err(name::Error::Empty);
@@ -54,6 +57,9 @@ pub fn name(input: &BStr) -> Result<&BStr, name::Error> {
     }
     if input[0] == b'.' {
         return Err(name::Error::StartsWithDot);
+    }
+    if input[input.len() - 1] == b'.' {
+        return Err(name::Error::EndsWithDot);
     }
     if input.ends_with(b".lock") {
         return Err(name::Error::LockFileSuffix);

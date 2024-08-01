@@ -15,8 +15,8 @@ pub mod name {
         StartsWithSlash,
         #[error("Multiple slashes in a row are not allowed as they may change the reference's meaning")]
         RepeatedSlash,
-        #[error("Names must not be a single '.', but may contain it.")]
-        SingleDot,
+        #[error("Path components must not start with '.'")]
+        StartsWithDot,
     }
 
     impl From<Infallible> for Error {
@@ -28,8 +28,8 @@ pub mod name {
 
 use bstr::BStr;
 
-/// Validate a reference name running all the tests in the book. This disallows lower-case references, but allows
-/// ones like `HEAD`.
+/// Validate a reference name running all the tests in the book. This disallows lower-case references like `lower`, but also allows
+/// ones like `HEAD`, and `refs/lower`.
 pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
     validate(path, Mode::Complete)
 }
@@ -51,19 +51,17 @@ fn validate(path: &BStr, mode: Mode) -> Result<&BStr, name::Error> {
         return Err(name::Error::StartsWithSlash);
     }
     let mut previous = 0;
-    let mut one_before_previous = 0;
     let mut saw_slash = false;
     for byte in path.iter() {
         match *byte {
-            b'/' if previous == b'.' && one_before_previous == b'/' => return Err(name::Error::SingleDot),
             b'/' if previous == b'/' => return Err(name::Error::RepeatedSlash),
+            b'.' if previous == b'/' => return Err(name::Error::StartsWithDot),
             _ => {}
         }
 
         if *byte == b'/' {
             saw_slash = true;
         }
-        one_before_previous = previous;
         previous = *byte;
     }
 

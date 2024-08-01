@@ -17,9 +17,20 @@ fn unix() {
 
 #[test]
 fn raw() {
-    let expected = "123456789 +0230";
-    assert_eq!(time().format(Format::Raw), expected);
-    assert_eq!(time().format(format::RAW), expected);
+    for (time, expected) in [
+        (time(), "123456789 +0230"),
+        (
+            Time {
+                seconds: 1112911993,
+                offset: 3600,
+                sign: Sign::Plus,
+            },
+            "1112911993 +0100",
+        ),
+    ] {
+        assert_eq!(time.format(Format::Raw), expected);
+        assert_eq!(time.format(format::RAW), expected);
+    }
 }
 
 #[test]

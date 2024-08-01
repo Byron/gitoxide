@@ -19,7 +19,6 @@ mod name {
         mktest!(contains_brackets, b"this_{is-fine}_too");
         mktest!(contains_brackets_and_at, b"this_{@is-fine@}_too");
         mktest!(dot_in_the_middle, b"token.other");
-        mktest!(dot_at_the_end, b"hello.");
         mktest!(slash_inbetween, b"hello/world");
     }
 
@@ -76,6 +75,7 @@ mod name {
         mktestb!(contains_newline, b"prefix\nsuffix");
         mktestb!(contains_carriage_return, b"prefix\rsuffix");
         mktest!(starts_with_dot, b".with-dot", StartsWithDot);
+        mktest!(ends_with_dot, b"with-dot.", EndsWithDot);
         mktest!(empty, b"", Empty);
     }
 }

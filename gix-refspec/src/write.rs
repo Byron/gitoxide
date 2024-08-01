@@ -36,25 +36,25 @@ impl Instruction<'_> {
                 allow_non_fast_forward,
             }) => {
                 if *allow_non_fast_forward {
-                    out.write_all(&[b'+'])?;
+                    out.write_all(b"+")?;
                 }
                 out.write_all(src)?;
-                out.write_all(&[b':'])?;
+                out.write_all(b":")?;
                 out.write_all(dst)
             }
             Instruction::Push(Push::AllMatchingBranches { allow_non_fast_forward }) => {
                 if *allow_non_fast_forward {
-                    out.write_all(&[b'+'])?;
+                    out.write_all(b"+")?;
                 }
-                out.write_all(&[b':'])
+                out.write_all(b":")
             }
             Instruction::Push(Push::Delete { ref_or_pattern }) => {
-                out.write_all(&[b':'])?;
+                out.write_all(b":")?;
                 out.write_all(ref_or_pattern)
             }
             Instruction::Fetch(Fetch::Only { src }) => out.write_all(src),
             Instruction::Fetch(Fetch::Exclude { src }) => {
-                out.write_all(&[b'^'])?;
+                out.write_all(b"^")?;
                 out.write_all(src)
             }
             Instruction::Fetch(Fetch::AndUpdate {
@@ -63,10 +63,10 @@ impl Instruction<'_> {
                 allow_non_fast_forward,
             }) => {
                 if *allow_non_fast_forward {
-                    out.write_all(&[b'+'])?;
+                    out.write_all(b"+")?;
                 }
                 out.write_all(src)?;
-                out.write_all(&[b':'])?;
+                out.write_all(b":")?;
                 out.write_all(dst)
             }
         }

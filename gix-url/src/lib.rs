@@ -322,10 +322,10 @@ impl Url {
             (Some(user), Some(host)) => {
                 out.write_all(user.as_bytes())?;
                 if let Some(password) = &self.password {
-                    out.write_all(&[b':'])?;
+                    out.write_all(b":")?;
                     out.write_all(password.as_bytes())?;
                 }
-                out.write_all(&[b'@'])?;
+                out.write_all(b"@")?;
                 out.write_all(host.as_bytes())?;
             }
             (None, Some(host)) => {

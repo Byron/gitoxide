@@ -55,7 +55,7 @@ mod name_partial {
         mktest!(
             refs_path_component_is_singular_dot,
             b"refs/./still-inside-but-not-cool",
-            RefError::SingleDot
+            RefError::StartsWithDot
         );
         mktest!(any_path_starts_with_slash, b"/etc/foo", RefError::StartsWithSlash);
         mktest!(empty_path, b"", RefError::Tag(TagError::Empty));
@@ -107,6 +107,7 @@ mod name {
         mktest!(all_uppercase, b"MAIN");
         mktest!(all_uppercase_with_underscore, b"NEW_HEAD");
         mktest!(chinese_utf8, "refs/heads/你好吗".as_bytes());
+        mktest!(dot_in_directory_component, b"this./totally./works");
     }
 
     mod invalid {
@@ -136,10 +137,21 @@ mod name {
             b".refs/somewhere",
             RefError::Tag(TagError::StartsWithDot)
         );
+
+        mktest!(
+            refs_path_name_starts_with_dot_in_name,
+            b"refs/.somewhere",
+            RefError::StartsWithDot
+        );
+        mktest!(
+            refs_path_name_ends_with_dot_in_name,
+            b"refs/somewhere.",
+            RefError::Tag(TagError::EndsWithDot)
+        );
         mktest!(
             refs_path_component_is_singular_dot,
             b"refs/./still-inside-but-not-cool",
-            RefError::SingleDot
+            RefError::StartsWithDot
         );
         mktest!(capitalized_name_without_path, b"Main", RefError::SomeLowercase);
         mktest!(lowercase_name_without_path, b"main", RefError::SomeLowercase);

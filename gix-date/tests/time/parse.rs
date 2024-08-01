@@ -67,6 +67,15 @@ fn raw() {
         },
     );
 
+    assert_eq!(
+        gix_date::parse("1112911993 +0100", None).unwrap(),
+        Time {
+            seconds: 1112911993,
+            offset: 3600,
+            sign: Sign::Plus,
+        },
+    );
+
     let expected = Time {
         seconds: 1660874655,
         offset: -28800,
