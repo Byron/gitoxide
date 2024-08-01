@@ -247,17 +247,28 @@ jobs:
       - name: Obtain single-architecture releases
         run: |
           gh release download "$VERSION" --pattern="$(name aarch64).tar.gz" --pattern="$(name x86_64).tar.gz"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Unpack single-architecture releases
+        run: |
           tar xf "$(name aarch64).tar.gz"
           tar xf "$(name x86_64).tar.gz"
 
-      - name: Repack into Universal-2 release
+      - name: Pre-populate directory for archive
         run: |
           cp -R -- "$(name aarch64)" "$(name universal)"
           rm -- "$(name universal)"/{ein,gix}
+
+      - name: Create Universal 2 binaries
+        run: |
           for bin in ein gix; do
             lipo -create "$(name aarch64)/$bin" "$(name x86_64)/$bin" -output "$(name universal)/$bin"
+            file "$(name universal)/$bin"
           done
-          file "$(name universal)"/{ein,gix}
+
+      - name: Build archive
+        run: |
           tar czf "$(name universal).tar.gz" "$(name universal)"
           echo "ASSET=$(name universal).tar.gz" >> "$GITHUB_ENV"
 
