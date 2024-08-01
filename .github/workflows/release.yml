@@ -35,7 +35,10 @@ jobs:
 
       - name: Get the release version from the tag
         if: env.VERSION == ''
-        run: echo 'VERSION=${{ github.ref_name }}' >> "$GITHUB_ENV"
+        run: echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+        env:
+          VERSION: ${{ github.ref_name }}
+
 
       - name: Validate version against Cargo.toml
         run: |
@@ -78,7 +81,9 @@ jobs:
         run: mkdir artifacts
 
       - name: Save release upload URL to artifact
-        run: echo '${{ steps.release.outputs.upload_url }}' > artifacts/release-upload-url
+        run: echo "$URL" > artifacts/release-upload-url
+        env:
+          URL: ${{ steps.release.outputs.upload_url }}
 
       - name: Save version number to artifact
         run: echo "$VERSION" > artifacts/release-version
@@ -156,8 +161,10 @@ jobs:
 
     env:
       CARGO: cargo  # On Linux, this will be changed to `cross` in a later step.
+      TARGET: ${{ matrix.target }}
       TARGET_FLAGS: --target=${{ matrix.target }}
       TARGET_DIR: target/${{ matrix.target }}
+      FEATURE: ${{ matrix.feature }}
       RUST_BACKTRACE: '1'  # Emit backtraces on panics.
       CARGO_TERM_COLOR: always
       CLICOLOR: '1'
@@ -204,7 +211,7 @@ jobs:
 
       - name: Build release binary
         run: |
-          "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features ${{ matrix.feature }}
+          "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features "$FEATURE"
 
       - name: Strip release binary (x86-64 Linux, and all macOS)
         if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.os == 'macos-latest'
@@ -222,12 +229,12 @@ jobs:
 
       - name: Build archive
         run: |
-          staging='gitoxide-${{ matrix.feature }}-${{ env.VERSION }}-${{ matrix.target }}'
+          staging="gitoxide-$FEATURE-$VERSION-$TARGET"
           mkdir -p -- "$staging"
 
           cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
-          if [ '${{ matrix.os }}' = 'windows-latest' ]; then
+          if [ "$OS" = 'windows-latest' ]; then
             file -- "$TARGET_DIR"/release/{ein,gix}.exe
             cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$staging/"
             7z a "$staging.zip" "$staging"
@@ -238,6 +245,8 @@ jobs:
             tar czf "$staging.tar.gz" "$staging"
             echo "ASSET=$staging.tar.gz" >> "$GITHUB_ENV"
           fi
+        env:
+          OS: ${{ matrix.os }}
 
       - name: Upload release archive
         uses: actions/upload-release-asset@v1.0.2
