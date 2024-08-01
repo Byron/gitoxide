@@ -62,9 +62,6 @@ jobs:
             ;;
           esac
 
-      - name: Create artifacts directory
-        run: mkdir artifacts
-
       - name: Create GitHub release
         id: release
         uses: ncipollo/release-action@v1
@@ -76,6 +73,9 @@ jobs:
           omitBody: true
           omitPrereleaseDuringUpdate: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create artifacts directory
+        run: mkdir artifacts
 
       - name: Save release upload URL to artifact
         run: echo '${{ steps.release.outputs.upload_url }}' > artifacts/release-upload-url
