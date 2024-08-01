@@ -232,8 +232,8 @@ impl PrepareFetch {
         Ok((
             crate::clone::PrepareCheckout {
                 repo: repo.into(),
-                ref_name: self.ref_name.clone(),
-            },
+                checkout_object: None,
+            }.with_ref_name(self.ref_name.as_ref()).expect("BUG: Ref not found in repo after fetching!"),
             fetch_outcome,
         ))
     }
