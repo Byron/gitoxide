@@ -88,7 +88,7 @@ jobs:
           - x86_64-pc-windows-gnu
           - i686-pc-windows-msvc
           - aarch64-pc-windows-msvc
-        feature:
+        feature: &features
           - small
           - lean
           - max
@@ -229,3 +229,21 @@ jobs:
         run: gh release upload "$VERSION" "$ASSET"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos-universal-binary-release:
+    name: build-macos-universal-binary-release
+
+    runs-on: macos-latest
+
+    needs: [ create-release, build-release ]
+
+    strategy:
+      matrix:
+        feature: *features
+
+    steps:
+      - name: Placeholder
+        run: |
+          echo "This job is for the feature: $FEATURE"
+        env:
+          FEATURE: ${{ matrix.feature }}
