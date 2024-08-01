@@ -1,4 +1,4 @@
-# This is largely adapted from past and recent versions of the ripgrep release workflow.
+# This is largely adapted from the ripgrep release workflow.
 # https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
 name: release
@@ -65,33 +65,12 @@ jobs:
           esac
 
       - name: Create GitHub release
-        id: release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ env.VERSION }}
-          name: ${{ env.VERSION }}
-          allowUpdates: true
-          draft: true
-          omitBody: true
-          omitPrereleaseDuringUpdate: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create artifacts directory
-        run: mkdir artifacts
-
-      - name: Save release upload URL to artifact
-        run: echo "$URL" > artifacts/release-upload-url
+        run: gh release create "$VERSION" --title="$VERSION" --draft
         env:
-          URL: ${{ steps.release.outputs.upload_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Save version number to artifact
-        run: echo "$VERSION" > artifacts/release-version
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifacts
-          path: artifacts
+    outputs:
+      version: ${{ env.VERSION }}
 
   build-release:
     name: build-release
@@ -199,17 +178,6 @@ jobs:
           echo "target flag is: $TARGET_FLAGS"
           echo "target dir is: $TARGET_DIR"
 
-      - name: Get release download URL
-        uses: actions/download-artifact@v4
-        with:
-          name: artifacts
-          path: artifacts
-
-      - name: Set release upload URL and release version
-        run: |
-          echo "UPLOAD_URL=$(< artifacts/release-upload-url)" >> "$GITHUB_ENV"
-          echo "VERSION=$(< artifacts/release-version)" >> "$GITHUB_ENV"
-
       - name: Build release binary
         run: |
           "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features "$FEATURE"
@@ -228,33 +196,36 @@ jobs:
             /target/arm-unknown-linux-gnueabihf/release/ein \
             /target/arm-unknown-linux-gnueabihf/release/gix
 
-      - name: Build archive
-        run: |
-          staging="gitoxide-$FEATURE-$VERSION-$TARGET"
-          mkdir -p -- "$staging"
-
-          cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
-
-          if [ "$OS" = 'windows-latest' ]; then
-            file -- "$TARGET_DIR"/release/{ein,gix}.exe
-            cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$staging/"
-            7z a "$staging.zip" "$staging"
-            echo "ASSET=$staging.zip" >> "$GITHUB_ENV"
-          else
-            file -- "$TARGET_DIR"/release/{ein,gix}
-            cp -- "$TARGET_DIR"/release/{ein,gix} "$staging/"
-            tar czf "$staging.tar.gz" "$staging"
-            echo "ASSET=$staging.tar.gz" >> "$GITHUB_ENV"
-          fi
+      - name: Determine version
+        run: echo "VERSION=$VERSION" >> "$GITHUB_ENV"
         env:
-          OS: ${{ matrix.os }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+
+      - name: Determine archive basename
+        run: echo "ARCHIVE=gitoxide-$FEATURE-$VERSION-$TARGET" >> "$GITHUB_ENV"
+
+      - name: Pre-populate directory for archive
+        run: |
+          mkdir -- "$ARCHIVE"
+          cp {README.md,LICENSE-*,CHANGELOG.md} "$ARCHIVE/"
+
+      - name: Build archive (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          file -- "$TARGET_DIR"/release/{ein,gix}.exe
+          cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$ARCHIVE/"
+          7z a "$ARCHIVE.zip" "$ARCHIVE"
+          echo "ASSET=$ARCHIVE.zip" >> "$GITHUB_ENV"
+
+      - name: Build archive (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          file -- "$TARGET_DIR"/release/{ein,gix}
+          cp -- "$TARGET_DIR"/release/{ein,gix} "$ARCHIVE/"
+          tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
 
       - name: Upload release archive
-        uses: actions/upload-release-asset@v1.0.2
+        run: gh release upload "$VERSION" "$ASSET"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: ${{ env.ASSET }}
-          asset_name: ${{ env.ASSET }}
-          asset_content_type: application/octet-stream
