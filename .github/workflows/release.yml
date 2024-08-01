@@ -134,14 +134,15 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CARGO: cargo  # On Linux, this will be changed to `cross` in a later step.
-      TARGET: ${{ matrix.target }}
-      TARGET_FLAGS: --target=${{ matrix.target }}
-      TARGET_DIR: target/${{ matrix.target }}
-      FEATURE: ${{ matrix.feature }}
       RUST_BACKTRACE: '1'  # Emit backtraces on panics.
       CARGO_TERM_COLOR: always
       CLICOLOR: '1'
+      CARGO: cargo  # On Linux, this will be changed to `cross` in a later step.
+      FEATURE: ${{ matrix.feature }}
+      VERSION: ${{ needs.create-release.outputs.version }}
+      TARGET: ${{ matrix.target }}
+      TARGET_FLAGS: --target=${{ matrix.target }}
+      TARGET_DIR: target/${{ matrix.target }}
 
     steps:
       - name: Checkout repository
@@ -192,11 +193,6 @@ jobs:
             /target/arm-unknown-linux-gnueabihf/release/ein \
             /target/arm-unknown-linux-gnueabihf/release/gix
 
-      - name: Determine version
-        run: echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-        env:
-          VERSION: ${{ needs.create-release.outputs.version }}
-
       - name: Determine archive basename
         run: echo "ARCHIVE=gitoxide-$FEATURE-$VERSION-$TARGET" >> "$GITHUB_ENV"
 
@@ -226,8 +222,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-macos-universal-binary-release:
-    name: build-macos-universal-binary-release
+  build-macos-universal2-release:
+    name: build-macos-universal2-release
 
     runs-on: macos-latest
 
@@ -237,9 +233,35 @@ jobs:
       matrix:
         feature: [ small, lean, max, max-pure ]
 
+    env:
+      BASH_ENV: ./helpers.sh
+      FEATURE: ${{ matrix.feature }}
+      VERSION: ${{ needs.create-release.outputs.version }}
+
     steps:
-      - name: Placeholder
+      - name: Define helper function
         run: |
-          echo "This job is for the feature: $FEATURE"
+          name() { echo "gitoxide-$FEATURE-$VERSION-$1-apple-darwin"; }
+          declare -f name >> "$BASH_ENV"
+
+      - name: Obtain single-architecture releases
+        run: |
+          gh release download "$VERSION" --pattern="$(name aarch64).tar.gz" --pattern="$(name x86_64).tar.gz"
+          tar xf "$(name aarch64).tar.gz"
+          tar xf "$(name x86_64).tar.gz"
+
+      - name: Repack into Universal-2 release
+        run: |
+          cp -R -- "$(name aarch64)" "$(name universal)"
+          rm -- "$(name universal)"/{ein,gix}
+          for bin in ein gix; do
+            lipo -create "$(name aarch64)/$bin" "$(name x86_64)/$bin" -output "$(name universal)/$bin"
+          done
+          file "$(name universal)"/{ein,gix}
+          tar czf "$(name universal).tar.gz" "$(name universal)"
+          echo "ASSET=$(name universal).tar.gz" >> "$GITHUB_ENV"
+
+      - name: Upload release archive
+        run: gh release upload "$VERSION" "$ASSET"
         env:
-          FEATURE: ${{ matrix.feature }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
