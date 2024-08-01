@@ -208,7 +208,9 @@ jobs:
           file -- "$TARGET_DIR"/release/{ein,gix}.exe
           cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$ARCHIVE/"
           7z a "$ARCHIVE.zip" "$ARCHIVE"
+          certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
           echo "ASSET=$ARCHIVE.zip" >> "$GITHUB_ENV"
+          echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> "$GITHUB_ENV"
 
       - name: Build archive (Unix)
         if: matrix.os != 'windows-latest'
@@ -216,10 +218,12 @@ jobs:
           file -- "$TARGET_DIR"/release/{ein,gix}
           cp -- "$TARGET_DIR"/release/{ein,gix} "$ARCHIVE/"
           tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          shasum --algorithm=256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
           echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
+          echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> "$GITHUB_ENV"
 
       - name: Upload release archive
-        run: gh release upload "$VERSION" "$ASSET"
+        run: gh release upload "$VERSION" "$ASSET" "$ASSET_SUM"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -249,38 +253,46 @@ jobs:
 
       - name: Obtain single-architecture releases
         run: |
-          gh release --repo="$REPOSITORY" download "$VERSION" --pattern="$(name aarch64).tar.gz" --pattern="$(name x86_64).tar.gz"
+          gh release --repo="$REPOSITORY" download "$VERSION" \
+            --pattern="$(name aarch64).tar.gz" --pattern="$(name aarch64).tar.gz.sha256" \
+            --pattern="$(name x86_64).tar.gz" --pattern="$(name x86_64).tar.gz.sha256"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Unpack single-architecture releases
         run: |
+          shasum --check "$(name aarch64).tar.gz.sha256" "$(name x86_64).tar.gz.sha256"
           tar xf "$(name aarch64).tar.gz"
           tar xf "$(name x86_64).tar.gz"
 
+      - name: Determine archive basename
+        run: echo "ARCHIVE=$(name universal)" >> "$GITHUB_ENV"
+
       - name: Pre-populate directory for archive
         run: |
-          cp -R -- "$(name aarch64)" "$(name universal)"
-          rm -- "$(name universal)"/{ein,gix}
+          cp -R -- "$(name aarch64)" "$ARCHIVE"
+          rm -- "$ARCHIVE"/{ein,gix}
 
       - name: Create Universal 2 binaries
         run: |
           for bin in ein gix; do
-            lipo -create "$(name aarch64)/$bin" "$(name x86_64)/$bin" -output "$(name universal)/$bin"
-            file "$(name universal)/$bin"
+            lipo -create "$(name aarch64)/$bin" "$(name x86_64)/$bin" -output "$ARCHIVE/$bin"
+            file -- "$ARCHIVE/$bin"
           done
 
       - name: Build archive
         run: |
-          tar czf "$(name universal).tar.gz" "$(name universal)"
-          echo "ASSET=$(name universal).tar.gz" >> "$GITHUB_ENV"
+          tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          shasum --algorithm=256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+          echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
+          echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> "$GITHUB_ENV"
 
       - name: Upload release archive
-        run: gh release --repo="$REPOSITORY" upload "$VERSION" "$ASSET"
+        run: gh release --repo="$REPOSITORY" upload "$VERSION" "$ASSET" "$ASSET_SUM"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # This checks and publishes the release on GitHub. It does not upload to crates.io.
+  # This checks the draft release on GitHub and publishes it. It does not upload to crates.io.
   publish-release:
     name: publish-release
 
