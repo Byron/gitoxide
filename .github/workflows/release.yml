@@ -17,9 +17,7 @@ defaults:
     shell: bash
 
 jobs:
-  # The create-release job runs purely to initialize the GitHub release itself,
-  # and names the release after the version tag that was pushed. It's separate
-  # from building the release so that we only create the release once.
+  # Create a draft release, initially with no binary assets attached.
   create-release:
     runs-on: ubuntu-latest
 
@@ -70,6 +68,7 @@ jobs:
     outputs:
       version: ${{ env.VERSION }}
 
+  # Build for a particular feature and target, and attach an archive for it.
   build-release:
     needs: [ create-release ]
 
@@ -223,6 +222,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Add a macOS universal binary archive for a feature using its built aarch64 and x86_64 assets.
   build-macos-universal2-release:
     runs-on: macos-latest
 
@@ -286,6 +286,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Check for some problems, consolidate checksum files into one, and mark the release non-draft.
   publish-release:
     runs-on: ubuntu-latest
 
