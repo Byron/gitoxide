@@ -1,4 +1,4 @@
-# This is largely adapted from the ripgrep release workflow.
+# Much of this workflow is adapted from the ripgrep release workflow.
 # https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
 name: release
