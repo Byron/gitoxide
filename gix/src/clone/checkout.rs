@@ -61,49 +61,8 @@ pub mod main_worktree {
 
     /// Modification
     impl PrepareCheckout {
-        /// Set the `name` of the reference to check out, instead of the remote `HEAD`.
-        /// If `None`, the `HEAD` will be used, which is the default.
-        ///
-        /// Note that `name` should be a partial name like `main` or `feat/one`, but can be a full ref name.
-        /// If a branch on the remote matches, it will automatically be retrieved even without a refspec.
-        pub fn with_ref_name<'a, Name, E>(self, ref_name: Option<Name>) -> Result<PrepareCheckout, Error>
-        where
-            Name: TryInto<&'a gix_ref::PartialNameRef, Error = E>,
-            gix_ref::file::find::Error: std::convert::From<E>,
-        {
-            let repo = self
-                .repo
-                .as_ref()
-                .expect("BUG: this method may only be called until it is successful");
-
-            let reference = ref_name
-                .map(|ref_name| repo.try_find_reference(ref_name))
-                .transpose()
-                .map_err(|e| Error::FindHead(crate::reference::find::existing::Error::Find(e)))?
-                .flatten()
-                .map(|r| r.detach());
-
-            self.with_ref(reference)
-        }
-
         /// Set the reference to checkout from the tree.
-        pub fn with_ref<'a>(mut self, ref_val: Option<gix_ref::Reference>) -> Result<PrepareCheckout, Error> {
-            let repo = self
-                .repo
-                .as_ref()
-                .expect("BUG: this method may only be called until it is successful");
-
-            self.checkout_object = ref_val
-                .map(|r| r.attach(repo))
-                .map(|r| r.into_fully_peeled_id())
-                .transpose()?
-                .map(|r| r.inner);
-
-            Ok(self)
-        }
-
-        /// Set the reference to checkout from the tree.
-        pub fn with_object_id(mut self, object_id: Option<crate::ObjectId>) -> PrepareCheckout {
+        pub fn with_rev_single(mut self, object_id: Option<gix_hash::ObjectId>) -> PrepareCheckout {
             self.checkout_object = object_id;
 
             self
