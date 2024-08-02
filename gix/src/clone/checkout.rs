@@ -5,7 +5,7 @@ use crate::{clone::PrepareCheckout, Repository};
 pub mod main_worktree {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
-    use crate::ext::{ObjectIdExt, ReferenceExt};
+    use crate::ext::ObjectIdExt;
     use crate::{clone::PrepareCheckout, Progress, Repository};
 
     /// The error returned by [`PrepareCheckout::main_worktree()`].
