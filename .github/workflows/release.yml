@@ -1,4 +1,4 @@
-# This is largely adapted from past and recent versions of the ripgrep release workflow.
+# Much of this workflow is adapted from the ripgrep release workflow.
 # https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
 name: release
@@ -12,59 +12,64 @@ on:
     tags:
       - 'v*'
 
-env:
-  RUST_BACKTRACE: 1
-  CARGO_TERM_COLOR: always
-  CLICOLOR: 1
-
 defaults:
   run:
     shell: bash
 
 jobs:
-  # The create-release job runs purely to initialize the GitHub release itself,
-  # and names the release after the version tag that was pushed. It's separate
-  # from building the release so that we only create the release once.
+  # Create a draft release, initially with no binary assets attached.
   create-release:
-    name: create-release
     runs-on: ubuntu-latest
+
 #    env:
 #      # Set to force version number, e.g., when no tag exists.
 #      VERSION: TEST-0.0.0
+
     steps:
-      - name: Create artifacts directory
-        run: mkdir artifacts
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Get the release version from the tag
         if: env.VERSION == ''
-        run: echo 'VERSION=${{ github.ref_name }}' >> "$GITHUB_ENV"
+        run: echo "VERSION=$REF_NAME" >> "$GITHUB_ENV"
+        env:
+          REF_NAME: ${{ github.ref_name }}
+
+      - name: Validate version against Cargo.toml
+        run: |
+          manifest_version="$(yq -r .package.version Cargo.toml)"
+          echo "version to name the release: $VERSION"
+          echo "version Cargo.toml suggests: v$manifest_version"
+
+          case "$VERSION" in
+          "v$manifest_version" )
+            echo 'OK: Release name/version agrees with Cargo.toml version.'
+            ;;
+          TEST-* | *-DO-NOT-USE )
+            echo 'OK: Release name/version is strange but marked as such.'
+            ;;
+          "$manifest_version" )
+            echo 'STOPPING: Release name/version is missing the leading "v".'
+            exit 1
+            ;;
+          * )
+            echo 'STOPPING: Release name/version and Cargo.toml version do not match.'
+            echo 'STOPPING: Usually this means either a wrong tag name or wrong version in Cargo.toml.'
+            echo 'STOPPING: If intended, prepend `TEST-` or append `-DO-NOT-USE` to the release name.'
+            exit 1
+            ;;
+          esac
 
       - name: Create GitHub release
-        id: release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ env.VERSION }}
-          name: ${{ env.VERSION }}
-          allowUpdates: true
-          omitBody: true
-          omitPrereleaseDuringUpdate: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$VERSION" --title="$VERSION" --draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Save release upload URL to artifact
-        run: echo '${{ steps.release.outputs.upload_url }}' > artifacts/release-upload-url
+    outputs:
+      version: ${{ env.VERSION }}
 
-      - name: Save version number to artifact
-        run: echo "$VERSION" > artifacts/release-version
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifacts
-          path: artifacts
-
+  # Build for a particular feature and target, and attach an archive for it.
   build-release:
-    name: build-release
-
     needs: [ create-release ]
 
     strategy:
@@ -78,11 +83,8 @@ jobs:
           - x86_64-pc-windows-gnu
           - i686-pc-windows-msvc
           - aarch64-pc-windows-msvc
-        feature:
-          - small
-          - lean
-          - max
-          - max-pure
+        # When changing these features, make the same change in build-macos-universal2-release.
+        feature: [ small, lean, max, max-pure ]
         include:
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
@@ -128,21 +130,28 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CARGO: cargo  # On Linux, this will be changed to `cross` later.
+      RUST_BACKTRACE: '1'  # Emit backtraces on panics.
+      CARGO_TERM_COLOR: always
+      CLICOLOR: '1'
+      CARGO: cargo  # On Linux, this will be changed to `cross` in a later step.
+      FEATURE: ${{ matrix.feature }}
+      VERSION: ${{ needs.create-release.outputs.version }}
+      TARGET: ${{ matrix.target }}
       TARGET_FLAGS: --target=${{ matrix.target }}
-      TARGET_DIR: ./target/${{ matrix.target }}
-      RUST_BACKTRACE: 1  # Emit backtraces on panics.
+      TARGET_DIR: target/${{ matrix.target }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install packages (Ubuntu)
-        # Because openssl doesn't work on musl by default, we resort to max-pure. And that won't need any dependency, so we can skip this.continue-on-error
+        # Because openssl doesn't work on musl by default, we resort to max-pure.
+        # And that won't need any dependency, so we can skip this or use `continue-on-error`.
         # Once we want to support better zlib performance, we might have to re-add it.
         if: matrix.os == 'ubuntu-latest-disabled'
         run: |
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -162,20 +171,9 @@ jobs:
           echo "target flag is: $TARGET_FLAGS"
           echo "target dir is: $TARGET_DIR"
 
-      - name: Get release download URL
-        uses: actions/download-artifact@v4
-        with:
-          name: artifacts
-          path: artifacts
-
-      - name: Set release upload URL and release version
-        run: |
-          echo "UPLOAD_URL=$(< artifacts/release-upload-url)" >> "$GITHUB_ENV"
-          echo "VERSION=$(< artifacts/release-version)" >> "$GITHUB_ENV"
-
       - name: Build release binary
         run: |
-          "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features ${{ matrix.feature }}
+          "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features "$FEATURE"
 
       - name: Strip release binary (x86-64 Linux, and all macOS)
         if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.os == 'macos-latest'
@@ -191,31 +189,164 @@ jobs:
             /target/arm-unknown-linux-gnueabihf/release/ein \
             /target/arm-unknown-linux-gnueabihf/release/gix
 
-      - name: Build archive
+      - name: Determine archive basename
+        run: echo "ARCHIVE=gitoxide-$FEATURE-$VERSION-$TARGET" >> "$GITHUB_ENV"
+
+      - name: Pre-populate directory for archive
         run: |
-          staging='gitoxide-${{ matrix.feature }}-${{ env.VERSION }}-${{ matrix.target }}'
-          mkdir -p -- "$staging"
+          mkdir -- "$ARCHIVE"
+          cp {README.md,LICENSE-*,CHANGELOG.md} "$ARCHIVE/"
 
-          cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
+      - name: Build archive (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          file -- "$TARGET_DIR"/release/{ein,gix}.exe
+          cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$ARCHIVE/"
+          7z a "$ARCHIVE.zip" "$ARCHIVE"
+          /usr/bin/core_perl/shasum --algorithm=256 --binary "$ARCHIVE.zip" > "$ARCHIVE.zip.sha256"
+          echo "ASSET=$ARCHIVE.zip" >> "$GITHUB_ENV"
+          echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> "$GITHUB_ENV"
 
-          if [ '${{ matrix.os }}' = 'windows-latest' ]; then
-            file -- "$TARGET_DIR"/release/{ein,gix}.exe
-            cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$staging/"
-            7z a "$staging.zip" "$staging"
-            echo "ASSET=$staging.zip" >> "$GITHUB_ENV"
-          else
-            file -- "$TARGET_DIR"/release/{ein,gix}
-            cp -- "$TARGET_DIR"/release/{ein,gix} "$staging/"
-            tar czf "$staging.tar.gz" "$staging"
-            echo "ASSET=$staging.tar.gz" >> "$GITHUB_ENV"
-          fi
+      - name: Build archive (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          file -- "$TARGET_DIR"/release/{ein,gix}
+          cp -- "$TARGET_DIR"/release/{ein,gix} "$ARCHIVE/"
+          tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          shasum --algorithm=256 --binary "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+          echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
+          echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> "$GITHUB_ENV"
 
       - name: Upload release archive
-        uses: actions/upload-release-asset@v1.0.2
+        run: gh release upload "$VERSION" "$ASSET" "$ASSET_SUM"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: ${{ env.ASSET }}
-          asset_name: ${{ env.ASSET }}
-          asset_content_type: application/octet-stream
+
+  # Add a macOS universal binary archive for a feature using its built aarch64 and x86_64 assets.
+  build-macos-universal2-release:
+    runs-on: macos-latest
+
+    needs: [ create-release, build-release ]
+
+    strategy:
+      matrix:
+        # These features need to be exactly the same as the features in build-release.
+        feature: [ small, lean, max, max-pure ]
+
+    env:
+      BASH_ENV: ./helpers.sh
+      REPOSITORY: ${{ github.repository }}
+      FEATURE: ${{ matrix.feature }}
+      VERSION: ${{ needs.create-release.outputs.version }}
+
+    steps:
+      - name: Define helper function
+        run: |
+          name() { echo "gitoxide-$FEATURE-$VERSION-$1-apple-darwin"; }
+          declare -f name >> "$BASH_ENV"
+
+      - name: Obtain single-architecture releases
+        run: |
+          gh release --repo="$REPOSITORY" download "$VERSION" \
+            --pattern="$(name aarch64).tar.gz" --pattern="$(name aarch64).tar.gz.sha256" \
+            --pattern="$(name x86_64).tar.gz" --pattern="$(name x86_64).tar.gz.sha256"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Unpack single-architecture releases
+        run: |
+          shasum --check "$(name aarch64).tar.gz.sha256" "$(name x86_64).tar.gz.sha256"
+          tar xf "$(name aarch64).tar.gz"
+          tar xf "$(name x86_64).tar.gz"
+
+      - name: Determine archive basename
+        run: echo "ARCHIVE=$(name universal)" >> "$GITHUB_ENV"
+
+      - name: Pre-populate directory for archive
+        run: |
+          cp -R -- "$(name aarch64)" "$ARCHIVE"
+          rm -- "$ARCHIVE"/{ein,gix}
+
+      - name: Create Universal 2 binaries
+        run: |
+          for bin in ein gix; do
+            lipo -create "$(name aarch64)/$bin" "$(name x86_64)/$bin" -output "$ARCHIVE/$bin"
+            file -- "$ARCHIVE/$bin"
+          done
+
+      - name: Build archive
+        run: |
+          tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          shasum --algorithm=256 --binary "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+          echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
+          echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> "$GITHUB_ENV"
+
+      - name: Upload release archive
+        run: gh release --repo="$REPOSITORY" upload "$VERSION" "$ASSET" "$ASSET_SUM"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Check for some problems, consolidate checksum files into one, and mark the release non-draft.
+  publish-release:
+    runs-on: ubuntu-latest
+
+    needs: [ create-release, build-release, build-macos-universal2-release ]
+
+    env:
+      REPOSITORY: ${{ github.repository }}
+      VERSION: ${{ needs.create-release.outputs.version }}
+
+    steps:
+      - name: Discover assets
+        run: |
+          gh release --repo="$REPOSITORY" view "$VERSION" --json assets --jq '.assets.[].name' > assets.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Show all individual asset names
+        run: cat assets.txt
+
+      # The `features` array is repeated because GHA doen't support YAML anchors.
+      # We will check that the macOS `universal` features match the others exactly.
+      # In the future this and the next step may be removed, or expanded to do more validation.
+      - name: Extract macOS asset names by architecture
+        run: |
+          for arch in aarch64 x86_64 universal; do
+            grep -Fw "$arch-apple-darwin" assets.txt | sort | tee -- "$arch.txt"
+          done
+
+      - name: Check macOS archive features
+        run: |
+          mask() { sed -r 's/\w+-apple-darwin/<arch>-apple-darwin/' -- "$1.txt"; }
+          diff -- <(mask aarch64) <(mask universal)
+          diff -- <(mask x86_64) <(mask universal)
+
+      - name: Clean up local temporary macOS asset list files
+        run: rm {assets,aarch64,x86_64,universal}.txt
+
+      - name: Retrieve all individual checksums
+        run: gh release --repo="$REPOSITORY" download "$VERSION" --pattern='gitoxide-*.sha256'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Concatenate checksums into one file
+        run: cat gitoxide-*.sha256 > hashes.sha256
+
+      - name: Upload the combined checksum file
+        run: gh release --repo="$REPOSITORY" upload "$VERSION" hashes.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # If any step of any job fails before this, the draft still has the individual checksum files.
+      - name: Remove the individual checksum file assets
+        run: |
+          for sumfile in gitoxide-*.sha256; do
+            gh release --repo="$REPOSITORY" delete-asset "$VERSION" "$sumfile" --yes
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the release
+        run: gh release --repo="$REPOSITORY" edit "$VERSION" --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
