@@ -37,6 +37,7 @@ pub enum Error {
     },
     #[error("Failed to update HEAD with values from remote")]
     HeadUpdate(#[from] crate::reference::edit::Error),
+    #[cfg(feature = "revision")]
     #[error("Failed to parse revision")]
     RefParseError(#[from] crate::revision::spec::parse::single::Error),
     #[error("The remote didn't have any ref that matched '{}'", wanted.as_ref().as_bstr())]
@@ -230,7 +231,6 @@ impl PrepareFetch {
         P: crate::NestedProgress,
         P::SubProgress: 'static,
     {
-
         let (repo, fetch_outcome) = self.fetch_only(progress, should_interrupt)?;
 
         let mut checkout = crate::clone::PrepareCheckout {
