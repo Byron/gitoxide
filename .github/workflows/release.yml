@@ -21,8 +21,6 @@ jobs:
   # and names the release after the version tag that was pushed. It's separate
   # from building the release so that we only create the release once.
   create-release:
-    name: create-release
-
     runs-on: ubuntu-latest
 
 #    env:
@@ -73,8 +71,6 @@ jobs:
       version: ${{ env.VERSION }}
 
   build-release:
-    name: build-release
-
     needs: [ create-release ]
 
     strategy:
@@ -228,8 +224,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-macos-universal2-release:
-    name: build-macos-universal2-release
-
     runs-on: macos-latest
 
     needs: [ create-release, build-release ]
@@ -293,8 +287,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-release:
-    name: publish-release
-
     runs-on: ubuntu-latest
 
     needs: [ create-release, build-release, build-macos-universal2-release ]
