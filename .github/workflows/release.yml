@@ -208,7 +208,7 @@ jobs:
           file -- "$TARGET_DIR"/release/{ein,gix}.exe
           cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$ARCHIVE/"
           7z a "$ARCHIVE.zip" "$ARCHIVE"
-          /usr/bin/core_perl/shasum --algorithm=256 "$ARCHIVE.zip" > "$ARCHIVE.zip.sha256"
+          /usr/bin/core_perl/shasum --algorithm=256 --binary "$ARCHIVE.zip" > "$ARCHIVE.zip.sha256"
           echo "ASSET=$ARCHIVE.zip" >> "$GITHUB_ENV"
           echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> "$GITHUB_ENV"
 
@@ -218,7 +218,7 @@ jobs:
           file -- "$TARGET_DIR"/release/{ein,gix}
           cp -- "$TARGET_DIR"/release/{ein,gix} "$ARCHIVE/"
           tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
-          shasum --algorithm=256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+          shasum --algorithm=256 --binary "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
           echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
           echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> "$GITHUB_ENV"
 
@@ -283,7 +283,7 @@ jobs:
       - name: Build archive
         run: |
           tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
-          shasum --algorithm=256 "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+          shasum --algorithm=256 --binary "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
           echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
           echo "ASSET_SUM=$ARCHIVE.tar.gz.sha256" >> "$GITHUB_ENV"
 
