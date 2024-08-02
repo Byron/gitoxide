@@ -208,7 +208,7 @@ jobs:
           file -- "$TARGET_DIR"/release/{ein,gix}.exe
           cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$ARCHIVE/"
           7z a "$ARCHIVE.zip" "$ARCHIVE"
-          certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
+          shasum --algorithm=256 "$ARCHIVE.zip" > "$ARCHIVE.zip.sha256"
           echo "ASSET=$ARCHIVE.zip" >> "$GITHUB_ENV"
           echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> "$GITHUB_ENV"
 
