@@ -292,23 +292,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # This checks the draft release on GitHub and publishes it. It does not upload to crates.io.
-  publish-release:
-    name: publish-release
+  check-release:
+    name: check-release
 
     runs-on: ubuntu-latest
 
     needs: [ create-release, build-release, build-macos-universal2-release ]
-
-    env:
-      REPOSITORY: ${{ github.repository }}
-      VERSION: ${{ needs.create-release.outputs.version }}
 
     steps:
       - name: Discover assets
         run: |
           gh release --repo="$REPOSITORY" view "$VERSION" --json assets --jq '.assets.[].name' > assets.txt
         env:
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ needs.create-release.outputs.version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Show all asset names
@@ -329,8 +326,34 @@ jobs:
           diff -- <(mask aarch64) <(mask universal)
           diff -- <(mask x86_64) <(mask universal)
 
+  publish-release:
+    name: publish-release
+
+    runs-on: ubuntu-latest
+
+    needs: [ create-release, check-release ]
+
+    env:
+      REPOSITORY: ${{ github.repository }}
+      VERSION: ${{ needs.create-release.outputs.version }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Retrieve individual checksums
+        run: gh release --repo="$REPOSITORY" download "$VERSION" --pattern='gitoxide-*.sha256'
+
+      - name: Concatenate checksums into one file
+        run: cat gitoxide-*.sha256 > hashes.sha256
+
+      - name: Upload the combined checksum file
+        run: gh release --repo="$REPOSITORY" upload "$VERSION" hashes.sha256
+
+      - name: Discard the individual checksum files
+        run: |
+          for sumfile in gitoxide-*.sha256; do
+            gh release --repo="$REPOSITORY" delete-asset "$VERSION" "$sumfile" --yes
+          done
+
       - name: Publish the release
         if: false
         run: gh release --repo="$REPOSITORY" edit "$VERSION" --draft=false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
