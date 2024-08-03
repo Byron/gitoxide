@@ -33,7 +33,9 @@ pub(crate) mod function {
         }
 
         Ok(if let Ok(val) = Date::strptime(SHORT.0, input) {
-            let val = val.to_zoned(TimeZone::UTC).expect("date is in range");
+            let val = val
+                .to_zoned(TimeZone::UTC)
+                .map_err(|_| Error::InvalidDateString { input: input.into() })?;
             Time::new(val.timestamp().as_second(), val.offset().seconds())
         } else if let Ok(val) = rfc2822_relaxed(input) {
             Time::new(val.timestamp().as_second(), val.offset().seconds())
