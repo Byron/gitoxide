@@ -62,7 +62,7 @@ bstr = { version = "1.3.0", default-features = false, features = [
     "std",
     "unicode",
 ] }
-winnow = { version = "0.6.0", features = ["simd"] }
+winnow.workspace = true
 
 # for async-client
 async-trait = { version = "0.1.51", optional = true }

@@ -8,10 +8,7 @@
 # More documentation for the advisories section can be found here:
 # https://embarkstudios.github.io/cargo-deny/checks/advisories/cfg.html
 [advisories]
-ignore = [
-    # this is `rustls@0.20.9` coming in with `curl`, which doesn't have an update yet. It's only active optionally, not by default.
-    "RUSTSEC-2024-0336",
-]
+ignore = []
 
 
 
@@ -29,10 +26,10 @@ allow = [
     "MIT",
     "MIT-0",
     "ISC",
-    "Unicode-DFS-2016",
     "LicenseRef-ring",
+    "Unicode-DFS-2016",
     "Zlib",
-    "Unicode-3.0"
+    "MPL-2.0"
 ]
 # The confidence threshold for detecting a license from license text.
 # The higher the value, the more closely the license text must be to the

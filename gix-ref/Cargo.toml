@@ -31,7 +31,7 @@ gix-lock = { version = "^14.0.0", path = "../gix-lock" }
 gix-tempfile = { version = "^14.0.0", default-features = false, path = "../gix-tempfile" }
 
 thiserror = "1.0.34"
-winnow = { version = "0.6.0", features = ["simd"] }
+winnow.workspace = true
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 
 # packed refs
