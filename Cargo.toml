@@ -206,17 +206,18 @@ sha1_smol = { opt-level = 3 }
 
 [profile.release]
 overflow-checks = false
-#lto = "fat"
-# this bloats files but assures destructors are called, important for tempfiles. One day I hope we
+lto = "thin"
+# This bloats files but assures destructors are called, important for tempfiles. One day I hope we
 # can wire up the 'abrt' signal handler so tempfiles will be removed in case of panics.
-panic = 'unwind'
-#codegen-units = 1
+panic = "unwind"
 incremental = false
 build-override = { opt-level = 0 }
 
-# It's not quite worth building dependencies with more optimizations yet. Let's keep it here for later.
-#[profile.dev.package."*"]
-#opt-level = 2
+[profile.release-opt]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
 
 [workspace]
 members = [

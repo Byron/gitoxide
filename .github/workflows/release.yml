@@ -139,6 +139,7 @@ jobs:
       TARGET: ${{ matrix.target }}
       TARGET_FLAGS: --target=${{ matrix.target }}
       TARGET_DIR: target/${{ matrix.target }}
+      PROFILE: release-opt
 
     steps:
       - name: Checkout repository
@@ -171,23 +172,9 @@ jobs:
           echo "target flag is: $TARGET_FLAGS"
           echo "target dir is: $TARGET_DIR"
 
-      - name: Build release binary
+      - name: Build release binary (with extra optimizations)
         run: |
-          "$CARGO" build --verbose --release "$TARGET_FLAGS" --no-default-features --features "$FEATURE"
-
-      - name: Strip release binary (x86-64 Linux, and all macOS)
-        if: matrix.target == 'x86_64-unknown-linux-musl' || matrix.os == 'macos-latest'
-        run: strip "$TARGET_DIR"/release/{ein,gix}
-
-      - name: Strip release binary (ARM Linux)
-        if: matrix.target == 'arm-unknown-linux-gnueabihf'
-        run: |
-          docker run --rm -v \
-            "$PWD/target:/target:Z" \
-            rustembedded/cross:arm-unknown-linux-gnueabihf \
-            arm-linux-gnueabihf-strip \
-            /target/arm-unknown-linux-gnueabihf/release/ein \
-            /target/arm-unknown-linux-gnueabihf/release/gix
+          "$CARGO" build --verbose --profile="$PROFILE" "$TARGET_FLAGS" --no-default-features --features="$FEATURE"
 
       - name: Determine archive basename
         run: echo "ARCHIVE=gitoxide-$FEATURE-$VERSION-$TARGET" >> "$GITHUB_ENV"
@@ -200,8 +187,8 @@ jobs:
       - name: Build archive (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          file -- "$TARGET_DIR"/release/{ein,gix}.exe
-          cp -- "$TARGET_DIR"/release/{ein,gix}.exe "$ARCHIVE/"
+          file -- "$TARGET_DIR/$PROFILE"/{ein,gix}.exe
+          cp -- "$TARGET_DIR/$PROFILE"/{ein,gix}.exe "$ARCHIVE/"
           7z a "$ARCHIVE.zip" "$ARCHIVE"
           /usr/bin/core_perl/shasum --algorithm=256 --binary "$ARCHIVE.zip" > "$ARCHIVE.zip.sha256"
           echo "ASSET=$ARCHIVE.zip" >> "$GITHUB_ENV"
@@ -210,8 +197,8 @@ jobs:
       - name: Build archive (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          file -- "$TARGET_DIR"/release/{ein,gix}
-          cp -- "$TARGET_DIR"/release/{ein,gix} "$ARCHIVE/"
+          file -- "$TARGET_DIR/$PROFILE"/{ein,gix}
+          cp -- "$TARGET_DIR/$PROFILE"/{ein,gix} "$ARCHIVE/"
           tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
           shasum --algorithm=256 --binary "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
           echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
@@ -346,7 +333,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish the release
+      - name: Publish the release  # FIXME: Reenable this.
+        if: false
         run: gh release --repo="$REPOSITORY" edit "$VERSION" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
