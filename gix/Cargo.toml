@@ -208,7 +208,7 @@ max-control = ["parallel", "pack-cache-lru-static", "pack-cache-lru-dynamic"]
 ## on some platforms.
 ## Note that this configuration still uses a pure Rust zlib implementation which isn't the fastest compared to its C-alternatives.
 ## No C toolchain is involved.
-max-performance-safe = ["max-control", "parallel-walkdir"]
+max-performance-safe = ["max-control"]
 
 ## If set, walkdir iterators will be multi-threaded which affects the listing of loose objects and references.
 ## Note, however, that this will use `rayon` under the hood and spawn threads for each traversal to avoid a global rayon thread pool.
