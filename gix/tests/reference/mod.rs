@@ -1,3 +1,5 @@
+use gix::remote::Direction;
+
 mod log {
 
     #[test]
@@ -17,6 +19,31 @@ mod log {
         );
     }
 }
+
+#[test]
+fn remote_name() -> crate::Result {
+    let repo = crate::named_subrepo_opts(
+        "make_remote_config_repos.sh",
+        "multiple-remotes",
+        gix::open::Options::isolated(),
+    )?;
+    for (ref_name, expected_remote) in [
+        ("main", "origin"),
+        ("other-main", "other"),
+        ("refs/remotes/origin/main", "origin"),
+        ("refs/remotes/other/main", "other"),
+        ("with/two/slashes/main", "with/two/slashes"),
+        ("with/two/main", "with/two"),
+    ] {
+        let r = repo.find_reference(ref_name)?;
+        assert_eq!(
+            r.remote_name(Direction::Fetch).map(|name| name.as_bstr().to_owned()),
+            Some(expected_remote.into())
+        );
+    }
+    Ok(())
+}
+
 mod find {
     use gix_ref as refs;
     use gix_ref::{FullName, FullNameRef, Target};

@@ -1,6 +1,7 @@
+use crate::bstr::ByteSlice;
 use crate::repository::{branch_remote_ref_name, branch_remote_tracking_ref_name};
 use crate::{remote, Reference};
-use gix_ref::FullNameRef;
+use gix_ref::{Category, FullNameRef};
 use std::borrow::Cow;
 
 /// Remotes
@@ -9,8 +10,31 @@ impl<'repo> Reference<'repo> {
     /// Return `None` if no remote is configured.
     ///
     /// See also [`Repository::branch_remote_name()`](crate::Repository::branch_remote_name()) for more details.
-    pub fn remote_name(&self, direction: remote::Direction) -> Option<remote::Name<'repo>> {
-        self.repo.branch_remote_name(self.name().shorten(), direction)
+    pub fn remote_name(&self, direction: remote::Direction) -> Option<remote::Name<'_>> {
+        let (category, shortname) = self.name().category_and_short_name()?;
+        match category {
+            Category::RemoteBranch => {
+                if shortname.find_iter("/").take(2).count() == 1 {
+                    let slash_pos = shortname.find_byte(b'/').expect("it was just found");
+                    shortname[..slash_pos]
+                        .as_bstr()
+                        .to_str()
+                        .ok()
+                        .map(|n| remote::Name::Symbol(n.into()))
+                } else {
+                    let remotes = self.repo.remote_names();
+                    for slash_pos in shortname.rfind_iter("/") {
+                        let candidate = shortname[..slash_pos].as_bstr();
+                        if remotes.contains(candidate) {
+                            return candidate.to_str().ok().map(|n| remote::Name::Symbol(n.into()));
+                        }
+                    }
+                    None
+                }
+            }
+            Category::LocalBranch => self.repo.branch_remote_name(shortname, direction),
+            _ => None,
+        }
     }
 
     /// Find the remote along with all configuration associated with it suitable for handling this reference.

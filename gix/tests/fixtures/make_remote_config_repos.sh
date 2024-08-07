@@ -131,3 +131,13 @@ EOF
     pushDefault = push-origin
 EOF
 )
+
+git clone fetch multiple-remotes
+(cd multiple-remotes
+  git remote add other ../fetch && git fetch other
+  git remote add with/two/slashes ../fetch && git fetch with/two/slashes
+  git remote add with/two ../fetch && git fetch with/two
+
+  git checkout -b main --track origin/main
+  git checkout -b other-main --track other/main
+)
