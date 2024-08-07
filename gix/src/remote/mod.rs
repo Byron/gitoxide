@@ -1,6 +1,6 @@
-use std::borrow::Cow;
-
 use crate::bstr::BStr;
+use std::borrow::Cow;
+use std::collections::BTreeSet;
 
 /// The direction of an operation carried out (or to be carried out) through a remote.
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
@@ -30,6 +30,9 @@ pub enum Name<'repo> {
     /// A url pointing to the remote host directly.
     Url(Cow<'repo, BStr>),
 }
+
+/// A type-definition for a sorted list of unvalidated remote names - they have been read straight from the configuration.
+pub type Names<'a> = BTreeSet<Cow<'a, BStr>>;
 
 ///
 #[allow(clippy::empty_docs)]

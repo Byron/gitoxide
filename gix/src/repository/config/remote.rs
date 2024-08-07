@@ -1,5 +1,5 @@
 use crate::bstr::BStr;
-use std::{borrow::Cow, collections::BTreeSet};
+use std::borrow::Cow;
 
 use crate::config::tree::{Remote, Section};
 use crate::remote;
@@ -8,7 +8,7 @@ use crate::remote;
 impl crate::Repository {
     /// Returns a sorted list unique of symbolic names of remotes that
     /// we deem [trustworthy][crate::open::Options::filter_config_section()].
-    pub fn remote_names(&self) -> BTreeSet<Cow<'_, BStr>> {
+    pub fn remote_names(&self) -> remote::Names<'_> {
         self.config
             .resolved
             .sections_by_name(Remote.name())

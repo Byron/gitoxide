@@ -74,6 +74,20 @@ impl<'repo> Reference<'repo> {
         Ok(Id::from_id(oid, self.repo))
     }
 
+    /// Follow all symbolic targets this reference might point to and peel the underlying object
+    /// to the end of the chain, and return it, reusing the `packed` buffer if available.
+    ///
+    /// This is useful to learn where this reference is ultimately pointing to.
+    pub fn peel_to_id_in_place_packed(
+        &mut self,
+        packed: Option<&gix_ref::packed::Buffer>,
+    ) -> Result<Id<'repo>, peel::Error> {
+        let oid = self
+            .inner
+            .peel_to_id_in_place_packed(&self.repo.refs, &self.repo.objects, packed)?;
+        Ok(Id::from_id(oid, self.repo))
+    }
+
     /// Similar to [`peel_to_id_in_place()`][Reference::peel_to_id_in_place()], but consumes this instance.
     pub fn into_fully_peeled_id(mut self) -> Result<Id<'repo>, peel::Error> {
         self.peel_to_id_in_place()
