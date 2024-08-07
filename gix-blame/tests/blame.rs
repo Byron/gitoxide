@@ -1,6 +1,7 @@
-use std::{ops::Range, path::PathBuf};
+use std::{ops::Range, path::PathBuf, str::FromStr};
 
 use gix_diff::blob::intern::Token;
+use gix_hash::ObjectId;
 use gix_odb::pack::FindExt;
 use gix_ref::{file::ReferenceExt, store::WriteReflog};
 
@@ -155,6 +156,14 @@ fn it_works() {
 
     assert_eq!(lines_to_blame, vec![0..4]);
 
+    #[derive(Debug, PartialEq)]
+    struct BlameEntry {
+        range: Range<u32>,
+        oid: ObjectId,
+    }
+
+    let mut lines_blamed: Vec<BlameEntry> = vec![];
+
     let mut lines = Vec::new();
 
     use gix_ref::bstr::ByteSlice;
@@ -195,21 +204,44 @@ fn it_works() {
                         // <-->     <->
                         new_lines_to_blame.push(range.start..after.start);
                         new_lines_to_blame.push((after.end + 1)..range.end);
+
+                        lines_blamed.push(BlameEntry {
+                            range: after.clone(),
+                            oid: oid.clone(),
+                        });
                     } else {
                         // <-------->
                         //     <------->
                         // <-->
                         new_lines_to_blame.push(range.start..after.start);
+
+                        lines_blamed.push(BlameEntry {
+                            range: after.start..range.end,
+                            oid: oid.clone(),
+                        });
                     }
                 } else {
                     //    <------->
                     // <------>
                     //         <-->
                     new_lines_to_blame.push((after.end + 1)..range.end);
+
+                    lines_blamed.push(BlameEntry {
+                        range: range.start..after.end,
+                        oid: oid.clone(),
+                    });
                 }
             }
 
             assert_eq!(new_lines_to_blame, vec![0..3]);
+            assert_eq!(
+                lines_blamed,
+                vec![BlameEntry {
+                    range: 3..4,
+                    oid: ObjectId::from_str("9c2a7090627d0fffa9ed001bf7be98f86c2c8068").unwrap()
+                }]
+            );
+            assert_eq!(lines_blamed, vec![BlameEntry { range: 3..4, oid: *oid }]);
         },
     );
 
