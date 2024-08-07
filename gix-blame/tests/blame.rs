@@ -145,6 +145,16 @@ fn it_works() {
     assert_eq!(input.before, [Token(0), Token(1), Token(2),]);
     assert_eq!(input.after, [Token(0), Token(1), Token(2), Token(3)]);
 
+    // Assumption: this works because “imara-diff will compute a line diff by default”, so each
+    // token represents a line.
+    let number_of_lines: u32 = input.after.len().try_into().unwrap();
+
+    assert_eq!(number_of_lines, 4);
+
+    let lines_to_blame: Vec<Range<u32>> = vec![0..number_of_lines];
+
+    assert_eq!(lines_to_blame, vec![0..4]);
+
     let mut lines = Vec::new();
 
     use gix_ref::bstr::ByteSlice;
@@ -174,6 +184,32 @@ fn it_works() {
                 assert_eq!(hunk_after, ["line 4\n"]);
             } else {
             }
+
+            let mut new_lines_to_blame: Vec<Range<u32>> = Vec::new();
+
+            for range in &lines_to_blame {
+                if range.contains(&after.start) {
+                    if range.contains(&after.end) {
+                        // <---------->
+                        //     <--->
+                        // <-->     <->
+                        new_lines_to_blame.push(range.start..after.start);
+                        new_lines_to_blame.push((after.end + 1)..range.end);
+                    } else {
+                        // <-------->
+                        //     <------->
+                        // <-->
+                        new_lines_to_blame.push(range.start..after.start);
+                    }
+                } else {
+                    //    <------->
+                    // <------>
+                    //         <-->
+                    new_lines_to_blame.push((after.end + 1)..range.end);
+                }
+            }
+
+            assert_eq!(new_lines_to_blame, vec![0..3]);
         },
     );
 
