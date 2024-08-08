@@ -221,7 +221,6 @@ panic = "unwind"
 lto = "fat"
 codegen-units = 1
 strip = "symbols"
-build-override = { opt-level = 3 }
 
 [workspace]
 members = [
