@@ -245,7 +245,8 @@ fn open_options(path: &Path, destination_is_initially_empty: bool, overwrite_exi
     options
         .create_new(destination_is_initially_empty && !overwrite_existing)
         .create(!destination_is_initially_empty || overwrite_existing)
-        .write(true);
+        .write(true)
+        .truncate(true);
     options
 }
 
