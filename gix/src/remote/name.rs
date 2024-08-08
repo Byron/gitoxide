@@ -50,6 +50,14 @@ impl Name<'_> {
             Name::Symbol(_) => None,
         }
     }
+
+    /// Return a fully-owned copy of this instance.
+    pub fn to_owned(&self) -> Name<'static> {
+        match self {
+            Name::Symbol(s) => Name::Symbol(s.clone().into_owned().into()),
+            Name::Url(s) => Name::Url(s.clone().into_owned().into()),
+        }
+    }
 }
 
 impl<'a> TryFrom<Cow<'a, BStr>> for Name<'a> {

@@ -121,12 +121,12 @@ pub(crate) struct Store {
     inner: store::State,
 }
 
-/// A validated complete and fully qualified referenced reference name, safe to use for all operations.
+/// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FullName(pub(crate) BString);
 
-/// A validated complete and fully qualified referenced reference name, safe to use for all operations.
+/// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd)]
 #[repr(transparent)]
 pub struct FullNameRef(BStr);
@@ -138,10 +138,12 @@ pub struct PartialNameRef(BStr);
 
 /// A validated and potentially partial reference name, safe to use for common operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PartialName(BString);
 
 /// A _validated_ prefix for references to act as a namespace.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Namespace(BString);
 
 /// Denotes the kind of reference.
@@ -160,6 +162,7 @@ pub enum Kind {
 ///
 /// This translates into a prefix containing all references of a given category.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Category<'a> {
     /// A tag in `refs/tags`
     Tag,
@@ -179,6 +182,7 @@ pub enum Category<'a> {
     /// A `PseudoRef` in another _linked_ worktree, never in the main one, like `worktrees/<id>/HEAD`.
     LinkedPseudoRef {
         /// The name of the worktree.
+        #[cfg_attr(feature = "serde", serde(borrow))]
         name: &'a BStr,
     },
     /// Any reference that is prefixed with `worktrees/<id>/refs/`.
