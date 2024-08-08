@@ -5,6 +5,58 @@ use gix_hash::ObjectId;
 use gix_odb::pack::FindExt;
 use gix_ref::{file::ReferenceExt, store::WriteReflog};
 
+struct Blame {
+    _resource_cache: gix_diff::blob::Platform,
+}
+
+impl Blame {
+    fn new(worktree_root: impl Into<PathBuf>) -> Self {
+        let worktree_root: PathBuf = worktree_root.into();
+        let git_dir = worktree_root.join(".git");
+        let index =
+            gix_index::File::at(git_dir.join("index"), gix_hash::Kind::Sha1, false, Default::default()).unwrap();
+
+        let capabilities = gix_fs::Capabilities::probe(&git_dir);
+        let stack = gix_worktree::Stack::from_state_and_ignore_case(
+            &worktree_root,
+            false,
+            gix_worktree::stack::State::AttributesAndIgnoreStack {
+                attributes: Default::default(),
+                ignore: Default::default(),
+            },
+            &index,
+            index.path_backing(),
+        );
+
+        let resource_cache = gix_diff::blob::Platform::new(
+            Default::default(),
+            gix_diff::blob::Pipeline::new(
+                gix_diff::blob::pipeline::WorktreeRoots {
+                    old_root: None,
+                    new_root: None,
+                },
+                gix_filter::Pipeline::new(Default::default(), Default::default()),
+                vec![],
+                gix_diff::blob::pipeline::Options {
+                    large_file_threshold_bytes: 0,
+                    fs: capabilities,
+                },
+            ),
+            gix_diff::blob::pipeline::Mode::ToGit,
+            stack,
+        );
+
+        Blame {
+            _resource_cache: resource_cache,
+        }
+    }
+}
+
+#[test]
+fn blame_works() {
+    let _blame = Blame::new(fixture_path());
+}
+
 #[test]
 fn it_works() {
     // TODO
