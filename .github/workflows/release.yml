@@ -334,6 +334,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish the release
+        if: vars.DRY_RUN_RELEASE != 'true' && vars.DRY_RUN_RELEASE != 'yes' && vars.DRY_RUN_RELEASE != '1'
         run: gh release --repo="$REPOSITORY" edit "$VERSION" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
