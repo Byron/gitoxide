@@ -213,6 +213,8 @@ panic = "unwind"
 incremental = false
 build-override = { opt-level = 0 }
 
+# This profile is currently used in building releases for GitHub.
+# It may be removed at any time and should not otherwise be relied on.
 [profile.release-opt]
 inherits = "release"
 lto = "fat"
