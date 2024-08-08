@@ -139,7 +139,7 @@ jobs:
       TARGET: ${{ matrix.target }}
       TARGET_FLAGS: --target=${{ matrix.target }}
       TARGET_DIR: target/${{ matrix.target }}
-      PROFILE: release-opt
+      PROFILE: release-github
 
     steps:
       - name: Checkout repository
