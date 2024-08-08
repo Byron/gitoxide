@@ -6,18 +6,19 @@ git init -q
 git config merge.ff false
 
 git checkout -q -b main
-git commit -q --allow-empty -m c1
-git tag at-c1
-git commit -q --allow-empty -m c2
-git commit -q --allow-empty -m c3
-git commit -q --allow-empty -m c4
 
-git checkout -q -b branch1
-git commit -q --allow-empty -m b1c1
-git tag at-b1c1
-git commit -q --allow-empty -m b1c2
+echo "line 1" >> file.txt
+git add file.txt
+git commit -q -m c1
 
-git checkout -q main
-git commit -q --allow-empty -m c5
-git tag at-c5
-git merge branch1 -m m1b1
+echo "line 2" >> file.txt
+git add file.txt
+git commit -q -m c2
+
+echo "line 3" >> file.txt
+git add file.txt
+git commit -q -m c3
+
+echo "line 4" >> file.txt
+git add file.txt
+git commit -q -m c4

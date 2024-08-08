@@ -14,4 +14,14 @@ doctest = false
 [dependencies]
 
 [dev-dependencies]
+gix-diff = { path = "../gix-diff" }
+gix-filter = { path = "../gix-filter" }
+gix-fs = { path = "../gix-fs" }
+gix-hash = { path = "../gix-hash" }
+gix-index = { path = "../gix-index" }
+gix-object = { path = "../gix-object" }
+gix-odb = { path = "../gix-odb" }
+gix-ref = { path = "../gix-ref" }
 gix-testtools = { path = "../tests/tools" }
+gix-traverse = { path = "../gix-traverse" }
+gix-worktree = { path = "../gix-worktree" }
