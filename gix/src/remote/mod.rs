@@ -23,6 +23,7 @@ impl Direction {
 
 /// The name of a remote, either interpreted as symbol like `origin` or as url as returned by [`Remote::name()`][crate::Remote::name()].
 #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Name<'repo> {
     /// A symbolic name, like `origin`.
     /// Note that it has not necessarily been validated yet.
