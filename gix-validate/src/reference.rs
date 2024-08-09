@@ -11,12 +11,6 @@ pub mod name {
         Tag(#[from] crate::tag::name::Error),
         #[error("Standalone references must be all uppercased, like 'HEAD'")]
         SomeLowercase,
-        #[error("A reference name must not start with a slash '/'")]
-        StartsWithSlash,
-        #[error("Multiple slashes in a row are not allowed as they may change the reference's meaning")]
-        RepeatedSlash,
-        #[error("Path components must not start with '.'")]
-        StartsWithDot,
     }
 
     impl From<Infallible> for Error {
@@ -75,34 +69,10 @@ fn validate(path: &BStr, mode: Mode) -> Result<Cow<'_, BStr>, name::Error> {
         },
     )?;
     let sanitize = matches!(mode, Mode::PartialSanitize);
-    if path.get(0) == Some(&b'/') {
-        if sanitize {
-            out.to_mut()[0] = b'-';
-        } else {
-            return Err(name::Error::StartsWithSlash);
-        }
-    }
     let mut previous = 0;
     let mut saw_slash = false;
-    let mut out_ofs = 0;
-    for (mut byte_pos, byte) in path.iter().enumerate() {
-        byte_pos -= out_ofs;
+    for (byte_pos, byte) in path.iter().enumerate() {
         match *byte {
-            b'/' if previous == b'/' => {
-                if sanitize {
-                    out.to_mut().remove(byte_pos);
-                    out_ofs += 1;
-                } else {
-                    return Err(name::Error::RepeatedSlash);
-                }
-            }
-            b'.' if previous == b'/' => {
-                if sanitize {
-                    out.to_mut()[byte_pos] = b'-';
-                } else {
-                    return Err(name::Error::StartsWithDot);
-                }
-            }
             _ => {}
         }
 

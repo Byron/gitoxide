@@ -12,8 +12,12 @@ pub mod name {
     pub enum Error {
         #[error("A ref must not contain invalid bytes or ascii control characters: {byte:?}")]
         InvalidByte { byte: BString },
+        #[error("A reference name must not start with a slash '/'")]
+        StartsWithSlash,
+        #[error("Multiple slashes in a row are not allowed as they may change the reference's meaning")]
+        RepeatedSlash,
         #[error("A ref must not contain '..' as it may be mistaken for a range")]
-        DoubleDot,
+        RepeatedDot,
         #[error("A ref must not end with '.lock'")]
         LockFileSuffix,
         #[error("A ref must not contain '@{{' which is a part of a ref-log")]
@@ -72,6 +76,13 @@ pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Cow<'_, BStr>, name
             return Err(name::Error::EndsWithSlash);
         }
     }
+    if input.get(0) == Some(&b'/') {
+        if sanitize {
+            out.to_mut()[0] = b'-';
+        } else {
+            return Err(name::Error::StartsWithSlash);
+        }
+    }
 
     let mut previous = 0;
     let mut out_ofs = 0;
@@ -100,7 +111,14 @@ pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Cow<'_, BStr>, name
                     out.to_mut().remove(byte_pos);
                     out_ofs += 1;
                 } else {
-                    return Err(name::Error::DoubleDot);
+                    return Err(name::Error::RepeatedDot);
+                }
+            }
+            b'.' if previous == b'/' => {
+                if sanitize {
+                    out.to_mut()[byte_pos] = b'-';
+                } else {
+                    return Err(name::Error::StartsWithDot);
                 }
             }
             b'{' if previous == b'@' => {
@@ -108,6 +126,21 @@ pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Cow<'_, BStr>, name
                     out.to_mut()[byte_pos] = b'-';
                 } else {
                     return Err(name::Error::ReflogPortion);
+                }
+            }
+            b'/' if previous == b'/' => {
+                if sanitize {
+                    out.to_mut().remove(byte_pos);
+                    out_ofs += 1;
+                } else {
+                    return Err(name::Error::RepeatedSlash);
+                }
+            }
+            b'.' if previous == b'/' => {
+                if sanitize {
+                    out.to_mut()[byte_pos] = b'-';
+                } else {
+                    return Err(name::Error::StartsWithDot);
                 }
             }
             _ => {}
