@@ -4,7 +4,7 @@ mod name {
             #[test]
             fn $name() {
                 let actual = gix_validate::reference::name_partial_or_sanitize($input.as_bstr());
-                assert_eq!(actual.as_ref(), $expected);
+                assert_eq!(actual, $expected);
                 assert!(gix_validate::reference::name_partial(actual.as_ref()).is_ok());
             }
         };
@@ -79,7 +79,7 @@ mod name {
         mktest!(suffix_is_dot_lock, b"prefix.lock", LockFileSuffix);
         mktest!(too_many_dots, b"......", RepeatedDot);
         mktests!(too_many_dots_san, b"......", "-");
-        mktests!(too_many_dots_and_slashes_san, b"//....///....///", "-");
+        mktests!(too_many_dots_and_slashes_san, b"//....///....///", "-/-");
         mktests!(suffix_is_dot_lock_san, b"prefix.lock", "prefix");
         mktest!(suffix_is_dot_lock_multiple, b"prefix.lock.lock", LockFileSuffix);
         mktests!(suffix_is_dot_lock_multiple_san, b"prefix.lock.lock", "prefix");
@@ -98,7 +98,7 @@ mod name {
         mktest!(starts_with_asterisk, b"*suffix", Asterisk);
         mktests!(starts_with_asterisk_san, b"*suffix", "-suffix");
         mktest!(starts_with_slash, b"/suffix", StartsWithSlash);
-        mktests!(starts_with_slash_san, b"/suffix", "-suffix");
+        mktests!(starts_with_slash_san, b"/suffix", "suffix");
         mktest!(ends_with_asterisk, b"prefix*", Asterisk);
         mktests!(ends_with_asterisk_san, b"prefix*", "prefix-");
         mktest!(contains_asterisk, b"prefix*suffix", Asterisk);

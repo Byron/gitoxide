@@ -3,7 +3,7 @@ macro_rules! mktests {
         #[test]
         fn $name() {
             let actual = gix_validate::reference::name_partial_or_sanitize($input.as_bstr());
-            assert_eq!(actual.as_ref(), $expected);
+            assert_eq!(actual, $expected);
             assert!(gix_validate::reference::name_partial(actual.as_ref()).is_ok());
         }
     };
@@ -132,7 +132,7 @@ mod name_partial {
             b"/etc/foo",
             RefError::Tag(TagError::StartsWithSlash)
         );
-        mktests!(any_path_starts_with_slash_san, b"/etc/foo", "-etc/foo");
+        mktests!(any_path_starts_with_slash_san, b"/etc/foo", "etc/foo");
         mktest!(empty_path, b"", RefError::Tag(TagError::Empty));
         mktests!(empty_path_san, b"", "-");
         mktest!(
@@ -140,7 +140,7 @@ mod name_partial {
             b"/refs/heads/main",
             RefError::Tag(TagError::StartsWithSlash)
         );
-        mktests!(refs_starts_with_slash_san, b"/refs/heads/main", "-refs/heads/main");
+        mktests!(refs_starts_with_slash_san, b"/refs/heads/main", "refs/heads/main");
         mktest!(
             ends_with_slash,
             b"refs/heads/main/",
@@ -318,7 +318,7 @@ mod name {
             b"/etc/foo",
             RefError::Tag(TagError::StartsWithSlash)
         );
-        mktests!(any_path_starts_with_slash_san, b"/etc/foo", "-etc/foo");
+        mktests!(any_path_starts_with_slash_san, b"/etc/foo", "etc/foo");
         mktest!(empty_path, b"", RefError::Tag(TagError::Empty));
         mktests!(empty_path_san, b"", "-");
         mktest!(
@@ -326,7 +326,7 @@ mod name {
             b"/refs/heads/main",
             RefError::Tag(TagError::StartsWithSlash)
         );
-        mktests!(refs_starts_with_slash_san, b"/refs/heads/main", "-refs/heads/main");
+        mktests!(refs_starts_with_slash_san, b"/refs/heads/main", "refs/heads/main");
         mktest!(
             ends_with_slash,
             b"refs/heads/main/",
@@ -338,11 +338,7 @@ mod name {
             b"refs/heads/main///",
             RefError::Tag(TagError::EndsWithSlash)
         );
-        mktests!(
-            ends_with_slash_multiple_san,
-            b"refs/heads/main///",
-            "refs/heads/main---"
-        );
+        mktests!(ends_with_slash_multiple_san, b"refs/heads/main///", "refs/heads/main");
         mktest!(
             a_path_with_duplicate_slashes,
             b"refs//heads/main",
