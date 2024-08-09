@@ -1,3 +1,5 @@
+use bstr::{BStr, BString, ByteSlice};
+
 ///
 #[allow(clippy::empty_docs)]
 pub mod name {
@@ -11,12 +13,6 @@ pub mod name {
         Tag(#[from] crate::tag::name::Error),
         #[error("Standalone references must be all uppercased, like 'HEAD'")]
         SomeLowercase,
-        #[error("A reference name must not start with a slash '/'")]
-        StartsWithSlash,
-        #[error("Multiple slashes in a row are not allowed as they may change the reference's meaning")]
-        RepeatedSlash,
-        #[error("Path components must not start with '.'")]
-        StartsWithDot,
     }
 
     impl From<Infallible> for Error {
@@ -26,49 +22,59 @@ pub mod name {
     }
 }
 
-use bstr::BStr;
-
 /// Validate a reference name running all the tests in the book. This disallows lower-case references like `lower`, but also allows
 /// ones like `HEAD`, and `refs/lower`.
 pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
-    validate(path, Mode::Complete)
+    match validate(path, Mode::Complete)? {
+        None => Ok(path),
+        Some(_) => {
+            unreachable!("Without sanitization, there is no chance a sanitized version is returned.")
+        }
+    }
 }
 
 /// Validate a partial reference name. As it is assumed to be partial, names like `some-name` is allowed
 /// even though these would be disallowed with when using [`name()`].
 pub fn name_partial(path: &BStr) -> Result<&BStr, name::Error> {
-    validate(path, Mode::Partial)
+    match validate(path, Mode::Partial)? {
+        None => Ok(path),
+        Some(_) => {
+            unreachable!("Without sanitization, there is no chance a sanitized version is returned.")
+        }
+    }
+}
+
+/// The infallible version of [`name_partial()`] which instead of failing, alters `path` and returns it to be a valid
+/// partial name, which would also pass [`name_partial()`].
+///
+/// Note that an empty `path` is replaced with a `-` in order to be valid.
+pub fn name_partial_or_sanitize(path: &BStr) -> BString {
+    validate(path, Mode::PartialSanitize)
+        .expect("BUG: errors cannot happen as any issue is fixed instantly")
+        .expect("we always rebuild the path")
 }
 
 enum Mode {
     Complete,
     Partial,
+    /// like Partial, but instead of failing, a sanitized version is returned.
+    PartialSanitize,
 }
 
-fn validate(path: &BStr, mode: Mode) -> Result<&BStr, name::Error> {
-    crate::tag::name(path)?;
-    if path[0] == b'/' {
-        return Err(name::Error::StartsWithSlash);
-    }
-    let mut previous = 0;
-    let mut saw_slash = false;
-    for byte in path.iter() {
-        match *byte {
-            b'/' if previous == b'/' => return Err(name::Error::RepeatedSlash),
-            b'.' if previous == b'/' => return Err(name::Error::StartsWithDot),
-            _ => {}
-        }
-
-        if *byte == b'/' {
-            saw_slash = true;
-        }
-        previous = *byte;
-    }
-
+fn validate(path: &BStr, mode: Mode) -> Result<Option<BString>, name::Error> {
+    let out = crate::tag::name_inner(
+        path,
+        match mode {
+            Mode::Complete | Mode::Partial => crate::tag::Mode::Validate,
+            Mode::PartialSanitize => crate::tag::Mode::Sanitize,
+        },
+    )?;
     if let Mode::Complete = mode {
-        if !saw_slash && !path.iter().all(|c| c.is_ascii_uppercase() || *c == b'_') {
+        let input = out.as_ref().map_or(path, |b| b.as_bstr());
+        let saw_slash = input.find_byte(b'/').is_some();
+        if !saw_slash && !input.iter().all(|c| c.is_ascii_uppercase() || *c == b'_') {
             return Err(name::Error::SomeLowercase);
         }
     }
-    Ok(path)
+    Ok(out)
 }
