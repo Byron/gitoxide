@@ -27,35 +27,82 @@ pub mod name {
 }
 
 use bstr::BStr;
+use std::borrow::Cow;
 
 /// Validate a reference name running all the tests in the book. This disallows lower-case references like `lower`, but also allows
 /// ones like `HEAD`, and `refs/lower`.
 pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
-    validate(path, Mode::Complete)
+    match validate(path, Mode::Complete)? {
+        Cow::Borrowed(inner) => Ok(inner),
+        Cow::Owned(_) => {
+            unreachable!("Without sanitization, there is no chance a sanitized version is returned.")
+        }
+    }
 }
 
 /// Validate a partial reference name. As it is assumed to be partial, names like `some-name` is allowed
 /// even though these would be disallowed with when using [`name()`].
 pub fn name_partial(path: &BStr) -> Result<&BStr, name::Error> {
-    validate(path, Mode::Partial)
+    match validate(path, Mode::Partial)? {
+        Cow::Borrowed(inner) => Ok(inner),
+        Cow::Owned(_) => {
+            unreachable!("Without sanitization, there is no chance a sanitized version is returned.")
+        }
+    }
+}
+
+/// The infallible version of [`name_partial()`] which instead of failing, alters `path` and returns it to be a valid
+/// partial name, which would also pass [`name_partial()`].
+///
+/// Note that an empty `path` is replaced with a `-` in order to be valid.
+pub fn name_partial_or_sanitize(path: &BStr) -> Cow<'_, BStr> {
+    validate(path, Mode::PartialSanitize).expect("BUG: errors cannot happen as any issue is fixed instantly")
 }
 
 enum Mode {
     Complete,
     Partial,
+    /// like Partial, but instead of failing, a sanitized version is returned.
+    PartialSanitize,
 }
 
-fn validate(path: &BStr, mode: Mode) -> Result<&BStr, name::Error> {
-    crate::tag::name(path)?;
-    if path[0] == b'/' {
-        return Err(name::Error::StartsWithSlash);
+fn validate(path: &BStr, mode: Mode) -> Result<Cow<'_, BStr>, name::Error> {
+    let mut out = crate::tag::name_inner(
+        path,
+        match mode {
+            Mode::Complete | Mode::Partial => crate::tag::Mode::Validate,
+            Mode::PartialSanitize => crate::tag::Mode::Sanitize,
+        },
+    )?;
+    let sanitize = matches!(mode, Mode::PartialSanitize);
+    if path.get(0) == Some(&b'/') {
+        if sanitize {
+            out.to_mut()[0] = b'-';
+        } else {
+            return Err(name::Error::StartsWithSlash);
+        }
     }
     let mut previous = 0;
     let mut saw_slash = false;
-    for byte in path.iter() {
+    let mut out_ofs = 0;
+    for (mut byte_pos, byte) in path.iter().enumerate() {
+        byte_pos -= out_ofs;
         match *byte {
-            b'/' if previous == b'/' => return Err(name::Error::RepeatedSlash),
-            b'.' if previous == b'/' => return Err(name::Error::StartsWithDot),
+            b'/' if previous == b'/' => {
+                if sanitize {
+                    out.to_mut().remove(byte_pos);
+                    out_ofs += 1;
+                } else {
+                    return Err(name::Error::RepeatedSlash);
+                }
+            }
+            b'.' if previous == b'/' => {
+                if sanitize {
+                    out.to_mut()[byte_pos] = b'-';
+                } else {
+                    return Err(name::Error::StartsWithDot);
+                }
+            }
             _ => {}
         }
 
@@ -70,5 +117,5 @@ fn validate(path: &BStr, mode: Mode) -> Result<&BStr, name::Error> {
             return Err(name::Error::SomeLowercase);
         }
     }
-    Ok(path)
+    Ok(out)
 }

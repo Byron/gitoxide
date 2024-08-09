@@ -1,4 +1,5 @@
-use bstr::BStr;
+use bstr::{BStr, ByteSlice};
+use std::borrow::Cow;
 
 ///
 #[allow(clippy::empty_docs)]
@@ -33,36 +34,110 @@ pub mod name {
 /// Assure the given `input` resemble a valid git tag name, which is returned unchanged on success.
 /// Tag names are provided as names, lik` v1.0` or `alpha-1`, without paths.
 pub fn name(input: &BStr) -> Result<&BStr, name::Error> {
+    match name_inner(input, Mode::Validate)? {
+        Cow::Borrowed(inner) => Ok(inner),
+        Cow::Owned(_) => {
+            unreachable!("When validating, the input isn't changed")
+        }
+    }
+}
+
+#[derive(Eq, PartialEq)]
+pub(crate) enum Mode {
+    Sanitize,
+    Validate,
+}
+
+pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Cow<'_, BStr>, name::Error> {
+    let mut out = Cow::Borrowed(input);
+    let sanitize = matches!(mode, Mode::Sanitize);
     if input.is_empty() {
-        return Err(name::Error::Empty);
+        return if sanitize {
+            out.to_mut().push(b'-');
+            Ok(out)
+        } else {
+            Err(name::Error::Empty)
+        };
     }
     if *input.last().expect("non-empty") == b'/' {
-        return Err(name::Error::EndsWithSlash);
+        if sanitize {
+            while out.last() == Some(&b'/') {
+                out.to_mut().pop();
+            }
+            let bytes_from_end = out.to_mut().as_bytes_mut().iter_mut().rev();
+            for b in bytes_from_end.take_while(|b| **b == b'/') {
+                *b = b'-';
+            }
+        } else {
+            return Err(name::Error::EndsWithSlash);
+        }
     }
 
     let mut previous = 0;
-    for byte in input.iter() {
+    let mut out_ofs = 0;
+    for (mut byte_pos, byte) in input.iter().enumerate() {
+        byte_pos -= out_ofs;
         match byte {
             b'\\' | b'^' | b':' | b'[' | b'?' | b' ' | b'~' | b'\0'..=b'\x1F' | b'\x7F' => {
-                return Err(name::Error::InvalidByte {
-                    byte: (&[*byte][..]).into(),
-                })
+                if sanitize {
+                    out.to_mut()[byte_pos] = b'-';
+                } else {
+                    return Err(name::Error::InvalidByte {
+                        byte: (&[*byte][..]).into(),
+                    });
+                }
             }
-            b'*' => return Err(name::Error::Asterisk),
-            b'.' if previous == b'.' => return Err(name::Error::DoubleDot),
-            b'{' if previous == b'@' => return Err(name::Error::ReflogPortion),
+            b'*' => {
+                if sanitize {
+                    out.to_mut()[byte_pos] = b'-';
+                } else {
+                    return Err(name::Error::Asterisk);
+                }
+            }
+
+            b'.' if previous == b'.' => {
+                if sanitize {
+                    out.to_mut().remove(byte_pos);
+                    out_ofs += 1;
+                } else {
+                    return Err(name::Error::DoubleDot);
+                }
+            }
+            b'{' if previous == b'@' => {
+                if sanitize {
+                    out.to_mut()[byte_pos] = b'-';
+                } else {
+                    return Err(name::Error::ReflogPortion);
+                }
+            }
             _ => {}
         }
         previous = *byte;
     }
     if input[0] == b'.' {
-        return Err(name::Error::StartsWithDot);
+        if sanitize {
+            out.to_mut()[0] = b'-';
+        } else {
+            return Err(name::Error::StartsWithDot);
+        }
     }
     if input[input.len() - 1] == b'.' {
-        return Err(name::Error::EndsWithDot);
+        if sanitize {
+            let last = out.len() - 1;
+            out.to_mut()[last] = b'-';
+        } else {
+            return Err(name::Error::EndsWithDot);
+        }
     }
     if input.ends_with(b".lock") {
-        return Err(name::Error::LockFileSuffix);
+        if sanitize {
+            while out.ends_with(b".lock") {
+                let len_without_suffix = out.len() - b".lock".len();
+                out.to_mut().truncate(len_without_suffix);
+            }
+        } else {
+            return Err(name::Error::LockFileSuffix);
+        }
     }
-    Ok(input)
+    Ok(out)
 }
