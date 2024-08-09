@@ -63,7 +63,7 @@ mod expand {
     fn repeated_slashes_are_invalid() {
         assert!(matches!(
             gix_ref::namespace::expand("foo//bar").expect_err("empty invalid"),
-            gix_validate::reference::name::Error::RepeatedSlash
+            gix_validate::reference::name::Error::Tag(gix_validate::tag::name::Error::RepeatedSlash)
         ));
     }
 }
