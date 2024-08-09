@@ -199,7 +199,7 @@ fn overwriting_files_and_lone_directories_works() -> crate::Result {
             |d| {
                 let empty = d.join("empty");
                 symlink::symlink_dir(d.join(".."), &empty)?; // empty is symlink to the directory above
-                std::fs::write(d.join("executable"), b"foo")?; // executable is regular file and has different content
+                std::fs::write(d.join("executable"), b"longer content foo bar")?; // executable is regular file and has different content
                 let dir = d.join("dir");
                 std::fs::create_dir(&dir)?;
                 std::fs::create_dir(dir.join("content"))?; // 'content' is a directory now
