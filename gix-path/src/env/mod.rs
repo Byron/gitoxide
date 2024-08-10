@@ -109,6 +109,12 @@ pub fn system_prefix() -> Option<&'static Path> {
             }
 
             let mut cmd = std::process::Command::new(exe_invocation());
+            #[cfg(windows)]
+            {
+                use std::os::windows::process::CommandExt;
+                const CREATE_NO_WINDOW: u32 = 0x08000000;
+                cmd.creation_flags(CREATE_NO_WINDOW);
+            }
             cmd.arg("--exec-path").stderr(std::process::Stdio::null());
             gix_trace::debug!(cmd = ?cmd, "invoking git to get system prefix/exec path");
             let path = cmd.output().ok()?.stdout;
