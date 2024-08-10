@@ -45,7 +45,7 @@ mod apply_environment {
     #[test]
     #[serial]
     fn ssh_askpass_is_used_as_fallback() {
-        let _env = Env::new().set("SSH_ASKPASS", "fallback");
+        let _env = Env::new().unset("GIT_ASKPASS").set("SSH_ASKPASS", "fallback");
 
         assert_eq!(
             Options {
@@ -63,7 +63,7 @@ mod apply_environment {
     #[test]
     #[serial]
     fn ssh_askpass_does_not_override_current_value() {
-        let _env = Env::new().set("SSH_ASKPASS", "fallback");
+        let _env = Env::new().unset("GIT_ASKPASS").set("SSH_ASKPASS", "fallback");
 
         assert_eq!(
             Options {
