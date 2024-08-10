@@ -237,6 +237,13 @@ mod prepare {
             } else {
                 Command::new(prep.command)
             };
+            // We never want to have terminals pop-up on Windows if this runs from a GUI application.
+            #[cfg(windows)]
+            {
+                use std::os::windows::process::CommandExt;
+                const CREATE_NO_WINDOW: u32 = 0x08000000;
+                cmd.creation_flags(CREATE_NO_WINDOW);
+            }
             cmd.stdin(prep.stdin)
                 .stdout(prep.stdout)
                 .stderr(prep.stderr)
@@ -400,6 +407,8 @@ pub mod shebang {
 /// - `stdin` is null to prevent blocking unexpectedly on consumption of stdin
 /// - `stdout` is captured for consumption by the caller
 /// - `stderr` is inherited to allow the command to provide context to the user
+///
+/// On Windows, terminal Windows will be suppressed automatically.
 ///
 /// ### Warning
 ///

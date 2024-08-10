@@ -74,13 +74,14 @@ pub(crate) mod function {
                 let tx_base = tx_base.clone();
                 let mut progress = progress.add_child("attributes");
                 move || -> anyhow::Result<()> {
-                    let mut child = std::process::Command::new(gix::path::env::exe_invocation())
-                        .args(["check-attr", "--stdin", "-a"])
-                        .stdin(std::process::Stdio::piped())
-                        .stdout(std::process::Stdio::piped())
-                        .stderr(std::process::Stdio::null())
-                        .current_dir(path)
-                        .spawn()?;
+                    let mut child =
+                        std::process::Command::from(gix::command::prepare(gix::path::env::exe_invocation()))
+                            .args(["check-attr", "--stdin", "-a"])
+                            .stdin(std::process::Stdio::piped())
+                            .stdout(std::process::Stdio::piped())
+                            .stderr(std::process::Stdio::null())
+                            .current_dir(path)
+                            .spawn()?;
 
                     std::thread::spawn({
                         let mut stdin = child.stdin.take().expect("we configured it");
@@ -125,13 +126,14 @@ pub(crate) mod function {
                 let tx_base = tx_base.clone();
                 let mut progress = progress.add_child("excludes");
                 move || -> anyhow::Result<()> {
-                    let mut child = std::process::Command::new(gix::path::env::exe_invocation())
-                        .args(["check-ignore", "--stdin", "-nv", "--no-index"])
-                        .stdin(std::process::Stdio::piped())
-                        .stdout(std::process::Stdio::piped())
-                        .stderr(std::process::Stdio::null())
-                        .current_dir(path)
-                        .spawn()?;
+                    let mut child =
+                        std::process::Command::from(gix::command::prepare(gix::path::env::exe_invocation()))
+                            .args(["check-ignore", "--stdin", "-nv", "--no-index"])
+                            .stdin(std::process::Stdio::piped())
+                            .stdout(std::process::Stdio::piped())
+                            .stderr(std::process::Stdio::null())
+                            .current_dir(path)
+                            .spawn()?;
 
                     std::thread::spawn({
                         let mut stdin = child.stdin.take().expect("we configured it");

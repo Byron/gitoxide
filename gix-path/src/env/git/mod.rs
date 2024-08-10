@@ -82,6 +82,12 @@ pub(super) static EXE_NAME: &str = "git";
 pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
     let git_cmd = |executable: PathBuf| {
         let mut cmd = Command::new(executable);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            cmd.creation_flags(CREATE_NO_WINDOW);
+        }
         cmd.args(["config", "-l", "--show-origin"])
             .stdin(Stdio::null())
             .stderr(Stdio::null());

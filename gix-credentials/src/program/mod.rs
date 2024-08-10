@@ -71,7 +71,7 @@ impl Program {
         let git_program = gix_path::env::exe_invocation();
         let mut cmd = match &self.kind {
             Kind::Builtin => {
-                let mut cmd = Command::new(git_program);
+                let mut cmd = Command::from(gix_command::prepare(git_program));
                 cmd.arg("credential").arg(action.as_arg(false));
                 cmd
             }
