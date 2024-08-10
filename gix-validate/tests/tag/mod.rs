@@ -88,6 +88,23 @@ mod name {
         mktests!(empty_component_san, b"prefix//suffix", "prefix/suffix");
         mktests!(ends_with_slash_san, b"prefix/", "prefix");
         mktest!(is_dot_lock, b".lock", StartsWithDot);
+        mktest!(dot_lock_in_component, b"foo.lock/baz.lock/bar", LockFileSuffix);
+        mktests!(dot_lock_in_component_san, b"foo.lock/baz.lock/bar", "foo/baz/bar");
+        mktests!(
+            dot_lock_in_each_component_san,
+            b"foo.lock/baz.lock/bar.lock",
+            "foo/baz/bar"
+        );
+        mktests!(
+            multiple_dot_lock_in_each_component_san,
+            b"foo.lock.lock/baz.lock.lock/bar.lock.lock",
+            "foo/baz/bar"
+        );
+        mktests!(
+            dot_lock_in_each_component_special_san,
+            b"...lock/..lock//lock",
+            "-lock/lock"
+        );
         mktests!(is_dot_lock_san, b".lock", "-lock");
         mktest!(contains_double_dot, b"with..double-dot", RepeatedDot);
         mktests!(contains_double_dot_san, b"with..double-dot", "with.double-dot");

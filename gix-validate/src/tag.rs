@@ -1,4 +1,4 @@
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice};
 
 ///
 #[allow(clippy::empty_docs)]
@@ -70,7 +70,10 @@ pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Option<BString>, na
     }
 
     let mut previous = 0;
-    for byte in input.iter() {
+    let mut component_start;
+    let mut component_end = 0;
+    let last = input.len() - 1;
+    for (byte_pos, byte) in input.iter().enumerate() {
         match byte {
             b'\\' | b'^' | b':' | b'[' | b'?' | b' ' | b'~' | b'\0'..=b'\x1F' | b'\x7F' => {
                 if let Some(out) = out.as_mut() {
@@ -121,8 +124,35 @@ pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Option<BString>, na
                 }
             }
             c => {
+                if *c == b'/' {
+                    component_start = component_end;
+                    component_end = byte_pos;
+
+                    if input[component_start..component_end].ends_with_str(".lock") {
+                        if let Some(out) = out.as_mut() {
+                            while out.ends_with(b".lock") {
+                                let len_without_suffix = out.len() - b".lock".len();
+                                out.truncate(len_without_suffix);
+                            }
+                        } else {
+                            return Err(name::Error::LockFileSuffix);
+                        }
+                    }
+                }
+
                 if let Some(out) = out.as_mut() {
                     out.push(*c)
+                }
+
+                if byte_pos == last && input[component_end + 1..].ends_with_str(".lock") {
+                    if let Some(out) = out.as_mut() {
+                        while out.ends_with(b".lock") {
+                            let len_without_suffix = out.len() - b".lock".len();
+                            out.truncate(len_without_suffix);
+                        }
+                    } else {
+                        return Err(name::Error::LockFileSuffix);
+                    }
                 }
             }
         }
@@ -137,29 +167,20 @@ pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Option<BString>, na
             out.remove(0);
         }
     }
-    if input[0] == b'.' {
+    if out.as_ref().map_or(input, |b| b.as_bstr())[0] == b'.' {
         if let Some(out) = out.as_mut() {
             out[0] = b'-';
         } else {
             return Err(name::Error::StartsWithDot);
         }
     }
-    if input[input.len() - 1] == b'.' {
+    let last = out.as_ref().map_or(input, |b| b.as_bstr()).len() - 1;
+    if out.as_ref().map_or(input, |b| b.as_bstr())[last] == b'.' {
         if let Some(out) = out.as_mut() {
             let last = out.len() - 1;
             out[last] = b'-';
         } else {
             return Err(name::Error::EndsWithDot);
-        }
-    }
-    if input.ends_with(b".lock") {
-        if let Some(out) = out.as_mut() {
-            while out.ends_with(b".lock") {
-                let len_without_suffix = out.len() - b".lock".len();
-                out.truncate(len_without_suffix);
-            }
-        } else {
-            return Err(name::Error::LockFileSuffix);
         }
     }
     Ok(out)
