@@ -1,0 +1,16 @@
+{
+  "name": "Rust",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": { "VARIANT": "1" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}
