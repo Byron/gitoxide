@@ -35,6 +35,7 @@ on:
       - 'gix*/**'
       - '*.toml'
       - Makefile
+  workflow_dispatch:
 
 jobs:
   pure-rust-build:
