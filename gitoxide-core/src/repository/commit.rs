@@ -20,7 +20,7 @@ pub fn verify(repo: gix::Repository, rev_spec: Option<&str>) -> Result<()> {
     signature_storage.write_all(signature.as_ref())?;
     let signed_storage = signature_storage.into_temp_path();
 
-    let mut cmd = std::process::Command::new("gpg");
+    let mut cmd: std::process::Command = gix::command::prepare("gpg").into();
     cmd.args(["--keyid-format=long", "--status-fd=1", "--verify"])
         .arg(&signed_storage)
         .arg("-")
