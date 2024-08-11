@@ -417,3 +417,11 @@ git init new
 (cd new
   baseline '@{1}'
 )
+
+git init invalid-head
+(cd invalid-head
+  >file && git add file && git commit -m "init"
+  rm .git/refs/heads/main
+  baseline 'HEAD'
+  baseline 'HEAD:file'
+)
