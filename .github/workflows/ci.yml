@@ -6,8 +6,12 @@ env:
 
 on:
   push:
-    branches: [ main ]
-    tags-ignore: [ '*' ]
+    branches:
+      - main
+      - 'run-ci/**'
+      - '**/run-ci/**'
+    tags-ignore:
+      - '*'
     paths:
       - '.github/**'
       - 'ci/**'
@@ -19,7 +23,8 @@ on:
       - '*.toml'
       - Makefile
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
     paths:
       - '.github/**'
       - 'ci/**'
@@ -30,6 +35,7 @@ on:
       - 'gix*/**'
       - '*.toml'
       - Makefile
+  workflow_dispatch:
 
 jobs:
   pure-rust-build:

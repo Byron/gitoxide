@@ -4,13 +4,13 @@
 name: release
 
 on:
-  workflow_dispatch:
   push:
     # Enable when testing release infrastructure on a branch.
     # branches:
      #  - fix-releases
     tags:
       - 'v*'
+  workflow_dispatch:
 
 defaults:
   run:
