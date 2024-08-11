@@ -1675,22 +1675,6 @@ dependencies = [
 
 [[package]]
 name = "gix-discover"
-version = "0.32.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc27c699b63da66b50d50c00668bc0b7e90c3a382ef302865e891559935f3dbf"
-dependencies = [
- "bstr",
- "dunce",
- "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-path 0.10.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-ref 0.44.1",
- "gix-sec 0.10.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror",
-]
-
-[[package]]
-name = "gix-discover"
 version = "0.33.0"
 dependencies = [
  "bstr",
@@ -1705,6 +1689,22 @@ dependencies = [
  "is_ci",
  "serial_test",
  "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "gix-discover"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67662731cec3cb31ba3ed2463809493f76d8e5d6c6d245de8b0560438c13450e"
+dependencies = [
+ "bstr",
+ "dunce",
+ "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-path 0.10.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-ref 0.45.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-sec 0.10.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -2301,28 +2301,6 @@ version = "0.0.0"
 
 [[package]]
 name = "gix-ref"
-version = "0.44.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3394a2997e5bc6b22ebc1e1a87b41eeefbcfcff3dbfa7c4bd73cb0ac8f1f3e2e"
-dependencies = [
- "gix-actor 0.31.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-date 0.8.7",
- "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-lock 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-object 0.42.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-path 0.10.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-tempfile 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-utils 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-validate 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "memmap2",
- "thiserror",
- "winnow",
-]
-
-[[package]]
-name = "gix-ref"
 version = "0.45.0"
 dependencies = [
  "document-features",
@@ -2340,6 +2318,27 @@ dependencies = [
  "gix-validate 0.8.5",
  "memmap2",
  "serde",
+ "thiserror",
+ "winnow",
+]
+
+[[package]]
+name = "gix-ref"
+version = "0.45.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "636e96a0a5562715153fee098c217110c33a6f8218f08f4687ff99afde159bb5"
+dependencies = [
+ "gix-actor 0.31.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-features 0.38.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-hash 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-lock 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-object 0.42.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-path 0.10.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-tempfile 14.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-utils 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gix-validate 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "memmap2",
  "thiserror",
  "winnow",
 ]
@@ -2550,7 +2549,7 @@ dependencies = [
  "document-features",
  "fastrand 2.1.0",
  "fs_extra",
- "gix-discover 0.32.0",
+ "gix-discover 0.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-fs 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-ignore 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-index 0.33.1 (registry+https://github.com/rust-lang/crates.io-index)",
