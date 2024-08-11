@@ -203,11 +203,16 @@ impl<'repo> Delegate<'repo> {
         for (r, obj) in self.refs.iter().zip(self.objs.iter_mut()) {
             if let (Some(ref_), obj_opt @ None) = (r, obj) {
                 if let Some(id) = ref_.target.try_id().map(ToOwned::to_owned).or_else(|| {
-                    ref_.clone()
-                        .attach(repo)
-                        .peel_to_id_in_place()
-                        .ok()
-                        .map(crate::Id::detach)
+                    match ref_.clone().attach(repo).peel_to_id_in_place() {
+                        Err(err) => {
+                            self.err.push(Error::PeelToId {
+                                name: ref_.name.clone(),
+                                source: err,
+                            });
+                            None
+                        }
+                        Ok(id) => Some(id.detach()),
+                    }
                 }) {
                     obj_opt.get_or_insert_with(HashSet::default).insert(id);
                 };

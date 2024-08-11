@@ -55,6 +55,11 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Could not peel '{}' to obtain its target", name)]
+    PeelToId {
+        name: gix_ref::FullName,
+        source: reference::peel::Error,
+    },
     #[error("The rev-spec is malformed and misses a ref name")]
     Malformed,
     #[error("Unborn heads do not have a reflog yet")]

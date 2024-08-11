@@ -147,11 +147,11 @@ fn access_blob_through_tree() {
 #[test]
 fn invalid_head() {
     let repo = repo("invalid-head").unwrap();
+    let err = parse_spec("HEAD:file", &repo).unwrap_err();
+    assert_eq!(err.to_string(), "Could not peel 'HEAD' to obtain its target");
+
     let err = parse_spec("HEAD", &repo).unwrap_err();
     assert_eq!(err.to_string(), "The rev-spec is malformed and misses a ref name");
-
-    let err = parse_spec("HEAD:file", &repo).unwrap_err();
-    assert_eq!(err.to_string(), "TBD");
 }
 
 #[test]
