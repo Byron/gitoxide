@@ -19,8 +19,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - windows-2019
-          - ubuntu-latest
+          - windows-2022
+          - ubuntu-24.04
     runs-on: ${{ matrix.os }}
     env:
       # dictated by `firefox` to support the `helix` editor, but now probably effectively be controlled by `jiff`, which also aligns with `regex`.
