@@ -83,6 +83,8 @@ jobs:
           - aarch64-unknown-linux-gnu
           - arm-unknown-linux-musleabihf
           - arm-unknown-linux-gnueabihf
+          - powerpc64le-unknown-linux-gnu
+          - riscv64gc-unknown-linux-gnu
           - s390x-unknown-linux-gnu
           - x86_64-apple-darwin
           - aarch64-apple-darwin
@@ -109,6 +111,10 @@ jobs:
           - target: arm-unknown-linux-musleabihf
             os: ubuntu-latest
           - target: arm-unknown-linux-gnueabihf
+            os: ubuntu-latest
+          - target: powerpc64le-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: riscv64gc-unknown-linux-gnu
             os: ubuntu-latest
           - target: s390x-unknown-linux-gnu
             os: ubuntu-latest
@@ -176,6 +182,18 @@ jobs:
           - target: arm-unknown-linux-gnueabihf
             feature: lean
           - target: arm-unknown-linux-gnueabihf
+            feature: max
+          - target: powerpc64le-unknown-linux-gnu
+            feature: small
+          - target: powerpc64le-unknown-linux-gnu
+            feature: lean
+          - target: powerpc64le-unknown-linux-gnu
+            feature: max
+          - target: riscv64gc-unknown-linux-gnu
+            feature: small
+          - target: riscv64gc-unknown-linux-gnu
+            feature: lean
+          - target: riscv64gc-unknown-linux-gnu
             feature: max
           - target: s390x-unknown-linux-gnu
             feature: small
