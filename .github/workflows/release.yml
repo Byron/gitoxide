@@ -86,30 +86,24 @@ jobs:
         # When changing these features, make the same change in build-macos-universal2-release.
         feature: [ small, lean, max, max-pure ]
         include:
+          - rust: stable
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            rust: stable
           - target: arm-unknown-linux-gnueabihf
             os: ubuntu-latest
-            rust: nightly
           - target: x86_64-apple-darwin
             os: macos-latest
-            rust: stable
           - target: aarch64-apple-darwin
             os: macos-latest
-            rust: stable
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            rust: nightly
           - target: x86_64-pc-windows-gnu
             os: windows-latest
-            rust: nightly-x86_64-gnu
+            rust: stable-x86_64-gnu
           - target: i686-pc-windows-msvc
             os: windows-latest
-            rust: nightly
           - target: aarch64-pc-windows-msvc
             os: windows-latest
-            rust: nightly
         # on linux we build with musl which causes trouble with open-ssl. For now, just build max-pure there
         # even though we could also build with `--features max-control,http-client-reqwest,gitoxide-core-blocking-client,gix-features/fast-sha1` for fast hashing.
         # It's a TODO.
