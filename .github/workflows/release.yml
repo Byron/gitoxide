@@ -76,7 +76,16 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-musl
+          - x86_64-unknown-linux-gnu
+          - i686-unknown-linux-musl
+          - i686-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - aarch64-unknown-linux-gnu
+          - arm-unknown-linux-musleabihf
           - arm-unknown-linux-gnueabihf
+          - powerpc64le-unknown-linux-gnu
+          - riscv64gc-unknown-linux-gnu
+          - s390x-unknown-linux-gnu
           - x86_64-apple-darwin
           - aarch64-apple-darwin
           - x86_64-pc-windows-msvc
@@ -89,7 +98,25 @@ jobs:
           - rust: stable
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: i686-unknown-linux-musl
+            os: ubuntu-latest
+          - target: i686-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: arm-unknown-linux-musleabihf
+            os: ubuntu-latest
           - target: arm-unknown-linux-gnueabihf
+            os: ubuntu-latest
+          - target: powerpc64le-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: riscv64gc-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: s390x-unknown-linux-gnu
             os: ubuntu-latest
           - target: x86_64-apple-darwin
             os: macos-latest
@@ -114,11 +141,65 @@ jobs:
             feature: lean
           - target: x86_64-unknown-linux-musl
             feature: max
+          - target: x86_64-unknown-linux-gnu
+            feature: small
+          - target: x86_64-unknown-linux-gnu
+            feature: lean
+          - target: x86_64-unknown-linux-gnu
+            feature: max
+          - target: i686-unknown-linux-musl
+            feature: small
+          - target: i686-unknown-linux-musl
+            feature: lean
+          - target: i686-unknown-linux-musl
+            feature: max
+          - target: i686-unknown-linux-gnu
+            feature: small
+          - target: i686-unknown-linux-gnu
+            feature: lean
+          - target: i686-unknown-linux-gnu
+            feature: max
+          - target: aarch64-unknown-linux-musl
+            feature: small
+          - target: aarch64-unknown-linux-musl
+            feature: lean
+          - target: aarch64-unknown-linux-musl
+            feature: max
+          - target: aarch64-unknown-linux-gnu
+            feature: small
+          - target: aarch64-unknown-linux-gnu
+            feature: lean
+          - target: aarch64-unknown-linux-gnu
+            feature: max
+          - target: arm-unknown-linux-musleabihf
+            feature: small
+          - target: arm-unknown-linux-musleabihf
+            feature: lean
+          - target: arm-unknown-linux-musleabihf
+            feature: max
           - target: arm-unknown-linux-gnueabihf
             feature: small
           - target: arm-unknown-linux-gnueabihf
             feature: lean
           - target: arm-unknown-linux-gnueabihf
+            feature: max
+          - target: powerpc64le-unknown-linux-gnu
+            feature: small
+          - target: powerpc64le-unknown-linux-gnu
+            feature: lean
+          - target: powerpc64le-unknown-linux-gnu
+            feature: max
+          - target: riscv64gc-unknown-linux-gnu
+            feature: small
+          - target: riscv64gc-unknown-linux-gnu
+            feature: lean
+          - target: riscv64gc-unknown-linux-gnu
+            feature: max
+          - target: s390x-unknown-linux-gnu
+            feature: small
+          - target: s390x-unknown-linux-gnu
+            feature: lean
+          - target: s390x-unknown-linux-gnu
             feature: max
 
     runs-on: ${{ matrix.os }}
