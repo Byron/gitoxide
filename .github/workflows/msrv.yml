@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  rustfmt:
+  check-msrv:
     name: cargo check MSRV
     strategy:
       matrix:
