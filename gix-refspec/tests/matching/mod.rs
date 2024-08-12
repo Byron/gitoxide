@@ -1,6 +1,6 @@
-use gix_testtools::once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
-static BASELINE: Lazy<baseline::Baseline> = Lazy::new(|| baseline::parse().unwrap());
+static BASELINE: LazyLock<baseline::Baseline> = LazyLock::new(|| baseline::parse().unwrap());
 
 pub mod baseline {
     use std::{borrow::Borrow, collections::HashMap};
@@ -12,7 +12,7 @@ pub mod baseline {
         parse::Operation,
         MatchGroup,
     };
-    use gix_testtools::once_cell::sync::Lazy;
+    use std::sync::LazyLock;
 
     use crate::matching::BASELINE;
 
@@ -34,7 +34,7 @@ pub mod baseline {
         }
     }
 
-    static INPUT: Lazy<Vec<Ref>> = Lazy::new(|| parse_input().unwrap());
+    static INPUT: LazyLock<Vec<Ref>> = LazyLock::new(|| parse_input().unwrap());
 
     pub type Baseline = HashMap<Vec<BString>, Result<Vec<Mapping>, BString>>;
 

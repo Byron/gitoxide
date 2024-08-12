@@ -41,7 +41,7 @@ use std::{
     sync::atomic::AtomicUsize,
 };
 
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 #[cfg(feature = "hp-hashmap")]
 type HashMap<K, V> = dashmap::DashMap<K, V>;
@@ -112,7 +112,7 @@ use crate::handle::{Closed, Writable};
 pub mod registry;
 
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
-static REGISTRY: Lazy<HashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
+static REGISTRY: LazyLock<HashMap<usize, Option<ForksafeTempfile>>> = LazyLock::new(|| {
     #[cfg(feature = "signals")]
     if signal::handler::MODE.load(std::sync::atomic::Ordering::SeqCst) != signal::handler::Mode::None as usize {
         for sig in signal_hook::consts::TERM_SIGNALS {

@@ -4,10 +4,10 @@ use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use gix_object::{bstr, bstr::BStr};
 use gix_ref::bstr::{BString, ByteSlice};
 use gix_revision::spec::Kind;
-use gix_testtools::once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
-static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<gix_revision::Spec>>>> = Lazy::new(|| {
+static BASELINE: LazyLock<HashMap<PathBuf, HashMap<BString, Option<gix_revision::Spec>>>> = LazyLock::new(|| {
     fn kind_of(spec: &BStr) -> gix_revision::spec::Kind {
         if spec.starts_with(b"^") {
             gix_revision::spec::Kind::IncludeReachable

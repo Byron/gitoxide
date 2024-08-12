@@ -2,14 +2,14 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use bstr::{BStr, BString, ByteSlice};
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 /// Other places to find Git in.
 #[cfg(windows)]
-pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> =
-    Lazy::new(|| locations_under_program_files(|key| std::env::var_os(key)));
+pub(super) static ALTERNATIVE_LOCATIONS: LazyLock<Vec<PathBuf>> =
+    LazyLock::new(|| locations_under_program_files(|key| std::env::var_os(key)));
 #[cfg(not(windows))]
-pub(super) static ALTERNATIVE_LOCATIONS: Lazy<Vec<PathBuf>> = Lazy::new(Vec::new);
+pub(super) static ALTERNATIVE_LOCATIONS: LazyLock<Vec<PathBuf>> = LazyLock::new(Vec::new);
 
 #[cfg(windows)]
 fn locations_under_program_files<F>(var_os_func: F) -> Vec<PathBuf>
@@ -79,7 +79,7 @@ pub(super) static EXE_NAME: &str = "git";
 /// Invoke the git executable to obtain the origin configuration, which is cached and returned.
 ///
 /// The git executable is the one found in PATH or an alternative location.
-pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
+pub(super) static EXE_INFO: LazyLock<Option<BString>> = LazyLock::new(|| {
     let git_cmd = |executable: PathBuf| {
         let mut cmd = Command::new(executable);
         #[cfg(windows)]
@@ -119,7 +119,7 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
 /// errors during execution.
 pub(super) fn install_config_path() -> Option<&'static BStr> {
     let _span = gix_trace::detail!("gix_path::git::install_config_path()");
-    static PATH: Lazy<Option<BString>> = Lazy::new(|| {
+    static PATH: LazyLock<Option<BString>> = LazyLock::new(|| {
         // Shortcut: Specifically in Git for Windows 'Git Bash' shells, this variable is set. It
         // may let us deduce the installation directory, so we can save the `git` invocation.
         #[cfg(windows)]

@@ -28,6 +28,5 @@ gix-features = { path = "../../gix-features" }
 gix-testtools = { path = "../../tests/tools" }
 gix-odb = { path = "../../gix-odb" }
 symlink = "0.1.0"
-once_cell = "1.18.0"
 
 walkdir = "2.3.2"

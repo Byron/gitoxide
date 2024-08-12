@@ -8,13 +8,12 @@ mod from_tree {
         convert::Infallible,
         io::{Error, ErrorKind, Read, Write},
         path::PathBuf,
-        sync::Arc,
+        sync::{Arc, LazyLock},
     };
 
     use gix_attributes::glob::pattern::Case;
     use gix_hash::oid;
     use gix_object::{bstr::ByteSlice, tree::EntryKind, Data};
-    use gix_testtools::once_cell::sync::Lazy;
     use gix_worktree::stack::state::attributes::Source;
 
     use crate::hex_to_id;
@@ -277,7 +276,7 @@ mod from_tree {
         }
     }
 
-    static DRIVER: Lazy<PathBuf> = Lazy::new(|| {
+    static DRIVER: LazyLock<PathBuf> = LazyLock::new(|| {
         let mut cargo = std::process::Command::new(env!("CARGO"));
         let res = cargo
             .args(["build", "-p=gix-filter", "--example", "arrow"])

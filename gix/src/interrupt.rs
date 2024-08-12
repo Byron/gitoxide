@@ -9,14 +9,17 @@
 mod init {
     use std::{
         io,
-        sync::atomic::{AtomicUsize, Ordering},
+        sync::{
+            atomic::{AtomicUsize, Ordering},
+            LazyLock,
+        },
     };
 
     static DEREGISTER_COUNT: AtomicUsize = AtomicUsize::new(0);
-    static REGISTERED_HOOKS: once_cell::sync::Lazy<parking_lot::Mutex<Vec<(i32, signal_hook::SigId)>>> =
-        once_cell::sync::Lazy::new(Default::default);
-    static DEFAULT_BEHAVIOUR_HOOKS: once_cell::sync::Lazy<parking_lot::Mutex<Vec<signal_hook::SigId>>> =
-        once_cell::sync::Lazy::new(Default::default);
+    static REGISTERED_HOOKS: LazyLock<parking_lot::Mutex<Vec<(i32, signal_hook::SigId)>>> =
+        LazyLock::new(Default::default);
+    static DEFAULT_BEHAVIOUR_HOOKS: LazyLock<parking_lot::Mutex<Vec<signal_hook::SigId>>> =
+        LazyLock::new(Default::default);
 
     /// A type to help deregistering hooks registered with [`init_handler`](super::init_handler());
     #[derive(Default)]

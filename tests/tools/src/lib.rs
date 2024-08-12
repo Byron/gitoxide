@@ -21,9 +21,8 @@ pub use bstr;
 use bstr::ByteSlice;
 use io_close::Close;
 pub use is_ci;
-pub use once_cell;
-use once_cell::sync::Lazy;
 use parking_lot::Mutex;
+use std::sync::LazyLock;
 pub use tempfile;
 
 /// A result type to allow using the try operator `?` in unit tests.
@@ -57,8 +56,8 @@ impl Drop for GitDaemon {
     }
 }
 
-static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
-static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::Stack>>> = Lazy::new(|| {
+static SCRIPT_IDENTITY: LazyLock<Mutex<BTreeMap<PathBuf, u32>>> = LazyLock::new(|| Mutex::new(BTreeMap::new()));
+static EXCLUDE_LUT: LazyLock<Mutex<Option<gix_worktree::Stack>>> = LazyLock::new(|| {
     let cache = (|| {
         let (repo_path, _) = gix_discover::upwards(Path::new(".")).ok()?;
         let (gix_dir, work_tree) = repo_path.into_repository_and_work_tree_directories();
@@ -86,7 +85,8 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::Stack>>> = Lazy::new(|| {
     Mutex::new(cache)
 });
 /// The major, minor and patch level of the git version on the system.
-pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_gix_version().expect("git version to be parsable"));
+pub static GIT_VERSION: LazyLock<(u8, u8, u8)> =
+    LazyLock::new(|| parse_gix_version().expect("git version to be parsable"));
 
 /// Define how [`scripted_fixture_writable_with_args()`] uses produces the writable copy.
 pub enum Creation {
@@ -180,7 +180,7 @@ pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::proces
 
 /// Spawn a git daemon process to host all repository at or below `working_dir`.
 pub fn spawn_git_daemon(working_dir: impl AsRef<Path>) -> std::io::Result<GitDaemon> {
-    static EXEC_PATH: Lazy<PathBuf> = Lazy::new(|| {
+    static EXEC_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
         let path = std::process::Command::new("git")
             .arg("--exec-path")
             .stderr(std::process::Stdio::null())

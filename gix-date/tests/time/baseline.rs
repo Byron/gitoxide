@@ -5,7 +5,7 @@ use gix_date::{
     SecondsSinceUnixEpoch,
 };
 use gix_testtools::Result;
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 struct Sample {
     format_name: Option<String>,
@@ -13,7 +13,7 @@ struct Sample {
     seconds: SecondsSinceUnixEpoch,
 }
 
-static BASELINE: Lazy<HashMap<String, Sample>> = Lazy::new(|| {
+static BASELINE: LazyLock<HashMap<String, Sample>> = LazyLock::new(|| {
     (|| -> Result<_> {
         let base = gix_testtools::scripted_fixture_read_only("generate_git_date_baseline.sh")?;
         let mut map = HashMap::new();

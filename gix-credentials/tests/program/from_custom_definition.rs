@@ -1,7 +1,7 @@
 use gix_credentials::{helper, program::Kind, Program};
 
-static GIT: once_cell::sync::Lazy<&'static str> =
-    once_cell::sync::Lazy::new(|| gix_path::env::exe_invocation().to_str().expect("not illformed"));
+static GIT: std::sync::LazyLock<&'static str> =
+    std::sync::LazyLock::new(|| gix_path::env::exe_invocation().to_str().expect("not illformed"));
 
 #[cfg(windows)]
 const SH: &str = "sh";

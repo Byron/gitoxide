@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use bstr::ByteSlice;
-use gix_testtools::once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 /// To see all current failures run the following command or execute cargo-nextest directly with
 /// the below shown arguments.
@@ -13,7 +13,7 @@ use gix_testtools::once_cell::sync::Lazy;
 fn run() {
     // ensure the baseline is evaluated before we disable the panic hook, otherwise we swallow
     // errors inside the baseline generation
-    Lazy::force(&baseline::URLS);
+    LazyLock::force(&baseline::URLS);
 
     let panic_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(|_| {}));
@@ -166,7 +166,7 @@ fn assert_urls_equal(expected: &baseline::GitDiagUrl<'_>, actual: &gix_url::Url)
 
 mod baseline {
     use bstr::{BStr, BString, ByteSlice};
-    use gix_testtools::once_cell::sync::Lazy;
+    use std::sync::LazyLock;
 
     pub enum Kind {
         Unix,
@@ -197,14 +197,14 @@ mod baseline {
         }
     }
 
-    static BASELINE: Lazy<BString> = Lazy::new(|| {
+    static BASELINE: LazyLock<BString> = LazyLock::new(|| {
         let base = gix_testtools::scripted_fixture_read_only("make_baseline.sh").unwrap();
         std::fs::read(base.join(format!("git-baseline.{}", Kind::new().extension())))
             .expect("fixture file exists")
             .into()
     });
 
-    pub static URLS: Lazy<Vec<(&'static BStr, GitDiagUrl<'static>)>> = Lazy::new(|| {
+    pub static URLS: LazyLock<Vec<(&'static BStr, GitDiagUrl<'static>)>> = LazyLock::new(|| {
         let mut out = Vec::new();
 
         let blocks = BASELINE
