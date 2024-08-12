@@ -89,9 +89,7 @@ jobs:
           - x86_64-pc-windows-msvc
           - x86_64-pc-windows-gnu
           - i686-pc-windows-msvc
-          - i686-pc-windows-gnu
           - aarch64-pc-windows-msvc
-          - aarch64-pc-windows-gnullvm
         # When changing these features, make the same change in build-macos-universal2-release.
         feature: [ small, lean, max, max-pure ]
         include:
@@ -125,14 +123,8 @@ jobs:
             rust: stable-x86_64-gnu
           - target: i686-pc-windows-msvc
             os: windows-latest
-          - target: i686-pc-windows-gnu
-            os: windows-latest
-            rust: stable-x86_64-gnu
           - target: aarch64-pc-windows-msvc
             os: windows-latest
-          - target: aarch64-pc-windows-gnullvm
-            os: windows-latest
-            rust: stable-x86_64-gnu
         # on linux we build with musl which causes trouble with open-ssl. For now, just build max-pure there
         # even though we could also build with `--features max-control,http-client-reqwest,gitoxide-core-blocking-client,gix-features/fast-sha1` for fast hashing.
         # It's a TODO.
