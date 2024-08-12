@@ -143,11 +143,23 @@ jobs:
             feature: lean
           - target: x86_64-unknown-linux-musl
             feature: max
+          - target: x86_64-unknown-linux-gnu
+            feature: small
+          - target: x86_64-unknown-linux-gnu
+            feature: lean
+          - target: x86_64-unknown-linux-gnu
+            feature: max
           - target: i686-unknown-linux-musl
             feature: small
           - target: i686-unknown-linux-musl
             feature: lean
           - target: i686-unknown-linux-musl
+            feature: max
+          - target: i686-unknown-linux-gnu
+            feature: small
+          - target: i686-unknown-linux-gnu
+            feature: lean
+          - target: i686-unknown-linux-gnu
             feature: max
           - target: aarch64-unknown-linux-musl
             feature: small
@@ -155,11 +167,29 @@ jobs:
             feature: lean
           - target: aarch64-unknown-linux-musl
             feature: max
+          - target: aarch64-unknown-linux-gnu
+            feature: small
+          - target: aarch64-unknown-linux-gnu
+            feature: lean
+          - target: aarch64-unknown-linux-gnu
+            feature: max
           - target: arm-unknown-linux-musleabihf
             feature: small
           - target: arm-unknown-linux-musleabihf
             feature: lean
           - target: arm-unknown-linux-musleabihf
+            feature: max
+          - target: arm-unknown-linux-gnueabihf
+            feature: small
+          - target: arm-unknown-linux-gnueabihf
+            feature: lean
+          - target: arm-unknown-linux-gnueabihf
+            feature: max
+          - target: s390x-unknown-linux-gnu
+            feature: small
+          - target: s390x-unknown-linux-gnu
+            feature: lean
+          - target: s390x-unknown-linux-gnu
             feature: max
 
     runs-on: ${{ matrix.os }}
