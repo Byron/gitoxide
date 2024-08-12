@@ -81,7 +81,7 @@ rusqlite = { version = "0.32.1", optional = true, features = ["bundled"] }
 
 # for 'corpus'
 parking_lot = { version = "0.12.1", optional = true }
-sysinfo = { version = "0.30.1", optional = true, default-features = false }
+sysinfo = { version = "0.31.2", optional = true, default-features = false, features = ["system"] }
 serde_json = { version = "1.0.65", optional = true }
 tracing-forest = { version = "0.1.5", features = ["serde"], optional = true }
 tracing-subscriber = { version = "0.3.17", optional = true }
