@@ -101,9 +101,16 @@ impl visit::Visit for Recorder {
     }
 
     fn push_back_tracked_path_component(&mut self, component: &BStr) {
-        if let Some(Location::Path) = self.location {
-            self.push_element(component);
-            self.path_deque.push_back(self.path.clone());
+        match self.location {
+            None => {}
+            Some(Location::Path) => {
+                self.push_element(component);
+                self.path_deque.push_back(self.path.clone());
+            }
+            Some(Location::FileName) => {
+                self.path.clear();
+                self.path.extend_from_slice(component);
+            }
         }
     }
 
