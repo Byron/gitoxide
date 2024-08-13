@@ -40,6 +40,7 @@ impl<'repo> Tree<'repo> {
     /// try to access blobs to compute a similarity metric. Thus, it's more compatible to turn rewrite tracking off
     /// using [`Platform::track_rewrites()`].
     #[allow(clippy::result_large_err)]
+    #[doc(alias = "diff_tree_to_tree", alias = "git2")]
     pub fn changes<'a>(&'a self) -> Result<Platform<'a, 'repo>, crate::diff::new_rewrites::Error> {
         Ok(Platform {
             state: Default::default(),

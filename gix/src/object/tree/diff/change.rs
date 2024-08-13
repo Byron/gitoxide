@@ -61,7 +61,7 @@ pub enum Event<'a, 'old, 'new> {
         entry_mode: gix_object::tree::EntryMode,
         /// The object id after the rename.
         id: Id<'new>,
-        /// If true, this rewrite is created by copy, and `source_id` is pointing to its source. Otherwise it's a rename, and `source_id`
+        /// If true, this rewrite is created by copy, and `source_id` is pointing to its source. Otherwise, it's a rename, and `source_id`
         /// points to a deleted object, as renames are tracked as deletions and additions of the same or similar content.
         copy: bool,
     },
@@ -70,8 +70,9 @@ pub enum Event<'a, 'old, 'new> {
 impl<'a, 'old, 'new> super::Change<'a, 'old, 'new> {
     /// Produce a platform for performing a line-diff no matter whether the underlying [Event] is an addition, modification,
     /// deletion or rewrite.
-    /// Use `resource_cache` to store the diffable data and possibly reuse previously stored data.
-    /// Afterwards the platform, which holds on to `resource_cache`, can be used to perform ready-made operations on the
+    /// Use `resource_cache` to store the diffable data and possibly reuse previously stored data, usually obtained with
+    /// [crate::Repository::diff_resource_cache()].
+    /// Afterward the platform, which holds on to `resource_cache`, can be used to perform ready-made operations on the
     /// pre-set resources.
     ///
     /// ### Warning about Memory Consumption
