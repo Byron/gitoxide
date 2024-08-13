@@ -14,8 +14,19 @@ fn changes_against_tree_modified() -> crate::Result {
     let from = tree_named(&repo, "@^{/c3-modification}~1");
     let to = tree_named(&repo, ":/c3-modification");
     let mut cache = repo.diff_resource_cache(gix_diff::blob::pipeline::Mode::ToGit, Default::default())?;
+
+    let expected_modifications = [
+        (EntryKind::Blob, "a\n", EntryKind::Blob, "a\na1\n"),
+        (EntryKind::Tree, "", EntryKind::Tree, ""),
+        (EntryKind::Blob, "dir/c\n", EntryKind::Blob, "dir/c\ndir/c1\n"),
+    ];
+    let mut i = 0;
+
     from.changes()?
         .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
+            let (expected_previous_entry_mode, expected_previous_data, expected_entry_mode, expected_data) =
+                expected_modifications[i];
+
             assert_eq!(change.location, "", "without configuration the location field is empty");
             match change.event {
                 Event::Modification {
@@ -24,10 +35,16 @@ fn changes_against_tree_modified() -> crate::Result {
                     entry_mode,
                     id,
                 } => {
-                    assert_eq!(previous_entry_mode.kind(), EntryKind::Blob);
-                    assert_eq!(entry_mode.kind(), EntryKind::Blob);
-                    assert_eq!(previous_id.object().unwrap().data.as_bstr(), "a\n");
-                    assert_eq!(id.object().unwrap().data.as_bstr(), "a\na1\n");
+                    assert_eq!(previous_entry_mode.kind(), expected_previous_entry_mode);
+                    assert_eq!(entry_mode.kind(), expected_entry_mode);
+
+                    if matches!(entry_mode.kind(), EntryKind::Tree) {
+                        i += 1;
+                        return Ok(Default::default());
+                    }
+
+                    assert_eq!(previous_id.object().unwrap().data.as_bstr(), expected_previous_data);
+                    assert_eq!(id.object().unwrap().data.as_bstr(), expected_data);
                 }
                 Event::Rewrite { .. } | Event::Deletion { .. } | Event::Addition { .. } => {
                     unreachable!("only modification is expected")
@@ -41,14 +58,20 @@ fn changes_against_tree_modified() -> crate::Result {
             diff.lines(|hunk| {
                 match hunk {
                     Change::Deletion { .. } => unreachable!("there was no deletion"),
-                    Change::Addition { lines } => assert_eq!(lines, vec!["a1\n".as_bytes().as_bstr()]),
+                    Change::Addition { lines } => assert_eq!(
+                        lines,
+                        vec![expected_data[expected_previous_data.len()..].as_bytes().as_bstr()]
+                    ),
                     Change::Modification { .. } => unreachable!("there was no modification"),
                 };
                 Ok::<_, Infallible>(())
             })
             .expect("infallible");
+
+            i += 1;
             Ok(Default::default())
         })?;
+    assert_eq!(i, 3);
     Ok(())
 }
 
@@ -68,6 +91,45 @@ fn changes_against_tree_with_filename_tracking() -> crate::Result {
     assert_eq!(expected, Vec::<&str>::new(), "all paths should have been seen");
 
     let mut expected = vec!["a", "b", "dir/c", "d"];
+    from.changes()?
+        .track_path()
+        .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
+            expected.retain(|name| name != change.location);
+            Ok(Default::default())
+        })?;
+    assert_eq!(expected, Vec::<&str>::new(), "all paths should have been seen");
+
+    let err = from
+        .changes()?
+        .track_path()
+        .for_each_to_obtain_tree(&to, |_change| {
+            Err(std::io::Error::new(std::io::ErrorKind::Other, "custom error"))
+        })
+        .unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "The user-provided callback failed",
+        "custom errors made visible and not squelched"
+    );
+    Ok(())
+}
+
+#[test]
+fn changes_against_modified_tree_with_filename_tracking() -> crate::Result {
+    let repo = named_repo("make_diff_repo.sh")?;
+    let from = tree_named(&repo, "@^{/c3-modification}~1");
+    let to = tree_named(&repo, ":/c3-modification");
+
+    let mut expected = vec!["a", "dir", "c"];
+    from.changes()?
+        .track_filename()
+        .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
+            expected.retain(|name| name != change.location);
+            Ok(Default::default())
+        })?;
+    assert_eq!(expected, Vec::<&str>::new(), "all paths should have been seen");
+
+    let mut expected = vec!["a", "dir", "dir/c"];
     from.changes()?
         .track_path()
         .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
@@ -246,7 +308,7 @@ mod track_rewrites {
             .track_path()
             .track_rewrites(
                 Rewrites {
-                    percentage: Some(0.75),
+                    percentage: Some(0.6),
                     limit: 1, // has no effect as it's just one item here.
                     ..Default::default()
                 }
@@ -700,7 +762,7 @@ mod track_rewrites {
         #[cfg(not(windows))]
         {
             let actual = std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline.with-renames"))?;
-            let expected = r#"commit 6974f2b5181772977a9d7d34a566414508552650
+            let expected = r#"commit 0231f5093bd3d760e7ee82984e0453da80e05c87
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -759,7 +821,7 @@ index e69de29..8ba3a16 100644
         #[cfg(not(windows))]
         {
             let actual = std::fs::read_to_string(repo.work_dir().expect("non-bare").join("baseline.no-renames"))?;
-            let expected = r#"commit 6974f2b5181772977a9d7d34a566414508552650
+            let expected = r#"commit 0231f5093bd3d760e7ee82984e0453da80e05c87
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -809,7 +871,7 @@ index e69de29..8ba3a16 100644
 
         #[cfg(not(windows))]
         {
-            let expected = r#"commit 72de3500e1bff816e56432bee8de02946d3e784b
+            let expected = r#"commit d78c63c5ea3149040767e4387e7fc743cda118fd
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -917,7 +979,7 @@ index 0000000..e69de29
 
         #[cfg(not(windows))]
         {
-            let expected = r#"commit dee00f5a20957db20d8d2e0050210716d6b44879
+            let expected = r#"commit 0cf7a4fe3ad6c49ae7beb394a1c1df7cc5173ce4
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -991,7 +1053,7 @@ index e69de29..0000000
 
         #[cfg(not(windows))]
         {
-            let expected = r#"commit dee00f5a20957db20d8d2e0050210716d6b44879
+            let expected = r#"commit 0cf7a4fe3ad6c49ae7beb394a1c1df7cc5173ce4
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 
@@ -1060,7 +1122,7 @@ rename to src/gix.rs
 
         #[cfg(not(windows))]
         {
-            let expected = r#"commit 72de3500e1bff816e56432bee8de02946d3e784b
+            let expected = r#"commit d78c63c5ea3149040767e4387e7fc743cda118fd
 Author: author <author@example.com>
 Date:   Sat Jan 1 00:00:00 2000 +0000
 

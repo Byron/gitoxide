@@ -34,6 +34,7 @@ echo d >> d
 git commit -q -am "c2"
 
 echo a1 >> a
+echo dir/c1 >> dir/c
 git commit -q -am "c3-modification"
 
 git mv a dir/a-moved
@@ -46,7 +47,7 @@ git mv s1 z && git mv s2 b2 && git mv s3 b1
 git commit -m "r2-ambiguous"
 
 git mv dir/c dir/c-moved
-echo n >> dir/c-moved
+echo dir/cn >> dir/c-moved
 echo n >> b
 git commit -am "r3-simple" # modified rename and normal modification
 
