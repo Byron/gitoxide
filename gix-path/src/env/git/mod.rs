@@ -1,3 +1,4 @@
+use std::env;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -88,7 +89,8 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
             const CREATE_NO_WINDOW: u32 = 0x08000000;
             cmd.creation_flags(CREATE_NO_WINDOW);
         }
-        cmd.args(["config", "-l", "--show-origin"])
+        cmd.args(["config", "-l", "--system", "--show-origin"])
+            .current_dir(env::temp_dir())
             .stdin(Stdio::null())
             .stderr(Stdio::null());
         cmd
