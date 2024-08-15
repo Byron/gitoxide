@@ -89,7 +89,7 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
             const CREATE_NO_WINDOW: u32 = 0x08000000;
             cmd.creation_flags(CREATE_NO_WINDOW);
         }
-        cmd.args(["config", "-l", "--system", "--show-origin"])
+        cmd.args(["config", "-l", "--show-origin"])
             .current_dir(env::temp_dir())
             .stdin(Stdio::null())
             .stderr(Stdio::null());
