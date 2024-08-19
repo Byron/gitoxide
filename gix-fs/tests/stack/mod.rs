@@ -35,56 +35,56 @@ fn p(s: &str) -> &Path {
 #[test]
 #[cfg(windows)]
 fn path_join_handling() {
-    let absolute = p("/absolute");
+    let looks_absolute = p("/absolute");
     assert!(
-        absolute.is_relative(),
-        "on Windows, absolute Linux paths are considered relative (and relative to the current drive)"
+        looks_absolute.is_relative(),
+        "on Windows, 'absolute' Linux paths are relative (and relative to the current drive)"
     );
-    let bs_absolute = p("\\absolute");
+    let bs_looks_absolute = p(r"\absolute");
     assert!(
-        absolute.is_relative(),
+        bs_looks_absolute.is_relative(),
         "on Windows, strange single-backslash paths are relative (and relative to the current drive)"
     );
     assert_eq!(
-        p("relative").join(absolute),
-        absolute,
-        "relative + absolute = absolute - however, they kind of act like they are absolute in conjunction with relative base paths"
+        p("relative").join(looks_absolute),
+        looks_absolute,
+        "relative + unix-absolute = unix-absolute - the relative path without a drive is replaced"
     );
     assert_eq!(
-        p("relative").join(bs_absolute),
-        bs_absolute,
-        "relative + absolute = absolute - backslashes aren't special here, and it just acts like it's absolute"
+        p("relative").join(bs_looks_absolute),
+        bs_looks_absolute,
+        "relative + unix-absolute = unix-absolute - the relative path without a drive is replaced - backslashes aren't special here"
     );
 
     assert_eq!(
         p("c:").join("relative"),
         p("c:relative"),
-        "drive + relative = strange joined result with missing backslash, but it's a valid path that works just like `c:\relative`"
+        "drive + relative = relative to the drive-specific current directory"
     );
     assert_eq!(
-        p("c:\\").join("relative"),
-        p("c:\\relative"),
+        p(r"c:\").join("relative"),
+        p(r"c:\relative"),
         "absolute + relative = joined result"
     );
 
     assert_eq!(
-        p("\\\\?\\base").join(absolute),
-        p("\\\\?\\base\\absolute"),
+        p(r"\\?\base").join(looks_absolute),
+        p(r"\\?\base\absolute"),
         "absolute1 + unix-absolute2 = joined result with backslash"
     );
     assert_eq!(
-        p("\\\\.\\base").join(absolute),
-        p("\\\\.\\base\\absolute"),
+        p(r"\\.\base").join(looks_absolute),
+        p(r"\\.\base\absolute"),
         "absolute1 + absolute2 = joined result with backslash (device namespace)"
     );
     assert_eq!(
-        p("\\\\?\\base").join(bs_absolute),
-        p("\\\\?\\base\\absolute"),
+        p(r"\\?\base").join(bs_looks_absolute),
+        p(r"\\?\base\absolute"),
         "absolute1 + absolute2 = joined result"
     );
     assert_eq!(
-        p("\\\\.\\base").join(bs_absolute),
-        p("\\\\.\\base\\absolute"),
+        p(r"\\.\base").join(bs_looks_absolute),
+        p(r"\\.\base\absolute"),
         "absolute1 + absolute2 = joined result (device namespace)"
     );
 
@@ -92,40 +92,40 @@ fn path_join_handling() {
     assert_eq!(
         p("d:/").join("C:"),
         p("C:"),
-        "d-drive + c-drive = c-drive - interesting, as C: is supposed to be relative"
+        "d-drive + c-drive-relative = c-drive-relative - C: is relative but not on D:"
     );
     assert_eq!(
-        p("d:\\").join("C:\\"),
-        p("C:\\"),
+        p(r"d:\").join(r"C:\"),
+        p(r"C:\"),
         "d-drive-with-bs + c-drive-with-bs = c-drive-with-bs - nothing special happens with backslashes"
     );
     assert_eq!(
-        p("c:\\").join("\\\\.\\"),
-        p("\\\\.\\"),
+        p(r"c:\").join(r"\\.\"),
+        p(r"\\.\"),
         "c-drive-with-bs + device-namespace-unc = device-namespace-unc"
     );
     assert_eq!(
         p("/").join("C:/"),
-        p("C:\\"),
+        p(r"C:\"),
         "unix-absolute + win-drive = win-drive, strangely enough it changed the trailing slash to backslash, so better not have trailing slashes"
     );
-    assert_eq!(p("/").join("C:\\"), p("C:\\"), "unix-absolute + win-drive = win-drive");
+    assert_eq!(p("/").join(r"C:\"), p(r"C:\"), "unix-absolute + win-drive = win-drive");
     assert_eq!(
-        p("\\\\.").join("C:"),
+        p(r"\\.").join("C:"),
         p("C:"),
-        "device-namespace-unc + win-drive-relative = win-drive-relative - c: was supposed to be relative, but it's not acting like it."
+        r"device-namespace-unc + win-drive-relative = win-drive-relative - C: as a relative path is not the C: device, so this is not \\.\C:"
     );
     assert_eq!(p("relative").join("C:"), p("C:"), "relative + win-drive = win-drive");
 
     assert_eq!(
-        p("/").join("\\\\localhost"),
-        p("\\localhost"),
-        "unix-absolute + win-absolute-unc = win-absolute-unc"
+        p("/").join(r"\\localhost"),
+        p(r"\localhost"),
+        "unix-absolute + win-absolute-unc-host = strangely, single-backslashed host"
     );
     assert_eq!(
-        p("relative").join("\\\\localhost"),
-        p("\\\\localhost"),
-        "relative + win-absolute-unc = win-absolute-unc"
+        p("relative").join(r"\\localhost"),
+        p(r"\\localhost"),
+        "relative + win-absolute-unc-host = win-absolute-unc-host"
     );
 }
 
@@ -154,8 +154,8 @@ fn path_join_handling() {
     assert_eq!(p("/").join("C:"), p("/C:"), "absolute + win-drive = joined result");
     assert_eq!(p("/").join("C:/"), p("/C:/"), "absolute + win-absolute = joined result");
     assert_eq!(
-        p("/").join("C:\\"),
-        p("/C:\\"),
+        p("/").join(r"C:\"),
+        p(r"/C:\"),
         "absolute + win-absolute = joined result"
     );
     assert_eq!(
@@ -165,14 +165,14 @@ fn path_join_handling() {
     );
 
     assert_eq!(
-        p("/").join("\\localhost"),
-        p("/\\localhost"),
-        "absolute + win-absolute-unc = joined result"
+        p("/").join(r"\\localhost"),
+        p(r"/\\localhost"),
+        "absolute + win-absolute-unc-host = joined result"
     );
     assert_eq!(
-        p("relative").join("\\localhost"),
-        p("relative/\\localhost"),
-        "relative + win-absolute-unc = joined result"
+        p("relative").join(r"\\localhost"),
+        p(r"relative/\\localhost"),
+        "relative + win-absolute-unc-host = joined result"
     );
 }
 
