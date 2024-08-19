@@ -59,7 +59,7 @@ fn path_join_handling() {
     assert_eq!(
         p("c:").join("relative"),
         p("c:relative"),
-        "drive + relative = strange joined result with missing backslash, but it's a valid path that works just like `c:\relative`"
+        "drive + relative = relative to the drive-specific current directory"
     );
     assert_eq!(
         p("c:\\").join("relative"),
