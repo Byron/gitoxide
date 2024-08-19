@@ -120,12 +120,12 @@ fn path_join_handling() {
     assert_eq!(
         p("/").join("\\\\localhost"),
         p("\\localhost"),
-        "unix-absolute + win-absolute-unc = win-absolute-unc"
+        "unix-absolute + win-absolute-unc-host = strangely, single-backslashed host"
     );
     assert_eq!(
         p("relative").join("\\\\localhost"),
         p("\\\\localhost"),
-        "relative + win-absolute-unc = win-absolute-unc"
+        "relative + win-absolute-unc-host = win-absolute-unc-host"
     );
 }
 
