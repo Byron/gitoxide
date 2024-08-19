@@ -38,7 +38,7 @@ fn path_join_handling() {
     let looks_absolute = p("/absolute");
     assert!(
         looks_absolute.is_relative(),
-        "on Windows, absolute Linux paths are considered relative (and relative to the current drive)"
+        "on Windows, 'absolute' Linux paths are relative (and relative to the current drive)"
     );
     let bs_looks_absolute = p("\\absolute");
     assert!(
@@ -48,12 +48,12 @@ fn path_join_handling() {
     assert_eq!(
         p("relative").join(looks_absolute),
         looks_absolute,
-        "relative + absolute = absolute - however, they kind of act like they are absolute in conjunction with relative base paths"
+        "relative + unix-absolute = unix-absolute - the relative path without a drive is replaced"
     );
     assert_eq!(
         p("relative").join(bs_looks_absolute),
         bs_looks_absolute,
-        "relative + absolute = absolute - backslashes aren't special here, and it just acts like it's absolute"
+        "relative + unix-absolute = unix-absolute - the relative path without a drive is replaced - backslashes aren't special here"
     );
 
     assert_eq!(
