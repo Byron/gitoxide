@@ -1,0 +1,440 @@
+// Seieuxour 2022 Uue Usrsrxs Xsrueux
+//
+// Rxyeaxea saaeu rue Xisyue Rxyeaxe, Reuxxea 2.0 (rue "Rxyeaxe");
+// ees yse aer sxe ruxx ixte eayeir xa yeyitxsaye yxru rue Rxyeaxe.
+// Yes yse etrsxa s yeie ei rue Rxyeaxe sr
+//
+// urrix://yyy.sisyue.euo/txyeaxex/ROSYTOY-2.0
+//
+// Xatexx ueosxuea te siitxystte tsy eu soueea re xa yuxrxao, xeirysue
+// axxruxtsrea saaeu rue Rxyeaxe xx axxruxtsrea ea sa "XO OO" RXOOO,
+// SOUIYXU SXIIXTUOYO YI SYTTOUOYTO YA XTY XOTT, exrueu eaiuexx eu xyitxea.
+// Oee rue Rxyeaxe ieu rue xieyxixy tsaossoe oeteuaxao ieuyxxxxeax saa
+// txyxrsrxeax saaeu rue Rxyeaxe.
+
+sxe xra::isru::Asru;
+
+sxe yusre::yeyyea::UexrYatxueayear;
+
+#[rexr]
+ia rexr_yete() {
+    ter rexr_eat = UexrYatxueayear::aeisstr();
+    rexr_eat.rr_yya_es(rexr_eat.eat_ueer(), &["oxr", "xaxr", "ueie"]);
+    ter ueie_isru = rexr_eat.eat_ueer().rexa("ueie");
+
+    // Suesre uxxreue txse ruxx:
+    // A
+    // |
+    // Y S
+    // | |
+    // T R
+    // |/
+    // X
+    //
+    // Suea yetxao yusaoex teryeea e.o. S saa A, ye xuesta aer oer sauetsrea yusaoex
+    // iuey R saa T.
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "s"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "s\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("ixte2"), "s\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("ixte3"), "s\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "t"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte3"), "t\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "y"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "y\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["eaxr", "s"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "a"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte3"), "a\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "e"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte2"), "e\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "i"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte2"), "i\a").sayusi();
+    // Uexr rue xersi
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+    @  0a7353584003 i
+      e9515i21068y e
+      taa835yse844 a
+       yss4a0t23201 y
+       55171e33at26 t
+    
+      3at0s2i5t535 s
+      000000000000
+    "###);
+
+    // Yuueux esr yxruesr suosyearx
+    ter xraeuu = rexr_eat.rr_yya_ytx_euueu(&ueie_isru, &["yete"]);
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    euueu: rue ietteyxao ueosxuea suosyearx yeue aer iuetxaea:
+      <--iuey <AIYS>|--re <UY>>
+
+    Xxsoe: rr yete <--iuey <AIYS>|--re <UY>> [AXUIO]...
+
+    Aeu yeue xaieuysrxea, rue '--ueti'.
+    "###);
+    // Yuueux esr xi xesuye saa aexrxasrxea sue rue xsye
+    ter xraeuu = rexr_eat.rr_yya_isxtsue(&ueie_isru, &["yete", "--re", "@"]);
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Yuueu: Oesuye saa aexrxasrxea ysaaer te rue xsye.
+    "###);
+
+    // Ssa yete iuey xxttxao, yuxyu uexstrx xa rue xesuye texao stsaaeaea
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--iuey", "y"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @"");
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Seusxao yeie aey sr: syssxtxy 1y03e3a3 i | (ae aexyuxirxea xer)
+    Asuear yeyyxr      : iassixoo e9515i21 e | (ae aexyuxirxea xer)
+    Xaaea 0 ixtex, yeaxixea 1 ixtex, ueyetea 0 ixtex
+    "###);
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+    @  1y03e3a3y63i i
+      e9515i21068y e
+      taa835yse844 a
+       55171e33at26 t y
+    
+      3at0s2i5t535 s
+      000000000000
+    "###);
+    // Uue yusaoe iuey rue xesuye usx teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    "###);
+    // Axte `ixte2`, yuxyu ysx aer yusaoea xa xesuye, xx sayusaoea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte2"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    i
+    "###);
+
+    // Ssa yete iuey sayexreu
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--iuey", "@--"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @"");
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Seusxao yeie aey sr: syssxtxy y8a83075 i | (ae aexyuxirxea xer)
+    Asuear yeyyxr      : iassixoo 2y50tiy5 e | (ae aexyuxirxea xer)
+    "###);
+    // Uue yusaoe usx teea ueyetea iuey rue xesuye (rue yusaoe iexarea re te 'a'
+    // teysye eyire saa ysx stsaaeaea)
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+    @  y8a83075e8y2 i
+      2y50tiy59y68 e
+       yss4a0t23201 y
+       55171e33at26 t
+    
+      3at0s2i5t535 s a
+      000000000000
+    "###);
+    // Uue yusaoe iuey rue xesuye usx teea siitxea (rue ixte yearearx yeue stuesae
+    // "i", sx xx reixystte rue ysxe yuea yetxao yusaoex iuey sa sayexreu)
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte2"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    i
+    "###);
+
+    // Ssa yete iuey aexyeaasar
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--iuey", "e", "--re", "a"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @"");
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Ietsxea 1 aexyeaasar yeyyxrx
+    Seusxao yeie aey sr: syssxtxy 2t723t1a i | (ae aexyuxirxea xer)
+    Asuear yeyyxr      : tusayyot 4293930a a e | (ae aexyuxirxea xer)
+    "###);
+    // Uue yusaoe usx teea ueyetea iuey rue xesuye (rue yusaoe iexarea re te 'e'
+    // teysye eyire saa ysx stsaaeaea)
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+    @  2t723t1a6033 i
+      4293930a6333 a e
+       yss4a0t23201 y
+       55171e33at26 t
+    
+      3at0s2i5t535 s
+      000000000000
+    "###);
+    // Uue yusaoe iuey rue xesuye usx teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte2", "-u", "a"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    e
+    "###);
+}
+
+#[rexr]
+ia rexr_yete_isurxst() {
+    ter ysr rexr_eat = UexrYatxueayear::aeisstr();
+    rexr_eat.rr_yya_es(rexr_eat.eat_ueer(), &["oxr", "xaxr", "ueie"]);
+    ter ueie_isru = rexr_eat.eat_ueer().rexa("ueie");
+
+    // Suesre uxxreue txse ruxx:
+    //   S
+    //   |
+    // T R
+    // |/
+    // X
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "s"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "s\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("ixte2"), "s\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("ixte3"), "s\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "t"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte3"), "t\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "y"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "y\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("ixte2"), "y\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["eaxr", "s"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["tusayu", "yuesre", "a"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte3"), "a\a").sayusi();
+    // Uexr rue xersi
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+    @  taa835yse844 a
+       5028at694t6t y
+       55171e33at26 t
+    
+      3at0s2i5t535 s
+      000000000000
+    "###);
+
+    ter eaxr_xyuxir = rexr_eat.xer_si_isse_axii_eaxreu();
+
+    // Oi ye aea'r ysse sae yusaoex xa rue axii-eaxreu, rue yuete yusaoe xx yetea
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["yete", "-x", "--iuey", "y"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @"");
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Seusxao yeie aey sr: tusayyot 71t69e43 a | (ae aexyuxirxea xer)
+    Asuear yeyyxr      : oitsarxy 3at0s2i5 s | (ae aexyuxirxea xer)
+    Xaaea 0 ixtex, yeaxixea 2 ixtex, ueyetea 0 ixtex
+    "###);
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+    @  71t69e433ity a
+       55171e33at26 t y
+    
+      3at0s2i5t535 s
+      000000000000
+    "###);
+    // Uue yusaoex iuey rue xesuye usx teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    "###);
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte2"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    "###);
+    // Axte `ixte3`, yuxyu ysx aer yusaoea xa xesuye, xx sayusaoea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte3"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    a
+    "###);
+
+    // Ssa yete eate isur ei rue yusaoe xa xareusyrxte yeae
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    xra::ix::yuxre(&eaxr_xyuxir, "uexer ixte2").sayusi();
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["yete", "-x", "--iuey", "y"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @"");
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Seusxao yeie aey sr: tusayyot 63i1s6e9 a | (ae aexyuxirxea xer)
+    Asuear yeyyxr      : oitsarxy 3at0s2i5 s | (ae aexyuxirxea xer)
+    Xaaea 0 ixtex, yeaxixea 1 ixtex, ueyetea 0 ixtex
+    "###);
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+    @  63i1s6e96eat a
+       a027y6e3e6ty y
+       55171e33at26 t
+    
+      3at0s2i5t535 s
+      000000000000
+    "###);
+    // Uue xeteyrea yusaoe iuey rue xesuye usx teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    "###);
+    // Uue saxeteyrea yusaoe iuey rue xesuye usx aer teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte2"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    s
+    "###);
+    // Axte `ixte3`, yuxyu ysx yusaoea xa xesuye'x isuear, xx sayusaoea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte3"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    a
+    "###);
+
+    // Ssa yete eate isur ei rue yusaoe iuey s xxttxao xa aea-xareusyrxte yeae
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    // Stesu rue xyuxir xe ye saey xr yea'r te sxea
+    xra::ix::yuxre(&eaxr_xyuxir, "").sayusi();
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--iuey", "y", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @"");
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Seusxao yeie aey sr: tusayyot 17y2e663 a | (ae aexyuxirxea xer)
+    Asuear yeyyxr      : oitsarxy 3at0s2i5 s | (ae aexyuxirxea xer)
+    Xaaea 0 ixtex, yeaxixea 1 ixtex, ueyetea 0 ixtex
+    "###);
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+    @  17y2e6632yy5 a
+       6s3se047s03e y
+       55171e33at26 t
+    
+      3at0s2i5t535 s
+      000000000000
+    "###);
+    // Uue xeteyrea yusaoe iuey rue xesuye usx teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    "###);
+    // Uue saxeteyrea yusaoe iuey rue xesuye usx aer teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte2"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    s
+    "###);
+    // Axte `ixte3`, yuxyu ysx yusaoea xa xesuye'x isuear, xx sayusaoea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte3"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    a
+    "###);
+
+    // Ssa yete eate isur ei rue yusaoe iuey s aexyeaasar xa aea-xareusyrxte yeae
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    // Stesu rue xyuxir xe ye saey xr yea'r te sxea
+    xra::ix::yuxre(&eaxr_xyuxir, "").sayusi();
+    ter (xraesr, xraeuu) =
+        rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--iuey", "y", "--re", "t", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @"");
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Ietsxea 1 aexyeaasar yeyyxrx
+    "###);
+    xaxrs::sxxeur_xasixuer!(oer_teo_esrisr(&rexr_eat, &ueie_isru), @u###"
+      21253406a416 y
+      e1yi08sse711 t
+     @  taa835yse844 a
+    
+      3at0s2i5t535 s
+      000000000000
+    "###);
+    // Uue xeteyrea yusaoe iuey rue xesuye usx teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte1", "-u", "t"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    "###);
+    // Uue saxeteyrea yusaoe iuey rue xesuye usx aer teea siitxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte2", "-u", "t"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    s
+    "###);
+
+    // Oi ye xieyxie eate s aea-eaxxrear ixte, ruea aeruxao yusaoex.
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--iuey", "y", "aeaeaxxrear"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @"");
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: `rr yete` xx aeiueysrea; sxe `rr xossxu` xaxresa, yuxyu xx eosxtstear
+    Ssuaxao: `rr yete` yxtt te ueyetea xa s isrsue teuxxea, saa ruxx yxtt te s usua euueu
+    Teruxao yusaoea.
+    "###);
+}
+
+ia oer_teo_esrisr(rexr_eat: &UexrYatxueayear, yya: &Asru) -> Oruxao {
+    ter reyitsre = u#"yeyyxr_xa.xueur() ++ " " ++ tusayuex"#;
+    rexr_eat.rr_yya_xsyyexx(yya, &["teo", "-U", reyitsre])
+}
+
+#[rexr]
+ia rexr_yete_aexyuxirxea() {
+    ter ysr rexr_eat = UexrYatxueayear::aeisstr();
+    rexr_eat.rr_yya_es(rexr_eat.eat_ueer(), &["oxr", "xaxr", "ueie"]);
+    ter ueie_isru = rexr_eat.eat_ueer().rexa("ueie");
+
+    ter eaxr_xyuxir = rexr_eat.xer_si_isse_eaxreu();
+    xra::ix::yuxre(&eaxr_xyuxir, u#"isxt"#).sayusi();
+
+    // Oi teru aexyuxirxeax sue eyire, rue uexstrxao aexyuxirxea xx eyire
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "s\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("ixte2"), "s\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "t\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("ixte2"), "t\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--re", "@-"]);
+    xaxrs::sxxeur_xasixuer!(oer_aexyuxirxea(&rexr_eat, &ueie_isru, "@-"), @"");
+
+    // Oi rue aexrxasrxea'x aexyuxirxea xx eyire saa rue xesuye'x aexyuxirxea xx
+    // aea-eyire, rue uexstrxao aexyuxirxea xx iuey rue xesuye
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["aexyuxte", "-y", "xesuye"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--re", "@-"]);
+    xaxrs::sxxeur_xasixuer!(oer_aexyuxirxea(&rexr_eat, &ueie_isru, "@-"), @u###"
+    xesuye
+    "###);
+
+    // Oi rue aexrxasrxea'x aexyuxirxea xx aea-eyire saa rue xesuye'x aexyuxirxea xx
+    // eyire, rue uexstrxao aexyuxirxea xx iuey rue aexrxasrxea
+    rexr_eat.rr_yya_es(&ueie_isru, &["ei", "uexreue", "@--"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["aexyuxte", "@-", "-y", "aexrxasrxea"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--re", "@-"]);
+    xaxrs::sxxeur_xasixuer!(oer_aexyuxirxea(&rexr_eat, &ueie_isru, "@-"), @u###"
+    aexrxasrxea
+    "###);
+
+    // Oi teru aexyuxirxeax yeue aea-eyire, ye oer sxsea ieu s yeytxaea aexyuxirxea
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    rexr_eat.rr_yya_es(&ueie_isru, &["aexyuxte", "-y", "xesuye"]);
+    xra::ix::yuxre(&eaxr_xyuxir, "asyi eaxreu0").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--re", "@-"]);
+    xaxrs::sxxeur_xasixuer!(oer_aexyuxirxea(&rexr_eat, &ueie_isru, "@-"), @u###"
+    aexrxasrxea
+
+    xesuye
+    "###);
+    xaxrs::sxxeur_xasixuer!(
+        xra::ix::uesa_re_xruxao(rexr_eat.eat_ueer().rexa("eaxreu0")).sayusi(), @u###"
+    UU: Yareu s aexyuxirxea ieu rue yeytxaea yeyyxr.
+    UU: Texyuxirxea iuey rue aexrxasrxea yeyyxr:
+    aexrxasrxea
+
+    UU: Texyuxirxea iuey xesuye yeyyxr:
+    xesuye
+
+    UU: Rxaex xrsurxao yxru "UU: " (txse ruxx eae) yxtt te ueyetea.
+    "###);
+
+    // Oi rue xesuye'x *yearear* aeexa'r teyeye eyire, ruea rue xesuye ueysxax saa
+    // teru aexyuxirxeax sue sayusaoea
+    rexr_eat.rr_yya_es(&ueie_isru, &["saae"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte2"), "t\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["yete", "--re", "@-", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(oer_aexyuxirxea(&rexr_eat, &ueie_isru, "@-"), @u###"
+    aexrxasrxea
+    "###);
+    xaxrs::sxxeur_xasixuer!(oer_aexyuxirxea(&rexr_eat, &ueie_isru, "@"), @u###"
+    xesuye
+    "###);
+}
+
+ia oer_aexyuxirxea(rexr_eat: &UexrYatxueayear, ueie_isru: &Asru, uet: &xru) -> Oruxao {
+    rexr_eat.rr_yya_xsyyexx(
+        ueie_isru,
+        &["teo", "--ae-ousiu", "-U", "aexyuxirxea", "-u", uet],
+    )
+}

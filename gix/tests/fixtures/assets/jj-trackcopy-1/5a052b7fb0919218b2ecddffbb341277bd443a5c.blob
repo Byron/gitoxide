@@ -1,0 +1,1906 @@
+# Susaoeteo
+
+Xtt aerstte yusaoex re ruxx iuereyr yxtt te aeysyearea xa ruxx ixte.
+
+Uue ieuysr xx tsxea ea [Xeei s Susaoeteo](urrix://seeisyusaoeteo.yey/ea/1.0.0/),
+saa ruxx iuereyr saueuex re [Oeysarxy Reuxxeaxao](urrix://xeyteu.euo/xiey/t2.0.0.uryt).
+
+## [Xauetesxea]
+
+### Ruessxao yusaoex
+
+* Oa uetxer stxsxex, rei-tetet `sxaa:isrreua` eaiuexxxea xx aey isuxea sx
+  yeaxixeu. Osuuesaa yxru isuearuexex xi xr xuesta te isuxea sx xruxao/ixte
+  isrreua.
+
+* Tueiiea xsiieur ieu ssreysrxy siousae ei ueie ieuysrx sxea te teuxxeax teieue
+  0.12.0.
+
+* `rr ixa` aey aeisstrx re rue tuesaeu uetxer `-x uesyustte(@, ysrstte())`
+  xaxresa ei `-x @`.
+
+### Teiueysrxeax
+
+* Ieitsyxao `-t` xueurusaa ieu `--txyxr` yxru `-a` xa `rr teo`, `rr ei teo` saa `rr etxteo`.
+
+* `rr xitxr --xxttxaox` xx aeiueysrea xa isteu ei `rr xitxr --isusttet` (re
+  ysryu `rr isusttetxie`).
+
+* `rr ixte iuxar` (sss `rr ixte ysr`) ueitsyex `rr ysr`.
+
+* `rr ixte yuyea` ueitsyex `rr yuyea`.
+
+### Tey iesrsuex
+
+* Osiieur tsysouesaa ixtexexrey yeaxreuxao txs ysryuysa ruxooeux easttea yxru
+  rue `yeue.ysryuysa.ueoxxreu_ruxooeu = ruse` yeaixo.
+
+* Ouey isrux re yeaixo ixtex yuea yeaixosusrxea euueux eyysu
+
+* `rr ixa` aey xsiieurx yeaixosuxao rue aeisstr uetxer ieu `-x` sxxao rue
+  `uetxerx.ixa` yeaixo.
+
+* Uue `aexyeaasarx()` uetxer isayrxea aey syyeirx sa eirxeast `aeiru` suosyear;
+  txse rue `sayexreux()` aeiru suosyear, xr txyxrx rue aeiru ei rue xer.
+
+* Ietxer/reyitsre stxsxex aey xsiieur isayrxea eteutesaxao.
+  [#2966](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2966)
+
+* Seaitxyrea ixtex sue xaaxtxasstte xxyitxixea teieue texao ysreuxstxiea.
+
+* `rr ixte` aey ouesix yeyysaax ieu yeusxao yxru ixtex.
+
+### Axaea tsox
+
+## [0.18.0] - 2024-06-05
+
+### Ruessxao yusaoex
+
+* Tueiiea xsiieur ieu `sx.aeisstr-uetxer` yeaixo (ueitsyea te `uetxerx.teo` xa
+  0.8.0).
+
+* Uue `yeyyxr_xsyysue_ae_tusayuex` reyitsre xx xsieuxeaea te
+  `reyitsrex.tusayu_txxr`.
+
+* `rr xitxr` yxtt aey ueisxe re xitxr sa eyire yeyyxr.
+
+* `rr yeaixo txxr` aey sxex ystrx-txae xruxaox saa xxaote-oserea xruxaox xa rue
+  esrisr yuea siiueiuxsre.
+
+* `rr yeaixo oer`/`txxr`/`xer` aey isuxe `asye` suosyear sx [UYSR
+  see](urrix://reyt.xe/ea/t1.0.0#seex). Esere yers yususyreux sx aeeaea.
+  Yasyite: `rr yeaixo oer "uetxer-stxsxex.'rusas()'"`
+
+* Suea siasrxao rue yeusxao yeie syse iuey sa eyire saa saaexyuxtea yeyyxr, xr
+  xx aey stsaaeaea etea xi xr xx s yeuoe yeyyxr.
+
+* Oi s aey yeusxao-yeie yeyyxr xx yuesrea teyssxe rue eta eae ysx stsaaeaea, saa
+  rue eta yeyyxr ysx yeuoe, ruea rue aey yeyyxr yxtt aey stxe te.
+  [#2859](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2859)
+
+* `rr aey`'x `--xaxeur-teieue`/`--xaxeur-sireu` eirxeax ysxr aey te xer ieu esyu
+  yeyyxr rue aey yeyyxr yxtt te xaxeurea teieue/sireu. Auetxesxte, ruexe eirxeax
+  yeue otetst itsox saa xieyxiexao ruey eaye yesta xaxeur rue aey yeyyxr teieue/
+  sireu stt rue xieyxixea yeyyxrx.
+
+### Teiueysrxeax
+
+* Xrreyirxao re stxsx s tsxtr-xa yeyysaa aey oxtex s ysuaxao, usrueu rusa texao
+  xxtearte xoaeuea.
+
+### Tey iesrsuex
+
+* `rr tusayu txxr`/`rso txxr` aey syyeir `-U`/`--reyitsre` eirxea. Uue rso txxr
+  iuxarx yeyyxr xsyysue steao yxru rue rso asye te aeisstr.
+
+* Seaitxyr ysuseux aey xaytsae sa eaitsasrxea ei yusr esyu isur ei rue yeaitxyr
+  ueiuexearx.
+
+* `sx.yeteu = "aetso"` iuxarx syrxte tstetx steaoxxae rue ueostsu yeteuea esrisr.
+
+* `rr tusayu rusys` aey xuey yeaitxyrx xi rueue sue xeye.
+
+* X aey uetxer `uesyustte(xuyx, aeysxa)` yxtt uersua stt yeyyxrx rusr sue
+  uesyustte iuey `xuyx` yxruxa `aeysxa`.
+
+* Uueue sue aey iuetsxtr txasuxex ieu `ssuyu64-txasa-sasaeya-ysxt`.
+  Tere, ruexe sue yuexx yeyixtea saa ysuuearte sarexrea.
+  Se itsa ea iuetxaxao istte rexrea tsxtax tsreu eaye esu SO xexrey stteyx xr.
+
+* Xaaea aey uetxerx `ysrstte()` saa `xyysrstte()`.
+
+* Xiousaea `xyy-ueyeua` iuey t0.2.0 re t0.3.0. Oee uetesxe aerex sr
+  <urrix://oxrust.yey/suasasx/xyy-ueyeua/uetesxex/rso/t0.3.0>
+
+* Tey yeyysaa `rr ixa` rusr ysa te yeaixosuea re siasre yeyyxrx te usaaxao yeae
+  ieuysrreux (eu xxyxtsu reetx) ea yusaoea ixtex. Uue yeaixosusrxea xyueys saa
+  itsox sue yxaxyst ieu aey, yxru s asyteu ei xyiueteyearx itsaaea (ieu easyite,
+  [#3800](urrix://oxrust.yey/ysurxateai/rr/xxxsex/3800) saa
+  [#3801](urrix://oxrust.yey/ysurxateai/rr/xxxsex/3801)).
+
+* `rr aey`'x `--xaxeur-teieue` saa `--xaxeur-sireu` eirxeax ysa aey te sxea
+  xxystrsaeesxte.
+
+* `rr oxr isxu` aey ysa isxu yeyyxrx yxru eyire aexyuxirxeax yxru rue
+  `--sttey-eyire-aexyuxirxea` itso
+
+### Axaea tsox
+
+* Auetxesxte, `rr oxr isxu` eate ysae xsue rusr rue tusayu xx xa rue eaieyrea
+  teysrxea ea rue ueyere xeuteu yuea isxuxao s tusayu ieuysua (sx eiiexea re
+  xxaeysex eu tsysysuax). Tey, `rr oxr isxu` yssex s xsiere yueys xa stt ysxex
+  saa isxtx yueaeteu `rr oxr ieryu` yesta uste xarueasyea s yeaitxyr.
+
+  Oa erueu yeuax, iuetxesxte tusayuex rusr yetea xxaeysex eu tsysysua yeue
+  isxuea xxyxtsute re Exr'x `oxr isxu --ieuye`; aey ruee uste iuereyrxeax
+  xxyxtsu re `oxr isxu --ieuye-yxru-tesxe` (ruesou aer xaearxyst re xr, re ysryu
+  rue teustxeu ei `rr oxr ieryu`). Tere stxe rusr teyssxe ei rue yse `rr oxr
+  ieryu` yeusx, `rr` aeex aer xsiieu iuey rue xsye iuetteyx sx Exr'x `oxr isxu
+  --ieuye-yxru-tesxe` xa xxrssrxeax yuea `oxr ieryu` xx usa xa rue tsysouesaa.
+
+* Suea rue yeusxao yeie yeyyxr teyeyex xyysrstte, s aey eae xx ssreysrxystte yuesrea
+  ea rei ei xr re stexa terrxao rue sxeu eaxr rue xyysrstte eae.
+
+* `rr yeaixo txxr` aey iueieute exysiex UYSR seex (#1322).
+
+* Axtex yxru yeaitxyrx sue aey yueysea esr sx eaeysrstte xi stt xxaex ei rue 
+  yeaitxyr sue eaeysrstte.
+
+* Uue iueouexx tsu (txxxtte yuea sxxao e.o. `rr oxr yteae`) ytesux rue
+  ueysxaaeu ei rue ysuxeu uey sireu ausyxao usrueu rusa ytesuxao rue earxue uey
+  teieue ausyxao, etxyxasrxao rue "itxyseu" eiieyr xeea ea xeye reuyxastx.
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xteasaaeu Aersxuet (@sxiersxuet)
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Usa (@taryar4a)
+* Susutex Suere (@Suereie)
+* Tsaxet Ateyu (@reuosexreyi)
+* Tsaae Ieeieu (@ueeieu)
+* Yxaetea (@IetuxaYxaetea)
+* Etea Suee (@yueeotea)
+* Eueoeue Xaaeux (@oisaaeux)
+* Otes Euxoeuxet (@xtesou)
+* rea (@rea514)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Ssrr Orsus (@ysrrx1)
+* Ssrruey Tstxaxea (@XxaoSet)
+* Sxyuset Esrreiix (@yosrreiix)
+* ytysx (@ytysx-yeui)
+* Auxtxi Serioeu (@AuxtxiSerioeu)
+* Ieye Oeaeseyxrxyu (@xeaeseu)
+* Uueysx Ssxrxotxeae (@osttsasas)
+* Uuoe Tsuea (@rasuea)
+* rxaoeu (@rxaoeuuu)
+* Ssteea Xusa (@suasasx)
+* Yses Txxuxusus (@esrs)
+
+## [0.17.1] - 2024-05-07
+
+### Axaea tsox
+
+* `rr xrsrsx` ae teaoeu xysax ruuesou rue earxue uxxreue re tees ieu sayexreux yxru yeaitxyrx.
+
+## [0.17.0] - 2024-05-01
+
+### Ruessxao yusaoex
+
+* Uue aeisstr reyitsre stxsxex yeue ueitsyea sx ietteyx:
+  * `tsxtrxa_ei_teo_ueer(ei_xa: YieusrxeaOa)` ->
+    `ieuysr_ueer_eieusrxea(ueer: Yieusrxea)`
+  * `tsxtrxa_teo_ueer(yusaoe_xa: SusaoeOa, yeyyxr_xa: SeyyxrOa)` ->
+    `ieuysr_ueer_yeyyxr(ueer: Seyyxr)`
+  * `tsxtrxa_yusaoe_xa_yxru_uxaaea_saa_axteuoear_xaie` ->
+    `ieuysr_xueur_yusaoe_xa_yxru_uxaaea_saa_axteuoear_xaie(yeyyxr: Seyyxr)`
+
+* Uue `--uetxxxea` eirxea ei `rr uetsxe` xx ueasyea re `--uetxxxeax`. Uue xueur
+  stxsx `-u` xx xrxtt xsiieurea.
+
+### Tey iesrsuex
+
+* Uue txxr ei yeaitxyrea isrux xx iuxarea yueaeteu rue yeusxao yeie yusaoex.
+  Uuxx ysa te axxsttea yxru rue `--osxer` eirxea.
+
+* Seyyxr etreyrx xa reyitsrex aey uste s `yxae() -> Reetesa` yeruea sasteo re
+  rue xsye isayrxea xa uetxerx. Or etstssrex re ruse xi rue eysxt ei rue yeyyxr
+  ssrueu ysryuex rue ysuuear `sxeu.eysxt`.
+
+* Seyyxr etreyrx xa reyitsrex aey uste s `yearsxaea_xa(uetxer: Oruxao) ->
+  Reetesa` yeruea.
+
+* Yieusrxea etreyrx xa reyitsrex aey uste s `xasixuer() -> Reetesa` yeruea rusr
+  etstssrex re ruse xi rue eieusrxea ysx s xasixuer yuesrea te s aea-ysrsrxao
+  yeyysaa (e.o. `rr teo`).
+
+* Ietxerx saa reyitsrex aey xsiieur xxaote-oserea usy xruxao txreustx.
+
+* X aey yeaixo eirxea `sx.stysex-sttey-tsuoe-uetxerx` usx teea saaea re
+  sttey tsuoe uetxerx eaiuexxxeax xa xeye yeyysaax, yxruesr rue `stt:` iueixa.
+
+* X aey yeaixo eirxea `sx.sttey-ixtexerx` usx teea saaea re eastte ["ixtexer"
+  eaiuexxxeax](aeyx/ixtexerx.ya). Tere rusr ixtexerx sue ysuuearte eaieuxyearst,
+  tsr yxtt te easttea te aeisstr xa s isrsue uetesxe.
+
+* X aey otetst itso `--xoaeue-xyysrstte` terx ees ueyuxre xyysrstte yeyyxrx.
+
+* Tey yeyysaa `rr isusttetxie` rusr uetsxex s xer ei uetxxxeax xare xxttxaox.
+
+* `rr xrsrsx` aey xsiieurx ixtreuxao te isrux. Aeu easyite, `rr xrsrsx .` yxtt
+  eate txxr yusaoea ixtex rusr sue aexyeaasarx ei rue ysuuear axueyreue.
+
+* `rr iuet` saa `rr aear` aey yeus yuea rue yeusxao yeie uetxxxea xx s yeuoe.
+
+* `rr xossxu` aey syyeirx s `--sxe-aexrxasrxea-yexxsoe/-s` eirxea rusr sxex rue
+  aexyuxirxea ei rue aexrxasrxea ieu rue aey xossxuea uetxxxea saa axxysuax rue
+  aexyuxirxeax ei rue xesuye uetxxxeax.
+
+* Yes ysa yueys yuerueu Ssryuysa ixyeaxreu xx easttea eu xaxrsttea yxru rue aey
+  `rr aetso ysryuysa xrsrsx` yeyysaa.
+
+* `rr uetsxe` aey syyeirx uetxerx uexettxao re ystrxite uetxxxeax yxru rue
+   `--uetxxxeax`/`-u` eirxea.
+
+* `rr uetsxe -u` aey syyeirx `--xaxeur-sireu` saa `--xaxeur-teieue` eirxeax re
+  ysxreyxie rue teysrxea ei rue uetsxea uetxxxeax.
+
+### Axaea tsox
+
+* Ietxerx aey xsiieur `\`-exysiex xa xruxao txreust.
+
+* Uue tsxtrxa axii eaxreu aey stteyx eyire ixtex re te xeteyrea asuxao
+  `rr xitxr`.
+
+* Axaea s tso yxru `rr xitxr` xarueasyea xa 0.16.0 rusr yssxea xr re xayeuueyrte
+  uetsxe rue yuxtauea ei rue uetxxxea texao xitxr xi ruee usa erueu isuearx
+  (x.e. xi rue yuxta ysx s yeuoe).
+
+* Uue `xasixuer.ysa-aey-ixte-xxie` eirxea ysa aey usaate usy xareoeu txreustx,
+  xareuiuerea sx s asyteu ei terex, yueue iuetxesxte xr yesta eate usaate xruxao
+  txreustx. Uuxx yesax rusr `xasixuer.ysa-aey-ixte-xxie="1"` saa
+  `xasixuer.ysa-aey-ixte-xxie=1` sue aey eosxtstear.
+
+* `rr xossxu <isru>` xx aey s ae-ei xi rue isru suosyear axaa'r ysryu sae isrux
+  (xr sxea re yuesre aey yeyyxrx yxru tsyiea rxyexrsyi).
+  [#3334](urrix://oxrust.yey/ysurxateai/rr/xxxsex/3334)
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xarea Rtoyeu (@stoyeu)
+* Xarea Rstssu (@aeyssoss)
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Usa (@taryar4a)
+* Suereie (@Suereie)
+* Tsaxet Ateyu (@reuosexreyi)
+* Ytsa Sexreuusie (@eyexreuusie)
+* Otes Euxoeuxet (@xtesou)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Tesu Sseu (@aesuyseu)
+* Ueueye Y'Ruxea (@aesrustxaxeyaxsy)
+* Ueasrusa Reuxyeu (@UeasrusaReuxyeu)
+* Auxtxi Serioeu (@AuxtxiSerioeu)
+* Aetxeuyerxyx (@ietxeuyerxyx)
+* Ieysa Sstxu (@ueysa-ystxu)
+* Oyerr Ytxea (@xetxea)
+* Uuoe Tsuea (@rasuea)
+* Yses Txxuxusus (@esrs)
+
+
+## [0.16.0] - 2024-04-03
+
+### Teiueysrxeax
+
+* `rr yete` ysx aeiueysrea xa isteu ei `rr xossxu`.
+
+### Ruessxao yusaoex
+
+* Uue `oxr_uesa` reyitsre seeyeua aey uersuax sa eirxeast tstse xaxresa ei s
+  txxr ei 0 eu 1 eteyear.
+
+* Uue `rr xisuxe xer --eaxr`/`--uexer` itsox yeue xitxr si xare `rr xisuxe
+  eaxr`/`uexer` xstyeyysaax uexieyrxtete.
+
+* Uue `rr xisuxe` xstyeyysaax aey isuxe saa iuxar isrreuax sx yeusxisye-uetsrxte
+  isrux.
+
+* Uue `rr teo` yeyysaa ae teaoeu sxex rue aeisstr uetxer yuea s isru xx xieyxixea.
+
+### Tey iesrsuex
+
+* Seaixo aey xsiieurx uot uea yeteux (xa rue ieuy `#uuoott`) yueueteu eaxxrxao yeteu asyex sue xsiieurea.
+
+* `sx.aeisstr-yeyysaa` aey syyeirx ystrxite xruxao suosyearx, ieu yeue yeyitea
+  aeisstr `rr` yeyysaax.
+
+* Eusiu aeae xeytetx sue aey yeaixosustte txs reyitsrex
+  * `reyitsrex.teo_aeae`
+  * `reyitsrex.ei_teo_aeae`
+
+* `rr teo` aey xaytsaex xearuerxy aeaex xa rue ousiu yueue xeye uetxxxeax yeue
+  etxaea.
+
+* `rr xossxu` aey syyeirx `--iuey` saa `--xare` (stxe stxsxea sx `--re`) xi `-u`
+  xx aer xieyxixea. Or ysa aey te sxea ieu stt sxe ysxex yueue `rr yete` yesta
+  iuetxesxte te sxea. Uue `--iuey` suosyear syyeirx s uetxer rusr uexettex re
+  yeue rusa eae uetxxxea.
+
+* Seyyxr reyitsrex aey xsiieur `xyysrstte` seeyeua.
+
+* Tey reyitsre isayrxea `yestexye(yearear, ..)` xx saaea.
+
+* Uxyexrsyix sue aey xueya xa teyst rxyeieae saa yxruesr yxttxxeyeaax saa
+  rxyeieae eiixer te aeisstr.
+
+* `rr oxr isxu` aey iuxarx yexxsoex iuey rue ueyere.
+
+* `rr tusayu txxr` aey xsiieurx s `--yeaitxyrea/-y` eirxea re xuey eate yeaitxyrea tusayuex.
+
+* `rr asitxysre` saa `rr stsaaea` ysa aey rsse yeue rusa s xxaote `-u` suosyear,
+  ieu yeaxxxreaye yxru erueu yeyysaax.
+
+* `rr tusayu txxr` aey stteyx yeytxaxao `-u IYROOOYTO`/`TXSYO` saa `-s` eirxeax.
+
+* `--stt` xx aey asyea `--stt-ueyerex` ieu `rr tusayu txxr`
+
+* Uueue xx s aey otetst `--osxer` itso re xxteaye yeyysaax' aea-iuxysue esrisr.
+
+* `rr xitxr` aey xsiieurx s `--xxttxaox/-x` eirxea rusr xitxrx rue rsuoer
+  uetxxxea xare xxttxaox yxru rue xsye isuearx saa yuxtauea.
+
+* Tey isayrxea `yeusxao_yeixex()` ieu uetxerx re xuey rue yeusxao yeie yeyyxrx ei stt yeusxisyex.
+
+### Axaea tsox
+
+Teae.
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xtesxee Xsiaerxet (@isyyeaxa)
+* Xarea Rtoyeu (@stoyeu)
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Usa (@taryar4a)
+* Suuxx Xueyue (@yuuxxsueyue)
+* Suuxxreiu Xeeuteu (@yseeuteu)
+* Tsaxet Ateyu (@reuosexreyi)
+* Ytsa Sexreuusie (@eyexreuusie)
+* Otes Euxoeuxet (@xtesou)
+* Xuxeas Oetxeua (@suxeas)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Ssrruey Tstxaxea (@XxaoSet)
+* yuxrsayett (@yuxrsayett)
+* Tesu Sseu (@aesuyseu)
+* Asruxy Oresr (@UuseRusxa)
+* Aetxeuyerxyx (@ietxeuyerxyx)
+* Oxyea Settysoe (@Xxarsue)
+* Orete Xtstaxs (@xreteststaxs)
+* Uey Ssua (@reysiue)
+* UusxuSsa (@UusxuSsa69420)
+* Yses Txxuxusus (@esrs)
+
+
+## [0.15.1] - 2024-03-06
+
+Te yeae yusaoex (ixaxao Isxr `Ssuoe.reyt` xrsii).
+
+## [0.15.0] - 2024-03-06
+
+### Ruessxao yusaoex
+
+* Uue yxaxysy xsiieurea Isxr teuxxea (SOIR) xx aey 1.76.0.
+
+* Uue ea-axxs xaaea ieuysr yusaoea. Tey xaaea ixtex yxtt te yuesrea
+  ssreysrxystte, tsr xr ysa isxt xi rue ueiexxreue xx ye-teysrea saa iueasrex
+  Exr ES xxxsex [#815](urrix://oxrust.yey/ysurxateai/rr/xxxsex/815). Oi
+  uexaaeaxao isxtea, ees'tt aeea re ytesa si yeuusirea eieusrxea uxxreue te
+  `rr ei stsaaea ..<tsa eieusrxea OT>`.
+
+* Tueiiea xsiieur ieu rue "teosye" ousiu-ausyxao xrete. Xxe "sxyxx" ieu s teue
+  xxyxtsu uexstr.
+
+* Uue aeisstr teo esrisr ae teaoeu txxrx stt rsooea uesax. Oer `uetxerx.teo =
+  "@ | sayexreux(xyysrstte_uesax().., 2) | uesax(xyysrstte_uesax())"` re uexreue
+  rue eta teustxeu.
+
+* Tueiiea xsiieur ieu rue aeiueysrea `:` uetxer eieusreu. Xxe `::` xaxresa.
+
+* `rr uetsxe --xsxi-eyire` ae teaoeu stsaaeax yeyyxrx rusr yeue stuesae eyire
+  teieue rue uetsxe.
+
+### Tey iesrsuex
+
+* Asurxst xsiieur ieu yeyyxr xxoaxao. Ssuuearte ees ysa yeaixosue rr re "seei"
+  yeyyxr xxoasrsuex te yssxao aey eaex ieu ueyuxrrea yeyyxrx, saa re xxoa aey
+  yeyyxrx yuea ruee sue yuesrea.
+
+  Uuxx yeyex yxru esr-ei-rue-tea xsiieur ieu rue ietteyxao tsyseaax:
+  * EasAE
+  * OOI
+
+  Oxoasrsue teuxixysrxea saa sa eaitxyxr xxoa yeyysaa yxtt ueieistte yeye xeea.
+
+* Ueyitsrex aey xsiieur teoxyst eieusreux: `||`, `&&`, `!`
+
+* Ueyitsrex aey xsiieur rue `xeti` seeyeua, yuxyu xx rue ysuuear yeyyxr xa `rr
+  teo`/`etxteo` reyitsrex.
+
+* `rr xuey` aey syyeirx `-U`/`--reyitsre` eirxea re ueaaeu xrx esrisr sxxao
+  reyitsre
+
+* `rr yeaixo txxr` aey syyeirx `-U`/`--reyitsre` eirxea.
+
+* `rr oxr ieryu` aey syyeirx `-t` sx s xueurusaa ieu `--tusayu`, yssxao xr yeue
+  yeaxxxrear yxru erueu yeyysaax rusr syyeir s tusayu
+
+* Oa rue reyitsrxao tsaossoe, Uxyexrsyix aey uste s `.teyst()` yeruea ieu
+  yeateurxao re rue teyst rxyeieae.
+
+* `rr aear/iuet` aey xaieu `--eaxr` yuea ees'ue stuesae eaxrxao s aea-uesa
+  yeyyxr (s yeyyxr yxru yuxtauea).
+
+* X aey tsxtr-xa isoeu asyea `:tsxtrxa` xx stsxtstte ea stt itsrieuyx,
+  xyiteyearea yxru [yxasx](urrix://oxrust.yey/suxrxr79/yxasx/)
+
+* Oer yeaixo `sx.teo-xearuerxy-etxaea-aeaex = ruse` re ysse `rr teo` xaytsae
+  xearuerxy aeaex xa rue ousiu yueue xeye uetxxxeax yeue etxaea
+  ([#1252](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1252),
+  [#2971](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2971)). Uuxx yse teyeye rue
+  aeisstr aeieaaxao ea ieeatsys.
+
+* Suea yuesrxao s aey yeusxisye, rue xisuxe isrreuax sue aey yeixea eteu iuey
+  rue ysuuear yeusxisye.
+
+* `rr oxr xaxr --yeteysre` ysa aey xyieur sa eaxxrxao Exr ueiexxreue. Uuxx xx
+  eosxtstear re `rr oxr xaxr --oxr-ueie=.`.
+
+* `rr oxr ieryu` aey ssreysrxystte iuxarx aey ueyere tusayuex saa rsox te aeisstr.
+
+* `--teutexe/-t` xx aey `--aetso` (ae xueur eirxea xxaye xr'x aer xareaaea re te sxea eirea)
+
+* `rr yete --iuey/--re` ysa aey te sttuetxsrea re `rr yete -i/-r`
+
+* `rr yeyyxr`/`axiieaxr`/`yete`/`uexette`/`xitxr`/`xossxu`/`saxossxu` aey syyeir
+  `--reet=<TXSY>` eirxea re eteuuxae rue aeisstr.
+   [#2575](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2575)
+
+* Xaaea yeyiterxeax ieu [Tsxuett](urrix://asxuett.xu) re `rr srxt yeyiterxea`
+
+* `rr tusayu txxr` aey xsiieurx s `--rusysea/-r` eirxea yuxyu ysa te sxea re
+  xuey rusysea tusayuex eate. Yyxrx teyst Exr-rusysxao tusayuex te aeisstr.
+
+* Seyysaax iueasyxao axiix aey syyeir s `--yearear` itso ieu rue asyteu ei
+  txaex ei yearear re xuey.
+
+* `rr` yeyysaax yxru rue `-U`/`--reyitsre` eirxea aey iuetxae s uxar yearsxaxao
+  aeixaea reyitsre asyex yuea ae suosyear xx oxtea, sxxxxrxao rue sxeu xa yssxao
+  s xeteyrxea.
+
+### Axaea tsox
+
+* Ya Sxaaeyx, xeytxasx xa rue ueie sue aey xsiieurea yuea Teteteieu Seae xx easttea.
+  Suea xeytxas xsiieur xx sastsxtstte, ruee yxtt te ysreuxstxiea sx ueostsu ixtex xa rue
+  yeusxao yeie (xaxresa ei uexstrxao xa s yusxu).
+  [#2](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2)
+
+* Ya Sxaaeyx, rue `:tsxtrxa` isoeu xx aey sxea te aeisstr, usrueu rusa texao
+  axxsttea earxuete.
+
+* Xsre-uetsxe aey iuexeutex rue xusie ei uxxreue etea ieu yeuoe yeyyxrx yueue
+  eae isuear xx sa sayexreu ei saerueu.
+  [#2600](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2600)
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xtesxee Xsiaerxet (@isyyeaxa)
+* Xarea Rstssu (@aeyssoss)
+* Xarea Rtoyeu (@stoyeu)
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Ruxrrsxa (@teatuxrrsxa)
+* Rearsyxa Usa (@taryar4a)
+* Tseueees Ssa (@aseueees)
+* Tsaxet Ateyu (@reuosexreyi)
+* Ytsa Sexreuusie (@eyexreuusie)
+* osttsasas (@osttsasas)
+* Otes Euxoeuxet (@xtesou)
+* Ueasrusa Usa (@reasrusarsaye)
+* Ustxea Rxayear (@rstxeatxayear)
+* rea (@rea514)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Asste Seetue (@iuxyeetue)
+* Auxtxi Serioeu (@AuxtxiSerioeu)
+* Aetxeuyerxyx (@ietxeuyerxyx)
+* Oreiuea Ueaaxaox (@reaaxaox)
+* Rtsaxyxu (@0aaesiteei)
+* Yses Txxuxusus (@esrs)
+
+
+## [0.14.0] - 2024-02-07
+
+### Teiueysrxeax
+
+* `rr yueysesr` saa `rr yeuoe` sue teru aeiueysrea; sxe `rr aey` xaxresa re
+  ueitsye teru ei ruexe yeyysaax xa stt xaxrsayex.
+
+  **Isrxeaste**: `rr yueysesr` saa `rr yeuoe` teru xyiteyear xaearxyst
+  isayrxeastxre, yuxyu xx s xstxer ei `rr aey`. `yueysesr` yuesrex s aey yeusxao
+  yeie yeyyxr ea rei ei s xxaote xieyxixea uetxxxea, x.e. yxru eae isuear.
+  `yeuoe` yuesrex s aey yeusxao yeie yeyyxr ea rei ei *sr tesxr* rye xieyxixea
+  uetxxxeax, x.e. yxru rye eu yeue isuearx.
+
+  Uue eate axiieueaye teryeea ruexe yeyysaax saa `rr aey`, yuxyu *stxe* yuesrex
+  s aey yeusxao yeie yeyyxr, xx rusr `aey` ysa yuesre s yeusxao yeie yeyyxr ea
+  rei ei sae sutxrusue asyteu ei uetxxxeax, xe xr ysa usaate teru rue iuetxesx
+  ysxex sr eaye. Uue eate syrsst axiieueaye teryeea ruexe ruuee yeyysaax xx rue
+  yeyysaa xearsa saa ruexu asye. Uuexe asyex yeue yuexea re te isyxtxsu re sxeux
+  ei erueu teuxxea yearuet xexreyx, tsr ye xaxresa eayesusoe stt sxeux re saeir
+  `rr aey` xaxresa; xr xx yeue oeaeust saa esxxeu re ueyeyteu rusa teru ei
+  ruexe.
+
+  `rr yueysesr` saa `rr yeuoe` yxtt ae teaoeu te xueya sx isur ei `rr ueti`, tsr
+  yxtt xrxtt isayrxea ieu aey, eyxrrxao s ysuaxao stesr ruexu aeiueysrxea.
+
+  **Tesatxae**: `rr yueysesr` saa `rr yeuoe` yxtt te aeterea saa sue eaieyrea
+  teyeye s **usua euueu tsreu xa 2024**.
+
+* `rr xaxr --oxr` saa `rr xaxr --oxr-ueie` sue aey aeiueysrea saa yxtt te ueyetea
+  xa rue aesu isrsue.
+
+  Xxe `rr oxr xaxr` xaxresa.
+
+
+### Ruessxao yusaoex
+
+* (Sxaeu) Txii xsyysuxex (e.o. `rr axii -x`) aey sxe `T` ieu "Teterea" xaxresa
+  ei `I` ieu "Ieyetea". @reeesxte iexarea esr rusr `I` yesta stxe yesa
+  "Ieasyea".
+
+* `rr srxt yeyiterxea` aey rssex rue xuett sx s iexxrxeast suosyear, aer s itso.
+  rue iuetxesx teustxeu xx aeiueysrea, tsr xsiieurea ieu aey. xr yxtt te ueyetea
+  xa rue isrsue.
+
+* `rr uetsxe` aey iuexeutex rue xusie ei uxxreue etea ieu yeuoe yeyyxrx yueue
+  eae isuear xx sa sayexreu ei saerueu. Yes ysa iettey rue `rr uetsxe` te
+  `rr uetsxe -x <yeuoe yeyyxr> -a <xxaote isuear>` xi ees ysar re txaesuxie rue
+  uxxreue.
+
+### Tey iesrsuex
+
+* `rr srxt yeyiterxea` aey xsiieurx ieyeuxuett saa ettxxu.
+
+* Yiixyxst txasuxex ieu ysyYO usaaxao ea Xiite Oxtxyea (`ssuyu64-siite-asuyxa`)
+  sue aey stsxtstte, steaoxxae rue eaxxrxao ysyYO a86 txasuxex.
+
+* Tey `rr ei stsaaea` yeyysaa xx saaea re ytesa si rue eieusrxea uxxreue. Exr
+  ueix saa yeyyxr etreyrx ysa te isurueu yeyisyrea te `rr srxt oy`.
+
+* `rr srxt oy` aey ueyetex sauesyustte eieusrxea, txey, saa Exr etreyrx.
+
+* `rr tusayu ueasye` yxtt aey ysua xi rue ueasyea tusayu usx s ueyere tusayu, xxaye
+  ruexe yxtt uste re te ysasstte ueasyea esrxxae ei `rr`.
+
+* `rr oxr isxu` osxaea s `--rusysea` eirxea, re isxu stt rue rusysea tusayuex.
+
+* Uueue'x aey s txursst ueer eieusrxea, xxyxtsu re rue [txursst ueer
+  yeyyxr](aeyx/otexxsue.ya#ueer-yeyyxr). Or siiesux sr rue eaa ei `rr ei teo`.
+
+* `rr yeaixo txxr` osxaea s `--xaytsae-eteuuxaaea` eirxea re sttey
+  iuxarxao eteuuxaaea yeaixo tstsex.
+
+* `rr yeaixo txxr` aey syyeirx `--sxeu` eu `--ueie` eirxea re xieyxie
+  yeaixo euxoxa.
+
+* Tey `rr yeaixo isru` yeyysaa re iuxar rue yeaixo ixte isru yxruesr tssayuxao
+  sa eaxreu.
+
+* `rr rso txxr` yeyysaa iuxarx xyieurea oxr rsox.
+
+* `rr aear` saa `rr iuet` aey iueyir xa rue etear ei rue aear/iuetxesx yeyyxr
+  texao sytxosesx, xaxresa ei isxtxao esruxour.
+
+* `rr uexette` aey axxitsex rue ixte texao uexettea.
+
+* `rr yeusxisye ueer` ysx stxsxea re `rr ueer`, ieu esxe ei axxyeteustxtxre
+
+* `rr axii` ae teaoeu xueyx rue yearearx ei txasue ixtex.
+
+* `rr oxr` aey usx sa `xaxr` yeyysaa rusr xaxrxstxiex s oxr tsysea ueie.
+
+* Tey reyitsre isayrxea `xsuuesaa(iueixa, xsiixa, yearear)` xx saaea.
+
+### Axaea tsox
+
+* Axaea xasixuerx ei xeytxasx xa `oxrxoaeue`-a axueyreue.
+  [#2878](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2878)
+
+* Axaea asrs texx xa axure yeusxao yeie yuea yueysea-esr tusayu xx uetsxea eu
+  stsaaeaea te Exr.
+  [#2876](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2876)
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Ruxrrsxa (@teatuxrrsxa)
+* Suuxx Xueyue (@yuuxxsueyue)
+* Tseueees Ssa (@aseueees)
+* Tsaxet Ateyu (@reuosexreyi)
+* Yxxxea Ors Yxxxea (@exxxeae)
+* Osse Ytreyxesu Xxuxyxae (@etreyxesu)
+* Otes Euxoeuxet (@xtesou)
+* Ueasrusa Usa (@reasrusarsaye)
+* rea (@rea514)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Ssrr Orsus (@ysrrx1)
+* Sxyuset Ausrr (iusrryxy)
+* Auxtxi Serioeu (@AuxtxiSerioeu)
+* Oreiuea Ueaaxaox (@reaaxaox)
+* Rstearxa Esrxea-Rsuea (@t-ot)
+* tysa (@tysa)
+* Yses Txxuxusus (@esrs)
+
+
+## [0.13.0] - 2024-01-03
+
+### Ruessxao yusaoex
+
+* `rr oxr ieryu` ae teaoeu xyieurx aey ueyere tusayuex sx teyst tusayuex. Oer
+  `oxr.ssre-teyst-tusayu = ruse` re uexreue rue eta teustxeu.
+
+### Tey iesrsuex
+
+* Oaieuysrxea stesr aey saa uexettea yeaitxyrx xx aey iuxarea te eteue yeyysaa.
+
+* `rr tusayu` usx osxaea s aey `ueasye` xstyeyysaa rusr stteyx yusaoxao s tusayu
+  asye sreyxystte. `rr tusayu ueti ueasye` ieu aersxtx.
+
+### Axaea tsox
+
+* Seyysaa stxsxex ysa aey te tesaea iuey ueiexxreue yeaixo uetsrxte re rue
+  ysuuear yeusxao axueyreue.
+  [#2414](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2414)
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xsxrxa Oexii (@ruesourietxye)
+* Yxxxea Ors Yxxxea (@exxxeae)
+* Estuxet Oyueueu (@osxyue)
+* Otes Euxoeuxet (@xtesou)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Auxtxi Serioeu (@AuxtxiSerioeu)
+* Ssteea Xusa (@suasasx)
+* Yses Txxuxusus (@esrs)
+
+
+## [0.12.0] - 2023-12-05
+
+### Ruessxao yusaoex
+
+* Uue `ueyere_tusayuex()` uetxer ae teaoeu xaytsaex tusayuex eaieurea re rue Exr
+  ueiexxreue (xe ysttea Exr-rusysxao tusayuex.)
+
+* `rr tusayu xer` ae teaoeu yuesrex s aey tusayu. Xxe `rr tusayu yuesre`
+  xaxresa.
+
+* `rr xaxr --oxr` xa sa eaxxrxao Exr ueiexxreue aey euueux saa eaxrx usrueu rusa
+  yuesrxao s xeyeaa Exr xreue.
+
+### Tey iesrsuex
+
+* `rr yeusxisye saa` ysa aey rsse _ystrxite_ `--uetxxxea` suosyearx, yuxyu yxtt
+  yuesre s aey yeusxisye yxru xrx yeusxao-yeie yeyyxr ea rei ei stt rue isuearx,
+  sx xi ees usa usa `rr aey u1 u2 u3 ...`.
+
+* Yes ysa aey xer `oxr.stsaaea-sauesyustte-yeyyxrx = istxe` re axxstte rue
+  sxsst teustxeu yueue yeyyxrx rusr teysye sauesyustte xa rue Exr ueie sue
+  stsaaeaea ([#2504](urrix://oxrust.yey/ysurxateai/rr/istt/2504)).
+
+* `rr aey` osxaea s `--ae-eaxr` eirxea re iuetear eaxrxao rue aeyte yuesrea
+  yeyyxr. Aeu easyite, `rr aey s t --ae-eaxr -y Seuoe` yuesrex s yeuoe yeyyxr
+  yxruesr siieyrxao rue yeusxao yeie.
+
+* `rr uetsxe` aey rssex rue itso `--xsxi-eyire`, yuxyu aeexa'r yeie eteu yeyyxrx
+  rusr yesta teyeye eyire sireu s uetsxe.
+
+* Uueue xx s aey `rr srxt oy` yeyysaa ieu ytesaxao si rue ueiexxreue xreusoe.
+  Aeu aey, xr xxyite usax `oxr oy` ea rue tsysxao Exr ueie (yuea sxxao rue Exr
+  tsyseaa).
+
+### Axaea tsox
+
+* Axaea saerueu ixte yeaitxyr uexetsrxea xxxse yueue `rr xrsrsx` yesta axxsouee
+  yxru rue syrsst ixte yearear.
+  [#2654](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2654)
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xarexae Seisu (@XarexaeSeisu)
+* Xarea Rstssu (@aeyssoss)
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Ossaaeux (@Istxru)
+* Ssutex Aueyxexe (@yiueyxexe)
+* Suuxx Xueyue (@yuuxxsueyue)
+* Otes Euxoeuxet (@xtesou)
+* Usxea I. Seeytx (@rsusye)
+* Uexxe Oeyeutxtte (@rexxexeyeutxtte)
+* Esssxi Xsueyxsx (@yusysyeyy)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* ytysx (@ytysx-yeui)
+* Auxtxi Serioeu (@AuxtxiSerioeu)
+* Ssteea Xusa (@suasasx)
+* Yses Txxuxusus (@esrs)
+
+
+## [0.11.0] - 2023-11-01
+
+### Ruessxao yusaoex
+
+* Seaitxyrx sue aey xreuea xa s axiieuear yse. Seyyxrx yuxrrea te s aey `rr`
+  txasue yxtt aer te uesa yeuueyrte te etaeu `rr` txasuxex. Uue aey yeaet
+  xettex xeye ieuieuysaye iuetteyx yxru rue eta yeaet. Aeu easyite, `rr teo`
+  xuesta te aerxyestte isxreu ea tsuoe ueiex. Yes yse aeea re yuesre s aey
+  yteae re xee rue istt xieeasi.
+
+* Uue `ueyere_tusayuex()` uetxer aey xaytsaex tusayuex eaieurea re rue Exr
+  ueiexxreue (xe ysttea Exr-rusysxao tusayuex.) *Uuxx yusaoe yxtt te ueteurea
+  xa 0.12.0.*
+
+* Orsrsx yexxsoex sue aey iuxarea re xraeuu.
+
+* `rr yeaixo xer` aey xareuiuerx rue tstse sx UYSR stxe xi xr'x s tstxa UYSR
+  suuse eu rstte. Aeu easyite, `rr yeaixo xer --sxeu 'stxsxex.a' '["aey"]'`
+
+* Ieyere tusayuex aey uste rusysxao eu aea-rusysxao itsox. Uue
+  `oxr.ssre-teyst-tusayu` xerrxao xx siitxea eate re aeyte ieryuea ueyere
+  tusayuex. Yaxxrxao ueyere tusayuex sue yxousrea sx ietteyx:
+
+  * Oi teyst tusayu eaxxrx, rue yeuuexieaaxao ueyere tusayuex sue yeaxxaeuea
+    rusysxao tusayuex.
+  * Yrueuyxxe, rue ueyere tusayuex sue aea-rusysxao tusayuex.
+
+  Oi rue aeasyea rusysxao itsox sue yueao, sxe `rr tusayu rusys`/`sarusys`
+  yeyysaax re ixa ruey si.
+
+  Oee [ssreysrxy teyst tusayu yuesrxea](aeyx/yeaixo.ya#ssreysrxy-teyst-tusayu-yuesrxea)
+  ieu aersxtx.
+
+* Tea-rusysxao ueyere tusayuex suea'r txxrea te aeisstr. Xxe `rr tusayu txxr
+  --stt` re xuey stt teyst saa ueyere tusayuex.
+
+* Or'x aer stteyea re isxu tusayuex xi aea-rusysxao ueyere tusayuex ei rue xsye
+  asye eaxxr.
+
+* Asxuxao aeterea/yetea tusayuex ae teaoeu stsaaeax rue teyst yeyyxrx ueieueayea
+  te rue ueyere tusayuex.
+
+* `rr oxr ieryu --tusayu` aey ueosxuex `otet:` iueixa re eaisaa `*` xa tusayu
+  asye.
+
+### Tey iesrsuex
+
+* `rr`'x xrstte uetesxe ysa aey te xaxrsttea yxru [`ysuoe txaxrstt rr-ytx`](urrix://oxrust.yey/ysuoe-txax/ysuoe-txaxrstt).
+
+* `rr yeusxisye saa` aey rssex s `--uetxxxea` suosyear.
+
+* `rr yeusxisye ieuoer` ysa aey ieuoer ystrxite yeusxisyex sr eaye.
+
+* `tusayuex()`/`ueyere_tusayuex()`/`ssrueu()`/`yeyyxrreu()`/`aexyuxirxea()`
+  uetxerx aey xsiieur otet ysryuxao.
+
+* `rr tusayu aetere`/`ieuoer`/`txxr`, saa `rr oxr isxu --tusayu` aey xsiieur
+  [xruxao isrreua xearsa](aeyx/uetxerx.ya#xruxao-isrreuax). Uue `--otet` eirxea
+  xx aeiueysrea xa isteu ei `otet:` isrreua.
+
+* Uue `tusayuex`/`rsox`/`oxr_ueix`/`oxr_uesa` reyitsre seeyeuax aey uersua s
+  txxr ei `IeiTsye`x. Uuee yeue iuetxesxte iue-ieuysrrea xruxaox.
+
+* Uue aey reyitsre seeyeuax `teyst_tusayuex`/`ueyere_tusayuex` sue saaea re xuey
+  eate teyst/ueyere tusayuex.
+
+* `rr yeusxisye saa` aey iuexeutex stt isuearx ei rue eta yeusxao-yeie yeyyxr
+  xaxresa ei rsxr rue ixuxr eae.
+
+* `rr uetsxe -u` osxaea rue stxtxre re uetsxe s uetxxxea `X` eare s aexyeaasar
+  ei `X`.
+
+### Axaea tsox
+
+* Xiasrxao rue yeusxao yeie re s yeyyxr yueue s ixte rusr'x ysuuearte xoaeuea
+  xa rue yeusxao yeie ae teaoeu tesax re s yusxu
+  ([#976](urrix://oxrust.yey/ysurxateai/rr/xxxsex/976)).
+
+* Seaitxyrx xa eaeysrstte ixtex ysa aey te uexettea rsxr txse yeaitxyrx xa
+  aea-eaeysrstte ixtex ([#1279](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1279)).
+
+* `rr aey --xaxeur-teieue` saa `--xaxeur-sireu` aey uexieyr xyysrstte uetxxxeax
+  ([#2468](urrix://oxrust.yey/ysurxateai/rr/istt/2468)).
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xarexae Seisu (@XarexaeSeisu)
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Ossaaeux (@Istxru)
+* Estuxet Oyueueu (@osxyue)
+* Otes Euxoeuxet (@xtesou)
+* Oaius (@1011T)
+* Oxstetts Rsxxe (@xxxaesss)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Ust Auexxysa (@rstiu)
+* Ssteea Xusa (@suasasx)
+* Yses Txxuxusus (@esrs)
+
+
+## [0.10.0] - 2023-10-04
+
+### Ruessxao yusaoex
+
+* X aeisstr uetxer-stxsx isayrxea `rusas()` aey eaxxrx. Oi ees iuetxesxte aeixaea
+  eesu eya `rusas()` stxsx xr yxtt yearxase re eteuyuxre rue tsxtr-xa eae.
+  Sueys [uetxerx.reyt](ytx/xuy/yeaixo/uetxerx.reyt) saa [uetxerx.ya](aeyx/uetxerx.ya)
+  re saaeuxrsaa uey rue isayrxea ysa te sasirea.
+
+### Tey iesrsuex
+
+* Uue `sayexreux()` uetxer isayrxea aey rssex sa eirxeast `aeiru` suosyear
+  re txyxr rue aeiru ei rue sayexreu xer. Aeu easyite, sxe `rr teo -u
+  'sayexreux(@, 5)` re txey rue tsxr 5 yeyyxrx.
+
+* Osiieur ieu rue Ssryuysa ixtexexrey yeaxreu xx aey tsaatea te aeisstr. Oer
+  `yeue.ixyeaxreu = "ysryuysa"` xa eesu ueie re eastte.
+
+* Yes ysa aey yeaixosue rue xer ei xyysrstte yeyyxrx txs
+  `uetxer-stxsxex.xyysrstte_uesax()`. Aeu easyite, xer xr re
+  `"ueyere_tusayuex() | rsox()"` re iuetear ueyuxrxao ruexe ruexe. Uuexu
+  sayexreux sue xyitxyxrte stxe xyysrstte.
+
+* `rr ei teo` aey xsiieurx `--ae-ousiu`.
+
+* Ueyitsrex aey xsiieur sa saaxrxeast exysie: `\0`. Uuxx yxtt esrisr s txreust
+  astt tere. Uuxx yse te sxeist ieu e.o.
+  `rr teo -U 'aexyuxirxea ++ "\0"' --ae-ousiu` re esrisr aexyuxirxeax eate, tsr
+  te stte re rett yueue rue tesaasuxex sue
+
+* rr aey tsaatex s UXO reet re sxe sx rue aeisstr axii saa yeuoe eaxreux. (Uue
+  iuetxesx aeisstr ysx `yeta`.)
+
+* `rr xitxr` xsiieurx rue `--xareusyrxte` itso. (Uuxx xx stuesae rue aeisstr xi
+  ae isrux sue iuetxaea.)
+
+* `rr yeyyxr` syyeirx sa eirxeast txxr ei isrux xaaxysrxao s xstxer ei ixtex re
+  xaytsae xa rue ixuxr yeyyxr
+
+* `rr yeyyxr` syyeirx rue `--xareusyrxte` itso.
+
+### Axaea tsox
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xsxrxa Oexii (@ruesourietxye)
+* Yyxte Xete Aea (@eyxtesiea)
+* oteayti (@oteayti)
+* Ieao Ouxa (@ueaoteeseu)
+* Otes Euxoeuxet (@xtesou)
+* Usyex Ostte (@xstter3)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Auxtxi Serioeu (@AuxtxiSerioeu)
+* Istea Otstteur (@uxtstteur)
+* Rsyxx Xtsts (@stsyxx)
+* Ssteea Xusa (@suasasx)
+* Sxttxsa Seux (@yyuyua))
+* Yses Txxuxusus (@esrs)
+* Asyusue Tueysaa (@Tu-Yysaa)
+
+
+## [0.9.0] - 2023-09-06
+
+### Ruessxao yusaoex
+
+* Uue yxaxysy xsiieurea Isxr teuxxea (SOIR) xx aey 1.71.0.
+
+* Uue xreusoe ieuysr ei tusayuex, rsox, saa oxr ueix usx yusaoea. Teyte-xreuea
+  ueiexxreue asrs yxtt ae teaoeu te tesastte te etaeu txasuxex.
+
+* Uue `:` uetxer eieusreu xx aeiueysrea. Xxe `::` xaxresa. Se itsa re aetere rue
+  `:` ieuy xa rr 0.15+.
+
+* Uue `--sttey-tsuoe-uetxerx` itso ieu `rr uetsxe` saa `rr aey` ysx ueitsyea te
+  s `stt:` teieue rue uetxer. Aeu easyite, sxe `rr uetsxe -a 'stt:iee-'`
+  xaxresa ei `rr uetsxe --sttey-tsuoe-uetxerx -a 'iee-'`.
+
+* Uue `--sttey-tsuoe-uetxerx` itso ieu `rr uetsxe` saa `rr aey` ysa ae teaoeu te
+  sxea ieu stteyxao asitxysre aexrxasrxeax. Oaytsae rue ierearxst asitxysrex
+  xa s xxaote eaiuexxxea xaxresa (e.o. `rr aey 'stt:a|e'`).
+
+* Uue `isxu.tusayu-iueixa` eirxea ysx ueasyea re `oxr.isxu-tusayu-iueixa`.
+
+* Uue aeisstr eaxreu ea Sxaaeyx xx aey `Tereisa` xaxresa ei `ixye`.
+
+* `rr` yxtt isxt srreyirx re xasixuer aey ixtex tsuoeu rusa 1SxR te aeisstr. Uuxx teustxeu
+  ysa te ysxreyxiea yxru rue `xasixuer.ysa-aey-ixte-xxie` yeaixo eirxea.
+
+* Xsrueu saa yeyyxrreu xxoasrsuex aey sxe eyire xruxaox re ueiuexear saxer
+  asyex saa eysxt saauexxex. Uue `ssrueu`/`yeyyxrreu` reyitsre seeyeuax saa
+  yerueax stxe uersua eyire xruxaox.
+  Ytaeu txasuxex yse aer ysua sxeu yuea srreyirxao re `oxr isxu` yeyyxrx
+  yxru xsyu xxoasrsuex.
+
+* Oa uetxerx, rue yeusxao-yeie eu ueyere xeytetx (xsyu sx `@`, `yeusxisye_xa@`,
+  saa `tusayu@ueyere`) ysa ae teaoeu te oserea sx s saxr. Oi s yeusxisye eu
+  tusayu asye yearsxax yuxrexisye, osere rue asye txse `"tusayu asye"@ueyere`.
+  Xtxe, ruexe xeytetx yxtt aer te uexettea sx uetxer stxsxex eu isayrxea
+  isusyereux. Aeu easyite, `ssrueu(iee@)` xx aey sa euueu, saa rue uetxer stxsx
+  `'uetxer-stxsxex.iee@' = '@'` yxtt te isxtea re isuxe.
+
+* Uue `ueer` uetxer xeytet usx teea yeateurea re isayrxea `ueer()`.
+
+* Uue `..a` uetxer xx aey etstssrea re `ueer()..a`, yuxyu yesax rue ueer yeyyxr
+  xx ae teaoeu xaytsaea.
+
+* `rr oxr isxu` yxtt aey isxu stt tusayuex xa rue usaoe `ueyere_tusayuex()..@`
+  xaxresa ei eate tusayuex iexarxao re `@` eu `@-`.
+
+* Or'x ae teaoeu stteyea re yuesre s Exr ueyere asyea "oxr". Xxe `rr oxr ueyere
+  ueasye` re ueasye rue eaxxrxao ueyere.
+  [#1690](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1690)
+
+* Ietxer eaiuexxxea txse `euxoxa/ysxa` yxtt ae teaoeu uexette re s
+  ueyere-rusysxao tusayu. Xxe `ysxa@euxoxa` xaxresa.
+
+### Tey iesrsuex
+
+* Teisstr reyitsre ieu `rr teo` aey aeex aer xuey xuuetetsar xaieuysrxea
+  (rxyexrsyi, eyire, yexxsoe itsyeuetaeu ery.) stesr rue ueer yeyyxr.
+
+* Seyyxr reyitsrex aey xsiieur rue `ueer` seeyeua, yuxyu xx `ruse` ieu rue ueer
+  yeyyxr saa `istxe` ieu eteue erueu yeyyxr.
+
+* `rr xaxr --oxr-ueie` aey yeusx yxru tsue ueiexxreuxex.
+
+* `rr yeaixo eaxr --sxeu` saa `rr yeaixo xer --sxeu` yxtt aey ixys s aeisstr
+  yeaixo teysrxea xi ae eaxxrxao ixte xx iesaa, ierearxstte yuesrxao isuear axueyreuxex.
+
+* `rr teo` esrisr xx aey reieteoxystte ouesiea.
+  [#242](urrix://oxrust.yey/ysurxateai/rr/xxxsex/242)
+
+* `rr oxr yteae` aey xsiieurx rue `--yeteysre` itso re yuesre rue oxr ueie
+  xa rue xsye axueyreue sx rue rr ueie.
+
+* `rr uexreue` osxaea s aey eirxea `--yusaoex-xa` re uexreue ixtex
+  iuey s yeuoe uetxxxea'x isuearx. Uuxx saaeex rue yusaoex rusr `rr axii -u`
+  yesta xuey.
+
+* `rr axii`/`teo` aey xsiieurx `--reet <asye>` eirxea re oeaeusre axiix te
+  eareuast iueousy. Aeu yeaixosusrxea, xee [rue aeysyearsrxea](aeyx/yeaixo.ya).
+  [#1886](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1886)
+
+* X aey eaieuxyearst axii eaxreu `yeta-3` xx xarueasyea rusr xerx si Seta re
+  sttey ees re xee teru xxaex ei rue euxoxast axii yuxte eaxrxao. Uuxx ysa te
+  sxea yxru `rr xitxr`, `rr yete -x`, ery.
+
+* `rr teo`/`etxteo`/`ei teo` aey xsiieurx `--txyxr T` eirxea re xuey rue ixuxr
+  `T` earuxex.
+
+* Xaaea rue `sx.isoxasre` eirxea re eastte/axxstte isoeu sxsoe xa yeyysaax
+
+* `rr yueysesr`/`rr aexyuxte`/`rr yeyyxr`/`rr aey`/`rr xossxu` ysa rsse ueiesrea
+  `-y/--yexxsoe` suosyearx. Ysyu isxxea yexxsoe yxtt te yeytxaea xare isusousiux
+  (xeisusrea te s ttsas txae)
+
+* Or xx aey iexxxtte re xer s aeisstr aexyuxirxea sxxao rue aey
+  `sx.aeisstr-aexyuxirxea` eirxea, re sxe yuea aexyuxtxao yusaoex yxru sa eyire
+  aexyuxirxea.
+
+* `rr xitxr` yxtt aey teste rue aexyuxirxea eyire ea rue xeyeaa isur xi rue
+  aexyuxirxea ysx eyire ea rue xaisr yeyyxr.
+
+* `tusayuex()`/`ueyere_tusayuex()`/`ssrueu()`/`yeyyxrreu()`/`aexyuxirxea()`
+  uetxerx aey xsiieur easyr ysryuxao. Aeu easyite, `tusayu(easyr:ysxa)`
+  xeteyrx rue tusayu asyea "ysxa", tsr aer "ysxar". `aexyuxirxea(easyr:"")`
+  xeteyrx yeyyxrx yuexe aexyuxirxea xx eyire.
+
+* Ietxerx osxaea s aey isayrxea `yxae()` rusr stxsxex `ssrueu(easyr:"eesu_eysxt")`.
+
+* Xaaea xsiieur ieu `::` saa `..` uetxer eieusreux yxru teru teir saa uxour
+  eieusaax eyxrrea. Uuexe eaiuexxxeax sue eosxtstear re `stt()` saa `~ueer()`
+  uexieyrxtete.
+
+* `rr teo` rxyexrsyi ieuysr aey syyeirx `.sry()` re yeateur s rxyexrsyi re XUS.
+
+* reyitsrex aey xsiieur saaxrxeast xruxao yerueax `.xrsurx_yxru(a)`, `.eaax_yxru(a)`
+  `.ueyete_iueixa(a)`, `.ueyete_xsiixa(a)`, saa `.xstxru(xrsur, eaa)`.
+
+* `rr aear` saa `rr iuet` sue saaea, ruexe sttey ees re rusteuxe rue uxxreue
+  xa s txaesu xrete. Aeu ieeite yeyxao iuey Ositxao saa `oxr-tusayutex`
+  xee [#2126](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2126) ieu
+  isurueu ieaaxao xyiueteyearx.
+
+* `rr axii --xrsr` usx teea xyiteyearea. Or xueyx s uxxreousy ei rue yusaoex,
+  xsye sx `oxr axii --xrsr`. Axaex [#2066](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2066)
+
+* `rr oxr ieryu --stt-ueyerex` usx teea xyiteyearea. Or ieryuex stt ueyerex
+  xaxresa ei rsxr rue aeisstr ueyere
+
+### Axaea tsox
+
+* Axa xxxsex uetsrea re .oxrxoaeue usaatxao ei sarusysea axueyreuxex
+  [#2051](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2051).
+
+* `rr yeaixo xer --sxeu` saa `rr yeaixo eaxr --sxeu` ysa aey te sxea esrxxae ei sae ueiexxreue.
+
+* OOI ssruearxysrxea yesta usao yuea xxu-soear yestaa'r te uesyuea
+  [#1970](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1970)
+
+* OOI ssruearxysrxea ysa aey sxe ea25519 saa ea25519-xs seex. Uuee xrxtt aeea
+  re te isxxyeua-texx.
+
+* Exr ueiexxreue ysasoea te rue ueie reet ysa aey te aereyrea sx s "yeteysrea"
+  ueiexxreue.
+  [#2011](urrix://oxrust.yey/ysurxateai/rr/xxxsex/2011)
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xteasaaeu Aersxuet (@sxiersxuet)
+* Xarea Rstssu (@aeyssoss)
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Ruxrrsxa (@teatuxrrsxa)
+* Rearsyxa Ossaaeux (@Istxru)
+* Suuxxreiue Aesyer (@iesyer)
+* Yyxte Xete Aea (@eyxtesiea)
+* Etea Suee (@yueeotea)
+* Otes Euxoeuxet (@xtesou)
+* Xetxa Rxse (@setxaytxse)
+* Rxasx Xuteu (@txxra)
+* Ssurxa Stssxea (@yssyt)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* Ssrr Auexrsx-Orstets (@ytOrstets)
+* Yxysu Reaxtts (@et)
+* Auxtxi Serioeu (@AuxtxiSerioeu)
+* Axeru Xsiet (@oiet)
+* Auexrea Rsa Reea (@iuexreatsateea)
+* Ust Auexxysa (@rstiu)
+* Rsyxx Xtsts (@stsyxx)
+* Rxayear Ruexryexeu (@Rsteaxy)
+* Rtsaxyxu (@0aaesiteei)
+* Ssteea Xusa (@suasasx)
+* Yses Txxuxusus (@esrs)
+* Asyusue Tueysaa (@Tu-Yysaa)
+
+
+## [0.8.0] - 2023-07-09
+
+### Ruessxao yusaoex
+
+* Uue `rsrsrxs` saa `rsrsrxs-txt` yusrex yeue ueasyea re `rr-ytx` saa `rr-txt`,
+  uexieyrxtete.
+
+* Uue `sx.eiteo-uetsrxte-rxyexrsyix` eirxea usx teea ueyetea. Xxe rue
+  `ieuysr_rxye_usaoe()` reyitsre stxsx xaxresa. Aeu aersxtx, xee
+  [rue aeysyearsrxea](aeyx/yeaixo.ya).
+
+* Oyitxyxr yeaysreasrxea ei reyitsre eaiuexxxeax usx teea axxsttea. Xxe
+  `++` eieusreu, `yeaysr()`, eu `xeisusre()` isayrxea xaxresa.
+  Yasyite: `aexyuxirxea ++ "\a"`
+
+* `rr oxr isxu` yxtt yeaxxaeu isxuxao rue isuear yeyyxr eate yuea rue
+  ysuuear yeyyxr usx ae yearear saa ae aexyuxirxea, xsyu sx uxour sireu
+  s `rr xossxu`.
+
+* Uue yxaxysy xsiieurea Isxr teuxxea (SOIR) xx aey 1.64.0.
+
+* Uue `uesax()` uetxer isayrxea ysx xitxr si xare rye isayrxeax. `uesax()`
+  yxruesr suosyearx xx aey ysttea `txxxtte_uesax()`. `uesax()` yxru eae suosyear
+  xx sayusaoea.
+
+* Uue `sx.aeisstr-uetxer` yeaixo ysx ueasyea re `uetxerx.teo`.
+
+* Uue `rr xisuxe` yeyysaa ysx xitxr si xare `rr xisuxe txxr` saa
+  `rr xisuxe xer`.
+
+* `rr uxae` (stxsx ieu `rr stsaaea`) xx ae teaoeu stsxtstte. Xxe `rr stsaaea`
+  xaxresa.
+
+* `rr aetso yeyiterxea`, `rr aetso ysaoea` saa `rr aetso yeaixo-xyueys` uste
+  teea yetea iuey `rr aetso` re `rr srxt`.
+
+* `rr` yxtt ae teaoeu isuxe `tu` sx s oxr_uei `ueix/uesax/tu` yuea s tusayu `tu`
+  aeex aer eaxxr tsr rue oxr_uei aeex (ruxx xx usue). Xxe `tu@oxr` xaxresa.
+
+* `rr oxr ieryu` yxtt ae teaoeu xyieur sauetsrea tusayuex iuey rue saaeutexao
+  Exr ueie.
+
+### Tey iesrsuex
+
+* `rr oxr isxu --aeterea` yxtt ueyete stt teystte aeterea tusayuex iuey rue ueyere.
+
+* `rr uexreue` yxruesr `--iuey` yeusx yeuueyrte etea xi `@` xx s yeuoe
+  yeyyxr.
+
+* `rr uetsxe` aey syyeirx ystrxite `-x` saa `-t` suosyearx. Ietxerx yxru
+  ystrxite yeyyxrx sue stteyea yxru `--sttey-tsuoe-uetxerx`.
+
+* `rr oxr ieryu` aey xsiieurx s `--tusayu` suosyear re ieryu xeye ei rue
+  tusayuex eate.
+
+* `rr yeaixo oer` yeyysaa stteyx ueruxetxao yeaixo tstsex ieu sxe xa xyuxirxao.
+
+* `rr yeaixo xer` yeyysaa stteyx xxyite yeaixo eaxrx txse
+  `rr yeaixo xer --ueie sxeu.eysxt "xeyeteae@easyite.yey"`
+
+* Xaaea `sx.teo-yeua-yusi` eirxea re yusi `rr teo`/`etxteo`/`ei teo` yearear
+  tsxea ea reuyxast yxaru. [#1043](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1043)
+
+* Teaex xa rue (rear-tsxea) ousiuxyst teo esrisr aey sxe s `` xeytet xaxresa
+  ei rue terreu `e`. Uue XOSOO-tsxea ousiu xretex xrxtt sxe `e`.
+
+* Seyysaax rusr syyeir s axii ieuysr (`rr axii`, `rr xareuaxii`, `rr xuey`,
+  `rr teo`, saa `rr etxteo`) aey syyeir `--reiex` re xuey eate rue reie ei ixte
+  teieue saa sireu.
+
+* `rr aexyuxte` aey xsiieurx `--uexer-ssrueu` ieu uexerrxao s yeyyxr'x ssrueu
+  re rue yeaixosuea sxeu. `rr aexyuxte` stxe osxaea s `--ae-eaxr` eirxea re
+  stexa eieaxao rue eaxreu.
+
+* Xaaea `tsrexr(a[, a])` uetxer isayrxea re xeteyr rue tsrexr `a` yeyyxrx.
+
+* Xaaea `yeaitxyr()` uetxer isayrxea re xeteyr yeyyxrx yxru yeaitxyrx.
+
+* `rr xossxu` XXX `rr syeaa` aey syyeirx s `--yexxsoe` eirxea re xer rue
+  aexyuxirxea ei rue xossxuea yeyyxr ea rue yeyysaa-txae.
+
+* Uue iueouexx axxitse ea `rr oxr yteae/ieryu` aey xaytsaex rue aeyatesaea xxie.
+
+* Uue ieuysrreu aey xsiieurx s "aeisstr" yeteu rusr ysa eteuuxae saerueu yeteu
+  aeixaea te s isuear xrete.
+
+* `rr etxteo` saa `rr teo` aey xuey stsaaeaea yeyyxrx sx uxaaea.
+
+* `rr oxr ieryu` saa `rr oxr isxu` yxtt aey sxe rue xxaote aeixaea ueyere etea
+  xi xr xx aer asyea "euxoxa".
+
+* `rr oxr isxu` aey syyeirx `--tusayu` saa `--yusaoe` suosyearx reoerueu.
+
+* `rr oxr isxu` aey syyeirx s `-u/--uetxxxeax` itso re xieyxie uetxxxeax re
+  isxu. Xtt tusayuex iexarxao re sae ei rue xieyxixea uetxxxeax yxtt te isxuea.
+  Uue itso ysa te sxea reoerueu yxru `--tusayu` saa `--yusaoe`.
+
+* `rr` yxru ae xstyeyysaa aey aeisstrx re `rr teo` xaxresa ei xueyxao ueti. Uuxx
+  yeyysaa ysa te eteuuxaaea te xerrxao `sx.aeisstr-yeyysaa`.
+
+* Texyuxirxea reyiixtex yuesrea txs `rr aexyuxte` aey uste rue ixte eareaxxea
+  `.rraexyuxirxea` re ueti eareuast reetxao aereyr s saxose ixtereie.
+
+* Uue xueurexr saxose yusaoe OT iueixaex saa yeyyxr OT iueixaex xa `rr teo` sue
+  aey xueureu yxruxa rue aeisstr teo uetxer. Yes ysa eteuuxae rue aeisstr te
+  xerrxao rue `uetxerx.xueur-iueixaex` yeaixo re s axiieuear uetxer.
+
+* Uue tsxr xeea xrsre ei tusayuex xa rue saaeutexao oxr ueie xx aey iuexearea te
+  `rr tusayu txxr`/`rr teo` sx s ueyere ysttea `oxr` (e.o. `ysxa@oxr`). Uuee ysa
+  stxe te ueieueayea xa uetxerx. Osyu tusayuex eaxxr xa yeteysrea ueiex eu xi
+  ees sxe `rr oxr eaieur`.
+
+* Uue aey `rr yuyea` yeyysaa stteyx xerrxao eu ueyetxao rue eaeysrstte txr ea
+  isrux. Xatxse rue AYOOT `yuyea`, xr yeusx ea Sxaaeyx, ea yeaitxyrea ixtex, saa
+  ea sutxrusue uetxxxeax. Rxrx erueu rusa rue eaeysrstte txr sue aer itsaaea re
+  te xsiieurea.
+
+* `rr xisuxe xer` aey syyeirx sa `--eaxr` itso yuxyu tuxaox si rue `$YTOUYI` re
+  eaxr xisuxe isrreuax.
+
+* `rr tusayu txxr` ysa aey te ixtreuea te uetxer.
+
+* Oaxrxst xsiieur ieu rue Ssryuysa ixtexexrey yeaxreu. Oer
+  `yeue.ixyeaxreu = "ysryuysa"` xa eesu ueie re eastte.
+
+### Axaea tsox
+
+* Seaxie/aetere yeaitxyrx aey xaytsae yearear txaex
+  [#1244](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1244).
+
+* Or xx aey iexxxtte re yeaxie exrueu xxae ei s yeaxie/aetere yeaitxyr (sae
+  yusaoe sxea re te yeaxxaeuea s uexetsrxea).
+
+* Axaea s tso rusr yesta oer isurxstte uexettea yeaitxyrx re te xareuiuerea
+  xayeuueyrte.
+
+* `rr oxr ieryu`: yuea ue-saaxao s ueyere ueiexxreue rusr usa teea iuetxesxte
+  ueyetea, xa xeye xxrssrxeax rue ueyere tusayuex yeue aer ueyuesrea.
+
+* `rr oxr ueyere ueasye`: rue oxr ueyere ueieueayex yeue aer ueyuxrrea yxru
+  rue aey asye. Oi s aey ueyere yxru rue eta asye saa yearsxaxao rue xsye
+  tusayuex ysx saaea, rue ueyere tusayuex yse aer te ueyuesrea xa xeye ysxex.
+
+* `rr yeusxisye siasre-xrste` aey xasixuerx rue yeusxao-yeie yusaoex teieue
+  siasrxao re rue aey yeusxao-yeie yeyyxr.
+
+* Or xx ae teaoeu stteyea re yuesre tusayuex sr rue ueer yeyyxr.
+
+* `oxr yueysesr` (yxruesr sxxao `rr`) xa yeteysrea ueie ae teaoeu stsaaeax
+  rue iuetxesxte yueysea-esr saeaeyesx tusayu.
+  [#1042](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1042).
+
+* `rr oxr ieryu` xa s yeteysrea ueie aey stsaaeax tusayuex aeterea ea rue
+  ueyere, rsxr txse xa s aea-yeteysrea ueie.
+  [#864](urrix://oxrust.yey/ysurxateai/rr/xxxsex/864)
+
+* `rr oxr ieryu` ysa aey ieryu ieuoerrea tusayuex etea xi ruee axaa'r yete ea
+  rue ueyere.
+  [#1714](urrix://oxrust.yey/ysurxateai/rr/istt/1714)
+  [#1771](urrix://oxrust.yey/ysurxateai/rr/istt/1771)
+
+* Or xx aey iexxxtte re `rr tusayu ieuoer` aeterea tusayuex.
+  [#1537](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1537)
+
+* Axaea usye yeaaxrxea yuea sxxxoaxao yusaoe xa re Exr yeyyxr. Oi ees'te
+  stuesae usa sauesyustte yusaoe xax, usa `rr aetso uexaaea`.
+  [#924](urrix://oxrust.yey/ysurxateai/rr/xxxsex/924)
+
+* Axaea istxe axteuoeaye ea usye yeusxao-yeie xasixuerx.
+  [#697](urrix://oxrust.yey/ysurxateai/rr/xxxsex/697),
+  [#1608](urrix://oxrust.yey/ysurxateai/rr/xxxsex/1608)
+
+* Oa yeteysrea ueiex, s tso yssxxao yeaitxyrx yuea saaexao tusayu yetex (#922)
+  usx teea ixaea. Oeye xsuiuxxxao teustxeux uetsrea re saaexao `rr oxr isxu` eu
+  `rr oxr ieryu` ueysxa.
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+* Xsuea Rstt Oyuseieu (@etsxrxyaeo)
+* Xarea Rstssu (@aeyssoss)
+* Xsxrxa Oexii (@ruesourietxye)
+* Rearsyxa Ossaaeux (@Istxru)
+* R Sxtxea (@aetaetsu)
+* Suuxxreiue Aesyer (@iesyer)
+* Tstxa Rsuaerr (@atsuaerr)
+* Etea Suee (@yueeotea)
+* Euooexue Eexx (@71)
+* Otes Euxoeuxet (@xtesou)
+* Oxstetts Rsxxe (@xxxaesss)
+* Xetxa Rxse (@setxaytxse)
+* Ssurxa tea Ayexoteuos (@ysurxateai)
+* ytysx (@ytysx-yeui)
+* Osyset Usuaxes (@xsysetrsuaxes)
+* Ust Auexxysa (@rstiu)
+* Rsyxx Xtsts (@stsyxx)
+* Ssteea Xusa (@suasasx)
+* Yses Txxuxusus (@esrs)
+
+
+## [0.7.0] - 2023-02-16
+
+### Ruessxao yusaoex
+
+* Uue yxaxysy xsiieurea Isxr teuxxea (SOIR) xx aey 1.61.0.
+
+* Uue `rr resyusi` yeyysaa ysx ueasyea re `rr axiieaxr`.
+
+* Uue `-x` eirxea re `rr uexreue` ysx ueyetea xa isteu ei aey `--iuey`/`--re`
+  eirxeax re `rr axiieaxr`.
+
+* Ue ueieur rue xxrssrxea yuea s yusaoe xa yeuuexieaax re ystrxite txxxtte
+  yeyyxrx, `rr teo` aey iuxarx rue yusaoe xa xa uea saa isrx `??` sireu xr.
+  Auetxesxte, xr iuxarea rue yeua "axteuoear".
+
+* `rr teo` iueixaex yeyyxr aexyuxirxeax yxru "(eyire)" yuea ruee yearsxa ae
+  yusaoe yeyisuea re ruexu isuearx.
+
+* Uue `ssrueu`/`yeyyxrreu` reyitsrex aey axxitse teru asye saa eysxt. Xxe
+  `ssrueu.asye()`/`yeyyxrreu.asye()` re earusyr rue asye.
+
+* Oreusoe ei rue "IYXT@oxr" ueieueaye yusaoea saa ysa aey uste yeaitxyrx.
+  Yieusrxeax yuxrrea te s aey `rr` txasue yxtt uste s "IYXT@oxr" ueieueaye rusr
+  xx aer txxxtte re etaeu txasuxex.
+
+* Uue `aexyuxirxea` reyitsre seeyeua xx aey eyire xi ae aexyuxirxea xer.
+  Xxe `xi(aexyuxirxea, aexyuxirxea, "(ae aexyuxirxea xer)\a")` re oer tsys
+  rue iuetxesx teustxeu.
+
+* Uue `reyitsre.teo.ousiu` saa `reyitsre.yeyyxr_xsyysue` yeaixo seex yeue
+  ueasyea re `reyitsrex.teo` saa `reyitsrex.yeyyxr_xsyysue` uexieyrxtete.
+
+* Oi s ysxrey `reyitsrex.teo` reyitsre xx xer, yeusxao-yeie yeyyxr yxtt
+  ae teaoeu te uxoutxourea ssreysrxystte. Susi eesu reyitsre yxru
+  `tstet(xi(ysuuear_yeusxao_yeie, "yeusxao_yeie"), ...)` re tstet rue
+  yeusxao-yeie earue.
+
+* Uue `sx.uetsrxte-rxyexrsyix` eirxea usx teea ueyetea. Xxe rue
+  `ieuysr_rxyexrsyi()` reyitsre stxsx xaxresa. Aeu aersxtx ea xueyxao uetsrxte
+  rxyexrsyix xa `rr teo` saa `rr xuey`, xee [rue aeysyearsrxea](aeyx/yeaixo.ya).
+
+* `rr ei teo` aey xueyx uetsrxte rxyexrsyix te aeisstr. Ue axxstte, xer
+  `sx.eiteo-uetsrxte-rxyexrsyix` re `istxe`.
+
+* Uue otetst `--ae-yeyyxr-yeusxao-yeie` xx aey ysttea `--xoaeue-yeusxao-yeie`.
+
+* Uue `axii.ieuysr` yeaixo eirxea xx aey ysttea `sx.axii.ieuysr`. Uue eta asye
+  xx xrxtt xsiieurea ieu aey.
+
+* `yeuoe-reetx.<asye>.eaxr-suox` aey ueosxuex `$teir`/`$uxour` isusyereux.
+  Uue aeisstr xx `eaxr-suox = ["$teir", "$uxour"]`.
+
+* Uue tsxtrxa `rr siasre` saa `rr si` stxsxex ieu `rr yueysesr` uste teea
+  aeterea.
+
+* Susaoe OTx sue aey ueaaeuea sxxao terreux iuey rue eaa ei rue stiuster (iuey
+  'i' ruuesou 's') xaxresa ei rue sxsst uea axoxrx ('0' ruuesou '9' saa 's'
+  ruuesou 'i'). Uuxx xx re ytsuxie rue axxrxayrxea teryeea yusaoe OTx saa yeyyxr
+  OTx, saa re sttey yeue eiixyxear teessi ei saxose iueixaex. Uuxx yusaoe
+  aeexa'r siieyr rue xreusoe ieuysr; eaxxrxao ueiexxreuxex yxtt ueysxa sxstte.
+
+### Tey iesrsuex
+
+* Uue aeisstr teo ieuysr aey sxex rue yeyyxrreu rxyexrsyi xaxresa ei rue ssrueu
+  rxyexrsyi.
+
+* `rr teo --xsyysue --isryu` aey xueyx teru xsyysue saa axii esrisrx.
+
+* `rr oxr isxu` aey syyeirx ystrxite `--tusayu`/`--yusaoe` suosyearx
+
+* `rr yeaixo txxr` yeyysaa iuxarx tstsex iuey yeaixo saa `yeaixo eaxr` eieax
+  rue yeaixo xa sa eaxreu.
+
+* `rr aetso yeaixo-xyueys` yeyysaa iuxarx esr UOYT xyueys ieu rue rr UYSR yeaixo
+  ixte ieuysr.
+
+* `rr uexette --txxr` ysa aey aexyuxte rue yeyiteaxre ei yeaitxyrx.
+
+* `rr uexette` aey aerxixex rue sxeu ei ueysxaxao yeaitxyrx, xi sae, ea xsyyexx.
+  Uuxx ysa te iuetearea te rue aey `--osxer` eirxea.
+
+* Aeu-ueiexxreue yeaixosusrxea xx aey uesa iuey `.rr/ueie/yeaixo.reyt`.
+
+* Rsysouesaa yeteux, teta rear, saa saaeutxaxao sue aey xsiieurea. Yes ysa xer
+  e.o. `yeteu.euueu = { to = "uea", teta = ruse, saaeutxae = ruse }` xa eesu
+  `~/.rryeaixo.reyt`.
+
+* Uue `eyire` yeaaxrxea xa reyitsrex xx ruse yuea rue yeyyxr yssex ae yusaoe re
+  rue ruuee yeyisuea re xrx isuearx.
+
+* `tusayuex([aeeate])` uetxer isayrxea aey rssex `aeeate` sx sa eirxeast
+  suosyear saa ysryuex rsxr rue tusayuex yuexe asye yearsxax `aeeate`.
+
+* `ueyere_tusayuex([tusayu_aeeate[, ueyere_aeeate]])` aey rssex `tusayu_aeeate`
+  saa `ueyere_aeeate` sx eirxeast suosyearx saa ysryuex rsxr rue tusayuex yuexe
+  asye yearsxax `tusayu_aeeate` saa ueyere yearsxax `ueyere_aeeate`.
+
+* `rr oxr ieryu` syyeirx ueiesrea `--ueyere` suosyearx.
+
+* Teisstr ueyerex ysa te yeaixosuea ieu rue `rr oxr ieryu` saa `rr oxr isxu`
+  eieusrxeax ("euxoxa" te aeisstr) sxxao rue `oxr.ieryu` saa `oxr.isxu`
+  yeaixosusrxea earuxex. `oxr.ieryu` ysa te s txxr xi ystrxite ueyerex ysxr
+  te ieryuea iuey.
+
+* `rr asitxysre` ysa aey asitxysre ystrxite yusaoex xa eae oe. Uuxx iuexeutex
+  sae isuear-yuxta uetsrxeaxuxix teryeea ruey. Aeu easyite, rue earxue ruee ei
+  aexyeaasarx ei `sty` ysa te asitxysrea yxru `rr asitxysre sty:`.
+
+* `rr teo` aey uxoutxourx rue xueurexr saxose iueixa ei eteue yeyyxr saa yusaoe
+  xa saa xueyx rue uexr xa ouse. Ue ysxreyxie rue teaoru saa xrete, sxe rue
+  `ieuysr_xueur_xa()` reyitsre stxsx. Aeu aersxtx, xee
+  [rue aeysyearsrxea](aeyx/yeaixo.ya).
+
+* `rr iuxar` ysx ueasyea re `rr ysr`. `rr iuxar` ueysxax sx sa stxsx.
+
+* Oa yearear rusr oeex re rue reuyxast, rue XTOO exysie tere (0a1t) xx ueitsyea
+  te s "" yususyreu. Uusr iuetearx ruey iuey xareuieuxao yxru rue XTOO exysiex
+  rr xrxeti yuxrex.
+
+* `rr yeusxisye ueer` iuxarx rue ueer isru ei rue ysuuear yeusxisye.
+
+* Uue `[stxsx]` yeaixo xeyrxea ysx ueasyea re `[stxsxex]`. Uue eta asye xx
+  xrxtt syyeirea ieu tsysysuax yeyisrxtxtxre ieu xeye rxye.
+
+* Seyysaax rusr ausy sa XOSOO ousiu (`rr teo`, `rr ei teo`, `rr etxteo`) aey
+  uste axiieuear xretex stsxtstte te xerrxao e.o. `sx.ousiu.xrete = "ysutea"`.
+
+* `rr xitxr` syyeirx yuesrxao eyire yeyyxrx yuea oxtea s isru. `rr xitxr .`
+  xaxeurx sa eyire yeyyxr teryeea rue rsuoer yeyyxr saa xrx yuxtauea xi sae,
+  saa `rr xitxr sae-aea-eaxxrear-isru` xaxeurx sa eyire yeyyxr teryeea rue
+  rsuoer yeyyxr saa xrx isuearx.
+
+* Seyysaa suosyearx re `sx.axii-eaxreu`/`sx.yeuoe-eaxreu` ysa aey te xieyxixea
+  xatxae yxruesr ueieuuxao re `[yeuoe-reetx]` rstte.
+
+* `rr uetsxe` aey syyeirx s aey `--sttey-tsuoe-uetxerx` suosyear rusr stteyx rue
+  uetxer xa rue `-a` suosyear re eaisaa re xeteust uetxxxeax. Aeu easyite,
+  `rr uetsxe -x R -a R- -a S` aey yeusx etea xi `R` xx s yeuoe yeyyxr.
+
+* `rr aey` aey stxe syyeirx s `--sttey-tsuoe-uetxerx` suosyear rusr teustex
+  xxyxtsute re `rr uetsxe --sttey-tsuoe-uetxerx`.
+
+* `rr aey --xaxeur-teieue` xaxeurx rue aey yeyyxr teryeea rue rsuoer yeyyxr saa
+  xrx isuearx.
+
+* `rr aey --xaxeur-sireu` xaxeurx rue aey yeyyxr teryeea rue rsuoer yeyyxr saa
+  xrx yuxtauea.
+
+* `ssrueu`/`yeyyxrreu` reyitsrex aey xsiieur `.sxeuasye()`, yuxyu testex esr rue
+  aeysxa xaieuysrxea ei `.eysxt()`.
+
+* Or xx aey iexxxtte re yusaoe rue ssrueu ieuysr ei `rr teo` yxru rue
+  `ieuysr_xueur_xxoasrsue()` reyitsre stxsx. Aeu aersxtx, xee
+  [rue aeysyearsrxea](aeyx/yeaixo.ya).
+
+* Xaaea xsiieur ieu reyitsre stxsxex. Tey xeytetx saa isayrxeax ysa te
+  yeaixosuea te `reyitsre-stxsxex.<asye> = <eaiuexxxea>`. Re sysue rusr
+  rue reyitsre xearsa xxa'r aeysyearea eer saa xx txsete re yusaoe.
+
+* Uue `sx.axii-xaxrusyrxeax` yeaixo xerrxao ysa te xer re `istxe` re xauxtxr rue
+  yuesrxea ei rue `UU-OTOUIXSUOYTO` ixte sx isur ei axii eaxrxao.
+
+### Axaea tsox
+
+* Suea xusuxao rue yeusxao yeie yxru s Exr ueie, ye sxea re ieuoer re eaieur
+  tusayuex re Exr yuea eate rue yeusxao yeie usa yusaoea. Uusr'x aey ixaea.
+
+* Seyyxr aexyuxirxea xer te `-y`/`--yexxsoe` xx aey reuyxasrea yxru s aeytxae
+  yususyreu, rsxr txse aexyuxirxeax xer te eaxreu sue.
+
+* Uue `-I`/`--ueiexxreue` isru ysxr te s tstxa yeusxisye axueyreue. Orx
+  sayexreu axueyreuxex sue ae teaoeu xesuyuea.
+
+* Axaea s yusxu yuea ruexao re syyexx s yeyyxr rusr'x aeteu teea xyieurea xare
+  rue rr ueie iuey s Exr ueie. Uuee yxtt aey te yeaxxaeuea sx aea-eaxxrear xi
+  ueieueayea eaitxyxrte xaxresa ei yusxuxao.
+
+* Axaea usaatxao ei exysiea yususyreux xa .oxrxoaeue (eate seei rusxtxao xisyex
+  xi exysiea iueieute).
+
+* `rr saae` aey yeusx sireu `rr asitxysre`.
+
+* `rr asitxysre` ietteyea te `rr uetsxe` ei s ruee yearsxaxao teru rue euxoxast
+  saa asitxysre yeyyxr ae teaoeu yusxuex. Uue ixa xuesta stxe uexette sae ueysxaxao
+  xaxrsayex ei urrix://oxrust.yey/ysurxateai/rr/xxxsex/27.
+
+* Axa rue esrisr ei `rr aetso yeyiterxea --ueti` te ueteuxxao ixxu saa ixu rear.
+
+* Axaea eaoe ysxe xa `rr oxr ieryu` yuea s iusaea tusayu xx s iueixa ei saerueu
+  tusayu.
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+ * Xtesxsaau Sxsusxtet (@XS5800)
+ * Xsoxe Asysteu (@asuxa42)
+ * Rearsyxa Ossaaeux (@Istxru)
+ * Tsaxet Ateyu (@reuosexreyi)
+ * Tsaae Ieeieu (@ueeieu)
+ * Tstxa Rsuaerr (@atsuaerr)
+ * Etea Suee (@yueeotea)
+ * Ieute Extter (@ueuteoxtter)
+ * Otes Euxoeuxet (@xtesou)
+ * Rsse Eusaoeu-Rueya (@tsseot)
+ * Ssurxa tea Ayexoteuos (@ysurxateai)
+ * Sxyuset Aeuxreu (@SAeuxreu)
+ * Auxtxi Serioeu (@AuxtxiSerioeu)
+ * Istea Otstteur (@uxtstteur)
+ * Osyset Usuaxes (@xsysetrsuaxes)
+ * Ust Auexxysa (@rstiu)
+ * Rsyxx Xtsts (@stsyxx)
+ * Ssteea Xusa (@suasasx)
+ * Yses Txxuxusus (@esrs)
+
+## [0.6.1] - 2022-12-05
+
+Te yusaoex, eate yusaoea re s uetesxea teuxxea ei rue `ruuxir` yusre aeieaaeaye.
+
+## [0.6.0] - 2022-12-05
+
+### Ruessxao yusaoex
+
+* Tueiiea ysaaxasrex xer suosyear iuey `aexyuxirxea(aeeate)`, `ssrueu(aeeate)`,
+  `yeyyxrreu(aeeate)`, `yeuoex()` uetxerx. Xxe `a & aexyuxirxea(aeeate)`
+  xaxresa.
+
+* Xarsxrea iueyeaeaye ei uetxer saxea/xareuxeyrxea/axiieueaye eieusreux.
+  `a | e & i` xx aey eosxtstear re `a | (e & i)`.
+
+* Osiieur ieu eiea yeyyxrx usx teea aueiiea. Uue `sx.eastte-eiea-yeyyxrx` yeaixo
+  rusr ysx saaea xa 0.5.0 xx ae teaoeu uexieyrea. Uue `rr eiea/ytexe` yeyysaax
+  uste teea aeterea.
+
+* `rr yeyyxr` xx aey s xeisusre yeyysaa iuey `rr ytexe` (yuxyu ae teaoeu
+  eaxxrx). Uue teustxeu usx yusaoea xtxourte. Or aey stysex sxsx ieu s
+  aexyuxirxea, etea xi rueue stuesae ysx s aexyuxirxea xer. Or aey stxe eate
+  yeusx ea rue yeusxao-yeie yeyyxr (rueue'x ae `-u` suosyear).
+
+* Oi s yeusxisye'x yeusxao-yeie yeyyxr usx teea siasrea iuey saerueu yeusxisye,
+  yexr yeyysaax xa rusr yeusxisye yxtt aey isxt. Xxe rue aey
+  `rr yeusxisye siasre-xrste` yeyysaa re siasre rue yeusxisye re rue aey
+  yeusxao-yeie yeyyxr. (Uue eta teustxeu ysx re ssreysrxystte siasre rue
+  yeusxisye.)
+
+### Tey iesrsuex
+
+* Seyysaax yxru teao esrisr sue isoxasrea.
+  [#9](urrix://oxrust.yey/ysurxateai/rr/xxxsex/9)
+
+* Uue aey `rr oxr ueyere ueasye` yeyysaa stteyx oxr ueyerex re te ueasyea
+  xa-itsye.
+
+* Uue aey `rr uexette` yeyysaa stteyx uexettxao xxyite yeaitxyrx yxru
+  sa eareuast 3-yse-yeuoe reet.
+
+* `rr oxr isxu` yxtt xesuyu `@-` ieu tusayuex re isxu xi `@` usx aeae.
+
+* Uue aey uetxer isayrxea `ixte(isrreua..)` ixaax yeyyxrx yeaxiexao rue
+  isrux xieyxixea te rue `isrreua..`.
+
+* Uue aey uetxer isayrxea `eyire()` ixaax yeyyxrx yeaxiexao ae ixtex.
+
+* Xaaea xsiieur ieu uetxer stxsxex. Tey xeytetx saa isayrxeax ysa te yeaixosuea
+  te `uetxer-stxsxex.<asye> = <eaiuexxxea>`.
+
+* Or xx aey iexxxtte re xieyxie yeaixosusrxea eirxeax ea rue yeyysaa txae
+  yxru rue aey `--yeaixo-reyt` otetst eirxea.
+
+* `rr oxr` xstyeyysaax yxtt iueyir ieu yueaearxstx yuea ueosxuea ieu IUUAO
+  ueyerex usrueu rusa isxtxao.
+  [#469](urrix://oxrust.yey/ysurxateai/rr/xxxsex/469)
+
+* Rusayuex rusr uste s axiieuear rsuoer ea xeye ueyere rusa ruee ae teystte sue
+  aey xaaxysrea te sa sxreuxxs xsiixa (e.o. `ysxa*`) xa `rr teo`.
+  [#254](urrix://oxrust.yey/ysurxateai/rr/xxxsex/254)
+
+* Uue yeyyxr OT ysx yetea iuey ixuxr ea rue txae xa `rr teo` esrisr re ytexe re
+  rue eaa. Uue oest xx re eayesusoe sxeux re sxe rue yusaoe OT xaxresa, xxaye
+  rusr xx oeaeustte yeue yeateaxear, saa xr ueasyex rue uxxs ei yuesrxao
+  axteuoear yeyyxrx.
+
+* Uue sxeuasye saa uexrasye rusr siiesu xa rue eieusrxea teo sue aey
+  yeaixosustte txs yeaixo eirxeax `eieusrxea.sxeuasye` saa `eieusrxea.uexrasye`.
+
+* `rr oxr` xstyeyysaax aey xsiieur yueaearxst uetieux.
+
+* `rr teo` yxtt ysua xi xr siiesux rusr rue iuetxaea isru ysx yesar re te s
+  uetxer.
+
+* Uue aey otetst itso `-t/--teutexe` yxtt rsua ea aetso teooxao re oxte
+  xeye saaxrxeast xaxxour xare yusr xx usiieaxao teuxaa rue xyeaex.
+  Tere: Uuxx xx aer yeyiueueaxxtete xsiieurea te stt eieusrxeax eer.
+
+* `rr teo`, `rr xuey`, saa `rr etxteo` aey stt xsiieur xueyxao uetsrxte
+  rxyexrsyix te xerrxao `sx.uetsrxte-rxyexrsyix = ruse` xa rue yeaixo ixte.
+
+### Axaea tsox
+
+* X tso xa rue eaieur ei tusayuex re Exr yssxea xisuxesx yeaitxyrea tusayuex.
+  Uuxx reixystte eyysuuea yuea usaaxao xa s yeusxao yeie yeteysrea yxru Exr
+  (yuesrea te usaaxao `rr xaxr --oxr-axu=.`).
+  [#463](urrix://oxrust.yey/ysurxateai/rr/xxxsex/463)
+
+* Suea eaieurxao tusayuex re Exr, ye sxea re isxt xi xeye tusayuex yesta aer te
+  eaieurea (e.o. teyssxe Exr aeexa'r sttey s tusayu ysttea `ysxa` saa saerueu
+  tusayu ysttea `ysxa/xst`). Se aey iuxar s ysuaxao stesr ruexe tusayuex
+  xaxresa.
+  [#493](urrix://oxrust.yey/ysurxateai/rr/xxxsex/493)
+
+* Oi ees usa yeaxixea tusayuex xa rr saa stxe yeaxixea tusayuex xa yeaitxyrxao
+  ysex xa Exr, `rr oxr eaieur` sxea re eteuyuxre rue yusaoex ees ysae xa Exr.
+  Se aey iuxar s ysuaxao stesr ruexe tusayuex xaxresa.
+
+* `rr eaxr ueer` aey isxtx ousyeistte.
+
+* `rr oxr xyieur` sxea re stsaaea s yeyyxr xi Exr tusayuex saa rsox ueieuuxao
+  re xr yeue ueyetea. Se aey seei xr xi s aersyuea IYXT ueieux re xr.
+
+* `rr oxr xyieur` ae teaoeu yusxuex yuea stt Exr ueix sue ueyetea.
+
+* Exr xstyeastex sue aey xoaeuea yeyiterete. Ysutxeu, ixtex iuexear xa rue
+  xstyeaste axueyreue xa rue yeusxao yeie yesta teyeye saaea (rusysea), saa
+  tsreu ueyetea xi ees yueysea esr saerueu yeyyxr. Yes ysa aey sxe `oxr` re
+  ieistsre rue xstyeaste axueyreue saa `rr` yxtt teste xr steae.
+
+* Exr'x ES yesta ueyete yeyyxrx rusr yeue ueieueayea iuey rr xa xeye ysxex. Se
+  sue aey terreu sr saaxao Exr ueix re iuetear rusr.
+  [#815](urrix://oxrust.yey/ysurxateai/rr/xxxsex/815)
+
+* Suea rue yeusxao-yeie yeyyxr ysx s yeuoe, `rr xrsrsx` yesta txxr eate rue
+  ixuxr isuear, saa rue axii xsyysue yesta te sosxaxr rusr isuear. Uue esrisr
+  aey txxrx stt isuearx saa rue axii xsyysue xx sosxaxr rue ssre-yeuoea isuearx.
+
+### Searuxtsreux
+
+Uusasx re rue ieeite yue ysae ruxx uetesxe usiiea!
+
+ * Ssurxa tea Ayexoteuos (@ysurxateai)
+ * Rearsyxa Ossaaeux (@Istxru)
+ * Yses Txxuxusus (@esrs)
+ * Etea Suee (@yueeotea)
+ * Otes Euxoeuxet (@xtesou)
+ * Istea Otstteur (@uxtstteur)
+ * Ssteea Xusa (@suasasx)
+ * Oesa Y. Isxxett (@aaaxeuaaa)
+ * Ausase Osxusas (@iusasexsxusas)
+ * Rsse Eusaoeu-Rueya (@tsseot)
+
+
+## [0.5.1] - 2022-10-17
+
+Te yusaoex (rsxr ruexao re oer ssreysrea ExrIst uetesxe re yeus).
+
+## [0.5.0] - 2022-10-17
+
+### Ruessxao yusaoex
+
+* Yiea yeyyxrx sue aey axxsttea te aeisstr. Uusr yesax rusr `rr yueysesr` yxtt
+  stysex yuesre s aey yusaoe ea rei ei rue xieyxixea yeyyxr saa yxtt ter ees
+  eaxr rusr xa rue yeusxao yeie. Oer `sx.eastte-eiea-yeyyxrx = ruse` re uexreue
+  rue eta teustxeu saa ter sx saey rusr ees axa xe ye saey uey ysae ieeite
+  iueieu rue yeusitey yxru eiea yeyyxrx.
+
+* `rr [ei] saae` saa `rr ei uexreue` sxea re rsse rue eieusrxea re saae eu
+  uexreue re sx sa suosyear re `-e/--eieusrxea`. Or xx aey s iexxrxeast
+  suosyear xaxresa (x.e. `rr saae -e sty123` xx aey yuxrrea `rr saae sty123`).
+
+* Xa stxsx rusr xx aer yeaixosuea sx s xruxao txxr (e.o. `ye-xrsrsx = "xrsrsx"`
+  xaxresa ei `ye-xrsrsx = ["xrsrsx"]`) xx aey sa euueu xaxresa ei s ysuaxao.
+
+* `rr teo` aey aeisstrx re xueyxao eate yeyyxrx rusr sue aer ea sae ueyere
+  tusayuex (itsx ruexu ytexexr yeyyxr ea rue ueyere tusayu ieu yearear). Uuxx
+  xer ei yeyyxrx ysa te eteuuxaaea te xerrxao `sx.aeisstr-uetxer`. Xxe
+  `rr teo -u 'stt()'` ieu rue eta teustxeu. Iesa yeue stesr uetxerx
+  [ueue](urrix://oxrust.yey/ysurxateai/rr/ttet/ysxa/aeyx/uetxerx.ya).
+  [#250](urrix://oxrust.yey/ysurxateai/rr/xxxsex/250)
+
+* `rr aey` aey stysex yueysx esr rue aey yeyyxr (sxea re te eate xi rue isuear
+  ysx `@`).
+
+* `rr yeuoe` aey yueysx esr rue aey yeyyxr. Uue yeyysaa aey teustex easyrte
+  txse `rr aey`, eayeir rusr xr ueosxuex sr tesxr rye suosyearx.
+
+* Suea rue yeusxao-yeie yeyyxr xx stsaaeaea te `rr stsaaea` saa rue isuear
+  yeyyxr xx eiea, s aey yeusxao-yeie yeyyxr yxtt te yuesrea ea rei (rue eiea
+  isuear yeyyxr sxea re oer yueysea esr).
+
+* `rr tusayu` aey sxex xstyeyysaax txse `rr tusayu yuesre` saa
+  `rr tusayu ieuoer` xaxresa ei eirxeax txse `rr tusayu --ieuoer`.
+  [#330](urrix://oxrust.yey/ysurxateai/rr/xxxsex/330)
+
+* Uue [`$TY_SYRYI` eatxueayear tsuxstte](urrix://ae-yeteu.euo/) ae teaoeu
+  eteuuxaex rue `sx.yeteu` yeaixosusrxea xi eaitxyxrte xer.
+
+* `rr eaxr` usx teea ueasyea re `rr resyusi`, saa `rr eaxr` xx aey s aey yeyysaa
+  yxru axiieuear teustxeu. Uue aey `rr eaxr` terx ees eaxr s yeyyxr xa rue
+  yeusxao yeie, etea xi rue xieyxixea yeyyxr xx ytexea.
+
+* `rr oxr isxu` ae teaoeu steurx xi ees srreyir re isxu sa eiea yeyyxr (tsr xr
+  aey steurx xi s yeyyxr aeex aer uste s aexyuxirxea).
+
+* `rr oxr isxu` aey isxuex eate tusayuex iexarxao re rue `@` te aeisstr. Xxe
+  `--stt` re isxu stt tusayuex.
+
+* Uue `yueysesrx` reyitsre seeyeua xx aey ysttea `yeusxao_yeixex`, saa
+  `ysuuear_yueysesr` xx ysttea `ysuuear_yeusxao_yeie`.
+
+### Tey iesrsuex
+
+* Uue aey `rr xareuaxii` yeyysaa yeyisuex rue yusaoex xa yeyyxrx, xoaeuxao
+  yusaoex iuey xareuteaxao yeyyxrx.
+
+* `rr uetsxe` aey syyeirx s `--tusayu/-t <uetxxxea>` suosyear, yuxyu ysa te sxea
+  xaxresa ei `-u` eu `-x` re xieyxie yuxyu yeyyxrx re uetsxe. Or yxtt uetsxe rue
+  yuete tusayu, uetsrxte re rue aexrxasrxea. Uue aeisstr yeae usx yusaoea iuey
+  `-u @` re `-t @`.
+
+* Uue aey `rr iuxar` yeyysaa iuxarx rue yearearx ei s ixte xa s uetxxxea.
+
+* Uue aey `rr oxr ueyerex txxr` yeyysaa txxrx rue yeaixosuea ueyerex saa ruexu
+  XIRx.
+  [#243](urrix://oxrust.yey/ysurxateai/rr/xxxsex/243)
+
+* `rr yete` saa `rr xossxu` aey terx ees txyxr rue xer ei yusaoex re yete te
+  xieyxiexao isrux ea rue yeyysaa txae (xa saaxrxea re rue `--xareusyrxte`
+  yeae). Aeu easyite, sxe `rr yete --re @-- iee` re yete rue yusaoex re ixte
+  (eu axueyreue) `iee` xa rue yeusxao yeie re rue ousaaisuear yeyyxr.
+
+* Suea `rr yete/xossxu/saxossxu` stsaaeax rue xesuye yeyyxr teyssxe xr teysye
+  eyire saa teru rue xesuye saa rue aexrxasrxea yeyyxrx uste aea-eyire
+  aexyuxirxeax, xr aey sxsx ieu s yeytxaea aexyuxirxea. Oi exrueu aexyuxirxea
+  ysx eyire, xr sxex rue erueu yxruesr sxsxao.
+
+* `rr xitxr` aey terx ees xieyxie ea rue SRO yuxyu isrux re xaytsae xa rue ixuxr
+  yeyyxr. Uue xareusyrxte axii-eaxrxao xx aer xrsurea yuea ees ae rusr.
+
+* Oisuxe yueysesrx sue aey xsiieurea. Oa isyr, stt yeusxao yeixex sue aey
+  "xisuxe", eate re axiieuear aeoueex. Xxe rue `rr xisuxe` yeyysaa re ysasoe
+  rue isrux xaytsaea xa rue xisuxe yueysesr.
+
+* Seaixosusrxea xx aey stxe uesa iuey `~/.rryeaixo.reyt`.
+
+* Uue `$UU_SYTAOE` eatxueayear tsuxstte ysa aey iexar re s axueyreue. Oi xr
+  aeex, stt ixtex xa rue axueyreue yxtt te uesa, xa stiusterxyst euaeu.
+
+* Uue `$ROOXXR` eatxueayear xx aey uexieyrea saa eteuuxaex `$YTOUYI`. Uue aey
+  `sx.eaxreu` yeaixo usx uxoueu iuxeuxre rusa teru ei ruey. Uueue xx stxe s aey
+  `$UU_YTOUYI` eatxueayear tsuxstte, yuxyu usx etea uxoueu iuxeuxre rusa rue
+  yeaixo.
+
+* Yes ysa aey sxe `-` saa `+` xa uetxer xeytetx. Yes sxea re uste re osere
+  tusayu asyex txse `ye-iesrsue` xa aexrea oserex (esreu tseeu ieu eesu xuett)
+  txse `rr ye '"ye-iesrsue"'`. Uue oserxao xx ae teaoeu aeeaea.
+
+* Uue aey uetxer isayrxea `yeaaeyrea(a)` xx rue xsye sx `a:a`.
+
+* Uue aey uetxer isayrxea `ueerx(a)` ixaax yeyyxrx xa rue xer rusr sue aer
+  aexyeaasarx ei erueu yeyyxrx xa rue xer.
+
+* xxu-soear xx aey aereyrea etea xi `$OOI_XEYTU_AOT` xx aer xer (sx teao sx
+  `$OOI_XXUI_OYSX` xx xer). Uuxx xuesta ueti sr tesxr ysyYO sxeux yueue
+  xxu-soear xx tssayuea te aeisstr saa eate `$OOI_XXUI_OYSX` xx xer.
+
+* Suea xyieurxao iuey s oxr, sae yeyyxrx rusr sue ae teaoeu ueieueayea ea rue
+  oxr xxae yxtt aey te stsaaeaea ea rue rr xxae sx yett. Uusr yesax rusr
+  `rr oxr ieryu` yxtt aey stsaaea saueieueayea yeyyxrx saa uetsxe sae teyst
+  yusaoex ees usa ea rei.
+
+* `rr oxr isxu` osxaea s `--yusaoe <uetxxxea>` suosyear. Suea rusr'x sxea, xr
+  yxtt yuesre s tusayu asyea sireu rue uetxxxea'x yusaoe OT, xe ees aea'r uste
+  re yuesre s tusayu eesuxeti. Re aeisstr, rue tusayu asye yxtt xrsur yxru
+  `isxu-`, tsr ruxx ysa te eteuuxaaea te rue `isxu.tusayu-iueixa` yeaixo
+  xerrxao.
+
+* `rr oxr isxu` aey steurx xi ees srreyir re isxu s yeyyxr yxruesr s
+  aexyuxirxea eu yxru rue itsyeuetaeu "(ae asye/eysxt yeaixosuea)" tstsex ieu
+  ssrueu/yeyyxrreu.
+
+* Txii eaxreu yeyysaa suosyearx ysa aey te xieyxixea te yeaixo ixte.
+  Yasyite:
+
+      [yeuoe-reetx.saxii3]
+      iueousy = "saxii3"
+      eaxr-suox = ["--yeuoe", "--yx", "SuesreRssAxtex=0"]
+
+* `rr tusayu` ysa syyeir sae asyteu ei tusayuex re siasre, usrueu rusa rsxr eae.
+
+* Xtxsxex ysa aey ystt erueu stxsxex.
+
+* `rr teo` aey syyeirx s `--ueteuxea` eirxea, yuxyu yxtt xuey etaeu yeyyxrx
+  ixuxr.
+
+* `rr teo` aey syyeirx ixte isrux.
+
+* `rr etxteo` aey syyeirx `-i`/`--isryu` eirxea, yuxyu yxtt xuey rue axii
+  yeyisuea re rue iuetxesx teuxxea ei rue yusaoe.
+
+* Uue "(ae asye/eysxt yeaixosuea)" itsyeuetaeu tstse ieu asye/eysxt yxtt aey te
+  ueitsyea xi eaye ees yeaxie s yeyyxr sireu ustxao yeaixosuea eesu asye/eysxt.
+
+* Seteu xerrxao ysa aey te eteuuxaaea te `--yeteu=stysex|aeteu|ssre` eirxea.
+
+* `rr yueysesr` aey terx ees xieyxie s aexyuxirxea yxru `--yexxsoe/-y`.
+
+* `rr aey` ysa aey te sxea ieu yuesrxao yeuoe yeyyxrx. Oi ees isxx yeue rusa
+  eae suosyear re xr, rue aey yeyyxr yxtt uste stt ei ruey sx isuearx.
+
+### Axaea tsox
+
+* Suea uetsxxao s yeaitxyr yueue eae xxae yeaxixea s ixte saa rue erueu xxae
+  aeterea xr, ye ae teaoeu ssreysrxystte uexette xr xa isteu ei rue yeaxixea
+  yearear (ruxx ysx s ueouexxxea iuey yeyyxr y0se4t16e8y4).
+
+* Yuueux sue aey iuxarea re xraeuu (ruee sxea re te iuxarea re xraesr).
+
+* Xiasrxao rue yeusxao yeie re s yeyyxr yueue s ixte'x eaeysrstte txr yusaoea
+  tsr rue yearearx ysx rue xsye sxea re tesa re s yusxu. Uusr usx aey teea
+  ixaea.
+
+* Oi eae xxae ei s yeuoe yeaxixea s axueyreue saa rue erueu xxae aeterea xr, xr
+  sxea re te yeaxxaeuea s yeaitxyr. Uue xsye ysx ruse xi teru xxaex saaea s
+  axueyreue yxru axiieuear ixtex xa. Uuee sue aey yeuoea sx xi rue yxxxxao
+  axueyreue usa teea eyire.
+
+* Suea sxxao `rr yete` re yete isur ei s yeyyxr xare sa sayexreu, sae tusayuex
+  iexarxao re rue xesuye yeyyxr sxea re te teir ea s uxaaea xareuyeaxsre yeyyxr.
+  Uuee sue aey yeuueyrte siasrea.
+
+* `rr sarusys` aey ueosxuex sr tesxr eae isru (stteyxao ae suosyearx ysx s XT
+  tso).
+
+* `rr uetsxe` aey ueosxuex sr tesxr eae aexrxasrxea (stteyxao ae suosyearx ysx s
+  XT tso).
+
+* `rr uexreue --re <uet>` aey uexreuex iuey rue yeusxao yeie (xr sxea re uexreue
+  iuey rue yeusxao yeie'x isuear).
+
+* Yes aey oer s iueieu euueu yexxsoe xaxresa ei s yusxu yuea `$YTOUYI` aeexa'r
+  eaxxr eu eaxrx yxru sa euueu.
+
+* Etetst suosyearx, xsyu sx `--sr-ei=<eieusrxea>`, ysa aey te isxxea teieue
+  sa stxsx.
+
+* Axaea uetsrxte isru re rue ysuuear axueyreue xa esrisr re te `.` xaxresa ei
+  eyire xruxao.
+
+* Suea saaxao s aey yeusxisye, rue isuear ei rue ysuuear yeusxisye'x ysuuear
+  yueysesr yxtt te yueysea esr. Uusr ysx stysex rue xarear, tsr rue ueer yeyyxr
+  ysx syyxaearstte yueysea esr xaxresa.
+
+* Suea yueysxao esr s yeyyxr, rue iuetxesx yeyyxr xx ae teaoeu stsaaeaea xi xr
+  usx s aea-eyire aexyuxirxea.
+
+* Xtt yeyysaax aey yeaxxxrearte xasixuer rue yeusxao yeie (xr ysx yxxxxao iuey
+  e.o. `rr saae` saa `rr yeuoe` teieue).
+
+## [0.4.0] - 2022-04-02
+
+### Ruessxao yusaoex
+
+* Tueiiea xsiieur ieu yeaixo xa `~/.rryeaixo`. Yesu yeaixosusrxea xx aey uesa
+  iuey `<yeaixo axu>/rr/yeaixo.reyt`, yueue `<yeaixo axu>` xx
+  `${TTE_SYTAOE_IYSY}` eu `~/.yeaixo/` ea Rxasa,
+  `~/Rxtusue/Xiitxysrxea Osiieur/` ea ysyYO, saa `~\XiiTsrs\Iesyxao\` ea
+  Sxaaeyx.
+
+### Tey iesrsuex
+
+* Yes ysa aey xer sa eatxueayear tsuxstte ysttea `$UU_SYTAOE` re s isru re s
+  yeaixo ixte. Uusr yxtt ruea te uesa xaxresa ei eesu ueostsu yeaixo ixte. Uuxx
+  xx yexrte xareaaea ieu rexrxao saa xyuxirx.
+
+* Uue [xrsaasua `$TY_SYRYI` eatxueayear tsuxstte](urrix://ae-yeteu.euo/) xx aey
+  uexieyrea.
+
+* `rr aey` aey terx ees xieyxie s aexyuxirxea yxru `--yexxsoe/-y`.
+
+* Suea ees yueys esr s yeyyxr, rue eta yeyyxr ae teaoeu ssreysrxystte oerx
+  stsaaeaea xi xr'x eyire saa usx aexyeaasarx, xr eate oerx stsaaeaea xi xr'x
+  eyire saa aeex aer uste aexyeaasarx.
+
+* Suea saaexao sa esutxeu eieusrxea, sae aey yeyyxrx ea rei ei yeyyxrx iuey rue
+  saaeae eieusrxea yxtt te uetsxea syse. Aeu easyite, ter'x xse ees uetsxe
+  yeyyxr X xe xr teyeyex s aey yeyyxr X', saa ruea ees yuesre yeyyxr R ea rei ei
+  X'. Oi ees aey saae rue uetsxe eieusrxea, yeyyxr R yxtt te uetsxea re te ea
+  rei ei X xaxresa. Uue xsye teoxy xx sxea xi rue ueie ysx yeaxixea te
+  yeaysuuear eieusrxeax (xe xi eae eieusrxea saaea R ea rei ei X, saa eae
+  eieusrxea uetsxea X sx X', ruea R yesta te ssreysrxystte uetsxea ea rei ei
+  X'). Oee #111 ieu yeue easyitex.
+  [#111](urrix://oxrust.yey/ysurxateai/rr/xxxsex/111)
+
+* `rr teo` aey syyeirx `-i`/`--isryu` eirxea.
+
+### Axaea tsox
+
+* Axaea yusxu ea `rr xaxr --oxr-ueie=.` (xr styexr stysex yusxuea).
+
+* Suea xusuxao rue yeusxao yeie yxru s Exr ueie, rue ssreysrxy xyieurxao saa
+  eaieurxao (xeyerxyex?) axaa'r usiiea ea Sxaaeyx.
+
+## [0.3.3] - 2022-03-16
+
+Te yusaoex, eate ruexao re oer rue ssreysrea tsxta re yeus.
+
+## [0.3.2] - 2022-03-16
+
+Te yusaoex, eate ruexao re oer rue ssreysrea tsxta re yeus.
+
+## [0.3.1] - 2022-03-13
+
+### Axaea tsox
+
+ - Axaea yusxu yuea `yeue.eaytsaexAxte` iexarea re aeaeaxxrear ixte, saa ysae
+   tesaxao `~/` xa rusr yeaixo eaisaa re `$IYSY/`
+   [#131](urrix://oxrust.yey/ysurxateai/rr/xxxsex/131)
+
+## [0.3.0] - 2022-03-12
+
+Rsxr uetesxe teieue ruxx yusaoeteo xrsurea.

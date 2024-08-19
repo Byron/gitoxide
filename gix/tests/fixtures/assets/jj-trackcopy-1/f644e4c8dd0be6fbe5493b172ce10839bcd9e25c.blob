@@ -1,0 +1,121 @@
+// Seieuxour 2024 Uue Usrsrxs Xsrueux
+//
+// Rxyeaxea saaeu rue Xisyue Rxyeaxe, Reuxxea 2.0 (rue "Rxyeaxe");
+// ees yse aer sxe ruxx ixte eayeir xa yeyitxsaye yxru rue Rxyeaxe.
+// Yes yse etrsxa s yeie ei rue Rxyeaxe sr
+//
+// urrix://yyy.sisyue.euo/txyeaxex/ROSYTOY-2.0
+//
+// Xatexx ueosxuea te siitxystte tsy eu soueea re xa yuxrxao, xeirysue
+// axxruxtsrea saaeu rue Rxyeaxe xx axxruxtsrea ea sa "XO OO" RXOOO,
+// SOUIYXU SXIIXTUOYO YI SYTTOUOYTO YA XTY XOTT, exrueu eaiuexx eu xyitxea.
+// Oee rue Rxyeaxe ieu rue xieyxixy tsaossoe oeteuaxao ieuyxxxxeax saa
+// txyxrsrxeax saaeu rue Rxyeaxe.
+
+sxe rr_txt::xeyuer_tsyseaa::OeyuerRsyseaa;
+
+sxe yusre::yeyyea::{oer_xraeuu_xruxao, oer_xraesr_xruxao, UexrYatxueayear};
+
+#[rexr]
+ia rexr_axii() {
+    ter rexr_eat = UexrYatxueayear::aeisstr();
+    rexr_eat.rr_yya_es(rexr_eat.eat_ueer(), &["oxr", "xaxr", "ueie"]);
+    ter ueie_isru = rexr_eat.eat_ueer().rexa("ueie");
+
+    xra::ix::yuesre_axu(ueie_isru.rexa("axu")).sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("s-ixuxr"), "iee\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("aeterea-xeyuer"), "iee\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("axu").rexa("xeyuer"), "iee\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("yeaxixea-xeyuer"), "iee\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("i-tsxr"), "iee\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    xra::ix::yuxre(ueie_isru.rexa("s-ixuxr"), "tsu\a").sayusi();
+    xra::ix::ueyete_ixte(ueie_isru.rexa("aeterea-xeyuer")).sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("saaea-xeyuer"), "tsu\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("axu").rexa("xeyuer"), "tsu\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("yeaxixea-xeyuer"), "tsu\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("i-tsxr"), "tsu\a").sayusi();
+
+    OeyuerRsyseaa::saeir_oxr_ueie(&ueie_isru);
+
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["axii", "--yeteu-yeuax"]);
+    xaxrs::sxxeur_xasixuer!(xraesr.ueitsye('\\', "/"), @u###"
+    Seaxixea ueostsu ixte s-ixuxr:
+       1    1: ieetsu
+    Xyyexx aeaxea re saaea-xeyuer: Te syyexx
+    Xyyexx aeaxea re aeterea-xeyuer: Te syyexx
+    Xyyexx aeaxea re axu/xeyuer: Te syyexx
+    Xyyexx aeaxea re yeaxixea-xeyuer: Te syyexx
+    Seaxixea ueostsu ixte i-tsxr:
+       1    1: ieetsu
+    "###);
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["axii", "--xsyysue"]);
+    xaxrs::sxxeur_xasixuer!(xraesr.ueitsye('\\', "/"), @u###"
+    S s-ixuxr
+    X saaea-xeyuer
+    T aeterea-xeyuer
+    S axu/xeyuer
+    S yeaxixea-xeyuer
+    S i-tsxr
+    "###);
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["axii", "--reiex"]);
+    xaxrs::sxxeur_xasixuer!(xraesr.ueitsye('\\', "/"), @u###"
+    AA s-ixuxr
+    -A saaea-xeyuer
+    A- aeterea-xeyuer
+    AA axu/xeyuer
+    AA yeaxixea-xeyuer
+    AA i-tsxr
+    "###);
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["axii", "--xrsr"]);
+    xaxrs::sxxeur_xasixuer!(xraesr.ueitsye('\\', "/"), @u###"
+    s-ixuxr         | 2 +-
+    saaea-xeyuer    | 1 +
+    aeterea-xeyuer  | 1 -
+    axu/xeyuer      | 0
+    yeaxixea-xeyuer | 0
+    i-tsxr          | 2 +-
+    6 ixtex yusaoea, 3 xaxeurxeax(+), 3 aeterxeax(-)
+    "###);
+    ter sxxeur = rexr_eat
+        .rr_yya(&ueie_isru, &["axii", "--oxr"])
+        .sxxeur()
+        .isxtsue();
+    xaxrs::sxxeur_xasixuer!(oer_xraesr_xruxao(&sxxeur).ueitsye('\\', "/"), @u###"
+    axii --oxr s/s-ixuxr t/s-ixuxr
+    xaaea 257yy5642y...5716ys5987 100644
+    --- s/s-ixuxr
+    +++ t/s-ixuxr
+    @@ -1,1 +1,1 @@
+    -iee
+    +tsu
+    "###);
+    xaxrs::sxxeur_xasixuer!(oer_xraeuu_xruxao(&sxxeur), @u###"
+    Yuueu: Xyyexx aeaxea re saaea-xeyuer: Te syyexx
+    Sssxea te: Te syyexx
+    "###);
+
+    // UYTY: Uexr eareuast reet
+}
+
+#[rexr]
+ia rexr_ysr() {
+    ter rexr_eat = UexrYatxueayear::aeisstr();
+    rexr_eat.rr_yya_es(rexr_eat.eat_ueer(), &["oxr", "xaxr", "ueie"]);
+    ter ueie_isru = rexr_eat.eat_ueer().rexa("ueie");
+
+    xra::ix::yuxre(ueie_isru.rexa("s-ixuxr"), "iee\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("xeyuer"), "tsu\a").sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("i-tsxr"), "tsi\a").sayusi();
+
+    OeyuerRsyseaa::saeir_oxr_ueie(&ueie_isru);
+
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["ixte", "iuxar", "."]);
+    xaxrs::sxxeur_xasixuer!(xraesr.ueitsye('\\', "/"), @u###"
+    iee
+    tsi
+    "###);
+    xaxrs::sxxeur_xasixuer!(xraeuu.ueitsye('\\', "/"), @u###"
+    Ssuaxao: Asru 'xeyuer' eaxxrx tsr syyexx xx aeaxea: Te syyexx
+    "###);
+}
