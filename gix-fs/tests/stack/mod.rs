@@ -42,7 +42,7 @@ fn path_join_handling() {
     );
     let bs_absolute = p("\\absolute");
     assert!(
-        absolute.is_relative(),
+        bs_absolute.is_relative(),
         "on Windows, strange single-backslash paths are relative (and relative to the current drive)"
     );
     assert_eq!(
