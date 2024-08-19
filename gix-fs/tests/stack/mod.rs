@@ -92,7 +92,7 @@ fn path_join_handling() {
     assert_eq!(
         p("d:/").join("C:"),
         p("C:"),
-        "d-drive + c-drive = c-drive - interesting, as C: is supposed to be relative"
+        "d-drive + c-drive-relative = c-drive-relative - C: is relative but not on D:"
     );
     assert_eq!(
         p("d:\\").join("C:\\"),
@@ -113,7 +113,7 @@ fn path_join_handling() {
     assert_eq!(
         p("\\\\.").join("C:"),
         p("C:"),
-        "device-namespace-unc + win-drive-relative = win-drive-relative - c: was supposed to be relative, but it's not acting like it."
+        "device-namespace-unc + win-drive-relative = win-drive-relative - C: as a relative path is not the C: device, so this is not \\\\.\\C:"
     );
     assert_eq!(p("relative").join("C:"), p("C:"), "relative + win-drive = win-drive");
 
