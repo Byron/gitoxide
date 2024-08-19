@@ -35,24 +35,24 @@ fn p(s: &str) -> &Path {
 #[test]
 #[cfg(windows)]
 fn path_join_handling() {
-    let absolute = p("/absolute");
+    let looks_absolute = p("/absolute");
     assert!(
-        absolute.is_relative(),
+        looks_absolute.is_relative(),
         "on Windows, absolute Linux paths are considered relative (and relative to the current drive)"
     );
-    let bs_absolute = p("\\absolute");
+    let bs_looks_absolute = p("\\absolute");
     assert!(
-        bs_absolute.is_relative(),
+        bs_looks_absolute.is_relative(),
         "on Windows, strange single-backslash paths are relative (and relative to the current drive)"
     );
     assert_eq!(
-        p("relative").join(absolute),
-        absolute,
+        p("relative").join(looks_absolute),
+        looks_absolute,
         "relative + absolute = absolute - however, they kind of act like they are absolute in conjunction with relative base paths"
     );
     assert_eq!(
-        p("relative").join(bs_absolute),
-        bs_absolute,
+        p("relative").join(bs_looks_absolute),
+        bs_looks_absolute,
         "relative + absolute = absolute - backslashes aren't special here, and it just acts like it's absolute"
     );
 
@@ -68,22 +68,22 @@ fn path_join_handling() {
     );
 
     assert_eq!(
-        p("\\\\?\\base").join(absolute),
+        p("\\\\?\\base").join(looks_absolute),
         p("\\\\?\\base\\absolute"),
         "absolute1 + unix-absolute2 = joined result with backslash"
     );
     assert_eq!(
-        p("\\\\.\\base").join(absolute),
+        p("\\\\.\\base").join(looks_absolute),
         p("\\\\.\\base\\absolute"),
         "absolute1 + absolute2 = joined result with backslash (device namespace)"
     );
     assert_eq!(
-        p("\\\\?\\base").join(bs_absolute),
+        p("\\\\?\\base").join(bs_looks_absolute),
         p("\\\\?\\base\\absolute"),
         "absolute1 + absolute2 = joined result"
     );
     assert_eq!(
-        p("\\\\.\\base").join(bs_absolute),
+        p("\\\\.\\base").join(bs_looks_absolute),
         p("\\\\.\\base\\absolute"),
         "absolute1 + absolute2 = joined result (device namespace)"
     );
