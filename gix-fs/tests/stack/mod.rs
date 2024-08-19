@@ -165,14 +165,14 @@ fn path_join_handling() {
     );
 
     assert_eq!(
-        p("/").join("\\localhost"),
-        p("/\\localhost"),
-        "absolute + win-absolute-unc = joined result"
+        p("/").join("\\\\localhost"),
+        p("/\\\\localhost"),
+        "absolute + win-absolute-unc-host = joined result"
     );
     assert_eq!(
-        p("relative").join("\\localhost"),
-        p("relative/\\localhost"),
-        "relative + win-absolute-unc = joined result"
+        p("relative").join("\\\\localhost"),
+        p("relative/\\\\localhost"),
+        "relative + win-absolute-unc-host = joined result"
     );
 }
 
