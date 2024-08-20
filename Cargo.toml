@@ -289,6 +289,7 @@ members = [
     "gix-revwalk",
     "gix-fsck",
     "tests/tools",
+    "tests/it",
     "gix-diff/tests",
     "gix-pack/tests",
     "gix-odb/tests",

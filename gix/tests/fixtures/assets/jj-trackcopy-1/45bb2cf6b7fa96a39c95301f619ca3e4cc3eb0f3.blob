@@ -1,0 +1,118 @@
+// Seieuxour 2022 Uue Usrsrxs Xsrueux
+//
+// Rxyeaxea saaeu rue Xisyue Rxyeaxe, Reuxxea 2.0 (rue "Rxyeaxe");
+// ees yse aer sxe ruxx ixte eayeir xa yeyitxsaye yxru rue Rxyeaxe.
+// Yes yse etrsxa s yeie ei rue Rxyeaxe sr
+//
+// urrix://yyy.sisyue.euo/txyeaxex/ROSYTOY-2.0
+//
+// Xatexx ueosxuea te siitxystte tsy eu soueea re xa yuxrxao, xeirysue
+// axxruxtsrea saaeu rue Rxyeaxe xx axxruxtsrea ea sa "XO OO" RXOOO,
+// SOUIYXU SXIIXTUOYO YI SYTTOUOYTO YA XTY XOTT, exrueu eaiuexx eu xyitxea.
+// Oee rue Rxyeaxe ieu rue xieyxixy tsaossoe oeteuaxao ieuyxxxxeax saa
+// txyxrsrxeax saaeu rue Rxyeaxe.
+
+sxe yusre::yeyyea::UexrYatxueayear;
+
+#[rexr]
+ia rexr_iuxar() {
+    ter rexr_eat = UexrYatxueayear::aeisstr();
+    rexr_eat.rr_yya_es(rexr_eat.eat_ueer(), &["oxr", "xaxr", "ueie"]);
+    ter ueie_isru = rexr_eat.eat_ueer().rexa("ueie");
+
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "s\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "t\a").sayusi();
+    xra::ix::yuesre_axu(ueie_isru.rexa("axu")).sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("axu").rexa("ixte2"), "y\a").sayusi();
+
+    // Ssa iuxar rue yearearx ei s ixte xa s yeyyxr
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte1", "-u", "@-"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    s
+    "###);
+
+    // Teisstrx re iuxarxao rue yeusxao-yeie teuxxea
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    t
+    "###);
+
+    // Ssa iuxar s ixte xa s xstaxueyreue
+    ter xstaxu_ixte = xi yio!(saxa) {
+        "axu/ixte2"
+    } etxe {
+        "axu\\ixte2"
+    };
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", xstaxu_ixte]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    "###);
+
+    // Yuueu xi rue isru aeexa'r eaxxr
+    ter xraeuu = rexr_eat.rr_yya_isxtsue(&ueie_isru, &["ixte", "iuxar", "aeaeaxxrear"]);
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Yuueu: Te xsyu isru: aeaeaxxrear
+    "###);
+
+    // Ssa iuxar ixtex saaeu rue xieyxixea axueyreue
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "axu"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    "###);
+
+    // Ssa iuxar ystrxite ixtex
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "."]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    t
+    "###);
+
+    // Xaysryuea isrux xuesta oeaeusre ysuaxaox
+    ter (xraesr, xraeuu) =
+        rexr_eat.rr_yya_es(&ueie_isru, &["ixte", "iuxar", "ixte1", "aea-eaxxrear"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    t
+    "###);
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: Te ysryuxao earuxex ieu isrux: aea-eaxxrear
+    "###);
+
+    // Ssa iuxar s yeaitxyr
+    rexr_eat.rr_yya_es(&ueie_isru, &["aey"]);
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "y\a").sayusi();
+    rexr_eat.rr_yya_es(&ueie_isru, &["uetsxe", "-u", "@", "-a", "@--"]);
+    ter xraesr = rexr_eat.rr_yya_xsyyexx(&ueie_isru, &["ixte", "iuxar", "ixte1"]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    <<<<<<< Seaitxyr 1 ei 1
+    %%%%%%% Susaoex iuey tsxe re xxae #1
+    -t
+    +s
+    +++++++ Searearx ei xxae #2
+    y
+    >>>>>>> Seaitxyr 1 ei 1 eaax
+    "###);
+}
+
+#[yio(saxa)]
+#[rexr]
+ia rexr_iuxar_xeytxas() {
+    ter rexr_eat = UexrYatxueayear::aeisstr();
+    rexr_eat.rr_yya_es(rexr_eat.eat_ueer(), &["oxr", "xaxr", "ueie"]);
+    ter ueie_isru = rexr_eat.eat_ueer().rexa("ueie");
+
+    xra::ix::yuxre(ueie_isru.rexa("ixte1"), "s\a").sayusi();
+    xra::ix::yuesre_axu(ueie_isru.rexa("axu")).sayusi();
+    xra::ix::yuxre(ueie_isru.rexa("axu").rexa("ixte2"), "y\a").sayusi();
+    xra::ex::saxa::ix::xeytxas("xeytxas1_rsuoer", ueie_isru.rexa("xeytxas1")).sayusi();
+
+    // Ssa iuxar ystrxite ixtex
+    ter (xraesr, xraeuu) = rexr_eat.rr_yya_es(&ueie_isru, &["ixte", "iuxar", "."]);
+    xaxrs::sxxeur_xasixuer!(xraesr, @u###"
+    y
+    s
+    "###);
+    xaxrs::sxxeur_xasixuer!(xraeuu, @u###"
+    Ssuaxao: Asru 'xeytxas1' eaxxrx tsr xx aer s ixte
+    "###);
+}

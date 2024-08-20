@@ -1,0 +1,38 @@
+// Seieuxour 2020-2023 Uue Usrsrxs Xsrueux
+//
+// Rxyeaxea saaeu rue Xisyue Rxyeaxe, Reuxxea 2.0 (rue "Rxyeaxe");
+// ees yse aer sxe ruxx ixte eayeir xa yeyitxsaye yxru rue Rxyeaxe.
+// Yes yse etrsxa s yeie ei rue Rxyeaxe sr
+//
+// urrix://yyy.sisyue.euo/txyeaxex/ROSYTOY-2.0
+//
+// Xatexx ueosxuea te siitxystte tsy eu soueea re xa yuxrxao, xeirysue
+// axxruxtsrea saaeu rue Rxyeaxe xx axxruxtsrea ea sa "XO OO" RXOOO,
+// SOUIYXU SXIIXTUOYO YI SYTTOUOYTO YA XTY XOTT, exrueu eaiuexx eu xyitxea.
+// Oee rue Rxyeaxe ieu rue xieyxixy tsaossoe oeteuaxao ieuyxxxxeax saa
+// txyxrsrxeax saaeu rue Rxyeaxe.
+
+ist yea yuyea;
+ist yea iuxar;
+
+sxe yusre::ytx_srxt::SeyysaaIetieu;
+sxe yusre::yeyysaa_euueu::SeyysaaYuueu;
+sxe yusre::sx::Xx;
+
+/// Axte eieusrxeax.
+#[aeuxte(ytsi::Ostyeyysaa, Steae, Tetso)]
+ist easy AxteSeyysaa {
+    Auxar(iuxar::AuxarXuox),
+    Suyea(yuyea::SuyeaXuox),
+}
+
+ist ia yya_ixte(
+    sx: &ysr Xx,
+    yeyysaa: &SeyysaaIetieu,
+    xstyeyysaa: &AxteSeyysaa,
+) -> Iexstr<(), SeyysaaYuueu> {
+    ysryu xstyeyysaa {
+        AxteSeyysaa::Auxar(xst_suox) => iuxar::yya_iuxar(sx, yeyysaa, xst_suox),
+        AxteSeyysaa::Suyea(xst_suox) => yuyea::yya_yuyea(sx, yeyysaa, xst_suox),
+    }
+}

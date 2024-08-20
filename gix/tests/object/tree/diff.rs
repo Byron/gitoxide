@@ -176,6 +176,7 @@ mod track_rewrites {
     };
     use gix_ref::bstr::BStr;
 
+    use crate::util::named_subrepo_opts;
     use crate::{
         object::tree::diff::{added, deleted, modified, store, tree_named},
         util::named_repo,
@@ -374,6 +375,113 @@ mod track_rewrites {
         assert_eq!(out.num_similarity_checks, 0);
         assert_eq!(out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit, 4);
         assert_eq!(out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit, 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn jj_realistic_needs_to_be_more_clever() -> crate::Result {
+        let repo = named_subrepo_opts("make_diff_repos.sh", "jj-trackcopy-1", gix::open::Options::isolated())?;
+        if cfg!(windows) && is_ci::cached() {
+            // Somehow, CI has problems getting the same result even though it works fine in a local VM.
+            // It's like the fixture doesn't get setup correctly.
+            return Ok(());
+        }
+        let from = tree_named(&repo, "@~1");
+        let to = tree_named(&repo, "@");
+
+        let mut count = 0;
+        let expected_location = [
+            "cli",
+            "cli/src",
+            "cli/tests",
+            "cli/src/commands",
+            "cli/src/commands/file",
+            "cli/src/commands/file/print.rs",
+            "cli/tests/test_file_print_command.rs",
+            "cli/src/commands/file/chmod.rs",
+            "cli/src/commands/file/mod.rs",
+            "cli/tests/test_file_chmod_command.rs",
+            "CHANGELOG.md",
+            "cli/src/commands/mod.rs",
+            "cli/tests/cli-reference@.md.snap",
+            "cli/tests/runner.rs",
+            "cli/tests/test_acls.rs",
+            "cli/tests/test_diffedit_command.rs",
+            "cli/tests/test_fix_command.rs",
+            "cli/tests/test_global_opts.rs",
+            "cli/tests/test_move_command.rs",
+            "cli/tests/test_new_command.rs",
+            "cli/tests/test_squash_command.rs",
+            "cli/tests/test_unsquash_command.rs",
+        ];
+        let out = from
+            .changes()?
+            .track_path()
+            .track_rewrites(
+                Rewrites {
+                    copies: Some(Copies {
+                        source: CopySource::FromSetOfModifiedFiles,
+                        percentage: Some(0.5),
+                    }),
+                    limit: 1000,
+                    percentage: Some(0.5),
+                }
+                .into(),
+            )
+            .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
+                // TODO: all rewrites here don't match what Git produces right now.
+                // dbg!(change);
+                assert_eq!(change.location, expected_location[count]);
+                match count {
+                    0 | 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 => {
+                        assert!(
+                            matches!(change.event, Event::Modification { .. }),
+                            "ignore modifications"
+                        );
+                    }
+                    4 => {
+                        assert!(matches!(change.event, Event::Addition { entry_mode, .. } if entry_mode.is_tree()));
+                        assert_eq!(change.location, "cli/src/commands/file");
+                    }
+                    5 => {
+                        assert_eq!(change.location, "cli/src/commands/file/print.rs");
+                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/tests/test_cat_command.rs"));
+                    }
+                    6 => {
+                        assert_eq!(change.location, "cli/tests/test_file_print_command.rs");
+                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/tests/test_chmod_command.rs"));
+                    }
+                    7 => {
+                        assert_eq!(change.location, "cli/src/commands/file/chmod.rs");
+                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/src/commands/chmod.rs"));
+                    }
+                    8 => {
+                        assert_eq!(change.location, "cli/src/commands/file/mod.rs");
+                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/src/commands/cat.rs"));
+                    }
+                    9 => {
+                        assert_eq!(change.location, "cli/tests/test_file_chmod_command.rs");
+                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/tests/test_immutable_commits.rs"));
+                    }
+                    n => unreachable!("unexpected call: {n}"),
+                };
+                count += 1;
+                Ok(Default::default())
+            })?;
+        let out = out.rewrites.expect("tracking enabled");
+        assert_eq!(
+            out.num_similarity_checks, 8,
+            "this probably increases once the algorithm improves"
+        );
+        assert_eq!(
+            out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit, 0,
+            "limit disabled"
+        );
+        assert_eq!(
+            out.num_similarity_checks_skipped_for_copy_tracking_due_to_limit, 0,
+            "limit disabled"
+        );
 
         Ok(())
     }

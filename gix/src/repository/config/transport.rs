@@ -1,8 +1,6 @@
 #![allow(clippy::result_large_err)]
 use std::any::Any;
 
-use gix_macros::momo;
-
 use crate::bstr::BStr;
 
 impl crate::Repository {
@@ -23,7 +21,6 @@ impl crate::Repository {
         )),
         allow(unused_variables)
     )]
-    #[momo]
     pub fn transport_options<'a>(
         &self,
         url: impl Into<&'a BStr>,

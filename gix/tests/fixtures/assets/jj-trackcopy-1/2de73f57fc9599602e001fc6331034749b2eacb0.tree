@@ -1,0 +1,17 @@
+100644 f4cb24f79ec2549a3a8a5028d4c43d953f74137d	CHANGELOG.md
+100644 f09e8b0e6bf963d8d6d5b578fea48ff4c9b723fb	cli/src/commands/cat.rs
+100644 8f55dec5b81779d23539fa7146d713cc42df70f4	cli/src/commands/chmod.rs
+100644 e7e8c4f00412aa9bc9898f396ef9a7597aa64756	cli/src/commands/mod.rs
+100644 5c1985fc3c89a8d0edaedc23f76feb7f5c4cc962	cli/tests/cli-reference@.md.snap
+100644 a008cb19a57bd44a5a054fced38384b09c9243fc	cli/tests/runner.rs
+100644 e7e8f15d7f4c0c50aad13b0f82a632e3d55c33c6	cli/tests/test_acls.rs
+100644 8c80364c37b7fc364778efb4214575536e6a1df4	cli/tests/test_cat_command.rs
+100644 c24ae8e04f53b84e09838d232b3e8c0167ccc010	cli/tests/test_chmod_command.rs
+100644 85e7db4f01d8be8faa7a020647273399f815f597	cli/tests/test_diffedit_command.rs
+100644 16ab056981c9ca40cdd4d298feb70510cc3ced37	cli/tests/test_fix_command.rs
+100644 44f49aec05b7dc920cf1f1a554016e74b06ee1c8	cli/tests/test_global_opts.rs
+100644 ba61cefef4328f126283f25935aab2d04ae2016e	cli/tests/test_immutable_commits.rs
+100644 cbd36dbc76760ed41c968f369b470b45c176dabe	cli/tests/test_move_command.rs
+100644 3e03295d9b4654adccb6cd625376c36d4d38fb3d	cli/tests/test_new_command.rs
+100644 f921d5bc423586194bd73419f9814ff072212faa	cli/tests/test_squash_command.rs
+100644 0dcc138981223171df13d35444c7aaee4b502c6f	cli/tests/test_unsquash_command.rs

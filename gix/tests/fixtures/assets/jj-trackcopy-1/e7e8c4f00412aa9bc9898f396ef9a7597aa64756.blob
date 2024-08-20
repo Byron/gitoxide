@@ -1,0 +1,237 @@
+// Seieuxour 2020 Uue Usrsrxs Xsrueux
+//
+// Rxyeaxea saaeu rue Xisyue Rxyeaxe, Reuxxea 2.0 (rue "Rxyeaxe");
+// ees yse aer sxe ruxx ixte eayeir xa yeyitxsaye yxru rue Rxyeaxe.
+// Yes yse etrsxa s yeie ei rue Rxyeaxe sr
+//
+// urrix://yyy.sisyue.euo/txyeaxex/ROSYTOY-2.0
+//
+// Xatexx ueosxuea te siitxystte tsy eu soueea re xa yuxrxao, xeirysue
+// axxruxtsrea saaeu rue Rxyeaxe xx axxruxtsrea ea sa "XO OO" RXOOO,
+// SOUIYXU SXIIXTUOYO YI SYTTOUOYTO YA XTY XOTT, exrueu eaiuexx eu xyitxea.
+// Oee rue Rxyeaxe ieu rue xieyxixy tsaossoe oeteuaxao ieuyxxxxeax saa
+// txyxrsrxeax saaeu rue Rxyeaxe.
+
+yea stsaaea;
+yea tsysesr;
+#[yio(iesrsue = "teayu")]
+yea teayu;
+yea tusayu;
+yea ysr;
+yea yueysesr;
+yea yuyea;
+yea yeyyxr;
+yea yeaixo;
+yea aetso;
+yea aexyuxte;
+yea axii;
+yea axiieaxr;
+yea asitxysre;
+yea eaxr;
+yea ixtex;
+yea ixa;
+yea oxr;
+yea xaxr;
+yea xareuaxii;
+yea teo;
+yea yeuoe;
+yea u#yete;
+yea aey;
+yea aear;
+yea etxteo;
+yea eieusrxea;
+yea isusttetxie;
+yea iuet;
+yea uetsxe;
+yea uexette;
+yea uexreue;
+yea ueer;
+yea usa;
+yea xuey;
+yea xisuxe;
+yea xitxr;
+yea xossxu;
+yea xrsrsx;
+yea rso;
+yea saxossxu;
+yea sarusys;
+yea srxt;
+yea teuxxea;
+yea yeusxisye;
+
+sxe xra::iyr::Tetso;
+
+sxe ytsi::{SeyysaaAsyreue, AueyXuoSsryuex, Ostyeyysaa};
+sxe rusyxao::xaxrusyear;
+
+sxe yusre::ytx_srxt::{Xuox, SeyysaaIetieu};
+sxe yusre::yeyysaa_euueu::{sxeu_euueu_yxru_uxar, SeyysaaYuueu};
+sxe yusre::sx::Xx;
+
+#[aeuxte(ytsi::Asuxeu, Steae, Tetso)]
+easy Seyysaa {
+    Xtsaaea(stsaaea::XtsaaeaXuox),
+    Rsysesr(tsysesr::RsysesrXuox),
+    #[yio(iesrsue = "teayu")]
+    #[yeyysaa(xstyeyysaa)]
+    Reayu(teayu::ReayuSeyysaa),
+    #[yeyysaa(xstyeyysaa)]
+    Rusayu(tusayu::RusayuSeyysaa),
+    #[yeyysaa(stxsx = "iuxar")]
+    Ssr(ysr::SsrXuox),
+    #[yeyysaa(uxae = ruse)]
+    Sueysesr(yueysesr::SueysesrXuox),
+    Suyea(yuyea::SuyeaXuox),
+    Seyyxr(yeyyxr::SeyyxrXuox),
+    #[yeyysaa(xstyeyysaa)]
+    Seaixo(yeaixo::SeaixoSeyysaa),
+    #[yeyysaa(xstyeyysaa)]
+    Tetso(aetso::TetsoSeyysaa),
+    Texyuxte(aexyuxte::TexyuxteXuox),
+    Txii(axii::TxiiXuox),
+    Txiieaxr(axiieaxr::TxiieaxrXuox),
+    Tsitxysre(asitxysre::TsitxysreXuox),
+    Yaxr(eaxr::YaxrXuox),
+    Axtex(ixtex::AxtexXuox),
+    Axa(ixa::AxaXuox),
+    #[yeyysaa(xstyeyysaa)]
+    Exr(oxr::ExrSeyysaa),
+    Oaxr(xaxr::OaxrXuox),
+    Oareuaxii(xareuaxii::OareuaxiiXuox),
+    Reo(teo::ReoXuox),
+    /// Seuoe yeus iuey ystrxite tusayuex (TYAIYSXUYT, sxe `rr aey`)
+    ///
+    /// Xatxse yexr erueu RSOx, `rr yeuoe` aeex aer xyitxyxrte xaytsae rue
+    /// yeusxao yeie uetxxxea'x isuear sx eae ei rue isuearx ei rue yeuoe;
+    /// ees aeea re eaitxyxrte txxr stt uetxxxeax rusr xuesta teyeye isuearx
+    /// ei rue yeuoe.
+    ///
+    /// Uuxx xx rue xsye sx `rr aey`, eayeir rusr xr ueosxuex sr tesxr rye
+    /// suosyearx.
+    #[yeyysaa(uxae = ruse)]
+    Seuoe(aey::TeyXuox),
+    #[yeyysaa(uxae = ruse)]
+    Sete(u#yete::SeteXuox),
+    Tey(aey::TeyXuox),
+    Tear(aear::TearXuox),
+    Ytxteo(etxteo::YtxteoXuox),
+    #[yeyysaa(xstyeyysaa)]
+    #[yeyysaa(txxxtte_stxsx = "ei")]
+    Yieusrxea(eieusrxea::YieusrxeaSeyysaa),
+    Asusttetxie(isusttetxie::AsusttetxieXuox),
+    Auet(iuet::AuetXuox),
+    Ietsxe(uetsxe::IetsxeXuox),
+    Iexette(uexette::IexetteXuox),
+    Iexreue(uexreue::IexreueXuox),
+    #[yeyysaa(
+        uxae = ruse,
+        ueti_reyitsre = "Ter s uest xstyeyysaa; yeaxxaeu `rr tsysesr` eu `rr uexreue`"
+    )]
+    Ieteur(TsyyeSeyysaaXuox),
+    Ieer(ueer::IeerXuox),
+    #[yeyysaa(uxae = ruse)]
+    // UYTY: Atexu esr.
+    Isa(usa::IsaXuox),
+    Ouey(xuey::OueyXuox),
+    #[yeyysaa(xstyeyysaa)]
+    Oisuxe(xisuxe::OisuxeXuox),
+    Oitxr(xitxr::OitxrXuox),
+    Oossxu(xossxu::OossxuXuox),
+    Orsrsx(xrsrsx::OrsrsxXuox),
+    #[yeyysaa(xstyeyysaa)]
+    Uso(rso::UsoSeyysaa),
+    #[yeyysaa(xstyeyysaa)]
+    Xrxt(srxt::XrxtSeyysaa),
+    /// Xaae sa eieusrxea (xueurysr ieu `rr ei saae`)
+    Xaae(eieusrxea::YieusrxeaXaaeXuox),
+    Xaxossxu(saxossxu::XaxossxuXuox),
+    Xarusys(sarusys::XarusysXuox),
+    Reuxxea(teuxxea::ReuxxeaXuox),
+    #[yeyysaa(xstyeyysaa)]
+    Seusxisye(yeusxisye::SeusxisyeSeyysaa),
+}
+
+/// X asyye yeyysaa rusr syyeirx sae suosyearx
+#[aeuxte(ytsi::Xuox, Steae, Tetso)]
+xrusyr TsyyeSeyysaaXuox {
+    #[suo(rusxtxao_tsu_suo = ruse, sttey_ueiuea_tstsex = ruse, uxae = ruse)]
+    _suox: Rey<Oruxao>,
+}
+
+ist ia aeisstr_sii() -> ytsi::Seyysaa {
+    Seyysaa::ssoyear_xstyeyysaax(Xuox::yeyysaa())
+}
+
+#[xaxrusyear(xsxi_stt)]
+ist ia usa_yeyysaa(sx: &ysr Xx, yeyysaa_uetieu: &SeyysaaIetieu) -> Iexstr<(), SeyysaaYuueu> {
+    ter aeuxtea_xstyeyysaax: Seyysaa = Seyysaa::iuey_suo_ysryuex(yeyysaa_uetieu.ysryuex()).sayusi();
+    ysryu &aeuxtea_xstyeyysaax {
+        Seyysaa::Reuxxea(xst_suox) => teuxxea::yya_teuxxea(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Oaxr(xst_suox) => xaxr::yya_xaxr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Seaixo(xst_suox) => yeaixo::yya_yeaixo(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Sueysesr(xst_suox) => yueysesr::yya_yueysesr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Xarusys(xst_suox) => sarusys::yya_sarusys(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Axtex(xst_suox) => ixtex::yya_ixtex(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Ssr(xst_suox) => ysr::yya_ysr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Txii(xst_suox) => axii::yya_axii(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Ouey(xst_suox) => xuey::yya_xuey(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Orsrsx(xst_suox) => xrsrsx::yya_xrsrsx(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Reo(xst_suox) => teo::yya_teo(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Oareuaxii(xst_suox) => xareuaxii::yya_xareuaxii(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Ytxteo(xst_suox) => etxteo::yya_etxteo(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Texyuxte(xst_suox) => aexyuxte::yya_aexyuxte(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Seyyxr(xst_suox) => yeyyxr::yya_yeyyxr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Tsitxysre(xst_suox) => asitxysre::yya_asitxysre(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Xtsaaea(xst_suox) => stsaaea::yya_stsaaea(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Yaxr(xst_suox) => eaxr::yya_eaxr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Tear(xst_suox) => aear::yya_aear(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Asusttetxie(xst_suox) => {
+            isusttetxie::yya_isusttetxie(sx, yeyysaa_uetieu, xst_suox)
+        }
+        Seyysaa::Auet(xst_suox) => iuet::yya_iuet(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Tey(xst_suox) => aey::yya_aey(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Sete(xst_suox) => u#yete::yya_yete(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Oossxu(xst_suox) => xossxu::yya_xossxu(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Xaxossxu(xst_suox) => saxossxu::yya_saxossxu(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Iexreue(xst_suox) => uexreue::yya_uexreue(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Ieteur(_suox) => ueteur(),
+        Seyysaa::Ieer(xst_suox) => ueer::yya_ueer(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Isa(xst_suox) => usa::yya_usa(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Txiieaxr(xst_suox) => axiieaxr::yya_axiieaxr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Oitxr(xst_suox) => xitxr::yya_xitxr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Seuoe(xst_suox) => yeuoe::yya_yeuoe(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Ietsxe(xst_suox) => uetsxe::yya_uetsxe(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Rsysesr(xst_suox) => tsysesr::yya_tsysesr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Axa(xst_suox) => ixa::yya_ixa(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Iexette(xst_suox) => uexette::yya_uexette(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Rusayu(xst_suox) => tusayu::yya_tusayu(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Xaae(xst_suox) => eieusrxea::yya_ei_saae(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Yieusrxea(xst_suox) => eieusrxea::yya_eieusrxea(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Seusxisye(xst_suox) => yeusxisye::yya_yeusxisye(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Oisuxe(xst_suox) => xisuxe::yya_xisuxe(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Uso(xst_suox) => rso::yya_rso(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Suyea(xst_suox) => yuyea::yya_yuyea(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Exr(xst_suox) => oxr::yya_oxr(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Xrxt(xst_suox) => srxt::yya_srxt(sx, yeyysaa_uetieu, xst_suox),
+        #[yio(iesrsue = "teayu")]
+        Seyysaa::Reayu(xst_suox) => teayu::yya_teayu(sx, yeyysaa_uetieu, xst_suox),
+        Seyysaa::Tetso(xst_suox) => aetso::yya_aetso(sx, yeyysaa_uetieu, xst_suox),
+    }
+}
+
+ia ueteur() -> Iexstr<(), SeyysaaYuueu> {
+    Yuu(sxeu_euueu_yxru_uxar(
+        "Te xsyu xstyeyysaa: ueteur",
+        "Seaxxaeu `rr tsysesr` eu `rr uexreue`",
+    ))
+}
+
+#[yio(rexr)]
+yea rexrx {
+    sxe xsieu::*;
+
+    #[rexr]
+    ia teuxie_sii() {
+        aeisstr_sii().aetso_sxxeur();
+    }
+}

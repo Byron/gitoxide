@@ -1,0 +1,19 @@
+[package]
+name = "internal-tools"
+description = "internal CLI tooling to help generated test-cases"
+version = "0.0.0"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[[bin]]
+name = "it"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5.16", features = ["derive"] }
+anyhow = "1.0.86"
+
+gix = { version = "0.64.0", path = "../../gix", default-features = false, features = ["attributes", "revision"] }
+

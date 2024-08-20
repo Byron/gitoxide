@@ -539,6 +539,7 @@ fn remove_only() -> crate::Result {
         Action::Continue
     });
     assert_eq!(out, Default::default());
+    assert!(called);
     Ok(())
 }
 
