@@ -129,7 +129,7 @@ pub fn update_head(
                                 change: gix_ref::transaction::Change::Update {
                                     log: reflog_message(),
                                     expected: PreviousValue::Any,
-                                    new: Target::Peeled(head_peeled_id.to_owned()),
+                                    new: Target::Object(head_peeled_id.to_owned()),
                                 },
                                 name: referent.clone(),
                                 deref: false,
@@ -155,7 +155,7 @@ pub fn update_head(
                     change: gix_ref::transaction::Change::Update {
                         log,
                         expected: PreviousValue::Any,
-                        new: Target::Peeled(head_peeled_id.to_owned()),
+                        new: Target::Object(head_peeled_id.to_owned()),
                     },
                     name: head,
                     deref: false,
@@ -169,7 +169,7 @@ pub fn update_head(
                 change: gix_ref::transaction::Change::Update {
                     log: reflog_message(),
                     expected: PreviousValue::Any,
-                    new: Target::Peeled(
+                    new: Target::Object(
                         head_peeled_id
                             .expect("detached heads always point to something")
                             .to_owned(),

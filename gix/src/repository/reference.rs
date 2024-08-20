@@ -23,7 +23,7 @@ impl crate::Repository {
             change: Change::Update {
                 log: Default::default(),
                 expected: constraint,
-                new: Target::Peeled(id),
+                new: Target::Object(id),
             },
             name: format!("refs/tags/{}", name.as_ref()).try_into()?,
             deref: false,
@@ -106,7 +106,7 @@ impl crate::Repository {
                     message: log_message,
                 },
                 expected: constraint,
-                new: Target::Peeled(id),
+                new: Target::Object(id),
             },
             name,
             deref: false,
@@ -119,7 +119,7 @@ impl crate::Repository {
 
         Ok(gix_ref::Reference {
             name: edits.pop().expect("exactly one edit").name,
-            target: Target::Peeled(id),
+            target: Target::Object(id),
             peeled: None,
         }
         .attach(self))
@@ -162,7 +162,7 @@ impl crate::Repository {
                 Err(reference::find::existing::Error::NotFound) => crate::head::Kind::Unborn(branch),
                 Err(err) => return Err(err),
             },
-            Target::Peeled(target) => crate::head::Kind::Detached {
+            Target::Object(target) => crate::head::Kind::Detached {
                 target,
                 peeled: head.inner.peeled,
             },

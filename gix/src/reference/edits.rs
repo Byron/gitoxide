@@ -36,11 +36,11 @@ pub mod set_target_id {
         ) -> Result<(), Error> {
             match &self.inner.target {
                 Target::Symbolic(name) => return Err(Error::SymbolicReference { name: name.clone() }),
-                Target::Peeled(current_id) => {
+                Target::Object(current_id) => {
                     let changed = self.repo.reference(
                         self.name(),
                         id,
-                        PreviousValue::MustExistAndMatch(Target::Peeled(current_id.to_owned())),
+                        PreviousValue::MustExistAndMatch(Target::Object(current_id.to_owned())),
                         reflog_message,
                     )?;
                     *self = changed;

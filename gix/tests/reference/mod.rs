@@ -63,7 +63,7 @@ mod find {
 
         assert_eq!(
             packed_tag_ref.inner.target,
-            refs::Target::Peeled(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3")),
+            refs::Target::Object(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3")),
             "it points to a tag object"
         );
 
@@ -99,7 +99,7 @@ mod find {
         symbolic_ref = symbolic_ref.follow().expect("another hop")?;
         assert_eq!(symbolic_ref.target(), second_hop.to_ref());
 
-        let last_hop = Target::Peeled(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
+        let last_hop = Target::Object(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
         symbolic_ref = symbolic_ref.follow().expect("another hop")?;
         assert_eq!(symbolic_ref.target(), last_hop.to_ref());
 

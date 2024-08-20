@@ -347,7 +347,7 @@ mod blocking_io {
                                 "if we set up a symref, the target should exist by now"
                             )
                         }
-                        TargetRef::Peeled(id) => {
+                        TargetRef::Object(id) => {
                             assert!(repo.objects.exists(id), "part of the fetched pack");
                         }
                     }
@@ -362,7 +362,7 @@ mod blocking_io {
                             .1
                             .starts_with_str(remote_name));
                         match r.target() {
-                            TargetRef::Peeled(_) => {
+                            TargetRef::Object(_) => {
                                 let mut logs = r.log_iter();
                                 assert_reflog(logs.all());
                             }

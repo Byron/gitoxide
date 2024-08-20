@@ -304,7 +304,7 @@ impl crate::Repository {
                     force_create_reflog: false,
                     message: crate::reference::log::message("commit", commit.message.as_ref(), commit.parents.len()),
                 },
-                expected: match commit.parents.first().map(|p| Target::Peeled(*p)) {
+                expected: match commit.parents.first().map(|p| Target::Object(*p)) {
                     Some(previous) => {
                         if reference.as_bstr() == "HEAD" {
                             PreviousValue::MustExistAndMatch(previous)
@@ -314,7 +314,7 @@ impl crate::Repository {
                     }
                     None => PreviousValue::MustNotExist,
                 },
-                new: Target::Peeled(commit_id.inner),
+                new: Target::Object(commit_id.inner),
             },
             name: reference,
             deref: true,

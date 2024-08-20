@@ -25,7 +25,7 @@ impl<'repo> Reference<'repo> {
     pub fn try_id(&self) -> Option<Id<'repo>> {
         match self.inner.target {
             gix_ref::Target::Symbolic(_) => None,
-            gix_ref::Target::Peeled(oid) => oid.to_owned().attach(self.repo).into(),
+            gix_ref::Target::Object(oid) => oid.to_owned().attach(self.repo).into(),
         }
     }
 
