@@ -27,4 +27,15 @@ impl crate::Repository {
             self.object_cache_size(bytes)
         }
     }
+
+    /// Return the amount of bytes the object cache [should be set to](Self::object_cache_size_if_unset) to perform
+    /// diffs between trees who are similar to `index` in a typical source code repository.
+    ///
+    /// Currently, this allocates about 10MB for every 10k files in `index`, and a minimum of 4KB.
+    #[cfg(feature = "index")]
+    pub fn compute_object_cache_size_for_tree_diffs(&self, index: &gix_index::State) -> usize {
+        let num_tracked = index.entries().len();
+        let ten_mb_for_every_10k_files = (num_tracked as f32 / 10_000.0) * (10 * 1024 * 1024) as f32;
+        (ten_mb_for_every_10k_files as usize).max(4 * 1024)
+    }
 }

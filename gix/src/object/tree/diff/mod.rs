@@ -33,7 +33,8 @@ impl<'repo> Tree<'repo> {
     ///
     /// # Performance
     ///
-    /// It's highly recommended to set an object cache to avoid extracting the same object multiple times.
+    /// It's highly recommended to [set an object cache](crate::Repository::compute_object_cache_size_for_tree_diffs)
+    /// to avoid extracting the same object multiple times.
     /// By default, similar to `git diff`, rename tracking will be enabled if it is not configured.
     ///
     /// Note that if a clone with `--filter=blob=none` was created, rename tracking may fail as it might
