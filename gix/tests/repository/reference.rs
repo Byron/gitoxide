@@ -11,7 +11,7 @@ mod set_namespace {
         let (mut repo, _keep) = easy_repo_rw()?;
         assert_eq!(
             repo.references()?.all()?.count(),
-            15,
+            17,
             "there are plenty of references in the default namespace"
         );
         assert!(repo.namespace().is_none(), "no namespace is set initially");
@@ -73,7 +73,7 @@ mod set_namespace {
 
         assert_eq!(
             repo.references()?.all()?.count(),
-            17,
+            19,
             "it lists all references, also the ones in namespaces"
         );
         Ok(())
@@ -110,6 +110,8 @@ mod iter_references {
                 "refs/remotes/origin/main",
                 "refs/remotes/origin/multi-link-target3",
                 "refs/tags/dt1",
+                "refs/tags/dt2",
+                "refs/tags/dt3",
                 "refs/tags/multi-link-target2",
                 "refs/tags/t1"
             ]
