@@ -242,7 +242,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
 fn non_existing_can_be_deleted_with_the_may_exist_match_constraint() -> crate::Result {
     let (_keep, store) = empty_store()?;
     let previous_value =
-        PreviousValue::ExistingMustMatch(Target::Peeled(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")));
+        PreviousValue::ExistingMustMatch(Target::Object(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")));
     let edits = store
         .transaction()
         .prepare(
@@ -363,7 +363,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Object(old_id)),
                     log: RefLog::AndReference,
                 },
                 name: "refs/heads/main".try_into()?,
@@ -397,7 +397,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(branch_id)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Object(branch_id)),
                     log: RefLog::AndReference,
                 },
                 name: branch.name,
@@ -432,8 +432,8 @@ fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
                     RefEdit {
                         change: Change::Delete {
                             expected: match mode {
-                                "must-exist" => PreviousValue::MustExistAndMatch(Target::Peeled(r.target())),
-                                "may-exist" => PreviousValue::ExistingMustMatch(Target::Peeled(r.target())),
+                                "must-exist" => PreviousValue::MustExistAndMatch(Target::Object(r.target())),
+                                "may-exist" => PreviousValue::ExistingMustMatch(Target::Object(r.target())),
                                 _ => unimplemented!("unknown mode: {}", mode),
                             },
                             log: RefLog::AndReference,

@@ -56,7 +56,7 @@ pub(crate) mod prepare_and_commit {
                     message: "log peeled".into(),
                 },
                 expected: PreviousValue::MustNotExist,
-                new: Target::Peeled(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
+                new: Target::Object(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
             },
             name: name.try_into().expect("valid"),
             deref: false,

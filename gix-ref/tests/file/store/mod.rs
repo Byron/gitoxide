@@ -105,7 +105,7 @@ fn precompose_unicode_journey() -> crate::Result {
             // Intentionally use the decomposed versions of their names
             store_decomposed
                 .loose_iter()?
-                .filter_map(|r| r.ok().filter(|r| r.kind() == gix_ref::Kind::Peeled))
+                .filter_map(|r| r.ok().filter(|r| r.kind() == gix_ref::Kind::Object))
                 .map(|r| RefEdit {
                     change: Change::Update {
                         log: LogChange::default(),

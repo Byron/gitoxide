@@ -209,7 +209,7 @@ mod writable {
         Change::Update {
             log: LogChange::default(),
             expected: PreviousValue::MustNotExist,
-            new: Target::Peeled(id),
+            new: Target::Object(id),
         }
     }
 

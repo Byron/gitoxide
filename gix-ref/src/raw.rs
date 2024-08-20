@@ -10,7 +10,8 @@ pub struct Reference {
     pub name: FullName,
     /// The target of the reference, either a symbolic reference by full name or a possibly intermediate object by its id.
     pub target: Target,
-    /// The fully peeled object to which this reference ultimately points to. Only guaranteed to be set after
+    /// The fully peeled object to which this reference ultimately points to after following all symbolic refs and all annotated
+    /// tags. Only guaranteed to be set after
     /// [`Reference::peel_to_id_in_place()`](crate::file::ReferenceExt) was called or if this reference originated
     /// from a packed ref.
     pub peeled: Option<ObjectId>,
@@ -48,7 +49,7 @@ mod convert {
         fn from(value: packed::Reference<'p>) -> Self {
             Reference {
                 name: value.name.into(),
-                target: Target::Peeled(value.target()),
+                target: Target::Object(value.target()),
                 peeled: value
                     .object
                     .map(|hex| ObjectId::from_hex(hex).expect("parser validation")),

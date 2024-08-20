@@ -150,8 +150,8 @@ pub struct Namespace(BString);
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
-    /// A ref that points to an object id
-    Peeled,
+    /// A ref that points to an object id directly.
+    Object,
     /// A ref that points to another reference, adding a level of indirection.
     ///
     /// It can be resolved to an id using the [`peel_in_place_to_id()`][`crate::file::ReferenceExt::peel_to_id_in_place()`] method.
@@ -203,8 +203,8 @@ pub enum Category<'a> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Target {
-    /// A ref that points to an object id
-    Peeled(ObjectId),
+    /// A ref that points directly to an object id.
+    Object(ObjectId),
     /// A ref that points to another reference by its validated name, adding a level of indirection.
     ///
     /// Note that this is an extension of gitoxide which will be helpful in logging all reference changes.
@@ -214,8 +214,8 @@ pub enum Target {
 /// Denotes a ref target, equivalent to [`Kind`], but with immutable data.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum TargetRef<'a> {
-    /// A ref that points to an object id
-    Peeled(&'a oid),
+    /// A ref that points directly to an object id.
+    Object(&'a oid),
     /// A ref that points to another reference by its validated name, adding a level of indirection.
     Symbolic(&'a FullNameRef),
 }

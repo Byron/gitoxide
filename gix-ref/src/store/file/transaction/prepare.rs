@@ -124,7 +124,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     | (PreviousValue::MustExist, Some(_))
                     | (PreviousValue::MustNotExist | PreviousValue::ExistingMustMatch(_), None) => {}
                     (PreviousValue::MustExist, None) => {
-                        let expected = Target::Peeled(store.object_hash.null());
+                        let expected = Target::Object(store.object_hash.null());
                         let full_name = change.name();
                         return Err(Error::MustExist { full_name, expected });
                     }
@@ -163,9 +163,9 @@ impl<'s, 'p> Transaction<'s, 'p> {
 
                 fn new_would_change_existing(new: &Target, existing: &Target) -> (bool, bool) {
                     match (new, existing) {
-                        (Target::Peeled(new), Target::Peeled(old)) => (old != new, false),
+                        (Target::Object(new), Target::Object(old)) => (old != new, false),
                         (Target::Symbolic(new), Target::Symbolic(old)) => (old != new, true),
-                        (Target::Peeled(_), _) => (true, false),
+                        (Target::Object(_), _) => (true, false),
                         (Target::Symbolic(_), _) => (true, true),
                     }
                 }
@@ -182,7 +182,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     let mut lock = lock.take().map_or_else(obtain_lock, Ok)?;
 
                     lock.with_mut(|file| match new {
-                        Target::Peeled(oid) => write!(file, "{oid}"),
+                        Target::Object(oid) => write!(file, "{oid}"),
                         Target::Symbolic(name) => writeln!(file, "ref: {}", name.0),
                     })?;
                     Some(lock.close()?)
@@ -277,7 +277,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                 };
                 if let Some(ref mut num_updates) = maybe_updates_for_packed_refs {
                     if let Change::Update {
-                        new: Target::Peeled(_), ..
+                        new: Target::Object(_), ..
                     } = edit.update.change
                     {
                         edits_for_packed_transaction.push(RefEdit {
@@ -390,7 +390,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
 
             // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
             // to help with their reflog entries
-            if let (Some(crate::TargetRef::Peeled(oid)), Some(parent_idx)) =
+            if let (Some(crate::TargetRef::Object(oid)), Some(parent_idx)) =
                 (change.update.change.previous_value(), change.parent_index)
             {
                 let oid = oid.to_owned();

@@ -133,19 +133,19 @@ mod loose {
     fn success() -> crate::Result {
         let store = store()?;
         for (partial_name, expected_path, expected_ref_kind) in &[
-            ("dt1", "refs/tags/dt1", gix_ref::Kind::Peeled),     // tags before heads
-            ("FETCH_HEAD", "FETCH_HEAD", gix_ref::Kind::Peeled), // special ref
-            ("heads/dt1", "refs/heads/dt1", gix_ref::Kind::Peeled),
-            ("d1", "refs/d1", gix_ref::Kind::Peeled), // direct refs before heads
-            ("heads/d1", "refs/heads/d1", gix_ref::Kind::Peeled),
+            ("dt1", "refs/tags/dt1", gix_ref::Kind::Object),     // tags before heads
+            ("FETCH_HEAD", "FETCH_HEAD", gix_ref::Kind::Object), // special ref
+            ("heads/dt1", "refs/heads/dt1", gix_ref::Kind::Object),
+            ("d1", "refs/d1", gix_ref::Kind::Object), // direct refs before heads
+            ("heads/d1", "refs/heads/d1", gix_ref::Kind::Object),
             ("HEAD", "HEAD", gix_ref::Kind::Symbolic), // it finds shortest paths first
             ("origin", "refs/remotes/origin/HEAD", gix_ref::Kind::Symbolic),
             ("origin/HEAD", "refs/remotes/origin/HEAD", gix_ref::Kind::Symbolic),
-            ("origin/main", "refs/remotes/origin/main", gix_ref::Kind::Peeled),
-            ("t1", "refs/tags/t1", gix_ref::Kind::Peeled),
-            ("main", "refs/heads/main", gix_ref::Kind::Peeled),
-            ("heads/main", "refs/heads/main", gix_ref::Kind::Peeled),
-            ("refs/heads/main", "refs/heads/main", gix_ref::Kind::Peeled),
+            ("origin/main", "refs/remotes/origin/main", gix_ref::Kind::Object),
+            ("t1", "refs/tags/t1", gix_ref::Kind::Object),
+            ("main", "refs/heads/main", gix_ref::Kind::Object),
+            ("heads/main", "refs/heads/main", gix_ref::Kind::Object),
+            ("refs/heads/main", "refs/heads/main", gix_ref::Kind::Object),
         ] {
             let reference = store.try_find_loose(*partial_name)?.expect("exists");
             assert_eq!(reference.name.as_bstr(), expected_path);

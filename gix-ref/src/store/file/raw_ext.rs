@@ -21,7 +21,8 @@ pub trait ReferenceExt: Sealed {
     fn log_exists(&self, store: &file::Store) -> bool;
 
     /// Follow all symbolic targets this reference might point to and peel the underlying object
-    /// to the end of the chain, and return it, using `objects` to access them.
+    /// to the end of the tag-chain, returning the first non-tag object the annotated tag points to,
+    /// using `objects` to access them.
     ///
     /// This is useful to learn where this reference is ultimately pointing to.
     fn peel_to_id_in_place(
@@ -89,7 +90,7 @@ impl ReferenceExt for Reference {
     ) -> Result<ObjectId, peel::to_id::Error> {
         match self.peeled {
             Some(peeled) => {
-                self.target = Target::Peeled(peeled.to_owned());
+                self.target = Target::Object(peeled.to_owned());
                 Ok(peeled)
             }
             None => {
@@ -136,7 +137,7 @@ impl ReferenceExt for Reference {
                     };
                 };
                 self.peeled = Some(peeled_id);
-                self.target = Target::Peeled(peeled_id);
+                self.target = Target::Object(peeled_id);
                 Ok(peeled_id)
             }
         }
@@ -161,11 +162,11 @@ impl ReferenceExt for Reference {
         match self.peeled {
             Some(peeled) => Some(Ok(Reference {
                 name: self.name.clone(),
-                target: Target::Peeled(peeled),
+                target: Target::Object(peeled),
                 peeled: None,
             })),
             None => match &self.target {
-                Target::Peeled(_) => None,
+                Target::Object(_) => None,
                 Target::Symbolic(full_name) => match store.try_find_packed(full_name.as_ref(), packed) {
                     Ok(Some(next)) => Some(Ok(next)),
                     Ok(None) => Some(Err(file::find::existing::Error::NotFound {

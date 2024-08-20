@@ -35,7 +35,7 @@ impl TryFrom<MaybeUnsafeState> for Target {
 
     fn try_from(v: MaybeUnsafeState) -> Result<Self, Self::Error> {
         Ok(match v {
-            MaybeUnsafeState::Id(id) => Target::Peeled(id),
+            MaybeUnsafeState::Id(id) => Target::Object(id),
             MaybeUnsafeState::UnvalidatedPath(name) => {
                 Target::Symbolic(match gix_validate::reference::name(name.as_ref()) {
                     Ok(_) => FullName(name),

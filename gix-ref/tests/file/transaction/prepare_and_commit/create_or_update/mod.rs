@@ -106,7 +106,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
 fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     let (_keep, store) = empty_store()?;
 
-    let new_target = Target::Peeled(gix_hash::Kind::Sha1.null());
+    let new_target = Target::Object(gix_hash::Kind::Sha1.null());
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Update {
@@ -141,8 +141,8 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
         Some(RefEdit {
             change: Change::Update {
                 log: LogChange::default(),
-                new: Target::Peeled(gix_hash::Kind::Sha1.null()),
-                expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
+                new: Target::Object(gix_hash::Kind::Sha1.null()),
+                expected: PreviousValue::MustExistAndMatch(Target::Object(hex_to_id(
                     "28ce6a8b26aa170e1de65536fe8abe1832bd3242",
                 ))),
             },
@@ -165,14 +165,14 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
 #[test]
 fn the_existing_must_match_constraint_allow_non_existing_references_to_be_created() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let expected = PreviousValue::ExistingMustMatch(Target::Peeled(ObjectId::empty_tree(gix_hash::Kind::Sha1)));
+    let expected = PreviousValue::ExistingMustMatch(Target::Object(ObjectId::empty_tree(gix_hash::Kind::Sha1)));
     let edits = store
         .transaction()
         .prepare(
             Some(RefEdit {
                 change: Change::Update {
                     log: LogChange::default(),
-                    new: Target::Peeled(gix_hash::Kind::Sha1.null()),
+                    new: Target::Object(gix_hash::Kind::Sha1.null()),
                     expected: expected.clone(),
                 },
                 name: "refs/heads/new".try_into()?,
@@ -188,7 +188,7 @@ fn the_existing_must_match_constraint_allow_non_existing_references_to_be_create
         vec![RefEdit {
             change: Change::Update {
                 log: LogChange::default(),
-                new: Target::Peeled(gix_hash::Kind::Sha1.null()),
+                new: Target::Object(gix_hash::Kind::Sha1.null()),
                 expected,
             },
             name: "refs/heads/new".try_into()?,
@@ -209,8 +209,8 @@ fn the_existing_must_match_constraint_requires_existing_references_to_have_the_g
         Some(RefEdit {
             change: Change::Update {
                 log: LogChange::default(),
-                new: Target::Peeled(gix_hash::Kind::Sha1.null()),
-                expected: PreviousValue::ExistingMustMatch(Target::Peeled(hex_to_id(
+                new: Target::Object(gix_hash::Kind::Sha1.null()),
+                expected: PreviousValue::ExistingMustMatch(Target::Object(hex_to_id(
                     "28ce6a8b26aa170e1de65536fe8abe1832bd3242",
                 ))),
             },
@@ -273,7 +273,7 @@ fn reference_with_must_exist_constraint_must_exist_already_with_any_value() -> c
     let target = head.target;
     let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
 
-    let new_target = Target::Peeled(ObjectId::empty_tree(gix_hash::Kind::Sha1));
+    let new_target = Target::Object(ObjectId::empty_tree(gix_hash::Kind::Sha1));
     let edits = store
         .transaction()
         .prepare(
@@ -404,7 +404,7 @@ fn symbolic_reference_writes_reflog_if_previous_value_is_set() -> crate::Result 
                 change: Change::Update {
                     log,
                     new: new_head_value,
-                    expected: PreviousValue::ExistingMustMatch(Target::Peeled(new_oid)),
+                    expected: PreviousValue::ExistingMustMatch(Target::Object(new_oid)),
                 },
                 name: "refs/heads/symbolic".try_into()?,
                 deref: false,
@@ -441,7 +441,7 @@ fn windows_device_name_is_illegal_with_enabled_windows_protections() -> crate::R
         message: "ignored".into(),
     };
 
-    let new = Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"));
+    let new = Target::Object(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"));
     for invalid_name in ["refs/heads/CON", "refs/CON/still-invalid"] {
         let err = store
             .transaction()
@@ -550,7 +550,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         assert!(store.try_find_loose(referent)?.is_none(), "referent wasn't created");
 
         let new_oid = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");
-        let new = Target::Peeled(new_oid);
+        let new = Target::Object(new_oid);
         let log = LogChange {
             message: "an actual change".into(),
             mode: RefLog::AndReference,
@@ -614,7 +614,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         );
 
         let referent_ref = store.find_loose(referent)?;
-        assert_eq!(referent_ref.kind(), gix_ref::Kind::Peeled, "referent is a peeled ref");
+        assert_eq!(referent_ref.kind(), gix_ref::Kind::Object, "referent is a peeled ref");
         assert_eq!(
             referent_ref.target.to_ref().try_id(),
             Some(new_oid.as_ref()),
@@ -661,7 +661,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                         message: "".into(),
                     },
                     expected: PreviousValue::MustExist,
-                    new: Target::Peeled(new_id),
+                    new: Target::Object(new_id),
                 },
                 name: referent.as_bstr().try_into()?,
                 deref: false,
@@ -681,10 +681,10 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                     force_create_reflog: false,
                     message: "".into(),
                 },
-                expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
+                expected: PreviousValue::MustExistAndMatch(Target::Object(hex_to_id(
                     "02a7a22d90d7c02fb494ed25551850b868e634f0"
                 )),),
-                new: Target::Peeled(new_id),
+                new: Target::Object(new_id),
             },
             name: referent.as_bstr().try_into()?,
             deref: false,
@@ -726,8 +726,8 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
                         force_create_reflog: false,
                         message: "for pack".into(),
                     },
-                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
-                    new: Target::Peeled(new_id),
+                    expected: PreviousValue::MustExistAndMatch(Target::Object(old_id)),
+                    new: Target::Object(new_id),
                 },
                 name: "refs/heads/main".try_into()?,
                 deref: false,
@@ -774,7 +774,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         .prepare(
             store
                 .loose_iter()?
-                .filter_map(|r| r.ok().filter(|r| r.kind() == gix_ref::Kind::Peeled))
+                .filter_map(|r| r.ok().filter(|r| r.kind() == gix_ref::Kind::Object))
                 .map(|r| RefEdit {
                     change: Change::Update {
                         log: LogChange::default(),
@@ -887,7 +887,7 @@ fn packed_refs_deletion_in_deletions_and_updates_mode() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Object(old_id)),
                     log: RefLog::AndReference,
                 },
                 name: "refs/heads/d1".try_into()?,
