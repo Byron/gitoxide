@@ -31,6 +31,37 @@ pub enum Subcommands {
         #[clap(value_parser = AsPathSpec)]
         patterns: Vec<gix::pathspec::Pattern>,
     },
+    /// Serialize a git repository as linear history while degenerating content into a shell script that reproduces it.
+    #[clap(visible_alias = "gts")]
+    GitToSh {
+        /// The amount of commits to copy from `committish`.
+        ///
+        /// If 0, all traversable commits will be copied.
+        #[clap(long, short = 'c', default_value_t = 0)]
+        count: usize,
+        /// Do not use `copy-royal` to degenerate information of blobs, but take blobs verbatim.
+        ///
+        /// Note that this should only be done if the source repository is purely for testing
+        /// or was created by yourself.
+        #[clap(long)]
+        verbatim: bool,
+        /// The directory into which the blobs and tree declarations will be written.
+        #[clap(long, short = 'o', default_value = ".")]
+        output_dir: PathBuf,
+        /// The path to the git repository to serialize.
+        repo_dir: PathBuf,
+        /// The name of the directory within `output_dir` for storing blobs and trees.
+        name: String,
+        /// A revspec of the commit to start the iteration from, like `@`.
+        ///
+        /// Note that the history will be serialized, and multiple parents aren't allowed.
+        committish: String,
+        /// The pathspecs to determine which paths to copy from each commit's tree.
+        ///
+        /// None will copy everything.
+        #[clap(value_parser = AsPathSpec)]
+        patterns: Vec<gix::pathspec::Pattern>,
+    },
 }
 
 #[derive(Clone)]
