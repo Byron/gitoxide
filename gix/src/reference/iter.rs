@@ -2,7 +2,6 @@
 #![allow(clippy::empty_docs)]
 use std::path::Path;
 
-use gix_macros::momo;
 use gix_ref::file::ReferenceExt;
 
 /// A platform to create iterators over references.
@@ -43,7 +42,6 @@ impl<'r> Platform<'r> {
     /// These are of the form `refs/heads` or `refs/remotes/origin`, and must not contain relative paths components like `.` or `..`.
     // TODO: Create a custom `Path` type that enforces the requirements of git naturally, this type is surprising possibly on windows
     //       and when not using a trailing '/' to signal directories.
-    #[momo]
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_>, init::Error> {
         Ok(Iter::new(self.repo, self.platform.prefixed(prefix.as_ref())?))
     }
