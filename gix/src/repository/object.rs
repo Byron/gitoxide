@@ -10,7 +10,7 @@ use gix_ref::{
 };
 use smallvec::SmallVec;
 
-use crate::{commit, ext::ObjectIdExt, object, tag, Blob, Id, Object, Reference, Tree};
+use crate::{commit, ext::ObjectIdExt, object, tag, Blob, Commit, Id, Object, Reference, Tag, Tree};
 
 /// Methods related to object creation.
 impl crate::Repository {
@@ -36,6 +36,35 @@ impl crate::Repository {
         let mut buf = self.free_buf();
         let kind = self.objects.find(&id, &mut buf)?.kind;
         Ok(Object::from_data(id, kind, buf, self))
+    }
+
+    /// Find a commit with `id` or fail if there was no object or the object wasn't a commit.
+    pub fn find_commit(
+        &self,
+        id: impl Into<ObjectId>,
+    ) -> Result<Commit<'_>, object::find::existing::with_conversion::Error> {
+        Ok(self.find_object(id)?.try_into_commit()?)
+    }
+
+    /// Find a tree with `id` or fail if there was no object or the object wasn't a tree.
+    pub fn find_tree(
+        &self,
+        id: impl Into<ObjectId>,
+    ) -> Result<Tree<'_>, object::find::existing::with_conversion::Error> {
+        Ok(self.find_object(id)?.try_into_tree()?)
+    }
+
+    /// Find an annotated tag with `id` or fail if there was no object or the object wasn't a tag.
+    pub fn find_tag(&self, id: impl Into<ObjectId>) -> Result<Tag<'_>, object::find::existing::with_conversion::Error> {
+        Ok(self.find_object(id)?.try_into_tag()?)
+    }
+
+    /// Find a blob with `id` or fail if there was no object or the object wasn't a blob.
+    pub fn find_blob(
+        &self,
+        id: impl Into<ObjectId>,
+    ) -> Result<Blob<'_>, object::find::existing::with_conversion::Error> {
+        Ok(self.find_object(id)?.try_into_blob()?)
     }
 
     /// Obtain information about an object without fully decoding it, or fail if the object doesn't exist.
