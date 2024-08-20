@@ -11,3 +11,8 @@ git tag -m "tag object" dt1
 git tag -m "tag object indirect" dt2 dt1
 
 echo "ref: refs/tags/dt2" > .git/refs/multi-hop
+echo "ref: refs/multi-hop" > .git/refs/multi-hop2
+
+if [ "${1:-}" = "packed" ]; then
+  git pack-refs --all --prune
+fi
