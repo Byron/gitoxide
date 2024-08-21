@@ -204,8 +204,8 @@ pub fn update(
                                             Some(c) => c,
                                             None => continue,
                                         };
-                                        rewrite_cache.clear_resource_cache();
-                                        diff_cache.clear_resource_cache();
+                                        rewrite_cache.clear_resource_cache_keep_allocation();
+                                        diff_cache.clear_resource_cache_keep_allocation();
                                         from.changes()?
                                             .track_path()
                                             .track_rewrites(Some(rewrites))

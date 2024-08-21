@@ -156,7 +156,7 @@ impl<'a, 'repo> Platform<'a, 'repo> {
                 lines_removed += counts.removals as u64;
             }
 
-            resource_cache.clear_resource_cache();
+            resource_cache.clear_resource_cache_keep_allocation();
             Ok::<_, std::convert::Infallible>(Action::Continue)
         })?;
 
