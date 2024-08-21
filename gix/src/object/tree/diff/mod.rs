@@ -1,5 +1,6 @@
 use gix_diff::tree::recorder::Location;
 
+use crate::bstr::BString;
 use crate::{bstr::BStr, diff::Rewrites, Tree};
 
 /// Returned by the `for_each` function to control flow.
@@ -17,10 +18,22 @@ pub enum Action {
 pub struct Change<'a, 'old, 'new> {
     /// The location of the file or directory described by `event`, if tracking was enabled.
     ///
-    /// Otherwise this value is always an empty path.
+    /// Otherwise, this value is always an empty path.
     pub location: &'a BStr,
     /// The diff event itself to provide information about what would need to change.
     pub event: change::Event<'a, 'old, 'new>,
+}
+
+/// Represents any possible change in order to turn one tree into another, the fully owned version
+/// of [`Change`].
+#[derive(Debug, Clone)]
+pub struct ChangeDetached {
+    /// The location of the file or directory described by `event`, if tracking was enabled.
+    ///
+    /// Otherwise, this value is always an empty path.
+    pub location: BString,
+    /// The diff event itself to provide information about what would need to change.
+    pub event: change::EventDetached,
 }
 
 ///
