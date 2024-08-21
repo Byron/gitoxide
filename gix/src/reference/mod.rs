@@ -11,7 +11,7 @@ pub mod iter;
 pub mod remote;
 
 mod errors;
-pub use errors::{edit, find, head_commit, head_id, head_tree_id, peel};
+pub use errors::{edit, find, follow, head_commit, head_id, head_tree_id, peel};
 
 use crate::ext::ObjectIdExt;
 
@@ -151,6 +151,33 @@ impl<'repo> Reference<'repo> {
             .follow_to_object_in_place_packed(&self.repo.refs, packed)?
             .attach(self.repo);
         Ok(target.object()?.peel_to_kind(kind)?)
+    }
+
+    /// Follow all symbolic references we point to up to the first object, which is typically (but not always) a tag,
+    /// returning its id.
+    /// After this call, this ref will be pointing to an object directly, but may still not consider itself 'peeled' unless
+    /// a symbolic target ref was looked up from packed-refs.
+    #[doc(alias = "resolve", alias = "git2")]
+    pub fn follow_to_object(&mut self) -> Result<Id<'repo>, follow::to_object::Error> {
+        let packed = self.repo.refs.cached_packed_buffer().map_err(|err| {
+            follow::to_object::Error::FollowToObject(gix_ref::peel::to_object::Error::Follow(
+                file::find::existing::Error::Find(file::find::Error::PackedOpen(err)),
+            ))
+        })?;
+        self.follow_to_object_packed(packed.as_ref().map(|p| &***p))
+    }
+
+    /// Like [`follow_to_object`](Self::follow_to_object), but can be used for repeated calls as it won't
+    /// look up `packed` each time, but can reuse it instead.
+    #[doc(alias = "resolve", alias = "git2")]
+    pub fn follow_to_object_packed(
+        &mut self,
+        packed: Option<&gix_ref::packed::Buffer>,
+    ) -> Result<Id<'repo>, follow::to_object::Error> {
+        Ok(self
+            .inner
+            .follow_to_object_in_place_packed(&self.repo.refs, packed)?
+            .attach(self.repo))
     }
 
     /// Follow this symbolic reference one level and return the ref it refers to.

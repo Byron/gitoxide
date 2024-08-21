@@ -153,6 +153,24 @@ mod find {
         );
         assert_eq!(tag_ref.peel_to_commit()?.id, obj.id);
 
+        let mut tag_ref = repo.find_reference("dt3")?;
+        assert_eq!(
+            tag_ref.follow_to_object()?,
+            first_tag_id,
+            "it's similar to peel_to_kind(), but provides the id instead"
+        );
+        assert_eq!(tag_ref.follow_to_object()?, first_tag_id, "it's idempotent");
+        assert_eq!(
+            tag_ref.target().id(),
+            first_tag_id,
+            "it now points to the first tag as well"
+        );
+        assert_eq!(
+            tag_ref.inner.peeled,
+            Some(target_commit_id),
+            "as it was read from a packed-ref, it contains peeling information nonetheless"
+        );
+
         Ok(())
     }
 

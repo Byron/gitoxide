@@ -56,6 +56,24 @@ pub mod peel {
 
 ///
 #[allow(clippy::empty_docs)]
+pub mod follow {
+    ///
+    #[allow(clippy::empty_docs)]
+    pub mod to_object {
+        /// The error returned by [`Reference::follow_to_object(…)`](crate::Reference::follow_to_object()).
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            FollowToObject(#[from] gix_ref::peel::to_object::Error),
+            #[error(transparent)]
+            PackedRefsOpen(#[from] gix_ref::packed::buffer::open::Error),
+        }
+    }
+}
+
+///
+#[allow(clippy::empty_docs)]
 pub mod head_id {
     /// The error returned by [`Repository::head_id(…)`](crate::Repository::head_id()).
     #[derive(Debug, thiserror::Error)]
