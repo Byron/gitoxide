@@ -91,13 +91,80 @@ impl<'a, 'repo> Platform<'a, 'repo> {
     }
 
     /// Provide `None` to disable rewrite tracking entirely, or pass `Some(<configuration>)` to control to
-    /// what extend rename and copy tracking is performed.
+    /// what extent rename and copy tracking is performed.
     ///
     /// Note that by default, the git configuration determines rewrite tracking and git defaults are used
     /// if nothing is configured, which turns rename tracking with 50% similarity on, while not tracking copies at all.
     pub fn track_rewrites(&mut self, renames: Option<Rewrites>) -> &mut Self {
         self.rewrites = renames;
         self
+    }
+}
+
+/// Provide aggregated information of a diff between two trees.
+#[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[doc(alias = "DiffStats", alias = "git2")]
+pub struct Stats {
+    /// The total amount of lines added in the between blobs of the two trees.
+    #[doc(alias = "insertions", alias = "git2")]
+    pub lines_added: u64,
+    /// The total amount of lines removed in the between blobs of the two trees.
+    #[doc(alias = "deletions", alias = "git2")]
+    pub lines_removed: u64,
+    /// The number of files that contributed to these statistics as they were added, removed or modified.
+    pub files_changed: u64,
+}
+
+///
+#[allow(clippy::empty_docs)]
+pub mod stats {
+    /// The error returned by [`stats()`](super::Platform::stats()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        CreateResourceCache(#[from] crate::repository::diff::resource_cache::Error),
+        #[error(transparent)]
+        ForEachChange(#[from] crate::object::tree::diff::for_each::Error),
+    }
+}
+
+/// Convenience
+impl<'a, 'repo> Platform<'a, 'repo> {
+    /// Calculate statistics about the lines of the diff between our current and the `other` tree.
+    ///
+    /// ### Performance Notes
+    ///
+    /// Be sure to forcefully disable [`track_rewrites(None)`](Self::track_rewrites) to avoid
+    /// rename tracking, an operation that doesn't affect the statistics currently.
+    /// As diffed resources aren't cached, if highly repetitive blobs are expected, performance
+    /// may be diminished. In real-world scenarios where blobs are mostly unique, that's not an issue though.
+    pub fn stats(&mut self, other: &Tree<'_>) -> Result<Stats, stats::Error> {
+        // let (mut number_of_files, mut lines_added, mut lines_removed) = (0, 0, 0);
+        let mut resource_cache = self.lhs.repo.diff_resource_cache_for_tree_diff()?;
+
+        let (mut files_changed, mut lines_added, mut lines_removed) = (0, 0, 0);
+        self.for_each_to_obtain_tree(other, |change| {
+            if let Some(counts) = change
+                .diff(&mut resource_cache)
+                .ok()
+                .and_then(|mut platform| platform.line_counts().ok())
+                .flatten()
+            {
+                files_changed += 1;
+                lines_added += counts.insertions as u64;
+                lines_removed += counts.removals as u64;
+            }
+
+            resource_cache.clear_resource_cache();
+            Ok::<_, std::convert::Infallible>(Action::Continue)
+        })?;
+
+        Ok(Stats {
+            files_changed,
+            lines_added,
+            lines_removed,
+        })
     }
 }
 

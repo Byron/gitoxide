@@ -72,6 +72,17 @@ fn changes_against_tree_modified() -> crate::Result {
             Ok(Default::default())
         })?;
     assert_eq!(i, 3);
+
+    assert_eq!(
+        from.changes()?.stats(&to)?,
+        gix::object::tree::diff::Stats {
+            lines_added: 2,
+            lines_removed: 0,
+            files_changed: 2,
+        },
+        "two files with one added line each"
+    );
+
     Ok(())
 }
 
