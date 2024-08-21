@@ -121,11 +121,33 @@ fn resources_of_worktree_and_odb_and_check_link() -> crate::Result {
         "Also obvious that symlinks are definitely special, but it's what git does as well"
     );
 
-    platform.clear_resource_cache();
+    assert_eq!(
+        platform.clear_resource_cache_keep_allocation(),
+        3,
+        "some buffers are retained and reused"
+    );
     assert_eq!(
         platform.resources(),
         None,
         "clearing the cache voids resources and one has to set it up again"
+    );
+
+    assert_eq!(
+        platform.clear_resource_cache_keep_allocation(),
+        2,
+        "doing this again keeps 2 buffers"
+    );
+    assert_eq!(
+        platform.clear_resource_cache_keep_allocation(),
+        2,
+        "no matter what - after all we need at least two resources for a diff"
+    );
+
+    platform.clear_resource_cache();
+    assert_eq!(
+        platform.clear_resource_cache_keep_allocation(),
+        0,
+        "after a proper clearing, the free-list is also emptied, and it won't be recreated"
     );
 
     Ok(())

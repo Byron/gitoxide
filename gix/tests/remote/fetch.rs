@@ -620,7 +620,7 @@ mod blocking_and_async_io {
                     let edit = edit.expect("refedit present even if it's a no-op");
                     if dry_run {
                         match edit.change.new_value().expect("no deletions") {
-                            gix_ref::TargetRef::Peeled(id) => {
+                            gix_ref::TargetRef::Object(id) => {
                                 assert_eq!(id, mapping.remote.as_id().expect("no unborn"))
                             }
                             gix_ref::TargetRef::Symbolic(target) => {
@@ -634,7 +634,7 @@ mod blocking_and_async_io {
                     } else {
                         let r = repo.find_reference(edit.name.as_ref()).unwrap();
                         match r.target() {
-                            gix_ref::TargetRef::Peeled(id) => {
+                            gix_ref::TargetRef::Object(id) => {
                                 assert_eq!(
                                     id,
                                     mapping.remote.as_id().expect("no unborn"),

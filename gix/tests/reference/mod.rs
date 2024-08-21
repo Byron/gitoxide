@@ -45,8 +45,7 @@ fn remote_name() -> crate::Result {
 }
 
 mod find {
-    use gix_ref as refs;
-    use gix_ref::{FullName, FullNameRef, Target};
+    use gix_ref::{FullName, FullNameRef, Target, TargetRef};
 
     use crate::util::hex_to_id;
 
@@ -63,7 +62,7 @@ mod find {
 
         assert_eq!(
             packed_tag_ref.inner.target,
-            refs::Target::Peeled(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3")),
+            Target::Object(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3")),
             "it points to a tag object"
         );
 
@@ -85,6 +84,93 @@ mod find {
         let expected: &FullNameRef = "refs/remotes/origin/multi-link-target3".try_into()?;
         assert_eq!(symbolic_ref.name(), expected, "it follows symbolic refs, too");
         assert_eq!(symbolic_ref.into_fully_peeled_id()?, the_commit, "idempotency");
+
+        let mut tag_ref = repo.find_reference("dt3")?;
+        assert_eq!(
+            tag_ref.target(),
+            TargetRef::Symbolic("refs/tags/dt2".try_into()?),
+            "the ref points at another tag"
+        );
+        assert_eq!(tag_ref.inner.peeled, None, "it wasn't peeled yet, nothing is stored");
+        let obj = tag_ref.peel_to_kind(gix::object::Kind::Tag)?;
+        assert_eq!(tag_ref.peel_to_tag()?.id, obj.id);
+        assert_eq!(obj.kind, gix::object::Kind::Tag);
+        assert_eq!(
+            obj.into_tag().decode()?.name,
+            "dt2",
+            "it stop at the first direct target"
+        );
+
+        let first_tag_id = hex_to_id("0f35190769db39bc70f60b6fbec9156370ce2f83");
+        assert_eq!(
+            tag_ref.target().id(),
+            first_tag_id,
+            "it's now followed to the first target"
+        );
+        let target_commit_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+        assert_eq!(
+            tag_ref.inner.peeled, Some(target_commit_id),
+            "It only counts as peeled as this ref is packed, and peeling in place is a way to 'make it the target' officially."
+        );
+
+        let err = tag_ref.peel_to_kind(gix::object::Kind::Blob).unwrap_err();
+        let expectd_err = "Last encountered object 4b825dc was tree while trying to peel to blob";
+        assert_eq!(
+            err.to_string(),
+            expectd_err,
+            "it's an error if the desired type isn't actually present"
+        );
+        match tag_ref.peel_to_blob() {
+            Ok(_) => {
+                unreachable!("target is a commit")
+            }
+            Err(err) => {
+                assert_eq!(err.to_string(), expectd_err);
+            }
+        }
+
+        let obj = tag_ref.peel_to_kind(gix::object::Kind::Tree)?;
+        assert!(obj.kind.is_tree());
+        assert_eq!(obj.id, hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904"),);
+        assert_eq!(tag_ref.peel_to_tree()?.id, obj.id);
+
+        assert_eq!(
+            tag_ref.target().id(),
+            first_tag_id,
+            "nothing changed - it still points to the target"
+        );
+        assert_eq!(
+            tag_ref.inner.peeled,
+            Some(target_commit_id),
+            "the peeling cache wasn't changed"
+        );
+
+        let obj = tag_ref.peel_to_kind(gix::object::Kind::Commit)?;
+        assert!(obj.kind.is_commit());
+        assert_eq!(
+            obj.id, target_commit_id,
+            "the standard-peel peels to right after all tags"
+        );
+        assert_eq!(tag_ref.peel_to_commit()?.id, obj.id);
+
+        let mut tag_ref = repo.find_reference("dt3")?;
+        assert_eq!(
+            tag_ref.follow_to_object()?,
+            first_tag_id,
+            "it's similar to peel_to_kind(), but provides the id instead"
+        );
+        assert_eq!(tag_ref.follow_to_object()?, first_tag_id, "it's idempotent");
+        assert_eq!(
+            tag_ref.target().id(),
+            first_tag_id,
+            "it now points to the first tag as well"
+        );
+        assert_eq!(
+            tag_ref.inner.peeled,
+            Some(target_commit_id),
+            "as it was read from a packed-ref, it contains peeling information nonetheless"
+        );
+
         Ok(())
     }
 
@@ -99,7 +185,7 @@ mod find {
         symbolic_ref = symbolic_ref.follow().expect("another hop")?;
         assert_eq!(symbolic_ref.target(), second_hop.to_ref());
 
-        let last_hop = Target::Peeled(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
+        let last_hop = Target::Object(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
         symbolic_ref = symbolic_ref.follow().expect("another hop")?;
         assert_eq!(symbolic_ref.target(), last_hop.to_ref());
 

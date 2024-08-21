@@ -105,7 +105,7 @@ pub fn spawn_tree_delta_threads<'scope>(
                     for chunk in rx {
                         for (commit_idx, parent_commit, commit) in chunk {
                             if let Some(cache) = cache.as_mut() {
-                                cache.clear_resource_cache();
+                                cache.clear_resource_cache_keep_allocation();
                             }
                             commits.fetch_add(1, Ordering::Relaxed);
                             if gix::interrupt::is_triggered() {

@@ -117,7 +117,7 @@ mod refedit_ext {
         fn non_symbolic_refs_are_ignored_or_if_the_deref_flag_is_not_set() -> crate::Result {
             let store = MockStore::with(Some((
                 "refs/heads/anything-but-not-symbolic",
-                Target::Peeled(gix_hash::Kind::Sha1.null()),
+                Target::Object(gix_hash::Kind::Sha1.null()),
             )));
             let mut edits = vec![
                 RefEdit {
@@ -204,7 +204,7 @@ mod refedit_ext {
                             force_create_reflog: true,
                             message: "the log message".into(),
                         },
-                        new: Target::Peeled(gix_hash::Kind::Sha1.null()),
+                        new: Target::Object(gix_hash::Kind::Sha1.null()),
                     },
                     name: "refs/heads/update-symbolic-1".try_into()?,
                     deref: true,
@@ -236,7 +236,7 @@ mod refedit_ext {
                 ),
                 (
                     "refs/heads/delete-symbolic-3",
-                    Target::Peeled(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
+                    Target::Object(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
                 ),
                 (
                     "refs/heads/update-symbolic-1",
@@ -248,7 +248,7 @@ mod refedit_ext {
                 ),
                 (
                     "refs/heads/update-symbolic-3",
-                    Target::Peeled(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
+                    Target::Object(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
                 ),
             ]);
             let log = LogChange {
@@ -274,7 +274,7 @@ mod refedit_ext {
                     change: Change::Update {
                         expected: PreviousValue::MustNotExist,
                         log: log.clone(),
-                        new: Target::Peeled(gix_hash::Kind::Sha1.null()),
+                        new: Target::Object(gix_hash::Kind::Sha1.null()),
                     },
                     name: "refs/heads/update-symbolic-1".try_into()?,
                     deref: true,
@@ -307,7 +307,7 @@ mod refedit_ext {
                         change: Change::Update {
                             expected: PreviousValue::Any,
                             log: log_only.clone(),
-                            new: Target::Peeled(gix_hash::Kind::Sha1.null()),
+                            new: Target::Object(gix_hash::Kind::Sha1.null()),
                         },
                         name: "refs/heads/update-symbolic-1".try_into()?,
                         deref: false,
@@ -324,7 +324,7 @@ mod refedit_ext {
                         change: Change::Update {
                             expected: PreviousValue::Any,
                             log: log_only,
-                            new: Target::Peeled(gix_hash::Kind::Sha1.null()),
+                            new: Target::Object(gix_hash::Kind::Sha1.null()),
                         },
                         name: "refs/heads/update-symbolic-2".try_into()?,
                         deref: false,
@@ -341,7 +341,7 @@ mod refedit_ext {
                         change: Change::Update {
                             expected: PreviousValue::MustNotExist,
                             log,
-                            new: Target::Peeled(gix_hash::Kind::Sha1.null()),
+                            new: Target::Object(gix_hash::Kind::Sha1.null()),
                         },
                         name: "refs/heads/update-symbolic-3".try_into()?,
                         deref: false,

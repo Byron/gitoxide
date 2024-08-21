@@ -1,6 +1,6 @@
-use std::{io::Write, process::Stdio};
-
 use bstr::{BStr, BString, ByteSlice};
+use std::cmp::Ordering;
+use std::{io::Write, process::Stdio};
 
 use super::Algorithm;
 use crate::blob::{pipeline, Pipeline, Platform, ResourceKind};
@@ -325,6 +325,7 @@ impl Platform {
             old: None,
             new: None,
             diff_cache: Default::default(),
+            free_list: Vec::with_capacity(2),
             options,
             filter,
             filter_mode,
@@ -542,7 +543,7 @@ impl Platform {
 
     /// Every call to [set_resource()](Self::set_resource()) will keep the diffable data in memory, and that will never be cleared.
     ///
-    /// Use this method to clear the cache, releasing memory. Note that this will also loose all information about resources
+    /// Use this method to clear the cache, releasing memory. Note that this will also lose all information about resources
     /// which means diffs would fail unless the resources are set again.
     ///
     /// Note that this also has to be called if the same resource is going to be diffed in different states, i.e. using different
@@ -551,6 +552,37 @@ impl Platform {
         self.old = None;
         self.new = None;
         self.diff_cache.clear();
+        self.free_list.clear();
+    }
+
+    /// Every call to [set_resource()](Self::set_resource()) will keep the diffable data in memory, and that will never be cleared.
+    ///
+    /// Use this method to clear the cache, but keep the previously used buffers around for later re-use.
+    ///
+    /// If there are more buffers on the free-list than there are stored sources, we half that amount each time this method is called,
+    /// or keep as many resources as were previously stored, or 2 buffers, whatever is larger.
+    /// If there are fewer buffers in the free-list than are in the resource cache, we will keep as many as needed to match the
+    /// number of previously stored resources.
+    ///
+    /// Returns the number of available buffers.
+    pub fn clear_resource_cache_keep_allocation(&mut self) -> usize {
+        self.old = None;
+        self.new = None;
+
+        let diff_cache = std::mem::take(&mut self.diff_cache);
+        match self.free_list.len().cmp(&diff_cache.len()) {
+            Ordering::Less => {
+                let to_take = diff_cache.len() - self.free_list.len();
+                self.free_list
+                    .extend(diff_cache.into_values().map(|v| v.buffer).take(to_take));
+            }
+            Ordering::Equal => {}
+            Ordering::Greater => {
+                let new_len = (self.free_list.len() / 2).max(diff_cache.len()).max(2);
+                self.free_list.truncate(new_len);
+            }
+        }
+        self.free_list.len()
     }
 }
 
@@ -591,7 +623,7 @@ impl Platform {
                     kind,
                     rela_path: rela_path.to_owned(),
                 })?;
-        let mut buf = Vec::new();
+        let mut buf = self.free_list.pop().unwrap_or_default();
         let out = self.filter.convert_to_diffable(
             &id,
             mode,

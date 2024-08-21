@@ -377,7 +377,7 @@ mod update {
             }]
         );
         assert_eq!(out.edits.len(), 1);
-        let target = Target::Peeled(hex_to_id("66f16e4e8baf5c77bb6d0484495bebea80e916ce"));
+        let target = Target::Object(hex_to_id("66f16e4e8baf5c77bb6d0484495bebea80e916ce"));
         assert_eq!(
             out.edits[0],
             RefEdit {
@@ -521,7 +521,7 @@ mod update {
                         expected: PreviousValue::MustExistAndMatch(Target::Symbolic(
                             "refs/heads/main".try_into().expect("valid"),
                         )),
-                        new: Target::Peeled(hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5")),
+                        new: Target::Object(hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5")),
                     },
                     name: "refs/heads/symbolic".try_into().expect("valid"),
                     deref: false,
@@ -543,7 +543,7 @@ mod update {
                             force_create_reflog: false,
                             message: "action: no update will be performed".into(),
                         },
-                        expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
+                        expected: PreviousValue::MustExistAndMatch(Target::Object(hex_to_id(
                             "f99771fe6a1b535783af3163eba95a927aae21d5",
                         ))),
                         new: Target::Symbolic("refs/heads/main".try_into().expect("valid")),
@@ -938,7 +938,7 @@ mod update {
     fn into_remote_ref(mut r: gix::Reference<'_>) -> gix_protocol::handshake::Ref {
         let full_ref_name = r.name().as_bstr().into();
         match r.target() {
-            TargetRef::Peeled(id) => gix_protocol::handshake::Ref::Direct {
+            TargetRef::Object(id) => gix_protocol::handshake::Ref::Direct {
                 full_ref_name,
                 object: id.into(),
             },

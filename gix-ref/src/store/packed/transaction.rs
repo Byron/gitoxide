@@ -102,7 +102,7 @@ impl packed::Transaction {
         let mut buf = Vec::new();
         for edit in &mut edits {
             if let Change::Update {
-                new: Target::Peeled(new),
+                new: Target::Object(new),
                 ..
             } = edit.inner.change
             {
@@ -235,7 +235,7 @@ fn write_edit(out: &mut dyn std::io::Write, edit: &Edit, lines_written: &mut i32
     match edit.inner.change {
         Change::Delete { .. } => {}
         Change::Update {
-            new: Target::Peeled(target_oid),
+            new: Target::Object(target_oid),
             ..
         } => {
             write!(out, "{target_oid} ")?;

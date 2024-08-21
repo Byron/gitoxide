@@ -34,6 +34,42 @@ pub mod peel {
         #[error(transparent)]
         PackedRefsOpen(#[from] gix_ref::packed::buffer::open::Error),
     }
+
+    ///
+    #[allow(clippy::empty_docs)]
+    pub mod to_kind {
+        /// The error returned by [`Reference::peel_to_kind(…)`](crate::Reference::peel_to_kind()).
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            FollowToObject(#[from] gix_ref::peel::to_object::Error),
+            #[error(transparent)]
+            PackedRefsOpen(#[from] gix_ref::packed::buffer::open::Error),
+            #[error(transparent)]
+            FindObject(#[from] crate::object::find::existing::Error),
+            #[error(transparent)]
+            PeelObject(#[from] crate::object::peel::to_kind::Error),
+        }
+    }
+}
+
+///
+#[allow(clippy::empty_docs)]
+pub mod follow {
+    ///
+    #[allow(clippy::empty_docs)]
+    pub mod to_object {
+        /// The error returned by [`Reference::follow_to_object(…)`](crate::Reference::follow_to_object()).
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            FollowToObject(#[from] gix_ref::peel::to_object::Error),
+            #[error(transparent)]
+            PackedRefsOpen(#[from] gix_ref::packed::buffer::open::Error),
+        }
+    }
 }
 
 ///

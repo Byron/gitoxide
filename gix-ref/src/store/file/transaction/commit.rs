@@ -54,17 +54,17 @@ impl<'s, 'p> Transaction<'s, 'p> {
                                 // Unless, the ref is new and we can obtain a peeled id
                                 // identified by the expectation of what could be there, as is the case when cloning.
                                 match expected {
-                                    PreviousValue::ExistingMustMatch(Target::Peeled(oid)) => {
+                                    PreviousValue::ExistingMustMatch(Target::Object(oid)) => {
                                         Some((Some(gix_hash::ObjectId::null(oid.kind())), oid))
                                     }
                                     _ => None,
                                 }
                             }
-                            Target::Peeled(new_oid) => {
+                            Target::Object(new_oid) => {
                                 let previous = match expected {
                                     // Here, this means that the ref already existed, and that it will receive (even transitively)
                                     // the given value
-                                    PreviousValue::MustExistAndMatch(Target::Peeled(oid)) => Some(oid.to_owned()),
+                                    PreviousValue::MustExistAndMatch(Target::Object(oid)) => Some(oid.to_owned()),
                                     _ => None,
                                 }
                                 .or(change.leaf_referent_previous_oid);
@@ -88,7 +88,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     // Don't do anything else while keeping the lock after potentially updating the reflog.
                     // We delay deletion of the reference and dropping the lock to after the packed-refs were
                     // safely written.
-                    if delete_loose_refs && matches!(new, Target::Peeled(_)) {
+                    if delete_loose_refs && matches!(new, Target::Object(_)) {
                         change.lock = lock;
                         continue;
                     }
@@ -156,7 +156,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                     log: LogChange { mode, .. },
                     new,
                     ..
-                } => delete_loose_refs && *mode == RefLog::AndReference && matches!(new, Target::Peeled(_)),
+                } => delete_loose_refs && *mode == RefLog::AndReference && matches!(new, Target::Object(_)),
                 Change::Delete { log: mode, .. } => *mode == RefLog::AndReference,
             };
             if take_lock_and_delete {

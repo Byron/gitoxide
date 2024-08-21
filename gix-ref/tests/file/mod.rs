@@ -18,6 +18,11 @@ pub fn store_at(name: &str) -> crate::Result<Store> {
     Ok(Store::at(path.join(".git"), Default::default()))
 }
 
+pub fn store_at_with_args(name: &str, args: impl IntoIterator<Item = impl Into<String>>) -> crate::Result<Store> {
+    let path = gix_testtools::scripted_fixture_read_only_with_args_standalone(name, args)?;
+    Ok(Store::at(path.join(".git"), Default::default()))
+}
+
 fn store_writable(name: &str) -> crate::Result<(gix_testtools::tempfile::TempDir, Store)> {
     let dir = gix_testtools::scripted_fixture_writable_standalone(name)?;
     let git_dir = dir.path().join(".git");

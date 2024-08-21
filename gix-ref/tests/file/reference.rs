@@ -47,6 +47,7 @@ mod reflog {
 }
 
 mod peel {
+    use gix_object::FindExt;
     use gix_ref::{file::ReferenceExt, Reference};
 
     use crate::{
@@ -63,13 +64,13 @@ mod peel {
 
         let nr = Reference::from(r).follow(&store).expect("exists").expect("no failure");
         assert!(
-            matches!(nr.target.to_ref(), gix_ref::TargetRef::Peeled(_)),
+            matches!(nr.target.to_ref(), gix_ref::TargetRef::Object(_)),
             "iteration peels a single level"
         );
         assert!(nr.follow(&store).is_none(), "end of iteration");
         assert_eq!(
             nr.target.to_ref(),
-            gix_ref::TargetRef::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
+            gix_ref::TargetRef::Object(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
             "we still have the peeled target"
         );
         Ok(())
@@ -93,25 +94,37 @@ mod peel {
     fn peel_one_level_with_pack() -> crate::Result {
         let store = store_with_packed_refs()?;
 
-        let head = store.find("dt1")?;
+        let mut head = store.find("dt1")?;
         assert_eq!(
             head.target.try_id().map(ToOwned::to_owned),
             Some(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3"))
         );
         assert_eq!(
             head.kind(),
-            gix_ref::Kind::Peeled,
-            "its peeled, but does have another step to peel to"
+            gix_ref::Kind::Object,
+            "its peeled, but does have another step to peel to…"
+        );
+        let final_stop = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+        assert_eq!(head.peeled, Some(final_stop), "…it knows its peeled object");
+
+        assert_eq!(
+            head.follow(&store).transpose()?,
+            None,
+            "but following doesn't do that, only real peeling does"
         );
 
-        let peeled = head.follow(&store).expect("a peeled ref for the object")?;
+        head.peel_to_id_in_place(&store, &EmptyCommit)?;
         assert_eq!(
-            peeled.target.try_id().map(ToOwned::to_owned),
-            Some(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
+            head.target.try_id().map(ToOwned::to_owned),
+            Some(final_stop),
             "packed refs are always peeled (at least the ones we choose to read)"
         );
-        assert_eq!(peeled.kind(), gix_ref::Kind::Peeled, "it's terminally peeled now");
-        assert!(peeled.follow(&store).is_none());
+        assert_eq!(head.kind(), gix_ref::Kind::Object, "it's terminally peeled now");
+        assert_eq!(
+            head.follow(&store).transpose()?,
+            None,
+            "following doesn't change anything"
+        );
         Ok(())
     }
 
@@ -144,6 +157,39 @@ mod peel {
     }
 
     #[test]
+    fn to_id_long_jump() -> crate::Result {
+        for packed in [None, Some("packed")] {
+            let store = file::store_at_with_args("make_multi_hop_ref.sh", packed)?;
+            let odb = gix_odb::at(store.git_dir().join("objects"))?;
+            let mut r: Reference = store.find("multi-hop")?;
+            r.peel_to_id_in_place(&store, &odb)?;
+
+            let commit_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+            assert_eq!(r.peeled, Some(commit_id));
+
+            let mut buf = Vec::new();
+            let obj = odb.find(&commit_id, &mut buf)?;
+            assert_eq!(obj.kind, gix_object::Kind::Commit, "always peeled to the first non-tag");
+
+            let mut r: Reference = store.find("multi-hop")?;
+            let tag_id =
+                r.follow_to_object_in_place_packed(&store, store.cached_packed_buffer()?.as_ref().map(|p| &***p))?;
+            let obj = odb.find(&tag_id, &mut buf)?;
+            assert_eq!(obj.kind, gix_object::Kind::Tag, "the first direct object target");
+            assert_eq!(
+                obj.decode()?.into_tag().expect("tag").name,
+                "dt2",
+                "this is the first annotated tag, which points at dt1"
+            );
+            let mut r: Reference = store.find("multi-hop2")?;
+            let other_tag_id =
+                r.follow_to_object_in_place_packed(&store, store.cached_packed_buffer()?.as_ref().map(|p| &***p))?;
+            assert_eq!(other_tag_id, tag_id, "it can follow with multiple hops as well");
+        }
+        Ok(())
+    }
+
+    #[test]
     fn to_id_cycle() -> crate::Result {
         let store = file::store()?;
         let mut r: Reference = store.find_loose("loop-a")?.into();
@@ -152,9 +198,15 @@ mod peel {
 
         assert!(matches!(
             r.peel_to_id_in_place(&store, &gix_object::find::Never).unwrap_err(),
-            gix_ref::peel::to_id::Error::Cycle { .. }
+            gix_ref::peel::to_id::Error::FollowToObject(gix_ref::peel::to_object::Error::Cycle { .. })
         ));
         assert_eq!(r.name.as_bstr(), "refs/loop-a", "the ref is not changed on error");
+
+        let mut r: Reference = store.find_loose("loop-a")?.into();
+        let err = r
+            .follow_to_object_in_place_packed(&store, store.cached_packed_buffer()?.as_ref().map(|p| &***p))
+            .unwrap_err();
+        assert!(matches!(err, gix_ref::peel::to_object::Error::Cycle { .. }));
         Ok(())
     }
 }
@@ -204,7 +256,7 @@ mod parse {
         mktest!(
             peeled,
             b"c5241b835b93af497cda80ce0dceb8f49800df1c\n",
-            gix_ref::Kind::Peeled,
+            gix_ref::Kind::Object,
             Some(hex_to_id("c5241b835b93af497cda80ce0dceb8f49800df1c").as_ref()),
             None
         );

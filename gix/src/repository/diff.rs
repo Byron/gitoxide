@@ -49,4 +49,14 @@ impl Repository {
             worktree_roots,
         )?)
     }
+
+    /// Return a resource cache suitable for diffing blobs from trees directly, where no worktree checkout exists.
+    ///
+    /// For more control, see [`diff_resource_cache()`](Self::diff_resource_cache).
+    pub fn diff_resource_cache_for_tree_diff(&self) -> Result<gix_diff::blob::Platform, resource_cache::Error> {
+        self.diff_resource_cache(
+            gix_diff::blob::pipeline::Mode::ToGit,
+            gix_diff::blob::pipeline::WorktreeRoots::default(),
+        )
+    }
 }
