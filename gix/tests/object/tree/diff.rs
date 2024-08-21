@@ -175,6 +175,7 @@ fn tree_named(repo: &gix::Repository, rev_spec: impl AsRef<str>) -> gix::Tree {
 }
 
 mod track_rewrites {
+    use std::collections::HashMap;
     use std::convert::Infallible;
 
     use gix::{
@@ -398,34 +399,27 @@ mod track_rewrites {
             // It's like the fixture doesn't get setup correctly.
             return Ok(());
         }
+
+        let mut expected = HashMap::<&BStr, (&BStr, u32)>::new();
+        expected.insert(
+            "cli/src/commands/file/chmod.rs".into(),
+            ("cli/src/commands/chmod.rs".into(), 90),
+        );
+        expected.insert(
+            "cli/src/commands/file/print.rs".into(),
+            ("cli/src/commands/cat.rs".into(), 90),
+        );
+        expected.insert(
+            "cli/tests/test_file_chmod_command.rs".into(),
+            ("cli/tests/test_chmod_command.rs".into(), 88),
+        );
+        expected.insert(
+            "cli/tests/test_file_print_command.rs".into(),
+            ("cli/tests/test_cat_command.rs".into(), 77),
+        );
+
         let from = tree_named(&repo, "@~1");
         let to = tree_named(&repo, "@");
-
-        let mut count = 0;
-        let expected_location = [
-            "cli",
-            "cli/src",
-            "cli/tests",
-            "cli/src/commands",
-            "cli/src/commands/file",
-            "cli/src/commands/file/print.rs",
-            "cli/tests/test_file_print_command.rs",
-            "cli/src/commands/file/chmod.rs",
-            "cli/src/commands/file/mod.rs",
-            "cli/tests/test_file_chmod_command.rs",
-            "CHANGELOG.md",
-            "cli/src/commands/mod.rs",
-            "cli/tests/cli-reference@.md.snap",
-            "cli/tests/runner.rs",
-            "cli/tests/test_acls.rs",
-            "cli/tests/test_diffedit_command.rs",
-            "cli/tests/test_fix_command.rs",
-            "cli/tests/test_global_opts.rs",
-            "cli/tests/test_move_command.rs",
-            "cli/tests/test_new_command.rs",
-            "cli/tests/test_squash_command.rs",
-            "cli/tests/test_unsquash_command.rs",
-        ];
         let out = from
             .changes()?
             .track_path()
@@ -441,48 +435,24 @@ mod track_rewrites {
                 .into(),
             )
             .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
-                // TODO: all rewrites here don't match what Git produces right now.
-                // dbg!(change);
-                assert_eq!(change.location, expected_location[count]);
-                match count {
-                    0 | 1 | 2 | 3 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 => {
-                        assert!(
-                            matches!(change.event, Event::Modification { .. }),
-                            "ignore modifications"
-                        );
-                    }
-                    4 => {
-                        assert!(matches!(change.event, Event::Addition { entry_mode, .. } if entry_mode.is_tree()));
-                        assert_eq!(change.location, "cli/src/commands/file");
-                    }
-                    5 => {
-                        assert_eq!(change.location, "cli/src/commands/file/print.rs");
-                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/tests/test_cat_command.rs"));
-                    }
-                    6 => {
-                        assert_eq!(change.location, "cli/tests/test_file_print_command.rs");
-                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/tests/test_chmod_command.rs"));
-                    }
-                    7 => {
-                        assert_eq!(change.location, "cli/src/commands/file/chmod.rs");
-                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/src/commands/chmod.rs"));
-                    }
-                    8 => {
-                        assert_eq!(change.location, "cli/src/commands/file/mod.rs");
-                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/src/commands/cat.rs"));
-                    }
-                    9 => {
-                        assert_eq!(change.location, "cli/tests/test_file_chmod_command.rs");
-                        assert!(matches!(change.event, Event::Rewrite {source_location, ..} if source_location == "cli/tests/test_immutable_commits.rs"));
-                    }
-                    n => unreachable!("unexpected call: {n}"),
-                };
-                count += 1;
+                if let Event::Rewrite {
+                    source_location,
+                    diff: Some(diff),
+                    ..
+                } = change.event
+                {
+                    // Round to percentage points to avoid floating point error.
+                    let similarity = (diff.similarity * 100.0) as u32;
+                    let v = expected.remove(change.location);
+                    assert_eq!(v, Some((source_location, similarity)));
+                }
                 Ok(Default::default())
             })?;
+
+        assert_eq!(expected, HashMap::new());
         let out = out.rewrites.expect("tracking enabled");
         assert_eq!(
-            out.num_similarity_checks, 8,
+            out.num_similarity_checks, 21,
             "this probably increases once the algorithm improves"
         );
         assert_eq!(
