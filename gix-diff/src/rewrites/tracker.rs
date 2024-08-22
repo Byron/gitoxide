@@ -561,10 +561,10 @@ mod diff {
         type Out = usize;
 
         fn process_change(&mut self, before: Range<u32>, _after: Range<u32>) {
-            self.removed_bytes = self.input.before[before.start as usize..before.end as usize]
+            self.removed_bytes += self.input.before[before.start as usize..before.end as usize]
                 .iter()
                 .map(|token| self.input.interner[*token].len())
-                .sum();
+                .sum::<usize>();
         }
 
         fn finish(self) -> Self::Out {
