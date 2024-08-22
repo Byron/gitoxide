@@ -1,6 +1,6 @@
 [package]
 name = "gix-diff"
-version = "0.45.0"
+version = "0.46.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "Calculate differences between various git objects"
@@ -24,9 +24,9 @@ doctest = false
 
 [dependencies]
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-gix-object = { version = "^0.43.0", path = "../gix-object" }
-gix-filter = { version = "^0.12.0", path = "../gix-filter", optional = true }
-gix-worktree = { version = "^0.35.0", path = "../gix-worktree", default-features = false, features = ["attributes"], optional = true }
+gix-object = { version = "^0.44.0", path = "../gix-object" }
+gix-filter = { version = "^0.13.0", path = "../gix-filter", optional = true }
+gix-worktree = { version = "^0.36.0", path = "../gix-worktree", default-features = false, features = ["attributes"], optional = true }
 gix-command = { version = "^0.3.9", path = "../gix-command", optional = true }
 gix-path = { version = "^0.10.10", path = "../gix-path", optional = true }
 gix-fs = { version = "^0.11.3", path = "../gix-fs", optional = true }

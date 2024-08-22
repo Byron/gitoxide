@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.32.0 (2024-08-22)
 
 ### Bug Fixes (BREAKING)
 
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelog prior to (yet another) release ([`209b6de`](https://github.com/Byron/gitoxide/commit/209b6de0329dbaaf61b929d32d9d54cf13fe241e))
     - Major-version bump to accomodate for the type-change in `gix-date`. ([`031cd68`](https://github.com/Byron/gitoxide/commit/031cd6884c925741112277529153870f69594c81))
 </details>
 

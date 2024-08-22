@@ -15,5 +15,5 @@ path = "src/main.rs"
 clap = { version = "4.5.16", features = ["derive"] }
 anyhow = "1.0.86"
 
-gix = { version = "^0.65.0", path = "../../gix", default-features = false, features = ["attributes", "revision"] }
+gix = { version = "^0.66.0", path = "../../gix", default-features = false, features = ["attributes", "revision"] }
 

@@ -167,9 +167,9 @@ gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 [dependencies]
 anyhow = "1.0.42"
 
-gitoxide-core = { version = "^0.40.0", path = "gitoxide-core" }
+gitoxide-core = { version = "^0.41.0", path = "gitoxide-core" }
 gix-features = { version = "^0.38.2", path = "gix-features" }
-gix = { version = "^0.65.0", path = "gix", default-features = false }
+gix = { version = "^0.66.0", path = "gix", default-features = false }
 
 clap = { version = "4.1.1", features = ["derive", "cargo"] }
 clap_complete = "4.4.3"
