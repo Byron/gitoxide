@@ -14,19 +14,19 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde= ["dep:serde", "bstr/serde", "bitflags/serde"]
+serde = ["dep:serde", "bstr/serde", "bitflags/serde"]
 
 [dependencies]
-gix-path = { version = "^0.10.9", path = "../gix-path" }
+gix-path = { version = "^0.10.10", path = "../gix-path" }
 gix-features = { version = "^0.38.1", path = "../gix-features" }
-bstr = { version = "1.3.0", default-features = false, features = ["std"]}
+bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 bitflags = "2"
-serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 
 document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
-gix-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools" }
 
 [package.metadata.docs.rs]
 all-features = true
