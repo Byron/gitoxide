@@ -76,7 +76,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.packedGitLimit",
-        usage: NotApplicable("we target 32bit systems only and don't use a windowing mechanism")
+        usage: NotApplicable("we target 64-bit systems only and don't use a windowing mechanism")
     },
     Record {
         config: "core.alternateRefsCommand",
@@ -91,7 +91,7 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned("Allow to remove similar hardcoded value - passing it through will be some effort")
     },
     Record {
-        config: "core.loosecompression",
+        config: "core.looseCompression",
         usage: Planned("")
     },
     Record {
@@ -100,7 +100,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.sparseCheckoutCone",
-        usage: Planned("this is a nice improvement over spareCheckout alone and should one day be available too")
+        usage: Planned("this is a nice improvement over sparseCheckout alone and should one day be available too")
     },
     Record {
         config: "core.gitProxy",
@@ -156,7 +156,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "submodule.recurse",
-        usage: Planned("very relevant for doing the right thing during checkouts. Note that 'clone' isnt' affected by it, even though we could make it so for good measure.")
+        usage: Planned("very relevant for doing the right thing during checkouts. Note that 'clone' isn't affected by it, even though we could make it so for good measure.")
     },
     Record {
         config: "submodule.propagateBranches",
