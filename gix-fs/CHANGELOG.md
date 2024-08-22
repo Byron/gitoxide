@@ -5,14 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.11.3 (2024-08-22)
+
+A maintenance release without user-facing changes.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 3 calendar days.
- - 29 days passed between releases.
+ - 12 commits contributed to the release over the course of 3 calendar days.
+ - 30 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - More changelogs to prepare for release with stable crates ([`42cecea`](https://github.com/Byron/gitoxide/commit/42ceceabf8449c1dd3f1e68a15bc745acc58c222))
     - Release gix-date v0.9.0, gix-actor v0.31.6, gix-validate v0.9.0, gix-object v0.43.0, gix-path v0.10.10, gix-attributes v0.22.4, gix-command v0.3.9, gix-packetline-blocking v0.17.5, gix-filter v0.12.0, gix-fs v0.11.3, gix-revwalk v0.14.0, gix-traverse v0.40.0, gix-worktree-stream v0.14.0, gix-archive v0.14.0, gix-ref v0.46.0, gix-config v0.39.0, gix-prompt v0.8.7, gix-url v0.27.5, gix-credentials v0.24.5, gix-ignore v0.11.4, gix-index v0.34.0, gix-worktree v0.35.0, gix-diff v0.45.0, gix-discover v0.34.0, gix-dir v0.7.0, gix-mailmap v0.23.6, gix-negotiate v0.14.0, gix-pack v0.52.0, gix-odb v0.62.0, gix-packetline v0.17.6, gix-transport v0.42.3, gix-protocol v0.45.3, gix-revision v0.28.0, gix-refspec v0.24.0, gix-status v0.12.0, gix-submodule v0.13.0, gix-worktree-state v0.12.0, gix v0.65.0, gix-fsck v0.5.0, gitoxide-core v0.40.0, gitoxide v0.38.0, safety bump 25 crates ([`d19af16`](https://github.com/Byron/gitoxide/commit/d19af16e1d2031d4f0100e76b6cd410a5d252af1))
     - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge pull request #1528 from EliahKagan/join ([`5ac3abb`](https://github.com/Byron/gitoxide/commit/5ac3abb775f3762f16f4107cf5903b51d5984a49))
@@ -35,10 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Improve messages about joining `C:` on the right ([`695f825`](https://github.com/Byron/gitoxide/commit/695f8255c01afa0e9b0196daa2151d401845a0d2))
     - Fix assertion message for joining `c:` to `relative` ([`a11fe15`](https://github.com/Byron/gitoxide/commit/a11fe15e74b06ef612a79789165fbf375423723a))
 </details>
-
-## 0.11.3 (2024-08-22)
-
-A maintenance release without user-facing changes.
 
 ## 0.11.2 (2024-07-23)
 

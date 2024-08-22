@@ -13,7 +13,7 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-sec = { version = "^0.10.7", path = "../gix-sec" }
+gix-sec = { version = "^0.10.8", path = "../gix-sec" }
 gix-path = { version = "^0.10.10", path = "../gix-path" }
 gix-ref = { version = "^0.46.0", path = "../gix-ref" }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }

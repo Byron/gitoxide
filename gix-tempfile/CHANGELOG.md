@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 14.0.2 (2024-08-22)
 
 A maintenance release without user-facing changes.
 
@@ -13,8 +13,8 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 24 calendar days.
- - 29 days passed between releases.
+ - 4 commits contributed to the release over the course of 24 calendar days.
+ - 30 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - More changelogs to prepare for release with stable crates ([`42cecea`](https://github.com/Byron/gitoxide/commit/42ceceabf8449c1dd3f1e68a15bc745acc58c222))
     - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge branch 'upgrades' ([`1d37bf6`](https://github.com/Byron/gitoxide/commit/1d37bf6a773d56eea9003aa626ced413e8e0eaa3))
     - Upgrades `dashmap` to v6.0 ([`aa34bed`](https://github.com/Byron/gitoxide/commit/aa34bedb059c62ce604f0b585273e7f39e51affe))

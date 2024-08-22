@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 37 commits contributed to the release over the course of 28 calendar days.
+ - 38 commits contributed to the release over the course of 28 calendar days.
  - 29 days passed between releases.
  - 16 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1508](https://github.com/Byron/gitoxide/issues/1508), [#1524](https://github.com/Byron/gitoxide/issues/1524)
@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1524](https://github.com/Byron/gitoxide/issues/1524)**
     - Add a real-world test to reproduce an issue discovered in `jj` ([`7ef1e88`](https://github.com/Byron/gitoxide/commit/7ef1e886e67d7754ecd0e6ecabcee945c28c1c3f))
  * **Uncategorized**
+    - Release gix-date v0.9.0, gix-actor v0.31.6, gix-validate v0.9.0, gix-object v0.43.0, gix-path v0.10.10, gix-attributes v0.22.4, gix-command v0.3.9, gix-packetline-blocking v0.17.5, gix-filter v0.12.0, gix-fs v0.11.3, gix-revwalk v0.14.0, gix-traverse v0.40.0, gix-worktree-stream v0.14.0, gix-archive v0.14.0, gix-ref v0.46.0, gix-config v0.39.0, gix-prompt v0.8.7, gix-url v0.27.5, gix-credentials v0.24.5, gix-ignore v0.11.4, gix-index v0.34.0, gix-worktree v0.35.0, gix-diff v0.45.0, gix-discover v0.34.0, gix-dir v0.7.0, gix-mailmap v0.23.6, gix-negotiate v0.14.0, gix-pack v0.52.0, gix-odb v0.62.0, gix-packetline v0.17.6, gix-transport v0.42.3, gix-protocol v0.45.3, gix-revision v0.28.0, gix-refspec v0.24.0, gix-status v0.12.0, gix-submodule v0.13.0, gix-worktree-state v0.12.0, gix v0.65.0, gix-fsck v0.5.0, gitoxide-core v0.40.0, gitoxide v0.38.0, safety bump 25 crates ([`d19af16`](https://github.com/Byron/gitoxide/commit/d19af16e1d2031d4f0100e76b6cd410a5d252af1))
     - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge branch 'improvements' ([`9ed2b24`](https://github.com/Byron/gitoxide/commit/9ed2b24e5d275e09ef29f341de8184874d5c23fe))
     - Similarity detection ([`6990afd`](https://github.com/Byron/gitoxide/commit/6990afd269c3461ae22e2821164c03a0dedc82f4))

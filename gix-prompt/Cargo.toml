@@ -14,7 +14,7 @@ doctest = false
 
 [dependencies]
 gix-command = { version = "^0.3.9", path = "../gix-command" }
-gix-config-value = { version = "^0.14.7", path = "../gix-config-value" }
+gix-config-value = { version = "^0.14.8", path = "../gix-config-value" }
 
 thiserror = "1.0.32"
 
