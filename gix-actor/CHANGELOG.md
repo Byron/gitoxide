@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-031cd6884c925741112277529153870f69594c81/> major-version bump to accomodate for the type-change in `gix-date`.
+   This should have happened automatically, but didn't, so the previous patch
+   release broke the world (but was yanked).
+   
+   Now everything needs to be re-released.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Major-version bump to accomodate for the type-change in `gix-date`. ([`031cd68`](https://github.com/Byron/gitoxide/commit/031cd6884c925741112277529153870f69594c81))
+</details>
+
 ## 0.31.6 (2024-08-22)
 
 A maintenance release without user-facing changes.
@@ -13,7 +41,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 24 calendar days.
+ - 6 commits contributed to the release over the course of 24 calendar days.
  - 29 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +53,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.9.0, gix-actor v0.31.6, gix-validate v0.9.0, gix-object v0.43.0, gix-path v0.10.10, gix-attributes v0.22.4, gix-command v0.3.9, gix-packetline-blocking v0.17.5, gix-filter v0.12.0, gix-fs v0.11.3, gix-revwalk v0.14.0, gix-traverse v0.40.0, gix-worktree-stream v0.14.0, gix-archive v0.14.0, gix-ref v0.46.0, gix-config v0.39.0, gix-prompt v0.8.7, gix-url v0.27.5, gix-credentials v0.24.5, gix-ignore v0.11.4, gix-index v0.34.0, gix-worktree v0.35.0, gix-diff v0.45.0, gix-discover v0.34.0, gix-dir v0.7.0, gix-mailmap v0.23.6, gix-negotiate v0.14.0, gix-pack v0.52.0, gix-odb v0.62.0, gix-packetline v0.17.6, gix-transport v0.42.3, gix-protocol v0.45.3, gix-revision v0.28.0, gix-refspec v0.24.0, gix-status v0.12.0, gix-submodule v0.13.0, gix-worktree-state v0.12.0, gix v0.65.0, gix-fsck v0.5.0, gitoxide-core v0.40.0, gitoxide v0.38.0, safety bump 25 crates ([`d19af16`](https://github.com/Byron/gitoxide/commit/d19af16e1d2031d4f0100e76b6cd410a5d252af1))
     - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge branch 'dependabot/github_actions/github-actions-c4bcf5a8e2' ([`2e00b5e`](https://github.com/Byron/gitoxide/commit/2e00b5ef6e8a15e7f0a34d54739a5cd1c986b322))
     - Make `winnow` a workspace dependency ([`78a7e32`](https://github.com/Byron/gitoxide/commit/78a7e32c34150dece4065e513cd177356619419f))
