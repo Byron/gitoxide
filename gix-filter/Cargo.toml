@@ -21,7 +21,7 @@ gix-quote = { version = "^0.4.12", path = "../gix-quote" }
 gix-utils = { version = "^0.1.12", path = "../gix-utils" }
 gix-path = { version = "^0.10.10", path = "../gix-path" }
 gix-packetline = { package = "gix-packetline-blocking", version = "^0.17.5", path = "../gix-packetline-blocking" }
-gix-attributes = { version = "^0.22.4", path = "../gix-attributes" }
+gix-attributes = { version = "^0.22.5", path = "../gix-attributes" }
 
 encoding_rs = "0.8.32"
 bstr = { version = "1.5.0", default-features = false, features = ["std"] }

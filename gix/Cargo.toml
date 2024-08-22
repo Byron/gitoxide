@@ -337,7 +337,7 @@ gix-glob = { version = "^0.16.5", path = "../gix-glob" }
 gix-credentials = { version = "^0.24.5", path = "../gix-credentials", optional = true }
 gix-prompt = { version = "^0.8.7", path = "../gix-prompt", optional = true }
 gix-index = { version = "^0.34.0", path = "../gix-index", optional = true }
-gix-attributes = { version = "^0.22.4", path = "../gix-attributes", optional = true }
+gix-attributes = { version = "^0.22.5", path = "../gix-attributes", optional = true }
 gix-ignore = { version = "^0.11.4", path = "../gix-ignore", optional = true }
 gix-worktree = { version = "^0.35.0", path = "../gix-worktree", optional = true, default-features = false }
 gix-worktree-state = { version = "^0.12.0", path = "../gix-worktree-state", optional = true }

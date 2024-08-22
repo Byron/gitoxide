@@ -1287,7 +1287,7 @@ dependencies = [
  "document-features",
  "gix-actor 0.31.6",
  "gix-archive",
- "gix-attributes 0.22.4",
+ "gix-attributes 0.22.5",
  "gix-command",
  "gix-commitgraph 0.24.3",
  "gix-config",
@@ -1384,7 +1384,7 @@ dependencies = [
  "bstr",
  "document-features",
  "flate2",
- "gix-attributes 0.22.4",
+ "gix-attributes 0.22.5",
  "gix-date 0.9.0",
  "gix-filter",
  "gix-hash 0.14.2",
@@ -1419,7 +1419,7 @@ dependencies = [
 
 [[package]]
 name = "gix-attributes"
-version = "0.22.4"
+version = "0.22.5"
 dependencies = [
  "bstr",
  "document-features",
@@ -1757,7 +1757,7 @@ version = "0.12.0"
 dependencies = [
  "bstr",
  "encoding_rs",
- "gix-attributes 0.22.4",
+ "gix-attributes 0.22.5",
  "gix-command",
  "gix-hash 0.14.2",
  "gix-object 0.43.0",
@@ -2226,7 +2226,7 @@ version = "0.7.7"
 dependencies = [
  "bitflags 2.6.0",
  "bstr",
- "gix-attributes 0.22.4",
+ "gix-attributes 0.22.5",
  "gix-config-value",
  "gix-glob 0.16.5",
  "gix-path 0.10.10",
@@ -2740,7 +2740,7 @@ version = "0.35.0"
 dependencies = [
  "bstr",
  "document-features",
- "gix-attributes 0.22.4",
+ "gix-attributes 0.22.5",
  "gix-features 0.38.2",
  "gix-fs 0.11.3",
  "gix-glob 0.16.5",
@@ -2794,7 +2794,7 @@ dependencies = [
 name = "gix-worktree-stream"
 version = "0.14.0"
 dependencies = [
- "gix-attributes 0.22.4",
+ "gix-attributes 0.22.5",
  "gix-features 0.38.2",
  "gix-filter",
  "gix-fs 0.11.3",
@@ -2814,7 +2814,7 @@ name = "gix-worktree-tests"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "gix-attributes 0.22.4",
+ "gix-attributes 0.22.5",
  "gix-discover 0.34.0",
  "gix-features 0.38.2",
  "gix-fs 0.11.3",
