@@ -14,6 +14,7 @@ pub struct Platform<'r> {
 /// An iterator over references, with or without filter.
 pub struct Iter<'r> {
     inner: gix_ref::file::iter::LooseThenPacked<'r, 'r>,
+    peel_with_packed: Option<gix_ref::file::packed::SharedBufferSnapshot>,
     peel: bool,
     repo: &'r crate::Repository,
 }
@@ -22,6 +23,7 @@ impl<'r> Iter<'r> {
     fn new(repo: &'r crate::Repository, platform: gix_ref::file::iter::LooseThenPacked<'r, 'r>) -> Self {
         Iter {
             inner: platform,
+            peel_with_packed: None,
             peel: false,
             repo,
         }
@@ -80,9 +82,10 @@ impl<'r> Iter<'r> {
     ///
     /// Doing this is necessary as the packed-refs buffer is already held by the iterator, disallowing the consumer of the iterator
     /// to peel the returned references themselves.
-    pub fn peeled(mut self) -> Self {
+    pub fn peeled(mut self) -> Result<Self, gix_ref::packed::buffer::open::Error> {
+        self.peel_with_packed = self.repo.refs.cached_packed_buffer()?;
         self.peel = true;
-        self
+        Ok(self)
     }
 }
 
@@ -95,9 +98,13 @@ impl<'r> Iterator for Iter<'r> {
                 .and_then(|mut r| {
                     if self.peel {
                         let repo = &self.repo;
-                        r.peel_to_id_in_place(&repo.refs, &repo.objects)
-                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
-                            .map(|_| r)
+                        r.peel_to_id_in_place_packed(
+                            &repo.refs,
+                            &repo.objects,
+                            self.peel_with_packed.as_ref().map(|p| &***p),
+                        )
+                        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                        .map(|_| r)
                     } else {
                         Ok(r)
                     }

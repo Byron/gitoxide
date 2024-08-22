@@ -291,7 +291,7 @@ fn mark_all_refs_in_repo(
     mark: Flags,
 ) -> Result<(), Error> {
     let _span = gix_trace::detail!("mark_all_refs");
-    for local_ref in repo.references()?.all()?.peeled() {
+    for local_ref in repo.references()?.all()?.peeled()? {
         let local_ref = local_ref?;
         let id = local_ref.id().detach();
         let mut is_complete = false;

@@ -240,6 +240,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                             .rev_walk(
                                 references
                                     .peeled()
+                                    .ok()?
                                     .filter_map(Result::ok)
                                     .filter(|r| r.id().header().ok().map_or(false, |obj| obj.kind().is_commit()))
                                     .filter_map(|r| r.detach().peeled),

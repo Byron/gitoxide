@@ -156,7 +156,7 @@ mod iter_references {
         assert_eq!(
             repo.references()?
                 .prefixed("refs/heads/")?
-                .peeled()
+                .peeled()?
                 .filter_map(Result::ok)
                 .map(|r| (
                     r.name().as_bstr().to_string(),
