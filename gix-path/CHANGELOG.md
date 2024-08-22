@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.10.10 (2024-08-22)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 12 calendar days.
+ - 6 commits contributed to the release over the course of 12 calendar days.
  - 35 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge pull request #1523 from martinvonz/push-xmsuurxprnnw ([`83c9de0`](https://github.com/Byron/gitoxide/commit/83c9de0db43761b7692a122f1a337964a7cfeb7a))
     - Remove `--system` from `git config` call as it fails on MacOS ([`6b1c243`](https://github.com/Byron/gitoxide/commit/6b1c2432f096b3de770a77694a23b93b8d29dc8d))
     - Run `git config -l` in temp dir when looking up system config ([`20ef4e9`](https://github.com/Byron/gitoxide/commit/20ef4e99149ef8a1255d02d8e60ff30c90fd9bff))

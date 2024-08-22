@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.65.0 (2024-08-22)
+
+<csr-id-26748ddbedc281b7b6b1defc51201d97e58f13e4/>
 
 ### New Features
 
@@ -62,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 36 commits contributed to the release over the course of 28 calendar days.
+ - 37 commits contributed to the release over the course of 28 calendar days.
  - 29 days passed between releases.
  - 16 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1508](https://github.com/Byron/gitoxide/issues/1508), [#1524](https://github.com/Byron/gitoxide/issues/1524)
@@ -78,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1524](https://github.com/Byron/gitoxide/issues/1524)**
     - Add a real-world test to reproduce an issue discovered in `jj` ([`7ef1e88`](https://github.com/Byron/gitoxide/commit/7ef1e886e67d7754ecd0e6ecabcee945c28c1c3f))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge branch 'improvements' ([`9ed2b24`](https://github.com/Byron/gitoxide/commit/9ed2b24e5d275e09ef29f341de8184874d5c23fe))
     - Similarity detection ([`6990afd`](https://github.com/Byron/gitoxide/commit/6990afd269c3461ae22e2821164c03a0dedc82f4))
     - Fix similarity detection ([`f8c5d9c`](https://github.com/Byron/gitoxide/commit/f8c5d9ce87a3b6b7d0e051b1cb7de3707209c432))

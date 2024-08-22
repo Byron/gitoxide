@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.0 (2024-08-22)
 
 <csr-id-28ac6572722f7ea31795dc0417521c70bcb6ec8f/>
 <csr-id-1b9c30dfb43373a76f3b65ae90a74dc99a892821/>
@@ -47,7 +47,7 @@ This is a *breaking release* as the `time` is gone and it's API isn't available 
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 26 calendar days.
+ - 11 commits contributed to the release over the course of 26 calendar days.
  - 60 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1485](https://github.com/Byron/gitoxide/issues/1485)
@@ -62,6 +62,7 @@ This is a *breaking release* as the `time` is gone and it's API isn't available 
     - Don't panic on dates too far in the past when parsing them. ([`a729c4b`](https://github.com/Byron/gitoxide/commit/a729c4b52242b9a8b02f3d0879bd481f23a3d719))
     - Reproduce fuzzer failure in `gix-date` ([`3a8b9e2`](https://github.com/Byron/gitoxide/commit/3a8b9e2a8456985b4b444be421e9f0f61b08b7f1))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge branch 'fix-fuzz' ([`3604a3b`](https://github.com/Byron/gitoxide/commit/3604a3b519d76db367084ca49d395f6ec4094cf7))
     - Merge branch 'improvements' ([`12313f2`](https://github.com/Byron/gitoxide/commit/12313f2720bb509cb8fa5d7033560823beafb91c))
     - Add more (but technically duplicate) tests for time parsing and formatting ([`9d5d8a6`](https://github.com/Byron/gitoxide/commit/9d5d8a6551310f3ec28fc0cb3f0dd0bad4ffcde0))

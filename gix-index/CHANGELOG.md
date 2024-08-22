@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.34.0 (2024-08-22)
 
 A maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 14 calendar days.
+ - 3 commits contributed to the release over the course of 14 calendar days.
  - 29 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge pull request #1496 from EliahKagan/touch ([`9b72c61`](https://github.com/Byron/gitoxide/commit/9b72c61f0164f9d549e7dea12fc7686721694433))
     - Have `touch` in test fixture fall back to portable format ([`bbbd1eb`](https://github.com/Byron/gitoxide/commit/bbbd1eb0d246b7cd2d7afaa33c17102f97a37355))
 </details>

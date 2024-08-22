@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.0 (2024-08-22)
 
 ### Bug Fixes
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 62 calendar days.
+ - 10 commits contributed to the release over the course of 62 calendar days.
  - 92 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge branch 'fixes' ([`ccc7a1f`](https://github.com/Byron/gitoxide/commit/ccc7a1f5c11a781e554815845e2fa55aa3daae73))
     - Disallow `.lock` extensions per component. ([`62f586c`](https://github.com/Byron/gitoxide/commit/62f586c4f8629bc6bad0ac0b18ec9b5f7a9a949e))
     - Merge branch 'sanitization' ([`d51f330`](https://github.com/Byron/gitoxide/commit/d51f330e9d364c6f7b068116b59bf5c0160e47af))

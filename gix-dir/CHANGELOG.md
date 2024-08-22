@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.7.0 (2024-08-22)
 
 ### Bug Fixes
 
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 28 calendar days.
+ - 7 commits contributed to the release over the course of 28 calendar days.
  - 29 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#1464](https://github.com/Byron/gitoxide/issues/1464), [#1469](https://github.com/Byron/gitoxide/issues/1469), [#1470](https://github.com/Byron/gitoxide/issues/1470)
@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1470](https://github.com/Byron/gitoxide/issues/1470)**
     - Assure that worktrees in hidden directories are not deleted ([`31e795a`](https://github.com/Byron/gitoxide/commit/31e795abf27dea8fd7dd7f59996cdd5d70398601))
  * **Uncategorized**
+    - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge branch 'fix-clean' ([`348b9bf`](https://github.com/Byron/gitoxide/commit/348b9bf6cbf7a61b8094e5db8354376abb2e8c99))
     - Merge branch 'fix-clean' ([`33eacfb`](https://github.com/Byron/gitoxide/commit/33eacfbaace2021043e2b5d72dcb9293af6c4020))
 </details>
