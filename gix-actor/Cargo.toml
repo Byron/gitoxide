@@ -12,7 +12,6 @@ rust-version = "1.65"
 [lib]
 doctest = false
 
-
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = ["dep:serde", "bstr/serde", "gix-date/serde"]
