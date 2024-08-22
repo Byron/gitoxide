@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 12 calendar days.
+ - 35 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #1523 from martinvonz/push-xmsuurxprnnw ([`83c9de0`](https://github.com/Byron/gitoxide/commit/83c9de0db43761b7692a122f1a337964a7cfeb7a))
+    - Remove `--system` from `git config` call as it fails on MacOS ([`6b1c243`](https://github.com/Byron/gitoxide/commit/6b1c2432f096b3de770a77694a23b93b8d29dc8d))
+    - Run `git config -l` in temp dir when looking up system config ([`20ef4e9`](https://github.com/Byron/gitoxide/commit/20ef4e99149ef8a1255d02d8e60ff30c90fd9bff))
+    - Merge branch 'push-ysnqkzlzwuwq' ([`e2c747d`](https://github.com/Byron/gitoxide/commit/e2c747d9049bc4a4975de2fd780e8b1fb862fc09))
+    - Don't show console on Windows ([`087594c`](https://github.com/Byron/gitoxide/commit/087594c226d0e38163e18eee76123f8e332130f2))
+</details>
+
 ## 0.10.9 (2024-07-18)
 
 ### Bug Fixes
@@ -25,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 35 commits contributed to the release over the course of 3 calendar days.
+ - 36 commits contributed to the release over the course of 3 calendar days.
  - 23 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -37,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-path v0.10.9 ([`15f1cf7`](https://github.com/Byron/gitoxide/commit/15f1cf76764221d14afa66d03a6528b19b9c30c9))
     - Merge branch 'program-files' ([`ffe6b60`](https://github.com/Byron/gitoxide/commit/ffe6b60be3c0361d38fd6634a7fbc299665a6a0c))
     - Refactor ([`73ed340`](https://github.com/Byron/gitoxide/commit/73ed3402861c88092b9a2cb2502e0f20d8bbcd36))
     - Move `test::loc`'s `use` statements up ([`dd53408`](https://github.com/Byron/gitoxide/commit/dd534087fd7829eee1a9b426ee8bcdaca9c352e1))

@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-62f586c4f8629bc6bad0ac0b18ec9b5f7a9a949e/> disallow `.lock` extensions per component.
+   Previously, it would allow `foo.lock/bar`, and now it doesn't.
+ - <csr-id-91d29c36ee4641ff2f9fc6452900dad26ee8ffb2/> prohibit full names with a trailing `.`.
+   Just like in Git, it's considered invalid.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-13c79225ef41cfe21894eaecd32604c574b651d0/> `validate::tag::name()` now rejects names starting with slashes, and with empty components, too
+   It's a breaking change as it renames the `DoubleDot` variant of `tag::Error` to `RepatedDot`, while moving
+   a couple of variants from `reference::Error` to `tag::Error`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 62 calendar days.
+ - 92 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'fixes' ([`ccc7a1f`](https://github.com/Byron/gitoxide/commit/ccc7a1f5c11a781e554815845e2fa55aa3daae73))
+    - Disallow `.lock` extensions per component. ([`62f586c`](https://github.com/Byron/gitoxide/commit/62f586c4f8629bc6bad0ac0b18ec9b5f7a9a949e))
+    - Merge branch 'sanitization' ([`d51f330`](https://github.com/Byron/gitoxide/commit/d51f330e9d364c6f7b068116b59bf5c0160e47af))
+    - Use additive approach to avoid issues around removal of indices ([`9683186`](https://github.com/Byron/gitoxide/commit/96831865e67cac62749fc8fd63837b71cf11c397))
+    - `validate::tag::name()` now rejects names starting with slashes, and with empty components, too ([`13c7922`](https://github.com/Byron/gitoxide/commit/13c79225ef41cfe21894eaecd32604c574b651d0))
+    - Add all tests imaginable for branch name sanitization ([`0401758`](https://github.com/Byron/gitoxide/commit/04017581fb1e2383169eab23e08facebafb9c748))
+    - Merge branch 'improvements' ([`12313f2`](https://github.com/Byron/gitoxide/commit/12313f2720bb509cb8fa5d7033560823beafb91c))
+    - Prohibit full names with a trailing `.`. ([`91d29c3`](https://github.com/Byron/gitoxide/commit/91d29c36ee4641ff2f9fc6452900dad26ee8ffb2))
+    - Merge branch 'main' into config-key-take-2 ([`9fa1054`](https://github.com/Byron/gitoxide/commit/9fa1054a01071180d7b08c8c2b5bd61e9d0d32da))
+</details>
+
 ## 0.8.5 (2024-05-22)
 
 ### New Features
@@ -23,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 3 calendar days.
+ - 13 commits contributed to the release over the course of 3 calendar days.
  - 68 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -41,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-features v0.38.2, gix-actor v0.31.2, gix-validate v0.8.5, gix-object v0.42.2, gix-command v0.3.7, gix-filter v0.11.2, gix-fs v0.11.0, gix-revwalk v0.13.1, gix-traverse v0.39.1, gix-worktree-stream v0.13.0, gix-archive v0.13.0, gix-tempfile v14.0.0, gix-lock v14.0.0, gix-ref v0.44.0, gix-config v0.37.0, gix-prompt v0.8.5, gix-index v0.33.0, gix-worktree v0.34.0, gix-diff v0.44.0, gix-discover v0.32.0, gix-pathspec v0.7.5, gix-dir v0.5.0, gix-macros v0.1.5, gix-mailmap v0.23.1, gix-negotiate v0.13.1, gix-pack v0.51.0, gix-odb v0.61.0, gix-transport v0.42.1, gix-protocol v0.45.1, gix-revision v0.27.1, gix-status v0.10.0, gix-submodule v0.11.0, gix-worktree-state v0.11.0, gix v0.63.0, gitoxide-core v0.38.0, gitoxide v0.36.0, safety bump 19 crates ([`4f98e94`](https://github.com/Byron/gitoxide/commit/4f98e94e0e8b79ed2899b35bef40f3c30b3025b0))
     - Adjust changelogs prior to release ([`9511416`](https://github.com/Byron/gitoxide/commit/9511416a6cd0c571233f958c165329c8705c2498))
     - Merge branch 'various-fixes' ([`d6cd449`](https://github.com/Byron/gitoxide/commit/d6cd44930fb204b06e2b70fc6965e7705530c47a))
     - Merge pull request from GHSA-7w47-3wg8-547c ([`79dce79`](https://github.com/Byron/gitoxide/commit/79dce79c62f6072aa2653780d590dc3993dfa401))

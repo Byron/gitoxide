@@ -5,6 +5,115 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-e079250089c1d2717d62f6ab7f7b6a902b24831e/> add `objects::tree::diff::Platform::stats()` to quickly obtain diff-stats.
+   This function is inspired by `git2` which also makes it very simple to obtain.
+ - <csr-id-b291de0a81584430d5b5f2ae05ee220bbdadd6e8/> allow threaded-handling of tree-diff changes.
+   This works by providing `Change::detach()` and `ChangeDetached::attach()`.
+ - <csr-id-d986b2b271cd29d013c7874e4f021fe776115004/> add `Reference::follow_to_object()`
+   It's an equivalent to `git2::Reference::resolve()`.`
+ - <csr-id-6c6f9467d5d22c2f9a923a6ccda52e7cde6a6a8f/> add `Repository::diff_resource_cache_for_tree_diff()`
+ - <csr-id-cdaba846526085736501a23d39ee5fbe3fe488d5/> add `Reference::peel_to_kind()`
+   Make it easy to follow a ref and peel it to a given object type.
+   Additional `peel_to_<kind>()` shortcuts are also provided, with
+   the same name as in `git2`.
+ - <csr-id-98bcb144e8fc948d95facc8a4f2a1a6ba0770106/> add `Repository::find_*()` methods for every object type.
+ - <csr-id-63c7a03bb7090b5ecc7e8ec5a6b9dffdb49c3315/> add `Repository::compute_object_cache_size_for_tree_diffs()`.
+   With it it's easier to obtain reasonable object cache sizes as optimized
+   for tree-diffs.
+ - <csr-id-8a27454a9738f077309104fde02d589d052e9f11/> `remote::Name::to_owned()` to get a static version of it.
+   Also, add optional `serde` support.
+ - <csr-id-6ac28673550ccd0b85b7fd2b191fa6049bbe481e/> `Reference::remote_name()` now also provides valid remote names for local tracking branches.
+ - <csr-id-c612440bbfa2d5a2c033f28805eda0661009469d/> add `Reference::peel_to_id_in_place_packed()` to allow passing a packed-buffer snapshot.
+   This is useful for speeding up reference lookups as otherwise, it will have to validate the packed-buffer
+   snapshot didn't change internally each time a ref is peeled.
+ - <csr-id-7c8f409bfa2066562930981b2d072245e5dca88e/> add `remote::Names` as shortcut to the value returned for all remote names.
+
+### Bug Fixes
+
+ - <csr-id-6990afd269c3461ae22e2821164c03a0dedc82f4/> similarity detection
+   Previously it would incorrectly count only the last batch of removed bytes, and now it will count all of them. This leads to realistic results with complex diffs, even though it's probably still not en-par with Git which uses more complex heuristics.
+ - <csr-id-e74095e0a035b090284135c88133106ba6a19fc3/> prevent panic in `Repository::rev_parse_single()` when `HEAD` was invalid.
+   When using a refspec like `HEAD:file`.
+ - <csr-id-6f2eb910f88ab8a61961efffd6d946d95927d8b8/> do not automatically use a parallel directory walk.
+   This reduces dependencies and can speed-up typical ref-walks as these
+   don't benefit from this many threads - the overhead here usually outweighs
+   the benefit.
+   
+   This can be turned back on based on the expected workload.
+
+### Other
+
+ - <csr-id-26748ddbedc281b7b6b1defc51201d97e58f13e4/> make tree-diff more easily discoverable when coming from `git2`
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-ba72ee0f069b7df96f7543fe2d97612c98544733/> better peeling performance for reference traversal.
+   This is done by keeping a packed-buffer around and reusing it, instead
+   of re-checking it every time.
+   
+   For this to work, the `peeled()` function on the `reference::Iter` can now fail
+   as it has to open a packed-refs snapshot.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 36 commits contributed to the release over the course of 28 calendar days.
+ - 29 days passed between releases.
+ - 16 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#1508](https://github.com/Byron/gitoxide/issues/1508), [#1524](https://github.com/Byron/gitoxide/issues/1524)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1508](https://github.com/Byron/gitoxide/issues/1508)**
+    - Reproduce panic when parsing refspecs ([`17bd32a`](https://github.com/Byron/gitoxide/commit/17bd32aa9311af5b10800402f4ca79a29290985a))
+ * **[#1524](https://github.com/Byron/gitoxide/issues/1524)**
+    - Add a real-world test to reproduce an issue discovered in `jj` ([`7ef1e88`](https://github.com/Byron/gitoxide/commit/7ef1e886e67d7754ecd0e6ecabcee945c28c1c3f))
+ * **Uncategorized**
+    - Merge branch 'improvements' ([`9ed2b24`](https://github.com/Byron/gitoxide/commit/9ed2b24e5d275e09ef29f341de8184874d5c23fe))
+    - Similarity detection ([`6990afd`](https://github.com/Byron/gitoxide/commit/6990afd269c3461ae22e2821164c03a0dedc82f4))
+    - Fix similarity detection ([`f8c5d9c`](https://github.com/Byron/gitoxide/commit/f8c5d9ce87a3b6b7d0e051b1cb7de3707209c432))
+    - Better peeling performance for reference traversal. ([`ba72ee0`](https://github.com/Byron/gitoxide/commit/ba72ee0f069b7df96f7543fe2d97612c98544733))
+    - Merge branch 'improvements' ([`242fedc`](https://github.com/Byron/gitoxide/commit/242fedc973c56b6c1b6f150af99dda972a67f547))
+    - Use improved gix-diff API for better buffer handling ([`f944e49`](https://github.com/Byron/gitoxide/commit/f944e49ec97b6e9dcffab8606ca0b46e343d7e55))
+    - Add `objects::tree::diff::Platform::stats()` to quickly obtain diff-stats. ([`e079250`](https://github.com/Byron/gitoxide/commit/e079250089c1d2717d62f6ab7f7b6a902b24831e))
+    - Allow threaded-handling of tree-diff changes. ([`b291de0`](https://github.com/Byron/gitoxide/commit/b291de0a81584430d5b5f2ae05ee220bbdadd6e8))
+    - Add `Reference::follow_to_object()` ([`d986b2b`](https://github.com/Byron/gitoxide/commit/d986b2b271cd29d013c7874e4f021fe776115004))
+    - Add `Repository::diff_resource_cache_for_tree_diff()` ([`6c6f946`](https://github.com/Byron/gitoxide/commit/6c6f9467d5d22c2f9a923a6ccda52e7cde6a6a8f))
+    - Add `Reference::peel_to_kind()` ([`cdaba84`](https://github.com/Byron/gitoxide/commit/cdaba846526085736501a23d39ee5fbe3fe488d5))
+    - Adapt to changes in `gix-ref` ([`d296ee8`](https://github.com/Byron/gitoxide/commit/d296ee87e1b46e603b98a5f5ebf9e6f0695f8a52))
+    - Adapt to changes in `gix-ref` ([`5464bfb`](https://github.com/Byron/gitoxide/commit/5464bfb2df3fa8b5c582718349997170c3f2745e))
+    - Add `Repository::find_*()` methods for every object type. ([`98bcb14`](https://github.com/Byron/gitoxide/commit/98bcb144e8fc948d95facc8a4f2a1a6ba0770106))
+    - Add `Repository::compute_object_cache_size_for_tree_diffs()`. ([`63c7a03`](https://github.com/Byron/gitoxide/commit/63c7a03bb7090b5ecc7e8ec5a6b9dffdb49c3315))
+    - Make tree-diff more easily discoverable when coming from `git2` ([`26748dd`](https://github.com/Byron/gitoxide/commit/26748ddbedc281b7b6b1defc51201d97e58f13e4))
+    - Merge pull request #1529 from Byron/better-copy-detection ([`7b7902e`](https://github.com/Byron/gitoxide/commit/7b7902eb8478607d611030d59fa87b390ca7ee76))
+    - Remove `#[momo]` directive as it seems to prevent auto-completion in IDEs. ([`3a339da`](https://github.com/Byron/gitoxide/commit/3a339da03ce6498b1c8a0f367a19d7eda773668f))
+    - Merge pull request #1521 from mvlabat/fix-dir-filename-tracking ([`12251eb`](https://github.com/Byron/gitoxide/commit/12251eb052df30105538fa831e641eea557f13d8))
+    - Fix dir name tracking in the FileName mode ([`63936e5`](https://github.com/Byron/gitoxide/commit/63936e5407d137d32d86a9557c3dfe378755cea0))
+    - Merge branch 'fix-panic' ([`0b28297`](https://github.com/Byron/gitoxide/commit/0b2829712be53846c830dbb175da2beaf00e7c76))
+    - Prevent panic in `Repository::rev_parse_single()` when `HEAD` was invalid. ([`e74095e`](https://github.com/Byron/gitoxide/commit/e74095e0a035b090284135c88133106ba6a19fc3))
+    - Merge branch 'improvements' ([`7dff447`](https://github.com/Byron/gitoxide/commit/7dff44754e0fdc369f92221468fb953bad9be60a))
+    - `remote::Name::to_owned()` to get a static version of it. ([`8a27454`](https://github.com/Byron/gitoxide/commit/8a27454a9738f077309104fde02d589d052e9f11))
+    - Merge branch 'improvements' ([`29898e3`](https://github.com/Byron/gitoxide/commit/29898e3010bd3332418c683f2ac96aff5c8e72fa))
+    - `Reference::remote_name()` now also provides valid remote names for local tracking branches. ([`6ac2867`](https://github.com/Byron/gitoxide/commit/6ac28673550ccd0b85b7fd2b191fa6049bbe481e))
+    - Add `Reference::peel_to_id_in_place_packed()` to allow passing a packed-buffer snapshot. ([`c612440`](https://github.com/Byron/gitoxide/commit/c612440bbfa2d5a2c033f28805eda0661009469d))
+    - Do not automatically use a parallel directory walk. ([`6f2eb91`](https://github.com/Byron/gitoxide/commit/6f2eb910f88ab8a61961efffd6d946d95927d8b8))
+    - Add `remote::Names` as shortcut to the value returned for all remote names. ([`7c8f409`](https://github.com/Byron/gitoxide/commit/7c8f409bfa2066562930981b2d072245e5dca88e))
+    - Merge branch 'ag/jiff' ([`5871fb1`](https://github.com/Byron/gitoxide/commit/5871fb130b1a603c1e768f4b2371ac9d7cc56330))
+    - Assure the next release is breaking ([`9fd1090`](https://github.com/Byron/gitoxide/commit/9fd10905449a41cdda5eb2764e4d45d314de9c04))
+    - Release gix-credentials v0.24.4 ([`f6a4eb9`](https://github.com/Byron/gitoxide/commit/f6a4eb98740fe4151e293d53a578233119307a58))
+    - Merge branch 'fix-clean' ([`33eacfb`](https://github.com/Byron/gitoxide/commit/33eacfbaace2021043e2b5d72dcb9293af6c4020))
+    - Adapt to changes in `gix-dir` ([`37c2852`](https://github.com/Byron/gitoxide/commit/37c2852a1fdbc13ff9e76db6f60224b4cb5f75ab))
+</details>
+
 ## 0.64.0 (2024-07-23)
 
 <csr-id-d9a813fdd2cac522999dccb2dbff84c6a50735a2/>
@@ -70,7 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 52 commits contributed to the release over the course of 58 calendar days.
+ - 53 commits contributed to the release over the course of 58 calendar days.
  - 62 days passed between releases.
  - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#1405](https://github.com/Byron/gitoxide/issues/1405), [#1428](https://github.com/Byron/gitoxide/issues/1428)
@@ -92,6 +201,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#1428](https://github.com/Byron/gitoxide/issues/1428)**
     - Make sure that `refs/heads/HEAD` isn't considered conflicting ([`40d1881`](https://github.com/Byron/gitoxide/commit/40d18816a85c41eb2b9075752b092ae68f4d979c))
  * **Uncategorized**
+    - Release gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`0e8508a`](https://github.com/Byron/gitoxide/commit/0e8508a629c74068a1e667ea4222c3e69ae0b861))
     - Release gix-actor v0.31.5, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`6232824`](https://github.com/Byron/gitoxide/commit/6232824301847a9786dea0b926796a3187493587))
     - Release gix-glob v0.16.4, gix-attributes v0.22.3, gix-command v0.3.8, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`a1b73a6`](https://github.com/Byron/gitoxide/commit/a1b73a67c19d9102a2c5a7f574a7a53a86d0094c))
     - Update manifests (by cargo-smart-release) ([`0470df3`](https://github.com/Byron/gitoxide/commit/0470df3b8ebb136b219f0057f1e9a7031975cce5))

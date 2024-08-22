@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-1257fbdd0f54eafde2546f2140e945d11fb0eb6a/> prevent terminal windows from popping up if code is run from a graphical UI on Windows
+ - <csr-id-6eb4ea6cf27b2feb3edb9dbf754393b0c7d272fd/> Adjust `gix clean` warning and help for worktree fix
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 27 calendar days.
+ - 28 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'improvements' ([`242fedc`](https://github.com/Byron/gitoxide/commit/242fedc973c56b6c1b6f150af99dda972a67f547))
+    - Use improved gix-diff API for better buffer handling ([`f944e49`](https://github.com/Byron/gitoxide/commit/f944e49ec97b6e9dcffab8606ca0b46e343d7e55))
+    - Merge pull request #1511 from joshtriplett/upgrade-sysinfo ([`9d7da54`](https://github.com/Byron/gitoxide/commit/9d7da54700265389cde88496d2f92a84d3cd3043))
+    - Upgrade sysinfo from 0.30 to 0.31 ([`b7f4de4`](https://github.com/Byron/gitoxide/commit/b7f4de455d01fd0e4d711822b584765620ea879a))
+    - Merge branch 'push-ysnqkzlzwuwq' ([`e2c747d`](https://github.com/Byron/gitoxide/commit/e2c747d9049bc4a4975de2fd780e8b1fb862fc09))
+    - Prevent terminal windows from popping up if code is run from a graphical UI on Windows ([`1257fbd`](https://github.com/Byron/gitoxide/commit/1257fbdd0f54eafde2546f2140e945d11fb0eb6a))
+    - Merge branch 'upgrades' ([`1d37bf6`](https://github.com/Byron/gitoxide/commit/1d37bf6a773d56eea9003aa626ced413e8e0eaa3))
+    - Upgrade `rusqlite` to the latest version ([`51c4706`](https://github.com/Byron/gitoxide/commit/51c4706db61348531759686c3d6b805b72bcdb6b))
+    - Adjust `gix clean` warning and help for worktree fix ([`6eb4ea6`](https://github.com/Byron/gitoxide/commit/6eb4ea6cf27b2feb3edb9dbf754393b0c7d272fd))
+    - Warn about hidden worktrees as well as separate repos ([`8c0448f`](https://github.com/Byron/gitoxide/commit/8c0448f6c4384b07d57e6c0633e3f766d54d2ce2))
+</details>
+
+## 0.39.1 (2024-07-25)
+
+### New Features
+
+ - <csr-id-c7213bcf2cf6be4058a78dbd86bbab4c5ad4afa7/> support for listing worktrees with `gix worktree list`
+
+### Bug Fixes
+
+ - <csr-id-1772f88882824b92fd233bc2148c4ad123740096/> avoid `as_ref()` call as `bstr` could break downstream with new impls
+   As `bstr` adds a new implementation of `AsRef`, the `as_ref()` call becomes
+   ambiguous which will then break `gitoxide`.
+   
+   Now `as_ref()` is avoided in favor of a method that can't fail.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 1 day passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1466](https://github.com/Byron/gitoxide/issues/1466)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1466](https://github.com/Byron/gitoxide/issues/1466)**
+    - Prepare manual release of `gitoxide-core` ([`8b09cf2`](https://github.com/Byron/gitoxide/commit/8b09cf254e8e376907b9e26d172cb9adf98f4d6e))
+    - Avoid `as_ref()` call as `bstr` could break downstream with new impls ([`1772f88`](https://github.com/Byron/gitoxide/commit/1772f88882824b92fd233bc2148c4ad123740096))
+ * **Uncategorized**
+    - Merge branch 'fix-clean' ([`33eacfb`](https://github.com/Byron/gitoxide/commit/33eacfbaace2021043e2b5d72dcb9293af6c4020))
+    - Support for listing worktrees with `gix worktree list` ([`c7213bc`](https://github.com/Byron/gitoxide/commit/c7213bcf2cf6be4058a78dbd86bbab4c5ad4afa7))
+</details>
+
 ## 0.39.0 (2024-07-23)
 
 ### New Features
@@ -20,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 58 calendar days.
+ - 21 commits contributed to the release over the course of 58 calendar days.
  - 62 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -38,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`0e8508a`](https://github.com/Byron/gitoxide/commit/0e8508a629c74068a1e667ea4222c3e69ae0b861))
     - Release gix-actor v0.31.5, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`6232824`](https://github.com/Byron/gitoxide/commit/6232824301847a9786dea0b926796a3187493587))
     - Release gix-glob v0.16.4, gix-attributes v0.22.3, gix-command v0.3.8, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`a1b73a6`](https://github.com/Byron/gitoxide/commit/a1b73a67c19d9102a2c5a7f574a7a53a86d0094c))
     - Update manifests (by cargo-smart-release) ([`0470df3`](https://github.com/Byron/gitoxide/commit/0470df3b8ebb136b219f0057f1e9a7031975cce5))

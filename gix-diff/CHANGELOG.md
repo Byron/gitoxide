@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-7f868d1e808656179a4c996ab586abceee952093/> add `blob::Platform::clear_resource_cache_keep_allocation()`.
+   It allows to keep a free-list of buffers around after clearing, to help
+   prevent re-allocating and growing bufers over and over.
+
+### Bug Fixes
+
+ - <csr-id-6990afd269c3461ae22e2821164c03a0dedc82f4/> similarity detection
+   Previously it would incorrectly count only the last batch of removed bytes, and now it will count all of them. This leads to realistic results with complex diffs, even though it's probably still not en-par with Git which uses more complex heuristics.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 27 calendar days.
+ - 29 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#1524](https://github.com/Byron/gitoxide/issues/1524)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1524](https://github.com/Byron/gitoxide/issues/1524)**
+    - Add a real-world test to reproduce an issue discovered in `jj` ([`7ef1e88`](https://github.com/Byron/gitoxide/commit/7ef1e886e67d7754ecd0e6ecabcee945c28c1c3f))
+ * **Uncategorized**
+    - Similarity detection ([`6990afd`](https://github.com/Byron/gitoxide/commit/6990afd269c3461ae22e2821164c03a0dedc82f4))
+    - Fix similarity detection ([`f8c5d9c`](https://github.com/Byron/gitoxide/commit/f8c5d9ce87a3b6b7d0e051b1cb7de3707209c432))
+    - Merge branch 'improvements' ([`242fedc`](https://github.com/Byron/gitoxide/commit/242fedc973c56b6c1b6f150af99dda972a67f547))
+    - Add `blob::Platform::clear_resource_cache_keep_allocation()`. ([`7f868d1`](https://github.com/Byron/gitoxide/commit/7f868d1e808656179a4c996ab586abceee952093))
+    - Merge pull request #1529 from Byron/better-copy-detection ([`7b7902e`](https://github.com/Byron/gitoxide/commit/7b7902eb8478607d611030d59fa87b390ca7ee76))
+    - Merge pull request #1521 from mvlabat/fix-dir-filename-tracking ([`12251eb`](https://github.com/Byron/gitoxide/commit/12251eb052df30105538fa831e641eea557f13d8))
+    - Fix dir name tracking in the FileName mode ([`63936e5`](https://github.com/Byron/gitoxide/commit/63936e5407d137d32d86a9557c3dfe378755cea0))
+    - Set the minimal version of `imara-diff` to the one that fixes a potential issue with pointers ([`55cffe4`](https://github.com/Byron/gitoxide/commit/55cffe4ecf78bfea76059b742fafaebe964a725f))
+</details>
+
 ## 0.44.1 (2024-07-23)
 
 A maintenance release without user-facing changes.
@@ -13,7 +54,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 19 commits contributed to the release over the course of 55 calendar days.
+ - 20 commits contributed to the release over the course of 55 calendar days.
  - 62 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +66,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-actor v0.31.5, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`6232824`](https://github.com/Byron/gitoxide/commit/6232824301847a9786dea0b926796a3187493587))
     - Release gix-glob v0.16.4, gix-attributes v0.22.3, gix-command v0.3.8, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`a1b73a6`](https://github.com/Byron/gitoxide/commit/a1b73a67c19d9102a2c5a7f574a7a53a86d0094c))
     - Update manifests (by cargo-smart-release) ([`0470df3`](https://github.com/Byron/gitoxide/commit/0470df3b8ebb136b219f0057f1e9a7031975cce5))
     - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))

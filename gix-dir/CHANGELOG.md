@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-31e795abf27dea8fd7dd7f59996cdd5d70398601/> Assure that worktrees in hidden directories are not deleted
+ - <csr-id-6c8850b44e288548a81db24974779f3811433fc9/> assure an ignored repository clone is for deletion is recognized as repository
+
+### New Features (BREAKING)
+
+ - <csr-id-c9cd2d258a46ba3dc93559abea9a95405e62f930/> make it possible to consider worktrees to be 'tracked'
+   That way it's possibel for them to be equivalent to submodules, which
+   would never be deleted by accident due to their 'tracked' status.
+   
+   This works by passing repository-relative paths of worktree locations
+   that are within this repository.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 28 calendar days.
+ - 29 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#1464](https://github.com/Byron/gitoxide/issues/1464), [#1469](https://github.com/Byron/gitoxide/issues/1469), [#1470](https://github.com/Byron/gitoxide/issues/1470)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1464](https://github.com/Byron/gitoxide/issues/1464)**
+    - Make it possible to consider worktrees to be 'tracked' ([`c9cd2d2`](https://github.com/Byron/gitoxide/commit/c9cd2d258a46ba3dc93559abea9a95405e62f930))
+    - Assure an ignored repository clone is for deletion is recognized as repository ([`6c8850b`](https://github.com/Byron/gitoxide/commit/6c8850b44e288548a81db24974779f3811433fc9))
+ * **[#1469](https://github.com/Byron/gitoxide/issues/1469)**
+    - Add a test to see what happens if worktrees are hidden in ignored directories ([`2bacc45`](https://github.com/Byron/gitoxide/commit/2bacc45f794d300656ca770c803a63c5df8b71fc))
+ * **[#1470](https://github.com/Byron/gitoxide/issues/1470)**
+    - Assure that worktrees in hidden directories are not deleted ([`31e795a`](https://github.com/Byron/gitoxide/commit/31e795abf27dea8fd7dd7f59996cdd5d70398601))
+ * **Uncategorized**
+    - Merge branch 'fix-clean' ([`348b9bf`](https://github.com/Byron/gitoxide/commit/348b9bf6cbf7a61b8094e5db8354376abb2e8c99))
+    - Merge branch 'fix-clean' ([`33eacfb`](https://github.com/Byron/gitoxide/commit/33eacfbaace2021043e2b5d72dcb9293af6c4020))
+</details>
+
 ## 0.6.0 (2024-07-23)
 
 ### Bug Fixes
@@ -16,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 55 calendar days.
+ - 18 commits contributed to the release over the course of 55 calendar days.
  - 62 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1458](https://github.com/Byron/gitoxide/issues/1458)
@@ -31,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Assure that worktree-roots are never considered ignored. ([`1e92d1e`](https://github.com/Byron/gitoxide/commit/1e92d1ed3f23e9de84203252d64e701e2c7fb941))
     - Add tests that show what happens with allow-lists and `/` in root ([`1ebd6c7`](https://github.com/Byron/gitoxide/commit/1ebd6c71457b292cdef97c218fb3e4176d10d502))
  * **Uncategorized**
+    - Release gix-actor v0.31.5, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`6232824`](https://github.com/Byron/gitoxide/commit/6232824301847a9786dea0b926796a3187493587))
     - Release gix-glob v0.16.4, gix-attributes v0.22.3, gix-command v0.3.8, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`a1b73a6`](https://github.com/Byron/gitoxide/commit/a1b73a67c19d9102a2c5a7f574a7a53a86d0094c))
     - Update manifests (by cargo-smart-release) ([`0470df3`](https://github.com/Byron/gitoxide/commit/0470df3b8ebb136b219f0057f1e9a7031975cce5))
     - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))

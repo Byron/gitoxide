@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-70d835b85ba22669bf9a30b209263181b35b9b40/> add `serde` support for varous reference name types.
+
+### New Features (BREAKING)
+
+ - <csr-id-16b5e7e4b34247de6e4ec70cb0fe3d77fac6abcb/> add `ReferenceExt::follow_to_object_in_place()`.
+   The missing link that makes it possible to follow to the first object
+   and then peel the object according to any preferred algorithm.
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-43d8096dcdd797fd015c177cefeb8ee1f0ae5881/> improve naming and change `Target::Peeled` to `Target::Object`.
+   This also renames `TargetRef::Peeled` to `TargetRef::Object` to make clear
+   that it's not necessarily the peeled object that is contained.
+   
+   Previously these terms were confusing due to the incorrect usage of the
+   word `peeled`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 24 calendar days.
+ - 29 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge branch 'improvements' ([`242fedc`](https://github.com/Byron/gitoxide/commit/242fedc973c56b6c1b6f150af99dda972a67f547))
+    - Add `ReferenceExt::follow_to_object_in_place()`. ([`16b5e7e`](https://github.com/Byron/gitoxide/commit/16b5e7e4b34247de6e4ec70cb0fe3d77fac6abcb))
+    - Improve naming and change `Target::Peeled` to `Target::Object`. ([`43d8096`](https://github.com/Byron/gitoxide/commit/43d8096dcdd797fd015c177cefeb8ee1f0ae5881))
+    - Merge branch 'sanitization' ([`d51f330`](https://github.com/Byron/gitoxide/commit/d51f330e9d364c6f7b068116b59bf5c0160e47af))
+    - Adapt to changes in `gix-validate` ([`b9cf0f4`](https://github.com/Byron/gitoxide/commit/b9cf0f4c3e8f2c2785f22693df82b7331cdddd66))
+    - Merge branch 'improvements' ([`7dff447`](https://github.com/Byron/gitoxide/commit/7dff44754e0fdc369f92221468fb953bad9be60a))
+    - Add `serde` support for varous reference name types. ([`70d835b`](https://github.com/Byron/gitoxide/commit/70d835b85ba22669bf9a30b209263181b35b9b40))
+    - Merge branch 'dependabot/github_actions/github-actions-c4bcf5a8e2' ([`2e00b5e`](https://github.com/Byron/gitoxide/commit/2e00b5ef6e8a15e7f0a34d54739a5cd1c986b322))
+    - Make `winnow` a workspace dependency ([`78a7e32`](https://github.com/Byron/gitoxide/commit/78a7e32c34150dece4065e513cd177356619419f))
+    - Merge branch 'ag/jiff' ([`5871fb1`](https://github.com/Byron/gitoxide/commit/5871fb130b1a603c1e768f4b2371ac9d7cc56330))
+    - Assure the next release is breaking ([`9fd1090`](https://github.com/Byron/gitoxide/commit/9fd10905449a41cdda5eb2764e4d45d314de9c04))
+</details>
+
 ## 0.45.0 (2024-07-23)
 
 <csr-id-ec1d6b44d7f65ded8ea34914350e723275121776/>
@@ -21,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release over the course of 57 calendar days.
+ - 24 commits contributed to the release over the course of 57 calendar days.
  - 57 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-actor v0.31.5, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`6232824`](https://github.com/Byron/gitoxide/commit/6232824301847a9786dea0b926796a3187493587))
     - Release gix-glob v0.16.4, gix-attributes v0.22.3, gix-command v0.3.8, gix-filter v0.11.3, gix-fs v0.11.2, gix-commitgraph v0.24.3, gix-revwalk v0.13.2, gix-traverse v0.39.2, gix-worktree-stream v0.13.1, gix-archive v0.13.2, gix-config-value v0.14.7, gix-tempfile v14.0.1, gix-ref v0.45.0, gix-sec v0.10.7, gix-config v0.38.0, gix-prompt v0.8.6, gix-url v0.27.4, gix-credentials v0.24.3, gix-ignore v0.11.3, gix-index v0.33.1, gix-worktree v0.34.1, gix-diff v0.44.1, gix-discover v0.33.0, gix-pathspec v0.7.6, gix-dir v0.6.0, gix-mailmap v0.23.5, gix-negotiate v0.13.2, gix-pack v0.51.1, gix-odb v0.61.1, gix-transport v0.42.2, gix-protocol v0.45.2, gix-revision v0.27.2, gix-refspec v0.23.1, gix-status v0.11.0, gix-submodule v0.12.0, gix-worktree-state v0.11.1, gix v0.64.0, gix-fsck v0.4.1, gitoxide-core v0.39.0, gitoxide v0.37.0 ([`a1b73a6`](https://github.com/Byron/gitoxide/commit/a1b73a67c19d9102a2c5a7f574a7a53a86d0094c))
     - Update manifests (by cargo-smart-release) ([`0470df3`](https://github.com/Byron/gitoxide/commit/0470df3b8ebb136b219f0057f1e9a7031975cce5))
     - Prepare changelog prior to release ([`99c00cc`](https://github.com/Byron/gitoxide/commit/99c00cc3ae9827555e2e1162328bc57038619d1f))

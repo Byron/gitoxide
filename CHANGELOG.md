@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-c7213bcf2cf6be4058a78dbd86bbab4c5ad4afa7/> support for listing worktrees with `gix worktree list`
+
+### Bug Fixes
+
+ - <csr-id-6eb4ea6cf27b2feb3edb9dbf754393b0c7d272fd/> Adjust `gix clean` warning and help for worktree fix
+ - <csr-id-c241422dc64f97e9dc781465ae69130a423ee501/> Clarify -r/--repositories and --skip-hidden-repositories
+   This adds information to the help text for the `git clean` options
+   `-r`/`--repositories` and `--skip-hidden-repositories` to make it
+   clearer what their relationship is, avoid creating the false
+   impression that repositories are never deleted in the absence of
+   `-r`/`--repositories`, and note that `--skip-hidden-repositories`
+   is sometimes needed to preserve not only separate repositories but
+   the (probably rarer) case of hidden nested worktrees of the current
+   repository.
+
+### Other
+
+ - <csr-id-28ac6572722f7ea31795dc0417521c70bcb6ec8f/> switch from `time` to `jiff`
+   This swaps out `time` for `jiff`. It doesn't completely remove `time`
+   from the dependency tree. The last remaining use of `time` is in
+   `prodash`, outside of the gitoxide project.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 9 commits contributed to the release over the course of 28 calendar days.
+ - 29 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #1531 from EliahKagan/progress-typos ([`25a3f1b`](https://github.com/Byron/gitoxide/commit/25a3f1b0b07c01dd44df254f46caa6f78a4d3014))
+    - Fix typos in config support info ([`b31d6b7`](https://github.com/Byron/gitoxide/commit/b31d6b79fd9bc528deaf0e3027dcaae0229ff581))
+    - Merge branch 'ag/jiff' ([`5871fb1`](https://github.com/Byron/gitoxide/commit/5871fb130b1a603c1e768f4b2371ac9d7cc56330))
+    - Switch from `time` to `jiff` ([`28ac657`](https://github.com/Byron/gitoxide/commit/28ac6572722f7ea31795dc0417521c70bcb6ec8f))
+    - Merge pull request #1471 from EliahKagan/hidden ([`a9aac4f`](https://github.com/Byron/gitoxide/commit/a9aac4f88d1d6245a3b03bd46e691697f661c114))
+    - Adjust `gix clean` warning and help for worktree fix ([`6eb4ea6`](https://github.com/Byron/gitoxide/commit/6eb4ea6cf27b2feb3edb9dbf754393b0c7d272fd))
+    - Clarify -r/--repositories and --skip-hidden-repositories ([`c241422`](https://github.com/Byron/gitoxide/commit/c241422dc64f97e9dc781465ae69130a423ee501))
+    - Merge branch 'fix-clean' ([`33eacfb`](https://github.com/Byron/gitoxide/commit/33eacfbaace2021043e2b5d72dcb9293af6c4020))
+    - Support for listing worktrees with `gix worktree list` ([`c7213bc`](https://github.com/Byron/gitoxide/commit/c7213bcf2cf6be4058a78dbd86bbab4c5ad4afa7))
+</details>
+
 ## 0.37.0 (2024-07-23)
 
 <csr-id-202f3e48a96b38d32b11d28449358c7d1f3546ff/>
