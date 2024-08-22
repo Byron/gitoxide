@@ -62,7 +62,7 @@ tempfile = "3.1.0"
 # for async-client
 async-trait = { version = "0.1.51", optional = true }
 async-net = { version = "2.0", optional = true }
-futures-lite = { workspace = true, optional = true }
+futures-lite = { version = "2.1.0", optional = true }
 async-io = { version = "2.2", optional = true }
 futures-io = { version = "0.3.16", optional = true }
 blocking = { version = "1.0.2", optional = true }
