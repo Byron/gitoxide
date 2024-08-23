@@ -64,27 +64,27 @@ struct Record {
 static GIT_CONFIG: &[Record] = &[
     Record {
         config: "core.symlinks",
-        usage: Planned("needed to handle checkouts faithfully")
+        usage: Planned("Needed to handle checkouts faithfully")
     },
     Record {
         config: "core.hideDotFiles",
-        usage: Planned("Seems useful, but needs demand from windows users")
+        usage: Planned("Seems useful, but needs demand from Windows users")
     },
     Record {
         config: "core.packedGitWindowSize",
-        usage: NotPlanned("an optimization for handling many large packs more efficiently seems unnecessary")
+        usage: NotPlanned("An optimization for handling many large packs more efficiently seems unnecessary")
     },
     Record {
         config: "core.packedGitLimit",
-        usage: NotApplicable("we target 64-bit systems only and don't use a windowing mechanism")
+        usage: NotApplicable("We target 64-bit systems only and don't use a windowing mechanism")
     },
     Record {
         config: "core.alternateRefsCommand",
-        usage: NotPlanned("there is no need as we can perform the required operation in-binary. This could happen though if there is a use-case and demand.")
+        usage: NotPlanned("There is no need as we can perform the required operation in-binary. This could happen though if there is a use-case and demand.")
     },
     Record {
         config: "core.alternateRefsPrefixes",
-        usage: NotPlanned("seems like a niche feature, but can be implemented if there is demand")
+        usage: NotPlanned("Seems like a niche feature, but can be implemented if there is demand")
     },
     Record {
         config: "core.compression",
@@ -96,23 +96,23 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.sparseCheckout",
-        usage: Planned("we want to support huge repos and be the fastest in doing so")
+        usage: Planned("We want to support huge repos and be the fastest in doing so")
     },
     Record {
         config: "core.sparseCheckoutCone",
-        usage: Planned("this is a nice improvement over sparseCheckout alone and should one day be available too")
+        usage: Planned("This is a nice improvement over 'sparseCheckout' alone and should one day be available too")
     },
     Record {
         config: "core.gitProxy",
-        usage: NotPlanned("the transport mechanism works differently enough to not support it for now, but of course it's possible to add support if there is demand")
+        usage: NotPlanned("The transport mechanism works differently enough to not support it for now, but of course it's possible to add support if there is demand")
     },
     Record {
         config: "checkout.defaultRemote",
-        usage: Planned("needed for correct checkout behaviour, similar to what git does")
+        usage: Planned("Needed for correct checkout behaviour, similar to what git does")
     },
     Record {
         config: "core.untrackedCache",
-        usage: Planned("needed for fast worktree operation")
+        usage: Planned("Needed for fast worktree operation")
     },
     Record {
         config: "checkout.guess",
@@ -120,105 +120,105 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "checkout.thresholdForParallelism",
-        usage: NotApplicable("parallelism is efficient enough to always run with benefit")
+        usage: NotApplicable("Parallelism is efficient enough to always run with benefit")
     },
     Record {
         config: "feature.manyFiles",
-        usage: Planned("big repositories are on the roadmap")
+        usage: Planned("Big repositories are on the roadmap")
     },
     Record {
         config: "core.preloadIndex",
-        usage: Planned("it's enabled by default and allows parallel stat checks - it's using a lot of CPU for just minor performance boosts though")
+        usage: Planned("It's enabled by default and allows parallel stat checks - it's using a lot of CPU for just minor performance boosts though")
     },
     Record {
         config: "commitGraph.generationVersion",
-        usage: NotPlanned("couldn't find a test that would require corrected generation numbers, even `git` has no test for this.")
+        usage: NotPlanned("Couldn't find a test that would require corrected generation numbers, even 'git' has no test for this.")
     },
     Record {
         config: "commitGraph.maxNewFilters",
-        usage: NotPlanned("can be considered when the underlying feature is actually used or needed")
+        usage: NotPlanned("Can be considered when the underlying feature is actually used or needed")
     },
     Record {
         config: "commitGraph.readChangedPaths",
-        usage: NotPlanned("can be considered when the underlying feature is actually used or needed")
+        usage: NotPlanned("Can be considered when the underlying feature is actually used or needed")
     },
     Record {
         config: "index.sparse",
-        usage: Planned("we can read sparse indices and support for it will be added early on")
+        usage: Planned("We can read sparse indices and support for it will be added early on")
     },
     Record {
         config: "merge.renormalize",
-        usage: Planned("once merging is being implemented, renormalization should be respected")
+        usage: Planned("Once merging is being implemented, renormalization should be respected")
     },
     Record {
         config: "sparse.expectFilesOutsideOfPatterns",
-        usage: Planned("a feature definitely worth having")
+        usage: Planned("A feature definitely worth having")
     },
     Record {
         config: "submodule.recurse",
-        usage: Planned("very relevant for doing the right thing during checkouts. Note that 'clone' isn't affected by it, even though we could make it so for good measure.")
+        usage: Planned("Very relevant for doing the right thing during checkouts. Note that 'clone' isn't affected by it, even though we could make it so for good measure.")
     },
     Record {
         config: "submodule.propagateBranches",
-        usage: NotPlanned("it is experimental, let's see how it pans out")
+        usage: NotPlanned("It is experimental, let's see how it pans out")
     },
     Record {
         config: "submodule.alternateLocation",
-        usage: NotPlanned("not currently supported when we clone either")
+        usage: NotPlanned("Not currently supported when we clone either")
     },
     Record {
         config: "submodule.alternateErrorStrategy",
-        usage: NotPlanned("not currently supported when we clone either")
+        usage: NotPlanned("Not currently supported when we clone either")
     },
     Record {
         config: "submodule.fetchJobs",
-        usage: Planned("relevant for fetching")
+        usage: Planned("Relevant for fetching")
     },
     Record {
         config: "branch.autoSetupRebase",
-        usage: Planned("for when we allow setting up upstream branches")
+        usage: Planned("For when we allow setting up upstream branches")
     },
     Record {
         config: "branch.<name>.rebase",
-        usage: Planned("for when we can merge, rebase should be supported")
+        usage: Planned("For when we can merge, rebase should be supported")
     },
     Record {
         config: "branch.<name>.description",
-        usage: NotPlanned("no plan to implement format-patch or request-pull summary")
+        usage: NotPlanned("No plan to implement 'format-patch' or 'request-pull' summary")
 
     },
     Record {
         config: "core.fsync",
-        usage: Planned("more safety for disk write operations is a good thing, definitely on the server")
+        usage: Planned("More safety for disk write operations is a good thing, definitely on the server")
     },
     Record {
         config: "core.fsyncMethod",
-        usage: Planned("needed to support `core.fsync`")
+        usage: Planned("Needed to support 'core.fsync'")
     },
     Record {
         config: "core.sharedRepository",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "core.createObject",
-        usage: NotPlanned("it's valuable not to do writes unless needed on the lowest level, but we hope to avoid issues by not writing duplicate objects in the first place")
+        usage: NotPlanned("It's valuable not to do writes unless needed on the lowest level, but we hope to avoid issues by not writing duplicate objects in the first place")
     },
     Record {
         config: "clone.filterSubmodules,",
-        usage: Planned("currently object filtering isn't support, a prerequisite for this, see --filter=blob:none for more"),
+        usage: Planned("Currently object filtering isn't supported, a prerequisite for this, see '--filter=blob:none' for more"),
 
     },
     Record {
         config: "clone.rejectShallow",
-        usage: Planned("probably trivial to implement once there is protocol support for shallow clones")
+        usage: Planned("Probably trivial to implement once there is protocol support for shallow clones")
     },
     Record {
         config: "receive.shallowUpdate",
-        usage: NotPlanned("it looks like a server-only setting that allows boundaries to change if refs are pushed that are outside of the boundary.")
+        usage: NotPlanned("It looks like a server-only setting that allows boundaries to change if refs are pushed that are outside of the boundary.")
     },
     Record {
         config: "fetch.recurseSubmodules",
-        usage: Planned("Seems useful for cargo as well"),
+        usage: Planned("Seems useful for 'cargo' as well"),
 
     },
     Record {
@@ -255,7 +255,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "fetch.showForcedUpdates",
-        usage: NotApplicable("we don't support advice")
+        usage: NotApplicable("We don't support advice")
     },
     Record {
         config: "fetch.output",
@@ -263,7 +263,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "remotes.<group>",
-        usage: Planned("useful for multi-remote fetches as part of the standard API, maybe just `group(name) -> Option<Vec<Remote>>`")
+        usage: Planned("Useful for multi-remote fetches as part of the standard API, maybe just 'group(name) -> Option<Vec<Remote>>'")
 
     },
     Record {
@@ -272,167 +272,167 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.sparseCheckout",
-        usage: Planned("together with 'index.sparse' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not")
+        usage: Planned("Together with 'index.sparse' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not")
     },
     Record {
         config: "core.sparseCheckoutCone",
-        usage: Planned("non-cone mode is deprecated but should still fail gracefully if encountered")
+        usage: Planned("Non-cone mode is deprecated but should still fail gracefully if encountered")
     },
     Record {
         config: "core.splitIndex",
-        usage: NotPlanned("we don't want to be able to create split indices, but we will read them. It's (somewhat) superseded by sparse indices")
+        usage: NotPlanned("We don't want to be able to create split indices, but we will read them. It's (somewhat) superseded by sparse indices")
     },
     Record {
         config: "splitIndex.maxPercentageChange",
-        usage: NotPlanned("seems like it's superseded by sparse indices")
+        usage: NotPlanned("Seems like it's superseded by sparse indices")
     },
     Record {
         config: "splitIndex.sharedIndexExpire",
-        usage: NotPlanned("seems like it's superseded by sparse indices")
+        usage: NotPlanned("Seems like it's superseded by sparse indices")
     },
     Record {
         config: "index.sparse",
-        usage: Planned("together with 'core.sparseCheckout' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not")
+        usage: Planned("Together with 'core.sparseCheckout' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not")
     },
     Record {
         config: "index.version",
-        usage: Planned("once V4 indices can be written, we need to be able to set a desired version. For now we write the smallest possible index version only.")
+        usage: Planned("Once V4 indices can be written, we need to be able to set a desired version. For now we write the smallest possible index version only.")
     },
     Record {
         config: "http.<url>.*",
-        usage: Planned("definitely needed for correctness, testing against baseline is a must")
+        usage: Planned("Definitely needed for correctness, testing against baseline is a must")
     },
     Record {
         config: "http.proxySSLCert",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.proxySSLKey",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.proxySSLCertPasswordProtected",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.proxySSLCAInfo",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.emptyAuth",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.delegation",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.cookieFile",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.saveCookies",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.curloptResolve",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslCipherList",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslCipherList",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslCert",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslKey",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslCertPasswordProtected",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslCertPasswordProtected",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslCAPath",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslBackend",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.pinnedPubkey",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.sslTry",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.maxRequests",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.minSessions",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.postBuffer",
-        usage: Planned("relevant when implementing push, we should understand how memory allocation works when streaming")
+        usage: Planned("Relevant when implementing push, we should understand how memory allocation works when streaming")
     },
     Record {
         config: "http.noEPSV",
-        usage: NotPlanned("on demand")
+        usage: NotPlanned("On demand")
     },
     Record {
         config: "http.<url>.*",
-        usage: Planned("it's a vital part of git configuration. It's unclear how to get a baseline from git for this one.")
+        usage: Planned("It's a vital part of git configuration. It's unclear how to get a baseline from 'git' for this one.")
     },
     Record {
         config: "init.templateDir",
-        usage: NotPlanned("git expects this dir to be a valid git dir - I'd find additive template dirs more interesting, or changes done afterwards procedurally. Maybe this needs a 'init_or_open' semantic to be really useful")
+        usage: NotPlanned("'git' expects this dir to be a valid git dir - I'd find additive template dirs more interesting, or changes done afterwards procedurally. Maybe this needs a 'init_or_open' semantic to be really useful")
     },
     Record {
         config: "sparse.expectFilesOutsideOfPatterns",
-        usage: NotPlanned("todo")
+        usage: NotPlanned("TODO")
     },
     Record {
         config: "remote.<name>.promisor",
-        usage: Planned("required for big monorepos, and typically used in conjunction with sparse indices")
+        usage: Planned("Required for big monorepos, and typically used in conjunction with sparse indices")
     },
     Record {
         config: "remote.<name>.partialCloneFilter",
-        usage: Planned("required for big monorepos, and typically used in conjunction with sparse indices")
+        usage: Planned("Required for big monorepos, and typically used in conjunction with sparse indices")
     },
     Record {
         config: "merge.renameLimit",
-        usage: Planned("The same as diff.renameLimit")
+        usage: Planned("The same as 'diff.renameLimit'")
     },
     Record {
         config: "merge.renames",
-        usage: Planned("The same as diff.renames")
+        usage: Planned("The same as 'diff.renames'")
     },
     Record {
         config: "status.renameLimit",
-        usage: Planned("definitely needed to do status properly, even though it doesn't have to be there for day one. The same as diff.renameLimit")
+        usage: Planned("Definitely needed to do status properly, even though it doesn't have to be there for day one. The same as 'diff.renameLimit'")
     },
     Record {
         config: "status.renames",
-        usage: Planned("the same as diff.renames")
+        usage: Planned("The same as 'diff.renames'")
     },
     Record {
         config: "transfer.credentialsInUrl",
-        usage: Planned("currently we are likely to expose passwords in errors or in other places, and it's better to by default not do that")
+        usage: Planned("Currently we are likely to expose passwords in errors or in other places, and it's better to by default not do that")
     },
     Record {
         config: "diff.*.cachetextconv",
