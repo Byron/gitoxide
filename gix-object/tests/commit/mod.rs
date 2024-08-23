@@ -170,7 +170,7 @@ fn invalid() {
     assert_eq!(
         CommitRef::from_bytes(partial_commit).unwrap_err().to_string(),
         if cfg!(feature = "verbose-object-parsing-errors") {
-            "object parsing failed at `1`\nexpected `<timestamp>`, `<name> <<email>> <timestamp> <+|-><HHMM>`, `author <signature>`"
+            "object parsing failed at `1`\nexpected `author <signature>`"
         } else {
             "object parsing failed"
         }
