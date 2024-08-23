@@ -25,7 +25,7 @@ gix-trace = { version = "^0.1.8", path = "../gix-trace" }
 bstr = { version = "1.3.0", default-features = false, features = ["std", "unicode"] }
 smallvec = "1.10.0"
 kstring = "2.0.0"
-unicode-bom.workspace = true
+unicode-bom = { version = "2.0.3" }
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 
