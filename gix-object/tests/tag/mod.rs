@@ -137,9 +137,11 @@ fn invalid() {
 }
 
 mod from_bytes {
+    use gix_actor::SignatureRef;
+    use gix_date::Time;
     use gix_object::{bstr::ByteSlice, Kind, TagRef};
 
-    use crate::{fixture_name, signature, tag::tag_fixture};
+    use crate::{fixture_name, signature, tag::tag_fixture, Sign};
 
     #[test]
     fn signed() -> crate::Result {
@@ -224,6 +226,30 @@ KLMHist5yj0sw1E4hDTyQa0=
                 target_kind: Kind::Commit,
                 message: b" \ttab\nnewline\n\nlast-with-trailer\n".as_bstr(),
                 tagger: Some(signature(1592382888)),
+                pgp_signature: None
+            }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn tagger_without_timestamp() -> crate::Result {
+        assert_eq!(
+            TagRef::from_bytes(&fixture_name("tag", "tagger-without-timestamp.txt"))?,
+            TagRef {
+                target: b"4fcd840c4935e4c7a5ea3552710a0f26b9178c24".as_bstr(),
+                name: b"ChangeLog".as_bstr(),
+                target_kind: Kind::Commit,
+                message: b"".as_bstr(),
+                tagger: Some(SignatureRef {
+                    name: b"shemminger".as_bstr(),
+                    email: b"shemminger".as_bstr(),
+                    time: Time {
+                        seconds: 0,
+                        offset: 0,
+                        sign: Sign::Plus
+                    }
+                }),
                 pgp_signature: None
             }
         );

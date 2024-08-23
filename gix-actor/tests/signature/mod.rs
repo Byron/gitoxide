@@ -105,3 +105,17 @@ fn parse_timestamp_with_trailing_digits() {
         }
     );
 }
+
+#[test]
+fn parse_missing_timestamp() {
+    let signature = gix_actor::SignatureRef::from_bytes::<()>(b"first last <name@example.com>")
+        .expect("deal with missing timestamp in signature by zeroing it");
+    assert_eq!(
+        signature,
+        SignatureRef {
+            name: "first last".into(),
+            email: "name@example.com".into(),
+            time: gix_actor::date::Time::new(0, 0),
+        }
+    );
+}
