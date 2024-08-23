@@ -6,7 +6,7 @@ pub(crate) mod function {
     use winnow::error::{ErrMode, ErrorKind};
     use winnow::stream::Stream;
     use winnow::{
-        combinator::{alt, separated_pair, terminated},
+        combinator::{alt, opt, separated_pair, terminated},
         error::{AddContext, ParserError, StrContext},
         prelude::*,
         stream::AsChar,
@@ -21,8 +21,8 @@ pub(crate) mod function {
     ) -> PResult<SignatureRef<'a>, E> {
         separated_pair(
             identity,
-            b" ",
-            (
+            opt(b" "),
+            opt((
                 terminated(take_until(0.., SPACE), take(1usize))
                     .verify_map(|v| to_signed::<SecondsSinceUnixEpoch>(v).ok())
                     .context(StrContext::Expected("<timestamp>".into())),
@@ -38,8 +38,9 @@ pub(crate) mod function {
                     .verify_map(|v| to_signed::<OffsetInSeconds>(v).ok())
                     .context(StrContext::Expected("MM".into())),
                 take_while(0.., AsChar::is_dec_digit).map(|v: &[u8]| v),
-            )
-                .map(|(time, sign, hours, minutes, trailing_digits)| {
+            ))
+            .map(|maybe_timestamp| {
+                if let Some((time, sign, hours, minutes, trailing_digits)) = maybe_timestamp {
                     let offset = if trailing_digits.is_empty() {
                         (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 }
                     } else {
@@ -50,7 +51,10 @@ pub(crate) mod function {
                         offset,
                         sign,
                     }
-                }),
+                } else {
+                    Time::new(0, 0)
+                }
+            }),
         )
         .context(StrContext::Expected("<name> <<email>> <timestamp> <+|-><HHMM>".into()))
         .map(|(identity, time)| SignatureRef {
@@ -206,12 +210,9 @@ mod tests {
         #[test]
         fn invalid_time() {
             assert_eq!(
-                        decode.parse_peek(b"hello <> abc -1215")
-                            .map_err(to_bstr_err)
-                            .expect_err("parse fails as > is missing")
-                            .to_string(),
-                        "in predicate verification at 'abc -1215'\n  0: expected `<timestamp>` at 'abc -1215'\n  1: expected `<name> <<email>> <timestamp> <+|-><HHMM>` at 'hello <> abc -1215'\n"
-                    );
+                decode.parse_peek(b"hello <> abc -1215").expect("parse to work").1,
+                signature("hello", "", 0, Sign::Plus, 0)
+            );
         }
     }
 }

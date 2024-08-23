@@ -137,9 +137,11 @@ fn invalid() {
 }
 
 mod from_bytes {
+    use gix_actor::SignatureRef;
+    use gix_date::Time;
     use gix_object::{bstr::ByteSlice, Kind, TagRef};
 
-    use crate::{fixture_name, signature, tag::tag_fixture};
+    use crate::{fixture_name, signature, tag::tag_fixture, Sign};
 
     #[test]
     fn signed() -> crate::Result {
@@ -232,15 +234,24 @@ KLMHist5yj0sw1E4hDTyQa0=
 
     #[test]
     fn tagger_without_timestamp() -> crate::Result {
-        // Note: this behaviour is inconsistent with Git's
-        // Git would successfully interpret this tag and set the timestamp to 0
-        // See https://github.com/git/git/blob/3a7362eb9fad0c4838f5cfaa95ed3c51a4c18d93/tag.c#L116
         assert_eq!(
-            format!(
-                "{:?}",
-                TagRef::from_bytes(&fixture_name("tag", "tagger-without-timestamp.txt"))
-            ),
-            "Err(Error { inner: () })".to_string()
+            TagRef::from_bytes(&fixture_name("tag", "tagger-without-timestamp.txt"))?,
+            TagRef {
+                target: b"4fcd840c4935e4c7a5ea3552710a0f26b9178c24".as_bstr(),
+                name: b"ChangeLog".as_bstr(),
+                target_kind: Kind::Commit,
+                message: b"".as_bstr(),
+                tagger: Some(SignatureRef {
+                    name: b"shemminger".as_bstr(),
+                    email: b"shemminger".as_bstr(),
+                    time: Time {
+                        seconds: 0,
+                        offset: 0,
+                        sign: Sign::Plus
+                    }
+                }),
+                pgp_signature: None
+            }
         );
         Ok(())
     }
