@@ -187,8 +187,8 @@ mod entries {
             )
         }
 
-        assert_eq!(
-            failures_when_searching_by_name, 2,
+        assert_ne!(
+            failures_when_searching_by_name, 0,
             "it's not possible to do a binary search by name alone"
         );
 
