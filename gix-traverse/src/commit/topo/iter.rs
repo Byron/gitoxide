@@ -180,7 +180,7 @@ where
 
     fn collect_parents(&mut self, id: &oid) -> Result<SmallVec<[(ObjectId, GenAndCommitTime); 1]>, Error> {
         collect_parents(
-            self.commit_graph.as_ref(),
+            &mut self.commit_graph,
             &self.find,
             id,
             matches!(self.parents, Parents::First),
@@ -193,7 +193,7 @@ where
         &mut self,
         id: &oid,
     ) -> Result<SmallVec<[(ObjectId, GenAndCommitTime); 1]>, Error> {
-        collect_parents(self.commit_graph.as_ref(), &self.find, id, false, &mut self.buf)
+        collect_parents(&mut self.commit_graph, &self.find, id, false, &mut self.buf)
     }
 
     fn pop_commit(&mut self) -> Option<Result<Info, Error>> {
@@ -236,7 +236,7 @@ where
 }
 
 fn collect_parents<Find>(
-    cache: Option<&gix_commitgraph::Graph>,
+    cache: &mut Option<gix_commitgraph::Graph>,
     f: Find,
     id: &oid,
     first_only: bool,
@@ -246,7 +246,7 @@ where
     Find: gix_object::Find,
 {
     let mut parents = SmallVec::<[(ObjectId, GenAndCommitTime); 1]>::new();
-    match find(cache, &f, id, buf)? {
+    match find(cache.as_ref(), &f, id, buf)? {
         Either::CommitRefIter(c) => {
             for token in c {
                 use gix_object::commit::ref_iter::Token as T;
@@ -265,15 +265,21 @@ where
             // Need to check the cache again. That a commit is not in the cache
             // doesn't mean a parent is not.
             for (id, gen_time) in parents.iter_mut() {
-                let commit = find(cache, &f, id, buf)?;
+                let commit = find(cache.as_ref(), &f, id, buf)?;
                 *gen_time = gen_and_commit_time(commit)?;
             }
         }
         Either::CachedCommit(c) => {
             for pos in c.iter_parents() {
+                let Ok(pos) = pos else {
+                    // drop corrupt cache and use ODB from now on.
+                    *cache = None;
+                    return collect_parents(cache, f, id, first_only, buf);
+                };
                 let parent_commit = cache
+                    .as_ref()
                     .expect("cache exists if CachedCommit was returned")
-                    .commit_at(pos?);
+                    .commit_at(pos);
                 parents.push((
                     parent_commit.id().into(),
                     (parent_commit.generation(), parent_commit.committer_timestamp() as i64),

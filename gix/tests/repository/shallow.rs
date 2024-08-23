@@ -44,7 +44,6 @@ fn yes() -> crate::Result {
 }
 
 mod traverse {
-    use gix_traverse::commit::simple::Sorting;
     use serial_test::parallel;
 
     use crate::util::{hex_to_id, named_subrepo_opts};
@@ -52,17 +51,24 @@ mod traverse {
     #[test]
     #[parallel]
     fn boundary_is_detected_triggering_no_error() -> crate::Result {
-        for toggle in [false, true] {
-            for name in ["shallow.git", "shallow"] {
-                let repo = named_subrepo_opts("make_shallow_repo.sh", name, crate::restricted())?;
-                let commits: Vec<_> = repo
-                    .head_id()?
-                    .ancestors()
-                    .use_commit_graph(toggle)
-                    .all()?
-                    .map(|c| c.map(|c| c.id))
-                    .collect::<Result<_, _>>()?;
-                assert_eq!(commits, [hex_to_id("30887839de28edf7ab66c860e5c58b4d445f6b12")]);
+        for sorting in [
+            gix::revision::walk::Sorting::BreadthFirst,
+            gix::revision::walk::Sorting::ByCommitTimeNewestFirst,
+            gix::revision::walk::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: 0 },
+        ] {
+            for toggle in [false, true] {
+                for name in ["shallow.git", "shallow"] {
+                    let repo = named_subrepo_opts("make_shallow_repo.sh", name, crate::restricted())?;
+                    let commits: Vec<_> = repo
+                        .head_id()?
+                        .ancestors()
+                        .use_commit_graph(toggle)
+                        .sorting(sorting)
+                        .all()?
+                        .map(|c| c.map(|c| c.id))
+                        .collect::<Result<_, _>>()?;
+                    assert_eq!(commits, [hex_to_id("30887839de28edf7ab66c860e5c58b4d445f6b12")]);
+                }
             }
         }
         Ok(())
@@ -91,7 +97,7 @@ mod traverse {
                     .head_id()?
                     .ancestors()
                     .use_commit_graph(toggle)
-                    .sorting(Sorting::ByCommitTimeNewestFirst)
+                    .sorting(gix::revision::walk::Sorting::ByCommitTimeNewestFirst)
                     .all()?
                     .map(|c| c.map(|c| c.id))
                     .collect::<Result<_, _>>()?;

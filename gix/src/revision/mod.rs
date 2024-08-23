@@ -8,7 +8,7 @@ pub use gix_revision as plumbing;
 ///
 #[allow(clippy::empty_docs)]
 pub mod walk;
-pub use walk::iter::Walk;
+pub use walk::iter_impl::Walk;
 
 ///
 #[cfg(feature = "revision")]

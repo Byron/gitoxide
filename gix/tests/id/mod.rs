@@ -67,8 +67,6 @@ fn display_and_debug() -> crate::Result {
 }
 
 mod ancestors {
-    use gix_traverse::commit;
-
     use crate::id::hex_to_id;
 
     #[test]
@@ -87,7 +85,7 @@ mod ancestors {
             let commits_by_commit_date = head
                 .ancestors()
                 .use_commit_graph(!use_commit_graph)
-                .sorting(commit::simple::Sorting::ByCommitTimeNewestFirst)
+                .sorting(gix::revision::walk::Sorting::ByCommitTimeNewestFirst)
                 .all()?
                 .map(|c| c.map(gix::revision::walk::Info::detach))
                 .collect::<Result<Vec<_>, _>>()?;
@@ -121,7 +119,7 @@ mod ancestors {
             let head = repo.head()?.into_peeled_id()?;
             let commits = head
                 .ancestors()
-                .sorting(commit::simple::Sorting::ByCommitTimeNewestFirst) // assure we have time set
+                .sorting(gix::revision::walk::Sorting::ByCommitTimeNewestFirst) // assure we have time set
                 .use_commit_graph(use_commit_graph)
                 .all()?
                 .collect::<Result<Vec<_>, _>>()?;
@@ -135,15 +133,37 @@ mod ancestors {
     }
 
     #[test]
+    fn prune_with_auto_cutoff() -> crate::Result {
+        let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
+        let head = repo.head()?.into_peeled_id()?;
+
+        for use_commit_graph in [false, true] {
+            let commits_graph_order = head
+                .ancestors()
+                .with_pruned(Some(hex_to_id("bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac")))
+                .use_commit_graph(use_commit_graph)
+                .all()?
+                .map(|c| c.map(|c| c.id))
+                .collect::<Result<Vec<_>, _>>()?;
+            assert_eq!(
+                commits_graph_order,
+                &[hex_to_id("288e509293165cb5630d08f4185bdf2445bf6170")],
+                "we ignore all but the first, and the cutoff takes care of that"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
     fn filtered() -> crate::Result {
         let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
         let head = repo.head()?.into_peeled_id()?;
 
         for use_commit_graph in [false, true] {
             for sorting in [
-                commit::simple::Sorting::BreadthFirst,
-                commit::simple::Sorting::ByCommitTimeNewestFirst,
-                commit::simple::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: 0 },
+                gix::revision::walk::Sorting::BreadthFirst,
+                gix::revision::walk::Sorting::ByCommitTimeNewestFirst,
+                gix::revision::walk::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: 0 },
             ] {
                 let commits_graph_order = head
                     .ancestors()
