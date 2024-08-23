@@ -17,7 +17,7 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 0..=2;
 
 pub(crate) mod function {
     use anyhow::{bail, Context};
-    use gix::{hashtable::HashMap, traverse::commit::simple::Sorting, Progress};
+    use gix::{hashtable::HashMap, revision::walk::Sorting, Progress};
     use layout::{
         backends::svg::SVGWriter,
         core::{base::Orientation, geometry::Point, style::StyleAttr},

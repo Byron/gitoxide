@@ -8,7 +8,7 @@ use clap::Parser;
 use gix::{
     bstr::{BString, ByteSlice},
     date::time::format,
-    traverse::commit::simple::Sorting,
+    revision::walk::Sorting,
 };
 
 fn main() {
