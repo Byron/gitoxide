@@ -11,8 +11,6 @@ pub enum Error {
     #[error("Internal state (bitflags) not found")]
     MissingStateUnexpected,
     #[error(transparent)]
-    CommitGraphFile(#[from] gix_commitgraph::file::commit::Error),
-    #[error(transparent)]
     ObjectDecode(#[from] gix_object::decode::Error),
     #[error(transparent)]
     Find(#[from] gix_object::find::existing_iter::Error),
