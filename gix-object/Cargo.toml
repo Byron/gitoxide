@@ -50,7 +50,7 @@ bstr = { version = "1.3.0", default-features = false, features = [
     "std",
     "unicode",
 ] }
-winnow = { version = "0.6", features = ["simd"] }
+winnow = { version = "0.6.18", features = ["simd"] }
 smallvec = { version = "1.4.0", features = ["write"] }
 serde = { version = "1.0.114", optional = true, default-features = false, features = [
     "derive",
