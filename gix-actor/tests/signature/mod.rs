@@ -105,3 +105,14 @@ fn parse_timestamp_with_trailing_digits() {
         }
     );
 }
+
+#[test]
+fn parse_missing_timestamp() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            gix_actor::SignatureRef::from_bytes::<()>(b"first last <name@example.com>")
+        ),
+        "Err(Backtrack(()))".to_string()
+    );
+}
