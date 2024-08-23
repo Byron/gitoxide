@@ -3,7 +3,7 @@ use gix_object::FindExt;
 
 use crate::{ext::ObjectIdExt, revision, Repository};
 
-/// The error returned by [`Platform::all()`].
+/// The error returned by [`Platform::all()`] and [`Platform::selected()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -13,6 +13,65 @@ pub enum Error {
     ShallowCommits(#[from] crate::shallow::open::Error),
     #[error(transparent)]
     ConfigBoolean(#[from] crate::config::boolean::Error),
+}
+
+/// Specify how to sort commits during a [revision::Walk] traversal.
+///
+/// ### Sample History
+///
+/// The following history will be referred to for explaining how the sort order works, with the number denoting the commit timestamp
+/// (*their X-alignment doesn't matter*).
+///
+/// ```text
+/// ---1----2----4----7 <- second parent of 8
+///     \              \
+///      3----5----6----8---
+/// ```
+#[derive(Default, Debug, Copy, Clone)]
+pub enum Sorting {
+    /// Commits are sorted as they are mentioned in the commit graph.
+    ///
+    /// In the *sample history* the order would be `8, 6, 7, 5, 4, 3, 2, 1`
+    ///
+    /// ### Note
+    ///
+    /// This is not to be confused with `git log/rev-list --topo-order`, which is notably different from
+    /// as it avoids overlapping branches.
+    #[default]
+    BreadthFirst,
+    /// Commits are sorted by their commit time in descending order, that is newest first.
+    ///
+    /// The sorting applies to all currently queued commit ids and thus is full.
+    ///
+    /// In the *sample history* the order would be `8, 7, 6, 4, 5, 2, 3, 1`
+    ///
+    /// # Performance
+    ///
+    /// This mode benefits greatly from having an [object cache](crate::Repository::object_cache_size) configured
+    /// to avoid having to look up each commit twice.
+    ByCommitTimeNewestFirst,
+    /// This sorting is similar to `ByCommitTimeNewestFirst`, but adds a cutoff to not return commits older than
+    /// a given time, stopping the iteration once no younger commits is queued to be traversed.
+    ///
+    /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
+    ///
+    /// In the *sample history* and a cut-off date of 4, the returned list of commits would be `8, 7, 6, 4`
+    ByCommitTimeNewestFirstCutoffOlderThan {
+        /// The amount of seconds since unix epoch to use as cut-off time.
+        seconds: gix_date::SecondsSinceUnixEpoch,
+    },
+}
+
+impl Sorting {
+    fn into_simple(self) -> Option<gix_traverse::commit::simple::Sorting> {
+        Some(match self {
+            Sorting::BreadthFirst => gix_traverse::commit::simple::Sorting::BreadthFirst,
+            Sorting::ByCommitTimeNewestFirst => gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirst,
+            Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => {
+                gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds }
+            }
+        })
+    }
 }
 
 /// Information about a commit that we obtained naturally as part of the iteration.
@@ -91,7 +150,8 @@ impl<'repo> Info<'repo> {
 pub struct Platform<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) tips: Vec<ObjectId>,
-    pub(crate) sorting: gix_traverse::commit::simple::Sorting,
+    pub(crate) prune: Vec<ObjectId>,
+    pub(crate) sorting: Sorting,
     pub(crate) parents: gix_traverse::commit::Parents,
     pub(crate) use_commit_graph: Option<bool>,
     pub(crate) commit_graph: Option<gix_commitgraph::Graph>,
@@ -106,6 +166,7 @@ impl<'repo> Platform<'repo> {
             parents: Default::default(),
             use_commit_graph: None,
             commit_graph: None,
+            prune: Vec::new(),
         }
     }
 }
@@ -113,7 +174,7 @@ impl<'repo> Platform<'repo> {
 /// Create-time builder methods
 impl<'repo> Platform<'repo> {
     /// Set the sort mode for commits to the given value. The default is to order topologically breadth-first.
-    pub fn sorting(mut self, sorting: gix_traverse::commit::simple::Sorting) -> Self {
+    pub fn sorting(mut self, sorting: Sorting) -> Self {
         self.sorting = sorting;
         self
     }
@@ -143,6 +204,37 @@ impl<'repo> Platform<'repo> {
         self.commit_graph = graph;
         self
     }
+
+    /// Prune the commit with the given `ids` such that they won't be returned, and such that none of their ancestors is returned either.
+    ///
+    /// Note that this forces the [sorting](Self::sorting) to
+    /// [`ByCommitTimeNewestFirstCutoffOlderThan`](Sorting::ByCommitTimeNewestFirstCutoffOlderThan) configured with
+    /// the oldest available commit time, ensuring that no commits older than the oldest of `ids` will be returned either.
+    ///
+    /// Also note that commits that can't be accessed or are missing are simply ignored for the purpose of obtaining the cutoff date.
+    #[doc(alias = "hide", alias = "git2")]
+    pub fn with_pruned(mut self, ids: impl IntoIterator<Item = impl Into<ObjectId>>) -> Self {
+        let mut cutoff = match self.sorting {
+            Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => Some(seconds),
+            Sorting::BreadthFirst | Sorting::ByCommitTimeNewestFirst => None,
+        };
+        for id in ids.into_iter() {
+            let id = id.into();
+            if !self.prune.contains(&id) {
+                if let Some(time) = self.repo.find_commit(id).ok().and_then(|c| c.time().ok()) {
+                    if cutoff.is_none() || cutoff > Some(time.seconds) {
+                        cutoff = time.seconds.into();
+                    }
+                }
+                self.prune.push(id);
+            }
+        }
+
+        if let Some(cutoff) = cutoff {
+            self.sorting = Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: cutoff }
+        }
+        self
+    }
 }
 
 /// Produce the iterator
@@ -162,7 +254,9 @@ impl<'repo> Platform<'repo> {
             parents,
             use_commit_graph,
             commit_graph,
+            mut prune,
         } = self;
+        prune.sort();
         Ok(revision::Walk {
             repo,
             inner: Box::new(
@@ -176,9 +270,12 @@ impl<'repo> Platform<'repo> {
                         if !filter(id) {
                             return false;
                         }
+                        let id = id.to_owned();
+                        if prune.binary_search(&id).is_ok() {
+                            return false;
+                        }
                         match shallow_commits.as_ref() {
                             Some(commits) => {
-                                let id = id.to_owned();
                                 if let Ok(idx) = grafted_parents_to_skip.binary_search(&id) {
                                     grafted_parents_to_skip.remove(idx);
                                     return false;
@@ -195,14 +292,15 @@ impl<'repo> Platform<'repo> {
                         }
                     }
                 })
-                .sorting(sorting)?
+                .sorting(sorting.into_simple().expect("for now there is nothing else"))?
                 .parents(parents)
                 .commit_graph(
                     commit_graph.or(use_commit_graph
                         .map_or_else(|| self.repo.config.may_use_commit_graph(), Ok)?
                         .then(|| self.repo.commit_graph().ok())
                         .flatten()),
-                ),
+                )
+                .map(|res| res.map_err(iter::Error::from)),
             ),
         })
     }
@@ -210,23 +308,34 @@ impl<'repo> Platform<'repo> {
     ///
     /// # Performance
     ///
-    /// It's highly recommended to set an [`object cache`][Repository::object_cache_size()] on the parent repo
+    /// It's highly recommended to set an [`object cache`](Repository::object_cache_size()) on the parent repo
     /// to greatly speed up performance if the returned id is supposed to be looked up right after.
     pub fn all(self) -> Result<revision::Walk<'repo>, Error> {
         self.selected(|_| true)
     }
 }
 
-pub(crate) mod iter {
+///
+#[allow(clippy::empty_docs)]
+pub mod iter {
+    /// The error returned by the [Walk](crate::revision::Walk) iterator.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        SimpleTraversal(#[from] gix_traverse::commit::simple::Error),
+    }
+}
+
+pub(crate) mod iter_impl {
     /// The iterator returned by [`crate::revision::walk::Platform::all()`].
     pub struct Walk<'repo> {
         pub(crate) repo: &'repo crate::Repository,
-        pub(crate) inner:
-            Box<dyn Iterator<Item = Result<gix_traverse::commit::Info, gix_traverse::commit::simple::Error>> + 'repo>,
+        pub(crate) inner: Box<dyn Iterator<Item = Result<gix_traverse::commit::Info, super::iter::Error>> + 'repo>,
     }
 
     impl<'repo> Iterator for Walk<'repo> {
-        type Item = Result<super::Info<'repo>, gix_traverse::commit::simple::Error>;
+        type Item = Result<super::Info<'repo>, super::iter::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             self.inner
