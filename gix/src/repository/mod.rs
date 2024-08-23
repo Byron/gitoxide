@@ -67,7 +67,6 @@ mod object;
 mod pathspec;
 mod reference;
 mod remote;
-#[cfg(feature = "revision")]
 mod revision;
 mod shallow;
 mod state;
