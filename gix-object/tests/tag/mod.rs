@@ -229,6 +229,21 @@ KLMHist5yj0sw1E4hDTyQa0=
         );
         Ok(())
     }
+
+    #[test]
+    fn tagger_without_timestamp() -> crate::Result {
+        // Note: this behaviour is inconsistent with Git's
+        // Git would successfully interpret this tag and set the timestamp to 0
+        // See https://github.com/git/git/blob/3a7362eb9fad0c4838f5cfaa95ed3c51a4c18d93/tag.c#L116
+        assert_eq!(
+            format!(
+                "{:?}",
+                TagRef::from_bytes(&fixture_name("tag", "tagger-without-timestamp.txt"))
+            ),
+            "Err(Error { inner: () })".to_string()
+        );
+        Ok(())
+    }
 }
 
 fn tag_fixture(offset: i32) -> TagRef<'static> {
