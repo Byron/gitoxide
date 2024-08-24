@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-sec"
 version = "0.10.8"

@@ -72,7 +72,7 @@ impl<'a, T: ReadlineBufRead + ?Sized + 'a + Unpin> ReadlineBufRead for Box<T> {
 #[async_trait(?Send)]
 impl<'a, T: ExtendedBufRead<'a> + ?Sized + 'a + Unpin> ExtendedBufRead<'a> for Box<T> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>) {
-        self.deref_mut().set_progress_handler(handle_progress)
+        self.deref_mut().set_progress_handler(handle_progress);
     }
 
     async fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>> {
@@ -80,7 +80,7 @@ impl<'a, T: ExtendedBufRead<'a> + ?Sized + 'a + Unpin> ExtendedBufRead<'a> for B
     }
 
     fn reset(&mut self, version: Protocol) {
-        self.deref_mut().reset(version)
+        self.deref_mut().reset(version);
     }
 
     fn stopped_at(&self) -> Option<MessageKind> {
@@ -113,7 +113,7 @@ impl<'a, T: AsyncRead + Unpin> ReadlineBufRead for gix_packetline::read::WithSid
 #[async_trait(?Send)]
 impl<'a, T: AsyncRead + Unpin> ExtendedBufRead<'a> for gix_packetline::read::WithSidebands<'a, T, HandleProgress<'a>> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>) {
-        self.set_progress_handler(handle_progress)
+        self.set_progress_handler(handle_progress);
     }
     async fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>> {
         match self.peek_data_line().await {

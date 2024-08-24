@@ -30,7 +30,7 @@ mod util {
         }
 
         fn consume(&mut self, amt: usize) {
-            Pin::new(&mut self.0).consume(amt)
+            Pin::new(&mut self.0).consume(amt);
         }
     }
 }

@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-negotiate"
 version = "0.15.0"

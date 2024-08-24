@@ -70,7 +70,7 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
                     }
                     let data_len = data_len + 4;
                     let len_buf = u16_to_hex(data_len as u16);
-                    *this.state = State::WriteHexLen(len_buf, 0)
+                    *this.state = State::WriteHexLen(len_buf, 0);
                 }
                 State::WriteHexLen(hex_len, written) => {
                     while *written != hex_len.len() {
@@ -81,9 +81,9 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
                         *written += n;
                     }
                     if this.prefix.is_empty() {
-                        *this.state = State::WriteData(0)
+                        *this.state = State::WriteData(0);
                     } else {
-                        *this.state = State::WritePrefix(this.prefix)
+                        *this.state = State::WritePrefix(this.prefix);
                     }
                 }
                 State::WritePrefix(buf) => {
@@ -95,7 +95,7 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
                         let (_, rest) = std::mem::take(buf).split_at(n);
                         *buf = rest;
                     }
-                    *this.state = State::WriteData(0)
+                    *this.state = State::WriteData(0);
                 }
                 State::WriteData(written) => {
                     while *written != data.len() {
@@ -110,7 +110,7 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
                         *this.state = State::Idle;
                         return Poll::Ready(Ok(written));
                     } else {
-                        *this.state = State::WriteSuffix(this.suffix)
+                        *this.state = State::WriteSuffix(this.suffix);
                     }
                 }
                 State::WriteSuffix(buf) => {

@@ -108,7 +108,7 @@ where
             parent
                 .as_mut()
                 .expect("parent is always available if we are idle")
-                .reset_with(delimiters)
+                .reset_with(delimiters);
         }
     }
 

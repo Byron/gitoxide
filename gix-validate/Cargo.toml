@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-validate"
 version = "0.9.0"

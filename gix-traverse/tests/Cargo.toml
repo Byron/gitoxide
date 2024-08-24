@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-traverse-tests"
 version = "0.0.0"
@@ -9,7 +11,7 @@ edition = "2021"
 rust-version = "1.65"
 
 [[test]]
-name ="test"
+name = "test"
 path = "traverse.rs"
 
 [dev-dependencies]

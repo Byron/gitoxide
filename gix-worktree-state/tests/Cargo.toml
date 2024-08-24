@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-worktree-state-tests"
 version = "0.0.0"

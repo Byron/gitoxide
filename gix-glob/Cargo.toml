@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-glob"
 version = "0.16.5"

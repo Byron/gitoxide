@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-worktree-stream"
 version = "0.15.0"
@@ -26,6 +28,6 @@ thiserror = "1.0.26"
 parking_lot = "0.12.1"
 
 [dev-dependencies]
-gix-testtools = { path = "../tests/tools"}
-gix-odb = { path = "../gix-odb"}
-gix-worktree = { path = "../gix-worktree", default-features = false, features = ["attributes"]}
+gix-testtools = { path = "../tests/tools" }
+gix-odb = { path = "../gix-odb" }
+gix-worktree = { path = "../gix-worktree", default-features = false, features = ["attributes"] }

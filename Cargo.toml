@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gitoxide"
 description = "A command-line application for interacting with git repositories"
@@ -311,3 +313,79 @@ features = ["document-features", "max"]
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/v{ version }/gitoxide-max-pure-v{ version }-{ target }{ archive-suffix }"
 bin-dir = "gitoxide-max-pure-v{ version }-{ target }/{ bin }{ binary-ext }"
+
+[workspace.lints.rust]
+# TODO: enable this
+# unused_qualifications = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+#
+# Reviewed and allowed lints
+enum_glob_use = "allow"  # x97
+missing_errors_doc = "allow"  # x1792
+missing_panics_doc = "allow"  # x447
+module_name_repetitions = "allow"  # x125
+must_use_candidate = "allow"  # x1696
+#
+# Lints that we may want to forbid in the future
+default_trait_access = "allow"  # x709
+doc_markdown = "allow"  # x552
+cast_possible_truncation = "allow"  # x216
+needless_pass_by_value = "allow"  # x205
+return_self_not_must_use = "allow"  # x204
+unreadable_literal = "allow"  # x169
+items_after_statements = "allow"  # x164
+single_match_else = "allow"  # x162
+too_many_lines = "allow"  # x161
+unnecessary_wraps = "allow"  # x110
+match_same_arms = "allow"  # x99
+cast_lossless = "allow"  # x91
+ignored_unit_patterns = "allow"  # x80
+used_underscore_binding = "allow"  # x75
+needless_raw_string_hashes = "allow"  # x75
+implicit_clone = "allow"  # x70
+manual_let_else = "allow"  # x64
+cast_precision_loss = "allow"  # x56
+trivially_copy_pass_by_ref = "allow"  # x43
+redundant_else = "allow"  # x42
+if_not_else = "allow"  # x37
+match_wildcard_for_single_variants = "allow"  # x35
+cast_sign_loss = "allow"  # x35
+similar_names = "allow"  # x32
+struct_excessive_bools = "allow"  # x29
+cast_possible_wrap = "allow"  # x26
+explicit_iter_loop = "allow"  # x24
+explicit_into_iter_loop = "allow"  # x22
+explicit_deref_methods = "allow"  # x22
+inconsistent_struct_constructor = "allow"  # x18
+range_plus_one = "allow"  # x17
+inefficient_to_string = "allow"  # x14
+from_iter_instead_of_collect = "allow"  # x13
+unused_self = "allow"  # x10
+many_single_char_names = "allow"  # x10
+manual_string_new = "allow"  # x10
+iter_not_returning_iterator = "allow"  # x10
+option_option = "allow"  # x9
+inline_always = "allow"  # x8
+manual_assert = "allow"  # x7
+iter_without_into_iter = "allow"  # x6
+copy_iterator = "allow"  # x6
+should_panic_without_expect = "allow"  # x5
+transmute_ptr_to_ptr = "allow"  # x4
+match_wild_err_arm = "allow"  # x4
+manual_is_variant_and = "allow"  # x4
+bool_to_int_with_if = "allow"  # x4
+struct_field_names = "allow"  # x3
+wildcard_imports = "allow"  # x2
+needless_for_each = "allow"  # x2
+naive_bytecount = "allow"  # x2
+mut_mut = "allow"  # x2
+match_bool = "allow"  # x2
+fn_params_excessive_bools = "allow"  # x2
+filter_map_next = "allow"  # x2
+checked_conversions = "allow"  # x2
+borrow_as_ptr = "allow"  # x2
+unnecessary_join = "allow"  # x1
+stable_sort_primitive = "allow"  # x1
+no_effect_underscore_binding = "allow"  # x1

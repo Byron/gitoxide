@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-lock"
 version = "14.0.0"

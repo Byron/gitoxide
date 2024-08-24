@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gitoxide-core"
 description = "The library implementing all capabilities of the gitoxide CLI"

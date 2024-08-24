@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-fsck"
 version = "0.6.0"
@@ -19,4 +21,4 @@ gix-object = { version = "^0.44.0", path = "../gix-object" }
 
 [dev-dependencies]
 gix-odb = { path = "../gix-odb" }
-gix-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools" }

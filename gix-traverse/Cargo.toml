@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-traverse"
 version = "0.41.0"

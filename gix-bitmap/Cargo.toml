@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-bitmap"
 version = "0.2.11"
@@ -17,4 +19,4 @@ test = true
 thiserror = "1.0.38"
 
 [dev-dependencies]
-gix-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools" }

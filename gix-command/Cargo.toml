@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-command"
 version = "0.3.9"

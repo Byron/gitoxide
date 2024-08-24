@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-actor"
 version = "0.32.0"

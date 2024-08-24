@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-trace"
 description = "A crate to provide minimal `tracing` support that can be turned off to zero cost"
@@ -22,10 +24,10 @@ default = []
 ##
 ## Note that this may have overhead as well, thus instrumentations should be used stategically, only providing coarse tracing by default and adding details
 ## only where needed while marking them with the appropriate level.
-tracing = [ "dep:tracing-core" ]
+tracing = ["dep:tracing-core"]
 
 ## If enabled, detailed tracing is also emitted, which can greatly increase insights but at a cost.
-tracing-detail = [ ]
+tracing-detail = []
 
 
 [dependencies]

@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-odb"
 version = "0.63.0"

@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"

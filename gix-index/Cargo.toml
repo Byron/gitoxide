@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-index"
 version = "0.35.0"

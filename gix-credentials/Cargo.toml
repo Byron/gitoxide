@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-credentials"
 version = "0.24.5"

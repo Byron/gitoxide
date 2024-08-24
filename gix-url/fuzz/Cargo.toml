@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-url-fuzz"
 version = "0.0.0"

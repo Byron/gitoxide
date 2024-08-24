@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-ref"
 version = "0.47.0"
