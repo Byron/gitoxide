@@ -90,7 +90,7 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
             cmd.creation_flags(CREATE_NO_WINDOW);
         }
         // git 2.8.0 and higher support --show-origin.
-        cmd.args(["config", "-l", "--show-origin"])
+        cmd.args(["config", "-lz", "--show-origin", "--name-only"])
             .current_dir(env::temp_dir())
             .stdin(Stdio::null())
             .stderr(Stdio::null());
@@ -138,8 +138,8 @@ pub(super) fn install_config_path() -> Option<&'static BStr> {
 
 fn first_file_from_config_with_origin(source: &BStr) -> Option<&BStr> {
     let file = source.strip_prefix(b"file:")?;
-    let end_pos = file.find_byte(b'\t')?;
-    file[..end_pos].trim_with(|c| c == '"').as_bstr().into()
+    let end_pos = file.find_byte(b'\0')?;
+    file[..end_pos].as_bstr().into()
 }
 
 /// Given `config_path` as obtained from `install_config_path()`, return the path of the git installation base.
