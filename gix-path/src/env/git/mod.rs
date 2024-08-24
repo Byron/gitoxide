@@ -89,6 +89,7 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
             const CREATE_NO_WINDOW: u32 = 0x08000000;
             cmd.creation_flags(CREATE_NO_WINDOW);
         }
+        // git 2.8.0 and higher support --show-origin.
         cmd.args(["config", "-l", "--show-origin"])
             .current_dir(env::temp_dir())
             .stdin(Stdio::null())
