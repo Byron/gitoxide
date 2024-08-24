@@ -116,13 +116,6 @@ pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Option<BString>, na
                     return Err(name::Error::RepeatedSlash);
                 }
             }
-            b'.' if previous == b'/' => {
-                if let Some(out) = out.as_mut() {
-                    out.push(b'-');
-                } else {
-                    return Err(name::Error::StartsWithDot);
-                }
-            }
             c => {
                 if *c == b'/' {
                     component_start = component_end;
