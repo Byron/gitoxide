@@ -1,53 +1,3 @@
-use std::path::Path;
-
-#[test]
-fn config_to_base_path() {
-    for (input, expected) in [
-        (
-            "/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig",
-            "/Applications/Xcode.app/Contents/Developer/usr/share/git-core",
-        ),
-        ("C:/git-sdk-64/etc/gitconfig", "C:/git-sdk-64/etc"),
-        ("C:\\ProgramData/Git/config", "C:\\ProgramData/Git"),
-        ("C:/Program Files/Git/etc/gitconfig", "C:/Program Files/Git/etc"),
-    ] {
-        assert_eq!(super::config_to_base_path(Path::new(input)), Path::new(expected));
-    }
-}
-
-#[test]
-fn first_file_from_config_with_origin() {
-    let macos =
-        "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig\0credential.helper\0file:/Users/byron/.gitconfig\0push.default\0";
-    let win_msys =
-        "file:C:/git-sdk-64/etc/gitconfig\0core.symlinks\0file:C:/git-sdk-64/etc/gitconfig\0core.autocrlf\0";
-    let win_cmd =
-        "file:C:/Program Files/Git/etc/gitconfig\0diff.astextplain.textconv\0file:C:/Program Files/Git/etc/gitconfig\0filter.lfs.clean\0";
-    let win_msys_old =
-        "file:C:\\ProgramData/Git/config\0diff.astextplain.textconv\0file:C:\\ProgramData/Git/config\0filter.lfs.clean\0";
-    let linux = "file:/home/parallels/.gitconfig\0core.excludesfile\0";
-    let bogus = "something unexpected";
-    let empty = "";
-
-    for (source, expected) in [
-        (
-            macos,
-            Some("/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig"),
-        ),
-        (win_msys, Some("C:/git-sdk-64/etc/gitconfig")),
-        (win_msys_old, Some("C:\\ProgramData/Git/config")),
-        (win_cmd, Some("C:/Program Files/Git/etc/gitconfig")),
-        (linux, Some("/home/parallels/.gitconfig")),
-        (bogus, None),
-        (empty, None),
-    ] {
-        assert_eq!(
-            super::first_file_from_config_with_origin(source.into()),
-            expected.map(Into::into)
-        );
-    }
-}
-
 #[cfg(windows)]
 mod locations {
     use std::ffi::{OsStr, OsString};
@@ -402,5 +352,54 @@ mod locations {
     #[test]
     fn alternative_locations() {
         assert!(super::super::ALTERNATIVE_LOCATIONS.is_empty());
+    }
+}
+
+use std::path::Path;
+
+#[test]
+fn first_file_from_config_with_origin() {
+    let macos =
+        "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig\0credential.helper\0file:/Users/byron/.gitconfig\0push.default\0";
+    let win_msys = "file:C:/git-sdk-64/etc/gitconfig\0core.symlinks\0file:C:/git-sdk-64/etc/gitconfig\0core.autocrlf\0";
+    let win_cmd =
+        "file:C:/Program Files/Git/etc/gitconfig\0diff.astextplain.textconv\0file:C:/Program Files/Git/etc/gitconfig\0filter.lfs.clean\0";
+    let win_msys_old =
+        "file:C:\\ProgramData/Git/config\0diff.astextplain.textconv\0file:C:\\ProgramData/Git/config\0filter.lfs.clean\0";
+    let linux = "file:/home/parallels/.gitconfig\0core.excludesfile\0";
+    let bogus = "something unexpected";
+    let empty = "";
+
+    for (source, expected) in [
+        (
+            macos,
+            Some("/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig"),
+        ),
+        (win_msys, Some("C:/git-sdk-64/etc/gitconfig")),
+        (win_msys_old, Some("C:\\ProgramData/Git/config")),
+        (win_cmd, Some("C:/Program Files/Git/etc/gitconfig")),
+        (linux, Some("/home/parallels/.gitconfig")),
+        (bogus, None),
+        (empty, None),
+    ] {
+        assert_eq!(
+            super::first_file_from_config_with_origin(source.into()),
+            expected.map(Into::into)
+        );
+    }
+}
+
+#[test]
+fn config_to_base_path() {
+    for (input, expected) in [
+        (
+            "/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig",
+            "/Applications/Xcode.app/Contents/Developer/usr/share/git-core",
+        ),
+        ("C:/git-sdk-64/etc/gitconfig", "C:/git-sdk-64/etc"),
+        ("C:\\ProgramData/Git/config", "C:\\ProgramData/Git"),
+        ("C:/Program Files/Git/etc/gitconfig", "C:/Program Files/Git/etc"),
+    ] {
+        assert_eq!(super::config_to_base_path(Path::new(input)), Path::new(expected));
     }
 }
