@@ -2689,7 +2689,6 @@ dependencies = [
  "gix-features 0.38.2",
  "gix-path 0.10.10",
  "gix-testtools",
- "home",
  "serde",
  "thiserror",
  "url",
