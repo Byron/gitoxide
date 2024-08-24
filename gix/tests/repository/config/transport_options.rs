@@ -83,7 +83,7 @@ mod http {
             assert!(
                 backend.is_none(),
                 "backed is never set as it's backend specific, rather custom options typically"
-            )
+            );
         }
         #[cfg(feature = "blocking-http-transport-curl")]
         {

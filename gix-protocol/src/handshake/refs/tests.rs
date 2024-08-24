@@ -226,7 +226,7 @@ impl<'a> futures_io::AsyncBufRead for Fixture<'a> {
     }
 
     fn consume(self: std::pin::Pin<&mut Self>, amt: usize) {
-        self.project_inner().consume(amt)
+        self.project_inner().consume(amt);
     }
 }
 
