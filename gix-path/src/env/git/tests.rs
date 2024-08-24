@@ -382,7 +382,10 @@ fn exe_info_never_from_local_scope() {
         .set("GIT_CONFIG_NOSYSTEM", "1")
         .set("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" });
     let maybe_path = super::exe_info();
-    assert!(maybe_path.is_none(), "Finds no config path if the config would be local");
+    assert!(
+        maybe_path.is_none(),
+        "Finds no config path if the config would be local"
+    );
 }
 
 #[test]
