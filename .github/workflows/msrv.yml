@@ -30,6 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
       - run: |
-          rustup toolchain install ${{ env.rust_version }} --profile minimal --no-self-update
+          rustup toolchain install ${{ env.rust_version }} nightly --profile minimal --no-self-update
           rustup default ${{ env.rust_version }}
+          cargo +nightly update -Zminimal-versions
       - run: just ci-check-msrv
