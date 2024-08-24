@@ -126,7 +126,7 @@ where
     NextFn: FnMut(&mut Stream) -> Result<Option<Entry<'_>>, gix_worktree_stream::entry::Error>,
 {
     let compression_level = match opts.format {
-        Format::Zip { compression_level } => compression_level.map(|lvl| i64::from(lvl)),
+        Format::Zip { compression_level } => compression_level.map(i64::from),
         _other => return write_stream(stream, next_entry, out, opts),
     };
 
