@@ -2215,11 +2215,12 @@ name = "gix-path"
 version = "0.10.10"
 dependencies = [
  "bstr",
+ "gix-testtools",
  "gix-trace 0.1.9",
  "home",
  "known-folders",
  "once_cell",
- "tempfile",
+ "serial_test",
  "thiserror",
  "windows 0.58.0",
  "winreg",

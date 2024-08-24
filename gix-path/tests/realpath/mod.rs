@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use bstr::ByteVec;
-use tempfile::tempdir;
+use gix_testtools::tempfile;
 
 use gix_path::{realpath::Error, realpath_opts};
 
@@ -28,7 +28,7 @@ fn fuzzed_timeout() -> crate::Result {
 
 #[test]
 fn assorted() -> crate::Result {
-    let cwd = tempdir()?;
+    let cwd = tempfile::tempdir()?;
     let cwd = cwd.path();
     let symlinks_disabled = 0;
 

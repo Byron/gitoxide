@@ -357,7 +357,10 @@ mod locations {
 
 use std::path::Path;
 
+use serial_test::serial;
+
 #[test]
+#[serial]
 fn exe_info() {
     let path = super::exe_info()
         .map(crate::from_bstring)
@@ -368,6 +371,19 @@ fn exe_info() {
         "Absolute, unless overridden such as with GIT_CONFIG_SYSTEM"
     );
     assert!(path.exists(), "Exists, since `git config` just found an entry there");
+}
+
+#[test]
+#[serial]
+fn exe_info_never_from_local_scope() {
+    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+    let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
+    let null_device = if cfg!(windows) { "NUL" } else { "/dev/null" };
+    let _env = gix_testtools::Env::new()
+        .set("GIT_CONFIG_SYSTEM", null_device)
+        .set("GIT_CONFIG_GLOBAL", null_device);
+    let info = super::exe_info();
+    assert!(info.is_none());
 }
 
 #[test]
