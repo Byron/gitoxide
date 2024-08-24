@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-testtools"
 description = "Shared code for gitoxide crates to facilitate testing"

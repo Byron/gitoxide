@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-object"
 version = "0.44.0"

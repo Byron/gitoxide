@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-dir"
 version = "0.8.0"

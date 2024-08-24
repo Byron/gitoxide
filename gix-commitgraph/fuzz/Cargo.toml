@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-commitgraph-fuzz"
 version = "0.0.0"

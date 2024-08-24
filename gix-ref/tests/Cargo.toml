@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-ref-tests"
 version = "0.0.0"
@@ -20,7 +22,7 @@ path = "refs.rs"
 [dev-dependencies]
 gix-ref = { path = ".." }
 gix-fs = { path = "../../gix-fs" }
-gix-features = { path = "../../gix-features", features = ["walkdir"]}
+gix-features = { path = "../../gix-features", features = ["walkdir"] }
 gix-testtools = { path = "../../tests/tools" }
 gix-discover = { path = "../../gix-discover" }
 gix-odb = { path = "../../gix-odb" }

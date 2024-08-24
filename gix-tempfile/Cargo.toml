@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-tempfile"
 version = "14.0.2"
@@ -54,4 +56,3 @@ libc = { version = "0.2.98", default-features = false }
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
-

@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-hashtable"
 version = "0.5.2"
@@ -15,8 +17,7 @@ doctest = false
 [dependencies]
 parking_lot = "0.12.1"
 hashbrown = { version = "0.14.0", default-features = false, features = [
-  "inline-more",
-  "raw"
+    "inline-more",
+    "raw"
 ] }
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-

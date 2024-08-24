@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-hash"
 version = "0.14.2"

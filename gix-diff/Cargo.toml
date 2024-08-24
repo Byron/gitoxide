@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-diff"
 version = "0.46.0"

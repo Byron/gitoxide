@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-submodule"
 version = "0.14.0"
@@ -23,6 +25,5 @@ bstr = { version = "1.5.0", default-features = false }
 thiserror = "1.0.44"
 
 [dev-dependencies]
-gix-testtools = { path = "../tests/tools"}
+gix-testtools = { path = "../tests/tools" }
 gix-features = { path = "../gix-features", features = ["walkdir"] }
-

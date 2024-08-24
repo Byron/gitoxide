@@ -1,3 +1,5 @@
+lints.workspace = true
+
 [package]
 name = "gix-revision-fuzz"
 version = "0.0.0"
