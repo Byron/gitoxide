@@ -48,9 +48,9 @@ pub fn parse(input: &BStr) -> Result<Url, parse::Error> {
 /// If more precise control of the resolution mechanism is needed, then use the [expand_path::with()] function.
 pub fn expand_path(user: Option<&expand_path::ForUser>, path: &BStr) -> Result<PathBuf, expand_path::Error> {
     expand_path::with(user, path, |user| match user {
-        expand_path::ForUser::Current => home::home_dir(),
+        expand_path::ForUser::Current => gix_path::env::home_dir(),
         expand_path::ForUser::Name(user) => {
-            home::home_dir().and_then(|home| home.parent().map(|home_dirs| home_dirs.join(user.to_string())))
+            gix_path::env::home_dir().and_then(|home| home.parent().map(|home_dirs| home_dirs.join(user.to_string())))
         }
     })
 }
