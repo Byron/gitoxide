@@ -25,7 +25,7 @@ fn check_missing<'a>(repo_name: &str, commits: impl IntoIterator<Item = &'a Obje
 
     let mut check = Connectivity::new(db, record_missing_and_assert_no_duplicate);
     for commit in commits.into_iter() {
-        check.check_commit(commit).expect("commit is present")
+        check.check_commit(commit).expect("commit is present");
     }
     missing
 }

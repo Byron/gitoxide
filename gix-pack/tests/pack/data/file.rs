@@ -174,7 +174,7 @@ mod decompress_entry {
     fn commit() {
         let buf = decompress_entry_at_offset(1968);
         assert_eq!(buf.as_bstr(), b"tree e90926b07092bccb7bf7da445fae6ffdfacf3eae\nauthor Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\ncommitter Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\n\nInitial commit\n".as_bstr());
-        assert_eq!(buf.len(), 187)
+        assert_eq!(buf.len(), 187);
     }
 
     #[test]
@@ -185,13 +185,13 @@ mod decompress_entry {
             b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n\nHello Other\n"
                 .as_bstr()
         );
-        assert_eq!(buf.len(), 93)
+        assert_eq!(buf.len(), 93);
     }
 
     #[test]
     fn blob_with_two_chain_links() {
         let buf = decompress_entry_at_offset(3033);
-        assert_eq!(buf.len(), 6, "it decompresses delta objects, but won't resolve them")
+        assert_eq!(buf.len(), 6, "it decompresses delta objects, but won't resolve them");
     }
 
     #[test]

@@ -185,7 +185,7 @@ mod lookup_ref_delta_objects {
             Err(input::Error::NotFound {
                 object_id
             }) if object_id == gix_hash::Kind::Sha1.null()
-        ))
+        ));
     }
 
     #[test]

@@ -107,7 +107,7 @@ fn empty_top_level_regex_are_invalid() {
     assert!(
         matches!(err, spec::parse::Error::EmptyTopLevelRegex),
         "git also can't do it, finds nothing instead. It could be the youngest commit in theory, but isn't"
-    )
+    );
 }
 
 #[test]
@@ -122,7 +122,7 @@ fn needs_suffix() {
     assert!(
         matches!(err, spec::parse::Error::MissingColonSuffix),
         "git also can't do it, finds nothing instead. It could be the youngest commit in theory, but isn't"
-    )
+    );
 }
 
 #[test]

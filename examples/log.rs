@@ -158,7 +158,7 @@ fn run(args: Args) -> anyhow::Result<()> {
     if args.reverse {
         let mut results: Vec<_> = log_iter.collect();
         results.reverse();
-        log_iter = Box::new(results.into_iter())
+        log_iter = Box::new(results.into_iter());
     }
 
     let mut log_iter = log_iter

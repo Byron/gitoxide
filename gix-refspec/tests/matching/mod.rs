@@ -53,7 +53,7 @@ pub mod baseline {
         specs: impl IntoIterator<Item = &'a str> + Clone,
         expected: impl IntoIterator<Item = &'b str>,
     ) {
-        agrees_and_applies_fixes(specs, Vec::new(), expected)
+        agrees_and_applies_fixes(specs, Vec::new(), expected);
     }
 
     pub fn agrees_and_applies_fixes<'a, 'b>(
@@ -76,17 +76,17 @@ pub mod baseline {
                     .collect(),
                 fixes: fixes.into_iter().collect(),
             },
-        )
+        );
     }
 
     pub fn of_objects_always_matches_if_the_server_has_the_object<'a, 'b>(
         specs: impl IntoIterator<Item = &'a str> + Clone,
     ) {
-        check_fetch_remote(specs, Mode::Normal { validate_err: None })
+        check_fetch_remote(specs, Mode::Normal { validate_err: None });
     }
 
     pub fn agrees_with_fetch_specs<'a>(specs: impl IntoIterator<Item = &'a str> + Clone) {
-        check_fetch_remote(specs, Mode::Normal { validate_err: None })
+        check_fetch_remote(specs, Mode::Normal { validate_err: None });
     }
 
     pub fn agrees_with_fetch_specs_validation_error<'a>(
@@ -98,7 +98,7 @@ pub mod baseline {
             Mode::Normal {
                 validate_err: Some(validate_err.into()),
             },
-        )
+        );
     }
 
     pub fn invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour<'a>(
@@ -116,7 +116,7 @@ pub mod baseline {
                 Err(err) => panic!("Unexpected parse error: {err:?}"),
             }
         }
-        assert!(saw_err, "Failed to see error when parsing specs: {err:?}")
+        assert!(saw_err, "Failed to see error when parsing specs: {err:?}");
     }
 
     /// Here we checked by hand which refs are actually written with a particular refspec
@@ -124,7 +124,7 @@ pub mod baseline {
         specs: impl IntoIterator<Item = &'a str> + Clone,
         expected: impl IntoIterator<Item = &'b str>,
     ) {
-        of_objects_with_destinations_are_written_into_given_local_branches(specs, expected)
+        of_objects_with_destinations_are_written_into_given_local_branches(specs, expected);
     }
 
     enum Mode {
@@ -212,7 +212,7 @@ pub mod baseline {
                     name: name.into(),
                     target,
                     object: None,
-                })
+                });
             } else {
                 out.last_mut().unwrap().object = Some(target);
             }
@@ -267,7 +267,7 @@ pub mod baseline {
                                 mappings.push(Mapping {
                                     remote: full_remote_ref(lhs.into()),
                                     local,
-                                })
+                                });
                             }
                         }
                     },

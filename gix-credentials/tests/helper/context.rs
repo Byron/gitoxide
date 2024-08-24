@@ -74,7 +74,7 @@ username=bob";
                 host: Some("example.com".into()),
                 ..Default::default()
             }
-        )
+        );
     }
 
     #[test]
@@ -89,7 +89,7 @@ username=bob";
                 username: Some("bob".into()),
                 ..Default::default()
             }
-        )
+        );
     }
 
     #[test]
@@ -100,7 +100,7 @@ username=bob";
                 Context::from_bytes(input.as_bytes()).unwrap().quit,
                 Some(true),
                 "{input}"
-            )
+            );
         }
         for false_value in ["0", "false", "off", "no"] {
             let input = format!("quit={false_value}");
@@ -108,7 +108,7 @@ username=bob";
                 Context::from_bytes(input.as_bytes()).unwrap().quit,
                 Some(false),
                 "{input}"
-            )
+            );
         }
     }
 

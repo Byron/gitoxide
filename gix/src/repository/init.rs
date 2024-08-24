@@ -44,7 +44,7 @@ pub(crate) fn setup_objects(objects: &mut crate::OdbHandle, config: &crate::conf
             None => match config.static_pack_cache_limit_bytes {
                 None => objects.set_pack_cache(|| Box::<gix_pack::cache::lru::StaticLinkedList<64>>::default()),
                 Some(limit) => {
-                    objects.set_pack_cache(move || Box::new(gix_pack::cache::lru::StaticLinkedList::<64>::new(limit)))
+                    objects.set_pack_cache(move || Box::new(gix_pack::cache::lru::StaticLinkedList::<64>::new(limit)));
                 }
             },
             Some(0) => objects.unset_pack_cache(),

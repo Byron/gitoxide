@@ -345,7 +345,7 @@ mod blocking_io {
                             assert!(
                                 repo.find_reference(referent).is_ok(),
                                 "if we set up a symref, the target should exist by now"
-                            )
+                            );
                         }
                         TargetRef::Object(id) => {
                             assert!(repo.objects.exists(id), "part of the fetched pack");
@@ -374,7 +374,7 @@ mod blocking_io {
                                     !r.log_exists(),
                                     "symbolic refs don't have object ids, so they can't get \
                                       into the reflog as these need previous and new oid"
-                                )
+                                );
                             }
                         }
                     }
@@ -639,7 +639,7 @@ mod blocking_io {
     fn assure_index_entries_on_disk(index: &gix::worktree::Index, work_dir: &Path) {
         for entry in index.entries() {
             let entry_path = work_dir.join(gix_path::from_bstr(entry.path(index)));
-            assert!(entry_path.is_file(), "{entry_path:?} not found on disk")
+            assert!(entry_path.is_file(), "{entry_path:?} not found on disk");
         }
     }
 

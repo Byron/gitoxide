@@ -96,7 +96,7 @@ fn changed_and_untracked_and_renamed() {
             num_similarity_checks_skipped_for_rename_tracking_due_to_limit: 0,
             num_similarity_checks_skipped_for_copy_tracking_due_to_limit: 0,
         })
-    )
+    );
 }
 
 #[test]

@@ -128,7 +128,7 @@ impl super::Store {
             assert!(
                 index.is_initialized(),
                 "BUG: after consolidating successfully, we have an initialized index"
-            )
+            );
         }
 
         progress.init(

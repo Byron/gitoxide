@@ -6,7 +6,7 @@ use crate::spec::parse::{parse, try_parse};
 fn braces_must_be_closed() {
     for unclosed_spec in ["@{something", "@{", "@{..@"] {
         let err = try_parse(unclosed_spec).unwrap_err();
-        assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == unclosed_spec[1..]))
+        assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == unclosed_spec[1..]));
     }
 }
 

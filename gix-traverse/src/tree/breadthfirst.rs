@@ -74,7 +74,7 @@ pub(crate) mod impl_ {
                         Continue => {
                             delegate.pop_path_component();
                             delegate.push_back_tracked_path_component(entry.filename);
-                            state.next.push_back(entry.oid.to_owned())
+                            state.next.push_back(entry.oid.to_owned());
                         }
                         Cancel => {
                             return Err(Error::Cancelled);

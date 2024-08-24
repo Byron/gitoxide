@@ -100,7 +100,7 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         _prev: Option<&Response>,
     ) -> io::Result<Action> {
         for wanted_ref in &self.want_refs {
-            arguments.want_ref(wanted_ref.as_ref())
+            arguments.want_ref(wanted_ref.as_ref());
         }
 
         Ok(Action::Cancel)

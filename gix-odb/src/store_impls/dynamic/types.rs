@@ -222,7 +222,7 @@ impl<T: Clone> OnDiskFile<T> {
         match std::mem::replace(&mut self.state, OnDiskFileState::Missing) {
             OnDiskFileState::Loaded(v) => self.state = OnDiskFileState::Garbage(v),
             other @ (OnDiskFileState::Garbage(_) | OnDiskFileState::Unloaded | OnDiskFileState::Missing) => {
-                self.state = other
+                self.state = other;
             }
         }
     }

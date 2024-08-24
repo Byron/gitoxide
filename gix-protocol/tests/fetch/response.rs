@@ -343,7 +343,7 @@ mod v2 {
                 Ok(_) => panic!("need error response"),
                 Err(err) => match err {
                     fetch::response::Error::UploadPack(err) => {
-                        assert_eq!(err.message, "segmentation fault\n")
+                        assert_eq!(err.message, "segmentation fault\n");
                     }
                     err => panic!("we expect upload pack errors, got {err:#?}"),
                 },

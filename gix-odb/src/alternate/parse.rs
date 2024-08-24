@@ -27,7 +27,7 @@ pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
             })
             .map_err(|_| Error::PathConversion(line.to_vec()))?
             .into_owned(),
-        )
+        );
     }
     Ok(out)
 }

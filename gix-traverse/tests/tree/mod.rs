@@ -143,7 +143,7 @@ fn breadth_first_no_location() -> crate::Result<()> {
     )?;
 
     for path in recorder.records.into_iter().map(|e| e.filepath) {
-        assert_eq!(path, "", "path should be empty as it's not tracked at all")
+        assert_eq!(path, "", "path should be empty as it's not tracked at all");
     }
     Ok(())
 }

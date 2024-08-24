@@ -23,7 +23,7 @@ fn from_tree() -> crate::Result {
         let odb = gix_odb::at(git_dir.join("objects"))?;
         let actual_state = State::from_tree(&tree_id, &odb, Default::default())?;
 
-        compare_states(&actual_state, &expected_state, fixture)
+        compare_states(&actual_state, &expected_state, fixture);
     }
     Ok(())
 }

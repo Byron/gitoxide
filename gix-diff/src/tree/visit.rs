@@ -142,6 +142,6 @@ mod tests {
         assert!(
             actual <= 46,
             "{actual} <= 46: this type shouldn't grow without us knowing"
-        )
+        );
     }
 }

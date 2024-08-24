@@ -111,7 +111,7 @@ fn streaming_parse_header_info(read: &mut dyn io::Read) -> Result<(u8, u64, usiz
         c = byte[0];
         i += 1;
         size += ((c & 0b0111_1111) as u64) << s;
-        s += 7
+        s += 7;
     }
     Ok((type_id, size, i))
 }
@@ -128,7 +128,7 @@ fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
         c = data[i];
         i += 1;
         size += ((c & 0b0111_1111) as u64) << s;
-        s += 7
+        s += 7;
     }
     (type_id, size, i)
 }

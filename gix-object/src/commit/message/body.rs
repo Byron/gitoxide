@@ -143,7 +143,7 @@ mod test_parse_trailer {
     #[test]
     fn extra_whitespace_before_token_or_value_is_error() {
         assert!(parse_single_line_trailer::<()>.parse_peek(b"foo : bar").is_err());
-        assert!(parse_single_line_trailer::<()>.parse_peek(b"foo:  bar").is_err())
+        assert!(parse_single_line_trailer::<()>.parse_peek(b"foo:  bar").is_err());
     }
 
     #[test]

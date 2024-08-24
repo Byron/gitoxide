@@ -74,7 +74,7 @@ mod encode_to_git {
         for round_trip in [RoundTripCheck::Skip, RoundTripCheck::Fail] {
             let mut buf = Vec::new();
             worktree::encode_to_git(input, encoding_rs::UTF_8, &mut buf, round_trip)?;
-            assert_eq!(buf.as_bstr(), input)
+            assert_eq!(buf.as_bstr(), input);
         }
         Ok(())
     }

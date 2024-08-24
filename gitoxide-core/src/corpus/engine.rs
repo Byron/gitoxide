@@ -100,7 +100,7 @@ impl Engine {
                     }
                     repo_progress.info(format!("with {} tasks", tasks.len()));
                     for (_, task) in tasks {
-                        repo_progress.info(format!("task '{}' ({})", task.description, task.short_name))
+                        repo_progress.info(format!("task '{}' ({})", task.description, task.short_name));
                     }
                     break 'tasks_loop;
                 }

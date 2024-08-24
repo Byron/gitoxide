@@ -11,7 +11,7 @@ mod io {
         std::thread::spawn(move || {
             writer
                 .write_all(message.as_bytes())
-                .expect("writes to work if reader is present")
+                .expect("writes to work if reader is present");
         });
 
         let mut received = String::new();
@@ -51,7 +51,7 @@ mod io {
         assert_eq!(
             reader.lines().map_while(Result::ok).collect::<Vec<_>>(),
             vec!["a", "b", "c"]
-        )
+        );
     }
 
     #[test]

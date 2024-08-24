@@ -314,7 +314,7 @@ fn from_bytes<'a, 'b>(
         }
         event => {
             if filter.map_or(true, |f| f(&event)) {
-                events.push(convert(event))
+                events.push(convert(event));
             }
         }
     })?;

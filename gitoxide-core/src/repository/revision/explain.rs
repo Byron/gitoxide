@@ -218,7 +218,7 @@ impl<'a> delegate::Kind for Explain<'a> {
 impl<'a> Delegate for Explain<'a> {
     fn done(&mut self) {
         if !self.has_implicit_anchor && self.ref_name.is_none() && self.oid_prefix.is_none() {
-            self.err = Some("Incomplete specification lacks its anchor, like a reference or object name".into())
+            self.err = Some("Incomplete specification lacks its anchor, like a reference or object name".into());
         }
     }
 }

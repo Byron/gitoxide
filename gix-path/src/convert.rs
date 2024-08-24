@@ -278,7 +278,7 @@ pub fn normalize<'a>(path: Cow<'a, Path>, current_dir: &Path) -> Option<Cow<'a, 
                 return None;
             }
         } else {
-            path.push(component)
+            path.push(component);
         }
     }
 

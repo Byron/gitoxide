@@ -38,7 +38,7 @@ impl ProgramKind {
                 if desired_version != Protocol::V1 {
                     prepare = prepare
                         .args(["-o", "SendEnv=GIT_PROTOCOL"])
-                        .env("GIT_PROTOCOL", format!("version={}", desired_version as usize))
+                        .env("GIT_PROTOCOL", format!("version={}", desired_version as usize));
                 }
                 if let Some(port) = url.port {
                     prepare = prepare.arg(format!("-p{port}"));

@@ -61,6 +61,6 @@ mod tests {
             ),
             "https://redirected.org/b/info/refs?something",
             "the tail stays the same if redirection happened"
-        )
+        );
     }
 }

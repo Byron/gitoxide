@@ -308,7 +308,7 @@ impl<H: Http> Transport<H> {
             headers.push(Cow::Owned(format!(
                 "Authorization: Basic {}",
                 base64::engine::general_purpose::STANDARD.encode(format!("{username}:{password}"))
-            )))
+            )));
         }
         Ok(())
     }
@@ -480,7 +480,7 @@ impl<H: Http, B: Unpin> HeadersThenBody<H, B> {
     fn handle_headers(&mut self) -> std::io::Result<()> {
         if let Some(headers) = self.headers.take() {
             <Transport<H>>::check_content_type(self.service, "result", headers)
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
         }
         Ok(())
     }
@@ -500,7 +500,7 @@ impl<H: Http, B: BufRead + Unpin> BufRead for HeadersThenBody<H, B> {
     }
 
     fn consume(&mut self, amt: usize) {
-        self.body.consume(amt)
+        self.body.consume(amt);
     }
 }
 
@@ -520,7 +520,7 @@ impl<H: Http, B: ReadlineBufRead + Unpin> ReadlineBufRead for HeadersThenBody<H,
 
 impl<'a, H: Http, B: ExtendedBufRead<'a> + Unpin> ExtendedBufRead<'a> for HeadersThenBody<H, B> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>) {
-        self.body.set_progress_handler(handle_progress)
+        self.body.set_progress_handler(handle_progress);
     }
 
     fn peek_data_line(&mut self) -> Option<std::io::Result<Result<&[u8], client::Error>>> {
@@ -531,7 +531,7 @@ impl<'a, H: Http, B: ExtendedBufRead<'a> + Unpin> ExtendedBufRead<'a> for Header
     }
 
     fn reset(&mut self, version: Protocol) {
-        self.body.reset(version)
+        self.body.reset(version);
     }
 
     fn stopped_at(&self) -> Option<MessageKind> {

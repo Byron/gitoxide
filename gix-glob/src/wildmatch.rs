@@ -206,7 +206,7 @@ pub(crate) mod function {
                             BACKSLASH => match p.next() {
                                 Some((_, p_ch)) => {
                                     if p_ch == t_ch {
-                                        matched = true
+                                        matched = true;
                                     } else {
                                         prev_p_ch = p_ch;
                                     }
@@ -252,7 +252,7 @@ pub(crate) mod function {
                                     || pattern[closing_bracket_idx - 1] != COLON
                                 {
                                     if t_ch == BRACKET_OPEN {
-                                        matched = true
+                                        matched = true;
                                     }
                                     if p_idx > pattern.len() {
                                         return AbortAll;

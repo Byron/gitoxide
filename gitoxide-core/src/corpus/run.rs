@@ -19,7 +19,7 @@ impl Task {
     ) {
         let start = std::time::Instant::now();
         if let Err(err) = self.execute.execute(repo, progress, threads, should_interrupt) {
-            run.error = Some(format!("{err:#?}"))
+            run.error = Some(format!("{err:#?}"));
         }
         run.duration = start.elapsed();
     }

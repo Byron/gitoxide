@@ -319,7 +319,7 @@ mod component {
                         unreachable!("{invalid:?} should not validate successfully")
                     }
                     Err(err) => {
-                        assert!(matches!(err, Error::SymlinkedGitModules))
+                        assert!(matches!(err, Error::SymlinkedGitModules));
                     }
                 }
             }

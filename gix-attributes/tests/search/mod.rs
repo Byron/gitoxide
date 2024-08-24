@@ -272,7 +272,7 @@ fn size_of_outcome() {
         std::mem::size_of::<Outcome>(),
         840,
         "it's quite big, shouldn't change without us noticing"
-    )
+    );
 }
 
 fn by_name(assignments: Vec<AssignmentRef>) -> BTreeMap<NameRef, StateRef> {

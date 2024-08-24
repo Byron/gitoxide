@@ -95,7 +95,7 @@ impl State {
                 .is_some()
             && !extension_toc.is_empty()
         {
-            extension::end_of_index_entry::write_to(out, self.object_hash, offset_to_extensions, extension_toc)?
+            extension::end_of_index_entry::write_to(out, self.object_hash, offset_to_extensions, extension_toc)?;
         }
 
         Ok(version)

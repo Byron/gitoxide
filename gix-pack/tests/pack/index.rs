@@ -47,7 +47,7 @@ mod version {
                         index
                     );
                     if let Some(candidates) = candidates {
-                        assert_eq!(candidates, index..index + 1)
+                        assert_eq!(candidates, index..index + 1);
                     }
                 }
             }

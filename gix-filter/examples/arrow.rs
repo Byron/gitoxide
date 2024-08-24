@@ -150,7 +150,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 buf.clear();
                                 buf.push_str("pathname=");
                                 buf.extend_from_slice(path);
-                                out.write_all(&buf)?
+                                out.write_all(&buf)?;
                             }
                         }
                         request.write_status(process::Status::success())?;

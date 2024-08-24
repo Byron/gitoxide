@@ -170,7 +170,7 @@ where
                                     .send(std::mem::replace(&mut chunk, Vec::with_capacity(CHUNK_SIZE)))
                                     .ok();
                             } else {
-                                chunk.push((commit_idx, first_parent, commit))
+                                chunk.push((commit_idx, first_parent, commit));
                             }
                         }
                         commit_idx += 1;

@@ -141,7 +141,7 @@ pub(crate) fn name_inner(input: &BStr, mode: Mode) -> Result<Option<BString>, na
                 }
 
                 if let Some(out) = out.as_mut() {
-                    out.push(*c)
+                    out.push(*c);
                 }
 
                 if byte_pos == last && input[component_end + 1..].ends_with_str(".lock") {

@@ -188,7 +188,7 @@ impl Ignore {
                     }
                     Err(_) => {
                         // Need one stack level per component so push and pop matches.
-                        self.stack.patterns.push(Default::default())
+                        self.stack.patterns.push(Default::default());
                     }
                 }
             }
@@ -216,7 +216,7 @@ impl Ignore {
                         }
                         Err(_) => {
                             // Need one stack level per component so push and pop matches.
-                            self.stack.patterns.push(Default::default())
+                            self.stack.patterns.push(Default::default());
                         }
                     }
                 }

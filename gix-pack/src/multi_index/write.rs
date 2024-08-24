@@ -191,12 +191,12 @@ impl multi_index::File {
             while let Some(chunk_to_write) = chunk_write.next_chunk() {
                 match chunk_to_write {
                     multi_index::chunk::index_names::ID => {
-                        multi_index::chunk::index_names::write(&index_filenames_sorted, &mut chunk_write)?
+                        multi_index::chunk::index_names::write(&index_filenames_sorted, &mut chunk_write)?;
                     }
                     multi_index::chunk::fanout::ID => multi_index::chunk::fanout::write(&entries, &mut chunk_write)?,
                     multi_index::chunk::lookup::ID => multi_index::chunk::lookup::write(&entries, &mut chunk_write)?,
                     multi_index::chunk::offsets::ID => {
-                        multi_index::chunk::offsets::write(&entries, num_large_offsets.is_some(), &mut chunk_write)?
+                        multi_index::chunk::offsets::write(&entries, num_large_offsets.is_some(), &mut chunk_write)?;
                     }
                     multi_index::chunk::large_offsets::ID => multi_index::chunk::large_offsets::write(
                         &entries,

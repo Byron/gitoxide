@@ -254,7 +254,7 @@ where
         self.write
             .write_all(&buf[..amt])
             .expect("a write to never fail - should be a memory buffer");
-        self.read.consume(amt)
+        self.read.consume(amt);
     }
 }
 

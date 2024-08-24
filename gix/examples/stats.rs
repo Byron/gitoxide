@@ -124,11 +124,11 @@ mod visit {
                 Commit => self.num_submodules += 1,
                 Blob => {
                     self.count_bytes(entry.oid);
-                    self.num_blobs += 1
+                    self.num_blobs += 1;
                 }
                 BlobExecutable => {
                     self.count_bytes(entry.oid);
-                    self.num_blobs_exec += 1
+                    self.num_blobs_exec += 1;
                 }
                 Link => self.num_links += 1,
                 Tree => unreachable!("BUG"),

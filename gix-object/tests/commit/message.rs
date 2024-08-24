@@ -151,7 +151,7 @@ mod body {
             .body()
             .expect("present"),
             BodyRef::from_bytes("hello".as_bytes())
-        )
+        );
     }
 
     #[test]
@@ -190,7 +190,7 @@ mod body {
                 token: "token".into(),
                 value: "value".into()
             }]
-        )
+        );
     }
 
     #[test]
@@ -210,7 +210,7 @@ mod body {
                     value: "d".into()
                 }
             ]
-        )
+        );
     }
 
     #[test]

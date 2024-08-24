@@ -5,7 +5,7 @@ use crate::spec::parse::{parse, try_parse};
 #[test]
 fn without_anchor_is_invalid() {
     let err = try_parse("~").unwrap_err();
-    assert!(matches!(err, spec::parse::Error::MissingTildeAnchor))
+    assert!(matches!(err, spec::parse::Error::MissingTildeAnchor));
 }
 
 #[test]

@@ -184,7 +184,7 @@ mod entries {
                 tree.bisect_entry(entry.filename, entry.mode.is_tree())
                     .expect("entry is present"),
                 entry
-            )
+            );
         }
 
         assert_ne!(
@@ -270,7 +270,7 @@ mod entry_mode {
                 "100644".into(),
             ),
         ] {
-            assert_eq!(mode.as_bytes(&mut buf), expected)
+            assert_eq!(mode.as_bytes(&mut buf), expected);
         }
     }
 }

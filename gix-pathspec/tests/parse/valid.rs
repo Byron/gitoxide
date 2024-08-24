@@ -142,7 +142,7 @@ fn empty_signatures() {
         (":():some/path", pat_with_path(":some/path")),
     ];
 
-    check_valid_inputs(inputs)
+    check_valid_inputs(inputs);
 }
 
 #[test]
@@ -165,7 +165,7 @@ fn whitespace_in_pathspec() {
         ),
     ];
 
-    check_valid_inputs(inputs)
+    check_valid_inputs(inputs);
 }
 
 #[test]
@@ -190,7 +190,7 @@ fn short_signatures() {
         ),
     ];
 
-    check_valid_inputs(inputs)
+    check_valid_inputs(inputs);
 }
 
 #[test]
@@ -286,7 +286,7 @@ fn attributes_in_signature() {
         ),
     ];
 
-    check_valid_inputs(inputs)
+    check_valid_inputs(inputs);
 }
 
 #[test]
@@ -318,7 +318,7 @@ fn attributes_with_escape_chars_in_state_values() {
         ),
     ];
 
-    check_valid_inputs(inputs)
+    check_valid_inputs(inputs);
 }
 
 fn pat_with_path(path: &str) -> NormalizedPattern {

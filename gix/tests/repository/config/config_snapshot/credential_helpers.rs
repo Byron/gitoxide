@@ -108,14 +108,14 @@ mod baseline {
     }
 
     pub fn agrees_with(url: &str) {
-        agrees_with_inner(url, false, false)
+        agrees_with_inner(url, false, false);
     }
 
     pub fn agrees_with_but_drops_default_port_in_prompt(url: &str) {
-        agrees_with_inner(url, true, false)
+        agrees_with_inner(url, true, false);
     }
     pub fn agrees_with_but_lowercases_scheme_and_host(url: &str) {
-        agrees_with_inner(url, false, true)
+        agrees_with_inner(url, false, true);
     }
 }
 

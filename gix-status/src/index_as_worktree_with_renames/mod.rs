@@ -195,7 +195,7 @@ pub(super) mod function {
                         if let Some(v) = entries_for_sorting.as_mut() {
                             v.push((change, location));
                         } else if let Some(change) = tracker.try_push_change(change, location.as_ref()) {
-                            collector.visit_entry(rewrite::change_to_entry(change, entries))
+                            collector.visit_entry(rewrite::change_to_entry(change, entries));
                         }
                     }
 
@@ -218,7 +218,7 @@ pub(super) mod function {
                                     if let Some(v) = entries_for_sorting.as_mut() {
                                         v.push(entry);
                                     } else {
-                                        collector.visit_entry(entry)
+                                        collector.visit_entry(entry);
                                     }
                                 }
                                 Some(src) => {

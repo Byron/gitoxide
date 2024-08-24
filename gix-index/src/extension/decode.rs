@@ -61,7 +61,7 @@ pub(crate) fn all(
                         // only used as a marker, if this changes we need this implementation.
                         return Err(Error::MandatoryUnimplemented { signature: mandatory });
                     }
-                    ext.is_sparse = true
+                    ext.is_sparse = true;
                 }
                 unknown => return Err(Error::MandatoryUnimplemented { signature: unknown }),
             },

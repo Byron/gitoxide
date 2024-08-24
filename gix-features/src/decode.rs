@@ -15,7 +15,7 @@ pub fn leb64_from_read(mut r: impl Read) -> Result<(u64, usize), std::io::Error>
         i += 1;
         debug_assert!(i <= 10, "Would overflow value at 11th iteration");
         value += 1;
-        value = (value << 7) + (b[0] as u64 & 0x7f)
+        value = (value << 7) + (b[0] as u64 & 0x7f);
     }
     Ok((value, i))
 }
@@ -32,7 +32,7 @@ pub fn leb64(d: &[u8]) -> (u64, usize) {
         i += 1;
         debug_assert!(i <= 10, "Would overflow value at 11th iteration");
         value += 1;
-        value = (value << 7) + (c as u64 & 0x7f)
+        value = (value << 7) + (c as u64 & 0x7f);
     }
     (value, i)
 }

@@ -5,17 +5,17 @@ use crate::parse::parse;
 
 #[test]
 fn relative_path_due_to_double_colon() {
-    assert_matches!(parse("invalid:://host.xz/path/to/repo.git/"), Err(RelativeUrl { .. }))
+    assert_matches!(parse("invalid:://host.xz/path/to/repo.git/"), Err(RelativeUrl { .. }));
 }
 
 #[test]
 fn ssh_missing_path() {
-    assert_matches!(parse("ssh://host.xz"), Err(MissingRepositoryPath { .. }))
+    assert_matches!(parse("ssh://host.xz"), Err(MissingRepositoryPath { .. }));
 }
 
 #[test]
 fn git_missing_path() {
-    assert_matches!(parse("git://host.xz"), Err(MissingRepositoryPath { .. }))
+    assert_matches!(parse("git://host.xz"), Err(MissingRepositoryPath { .. }));
 }
 
 #[test]
@@ -37,5 +37,5 @@ fn file_missing_host_path_separator() {
 
 #[test]
 fn missing_port_despite_indication() {
-    assert_matches!(parse("ssh://host.xz:"), Err(MissingRepositoryPath { .. }))
+    assert_matches!(parse("ssh://host.xz:"), Err(MissingRepositoryPath { .. }));
 }

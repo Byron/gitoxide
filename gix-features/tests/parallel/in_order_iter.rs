@@ -9,7 +9,7 @@ fn in_order_stays_in_order() {
             .collect::<Result<Vec<_>, _>>()
             .expect("infallible"),
         vec!['a', 'b', 'c']
-    )
+    );
 }
 
 #[test]
@@ -27,7 +27,7 @@ fn out_of_order_items_are_held_until_the_sequence_is_complete() {
         .collect::<Result<Vec<_>, _>>()
         .expect("infallible"),
         vec!['a', 'b', 'c', 'd']
-    )
+    );
 }
 
 #[test]

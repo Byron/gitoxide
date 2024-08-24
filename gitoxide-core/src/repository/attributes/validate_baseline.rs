@@ -215,7 +215,7 @@ pub(crate) mod function {
                                     actual: matches.iter().map(|m| m.assignment.to_owned()).collect(),
                                     expected,
                                 },
-                            ))
+                            ));
                         }
                     }
                 }
@@ -228,7 +228,7 @@ pub(crate) mod function {
                                 actual: match_.map(Into::into),
                                 expected: location,
                             },
-                        ))
+                        ));
                     }
                 }
             }

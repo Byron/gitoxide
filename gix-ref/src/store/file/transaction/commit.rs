@@ -170,7 +170,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
                         });
                     }
                 }
-                drop(lock)
+                drop(lock);
             }
         }
         Ok(updates.into_iter().map(|edit| edit.update).collect())

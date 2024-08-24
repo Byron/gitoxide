@@ -65,7 +65,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                     self.objects,
                     self.case,
                     &mut self.statistics.ignore,
-                )?
+                )?;
             }
             State::IgnoreStack(ignore) => ignore.push_directory(
                 stack.root(),
@@ -98,7 +98,7 @@ impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
                     self.mode,
                     &mut self.statistics.delegate.num_mkdir_calls,
                     *unlink_on_collision,
-                )?
+                )?;
             }
             #[cfg(feature = "attributes")]
             State::AttributesAndIgnoreStack { .. } | State::AttributesStack(_) => {}

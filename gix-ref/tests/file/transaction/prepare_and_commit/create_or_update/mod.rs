@@ -632,7 +632,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     assert!(
                         store.reflog_iter(*ref_name, &mut buf)?.is_none(),
                         "nothing is ever written if its disabled"
-                    )
+                    );
                 }
             }
         }

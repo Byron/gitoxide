@@ -123,7 +123,7 @@ impl Visit for Recorder {
 
     fn pop_path_component(&mut self) {
         if let Some(Location::Path) = self.location {
-            self.pop_element()
+            self.pop_element();
         }
     }
 

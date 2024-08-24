@@ -122,7 +122,7 @@ where
     }
 
     fn pop_path_component(&mut self) {
-        self.pop_element()
+        self.pop_element();
     }
 
     fn visit_tree(&mut self, entry: &tree::EntryRef<'_>) -> Action {

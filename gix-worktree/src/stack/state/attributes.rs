@@ -167,7 +167,7 @@ impl Attributes {
         // Need one stack level per component so push and pop matches, but only if this isn't the root level which is never popped.
         if !added && self.info_attributes.is_none() {
             self.stack
-                .add_patterns_buffer(&[], "<empty dummy>".into(), None, &mut self.collection, true)
+                .add_patterns_buffer(&[], "<empty dummy>".into(), None, &mut self.collection, true);
         }
 
         // When reading the root, always the first call, we can try to also read the `.git/info/attributes` file which is

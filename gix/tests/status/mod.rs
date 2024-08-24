@@ -38,7 +38,7 @@ mod index_worktree {
                 .status(gix::progress::Discard)?
                 .index_worktree_options_mut(|opts| {
                     opts.sorting =
-                        Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive)
+                        Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive);
                 })
                 .into_index_worktree_iter(Vec::new())?;
             let items: Vec<_> = status.by_ref().filter_map(Result::ok).collect();
@@ -53,7 +53,7 @@ mod index_worktree {
                 .status(gix::progress::Discard)?
                 .index_worktree_options_mut(|opts| {
                     opts.sorting =
-                        Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive)
+                        Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive);
                 })
                 .into_index_worktree_iter(Vec::new())?;
             let items: Vec<_> = status.filter_map(Result::ok).collect();
@@ -99,7 +99,7 @@ mod index_worktree {
                 .status(gix::progress::Discard)?
                 .index_worktree_options_mut(|opts| {
                     opts.sorting =
-                        Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive)
+                        Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive);
                 })
                 .into_index_worktree_iter(Vec::new())?;
             let items: Vec<_> = status.by_ref().filter_map(Result::ok).collect();
@@ -120,7 +120,7 @@ mod index_worktree {
                 .index_worktree_submodules(gix::status::Submodule::AsConfigured { check_dirty: true })
                 .index_worktree_options_mut(|opts| {
                     opts.sorting =
-                        Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive)
+                        Some(gix::status::plumbing::index_as_worktree_with_renames::Sorting::ByPathCaseSensitive);
                 })
                 .into_index_worktree_iter(Vec::new())?
                 .next()

@@ -516,7 +516,7 @@ fn scripted_fixture_read_only_with_args_inner(
     let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");
     if force_run || !script_result_directory.is_dir() || failure_marker.is_file() {
         if failure_marker.is_file() {
-            std::fs::remove_dir_all(&script_result_directory).map_err(|err| format!("Failed to remove '{script_result_directory:?}', please try to do that by hand. Original error: {err}"))?
+            std::fs::remove_dir_all(&script_result_directory).map_err(|err| format!("Failed to remove '{script_result_directory:?}', please try to do that by hand. Original error: {err}"))?;
         }
         std::fs::create_dir_all(&script_result_directory)?;
         let script_identity_for_archive = match args_in_hash {
@@ -534,7 +534,7 @@ fn scripted_fixture_read_only_with_args_inner(
                     archive_file_path.display(),
                     archive_id,
                     platform
-                )
+                );
             }
             Err(err) => {
                 if err.kind() != std::io::ErrorKind::NotFound {

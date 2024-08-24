@@ -61,7 +61,7 @@ pub fn from_list(
             gix::index::entry::Flags::empty(),
             gix::index::entry::Mode::FILE,
             gix::path::to_unix_separators_on_windows(path).as_ref(),
-        )
+        );
     }
     index.sort_entries();
 

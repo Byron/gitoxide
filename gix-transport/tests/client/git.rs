@@ -73,7 +73,7 @@ async fn handshake_v1_and_request() -> crate::Result {
     let mut refs = Vec::new();
     #[allow(clippy::while_let_on_iterator)] // needed in async version of test
     while let Some(line) = lines.next().await {
-        refs.push(line?)
+        refs.push(line?);
     }
     #[allow(clippy::drop_non_drop)] // needed for non-async version
     drop(lines);
@@ -187,7 +187,7 @@ async fn push_v1_simulated() -> crate::Result {
         let mut info = Vec::new();
         #[allow(clippy::while_let_on_iterator)] // needed in async version of test
         while let Some(line) = lines.next().await {
-            info.push(line?)
+            info.push(line?);
         }
         assert_eq!(
             info,
@@ -351,7 +351,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
     let mut refs = Vec::new();
     #[allow(clippy::while_let_on_iterator)] // needed in async version of test
     while let Some(line) = lines.next().await {
-        refs.push(line?)
+        refs.push(line?);
     }
     assert_eq!(
         refs,

@@ -32,9 +32,9 @@ impl std::hash::Hash for CacheKey {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         if self.use_id {
             self.id.hash(state);
-            self.is_link.hash(state)
+            self.is_link.hash(state);
         } else {
-            self.location.hash(state)
+            self.location.hash(state);
         }
     }
 }

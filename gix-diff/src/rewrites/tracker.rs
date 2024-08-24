@@ -411,12 +411,12 @@ fn estimate_involved_items(
                 }
                 ChangeKind::Deletion => {
                     if kind == visit::SourceKind::Rename {
-                        src += 1
+                        src += 1;
                     }
                 }
                 ChangeKind::Modification => {
                     if kind == visit::SourceKind::Copy {
-                        src += 1
+                        src += 1;
                     }
                 }
             }

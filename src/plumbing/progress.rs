@@ -24,12 +24,12 @@ impl Display for Usage {
             NotPlanned(reason) => write!(f, "not planned || {reason}")?,
             Planned(note) => {
                 if !note.is_empty() {
-                    write!(f, "planned || {note}")?
+                    write!(f, "planned || {note}")?;
                 }
             }
             InUse(deviation) => {
                 if !deviation.is_empty() {
-                    write!(f, "❗️❗️❗️{deviation}")?
+                    write!(f, "❗️❗️❗️{deviation}")?;
                 }
             }
         }

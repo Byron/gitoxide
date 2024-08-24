@@ -170,7 +170,7 @@ mod find_remote {
         let remote = repo.find_remote("origin").expect("present");
         assert_eq!(remote.url(Direction::Push).unwrap().path, ".");
         assert_eq!(remote.url(Direction::Fetch).unwrap().path, base_dir(&repo));
-        assert_eq!(remote.refspecs(Direction::Push), &[pushspec("refs/tags/*:refs/tags/*")])
+        assert_eq!(remote.refspecs(Direction::Push), &[pushspec("refs/tags/*:refs/tags/*")]);
     }
 
     #[test]
@@ -184,7 +184,7 @@ mod find_remote {
                 fetchspec("+refs/heads/*:refs/remotes/origin/*"),
                 fetchspec("refs/tags/*:refs/tags/*")
             ]
-        )
+        );
     }
 
     #[test]

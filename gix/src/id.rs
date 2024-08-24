@@ -121,7 +121,7 @@ mod impls {
 
     impl<'a> std::hash::Hash for Id<'a> {
         fn hash<H: Hasher>(&self, state: &mut H) {
-            self.inner.hash(state)
+            self.inner.hash(state);
         }
     }
 
@@ -203,6 +203,6 @@ mod tests {
         assert!(
             actual <= ceiling,
             "size of oid shouldn't change without notice: {actual} <= {ceiling}"
-        )
+        );
     }
 }

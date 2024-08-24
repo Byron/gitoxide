@@ -137,7 +137,7 @@ where
         match checkout_entry_handle_result(entry, entry_path, &mut errors, &mut collisions, files, bytes, ctx)? {
             entry::Outcome::Written { bytes } => {
                 bytes_written += bytes as u64;
-                files_in_chunk += 1
+                files_in_chunk += 1;
             }
             entry::Outcome::Delayed(delayed) => delayed_filter_results.push(delayed),
         }

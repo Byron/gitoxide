@@ -120,7 +120,7 @@ pub(crate) mod function {
                         gix_trace::warn!(
                             "in the working copy of '{}', CRLF will be replaced by LF next time git touches it",
                             rela_path.display()
-                        )
+                        );
                     }
                 }
             } else if stats.lone_lf > 0 && new_stats.lone_lf == 0 {
@@ -137,7 +137,7 @@ pub(crate) mod function {
                         gix_trace::warn!(
                             "in the working copy of '{}', LF will be replaced by CRLF next time git touches it",
                             rela_path.display()
-                        )
+                        );
                     }
                 }
             }

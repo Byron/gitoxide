@@ -83,7 +83,7 @@ fn size_in_memory() {
     assert!(
         actual <= 264,
         "{actual} <= 264: Prevent unexpected growth of what should be lightweight objects"
-    )
+    );
 }
 
 fn hex_to_id(hex: &str) -> ObjectId {

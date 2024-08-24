@@ -138,7 +138,7 @@ where
                 let file = std::fs::File::open(path)?;
                 protocol::write_stream(&mut buf, file, out)
             }
-        }?
+        }?;
     }
     Ok(())
 }

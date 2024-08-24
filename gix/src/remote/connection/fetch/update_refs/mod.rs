@@ -284,7 +284,7 @@ pub(crate) fn update(
             mode,
             type_change,
             edit_index,
-        })
+        });
     }
 
     for (update_index, edit_index) in edit_indices_to_validate {

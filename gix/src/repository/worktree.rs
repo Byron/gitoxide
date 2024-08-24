@@ -19,7 +19,7 @@ impl crate::Repository {
                 res.push(worktree::Proxy {
                     parent: self,
                     git_dir: worktree_git_dir,
-                })
+                });
             }
         }
         res.sort_by(|a, b| a.git_dir.cmp(&b.git_dir));

@@ -23,7 +23,7 @@ pub enum ObjectId {
 #[allow(clippy::derived_hash_with_manual_eq)]
 impl Hash for ObjectId {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write(self.as_slice())
+        state.write(self.as_slice());
     }
 }
 
