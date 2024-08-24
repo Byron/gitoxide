@@ -80,7 +80,9 @@ pub(super) static EXE_NAME: &str = "git";
 /// Invoke the git executable to obtain the origin configuration, which is cached and returned.
 ///
 /// The git executable is the one found in PATH or an alternative location.
-pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
+pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(exe_info);
+
+fn exe_info() -> Option<BString> {
     let mut cmd = git_cmd(EXE_NAME.into());
     gix_trace::debug!(cmd = ?cmd, "invoking git for installation config path");
     let cmd_output = match cmd.output() {
@@ -98,7 +100,7 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
     };
 
     first_file_from_config_with_origin(cmd_output.as_slice().into()).map(ToOwned::to_owned)
-});
+}
 
 fn git_cmd(executable: PathBuf) -> Command {
     let mut cmd = Command::new(executable);

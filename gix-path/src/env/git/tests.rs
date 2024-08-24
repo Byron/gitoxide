@@ -358,6 +358,19 @@ mod locations {
 use std::path::Path;
 
 #[test]
+fn exe_info() {
+    let path = super::exe_info()
+        .map(crate::from_bstring)
+        .expect("Nonempty config in the test environment");
+
+    assert!(
+        path.is_absolute(),
+        "Absolute, unless overridden such as with GIT_CONFIG_SYSTEM"
+    );
+    assert!(path.exists(), "Exists, since `git config` just found an entry there");
+}
+
+#[test]
 fn first_file_from_config_with_origin() {
     let macos =
         "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig\0credential.helper\0file:/Users/byron/.gitconfig\0push.default\0";
