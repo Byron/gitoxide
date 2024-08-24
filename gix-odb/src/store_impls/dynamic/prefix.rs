@@ -91,7 +91,7 @@ where
                 *snapshot = self.store.load_all_indices()?;
                 let mut obj_count = 0;
                 for index in &snapshot.indices {
-                    obj_count += index.num_objects() as u64;
+                    obj_count += u64::from(index.num_objects());
                 }
                 *count = Some(obj_count);
                 Ok(obj_count)

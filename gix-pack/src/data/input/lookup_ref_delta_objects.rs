@@ -67,7 +67,7 @@ where
         let previous_header_size = entry.header_size;
         entry.header_size = entry.header.size(entry.decompressed_size) as u16;
 
-        let change = entry.header_size as i64 - previous_header_size as i64;
+        let change = i64::from(entry.header_size) - i64::from(previous_header_size);
         entry.crc32 = Some(entry.compute_crc32());
         self.track_change(entry.pack_offset, pack_offset, change, None);
     }

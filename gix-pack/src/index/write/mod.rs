@@ -130,7 +130,7 @@ impl crate::index::File {
 
             decompressed_progress.inc_by(decompressed_size as usize);
 
-            let entry_len = header_size as u64 + compressed_size;
+            let entry_len = u64::from(header_size) + compressed_size;
             pack_entries_end = pack_offset + entry_len;
 
             let crc32 = crc32.expect("crc32 to be computed by the iterator. Caller assures correct configuration.");

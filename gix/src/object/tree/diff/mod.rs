@@ -152,8 +152,8 @@ impl<'a, 'repo> Platform<'a, 'repo> {
                 .flatten()
             {
                 files_changed += 1;
-                lines_added += counts.insertions as u64;
-                lines_removed += counts.removals as u64;
+                lines_added += u64::from(counts.insertions);
+                lines_removed += u64::from(counts.removals);
             }
 
             resource_cache.clear_resource_cache_keep_allocation();

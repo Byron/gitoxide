@@ -104,13 +104,13 @@ fn streaming_parse_header_info(read: &mut dyn io::Read) -> Result<(u8, u64, usiz
     let mut c = byte[0];
     let mut i = 1;
     let type_id = (c >> 4) & 0b0000_0111;
-    let mut size = c as u64 & 0b0000_1111;
+    let mut size = u64::from(c) & 0b0000_1111;
     let mut s = 4;
     while c & 0b1000_0000 != 0 {
         read.read_exact(&mut byte)?;
         c = byte[0];
         i += 1;
-        size += ((c & 0b0111_1111) as u64) << s;
+        size += u64::from(c & 0b0111_1111) << s;
         s += 7;
     }
     Ok((type_id, size, i))
@@ -122,12 +122,12 @@ fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
     let mut c = data[0];
     let mut i = 1;
     let type_id = (c >> 4) & 0b0000_0111;
-    let mut size = c as u64 & 0b0000_1111;
+    let mut size = u64::from(c) & 0b0000_1111;
     let mut s = 4;
     while c & 0b1000_0000 != 0 {
         c = data[i];
         i += 1;
-        size += ((c & 0b0111_1111) as u64) << s;
+        size += u64::from(c & 0b0111_1111) << s;
         s += 7;
     }
     (type_id, size, i)

@@ -115,7 +115,7 @@ pub(crate) mod at_rest {
 
     impl Flags {
         pub fn to_memory(self) -> super::Flags {
-            super::Flags::from_bits_retain(self.bits() as u32)
+            super::Flags::from_bits_retain(u32::from(self.bits()))
         }
     }
 
@@ -135,7 +135,7 @@ pub(crate) mod at_rest {
             )
         }
         pub fn to_flags(self) -> Option<super::Flags> {
-            super::Flags::from_bits((self.bits() as u32) << 16)
+            super::Flags::from_bits(u32::from(self.bits()) << 16)
         }
     }
 

@@ -115,7 +115,7 @@ impl CompareBlobs for FastEq {
         // make sure to account for racily smudged entries here so that they don't always keep
         // showing up as modified even after their contents have changed again, to a potentially
         // unmodified state. That means that we want to ignore stat.size == 0 for non_empty_blobs.
-        if entry.stat.size as u64 != worktree_file_size && (entry.id.is_empty_blob() || entry.stat.size != 0) {
+        if u64::from(entry.stat.size) != worktree_file_size && (entry.id.is_empty_blob() || entry.stat.size != 0) {
             return Ok(Some(()));
         }
         HashEq

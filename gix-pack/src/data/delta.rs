@@ -6,7 +6,7 @@ pub fn decode_header_size(d: &[u8]) -> (u64, usize) {
     let mut consumed = 0;
     for cmd in d.iter() {
         consumed += 1;
-        size |= (*cmd as u64 & 0x7f) << i;
+        size |= (u64::from(*cmd) & 0x7f) << i;
         i += 7;
         if *cmd & 0x80 == 0 {
             break;
@@ -23,31 +23,31 @@ pub fn apply(base: &[u8], mut target: &mut [u8], data: &[u8]) {
             cmd if cmd & 0b1000_0000 != 0 => {
                 let (mut ofs, mut size): (u32, u32) = (0, 0);
                 if cmd & 0b0000_0001 != 0 {
-                    ofs = data[i] as u32;
+                    ofs = u32::from(data[i]);
                     i += 1;
                 }
                 if cmd & 0b0000_0010 != 0 {
-                    ofs |= (data[i] as u32) << 8;
+                    ofs |= u32::from(data[i]) << 8;
                     i += 1;
                 }
                 if cmd & 0b0000_0100 != 0 {
-                    ofs |= (data[i] as u32) << 16;
+                    ofs |= u32::from(data[i]) << 16;
                     i += 1;
                 }
                 if cmd & 0b0000_1000 != 0 {
-                    ofs |= (data[i] as u32) << 24;
+                    ofs |= u32::from(data[i]) << 24;
                     i += 1;
                 }
                 if cmd & 0b0001_0000 != 0 {
-                    size = data[i] as u32;
+                    size = u32::from(data[i]);
                     i += 1;
                 }
                 if cmd & 0b0010_0000 != 0 {
-                    size |= (data[i] as u32) << 8;
+                    size |= u32::from(data[i]) << 8;
                     i += 1;
                 }
                 if cmd & 0b0100_0000 != 0 {
-                    size |= (data[i] as u32) << 16;
+                    size |= u32::from(data[i]) << 16;
                     i += 1;
                 }
                 if size == 0 {

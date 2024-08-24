@@ -99,7 +99,7 @@ impl File {
         let base_graph_count = data[ofs];
         ofs += 1;
 
-        let chunks = gix_chunk::file::Index::from_bytes(&data, ofs, chunk_count as u32)?;
+        let chunks = gix_chunk::file::Index::from_bytes(&data, ofs, u32::from(chunk_count))?;
 
         let base_graphs_list_offset = chunks
             .validated_usize_offset_by_id(BASE_GRAPHS_LIST_CHUNK_ID, |chunk_range| {
