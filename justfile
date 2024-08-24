@@ -24,17 +24,17 @@ clear-target:
 
 # Run cargo clippy on all crates
 clippy *clippy-args:
-    cargo clippy --all --tests --examples --benches -- {{ clippy-args }}
-    cargo clippy --all --no-default-features --features small -- {{ clippy-args }}
-    cargo clippy --all --no-default-features --features max-pure -- {{ clippy-args }}
-    cargo clippy --all --no-default-features --features lean-async --tests -- {{ clippy-args }}
+    cargo clippy --workspace --all-targets -- {{ clippy-args }}
+    cargo clippy --workspace --no-default-features --features small -- {{ clippy-args }}
+    cargo clippy --workspace --no-default-features --features max-pure -- {{ clippy-args }}
+    cargo clippy --workspace --no-default-features --features lean-async --tests -- {{ clippy-args }}
 
 # Run cargo clippy on all crates, fixing what can be fixed, and format all code
 clippy-fix:
-    cargo clippy --fix --all --tests --examples
-    cargo clippy --fix --allow-dirty --all --no-default-features --features small
-    cargo clippy --fix --allow-dirty --all --no-default-features --features max-pure
-    cargo clippy --fix --allow-dirty --all --no-default-features --features lean-async --tests
+    cargo clippy --fix --workspace --all-targets
+    cargo clippy --fix --allow-dirty --workspace --no-default-features --features small
+    cargo clippy --fix --allow-dirty --workspace --no-default-features --features max-pure
+    cargo clippy --fix --allow-dirty --workspace --no-default-features --features lean-async --tests
     cargo fmt --all
 
 # Build all code in suitable configurations

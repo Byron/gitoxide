@@ -14,7 +14,7 @@ mod _impl {
     impl Sha1 {
         /// Digest the given `bytes`.
         pub fn update(&mut self, bytes: &[u8]) {
-            self.0.update(bytes)
+            self.0.update(bytes);
         }
         /// Finalize the hash and produce a digest.
         pub fn digest(self) -> Sha1Digest {
