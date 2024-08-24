@@ -438,7 +438,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                     .compressed
                     .expect("bytes present in default configuration of streaming iter")
                     .len() as u64,
-                next_offset - entry.pack_offset - entry.header_size as u64,
+                next_offset - entry.pack_offset - u64::from(entry.header_size),
                 "we get the compressed bytes region after the head to the next entry"
             );
         }

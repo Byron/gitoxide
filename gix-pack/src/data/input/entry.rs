@@ -25,7 +25,7 @@ impl input::Entry {
     }
     /// The amount of bytes this entry may consume in a pack data file
     pub fn bytes_in_pack(&self) -> u64 {
-        self.header_size as u64 + self.compressed_size
+        u64::from(self.header_size) + self.compressed_size
     }
 
     /// Update our CRC value by recalculating it from our header and compressed data.

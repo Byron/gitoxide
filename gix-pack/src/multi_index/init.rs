@@ -93,7 +93,7 @@ impl TryFrom<&Path> for File {
             (version, object_hash, num_chunks, num_indices)
         };
 
-        let chunks = gix_chunk::file::Index::from_bytes(&data, Self::HEADER_LEN, num_chunks as u32)?;
+        let chunks = gix_chunk::file::Index::from_bytes(&data, Self::HEADER_LEN, u32::from(num_chunks))?;
 
         let index_names = chunks.data_by_id(&data, chunk::index_names::ID)?;
         let index_names = chunk::index_names::from_bytes(index_names, num_indices)?;

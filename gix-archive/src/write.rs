@@ -64,7 +64,7 @@ where
                                         out,
                                         match compression_level {
                                             None => flate2::Compression::default(),
-                                            Some(level) => flate2::Compression::new(level as u32),
+                                            Some(level) => flate2::Compression::new(u32::from(level)),
                                         },
                                     );
                                     let mut ar = tar::Builder::new(gz);
@@ -126,7 +126,7 @@ where
     NextFn: FnMut(&mut Stream) -> Result<Option<Entry<'_>>, gix_worktree_stream::entry::Error>,
 {
     let compression_level = match opts.format {
-        Format::Zip { compression_level } => compression_level.map(|lvl| lvl as i64),
+        Format::Zip { compression_level } => compression_level.map(i64::from),
         _other => return write_stream(stream, next_entry, out, opts),
     };
 

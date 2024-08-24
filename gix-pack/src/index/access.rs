@@ -37,7 +37,7 @@ impl index::File {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
                         oid: gix_hash::ObjectId::from_bytes_or_panic(oid),
-                        pack_offset: crate::read_u32(ofs) as u64,
+                        pack_offset: u64::from(crate::read_u32(ofs)),
                         crc32: None,
                     }
                 }),
@@ -97,7 +97,7 @@ impl index::File {
             }
             index::Version::V1 => {
                 let start = V1_HEADER_SIZE + index * (N32_SIZE + self.hash_len);
-                crate::read_u32(&self.data[start..][..N32_SIZE]) as u64
+                u64::from(crate::read_u32(&self.data[start..][..N32_SIZE]))
             }
         }
     }
@@ -202,7 +202,7 @@ impl index::File {
             let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;
             crate::read_u64(&self.data[from..][..N64_SIZE])
         } else {
-            ofs32 as u64
+            u64::from(ofs32)
         }
     }
 }

@@ -99,7 +99,7 @@ fn mode_from_decimal(i: &[u8]) -> Option<(u32, &[u8])> {
         if *b < b'0' || *b > b'7' {
             return None;
         }
-        mode = (mode << 3) + (b - b'0') as u32;
+        mode = (mode << 3) + u32::from(b - b'0');
         spacer_pos += 1;
     }
     if i.len() < spacer_pos {

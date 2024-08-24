@@ -21,7 +21,7 @@ impl Stat {
             check_stat, use_nsec, ..
         }: Options,
     ) -> bool {
-        match timestamp.unix_seconds().cmp(&(self.mtime.secs as i64)) {
+        match timestamp.unix_seconds().cmp(&i64::from(self.mtime.secs)) {
             Ordering::Less => true,
             Ordering::Equal if use_nsec && check_stat => timestamp.nanoseconds() <= self.mtime.nsecs,
             Ordering::Equal => true,

@@ -427,7 +427,7 @@ impl<'index> State<'_, 'index> {
         let file_size_bytes = if cfg!(windows) && metadata.is_symlink() {
             // symlinks on Windows seem to have a length of zero, so just pretend
             // they have the correct length to avoid short-cutting, and enforce a full buffer check.
-            entry.stat.size as u64
+            u64::from(entry.stat.size)
         } else {
             metadata.len()
         };

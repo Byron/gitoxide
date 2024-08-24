@@ -595,8 +595,11 @@ fn racy_git() {
     // This case doesn't happen in the realworld (except for file corruption) but
     // makes sure we are actually hitting the right codepath.
     index.entries_mut()[0].stat.mtime.secs = timestamp;
-    set_file_mtime(worktree.join("content"), FileTime::from_unix_time(timestamp as i64, 0))
-        .expect("changing filetime works");
+    set_file_mtime(
+        worktree.join("content"),
+        FileTime::from_unix_time(i64::from(timestamp), 0),
+    )
+    .expect("changing filetime works");
     let mut recorder = Recorder::default();
 
     let count = Arc::new(AtomicUsize::new(0));
@@ -649,7 +652,7 @@ fn racy_git() {
     // Now we also backdate the index timestamp to match the artificially created
     // mtime above this is now a realistic realworld race-condition which should trigger racy git
     // and cause proper output.
-    index.set_timestamp(FileTime::from_unix_time(timestamp as i64, 0));
+    index.set_timestamp(FileTime::from_unix_time(i64::from(timestamp), 0));
     let mut recorder = Recorder::default();
     let out = index_as_worktree(
         &index,
