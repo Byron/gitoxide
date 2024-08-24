@@ -70,7 +70,7 @@ impl<T: AsyncWrite + Unpin> AsyncWrite for Writer<T> {
                             "empty packet lines are not permitted as '0004' is invalid",
                         )));
                     }
-                    *this.state = State::WriteData(0)
+                    *this.state = State::WriteData(0);
                 }
                 State::WriteData(written) => {
                     while *written != buf.len() {
