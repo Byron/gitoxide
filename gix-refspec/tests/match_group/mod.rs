@@ -181,6 +181,6 @@ mod multiple {
                 },
             ],
             ["refs/heads/f1:refs/heads/f1"],
-        )
+        );
     }
 }

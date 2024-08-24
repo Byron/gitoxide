@@ -63,7 +63,7 @@ impl Search {
             let last = self.patterns.last_mut().expect("just added");
             if !allow_macros {
                 last.patterns
-                    .retain(|p| !matches!(p.value, Value::MacroAssignments { .. }))
+                    .retain(|p| !matches!(p.value, Value::MacroAssignments { .. }));
             }
             collection.update_from_list(last);
         }
@@ -84,7 +84,7 @@ impl Search {
         let last = self.patterns.last_mut().expect("just added");
         if !allow_macros {
             last.patterns
-                .retain(|p| !matches!(p.value, Value::MacroAssignments { .. }))
+                .retain(|p| !matches!(p.value, Value::MacroAssignments { .. }));
         }
         collection.update_from_list(last);
     }

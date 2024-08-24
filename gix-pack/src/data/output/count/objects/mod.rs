@@ -194,7 +194,7 @@ mod expand {
                                     for token in commit_iter {
                                         match token {
                                             Ok(gix_object::commit::ref_iter::Token::Parent { id }) => {
-                                                parent_commit_ids.push(id)
+                                                parent_commit_ids.push(id);
                                             }
                                             Ok(_) => break,
                                             Err(err) => return Err(Error::CommitDecode(err)),

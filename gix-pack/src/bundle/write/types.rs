@@ -91,7 +91,7 @@ where
     }
 
     fn consume(&mut self, amt: usize) {
-        self.reader.consume(amt)
+        self.reader.consume(amt);
     }
 }
 

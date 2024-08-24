@@ -77,7 +77,7 @@ impl Algorithm {
                                 if prev_flags.contains(Flags::SEEN) && !prev_flags.contains(Flags::POPPED) {
                                     self.non_common_revs -= 1;
                                 }
-                                queue.insert(parent.commit_time, (parent_id, generation + 1))
+                                queue.insert(parent.commit_time, (parent_id, generation + 1));
                             }
                         }
                     }

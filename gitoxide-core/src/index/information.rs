@@ -103,10 +103,10 @@ mod serde_only {
                         names.push("fs-monitor (FSMN)");
                     };
                     if f.had_offset_table() {
-                        names.push("offset-table (IEOT)")
+                        names.push("offset-table (IEOT)");
                     }
                     if f.had_end_of_index_marker() {
-                        names.push("end-of-index (EOIE)")
+                        names.push("end-of-index (EOIE)");
                     }
                     Extensions { names, tree }
                 },

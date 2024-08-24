@@ -194,7 +194,7 @@ impl Server {
                     actual: line.into(),
                 })?;
             assert!(tokens.next().is_none(), "configured to yield at most two tokens");
-            meta.push((key.as_bstr().to_string(), value.into()))
+            meta.push((key.as_bstr().to_string(), value.into()));
         }
 
         drop(read);

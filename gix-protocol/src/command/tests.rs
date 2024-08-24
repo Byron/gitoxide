@@ -73,7 +73,7 @@ mod v2 {
                         .iter()
                         .map(|s| (*s, None))
                         .collect::<Vec<_>>()
-                )
+                );
             }
         }
 
@@ -94,7 +94,7 @@ mod v2 {
                         .map(|s| s.as_bytes().as_bstr().to_owned())
                         .collect::<Vec<_>>(),
                     "packfile-uris isn't really supported that well and we don't support it either yet"
-                )
+                );
             }
         }
     }

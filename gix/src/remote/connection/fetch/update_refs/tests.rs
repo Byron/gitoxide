@@ -182,7 +182,7 @@ mod update {
                             new.id(),
                             remote_ref.target().id(),
                             "remote ref provides the id to set in the local reference"
-                        )
+                        );
                     }
                     _ => unreachable!("only updates"),
                 }

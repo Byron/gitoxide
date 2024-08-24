@@ -241,7 +241,7 @@ pub(crate) fn add_wants(
                 want.remote
                     .as_name()
                     .expect("name available if this isn't an object id"),
-            )
+            );
         }
         let id_is_annotated_tag_we_have = id_on_remote
             .and_then(|id| repo.objects.header(id).ok().map(|h| (id, h)))
@@ -250,7 +250,7 @@ pub(crate) fn add_wants(
         if let Some(tag_on_remote) = id_is_annotated_tag_we_have {
             // Annotated tags are not handled at all by negotiators in the commit-graph - they only see commits and thus won't
             // ever add `have`s for tags. To correct for that, we add these haves here to avoid getting them sent again.
-            arguments.have(tag_on_remote)
+            arguments.have(tag_on_remote);
         }
     }
 }
@@ -273,11 +273,11 @@ fn mark_recent_complete_commits(
             if let Some(parent) = graph
                 .try_lookup_or_insert_commit(parent_id, |md| {
                     was_complete = md.flags.contains(Flags::COMPLETE);
-                    md.flags |= Flags::COMPLETE
+                    md.flags |= Flags::COMPLETE;
                 })?
                 .filter(|_| !was_complete)
             {
-                queue.insert(parent.commit_time, parent_id)
+                queue.insert(parent.commit_time, parent_id);
             }
         }
     }
@@ -298,7 +298,7 @@ fn mark_all_refs_in_repo(
         if let Some(commit) = graph
             .try_lookup_or_insert_commit(id, |md| {
                 is_complete = md.flags.contains(Flags::COMPLETE);
-                md.flags |= mark
+                md.flags |= mark;
             })?
             .filter(|_| !is_complete)
         {

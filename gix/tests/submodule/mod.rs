@@ -91,7 +91,7 @@ mod open {
                         worktree.dot_git_exists(),
                         state.worktree_checkout,
                         "there is a way to check for indicators that a submodule worktree isn't checked out though"
-                    )
+                    );
                 }
                 #[cfg(feature = "status")]
                 for check_dirty in [false, true] {
@@ -113,7 +113,7 @@ mod open {
                         status.is_dirty(),
                         *_expected_is_dirty,
                         "none of these submodules are dirty, but some aren't checked out"
-                    )
+                    );
                 }
             }
             assert_eq!(

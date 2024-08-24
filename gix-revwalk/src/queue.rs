@@ -109,7 +109,7 @@ impl<K: Ord, T> PriorityQueue<K, T> {
 
     /// Drop all items from the queue, without changing its capacity.
     pub fn clear(&mut self) {
-        self.0.clear()
+        self.0.clear();
     }
 }
 

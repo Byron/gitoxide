@@ -71,9 +71,9 @@ mod memory {
                 Some((e.kind, e.compressed_size))
             });
             if res.is_some() {
-                self.debug.hit()
+                self.debug.hit();
             } else {
-                self.debug.miss()
+                self.debug.miss();
             }
             res
         }
@@ -176,9 +176,9 @@ mod _static {
                 }
             });
             if res.is_some() {
-                self.debug.hit()
+                self.debug.hit();
             } else {
-                self.debug.miss()
+                self.debug.miss();
             }
             res
         }

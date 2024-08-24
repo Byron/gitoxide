@@ -63,7 +63,7 @@ pub fn main() -> Result<()> {
     let mut trace = false;
     #[cfg(feature = "tracing")]
     {
-        trace = args.trace
+        trace = args.trace;
     }
     let object_hash = args.object_hash;
     let config = args.config;

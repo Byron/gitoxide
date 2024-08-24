@@ -243,19 +243,19 @@ where
     E: Into<Box<dyn std::error::Error + Sync + Send + 'static>>,
 {
     fn pop_front_tracked_path_and_set_current(&mut self) {
-        self.recorder.pop_front_tracked_path_and_set_current()
+        self.recorder.pop_front_tracked_path_and_set_current();
     }
 
     fn push_back_tracked_path_component(&mut self, component: &BStr) {
-        self.recorder.push_back_tracked_path_component(component)
+        self.recorder.push_back_tracked_path_component(component);
     }
 
     fn push_path_component(&mut self, component: &BStr) {
-        self.recorder.push_path_component(component)
+        self.recorder.push_path_component(component);
     }
 
     fn pop_path_component(&mut self) {
-        self.recorder.pop_path_component()
+        self.recorder.pop_path_component();
     }
 
     fn visit(&mut self, change: gix_diff::tree::visit::Change) -> gix_diff::tree::visit::Action {
@@ -314,15 +314,15 @@ mod tree_to_changes {
 
     impl gix_traverse::tree::Visit for Delegate<'_> {
         fn pop_front_tracked_path_and_set_current(&mut self) {
-            self.recorder.pop_front_tracked_path_and_set_current()
+            self.recorder.pop_front_tracked_path_and_set_current();
         }
 
         fn push_back_tracked_path_component(&mut self, component: &BStr) {
-            self.recorder.push_back_tracked_path_component(component)
+            self.recorder.push_back_tracked_path_component(component);
         }
 
         fn push_path_component(&mut self, component: &BStr) {
-            self.recorder.push_path_component(component)
+            self.recorder.push_path_component(component);
         }
 
         fn pop_path_component(&mut self) {

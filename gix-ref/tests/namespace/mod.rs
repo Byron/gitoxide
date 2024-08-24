@@ -7,7 +7,7 @@ fn into_namespaced_prefix() {
             .unwrap()
             .into_namespaced_prefix("prefix".as_ref()),
         Path::new("refs").join("namespaces").join("foo").join("prefix")
-    )
+    );
 }
 
 mod expand {
@@ -16,7 +16,7 @@ mod expand {
         assert_eq!(
             gix_ref::namespace::expand("foo").unwrap().as_bstr(),
             "refs/namespaces/foo/"
-        )
+        );
     }
 
     #[test]
@@ -24,7 +24,7 @@ mod expand {
         assert_eq!(
             gix_ref::namespace::expand("foo/bar").unwrap().as_bstr(),
             "refs/namespaces/foo/refs/namespaces/bar/"
-        )
+        );
     }
 
     #[test]

@@ -76,7 +76,7 @@ impl<'a> MatchGroup<'a> {
                             lhs: SourceRef::FullName(item.full_ref_name),
                             rhs,
                             spec_index,
-                        })
+                        });
                     }
                 }
             }

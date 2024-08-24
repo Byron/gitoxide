@@ -58,7 +58,7 @@ fn dirwalk_api_and_icase_support() {
             let other_entry = file
                 .entry_closest_to_directory_icase(dir_upper.as_bstr(), true, &icase)
                 .unwrap_or_else(|| panic!("didn't find upper-cased {dir_upper}"));
-            assert_eq!(other_entry, entry, "the first entry is always the same, no matter what kind of search is conducted (as there are no clashes/ambiguities here)")
+            assert_eq!(other_entry, entry, "the first entry is always the same, no matter what kind of search is conducted (as there are no clashes/ambiguities here)");
         }
     }
 }

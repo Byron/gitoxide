@@ -410,7 +410,7 @@ mod arguments {
 0009done
 0000"
                     .as_bstr()
-            )
+            );
         }
     }
 }

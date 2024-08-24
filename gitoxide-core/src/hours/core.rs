@@ -33,9 +33,9 @@ pub fn estimate_hours(
         for next in commits {
             let change_in_minutes = (next.time.seconds.saturating_sub(cur.time.seconds)) as f32 / MINUTES_PER_HOUR;
             if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
-                hours += change_in_minutes / MINUTES_PER_HOUR
+                hours += change_in_minutes / MINUTES_PER_HOUR;
             } else {
-                hours += FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR
+                hours += FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR;
             }
             cur = next;
         }

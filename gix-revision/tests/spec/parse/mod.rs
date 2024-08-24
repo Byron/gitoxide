@@ -78,7 +78,7 @@ impl Recorder {
 
     fn called(&mut self, f: Call) {
         self.calls += 1;
-        self.order.push(f)
+        self.order.push(f);
     }
 }
 

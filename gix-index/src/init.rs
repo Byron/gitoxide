@@ -133,7 +133,7 @@ pub mod from_tree {
             self.path.push_str(name);
             if self.invalid_path.is_none() {
                 if let Err(err) = gix_validate::path::component(name, None, self.validate) {
-                    self.invalid_path = Some((self.path.clone(), err))
+                    self.invalid_path = Some((self.path.clone(), err));
                 }
             }
         }

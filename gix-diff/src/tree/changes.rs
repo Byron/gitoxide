@@ -159,7 +159,7 @@ fn add_entry_schedule_recursion<R: tree::Visit>(
     if entry.mode.is_tree() {
         delegate.pop_path_component();
         delegate.push_back_tracked_path_component(entry.filename);
-        queue.push_back((None, Some(entry.oid.to_owned())))
+        queue.push_back((None, Some(entry.oid.to_owned())));
     }
     Ok(())
 }

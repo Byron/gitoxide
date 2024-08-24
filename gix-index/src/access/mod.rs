@@ -28,7 +28,7 @@ impl State {
     /// **will cause (file system) race conditions** see racy-git.txt in the git documentation
     /// for more details.
     pub fn set_timestamp(&mut self, timestamp: FileTime) {
-        self.timestamp = timestamp
+        self.timestamp = timestamp;
     }
 
     /// Return the kind of hashes used in this instance.

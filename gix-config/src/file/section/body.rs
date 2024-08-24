@@ -148,9 +148,9 @@ impl<'event> Body<'event> {
                 }
                 Event::ValueNotDone(_) | Event::ValueDone(_) => {
                     if value_range.end == 0 {
-                        value_range.end = i
+                        value_range.end = i;
                     } else {
-                        value_range.start = i
+                        value_range.start = i;
                     };
                 }
                 _ => (),

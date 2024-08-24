@@ -150,7 +150,7 @@ mod program_kind {
             assert!(matches!(
                 try_call(ProgramKind::Ssh, "ssh://-arg@host/p", Protocol::V2),
                 Err(ssh::invocation::Error::AmbiguousUserName { user }) if user == "-arg"
-            ))
+            ));
         }
 
         #[test]
@@ -158,7 +158,7 @@ mod program_kind {
             assert!(matches!(
                 try_call(ProgramKind::Ssh, "-arg@host:p/q", Protocol::V2),
                 Err(ssh::invocation::Error::AmbiguousUserName { user }) if user == "-arg"
-            ))
+            ));
         }
 
         #[test]

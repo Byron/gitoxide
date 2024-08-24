@@ -140,7 +140,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 // Technically this is letting the last one win, but so be it.
                                 self.paths[self.idx] = Some((path.to_owned(), mode));
                             }
-                            replacements.push((*obj, replace))
+                            replacements.push((*obj, replace));
                         }
                         Err(err) => errors.push((*obj, err)),
                     }
@@ -224,7 +224,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                         commits_searched: count,
                                         oid: oid.attach(repo).shorten_or_id(),
                                     },
-                                ))
+                                ));
                             }
                         }
                         Err(err) => errors.push((*oid, err.into())),

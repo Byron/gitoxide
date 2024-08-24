@@ -58,7 +58,7 @@ impl Stats {
                 match bytes.peek() {
                     Some(n) if **n == b'\n' => {
                         bytes.next();
-                        crlf += 1
+                        crlf += 1;
                     }
                     _ => lone_cr += 1,
                 }

@@ -11,7 +11,7 @@ fn assert_url(url: &str, expected: gix_url::Url) -> Result<gix_url::Url, crate::
             actual.path
         );
         if actual.path.len() < 2 {
-            assert!(actual.path_is_root())
+            assert!(actual.path_is_root());
         }
     }
     Ok(expected)

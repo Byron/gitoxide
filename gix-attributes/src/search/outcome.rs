@@ -26,11 +26,11 @@ impl Outcome {
             for (order, macro_attributes) in collection.iter().filter_map(|(_, meta)| {
                 (!meta.macro_attributes.is_empty()).then_some((meta.id.0, &meta.macro_attributes))
             }) {
-                self.matches_by_id[order].macro_attributes.clone_from(macro_attributes)
+                self.matches_by_id[order].macro_attributes.clone_from(macro_attributes);
             }
 
             for (name, id) in self.selected.iter_mut().filter(|(_, id)| id.is_none()) {
-                *id = collection.name_to_meta.get(name.as_str()).map(|meta| meta.id)
+                *id = collection.name_to_meta.get(name.as_str()).map(|meta| meta.id);
             }
         }
         self.reset();
@@ -46,7 +46,7 @@ impl Outcome {
         collection: &MetadataCollection,
         attribute_names: impl IntoIterator<Item = impl Into<KStringRef<'a>>>,
     ) {
-        self.initialize_with_selection_inner(collection, &mut attribute_names.into_iter().map(Into::into))
+        self.initialize_with_selection_inner(collection, &mut attribute_names.into_iter().map(Into::into));
     }
 
     fn initialize_with_selection_inner(

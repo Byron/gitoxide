@@ -105,7 +105,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
             }
         } else {
             for r in &self.wanted_refs {
-                arguments.want_ref(r.as_ref())
+                arguments.want_ref(r.as_ref());
             }
         }
         Ok(Action::Cancel)
@@ -408,7 +408,7 @@ fn receive_pack_blocking<W: io::Write>(
         OutputFormat::Human => drop(print(&mut ctx.out, outcome, refs)),
         #[cfg(feature = "serde")]
         OutputFormat::Json => {
-            serde_json::to_writer_pretty(&mut ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
+            serde_json::to_writer_pretty(&mut ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?;
         }
     };
     Ok(())

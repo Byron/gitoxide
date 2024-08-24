@@ -95,7 +95,7 @@ mod with_core_worktree_config {
             !repo.work_dir().expect("configured").exists(),
             "non-existing or invalid worktrees (this one is a file) are taken verbatim and \
             may lead to errors later - just like in `git` and we explicitly do not try to be smart about it"
-        )
+        );
     }
 
     #[test]

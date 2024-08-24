@@ -44,7 +44,7 @@ pub(super) mod function {
                         src = src.display()
                     )
                 })?;
-                std::fs::write(dst, remapped(&content))?
+                std::fs::write(dst, remapped(&content))?;
             }
         }
         Ok(())

@@ -7,7 +7,7 @@ mod parse {
         assert_eq!(
             RemoteProgress::from_bytes(b"something that might be progress: but is not."),
             None
-        )
+        );
     }
 
     #[test]
@@ -20,7 +20,7 @@ mod parse {
                 step: Some(10),
                 max: None
             })
-        )
+        );
     }
 
     #[test]
@@ -33,6 +33,6 @@ mod parse {
                 step: Some(5),
                 max: Some(10)
             })
-        )
+        );
     }
 }

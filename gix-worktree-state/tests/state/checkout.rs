@@ -372,7 +372,7 @@ fn keep_going_collects_results() {
             outcome.errors.len(),
             2,
             "content changes due to non-deterministic nature of racy threads"
-        )
+        );
     } else {
         assert_eq!(
             outcome

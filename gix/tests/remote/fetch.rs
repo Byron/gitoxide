@@ -621,10 +621,10 @@ mod blocking_and_async_io {
                     if dry_run {
                         match edit.change.new_value().expect("no deletions") {
                             gix_ref::TargetRef::Object(id) => {
-                                assert_eq!(id, mapping.remote.as_id().expect("no unborn"))
+                                assert_eq!(id, mapping.remote.as_id().expect("no unborn"));
                             }
                             gix_ref::TargetRef::Symbolic(target) => {
-                                assert_eq!(target.as_bstr(), mapping.remote.as_target().expect("no direct ref"))
+                                assert_eq!(target.as_bstr(), mapping.remote.as_target().expect("no direct ref"));
                             }
                         }
                         assert!(
@@ -642,7 +642,7 @@ mod blocking_and_async_io {
                                 );
                             }
                             gix_ref::TargetRef::Symbolic(target) => {
-                                assert_eq!(target.as_bstr(), mapping.remote.as_target().expect("no direct ref"))
+                                assert_eq!(target.as_bstr(), mapping.remote.as_target().expect("no direct ref"));
                             }
                         }
                     }

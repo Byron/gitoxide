@@ -41,13 +41,13 @@ mod impls {
 
     impl Hash for RefSpec {
         fn hash<H: Hasher>(&self, state: &mut H) {
-            self.to_ref().hash(state)
+            self.to_ref().hash(state);
         }
     }
 
     impl Hash for RefSpecRef<'_> {
         fn hash<H: Hasher>(&self, state: &mut H) {
-            self.instruction().hash(state)
+            self.instruction().hash(state);
         }
     }
 

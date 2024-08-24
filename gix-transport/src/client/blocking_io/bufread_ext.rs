@@ -63,7 +63,7 @@ impl<'a, T: ReadlineBufRead + ?Sized + 'a> ReadlineBufRead for Box<T> {
 
 impl<'a, T: ExtendedBufRead<'a> + ?Sized + 'a> ExtendedBufRead<'a> for Box<T> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>) {
-        self.deref_mut().set_progress_handler(handle_progress)
+        self.deref_mut().set_progress_handler(handle_progress);
     }
 
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>> {
@@ -71,7 +71,7 @@ impl<'a, T: ExtendedBufRead<'a> + ?Sized + 'a> ExtendedBufRead<'a> for Box<T> {
     }
 
     fn reset(&mut self, version: Protocol) {
-        self.deref_mut().reset(version)
+        self.deref_mut().reset(version);
     }
 
     fn stopped_at(&self) -> Option<MessageKind> {
@@ -101,7 +101,7 @@ impl<'a, T: io::Read> ReadlineBufRead for gix_packetline::read::WithSidebands<'a
 
 impl<'a, T: io::Read> ExtendedBufRead<'a> for gix_packetline::read::WithSidebands<'a, T, HandleProgress<'a>> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress<'a>>) {
-        self.set_progress_handler(handle_progress)
+        self.set_progress_handler(handle_progress);
     }
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>> {
         match self.peek_data_line() {

@@ -262,7 +262,7 @@ fn subomdule_typechange() {
             symlink_metadata_calls: 2,
             ..Default::default()
         }
-    )
+    );
 }
 
 #[test]

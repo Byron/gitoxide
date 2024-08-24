@@ -61,7 +61,7 @@ mod write_chunk {
                     entry.offset.end,
                     self.written_bytes,
                     std::str::from_utf8(&entry.kind)
-                )
+                );
             }
             self.written_bytes = 0;
             self.next_chunk = self.chunks_to_write.pop_front();
@@ -92,7 +92,7 @@ impl Index {
         self.chunks.push(Entry {
             kind: chunk,
             offset: 0..exact_size_on_disk,
-        })
+        });
     }
 
     /// Return the total size of all planned chunks thus far.

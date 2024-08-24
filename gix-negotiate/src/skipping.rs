@@ -59,7 +59,7 @@ impl Algorithm {
                             .try_lookup_or_insert_commit(parent_id, |entry| {
                                 was_unseen_or_common =
                                     !entry.flags.contains(Flags::SEEN) || entry.flags.contains(Flags::COMMON);
-                                entry.flags |= Flags::COMMON
+                                entry.flags |= Flags::COMMON;
                             })?
                             .filter(|_| !was_unseen_or_common)
                         {

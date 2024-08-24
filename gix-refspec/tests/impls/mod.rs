@@ -10,13 +10,13 @@ fn pair() -> Vec<RefSpec> {
 
 #[test]
 fn cmp() {
-    assert_eq!(BTreeSet::from_iter(pair()).len(), 1)
+    assert_eq!(BTreeSet::from_iter(pair()).len(), 1);
 }
 
 #[test]
 fn hash() {
     let set: HashSet<_> = pair().into_iter().collect();
-    assert_eq!(set.len(), 1)
+    assert_eq!(set.len(), 1);
 }
 
 #[test]

@@ -30,7 +30,7 @@ pub struct oid {
 #[allow(clippy::derived_hash_with_manual_eq)]
 impl hash::Hash for oid {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        state.write(self.as_bytes())
+        state.write(self.as_bytes());
     }
 }
 

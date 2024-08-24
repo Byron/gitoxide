@@ -6,7 +6,7 @@ mod graph {
                 std::mem::size_of::<gix_revwalk::graph::Commit<()>>(),
                 48,
                 "We might see quite a lot of these, so they shouldn't grow unexpectedly"
-            )
+            );
         }
     }
 }

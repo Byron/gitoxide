@@ -8,7 +8,7 @@ fn size_of_entry() {
         std::mem::size_of::<output::Entry>(),
         80,
         "The size of the structure shouldn't change unexpectedly"
-    )
+    );
 }
 
 #[test]
@@ -17,7 +17,7 @@ fn size_of_count() {
         std::mem::size_of::<output::Count>(),
         56,
         "The size of the structure shouldn't change unexpectedly"
-    )
+    );
 }
 
 enum DbKind {

@@ -338,7 +338,7 @@ pub fn try_collect_filtered_opts(
             worktree_root.is_absolute(),
             "BUG: need absolute worktree root for CWD checks to work"
         );
-        cwd.push(suffix)
+        cwd.push(suffix);
     }
     let git_dir_realpath = gix_path::realpath_opts(&git_dir, &cwd, gix_path::realpath::MAX_SYMLINKS).unwrap();
     let lookup = index.prepare_icase_backing();

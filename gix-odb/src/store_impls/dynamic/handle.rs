@@ -335,7 +335,7 @@ where
 {
     fn drop(&mut self) {
         if let Some(token) = self.token.take() {
-            self.store.remove_handle(token)
+            self.store.remove_handle(token);
         }
     }
 }

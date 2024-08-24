@@ -227,7 +227,7 @@ pub(crate) mod function {
                                 to_human_simple(out, &index, entry, attrs, prefix)
                             } else {
                                 to_human(out, &index, entry, attrs, prefix)
-                            }?
+                            }?;
                         }
                         #[cfg(feature = "serde")]
                         OutputFormat::Json => to_json(out, &index, entry, attrs, entries.peek().is_none(), prefix)?,

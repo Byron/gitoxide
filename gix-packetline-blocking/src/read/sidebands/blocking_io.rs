@@ -71,7 +71,7 @@ where
 
     /// Forwards to the parent [`StreamingPeekableIter::reset_with()`]
     pub fn reset_with(&mut self, delimiters: &'static [PacketLineRef<'static>]) {
-        self.parent.reset_with(delimiters)
+        self.parent.reset_with(delimiters);
     }
 
     /// Forwards to the parent [`StreamingPeekableIter::stopped_at()`]

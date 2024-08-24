@@ -67,7 +67,7 @@ fn default() {
     assert_eq!(
         time_dec1().format(gix_date::time::format::GITOXIDE),
         "Sat Dec 01 1973 00:03:09 +0230"
-    )
+    );
 }
 
 #[test]
@@ -79,7 +79,7 @@ fn git_default() {
     assert_eq!(
         time_dec1().format(gix_date::time::format::DEFAULT),
         "Sat Dec 1 00:03:09 1973 +0230"
-    )
+    );
 }
 
 fn time() -> Time {

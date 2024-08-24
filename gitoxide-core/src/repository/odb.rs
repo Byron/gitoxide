@@ -128,7 +128,7 @@ pub fn statistics(
             match item {
                 find::Header::Loose { size, kind } => {
                     self.loose_objects += 1;
-                    self.count(kind, size)
+                    self.count(kind, size);
                 }
                 find::Header::Packed(packed) => {
                     self.packed_objects += 1;

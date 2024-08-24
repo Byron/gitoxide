@@ -109,7 +109,7 @@ fn v2_with_multiple_entries_without_eoie_ext() {
         assert_eq!(e.path(&file), path);
         assert!(e.flags.is_empty());
         assert_eq!(e.mode, entry::Mode::FILE);
-        assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"))
+        assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"));
     }
 
     let tree = file.tree().unwrap();
@@ -173,7 +173,7 @@ fn v2_very_long_path() {
     assert_eq!(tree.num_entries, None, "root tree has invalid entries actually");
     assert_eq!(tree.name.as_bstr(), "");
     assert_eq!(tree.num_entries, None, "it's marked invalid actually");
-    assert!(tree.id.is_null(), "there is no id for the root")
+    assert!(tree.id.is_null(), "there is no id for the root");
 }
 
 #[test]
@@ -250,7 +250,7 @@ fn v4_with_delta_paths_and_ieot_ext() {
         assert_eq!(e.path(&file), path);
         assert!(e.flags.is_empty());
         assert_eq!(e.mode, entry::Mode::FILE);
-        assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"))
+        assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"));
     }
 }
 
@@ -373,5 +373,5 @@ fn split_index_and_regular_index_of_same_content_are_indeed_the_same() {
         assert_eq!(s.id, r.id);
         assert_eq!(s.flags, r.flags);
         assert_eq!(s.path_in(split.path_backing()), r.path_in(regular.path_backing()));
-    })
+    });
 }

@@ -18,7 +18,7 @@ impl Display for Color {
                 write!(f, " ")?;
             }
             bg.fmt(f)?;
-            write_space = Some(())
+            write_space = Some(());
         }
 
         if !self.attributes.is_empty() {
@@ -267,7 +267,7 @@ impl Display for Attribute {
             };
             if self.contains(attr) {
                 if write_space.take().is_some() {
-                    write!(f, " ")?
+                    write!(f, " ")?;
                 }
                 match attr {
                     Attribute::RESET => write!(f, "reset"),

@@ -183,7 +183,7 @@ impl Arguments {
                     .features_for_first_want
                     .as_mut()
                     .expect("call add_feature before first want()");
-                features.push(feature.into())
+                features.push(feature.into());
             }
             gix_transport::Protocol::V2 => {
                 self.args.push(feature.into());

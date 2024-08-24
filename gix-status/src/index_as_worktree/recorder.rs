@@ -42,6 +42,6 @@ impl<'index, T: Send, U: Send> VisitEntry<'index> for Recorder<'index, T, U> {
             entry_index,
             relative_path,
             status,
-        })
+        });
     }
 }

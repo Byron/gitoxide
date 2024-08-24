@@ -24,7 +24,7 @@ impl crate::Repository {
     /// Use this method to avoid overwriting any existing value while assuring better performance in case no value is set.
     pub fn object_cache_size_if_unset(&mut self, bytes: usize) {
         if !self.objects.has_object_cache() {
-            self.object_cache_size(bytes)
+            self.object_cache_size(bytes);
         }
     }
 

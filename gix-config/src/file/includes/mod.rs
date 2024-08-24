@@ -66,12 +66,12 @@ fn resolve_includes_recursive(
         let header = &section.header;
         let header_name = header.name.as_ref();
         if header_name == "include" && header.subsection_name.is_none() {
-            detach_include_paths(&mut section_ids_and_include_paths, section, id)
+            detach_include_paths(&mut section_ids_and_include_paths, section, id);
         } else if header_name == "includeIf" {
             if let Some(condition) = &header.subsection_name {
                 let target_config_path = section.meta.path.as_deref();
                 if include_condition_match(condition.as_ref(), target_config_path, options.includes)? {
-                    detach_include_paths(&mut section_ids_and_include_paths, section, id)
+                    detach_include_paths(&mut section_ids_and_include_paths, section, id);
                 }
             }
         }
@@ -142,7 +142,7 @@ fn detach_include_paths(
             .values("path")
             .into_iter()
             .map(|path| (id, crate::Path::from(Cow::Owned(path.into_owned())))),
-    )
+    );
 }
 
 fn include_condition_match(
@@ -251,7 +251,7 @@ fn gitdir_matches(
     {
         let mut prefixed = pattern_path.into_owned();
         prefixed.insert_str(0, "**/");
-        pattern_path = prefixed.into()
+        pattern_path = prefixed.into();
     }
     if pattern_path.ends_with(b"/") {
         let mut suffixed = pattern_path.into_owned();

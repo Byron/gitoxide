@@ -259,7 +259,7 @@ where
         pack::data::output::bytes::FromEntriesIter::new(
             in_order_entries.by_ref().inspect(|e| {
                 if let Ok(entries) = e {
-                    entries_progress.inc_by(entries.len())
+                    entries_progress.inc_by(entries.len());
                 }
             }),
             &mut pack_file,

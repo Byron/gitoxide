@@ -143,7 +143,7 @@ impl PrepareFetch {
             let mut fetch_opts = {
                 let mut opts = self.fetch_options.clone();
                 if !opts.extra_refspecs.contains(&head_refspec) {
-                    opts.extra_refspecs.push(head_refspec.clone())
+                    opts.extra_refspecs.push(head_refspec.clone());
                 }
                 if let Some(ref_name) = &self.ref_name {
                     opts.extra_refspecs.push(

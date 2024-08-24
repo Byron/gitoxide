@@ -315,7 +315,7 @@ pub fn update(
                                         out_chunk.push(CommitDiffStats {
                                             id: commit,
                                             changes: Vec::new(),
-                                        })
+                                        });
                                     }
                                 }
                                 if tx_stats.send(Ok((chunk_id, out_chunk))).is_err() {
@@ -500,7 +500,7 @@ fn remove_lines(out: &mut Vec<FileChange>, path: &BStr, lines_counter: &AtomicUs
             mode: FileMode::Removed,
             source_relpath: None,
             lines: Some(lines),
-        })
+        });
     }
 }
 

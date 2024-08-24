@@ -35,7 +35,7 @@ fn newlines_with_spaces() {
     assert_eq!(
         Events::from_str("\n   \n \n").unwrap().into_vec(),
         vec![newline(), whitespace("   "), newline(), whitespace(" "), newline()]
-    )
+    );
 }
 
 #[test]

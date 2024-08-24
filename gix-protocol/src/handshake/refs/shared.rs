@@ -115,7 +115,7 @@ pub(crate) fn from_capabilities<'a>(
                 b"(null)" => None,
                 name => Some(name.into()),
             },
-        })
+        });
     }
     Ok(out_refs)
 }

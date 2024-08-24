@@ -115,7 +115,7 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/gix-commitgraph-v0.0.0
                 object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
             },
         ]
-    )
+    );
 }
 
 #[test]
@@ -163,7 +163,7 @@ impl<'a> std::io::BufRead for Fixture<'a> {
     }
 
     fn consume(&mut self, amt: usize) {
-        self.0.consume(amt)
+        self.0.consume(amt);
     }
 }
 

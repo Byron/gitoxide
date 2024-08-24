@@ -123,7 +123,7 @@ mod intercept {
     {
         fn done(&mut self) {
             self.done = true;
-            self.inner.done()
+            self.inner.done();
         }
     }
 
@@ -252,14 +252,14 @@ fn parens(input: &[u8]) -> Result<Option<InsideParensRestConsumed<'_>>, Error> {
                 if ignore_next {
                     ignore_next = false;
                 } else {
-                    open_braces += 1
+                    open_braces += 1;
                 }
             }
             b'}' => {
                 if ignore_next {
                     ignore_next = false;
                 } else {
-                    open_braces -= 1
+                    open_braces -= 1;
                 }
             }
             b'\\' => {
@@ -275,7 +275,7 @@ fn parens(input: &[u8]) -> Result<Option<InsideParensRestConsumed<'_>>, Error> {
                 if ignore_next {
                     skip_list.pop();
                 };
-                ignore_next = false
+                ignore_next = false;
             }
         }
         if open_braces == 0 {
@@ -441,7 +441,7 @@ where
                     delegate.sibling_branch(kind).ok_or(Error::Delegate)
                 } else {
                     Err(Error::SiblingBranchNeedsBranchName { name: (*name).into() })
-                }?
+                }?;
             } else if has_ref_or_implied_name {
                 let time = nav
                     .to_str()
