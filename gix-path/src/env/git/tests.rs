@@ -378,12 +378,11 @@ fn exe_info() {
 fn exe_info_never_from_local_scope() {
     let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
     let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
-    let null_device = if cfg!(windows) { "NUL" } else { "/dev/null" };
     let _env = gix_testtools::Env::new()
-        .set("GIT_CONFIG_SYSTEM", null_device)
-        .set("GIT_CONFIG_GLOBAL", null_device);
-    let info = super::exe_info();
-    assert!(info.is_none());
+        .set("GIT_CONFIG_NOSYSTEM", "1")
+        .set("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" });
+    let maybe_path = super::exe_info();
+    assert!(maybe_path.is_none(), "Finds no config path if the config would be local");
 }
 
 #[test]
