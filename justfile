@@ -13,11 +13,10 @@ alias nt := nextest
 test: clippy check doc unit-tests journey-tests-pure journey-tests-small journey-tests-async journey-tests
 
 # run all tests, without clippy, including journey tests, try building docs (and clear target on CI)
-ci-test: check doc clear-target unit-tests ci-journey-tests
+ci-test: check doc unit-tests ci-journey-tests
 
 # run all journey tests, but assure these are running after `cargo clean` (and workaround a just-issue of deduplicating targets)
-ci-journey-tests:
-    just clear-target journey-tests-pure journey-tests-small journey-tests-async journey-tests
+ci-journey-tests: journey-tests-pure journey-tests-small journey-tests-async journey-tests
 
 clear-target:
     cargo clean
@@ -152,41 +151,42 @@ doc $RUSTDOCFLAGS="-D warnings":
 
 # run all unit tests
 unit-tests:
-    cargo test --all
-    cargo test -p gix-testtools
-    cargo test -p gix-testtools --features xz
-    cargo test -p gix-archive --no-default-features
-    cargo test -p gix-archive --features tar
-    cargo test -p gix-archive --features tar_gz
-    cargo test -p gix-archive --features zip
-    cargo test -p gix-status-tests --features "gix-features-parallel"
-    cargo test -p gix-worktree-state-tests --features "gix-features-parallel"
-    cargo test -p gix-worktree-tests --features "gix-features-parallel"
+    cargo nextest run
+    cargo test --doc
+    cargo nextest run -p gix-testtools
+    cargo nextest run -p gix-testtools --features xz
+    cargo nextest run -p gix-archive --no-default-features
+    cargo nextest run -p gix-archive --features tar
+    cargo nextest run -p gix-archive --features tar_gz
+    cargo nextest run -p gix-archive --features zip
+    cargo nextest run -p gix-status-tests --features "gix-features-parallel"
+    cargo nextest run -p gix-worktree-state-tests --features "gix-features-parallel"
+    cargo nextest run -p gix-worktree-tests --features "gix-features-parallel"
     cd gix-object; \
-      set -ex; \
-      cargo test; \
-      cargo test --features verbose-object-parsing-errors
-    cargo test -p gix-tempfile --features signals
-    cargo test -p gix-features --all-features
-    cargo test -p gix-ref-tests --all-features
-    cargo test -p gix-odb --all-features
-    cargo test -p gix-odb-tests --features gix-features-parallel
-    cargo test -p gix-pack --all-features
-    cargo test -p gix-pack-tests --features all-features
-    cargo test -p gix-pack-tests --features "gix-features-parallel"
-    cargo test -p gix-index-tests --features "gix-features-parallel"
-    cargo test -p gix-packetline --features blocking-io,maybe-async/is_sync --test blocking-packetline
-    cargo test -p gix-packetline --features "async-io" --test async-packetline
-    cargo test -p gix-transport --features http-client-curl,maybe-async/is_sync
-    cargo test -p gix-transport --features http-client-reqwest,maybe-async/is_sync
-    cargo test -p gix-transport --features async-client
-    cargo test -p gix-protocol --features blocking-client
-    cargo test -p gix-protocol --features async-client
-    cargo test -p gix --no-default-features
-    cargo test -p gix --no-default-features --features basic,extras,comfort
-    cargo test -p gix --features async-network-client
-    cargo test -p gix --features blocking-network-client
-    cargo test -p gitoxide-core --lib
+        set -ex; \
+        cargo nextest run; \
+        cargo nextest run --features verbose-object-parsing-errors
+    cargo nextest run -p gix-tempfile --features signals
+    cargo nextest run -p gix-features --all-features
+    cargo nextest run -p gix-ref-tests --all-features
+    cargo nextest run -p gix-odb --all-features
+    cargo nextest run -p gix-odb-tests --features gix-features-parallel
+    cargo nextest run -p gix-pack --all-features
+    cargo nextest run -p gix-pack-tests --features all-features
+    cargo nextest run -p gix-pack-tests --features "gix-features-parallel"
+    cargo nextest run -p gix-index-tests --features "gix-features-parallel"
+    cargo nextest run -p gix-packetline --features blocking-io,maybe-async/is_sync --test blocking-packetline
+    cargo nextest run -p gix-packetline --features "async-io" --test async-packetline
+    cargo nextest run -p gix-transport --features http-client-curl,maybe-async/is_sync
+    cargo nextest run -p gix-transport --features http-client-reqwest,maybe-async/is_sync
+    cargo nextest run -p gix-transport --features async-client
+    cargo nextest run -p gix-protocol --features blocking-client
+    cargo nextest run -p gix-protocol --features async-client
+    cargo nextest run -p gix --no-default-features
+    cargo nextest run -p gix --no-default-features --features basic,extras,comfort
+    cargo nextest run -p gix --features async-network-client
+    cargo nextest run -p gix --features blocking-network-client
+    cargo nextest run -p gitoxide-core --lib
 
 # These tests aren't run by default as they are flaky (even locally)
 unit-tests-flaky:

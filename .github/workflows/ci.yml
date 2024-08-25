@@ -60,6 +60,9 @@ jobs:
         run:
           sudo apt-get install tree
       - uses: extractions/setup-just@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
       - name: test
         env:
           CI: true
@@ -89,7 +92,9 @@ jobs:
         with:
           tool: nextest
       - name: "Test (nextest)"
-        run: cargo nextest run --all --no-fail-fast
+        run: |
+          cargo nextest run --all --no-fail-fast
+          cargo test --doc
 
   test-32bit:
     runs-on: ubuntu-latest
