@@ -9,7 +9,7 @@ mod baseline {
     fn validate() -> crate::Result {
         let root = gix_testtools::scripted_fixture_read_only("make_merge_base_repos.sh")?;
         let mut count = 0;
-        let odb = gix_odb::at(&root.join(".git/objects"))?;
+        let odb = gix_odb::at(root.join(".git/objects"))?;
         for baseline_path in expectation_paths(&root)? {
             count += 1;
             for use_commitgraph in [false, true] {
@@ -64,7 +64,7 @@ mod baseline {
                 first,
                 others,
                 bases: if bases.is_empty() { None } else { Some(bases) },
-            })
+            });
         }
         Ok(out)
     }

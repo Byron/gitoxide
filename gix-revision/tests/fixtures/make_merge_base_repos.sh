@@ -44,6 +44,9 @@ mkcommit 100 DB
   baseline DA DA DB
 } > 1_disjoint.baseline
 
+# A graph that is purposefully using times that can't be trusted, i.e. the root E
+# has a higher time than its future commits, so that it would be preferred
+# unless if there was an additional pruning step to deal with this case.
 # E---D---C---B---A
 # \"-_         \   \
 #  \  `---------G   \
