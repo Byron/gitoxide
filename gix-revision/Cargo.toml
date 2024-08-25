@@ -15,10 +15,13 @@ rust-version = "1.65"
 doctest = false
 
 [features]
-default = ["describe"]
+default = ["describe", "merge_base"]
 
 ## `git describe` functionality
 describe = ["dep:gix-trace", "dep:gix-hashtable"]
+
+## `git merge-base` functionality
+merge_base = ["dep:gix-trace", "dep:bitflags"]
 
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = ["dep:serde", "gix-hash/serde", "gix-object/serde"]
@@ -29,9 +32,11 @@ gix-object = { version = "^0.44.0", path = "../gix-object" }
 gix-date = { version = "^0.9.0", path = "../gix-date" }
 gix-hashtable = { version = "^0.5.2", path = "../gix-hashtable", optional = true }
 gix-revwalk = { version = "^0.15.0", path = "../gix-revwalk" }
+gix-commitgraph = { version = "0.24.3", path = "../gix-commitgraph" }
 gix-trace = { version = "^0.1.8", path = "../gix-trace", optional = true }
 
 bstr = { version = "1.3.0", default-features = false, features = ["std"] }
+bitflags = { version = "2", optional = true }
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 document-features = { version = "0.2.1", optional = true }
@@ -39,7 +44,6 @@ document-features = { version = "0.2.1", optional = true }
 [dev-dependencies]
 gix-odb = { path = "../gix-odb" }
 gix-testtools = { path = "../tests/tools" }
-gix-commitgraph = { path = "../gix-commitgraph" }
 
 [package.metadata.docs.rs]
 all-features = true
