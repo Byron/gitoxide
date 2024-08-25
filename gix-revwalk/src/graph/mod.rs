@@ -90,9 +90,24 @@ impl<'find, T> Graph<'find, T> {
         self.map.get_mut(id)
     }
 
-    /// Insert `id` into the graph and associate it with `value`, returning the previous value associated with it if it existed.
+    /// Insert `id` into the graph and associate it with `value`, returning the previous value associated with `id` if it existed.
     pub fn insert(&mut self, id: gix_hash::ObjectId, value: T) -> Option<T> {
         self.map.insert(id, value)
+    }
+
+    /// Insert `id` into the graph and associate it with the value returned by `make_data`,
+    /// and returning the previous value associated with `id` if it existed.
+    /// Fail if `id` doesn't exist in the object database.
+    pub fn insert_data<E>(
+        &mut self,
+        id: gix_hash::ObjectId,
+        mut make_data: impl FnMut(LazyCommit<'_>) -> Result<T, E>,
+    ) -> Result<Option<T>, E>
+    where
+        E: From<gix_object::find::existing_iter::Error>,
+    {
+        let value = make_data(self.lookup(&id).map_err(E::from)?)?;
+        Ok(self.map.insert(id, value))
     }
 
     /// Remove all data from the graph to start over.
@@ -131,6 +146,45 @@ impl<'find, T> Graph<'find, T> {
             }
             if first_parent {
                 break;
+            }
+        }
+        Ok(())
+    }
+
+    /// Insert the parents of commit named `id` to the graph and associate new parents with data
+    /// as produced by `parent_data(parent_id, parent_info, maybe-existing-data &mut T) -> T`, which is always
+    /// provided the full parent commit information.
+    /// It will be provided either existing data, along with complete information about the parent,
+    /// and produces new data even though it's only used in case the parent isn't stored in the graph yet.
+    #[allow(clippy::type_complexity)]
+    pub fn insert_parents_with_lookup<E>(
+        &mut self,
+        id: &gix_hash::oid,
+        parent_data: &mut dyn FnMut(gix_hash::ObjectId, LazyCommit<'_>, Option<&mut T>) -> Result<T, E>,
+    ) -> Result<(), E>
+    where
+        E: From<gix_object::find::existing_iter::Error>
+            + From<gix_object::decode::Error>
+            + From<commit::iter_parents::Error>,
+    {
+        let commit = self.lookup(id).map_err(E::from)?;
+        let parents: SmallVec<[_; 2]> = commit.iter_parents().collect();
+        for parent_id in parents {
+            let parent_id = parent_id.map_err(E::from)?;
+            let parent = match try_lookup(&parent_id, &*self.find, self.cache.as_ref(), &mut self.parent_buf)
+                .map_err(E::from)?
+            {
+                Some(p) => p,
+                None => continue, // skip missing objects, this is due to shallow clones for instance.
+            };
+
+            match self.map.entry(parent_id) {
+                gix_hashtable::hash_map::Entry::Vacant(entry) => {
+                    entry.insert(parent_data(parent_id, parent, None)?);
+                }
+                gix_hashtable::hash_map::Entry::Occupied(mut entry) => {
+                    parent_data(parent_id, parent, Some(entry.get_mut()))?;
+                }
             }
         }
         Ok(())
