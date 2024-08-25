@@ -413,3 +413,43 @@ jobs:
         run: gh release --repo="$REPOSITORY" edit "$VERSION" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  installation:
+    strategy:
+      matrix:
+        build: [win-msvc, win-gnu, win32-msvc, win32-gnu]
+        include:
+          - build: win-msvc
+            os: windows-latest
+            rust: stable
+            target: x86_64-pc-windows-msvc
+          - build: win-gnu
+            os: windows-latest
+            rust: stable-x86_64-gnu
+            target: x86_64-pc-windows-gnu
+          - build: win32-msvc
+            os: windows-latest
+            rust: stable
+            target: i686-pc-windows-msvc
+          - build: win32-gnu
+            os: windows-latest
+            rust: stable
+            target: i686-pc-windows-gnu
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+          targets: ${{ matrix.target }}
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW${{ startsWith(matrix.target, 'i686-') && '32' || '64' }}
+          pacboy: cc:p
+          path-type: inherit
+      - name: "Install prerequisites"
+        run: vcpkg install  zlib:x64-windows-static-md
+      - name: "Installation from crates.io: gitoxide"
+        run: cargo +${{ matrix.rust }} install --target ${{ matrix.target }} --no-default-features --features max-pure --target-dir install-artifacts --debug --force gitoxide
+        shell: msys2 {0}
