@@ -162,8 +162,10 @@ unit-tests:
     cargo nextest run -p gix-status-tests --features "gix-features-parallel"
     cargo nextest run -p gix-worktree-state-tests --features "gix-features-parallel"
     cargo nextest run -p gix-worktree-tests --features "gix-features-parallel"
-    cargo nextest run -p gix-object
-    cargo nextest run -p gix-object --features verbose-object-parsing-errors
+    cd gix-object; \
+        set -ex; \
+        cargo nextest run; \
+        cargo nextest run --features verbose-object-parsing-errors
     cargo nextest run -p gix-tempfile --features signals
     cargo nextest run -p gix-features --all-features
     cargo nextest run -p gix-ref-tests --all-features
