@@ -166,7 +166,7 @@ jobs:
           components: clippy,rustfmt
       - uses: extractions/setup-just@v2
       - name: Run cargo clippy
-        run: just clippy -D warnings -A unknown-lints
+        run: just clippy -D warnings -A unknown-lints --no-deps
       - name: Run cargo doc
         run: just doc
       - name: Run cargo fmt
