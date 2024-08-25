@@ -18,16 +18,18 @@ bitflags::bitflags! {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("A commit could not be found")]
+    FindExistingCommit(#[from] gix_object::find::existing_iter::Error),
     #[error("A commit could not be decoded during traversal")]
     Decode(#[from] gix_object::decode::Error),
 }
 
 pub(crate) mod function {
-    use gix_hash::ObjectId;
-    use std::cmp::Ordering;
-
     use super::Error;
     use crate::{merge_base::Flags, Graph, PriorityQueue};
+    use gix_hash::ObjectId;
+    use gix_revwalk::graph::LazyCommit;
+    use std::cmp::Ordering;
 
     /// Given a commit at `first` id, traverse the commit `graph` and return all possible merge-base between it and `others`,
     /// sorted from best to worst. Returns `None` if there is no merge-base as `first` and `others` don't share history.
@@ -49,11 +51,22 @@ pub(crate) mod function {
             return Ok(Some(vec![first]));
         }
 
-        graph.insert(first, Flags::COMMIT1);
-        let mut queue = PriorityQueue::from_iter(Some((GenThenTime::max(), first)));
+        let mut queue = PriorityQueue::<GenThenTime, ObjectId>::new();
+        graph.insert_data(first, |commit| -> Result<_, Error> {
+            queue.insert(commit.try_into()?, first);
+            Ok(Flags::COMMIT1)
+        })?;
+
+        for other in others {
+            graph.insert_data(*other, |commit| -> Result<_, Error> {
+                queue.insert(commit.try_into()?, *other);
+                Ok(Flags::COMMIT2)
+            })?;
+        }
         Ok(None)
     }
 
+    // TODO(ST): Should this type be used for `describe` as well?
     struct GenThenTime {
         /// Note that the special [`GENERATION_NUMBER_INFINITY`](gix_commitgraph::GENERATION_NUMBER_INFINITY) is used to indicate
         /// that no commitgraph is avaialble.
@@ -61,12 +74,16 @@ pub(crate) mod function {
         time: gix_date::SecondsSinceUnixEpoch,
     }
 
-    impl GenThenTime {
-        fn max() -> Self {
-            Self {
-                generation: gix_commitgraph::GENERATION_NUMBER_INFINITY,
-                time: gix_date::SecondsSinceUnixEpoch::MAX,
-            }
+    impl TryFrom<gix_revwalk::graph::LazyCommit<'_>> for GenThenTime {
+        type Error = gix_object::decode::Error;
+
+        fn try_from(commit: LazyCommit<'_>) -> Result<Self, Self::Error> {
+            Ok(GenThenTime {
+                generation: commit
+                    .generation()
+                    .unwrap_or(gix_commitgraph::GENERATION_NUMBER_INFINITY),
+                time: commit.committer_timestamp()?,
+            })
         }
     }
 
