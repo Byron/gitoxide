@@ -8,6 +8,7 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 include = ["/src/**/*", "/LICENSE-*"]
+rust-version = "1.76"
 
 [[bin]]
 name = "jtt"

@@ -167,7 +167,6 @@ impl Capabilities {
 
 #[cfg(feature = "blocking-client")]
 ///
-#[allow(clippy::empty_docs)]
 pub mod recv {
     use std::io;
 
@@ -253,7 +252,6 @@ pub mod recv {
 #[cfg(feature = "async-client")]
 #[allow(missing_docs)]
 ///
-#[allow(clippy::empty_docs)]
 pub mod recv {
     use bstr::ByteVec;
     use futures_io::AsyncRead;

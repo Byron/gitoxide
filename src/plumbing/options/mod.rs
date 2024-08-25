@@ -723,7 +723,6 @@ pub mod credential {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod commitgraph {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -955,5 +954,4 @@ pub mod submodule {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod free;

@@ -98,5 +98,4 @@ pub use error::Error;
 pub(crate) mod function;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod refs;

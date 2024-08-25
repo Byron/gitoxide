@@ -6,10 +6,8 @@ use crate::index;
 
 mod reduce;
 ///
-#[allow(clippy::empty_docs)]
 pub mod with_index;
 ///
-#[allow(clippy::empty_docs)]
 pub mod with_lookup;
 use reduce::Reducer;
 

@@ -5,7 +5,6 @@ use bstr::BStr;
 use crate::{driver, eol, ident, pipeline::util::Configuration, worktree, Pipeline};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod configuration {
     use bstr::BString;
 
@@ -21,7 +20,6 @@ pub mod configuration {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod to_git {
     /// A function that fills `buf` `fn(&mut buf)` with the data stored in the index of the file that should be converted.
     pub type IndexObjectFn<'a> = dyn FnMut(&mut Vec<u8>) -> Result<Option<()>, gix_object::find::Error> + 'a;
@@ -46,7 +44,6 @@ pub mod to_git {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod to_worktree {
     /// The error returned by [Pipeline::convert_to_worktree()][super::Pipeline::convert_to_worktree()].
     #[derive(Debug, thiserror::Error)]

@@ -39,7 +39,6 @@ pub struct Graph<'find, T> {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod graph;
 
 /// A utility type implementing a queue which can be used to automatically sort data by its time in ascending order.

@@ -6,7 +6,6 @@ use std::path::PathBuf;
 mod options;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod iter;
 
 /// An iterator for entries in a directory walk.

@@ -1,4 +1,3 @@
-#[allow(clippy::empty_docs)]
 ///
 pub mod from_tree {
     use std::collections::VecDeque;

@@ -69,7 +69,6 @@ fn calculate_auto_hex_len(num_packed_objects: u64) -> usize {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod shorten {
     /// Returned by [`Id::prefix()`][super::Id::shorten()].
     #[derive(Debug, thiserror::Error)]

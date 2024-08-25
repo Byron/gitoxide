@@ -3,7 +3,6 @@
 #![forbid(unsafe_code)]
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod ansi_c;
 
 mod single;

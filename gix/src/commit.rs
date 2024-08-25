@@ -23,7 +23,6 @@ pub enum Error {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(feature = "revision")]
 pub mod describe {
     use std::borrow::Cow;

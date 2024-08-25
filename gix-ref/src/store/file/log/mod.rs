@@ -3,7 +3,6 @@ use gix_object::bstr::BStr;
 pub use super::loose::reflog::{create_or_update, Error};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod iter;
 mod line;
 

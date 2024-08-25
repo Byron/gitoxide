@@ -26,17 +26,14 @@ pub struct Entry {
 mod file;
 pub use file::{decode, verify, Header};
 ///
-#[allow(clippy::empty_docs)]
 pub mod header;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init {
     pub use super::header::decode::Error;
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod entry;
 
 ///

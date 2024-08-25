@@ -36,7 +36,6 @@ pub enum Name<'repo> {
 pub type Names<'a> = BTreeSet<Cow<'a, BStr>>;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod name;
 
 mod build;
@@ -45,11 +44,9 @@ mod errors;
 pub use errors::find;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod fetch;
 
 ///
@@ -62,10 +59,8 @@ mod connection;
 pub use connection::{ref_map, AuthenticateFn, Connection};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod save;
 
 mod access;
 ///
-#[allow(clippy::empty_docs)]
 pub mod url;

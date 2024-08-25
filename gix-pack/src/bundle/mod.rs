@@ -1,5 +1,4 @@
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;
 
 mod find;
@@ -8,14 +7,12 @@ mod find;
 pub mod write;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod verify {
     use std::sync::atomic::AtomicBool;
 
     use gix_features::progress::DynNestedProgress;
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod integrity {
         /// Returned by [`Bundle::verify_integrity()`][crate::Bundle::verify_integrity()].
         pub struct Outcome {

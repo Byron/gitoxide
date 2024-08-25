@@ -5,15 +5,12 @@
 //! can be taken, which we do not yet take unless there is specific examples or problems to solve.
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod encoding;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod encode_to_git;
 pub use encode_to_git::function::encode_to_git;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod encode_to_worktree;
 pub use encode_to_worktree::function::encode_to_worktree;

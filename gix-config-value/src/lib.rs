@@ -37,13 +37,10 @@ impl Error {
 
 mod boolean;
 ///
-#[allow(clippy::empty_docs)]
 pub mod color;
 ///
-#[allow(clippy::empty_docs)]
 pub mod integer;
 ///
-#[allow(clippy::empty_docs)]
 pub mod path;
 
 mod types;

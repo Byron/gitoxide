@@ -574,9 +574,8 @@ fn scripted_fixture_read_only_with_args_inner(
                     &archive_file_path,
                     script_identity_for_archive,
                 )
-                .map_err(|err| {
+                .inspect_err(|_err| {
                     write_failure_marker(&failure_marker);
-                    err
                 })?;
             }
         }

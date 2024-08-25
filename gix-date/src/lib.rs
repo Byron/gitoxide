@@ -11,11 +11,9 @@
 #![forbid(unsafe_code)]
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod time;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod parse;
 pub use parse::function::parse;
 

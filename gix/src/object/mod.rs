@@ -11,20 +11,16 @@ pub(crate) mod cache {
 }
 pub use errors::{conversion, find, write};
 ///
-#[allow(clippy::empty_docs)]
 pub mod blob;
 ///
-#[allow(clippy::empty_docs)]
 pub mod commit;
 mod impls;
 pub mod peel;
 mod tag;
 ///
-#[allow(clippy::empty_docs)]
 pub mod tree;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod try_into {
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]

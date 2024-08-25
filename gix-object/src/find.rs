@@ -1,7 +1,6 @@
 /// The error type returned by the [`Find`](crate::Find) trait.
 pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 ///
-#[allow(clippy::empty_docs)]
 pub mod existing {
     use gix_hash::ObjectId;
 
@@ -17,7 +16,6 @@ pub mod existing {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod existing_object {
     use gix_hash::ObjectId;
 
@@ -44,7 +42,6 @@ pub mod existing_object {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod existing_iter {
     use gix_hash::ObjectId;
 

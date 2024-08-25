@@ -34,11 +34,9 @@ where
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod changes;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod visit;
 #[doc(inline)]
 pub use visit::Visit;

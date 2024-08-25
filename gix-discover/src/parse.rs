@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use bstr::ByteSlice;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod gitdir {
     use bstr::BString;
 

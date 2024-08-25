@@ -1,7 +1,6 @@
 use bstr::{BStr, BString, ByteSlice};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod name {
     use std::convert::Infallible;
 

@@ -6,11 +6,9 @@ use bstr::BString;
 pub use imara_diff::*;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod pipeline;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod platform;
 
 /// Information about the diff performed to detect similarity.

@@ -46,7 +46,6 @@ impl Entry {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod decode;
 
 mod header;

@@ -4,7 +4,6 @@ pub use gix_pathspec::*;
 use crate::{bstr::BStr, AttributeStack, Pathspec, PathspecDetached, Repository};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init {
     /// The error returned by [`Pathspec::new()`](super::Pathspec::new()).
     #[derive(Debug, thiserror::Error)]

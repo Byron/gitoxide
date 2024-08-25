@@ -13,7 +13,6 @@ use std::{borrow::Cow, path::PathBuf};
 use bstr::{BStr, BString};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod expand_path;
 
 mod scheme;
@@ -21,7 +20,6 @@ pub use scheme::Scheme;
 mod impls;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod parse;
 
 /// Parse the given `bytes` as a [git url](Url).

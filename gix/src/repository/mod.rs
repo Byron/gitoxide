@@ -41,15 +41,12 @@ pub mod attributes;
 mod cache;
 mod config;
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(feature = "blob-diff")]
 pub mod diff;
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(feature = "dirwalk")]
 mod dirwalk;
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(feature = "attributes")]
 pub mod filter;
 mod graph;
@@ -76,7 +73,6 @@ mod thread_safe;
 mod worktree;
 
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(feature = "index")]
 pub mod index_from_tree {
     /// The error returned by [Repository::index_from_tree()](crate::Repository::index_from_tree).
@@ -94,7 +90,6 @@ pub mod index_from_tree {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod branch_remote_ref_name {
 
     /// The error returned by [Repository::branch_remote_ref_name()](crate::Repository::branch_remote_ref_name()).
@@ -111,7 +106,6 @@ pub mod branch_remote_ref_name {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod branch_remote_tracking_ref_name {
 
     /// The error returned by [Repository::branch_remote_tracking_ref_name()](crate::Repository::branch_remote_tracking_ref_name()).

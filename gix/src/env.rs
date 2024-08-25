@@ -50,7 +50,6 @@ pub fn os_str_to_bstring(input: &OsStr) -> Option<BString> {
 pub mod collate {
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod fetch {
         /// An error which combines all possible errors when opening a repository, finding remotes and using them to fetch.
         ///

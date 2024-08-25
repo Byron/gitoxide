@@ -1,7 +1,6 @@
 use crate::{clone::PrepareCheckout, Repository};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod main_worktree {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 

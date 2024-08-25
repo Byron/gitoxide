@@ -389,3 +389,4 @@ borrow_as_ptr = "allow"  # x2
 unnecessary_join = "allow"  # x1
 stable_sort_primitive = "allow"  # x1
 no_effect_underscore_binding = "allow"  # x1
+empty_docs = "allow"

@@ -16,7 +16,6 @@ pub enum Error {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod from_hex {
     /// The error returned by [`Prefix::from_hex`][super::Prefix::from_hex()].
     #[derive(Debug, Eq, PartialEq, thiserror::Error)]

@@ -37,21 +37,16 @@ pub struct File {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod write;
 
 ///
-#[allow(clippy::empty_docs)]
 mod access;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod verify;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod chunk;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;

@@ -31,11 +31,9 @@ pub enum Channel {
 
 mod line;
 ///
-#[allow(clippy::empty_docs)]
 pub mod read;
 
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(any(feature = "async-io", feature = "blocking-io"))]
 mod write;
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]

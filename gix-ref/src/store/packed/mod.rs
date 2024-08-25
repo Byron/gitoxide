@@ -84,17 +84,13 @@ pub struct Iter<'a> {
 mod decode;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod iter;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod buffer;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod find;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod transaction;

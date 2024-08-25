@@ -36,16 +36,13 @@ mod snapshot;
 pub use snapshot::{FileSnapshot, SharedFileSnapshot, SharedFileSnapshotMut};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod symlink;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod read_dir;
 pub use read_dir::function::read_dir;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod dir;
 
 /// Like [`std::env::current_dir()`], but it will `precompose_unicode` if that value is true, if the current directory
@@ -93,5 +90,4 @@ pub fn is_executable(_metadata: &std::fs::Metadata) -> bool {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod stack;

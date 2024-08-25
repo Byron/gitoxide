@@ -61,10 +61,8 @@ pub struct Entry {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod entry;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod walk;
 pub use walk::function::walk;

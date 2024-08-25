@@ -6,13 +6,11 @@
 pub use gix_revision as plumbing;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod walk;
 pub use walk::iter_impl::Walk;
 
 ///
 #[cfg(feature = "revision")]
-#[allow(clippy::empty_docs)]
 pub mod spec;
 
 /// The specification of a revision as parsed from a revision specification like `HEAD@{1}` or `v1.2.3...main`.

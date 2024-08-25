@@ -5,7 +5,6 @@ use gix_features::progress::Progress;
 use crate::data::File;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod checksum {
     /// Returned by [`data::File::verify_checksum()`][crate::data::File::verify_checksum()].
     pub type Error = crate::verify::checksum::Error;

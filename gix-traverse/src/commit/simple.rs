@@ -73,7 +73,6 @@ pub(super) struct State {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 mod init {
     use gix_date::SecondsSinceUnixEpoch;
     use gix_hash::{oid, ObjectId};

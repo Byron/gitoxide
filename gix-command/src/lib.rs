@@ -337,7 +337,6 @@ pub fn extract_interpreter(executable: &Path) -> Option<shebang::Data> {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod shebang {
     use bstr::{BStr, ByteSlice};
     use std::ffi::OsString;

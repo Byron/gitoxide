@@ -1,5 +1,4 @@
 ///
-#[allow(clippy::empty_docs)]
 pub mod decode {
     /// The error returned by [`decode()`][super::decode()].
     #[derive(Debug, thiserror::Error)]

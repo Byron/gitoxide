@@ -14,18 +14,14 @@ use kstring::{KString, KStringRef};
 
 mod assignment;
 ///
-#[allow(clippy::empty_docs)]
 pub mod name;
 ///
-#[allow(clippy::empty_docs)]
 pub mod state;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod search;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod parse;
 
 /// Parse attribute assignments line by line from `bytes`, and fail the operation on error.

@@ -1,5 +1,4 @@
 ///
-#[allow(clippy::empty_docs)]
 pub mod conversion {
 
     /// The error returned by [`crate::object::try_to_()`][crate::Object::try_to_commit_ref()].
@@ -17,7 +16,6 @@ pub mod conversion {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod find {
     /// Indicate that an error occurred when trying to find an object.
     #[derive(Debug, thiserror::Error)]
@@ -25,12 +23,10 @@ pub mod find {
     pub struct Error(#[from] pub gix_object::find::Error);
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod existing {
         /// An object could not be found in the database, or an error occurred when trying to obtain it.
         pub type Error = gix_object::find::existing::Error;
         ///
-        #[allow(clippy::empty_docs)]
         pub mod with_conversion {
             /// The error returned by [Repository::find_commit()](crate::Repository::find_commit).
             #[derive(Debug, thiserror::Error)]
@@ -46,7 +42,6 @@ pub mod find {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod write {
     /// An error to indicate writing to the loose object store failed.
     #[derive(Debug, thiserror::Error)]

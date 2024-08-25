@@ -5,11 +5,9 @@ use crate::TagRef;
 mod decode;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod write;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod ref_iter;
 
 impl<'a> TagRef<'a> {

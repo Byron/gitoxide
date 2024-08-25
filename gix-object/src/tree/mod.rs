@@ -7,7 +7,6 @@ use crate::{
 
 mod ref_iter;
 ///
-#[allow(clippy::empty_docs)]
 pub mod write;
 
 /// The mode of items storable in a tree, similar to the file mode on a unix file system.

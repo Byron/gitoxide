@@ -49,5 +49,4 @@ impl Inflate {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod stream;

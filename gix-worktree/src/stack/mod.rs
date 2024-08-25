@@ -208,11 +208,9 @@ impl Stack {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod delegate;
 use delegate::StackDelegate;
 
 mod platform;
 ///
-#[allow(clippy::empty_docs)]
 pub mod state;

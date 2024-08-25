@@ -1,10 +1,8 @@
 use std::collections::TryReserveError;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod entry;
 ///
-#[allow(clippy::empty_docs)]
 pub mod header;
 
 /// Returned by [`File::decode_header()`][crate::data::File::decode_header()],

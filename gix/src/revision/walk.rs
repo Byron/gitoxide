@@ -316,7 +316,6 @@ impl<'repo> Platform<'repo> {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod iter {
     /// The error returned by the [Walk](crate::revision::Walk) iterator.
     #[derive(Debug, thiserror::Error)]

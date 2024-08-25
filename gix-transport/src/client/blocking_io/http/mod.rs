@@ -27,7 +27,6 @@ compile_error!("Cannot set both 'http-client-reqwest' and 'http-client-curl' fea
 
 #[cfg(feature = "http-client-curl")]
 ///
-#[allow(clippy::empty_docs)]
 pub mod curl;
 
 /// The experimental `reqwest` backend.
@@ -40,7 +39,6 @@ pub mod reqwest;
 mod traits;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod options {
     /// A function to authenticate a URL.
     pub type AuthenticateFn =

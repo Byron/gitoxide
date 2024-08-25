@@ -132,7 +132,6 @@ where
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod connect {
     use std::net::{TcpStream, ToSocketAddrs};
 

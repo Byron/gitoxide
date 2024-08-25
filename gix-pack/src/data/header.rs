@@ -37,7 +37,6 @@ pub fn encode(version: data::Version, num_objects: u32) -> [u8; 12] {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod decode {
     /// Returned by [`decode()`][super::decode()].
     #[derive(thiserror::Error, Debug)]

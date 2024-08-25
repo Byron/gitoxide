@@ -3,23 +3,18 @@ use std::collections::HashMap;
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod apply;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod shutdown;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod delayed;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod process;
 
 /// A literal driver process.

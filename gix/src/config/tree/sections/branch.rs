@@ -49,7 +49,6 @@ mod merge {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod validate {
     use crate::{
         bstr::BStr,

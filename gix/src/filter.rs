@@ -14,10 +14,8 @@ use crate::{
 };
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod pipeline {
     ///
-    #[allow(clippy::empty_docs)]
     pub mod options {
         use crate::{bstr::BString, config};
 
@@ -40,7 +38,6 @@ pub mod pipeline {
     }
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod convert_to_git {
         /// The error returned by [Pipeline::convert_to_git()][crate::filter::Pipeline::convert_to_git()].
         #[derive(Debug, thiserror::Error)]
@@ -54,7 +51,6 @@ pub mod pipeline {
     }
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod convert_to_worktree {
         /// The error returned by [Pipeline::convert_to_worktree()][crate::filter::Pipeline::convert_to_worktree()].
         #[derive(Debug, thiserror::Error)]

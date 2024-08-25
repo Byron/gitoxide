@@ -3,7 +3,6 @@ use std::ops::Range;
 use crate::file::Index;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod offset_by_kind {
     use std::fmt::{Display, Formatter};
 
@@ -28,7 +27,6 @@ pub mod offset_by_kind {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod data_by_kind {
     /// The error returned by [`Index::data_by_id()`][super::Index::data_by_id()].
     #[derive(Debug, thiserror::Error)]

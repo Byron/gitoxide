@@ -6,7 +6,6 @@ use crate::{
 };
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod list {
     use crate::driver;
 
@@ -24,7 +23,6 @@ pub mod list {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod fetch {
     use crate::driver;
 

@@ -1,7 +1,6 @@
 use crate::{filter, worktree::IndexPersistedOrInMemory, Id, Repository};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod pipeline {
     /// The error returned by [Repository::filter_pipeline()](super::Repository::filter_pipeline()).
     #[derive(Debug, thiserror::Error)]

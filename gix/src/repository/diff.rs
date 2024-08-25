@@ -1,7 +1,6 @@
 use crate::Repository;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod resource_cache {
     /// The error returned by [Repository::diff_resource_cache()](super::Repository::diff_resource_cache()).
     #[derive(Debug, thiserror::Error)]

@@ -8,7 +8,6 @@ mod traits;
 pub use traits::{SetServiceResponse, Transport, TransportV2Ext};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod connect;
 #[cfg(feature = "async-std")]
 pub use connect::function::connect;

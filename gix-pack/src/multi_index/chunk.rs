@@ -8,7 +8,6 @@ pub mod index_names {
     pub const ID: gix_chunk::Id = *b"PNAM";
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod decode {
         use gix_object::bstr::BString;
 

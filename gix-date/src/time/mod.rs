@@ -40,7 +40,6 @@ impl From<CustomFormat> for Format {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod format;
 mod init;
 mod write;
