@@ -60,6 +60,9 @@ jobs:
         run:
           sudo apt-get install tree
       - uses: extractions/setup-just@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
       - name: test
         env:
           CI: true
