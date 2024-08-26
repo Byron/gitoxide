@@ -857,7 +857,7 @@ impl<'a> Env<'a> {
 
 impl<'a> Drop for Env<'a> {
     fn drop(&mut self) {
-        for (var, prev_value) in &self.altered_vars {
+        for (var, prev_value) in self.altered_vars.iter().rev() {
             match prev_value {
                 Some(value) => std::env::set_var(var, value),
                 None => std::env::remove_var(var),
