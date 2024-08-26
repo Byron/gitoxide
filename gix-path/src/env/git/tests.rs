@@ -362,13 +362,16 @@ use serial_test::serial;
 fn check_exe_info() {
     let path = super::exe_info()
         .map(crate::from_bstring)
-        .expect("Nonempty config in the test environment");
+        .expect("It is present in the test environment (nonempty config)");
 
     assert!(
         path.is_absolute(),
-        "Absolute, unless overridden such as with GIT_CONFIG_SYSTEM"
+        "It is absolute (unless overridden such as with GIT_CONFIG_SYSTEM)"
     );
-    assert!(path.exists(), "Exists, since `git config` just found an entry there");
+    assert!(
+        path.exists(),
+        "It should exist on disk, since `git config` just found an entry there"
+    );
 }
 
 #[test]
@@ -380,7 +383,7 @@ fn exe_info() {
 #[test]
 #[serial]
 fn exe_info_tolerates_broken_tmp() {
-    let empty = gix_testtools::tempfile::tempdir().expect("We can create a new temporary subdirectory");
+    let empty = gix_testtools::tempfile::tempdir().expect("can create new temporary subdirectory");
     let nonexistent = empty.path().join("nonexistent");
     assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
     let nonexistent_str = nonexistent.to_str().expect("valid Unicode");
@@ -426,7 +429,7 @@ fn exe_info_never_from_local_scope_even_if_temp_is_here() {
     assert_eq!(
         std::env::temp_dir(),
         repo,
-        "It is likely that setting up the test failed"
+        "Possible test bug: Setting up the test may have failed"
     );
     let maybe_path = super::exe_info();
     assert_eq!(
