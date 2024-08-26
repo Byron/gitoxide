@@ -44,11 +44,12 @@ pub(crate) mod function {
         others: &[ObjectId],
         graph: &mut Graph<'_, '_, Flags>,
     ) -> Result<Option<Vec<ObjectId>>, Error> {
-        let _span = gix_trace::coarse!("gix_revision::merge_base()", ?first, ?others,);
+        let _span = gix_trace::coarse!("gix_revision::merge_base()", ?first, ?others);
         if others.is_empty() || others.contains(&first) {
             return Ok(Some(vec![first]));
         }
 
+        graph.clear();
         let bases = paint_down_to_common(first, others, graph)?;
         graph.clear();
 
@@ -65,6 +66,7 @@ pub(crate) mod function {
         if commits.is_empty() {
             return Ok(Vec::new());
         }
+        let _span = gix_trace::detail!("gix_revision::remove_redundant()", num_commits = %commits.len());
         let sorted_commits = {
             let mut v = commits.to_vec();
             v.sort_by(|a, b| a.1.cmp(&b.1));
@@ -217,11 +219,10 @@ pub(crate) mod function {
         type Error = gix_object::decode::Error;
 
         fn try_from(commit: LazyCommit<'_, '_>) -> Result<Self, Self::Error> {
+            let (generation, timestamp) = commit.generation_and_timestamp()?;
             Ok(GenThenTime {
-                generation: commit
-                    .generation()
-                    .unwrap_or(gix_commitgraph::GENERATION_NUMBER_INFINITY),
-                time: commit.committer_timestamp()?,
+                generation: generation.unwrap_or(gix_commitgraph::GENERATION_NUMBER_INFINITY),
+                time: timestamp,
             })
         }
     }
