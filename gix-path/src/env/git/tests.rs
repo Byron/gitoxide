@@ -370,7 +370,7 @@ fn set_temp_env_vars<'a>(path: &Path) -> gix_testtools::Env<'a> {
     assert_eq!(
         std::env::temp_dir(),
         path,
-        "Possible test bug: Setting up the test may have failed"
+        "Possible test bug: Temp dir path may not have been customized successfully"
     );
 
     env
@@ -416,7 +416,7 @@ fn exe_info_never_from_local_scope() {
     let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
     let _env = gix_testtools::Env::new()
         .set("GIT_CONFIG_NOSYSTEM", "1")
-        .set("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" });
+        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE);
 
     let maybe_path = super::exe_info();
     assert_eq!(
