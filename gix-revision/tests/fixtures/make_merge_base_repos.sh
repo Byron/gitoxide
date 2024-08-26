@@ -65,5 +65,15 @@ H=$(mkcommit 8 H $A $F)
   baseline G H
 } > 2_a.baseline
 
+commits=$(git log --all --format=%s)
+commit_array=($commits)
+num_commits=${#commit_array[@]}
+
+for ((i=0; i<num_commits; i++)); do
+    for ((j=0; j<num_commits; j++)); do
+        baseline ${commit_array[$i]} ${commit_array[$j]}
+    done
+done > 3_permutations.baseline
+
 git commit-graph write --no-progress --reachable
 git repack -adq

@@ -75,13 +75,13 @@ pub(crate) mod function {
 
         let mut walk_start = Vec::with_capacity(commits.len());
         for (id, _) in commits {
-            graph.insert(*id, Flags::RESULT);
             graph.insert_parents_with_lookup(id, &mut |parent_id, parent_data, maybe_flags| -> Result<_, Error> {
-                if maybe_flags.is_none() {
+                if maybe_flags.map_or(true, |flags| !flags.contains(Flags::STALE)) {
                     walk_start.push((parent_id, GenThenTime::try_from(parent_data)?));
                 }
                 Ok(Flags::empty())
             })?;
+            graph.insert(*id, Flags::RESULT);
         }
         walk_start.sort_by(|a, b| a.0.cmp(&b.0));
         let mut count_still_independent = commits.len();
