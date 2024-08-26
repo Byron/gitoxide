@@ -75,6 +75,16 @@ impl<'find, 'cache, T: Default> Graph<'find, 'cache, T> {
 
 /// Access and mutation
 impl<'find, 'cache, T> Graph<'find, 'cache, T> {
+    /// Returns the amount of entries in the graph.
+    pub fn len(&self) -> usize {
+        self.map.len()
+    }
+
+    /// Returns `true` if there is no entry in the graph.
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
+
     /// Returns true if `id` has data associated with it, meaning that we processed it already.
     pub fn contains(&self, id: &gix_hash::oid) -> bool {
         self.map.contains_key(id.as_ref())
