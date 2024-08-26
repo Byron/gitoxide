@@ -25,11 +25,11 @@
 ///
 /// Additionally, and only if `T` is [`Commit<T>`][graph::Commit], there is *no need for an object cache* as we keep track of
 /// everything related to commit traversal in our own hashmap.
-pub struct Graph<'find, T> {
+pub struct Graph<'find, 'cache, T> {
     /// A way to resolve a commit from the object database.
     find: Box<dyn gix_object::Find + 'find>,
     /// A way to speedup commit access, essentially a multi-file commit database.
-    cache: Option<gix_commitgraph::Graph>,
+    cache: Option<&'cache gix_commitgraph::Graph>,
     /// The set of cached commits that we have seen once, along with data associated with them.
     map: graph::IdMap<T>,
     /// A buffer for writing commit data into.

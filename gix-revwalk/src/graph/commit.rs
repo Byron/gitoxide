@@ -4,9 +4,9 @@ use smallvec::SmallVec;
 use super::LazyCommit;
 use crate::graph::{Commit, Either, Generation};
 
-impl<'graph> LazyCommit<'graph> {
+impl<'graph, 'cache> LazyCommit<'graph, 'cache> {
     /// Return an iterator over the parents of this commit.
-    pub fn iter_parents(&self) -> Parents<'graph> {
+    pub fn iter_parents(&self) -> Parents<'graph, 'cache> {
         let backing = match &self.backing {
             Either::Left(buf) => Either::Left(gix_object::CommitRefIter::from_bytes(buf)),
             Either::Right((cache, pos)) => Either::Right((*cache, cache.commit_at(*pos).iter_parents())),
@@ -89,17 +89,17 @@ impl<'graph> LazyCommit<'graph> {
 }
 
 /// An iterator over the parents of a commit.
-pub struct Parents<'graph> {
+pub struct Parents<'graph, 'cache> {
     backing: Either<
         gix_object::CommitRefIter<'graph>,
         (
-            &'graph gix_commitgraph::Graph,
-            gix_commitgraph::file::commit::Parents<'graph>,
+            &'cache gix_commitgraph::Graph,
+            gix_commitgraph::file::commit::Parents<'cache>,
         ),
     >,
 }
 
-impl<'graph> Iterator for Parents<'graph> {
+impl<'graph, 'cache> Iterator for Parents<'graph, 'cache> {
     type Item = Result<gix_hash::ObjectId, iter_parents::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
