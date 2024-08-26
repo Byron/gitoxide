@@ -359,9 +359,7 @@ use std::path::Path;
 
 use serial_test::serial;
 
-#[test]
-#[serial]
-fn exe_info() {
+fn check_exe_info() {
     let path = super::exe_info()
         .map(crate::from_bstring)
         .expect("Nonempty config in the test environment");
@@ -371,6 +369,28 @@ fn exe_info() {
         "Absolute, unless overridden such as with GIT_CONFIG_SYSTEM"
     );
     assert!(path.exists(), "Exists, since `git config` just found an entry there");
+}
+
+#[test]
+#[serial]
+fn exe_info() {
+    check_exe_info();
+}
+
+#[test]
+#[serial]
+fn exe_info_tolerates_broken_tmp() {
+    let empty = gix_testtools::tempfile::tempdir().expect("We can create a new temporary subdirectory");
+    let nonexistent = empty.path().join("nonexistent");
+    assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
+    let nonexistent_str = nonexistent.to_str().expect("valid Unicode");
+
+    let _env = gix_testtools::Env::new()
+        .set("TMPDIR", nonexistent_str) // Mainly for Unix.
+        .set("TMP", nonexistent_str) // Mainly for Windows.
+        .set("TEMP", nonexistent_str); // Mainly for Windows, too.
+
+    check_exe_info();
 }
 
 #[test]
