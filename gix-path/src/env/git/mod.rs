@@ -118,7 +118,8 @@ fn git_cmd(executable: PathBuf) -> Command {
     // git 2.8.0 and higher support --show-origin.
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
         .current_dir(env::temp_dir())
-        .env("GIT_DIR", NULL_DEVICE)
+        .env("GIT_DIR", NULL_DEVICE) // Avoid getting local-scope config.
+        .env("GIT_WORK_TREE", NULL_DEVICE) // Not needed, but clarifies intent.
         .stdin(Stdio::null())
         .stderr(Stdio::null());
     cmd
