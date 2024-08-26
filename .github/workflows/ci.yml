@@ -92,9 +92,9 @@ jobs:
         with:
           tool: nextest
       - name: "Test (nextest)"
-        run: |
-          cargo nextest run --all --no-fail-fast
-          cargo test --doc
+        run: cargo nextest run --all --no-fail-fast
+      - name: Doctest
+        run: cargo test --doc
 
   test-32bit:
     runs-on: ubuntu-latest
