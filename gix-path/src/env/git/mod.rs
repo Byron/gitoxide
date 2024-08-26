@@ -82,6 +82,11 @@ pub(super) static EXE_NAME: &str = "git";
 /// The git executable is the one found in PATH or an alternative location.
 pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(exe_info);
 
+#[cfg(windows)]
+static NULL_DEVICE: &str = "NUL";
+#[cfg(not(windows))]
+static NULL_DEVICE: &str = "/dev/null";
+
 fn exe_info() -> Option<BString> {
     let mut cmd = git_cmd(EXE_NAME.into());
     gix_trace::debug!(cmd = ?cmd, "invoking git for installation config path");
@@ -113,6 +118,7 @@ fn git_cmd(executable: PathBuf) -> Command {
     // git 2.8.0 and higher support --show-origin.
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
         .current_dir(env::temp_dir())
+        .env("GIT_DIR", NULL_DEVICE)
         .stdin(Stdio::null())
         .stderr(Stdio::null());
     cmd
