@@ -430,7 +430,7 @@ fn exe_info() {
 
 #[test]
 #[serial]
-fn exe_info_tolerates_broken_tmp() {
+fn exe_info_tolerates_broken_temp() {
     let non = NonexistentLocation::new();
     let _env = set_temp_env_vars(non.path());
     check_exe_info();
