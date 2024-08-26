@@ -407,6 +407,10 @@ fn set_temp_env_vars<'a>(path: &Path) -> gix_testtools::Env<'a> {
     env
 }
 
+fn unset_windows_directory_vars<'a>() -> gix_testtools::Env<'a> {
+    gix_testtools::Env::new().unset("windir").unset("SystemRoot")
+}
+
 fn check_exe_info() {
     let path = super::exe_info()
         .map(crate::from_bstring)
@@ -438,6 +442,15 @@ fn exe_info_tolerates_broken_temp() {
 
 #[test]
 #[serial]
+fn exe_info_tolerates_oversanitized_env() {
+    // This test runs on all systems, but it is a regression test for Windows.
+    // Also, having both a broken temp dir and an over-sanitized environment is not supported.
+    let _env = unset_windows_directory_vars();
+    check_exe_info();
+}
+
+#[test]
+#[serial]
 fn exe_info_same_result_with_broken_temp() {
     let with_unmodified_temp = super::exe_info();
 
@@ -448,6 +461,20 @@ fn exe_info_same_result_with_broken_temp() {
     };
 
     assert_eq!(with_unmodified_temp, with_nonexistent_temp);
+}
+
+#[test]
+#[serial]
+fn exe_info_same_result_with_oversanitized_env() {
+    // See `exe_info_tolerates_oversanitized_env`.
+    let with_unmodified_env = super::exe_info();
+
+    let with_oversanitized_env = {
+        let _env = unset_windows_directory_vars();
+        super::exe_info()
+    };
+
+    assert_eq!(with_unmodified_env, with_oversanitized_env);
 }
 
 #[test]
