@@ -160,7 +160,7 @@ pub(crate) mod function {
     /// candidate by setting `fallback_to_oid` to true.
     pub fn describe<'name>(
         commit: &oid,
-        graph: &mut Graph<'_, Flags>,
+        graph: &mut Graph<'_, '_, Flags>,
         Options {
             name_by_oid,
             mut max_candidates,
@@ -304,7 +304,7 @@ pub(crate) mod function {
     }
 
     fn parents_by_date_onto_queue_and_track_names(
-        graph: &mut Graph<'_, Flags>,
+        graph: &mut Graph<'_, '_, Flags>,
         queue: &mut PriorityQueue<CommitTime, gix_hash::ObjectId>,
         commit: gix_hash::ObjectId,
         commit_flags: Flags,
@@ -326,7 +326,7 @@ pub(crate) mod function {
 
     fn finish_depth_computation(
         mut queue: PriorityQueue<CommitTime, gix_hash::ObjectId>,
-        graph: &mut Graph<'_, Flags>,
+        graph: &mut Graph<'_, '_, Flags>,
         best_candidate: &mut Candidate<'_>,
         first_parent: bool,
     ) -> Result<u32, Error> {

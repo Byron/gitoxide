@@ -42,7 +42,7 @@ pub(crate) mod function {
     pub fn merge_base(
         first: ObjectId,
         others: &[ObjectId],
-        graph: &mut Graph<'_, Flags>,
+        graph: &mut Graph<'_, '_, Flags>,
     ) -> Result<Option<Vec<ObjectId>>, Error> {
         let _span = gix_trace::coarse!("gix_revision::merge_base()", ?first, ?others,);
         if others.is_empty() || others.contains(&first) {
@@ -60,7 +60,7 @@ pub(crate) mod function {
     /// That way, we return only the topologically most recent commits in `commits`.
     fn remove_redundant(
         commits: &[(ObjectId, GenThenTime)],
-        graph: &mut Graph<'_, Flags>,
+        graph: &mut Graph<'_, '_, Flags>,
     ) -> Result<Vec<ObjectId>, Error> {
         if commits.is_empty() {
             return Ok(Vec::new());
@@ -151,7 +151,7 @@ pub(crate) mod function {
     fn paint_down_to_common(
         first: ObjectId,
         others: &[ObjectId],
-        graph: &mut Graph<'_, Flags>,
+        graph: &mut Graph<'_, '_, Flags>,
     ) -> Result<Vec<(ObjectId, GenThenTime)>, Error> {
         let mut queue = PriorityQueue::<GenThenTime, ObjectId>::new();
         graph.insert_data(first, |commit| -> Result<_, Error> {
@@ -213,10 +213,10 @@ pub(crate) mod function {
         time: gix_date::SecondsSinceUnixEpoch,
     }
 
-    impl TryFrom<gix_revwalk::graph::LazyCommit<'_>> for GenThenTime {
+    impl TryFrom<gix_revwalk::graph::LazyCommit<'_, '_>> for GenThenTime {
         type Error = gix_object::decode::Error;
 
-        fn try_from(commit: LazyCommit<'_>) -> Result<Self, Self::Error> {
+        fn try_from(commit: LazyCommit<'_, '_>) -> Result<Self, Self::Error> {
             Ok(GenThenTime {
                 generation: commit
                     .generation()

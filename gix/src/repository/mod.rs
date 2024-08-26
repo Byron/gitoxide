@@ -73,6 +73,19 @@ mod thread_safe;
 mod worktree;
 
 ///
+pub mod commit_graph_if_enabled {
+    /// The error returned by [Repository::commit_graph_if_enabled()](crate::Repository::commit_graph_if_enabled()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        ConfigBoolean(#[from] crate::config::boolean::Error),
+        #[error(transparent)]
+        OpenCommitGraph(#[from] gix_commitgraph::init::Error),
+    }
+}
+
+///
 #[cfg(feature = "index")]
 pub mod index_from_tree {
     /// The error returned by [Repository::index_from_tree()](crate::Repository::index_from_tree).

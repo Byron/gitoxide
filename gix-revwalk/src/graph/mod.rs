@@ -207,7 +207,7 @@ impl<'find, 'cache, T> Graph<'find, 'cache, T> {
     pub fn new(objects: impl gix_object::Find + 'find, cache: Option<&'cache gix_commitgraph::Graph>) -> Self {
         Graph {
             find: Box::new(objects),
-            cache: cache.into(),
+            cache,
             map: gix_hashtable::HashMap::default(),
             buf: Vec::new(),
             parent_buf: Vec::new(),

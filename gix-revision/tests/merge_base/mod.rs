@@ -13,10 +13,10 @@ mod baseline {
         for baseline_path in expectation_paths(&root)? {
             count += 1;
             for use_commitgraph in [false, true] {
+                let cache = use_commitgraph
+                    .then(|| gix_commitgraph::Graph::from_info_dir(&odb.store_ref().path().join("info")).unwrap());
                 for expected in parse_expectations(&baseline_path)? {
-                    let cache = use_commitgraph
-                        .then(|| gix_commitgraph::Graph::from_info_dir(&odb.store_ref().path().join("info")).unwrap());
-                    let mut graph = gix_revision::Graph::new(&odb, cache);
+                    let mut graph = gix_revision::Graph::new(&odb, cache.as_ref());
 
                     let actual = merge_base(expected.first, &expected.others, &mut graph)?;
                     assert_eq!(
