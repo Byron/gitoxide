@@ -33,6 +33,26 @@ impl<'graph, 'cache> LazyCommit<'graph, 'cache> {
         }
     }
 
+    /// Returns the generation of the commit and its commit-time, either from cache if available, or parsed from the object buffer.
+    pub fn generation_and_timestamp(
+        &self,
+    ) -> Result<(Option<Generation>, SecondsSinceUnixEpoch), gix_object::decode::Error> {
+        Ok(match &self.backing {
+            Either::Left(buf) => (
+                None,
+                gix_object::CommitRefIter::from_bytes(buf).committer()?.time.seconds,
+            ),
+            Either::Right((cache, pos)) => {
+                let commit = cache.commit_at(*pos);
+                (
+                    commit.generation().into(),
+                    // a cast as we cannot represent the error and trying seems overkill
+                    cache.commit_at(*pos).committer_timestamp() as SecondsSinceUnixEpoch,
+                )
+            }
+        })
+    }
+
     /// Convert ourselves into an owned version, which effectively detaches us from the underlying graph.
     /// Use `new_data()` to provide the `data` field for the owned `Commit`.
     pub fn to_owned<T>(&self, new_data: impl FnOnce() -> T) -> Result<Commit<T>, to_owned::Error> {
