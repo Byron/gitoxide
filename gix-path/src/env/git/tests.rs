@@ -359,6 +359,23 @@ use std::path::Path;
 
 use serial_test::serial;
 
+fn set_temp_env_vars<'a>(path: &Path) -> gix_testtools::Env<'a> {
+    let path_str = path.to_str().expect("valid Unicode");
+
+    let env = gix_testtools::Env::new()
+        .set("TMPDIR", path_str) // Mainly for Unix.
+        .set("TMP", path_str) // Mainly for Windows.
+        .set("TEMP", path_str); // Mainly for Windows, too.
+
+    assert_eq!(
+        std::env::temp_dir(),
+        path,
+        "Possible test bug: Setting up the test may have failed"
+    );
+
+    env
+}
+
 fn check_exe_info() {
     let path = super::exe_info()
         .map(crate::from_bstring)
@@ -386,13 +403,8 @@ fn exe_info_tolerates_broken_tmp() {
     let empty = gix_testtools::tempfile::tempdir().expect("can create new temporary subdirectory");
     let nonexistent = empty.path().join("nonexistent");
     assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
-    let nonexistent_str = nonexistent.to_str().expect("valid Unicode");
 
-    let _env = gix_testtools::Env::new()
-        .set("TMPDIR", nonexistent_str) // Mainly for Unix.
-        .set("TMP", nonexistent_str) // Mainly for Windows.
-        .set("TEMP", nonexistent_str); // Mainly for Windows, too.
-
+    let _env = set_temp_env_vars(&nonexistent);
     check_exe_info();
 }
 
@@ -400,10 +412,12 @@ fn exe_info_tolerates_broken_tmp() {
 #[serial]
 fn exe_info_never_from_local_scope() {
     let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+
     let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
     let _env = gix_testtools::Env::new()
         .set("GIT_CONFIG_NOSYSTEM", "1")
         .set("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" });
+
     let maybe_path = super::exe_info();
     assert_eq!(
         maybe_path, None,
@@ -418,19 +432,12 @@ fn exe_info_never_from_local_scope_even_if_temp_is_here() {
         .expect("script succeeds")
         .canonicalize()
         .expect("path is valid and exists");
-    let repo_str = repo.to_str().expect("valid Unicode");
+
     let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
-    let _env = gix_testtools::Env::new()
+    let _env = set_temp_env_vars(&repo)
         .set("GIT_CONFIG_NOSYSTEM", "1")
-        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE)
-        .set("TMPDIR", repo_str) // Mainly for Unix.
-        .set("TMP", repo_str) // Mainly for Windows.
-        .set("TEMP", repo_str); // Mainly for Windows, too.
-    assert_eq!(
-        std::env::temp_dir(),
-        repo,
-        "Possible test bug: Setting up the test may have failed"
-    );
+        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE);
+
     let maybe_path = super::exe_info();
     assert_eq!(
         maybe_path, None,
