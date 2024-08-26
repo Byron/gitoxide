@@ -115,7 +115,11 @@ fn git_cmd(executable: PathBuf) -> Command {
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
-    // git 2.8.0 and higher support --show-origin.
+    // Git 2.8.0 and higher support --show-origin. The -l, -z, and --name-only options were
+    // supported even before that. In contrast, --show-scope was introduced later, in Git 2.26.0.
+    // Low versions of git are still sometimes used, and this is sometimes reasonable because
+    // downstream distributions often backport security patches without adding most new features.
+    // So for now, we forgo the convenience of --show-scope for greater backward compatibility.
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
         .current_dir(env::temp_dir())
         .env("GIT_DIR", NULL_DEVICE) // Avoid getting local-scope config.
