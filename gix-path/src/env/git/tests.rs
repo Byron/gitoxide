@@ -355,9 +355,40 @@ mod locations {
     }
 }
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
+use gix_testtools::tempfile;
 use serial_test::serial;
+
+/// Wrapper for a path to a location kept from accidentally existing, until drop.
+#[derive(Debug)]
+struct NonexistentLocation {
+    _empty: tempfile::TempDir,
+    nonexistent: PathBuf,
+}
+
+impl NonexistentLocation {
+    fn new() -> Self {
+        let empty = tempfile::tempdir().expect("can create new temporary subdirectory");
+
+        let nonexistent = empty
+            .path()
+            .canonicalize()
+            .expect("path to the new directory works")
+            .join("nonexistent");
+
+        assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
+
+        Self {
+            _empty: empty,
+            nonexistent,
+        }
+    }
+
+    fn path(&self) -> &Path {
+        &self.nonexistent
+    }
+}
 
 fn set_temp_env_vars<'a>(path: &Path) -> gix_testtools::Env<'a> {
     let path_str = path.to_str().expect("valid Unicode");
@@ -400,15 +431,8 @@ fn exe_info() {
 #[test]
 #[serial]
 fn exe_info_tolerates_broken_tmp() {
-    let empty = gix_testtools::tempfile::tempdir().expect("can create new temporary subdirectory");
-    let nonexistent = empty
-        .path()
-        .canonicalize()
-        .expect("path to the new directory works")
-        .join("nonexistent");
-    assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
-
-    let _env = set_temp_env_vars(&nonexistent);
+    let non = NonexistentLocation::new();
+    let _env = set_temp_env_vars(non.path());
     check_exe_info();
 }
 
