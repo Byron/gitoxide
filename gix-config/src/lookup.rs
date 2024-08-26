@@ -9,7 +9,6 @@ pub enum Error<E> {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod existing {
     /// The error when looking up a value that doesn't exist, for example via [`File::value()`][crate::File::value()].
     #[derive(Debug, thiserror::Error)]

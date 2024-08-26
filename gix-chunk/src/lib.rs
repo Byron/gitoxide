@@ -10,7 +10,6 @@ pub type Id = [u8; 4];
 pub const SENTINEL: Id = [0u8; 4];
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod range {
     use std::ops::Range;
 
@@ -34,5 +33,4 @@ pub mod range {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod file;

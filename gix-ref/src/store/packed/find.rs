@@ -129,7 +129,6 @@ mod error {
 pub use error::Error;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod existing {
 
     /// The error returned by [`find_existing()`][super::packed::Buffer::find()]

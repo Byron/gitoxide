@@ -3,7 +3,6 @@ use std::cmp::Ordering;
 use crate::State;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod entries {
     use bstr::BString;
 
@@ -23,7 +22,6 @@ pub mod entries {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod extensions {
     use crate::extension;
 

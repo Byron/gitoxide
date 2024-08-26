@@ -90,7 +90,6 @@ pub struct Resource<'a> {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod resource {
     use crate::blob::{
         pipeline,
@@ -151,7 +150,6 @@ pub mod resource {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod set_resource {
     use bstr::BString;
 
@@ -181,7 +179,6 @@ pub mod set_resource {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod prepare_diff {
     use bstr::BStr;
 
@@ -248,7 +245,6 @@ pub mod prepare_diff {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod prepare_diff_command {
     use std::ops::{Deref, DerefMut};
 

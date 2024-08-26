@@ -1,5 +1,4 @@
 ///
-#[allow(clippy::empty_docs)]
 pub mod edit {
     use crate::config;
 
@@ -22,7 +21,6 @@ pub mod edit {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod peel {
     /// The error returned by [`Reference::peel_to_id_in_place(…)`](crate::Reference::peel_to_id_in_place()) and
     /// [`Reference::into_fully_peeled_id(…)`](crate::Reference::into_fully_peeled_id()).
@@ -36,7 +34,6 @@ pub mod peel {
     }
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod to_kind {
         /// The error returned by [`Reference::peel_to_kind(…)`](crate::Reference::peel_to_kind()).
         #[derive(Debug, thiserror::Error)]
@@ -55,10 +52,8 @@ pub mod peel {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod follow {
     ///
-    #[allow(clippy::empty_docs)]
     pub mod to_object {
         /// The error returned by [`Reference::follow_to_object(…)`](crate::Reference::follow_to_object()).
         #[derive(Debug, thiserror::Error)]
@@ -73,7 +68,6 @@ pub mod follow {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod head_id {
     /// The error returned by [`Repository::head_id(…)`](crate::Repository::head_id()).
     #[derive(Debug, thiserror::Error)]
@@ -87,7 +81,6 @@ pub mod head_id {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod head_commit {
     /// The error returned by [`Repository::head_commit`(…)](crate::Repository::head_commit()).
     #[derive(Debug, thiserror::Error)]
@@ -101,7 +94,6 @@ pub mod head_commit {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod head_tree_id {
     /// The error returned by [`Repository::head_tree_id`(…)](crate::Repository::head_tree_id()).
     #[derive(Debug, thiserror::Error)]
@@ -115,10 +107,8 @@ pub mod head_tree_id {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod find {
     ///
-    #[allow(clippy::empty_docs)]
     pub mod existing {
         /// The error returned by [`find_reference(…)`][crate::Repository::find_reference()], and others.
         #[derive(Debug, thiserror::Error)]

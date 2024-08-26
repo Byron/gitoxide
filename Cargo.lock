@@ -2396,6 +2396,7 @@ dependencies = [
 name = "gix-revision"
 version = "0.29.0"
 dependencies = [
+ "bitflags 2.6.0",
  "bstr",
  "document-features",
  "gix-commitgraph 0.24.3",

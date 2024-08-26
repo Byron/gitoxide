@@ -11,7 +11,6 @@ use bstr::BString;
 pub use gix_attributes as attributes;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod normalize {
     use std::path::PathBuf;
 
@@ -29,11 +28,9 @@ pub mod normalize {
 mod pattern;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod search;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod parse;
 
 /// Default settings for some fields of a [`Pattern`].
@@ -54,7 +51,6 @@ pub struct Defaults {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod defaults;
 
 /// A lists of pathspec patterns, possibly from a file.

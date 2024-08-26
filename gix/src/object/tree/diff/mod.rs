@@ -37,7 +37,6 @@ pub struct ChangeDetached {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod change;
 
 /// Diffing
@@ -116,7 +115,6 @@ pub struct Stats {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod stats {
     /// The error returned by [`stats()`](super::Platform::stats()).
     #[derive(Debug, thiserror::Error)]
@@ -169,5 +167,4 @@ impl<'a, 'repo> Platform<'a, 'repo> {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod for_each;

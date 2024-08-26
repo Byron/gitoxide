@@ -1,5 +1,4 @@
 ///
-#[allow(clippy::empty_docs)]
 pub mod convert_to_git;
 pub use convert_to_git::function::convert_to_git;
 

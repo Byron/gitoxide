@@ -6,7 +6,6 @@ pub(crate) mod types;
 pub use types::{Item, Mapping, Outcome, Source, SourceRef};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod validate;
 
 /// Initialization

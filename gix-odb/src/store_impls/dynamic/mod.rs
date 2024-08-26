@@ -51,25 +51,20 @@ impl RefreshMode {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod find;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod prefix;
 
 mod header;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod iter;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod write;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;
 
 pub(crate) mod types;
@@ -78,11 +73,9 @@ pub use types::Metrics;
 pub(crate) mod handle;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod load_index;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod verify;
 
 mod load_one;
@@ -92,5 +85,4 @@ mod metrics;
 mod access;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod structure;

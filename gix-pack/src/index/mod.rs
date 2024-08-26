@@ -136,7 +136,6 @@ impl File {
 
 const V2_SIGNATURE: &[u8] = b"\xfftOc";
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;
 
 pub(crate) mod access;
@@ -144,11 +143,9 @@ pub use access::Entry;
 
 pub(crate) mod encode;
 ///
-#[allow(clippy::empty_docs)]
 pub mod traverse;
 mod util;
 ///
-#[allow(clippy::empty_docs)]
 pub mod verify;
 ///
 #[cfg(feature = "streaming-input")]

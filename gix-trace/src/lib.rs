@@ -54,7 +54,6 @@ mod disabled;
 pub use disabled::Span;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod event {
     #[cfg(feature = "tracing")]
     pub use tracing_core::Level;

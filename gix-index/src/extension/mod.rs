@@ -74,29 +74,23 @@ mod iter;
 pub(crate) mod fs_monitor;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod decode;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod tree;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod end_of_index_entry;
 
 pub(crate) mod index_entry_offset_table;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod link;
 
 pub(crate) mod resolve_undo;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod untracked_cache;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod sparse;

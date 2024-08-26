@@ -83,5 +83,4 @@ pub fn helper_outcome_to_result(outcome: Option<helper::Outcome>, action: helper
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod context;

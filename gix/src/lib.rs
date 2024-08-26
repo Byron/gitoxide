@@ -147,14 +147,12 @@ pub mod interrupt;
 
 mod ext;
 ///
-#[allow(clippy::empty_docs)]
 pub mod prelude;
 
 #[cfg(feature = "excludes")]
 mod attribute_stack;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod path;
 
 /// The standard type for a store to handle git references.
@@ -175,12 +173,10 @@ pub use types::{
 pub use types::{Pathspec, PathspecDetached, Submodule};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod clone;
 pub mod commit;
 ///
 #[cfg(feature = "dirwalk")]
-#[allow(clippy::empty_docs)]
 pub mod dirwalk;
 pub mod head;
 pub mod id;
@@ -196,14 +192,11 @@ pub mod tag;
 pub(crate) mod util;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod progress;
 ///
-#[allow(clippy::empty_docs)]
 pub mod push;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod diff;
 
 /// See [`ThreadSafeRepository::discover()`], but returns a [`Repository`] instead.
@@ -296,24 +289,19 @@ pub fn open_opts(directory: impl Into<std::path::PathBuf>, options: open::Option
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod create;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod open;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod config;
 
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(feature = "mailmap")]
 pub mod mailmap;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod worktree;
 
 pub mod revision;
@@ -322,27 +310,22 @@ pub mod revision;
 pub mod filter;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod remote;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;
 
 /// Not to be confused with 'status'.
 pub mod state;
 
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(feature = "status")]
 pub mod status;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod shallow;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod discover;
 
 pub mod env;

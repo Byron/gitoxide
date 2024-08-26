@@ -57,7 +57,6 @@ impl file::Store {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod transaction {
 
     use crate::store_impl::packed;

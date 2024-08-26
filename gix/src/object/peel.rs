@@ -7,7 +7,6 @@ use crate::{
 };
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod to_kind {
     mod error {
 

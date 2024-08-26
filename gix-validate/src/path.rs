@@ -1,7 +1,6 @@
 use bstr::{BStr, ByteSlice};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod component {
     /// The error returned by [`component()`](super::component()).
     #[derive(Debug, thiserror::Error)]

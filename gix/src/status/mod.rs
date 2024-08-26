@@ -128,7 +128,6 @@ impl Repository {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod is_dirty {
     use crate::Repository;
 
@@ -176,5 +175,4 @@ pub mod is_dirty {
 mod platform;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod index_worktree;

@@ -282,7 +282,6 @@ impl file::Store {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod existing {
     pub use error::Error;
 

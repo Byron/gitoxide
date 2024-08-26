@@ -111,7 +111,6 @@ impl Mode {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod convert_to_diffable {
     use std::collections::TryReserveError;
 

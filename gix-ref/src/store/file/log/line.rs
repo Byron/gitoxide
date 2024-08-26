@@ -72,7 +72,6 @@ impl<'a> From<LineRef<'a>> for Line {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod decode {
     use gix_object::bstr::{BStr, ByteSlice};
     use winnow::{
@@ -85,7 +84,6 @@ pub mod decode {
     use crate::{file::log::LineRef, parse::hex_hash};
 
     ///
-    #[allow(clippy::empty_docs)]
     mod error {
         use gix_object::bstr::{BString, ByteSlice};
 

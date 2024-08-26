@@ -5,7 +5,6 @@ use gix_hash::ObjectId;
 use crate::{data, data::output, find};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod iter_from_counts;
 pub use iter_from_counts::function::iter_from_counts;
 

@@ -20,7 +20,6 @@ pub enum Stage {
 pub type StageRaw = u32;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod mode;
 
 mod flags;
@@ -28,7 +27,6 @@ pub(crate) use flags::at_rest;
 pub use flags::Flags;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod stat;
 mod write;
 

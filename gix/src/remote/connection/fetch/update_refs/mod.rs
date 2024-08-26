@@ -20,7 +20,6 @@ use crate::{
 };
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod update;
 
 /// Information about the update of a single reference, corresponding the respective entry in [`RefMap::mappings`][crate::remote::fetch::RefMap::mappings].

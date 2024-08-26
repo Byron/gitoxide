@@ -118,7 +118,6 @@ pub mod visit {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod emit {
     /// The error returned by [Tracker::emit()](super::Tracker::emit()).
     #[derive(Debug, thiserror::Error)]

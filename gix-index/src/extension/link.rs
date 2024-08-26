@@ -16,7 +16,6 @@ pub struct Bitmaps {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod decode {
 
     /// The error returned when decoding link extensions.

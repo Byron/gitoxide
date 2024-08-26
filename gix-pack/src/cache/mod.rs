@@ -52,7 +52,6 @@ pub mod lru;
 pub mod object;
 
 ///
-#[allow(clippy::empty_docs)]
 pub(crate) mod delta;
 
 /// Replaces content of the given `Vec` with the slice. The vec will have the same length

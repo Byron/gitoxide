@@ -22,7 +22,7 @@ fn run_test(
         let cache = use_commitgraph
             .then(|| gix_commitgraph::Graph::from_info_dir(&store.store_ref().path().join("info")).ok())
             .flatten();
-        let mut graph = gix_revision::Graph::new(&store, cache);
+        let mut graph = gix_revision::Graph::new(&store, cache.as_ref());
         run_assertions(
             gix_revision::describe(&commit_id, &mut graph, options(commit_id)),
             commit_id,

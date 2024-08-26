@@ -62,5 +62,4 @@ pub struct Stack {
 pub(crate) type PathIdMapping = (BString, gix_hash::ObjectId);
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod stack;

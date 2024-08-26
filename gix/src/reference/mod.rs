@@ -7,7 +7,6 @@ use crate::{Blob, Commit, Id, Object, Reference, Tag, Tree};
 
 pub mod iter;
 ///
-#[allow(clippy::empty_docs)]
 pub mod remote;
 
 mod errors;

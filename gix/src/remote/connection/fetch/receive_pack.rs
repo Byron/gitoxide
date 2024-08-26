@@ -155,7 +155,8 @@ where
             r.objects.unset_object_cache();
             r
         };
-        let mut graph = graph_repo.revision_graph();
+        let cache = graph_repo.commit_graph_if_enabled().ok().flatten();
+        let mut graph = graph_repo.revision_graph(cache.as_ref());
         let action = negotiate::mark_complete_and_common_ref(
             &graph_repo,
             negotiator.deref_mut(),

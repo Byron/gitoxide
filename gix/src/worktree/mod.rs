@@ -108,7 +108,6 @@ pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BSt
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod proxy;
 
 ///

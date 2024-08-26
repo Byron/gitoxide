@@ -12,11 +12,9 @@ pub enum Error {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod traverse;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod from_offsets;
 
 /// Tree datastructure

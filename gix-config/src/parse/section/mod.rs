@@ -5,7 +5,6 @@ use bstr::BStr;
 use crate::parse::{Event, Section};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod header;
 
 pub(crate) mod unvalidated;
@@ -49,7 +48,6 @@ mod types {
     macro_rules! generate_case_insensitive {
         ($name:ident, $module:ident, $err_doc:literal, $validate:ident, $cow_inner_type:ty, $comment:literal) => {
             ///
-            #[allow(clippy::empty_docs)]
             pub mod $module {
                 /// The error returned when `TryFrom` is invoked to create an instance.
                 #[derive(Debug, thiserror::Error, Copy, Clone)]

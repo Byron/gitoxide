@@ -108,7 +108,6 @@ pub mod handle;
 use crate::handle::{Closed, Writable};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod registry;
 
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);

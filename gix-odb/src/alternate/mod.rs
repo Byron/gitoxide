@@ -21,7 +21,6 @@ use std::{fs, io, path::PathBuf};
 use gix_path::realpath::MAX_SYMLINKS;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod parse;
 
 /// Returned by [`resolve()`]

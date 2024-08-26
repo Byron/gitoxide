@@ -17,14 +17,11 @@ impl Reference {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub(crate) mod reflog;
 
 ///
-#[allow(clippy::empty_docs)]
 pub(crate) mod iter;
 ///
-#[allow(clippy::empty_docs)]
 pub mod reference;
 
 mod init {

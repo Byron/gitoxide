@@ -16,33 +16,26 @@ pub use gix_hash as hash;
 pub use gix_validate as validate;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod file;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod extension;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod entry;
 
 mod access;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod decode;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod verify;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod write;
 
 pub mod fs;

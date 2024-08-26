@@ -32,7 +32,6 @@ pub use gix_transport as transport;
 pub use maybe_async;
 
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub mod fetch;
 
@@ -49,13 +48,11 @@ compile_error!("Cannot set both 'blocking-client' and 'async-client' features as
 
 ///
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
-#[allow(clippy::empty_docs)]
 pub mod handshake;
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub use handshake::function::handshake;
 
 ///
-#[allow(clippy::empty_docs)]
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub mod ls_refs;
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]

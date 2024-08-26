@@ -3,7 +3,6 @@ use bstr::BStr;
 use super::Ref;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod parse {
     use bstr::BString;
 

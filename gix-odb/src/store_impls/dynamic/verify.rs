@@ -13,7 +13,6 @@ use crate::{
 };
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod integrity {
     use std::{marker::PhantomData, path::PathBuf};
 

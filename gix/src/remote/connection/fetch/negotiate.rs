@@ -65,7 +65,7 @@ pub(crate) enum Action {
 pub(crate) fn mark_complete_and_common_ref(
     repo: &crate::Repository,
     negotiator: &mut dyn gix_negotiate::Negotiator,
-    graph: &mut gix_negotiate::Graph<'_>,
+    graph: &mut gix_negotiate::Graph<'_, '_>,
     ref_map: &fetch::RefMap,
     shallow: &fetch::Shallow,
     mapping_is_ignored: impl Fn(&fetch::Mapping) -> bool,
@@ -258,7 +258,7 @@ pub(crate) fn add_wants(
 /// Remove all commits that are more recent than the cut-off, which is the commit time of the oldest common commit we have with the server.
 fn mark_recent_complete_commits(
     queue: &mut Queue,
-    graph: &mut gix_negotiate::Graph<'_>,
+    graph: &mut gix_negotiate::Graph<'_, '_>,
     cutoff: SecondsSinceUnixEpoch,
 ) -> Result<(), Error> {
     let _span = gix_trace::detail!("mark_recent_complete", queue_len = queue.len());
@@ -286,7 +286,7 @@ fn mark_recent_complete_commits(
 
 fn mark_all_refs_in_repo(
     repo: &crate::Repository,
-    graph: &mut gix_negotiate::Graph<'_>,
+    graph: &mut gix_negotiate::Graph<'_, '_>,
     queue: &mut Queue,
     mark: Flags,
 ) -> Result<(), Error> {
@@ -310,7 +310,7 @@ fn mark_all_refs_in_repo(
 
 fn mark_alternate_complete(
     repo: &crate::Repository,
-    graph: &mut gix_negotiate::Graph<'_>,
+    graph: &mut gix_negotiate::Graph<'_, '_>,
     queue: &mut Queue,
 ) -> Result<(), Error> {
     let alternates = repo.objects.store_ref().alternate_db_paths()?;
@@ -332,7 +332,7 @@ fn mark_alternate_complete(
 /// Returns the amount of haves actually sent.
 pub(crate) fn one_round(
     negotiator: &mut dyn gix_negotiate::Negotiator,
-    graph: &mut gix_negotiate::Graph<'_>,
+    graph: &mut gix_negotiate::Graph<'_, '_>,
     haves_to_send: usize,
     arguments: &mut gix_protocol::fetch::Arguments,
     previous_response: Option<&gix_protocol::fetch::Response>,

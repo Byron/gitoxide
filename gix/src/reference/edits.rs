@@ -1,5 +1,4 @@
 ///
-#[allow(clippy::empty_docs)]
 pub mod set_target_id {
     use gix_ref::{transaction::PreviousValue, Target};
 
@@ -52,7 +51,6 @@ pub mod set_target_id {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod delete {
     use gix_ref::transaction::{Change, PreviousValue, RefEdit, RefLog};
 

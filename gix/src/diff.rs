@@ -1,7 +1,6 @@
 pub use gix_diff::*;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod rename {
     /// Determine how to do rename tracking.
     #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -29,7 +28,6 @@ mod utils {
     };
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod new_rewrites {
         /// The error returned by [`new_rewrites()`](super::new_rewrites()).
         #[derive(Debug, thiserror::Error)]
@@ -43,7 +41,6 @@ mod utils {
     }
 
     ///
-    #[allow(clippy::empty_docs)]
     pub mod resource_cache {
         /// The error returned by [`resource_cache()`](super::resource_cache()).
         #[derive(Debug, thiserror::Error)]

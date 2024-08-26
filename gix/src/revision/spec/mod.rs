@@ -2,7 +2,6 @@ use crate::bstr::BStr;
 use crate::{ext::ReferenceExt, revision::Spec, Id, Reference};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod parse;
 
 mod impls {

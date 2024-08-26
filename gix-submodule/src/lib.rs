@@ -19,11 +19,9 @@ pub struct File {
 mod access;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod config;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod is_active_platform;
 
 /// A platform to keep the state necessary to perform repeated active checks, created by [File::is_active_platform()].
@@ -87,7 +85,6 @@ impl File {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 mod init {
     use std::path::PathBuf;
 

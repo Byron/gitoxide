@@ -84,7 +84,6 @@ impl file::Store {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod create_or_update {
     use std::{
         borrow::Cow,

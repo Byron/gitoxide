@@ -57,7 +57,7 @@ fn run() -> crate::Result {
                 let cache = use_cache
                     .then(|| gix_commitgraph::at(store.store_ref().path().join("info")).ok())
                     .flatten();
-                let mut graph = gix_revwalk::Graph::new(&store, cache);
+                let mut graph = gix_revwalk::Graph::new(&store, cache.as_ref());
                 let mut negotiator = algo.into_negotiator();
                 if debug {
                     eprintln!("ALGO {algo_name} CASE {case}");

@@ -23,9 +23,7 @@ pub struct Connection<'a, 'repo, T> {
 mod access;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod ref_map;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod fetch;

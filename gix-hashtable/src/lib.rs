@@ -34,7 +34,6 @@ pub mod sync {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod hash {
     /// A Hasher for usage with `HashMap` keys that are already robust hashes (like an `ObjectId`).
     /// The first `8` bytes of the hash are used as the `HashMap` hash

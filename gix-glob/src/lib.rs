@@ -25,13 +25,11 @@ pub struct Pattern {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod pattern;
 
 pub mod search;
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod wildmatch;
 pub use wildmatch::function::wildmatch;
 

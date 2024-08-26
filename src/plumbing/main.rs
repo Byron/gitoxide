@@ -141,6 +141,17 @@ pub fn main() -> Result<()> {
     }
 
     match cmd {
+        Subcommands::MergeBase(crate::plumbing::options::merge_base::Command { first, others }) => prepare_and_run(
+            "merge-base",
+            trace,
+            verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |_progress, out, _err| {
+                core::repository::merge_base(repository(Mode::Lenient)?, first, others, out, format)
+            },
+        ),
         Subcommands::Worktree(crate::plumbing::options::worktree::Platform { cmd }) => match cmd {
             crate::plumbing::options::worktree::SubCommands::List => prepare_and_run(
                 "worktree-list",

@@ -138,6 +138,7 @@ pub enum Subcommands {
     Config(config::Platform),
     #[cfg(feature = "gitoxide-core-tools-corpus")]
     Corpus(corpus::Platform),
+    MergeBase(merge_base::Command),
     Worktree(worktree::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
@@ -265,6 +266,17 @@ pub mod status {
         /// The git path specifications to list attributes for, or unset to read from stdin one per line.
         #[clap(value_parser = CheckPathSpec)]
         pub pathspec: Vec<BString>,
+    }
+}
+
+pub mod merge_base {
+    #[derive(Debug, clap::Parser)]
+    #[command(about = "A command for calculating all merge-bases")]
+    pub struct Command {
+        /// A revspec for the first commit.
+        pub first: String,
+        /// Revspecs for the other commits to compute the merge-base with.
+        pub others: Vec<String>,
     }
 }
 
@@ -723,7 +735,6 @@ pub mod credential {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod commitgraph {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
@@ -955,5 +966,4 @@ pub mod submodule {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod free;

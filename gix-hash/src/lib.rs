@@ -17,7 +17,6 @@ mod object_id;
 pub use object_id::{decode, ObjectId};
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod prefix;
 
 /// A partial, owned hash possibly identifying an object uniquely, whose non-prefix bytes are zeroed.

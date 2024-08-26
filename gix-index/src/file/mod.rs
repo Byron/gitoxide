@@ -83,11 +83,8 @@ mod mutation {
 }
 
 ///
-#[allow(clippy::empty_docs)]
 pub mod init;
 ///
-#[allow(clippy::empty_docs)]
 pub mod verify;
 ///
-#[allow(clippy::empty_docs)]
 pub mod write;
