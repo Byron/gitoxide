@@ -73,6 +73,42 @@ mod thread_safe;
 mod worktree;
 
 ///
+#[cfg(feature = "revision")]
+pub mod merge_base {
+    /// The error returned by [Repository::merge_base()](crate::Repository::merge_base()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        OpenCache(#[from] crate::repository::commit_graph_if_enabled::Error),
+        #[error(transparent)]
+        FindMergeBase(#[from] gix_revision::merge_base::Error),
+        #[error("Could not find a merge-base between commits {first} and {second}")]
+        NotFound {
+            first: gix_hash::ObjectId,
+            second: gix_hash::ObjectId,
+        },
+    }
+}
+
+///
+#[cfg(feature = "revision")]
+pub mod merge_base_with_cache {
+    /// The error returned by [Repository::merge_base_with_cache()](crate::Repository::merge_base_with_cache()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        FindMergeBase(#[from] gix_revision::merge_base::Error),
+        #[error("Could not find a merge-base between commits {first} and {second}")]
+        NotFound {
+            first: gix_hash::ObjectId,
+            second: gix_hash::ObjectId,
+        },
+    }
+}
+
+///
 pub mod commit_graph_if_enabled {
     /// The error returned by [Repository::commit_graph_if_enabled()](crate::Repository::commit_graph_if_enabled()).
     #[derive(Debug, thiserror::Error)]
