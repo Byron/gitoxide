@@ -382,8 +382,8 @@ fn exe_info_never_from_local_scope() {
         .set("GIT_CONFIG_NOSYSTEM", "1")
         .set("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" });
     let maybe_path = super::exe_info();
-    assert!(
-        maybe_path.is_none(),
+    assert_eq!(
+        maybe_path, None,
         "Should find no config path if the config would be local"
     );
 }
@@ -399,14 +399,18 @@ fn exe_info_never_from_local_scope_even_if_temp_is_here() {
     let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
     let _env = gix_testtools::Env::new()
         .set("GIT_CONFIG_NOSYSTEM", "1")
-        .set("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
+        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE)
         .set("TMPDIR", repo_str) // Mainly for Unix.
         .set("TMP", repo_str) // Mainly for Windows.
         .set("TEMP", repo_str); // Mainly for Windows, too.
-    assert_eq!(std::env::temp_dir(), repo, "It is likely that setting up the test failed");
+    assert_eq!(
+        std::env::temp_dir(),
+        repo,
+        "It is likely that setting up the test failed"
+    );
     let maybe_path = super::exe_info();
-    assert!(
-        maybe_path.is_none(),
+    assert_eq!(
+        maybe_path, None,
         "Should find no config path if the config would be local even in a `/tmp`-like dir"
     );
 }
