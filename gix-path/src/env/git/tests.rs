@@ -384,7 +384,7 @@ fn exe_info_never_from_local_scope() {
     let maybe_path = super::exe_info();
     assert!(
         maybe_path.is_none(),
-        "Finds no config path if the config would be local"
+        "Should find no config path if the config would be local"
     );
 }
 
@@ -403,13 +403,11 @@ fn exe_info_never_from_local_scope_even_if_temp_is_here() {
         .set("TMPDIR", repo_str) // Mainly for Unix.
         .set("TMP", repo_str) // Mainly for Windows.
         .set("TEMP", repo_str); // Mainly for Windows, too.
-    //assert_eq!(std::env::temp_dir(), repo);
-    //assert_eq!(std::env::temp_dir(), Path::new("/a/b/c"), "Bogus assertion to debug test");
-    //std::thread::sleep(std::time::Duration::from_secs(3600));
+    assert_eq!(std::env::temp_dir(), repo, "It is likely that setting up the test failed");
     let maybe_path = super::exe_info();
     assert!(
         maybe_path.is_none(),
-        "Finds no config path if the config would be local even in a `/tmp`-like dir"
+        "Should find no config path if the config would be local even in a `/tmp`-like dir"
     );
 }
 
