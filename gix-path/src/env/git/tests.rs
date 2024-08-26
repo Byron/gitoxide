@@ -389,6 +389,25 @@ fn exe_info_never_from_local_scope() {
 }
 
 #[test]
+#[serial]
+fn exe_info_never_from_local_scope_even_if_temp_is_here() {
+    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+    let repo_str = repo.to_str().expect("valid Unicode");
+    let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
+    let _env = gix_testtools::Env::new()
+        .set("GIT_CONFIG_NOSYSTEM", "1")
+        .set("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
+        .set("TMPDIR", repo_str) // Mainly for Unix.
+        .set("TMP", repo_str) // Mainly for Windows.
+        .set("TEMP", repo_str); // Mainly for Windows, too.
+    let maybe_path = super::exe_info();
+    assert!(
+        maybe_path.is_none(),
+        "Finds no config path if the config would be local even in a `/tmp`-like dir"
+    );
+}
+
+#[test]
 fn first_file_from_config_with_origin() {
     let macos =
         "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig\0credential.helper\0file:/Users/byron/.gitconfig\0push.default\0";
