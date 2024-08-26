@@ -14,7 +14,7 @@ bitflags::bitflags! {
     }
 }
 
-/// The error returned by the [`merge_base()`][function::describe()] function.
+/// The error returned by the [`merge_base()`][function::merge_base()] function.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
