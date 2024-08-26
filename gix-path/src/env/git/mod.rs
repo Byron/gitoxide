@@ -120,6 +120,11 @@ fn git_cmd(executable: PathBuf) -> Command {
     // Low versions of git are still sometimes used, and this is sometimes reasonable because
     // downstream distributions often backport security patches without adding most new features.
     // So for now, we forgo the convenience of --show-scope for greater backward compatibility.
+    //
+    // Separately from that, we can't use --system here, because scopes treated higher than the
+    // system scope are possible. This commonly happens on macOS with Apple Git, where the config
+    // file under /Library is shown as an "unknown" scope but takes precedence over the system
+    // scope. Although GIT_CONFIG_NOSYSTEM will suppress this as well, passing --system omits it.
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
         .current_dir(env::temp_dir())
         .env("GIT_DIR", NULL_DEVICE) // Avoid getting local-scope config.
