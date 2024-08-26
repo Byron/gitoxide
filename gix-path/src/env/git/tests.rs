@@ -391,7 +391,10 @@ fn exe_info_never_from_local_scope() {
 #[test]
 #[serial]
 fn exe_info_never_from_local_scope_even_if_temp_is_here() {
-    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
+        .expect("script succeeds")
+        .canonicalize()
+        .expect("path is valid and exists");
     let repo_str = repo.to_str().expect("valid Unicode");
     let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
     let _env = gix_testtools::Env::new()
@@ -400,6 +403,9 @@ fn exe_info_never_from_local_scope_even_if_temp_is_here() {
         .set("TMPDIR", repo_str) // Mainly for Unix.
         .set("TMP", repo_str) // Mainly for Windows.
         .set("TEMP", repo_str); // Mainly for Windows, too.
+    //assert_eq!(std::env::temp_dir(), repo);
+    //assert_eq!(std::env::temp_dir(), Path::new("/a/b/c"), "Bogus assertion to debug test");
+    //std::thread::sleep(std::time::Duration::from_secs(3600));
     let maybe_path = super::exe_info();
     assert!(
         maybe_path.is_none(),
