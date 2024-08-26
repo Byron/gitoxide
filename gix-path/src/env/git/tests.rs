@@ -438,6 +438,20 @@ fn exe_info_tolerates_broken_tmp() {
 
 #[test]
 #[serial]
+fn exe_info_same_result_with_broken_temp() {
+    let with_unmodified_temp = super::exe_info();
+
+    let with_nonexistent_temp = {
+        let non = NonexistentLocation::new();
+        let _env = set_temp_env_vars(non.path());
+        super::exe_info()
+    };
+
+    assert_eq!(with_unmodified_temp, with_nonexistent_temp);
+}
+
+#[test]
+#[serial]
 fn exe_info_never_from_local_scope() {
     let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
 
