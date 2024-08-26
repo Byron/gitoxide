@@ -44,6 +44,8 @@ mod fsck;
 pub use fsck::function as fsck;
 pub mod index;
 pub mod mailmap;
+mod merge_base;
+pub use merge_base::merge_base;
 pub mod odb;
 pub mod remote;
 pub mod revision;

@@ -52,11 +52,10 @@ impl crate::Repository {
         let two = two.into();
         let cache = self.commit_graph_if_enabled()?;
         let mut graph = self.revision_graph(cache.as_ref());
-        let bases =
-            gix_revision::merge_base(one, &vec![two], &mut graph)?.ok_or(super::merge_base::Error::NotFound {
-                first: one,
-                second: two,
-            })?;
+        let bases = gix_revision::merge_base(one, &[two], &mut graph)?.ok_or(super::merge_base::Error::NotFound {
+            first: one,
+            second: two,
+        })?;
         Ok(bases[0].attach(self))
     }
 
@@ -76,7 +75,7 @@ impl crate::Repository {
         let one = one.into();
         let two = two.into();
         let mut graph = self.revision_graph(cache);
-        let bases = gix_revision::merge_base(one, &vec![two], &mut graph)?.ok_or(
+        let bases = gix_revision::merge_base(one, &[two], &mut graph)?.ok_or(
             super::merge_base_with_cache::Error::NotFound {
                 first: one,
                 second: two,
