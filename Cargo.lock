@@ -2578,6 +2578,7 @@ dependencies = [
  "is_ci",
  "once_cell",
  "parking_lot",
+ "serial_test",
  "tar",
  "tempfile",
  "winnow",
