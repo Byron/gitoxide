@@ -401,7 +401,11 @@ fn exe_info() {
 #[serial]
 fn exe_info_tolerates_broken_tmp() {
     let empty = gix_testtools::tempfile::tempdir().expect("can create new temporary subdirectory");
-    let nonexistent = empty.path().join("nonexistent");
+    let nonexistent = empty
+        .path()
+        .canonicalize()
+        .expect("path to the new directory works")
+        .join("nonexistent");
     assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
 
     let _env = set_temp_env_vars(&nonexistent);
@@ -431,7 +435,7 @@ fn exe_info_never_from_local_scope_even_if_temp_is_here() {
     let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
         .expect("script succeeds")
         .canonicalize()
-        .expect("path is valid and exists");
+        .expect("repo path is valid and exists");
 
     let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
     let _env = set_temp_env_vars(&repo)
