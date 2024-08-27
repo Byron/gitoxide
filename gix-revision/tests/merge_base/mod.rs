@@ -17,12 +17,22 @@ mod baseline {
                     .then(|| gix_commitgraph::Graph::from_info_dir(&odb.store_ref().path().join("info")).unwrap());
                 for expected in parse_expectations(&baseline_path)? {
                     let mut graph = gix_revision::Graph::new(&odb, cache.as_ref());
-
                     let actual = merge_base(expected.first, &expected.others, &mut graph)?;
                     assert_eq!(
                         actual,
                         expected.bases,
                         "sample {file:?}:{input}",
+                        file = baseline_path.with_extension("").file_name(),
+                        input = expected.plain_input
+                    );
+                }
+                let mut graph = gix_revision::Graph::new(&odb, cache.as_ref());
+                for expected in parse_expectations(&baseline_path)? {
+                    let actual = merge_base(expected.first, &expected.others, &mut graph)?;
+                    assert_eq!(
+                        actual,
+                        expected.bases,
+                        "sample (reused graph) {file:?}:{input}",
                         file = baseline_path.with_extension("").file_name(),
                         input = expected.plain_input
                     );
