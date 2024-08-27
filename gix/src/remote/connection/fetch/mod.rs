@@ -182,7 +182,7 @@ where
         progress: impl Progress,
         options: ref_map::Options,
     ) -> Result<Prepare<'remote, 'repo, T>, prepare::Error> {
-        if self.remote.refspecs(remote::Direction::Fetch).is_empty() {
+        if self.remote.refspecs(remote::Direction::Fetch).is_empty() && options.extra_refspecs.is_empty() {
             return Err(prepare::Error::MissingRefSpecs);
         }
         let ref_map = self.ref_map_inner(progress, options).await?;
