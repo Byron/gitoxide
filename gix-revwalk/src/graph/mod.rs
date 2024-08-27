@@ -226,9 +226,9 @@ impl<'find, 'cache, T> Graph<'find, 'cache, T> {
 }
 
 /// Commit based methods
-impl<'find, 'cache, T> Graph<'find, 'cache, crate::graph::Commit<T>> {
-    /// Lookup `id` without failing if the commit doesn't exist, and assure that `id` is inserted into our set
-    /// with a commit with `new_data()` assigned.
+impl<'find, 'cache, T> Graph<'find, 'cache, Commit<T>> {
+    /// Lookup `id` in the graph, but insert it if it's not yet present by looking it up without failing if the commit doesn't exist.
+    /// Call `new_data()` to obtain data for a newly inserted commit.
     /// `update_data(data)` gets run either on existing or on new data.
     ///
     /// Note that none of the data updates happen if `id` didn't exist.
@@ -264,8 +264,8 @@ impl<'find, 'cache, T> Graph<'find, 'cache, crate::graph::Commit<T>> {
 
 /// Commit based methods
 impl<'find, 'cache, T: Default> Graph<'find, 'cache, Commit<T>> {
-    /// Lookup `id` without failing if the commit doesn't exist or `id` isn't a commit,
-    /// and assure that `id` is inserted into our set with a commit and default data assigned.
+    /// Lookup `id` in the graph, but insert it if it's not yet present by looking it up without failing if the commit doesn't exist.
+    /// Newly inserted commits are populated with default data.
     /// `update_data(data)` gets run either on existing or on new data.
     ///
     /// Note that none of the data updates happen if `id` didn't exist.
@@ -278,6 +278,33 @@ impl<'find, 'cache, T: Default> Graph<'find, 'cache, Commit<T>> {
         update_data: impl FnOnce(&mut T),
     ) -> Result<Option<&mut Commit<T>>, try_lookup_or_insert_default::Error> {
         self.try_lookup_or_insert_commit_default(id, T::default, update_data)
+    }
+
+    /// Lookup `id` in the graph, but insert it if it's not yet present by looking it up without failing if the commit doesn't exist.
+    /// `update_commit(commit)` gets run either on existing or on new data.
+    ///
+    /// Note that none of the data updates happen if `id` didn't exist in the graph.
+    pub fn get_or_insert_full_commit(
+        &mut self,
+        id: gix_hash::ObjectId,
+        update_commit: impl FnOnce(&mut Commit<T>),
+    ) -> Result<Option<&mut Commit<T>>, try_lookup_or_insert_default::Error> {
+        match self.map.entry(id) {
+            gix_hashtable::hash_map::Entry::Vacant(entry) => {
+                let res = try_lookup(&id, &*self.find, self.cache, &mut self.buf)?;
+                let commit = match res {
+                    None => return Ok(None),
+                    Some(commit) => commit,
+                };
+                let mut commit = commit.to_owned(T::default)?;
+                update_commit(&mut commit);
+                entry.insert(commit);
+            }
+            gix_hashtable::hash_map::Entry::Occupied(mut entry) => {
+                update_commit(entry.get_mut());
+            }
+        };
+        Ok(self.map.get_mut(&id))
     }
 }
 
