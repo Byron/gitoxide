@@ -20,7 +20,7 @@ impl Default for Algorithm {
 impl Algorithm {
     /// Add `id` to our priority queue and *add* `flags` to it.
     fn add_to_queue(&mut self, id: ObjectId, mark: Flags, graph: &mut crate::Graph<'_, '_>) -> Result<(), Error> {
-        let commit = graph.try_lookup_or_insert_commit(id, |entry| {
+        let commit = graph.get_or_insert_commit(id, |entry| {
             entry.flags |= mark | Flags::SEEN;
         })?;
         if let Some(timestamp) = commit.map(|c| c.commit_time) {
@@ -35,7 +35,7 @@ impl Algorithm {
     fn mark_common(&mut self, id: ObjectId, graph: &mut crate::Graph<'_, '_>) -> Result<(), Error> {
         let mut is_common = false;
         if let Some(commit) = graph
-            .try_lookup_or_insert_commit(id, |entry| {
+            .get_or_insert_commit(id, |entry| {
                 is_common = entry.flags.contains(Flags::COMMON);
                 entry.flags |= Flags::COMMON;
             })?
@@ -43,7 +43,7 @@ impl Algorithm {
         {
             let mut queue = gix_revwalk::PriorityQueue::from_iter(Some((commit.commit_time, id)));
             while let Some(id) = queue.pop_value() {
-                if let Some(commit) = graph.try_lookup_or_insert_commit(id, |entry| {
+                if let Some(commit) = graph.get_or_insert_commit(id, |entry| {
                     if !entry.flags.contains(Flags::POPPED) {
                         self.non_common_revs -= 1;
                     }
@@ -56,7 +56,7 @@ impl Algorithm {
                         }
                         let mut was_unseen_or_common = false;
                         if let Some(parent) = graph
-                            .try_lookup_or_insert_commit(parent_id, |entry| {
+                            .get_or_insert_commit(parent_id, |entry| {
                                 was_unseen_or_common =
                                     !entry.flags.contains(Flags::SEEN) || entry.flags.contains(Flags::COMMON);
                                 entry.flags |= Flags::COMMON;

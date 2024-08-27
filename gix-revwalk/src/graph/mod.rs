@@ -30,7 +30,7 @@ mod errors {
     }
 
     ///
-    pub mod try_lookup_or_insert_default {
+    pub mod get_or_insert_default {
         use crate::graph::commit::to_owned;
 
         /// The error returned by [`try_lookup_or_insert_default()`](crate::Graph::try_lookup_or_insert_default()).
@@ -44,7 +44,7 @@ mod errors {
         }
     }
 }
-pub use errors::{insert_parents, try_lookup_or_insert_default};
+pub use errors::{get_or_insert_default, insert_parents};
 use gix_date::SecondsSinceUnixEpoch;
 
 /// The generation away from the HEAD of graph, useful to limit algorithms by topological depth as well.
@@ -68,7 +68,7 @@ impl<'find, 'cache, T: Default> Graph<'find, 'cache, T> {
         &mut self,
         id: gix_hash::ObjectId,
         update_data: impl FnOnce(&mut T),
-    ) -> Result<Option<LazyCommit<'_, 'cache>>, try_lookup_or_insert_default::Error> {
+    ) -> Result<Option<LazyCommit<'_, 'cache>>, get_or_insert_default::Error> {
         self.try_lookup_or_insert_default(id, T::default, update_data)
     }
 }
@@ -225,19 +225,19 @@ impl<'find, 'cache, T> Graph<'find, 'cache, T> {
     }
 }
 
-/// commit access
+/// Commit based methods
 impl<'find, 'cache, T> Graph<'find, 'cache, Commit<T>> {
-    /// Lookup `id` without failing if the commit doesn't exist, and assure that `id` is inserted into our set
-    /// with a commit with `new_data()` assigned.
+    /// Lookup `id` in the graph, but insert it if it's not yet present by looking it up without failing if the commit doesn't exist.
+    /// Call `new_data()` to obtain data for a newly inserted commit.
     /// `update_data(data)` gets run either on existing or on new data.
     ///
     /// Note that none of the data updates happen if `id` didn't exist.
-    pub fn try_lookup_or_insert_commit_default(
+    pub fn get_or_insert_commit_default(
         &mut self,
         id: gix_hash::ObjectId,
         new_data: impl FnOnce() -> T,
         update_data: impl FnOnce(&mut T),
-    ) -> Result<Option<&mut Commit<T>>, try_lookup_or_insert_default::Error> {
+    ) -> Result<Option<&mut Commit<T>>, get_or_insert_default::Error> {
         match self.map.entry(id) {
             gix_hashtable::hash_map::Entry::Vacant(entry) => {
                 let res = try_lookup(&id, &*self.find, self.cache, &mut self.buf)?;
@@ -255,24 +255,56 @@ impl<'find, 'cache, T> Graph<'find, 'cache, Commit<T>> {
         };
         Ok(self.map.get_mut(&id))
     }
+
+    /// For each stored commit, call `clear` on its data.
+    pub fn clear_commit_data(&mut self, mut clear: impl FnMut(&mut T)) {
+        self.map.values_mut().for_each(|c| clear(&mut c.data));
+    }
 }
 
-/// commit access
+/// Commit based methods
 impl<'find, 'cache, T: Default> Graph<'find, 'cache, Commit<T>> {
-    /// Lookup `id` without failing if the commit doesn't exist or `id` isn't a commit,
-    /// and assure that `id` is inserted into our set with a commit and default data assigned.
+    /// Lookup `id` in the graph, but insert it if it's not yet present by looking it up without failing if the commit doesn't exist.
+    /// Newly inserted commits are populated with default data.
     /// `update_data(data)` gets run either on existing or on new data.
     ///
     /// Note that none of the data updates happen if `id` didn't exist.
     ///
     /// If only commit data is desired without the need for attaching custom data, use
     /// [`try_lookup(id).to_owned()`][Graph::try_lookup()] instead.
-    pub fn try_lookup_or_insert_commit(
+    pub fn get_or_insert_commit(
         &mut self,
         id: gix_hash::ObjectId,
         update_data: impl FnOnce(&mut T),
-    ) -> Result<Option<&mut Commit<T>>, try_lookup_or_insert_default::Error> {
-        self.try_lookup_or_insert_commit_default(id, T::default, update_data)
+    ) -> Result<Option<&mut Commit<T>>, get_or_insert_default::Error> {
+        self.get_or_insert_commit_default(id, T::default, update_data)
+    }
+
+    /// Lookup `id` in the graph, but insert it if it's not yet present by looking it up without failing if the commit doesn't exist.
+    /// `update_commit(commit)` gets run either on existing or on new data.
+    ///
+    /// Note that none of the data updates happen if `id` didn't exist in the graph.
+    pub fn get_or_insert_full_commit(
+        &mut self,
+        id: gix_hash::ObjectId,
+        update_commit: impl FnOnce(&mut Commit<T>),
+    ) -> Result<Option<&mut Commit<T>>, get_or_insert_default::Error> {
+        match self.map.entry(id) {
+            gix_hashtable::hash_map::Entry::Vacant(entry) => {
+                let res = try_lookup(&id, &*self.find, self.cache, &mut self.buf)?;
+                let commit = match res {
+                    None => return Ok(None),
+                    Some(commit) => commit,
+                };
+                let mut commit = commit.to_owned(T::default)?;
+                update_commit(&mut commit);
+                entry.insert(commit);
+            }
+            gix_hashtable::hash_map::Entry::Occupied(mut entry) => {
+                update_commit(entry.get_mut());
+            }
+        };
+        Ok(self.map.get_mut(&id))
     }
 }
 
@@ -293,7 +325,7 @@ impl<'find, 'cache, T> Graph<'find, 'cache, T> {
         id: gix_hash::ObjectId,
         default: impl FnOnce() -> T,
         update_data: impl FnOnce(&mut T),
-    ) -> Result<Option<LazyCommit<'_, 'cache>>, try_lookup_or_insert_default::Error> {
+    ) -> Result<Option<LazyCommit<'_, 'cache>>, get_or_insert_default::Error> {
         let res = try_lookup(&id, &*self.find, self.cache, &mut self.buf)?;
         Ok(res.map(|commit| {
             match self.map.entry(id) {

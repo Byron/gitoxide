@@ -93,8 +93,8 @@ pub mod merge_base {
 
 ///
 #[cfg(feature = "revision")]
-pub mod merge_base_with_cache {
-    /// The error returned by [Repository::merge_base_with_cache()](crate::Repository::merge_base_with_cache()).
+pub mod merge_base_with_graph {
+    /// The error returned by [Repository::merge_base_with_cache()](crate::Repository::merge_base_with_graph()).
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
