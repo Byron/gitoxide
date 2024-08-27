@@ -225,8 +225,8 @@ impl<'find, 'cache, T> Graph<'find, 'cache, T> {
     }
 }
 
-/// commit access
-impl<'find, 'cache, T> Graph<'find, 'cache, Commit<T>> {
+/// Commit based methods
+impl<'find, 'cache, T> Graph<'find, 'cache, crate::graph::Commit<T>> {
     /// Lookup `id` without failing if the commit doesn't exist, and assure that `id` is inserted into our set
     /// with a commit with `new_data()` assigned.
     /// `update_data(data)` gets run either on existing or on new data.
@@ -255,9 +255,14 @@ impl<'find, 'cache, T> Graph<'find, 'cache, Commit<T>> {
         };
         Ok(self.map.get_mut(&id))
     }
+
+    /// For each stored commit, call `clear` on its data.
+    pub fn clear_commit_data(&mut self, mut clear: impl FnMut(&mut T)) {
+        self.map.values_mut().for_each(|c| clear(&mut c.data));
+    }
 }
 
-/// commit access
+/// Commit based methods
 impl<'find, 'cache, T: Default> Graph<'find, 'cache, Commit<T>> {
     /// Lookup `id` without failing if the commit doesn't exist or `id` isn't a commit,
     /// and assure that `id` is inserted into our set with a commit and default data assigned.
