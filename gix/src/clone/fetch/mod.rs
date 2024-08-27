@@ -105,13 +105,15 @@ impl PrepareFetch {
                 .unwrap_or_else(|| "origin".into()),
         };
 
-        let mut remote = repo
-            .remote_at(self.url.clone())?
-            .with_refspecs(
-                Some(format!("+refs/heads/*:refs/remotes/{remote_name}/*").as_str()),
-                remote::Direction::Fetch,
-            )
-            .expect("valid static spec");
+        let mut remote = repo.remote_at(self.url.clone())?;
+        if remote.fetch_specs.is_empty() {
+            remote = remote
+                .with_refspecs(
+                    Some(format!("+refs/heads/*:refs/remotes/{remote_name}/*").as_str()),
+                    remote::Direction::Fetch,
+                )
+                .expect("valid static spec");
+        }
         let mut clone_fetch_tags = None;
         if let Some(f) = self.configure_remote.as_mut() {
             remote = f(remote).map_err(Error::RemoteConfiguration)?;
