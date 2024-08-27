@@ -23,7 +23,7 @@ impl Algorithm {
         let mut is_common = false;
         let mut has_mark = false;
         if let Some(commit) = graph
-            .try_lookup_or_insert_commit(id, |data| {
+            .get_or_insert_commit(id, |data| {
                 has_mark = data.flags.intersects(mark);
                 data.flags |= mark;
                 is_common = data.flags.contains(Flags::COMMON);
@@ -47,7 +47,7 @@ impl Algorithm {
     ) -> Result<(), Error> {
         let mut is_common = false;
         if let Some(commit) = graph
-            .try_lookup_or_insert_commit(id, |data| is_common = data.flags.contains(Flags::COMMON))?
+            .get_or_insert_commit(id, |data| is_common = data.flags.contains(Flags::COMMON))?
             .filter(|_| !is_common)
         {
             let mut queue = gix_revwalk::PriorityQueue::from_iter(Some((commit.commit_time, (id, 0_usize))));
@@ -64,11 +64,11 @@ impl Algorithm {
                 {
                     self.add_to_queue(id, Flags::SEEN, graph)?;
                 } else if matches!(ancestors, Ancestors::AllUnseen) || generation < 2 {
-                    if let Some(commit) = graph.try_lookup_or_insert_commit(id, |_| {})? {
+                    if let Some(commit) = graph.get_or_insert_commit(id, |_| {})? {
                         for parent_id in commit.parents.clone() {
                             let mut prev_flags = Flags::default();
                             if let Some(parent) = graph
-                                .try_lookup_or_insert_commit(parent_id, |data| {
+                                .get_or_insert_commit(parent_id, |data| {
                                     prev_flags = data.flags;
                                     data.flags |= Flags::COMMON;
                                 })?

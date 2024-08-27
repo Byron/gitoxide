@@ -16,7 +16,7 @@ pub enum Error {
     #[error("We were unable to figure out what objects the server should send after {rounds} round(s)")]
     NegotiationFailed { rounds: usize },
     #[error(transparent)]
-    LookupCommitInGraph(#[from] gix_revwalk::graph::try_lookup_or_insert_default::Error),
+    LookupCommitInGraph(#[from] gix_revwalk::graph::get_or_insert_default::Error),
     #[error(transparent)]
     InitRefsIterator(#[from] crate::reference::iter::init::Error),
     #[error(transparent)]
@@ -114,7 +114,7 @@ pub(crate) fn mark_complete_and_common_ref(
         }
 
         if let Some(commit) = want_id
-            .and_then(|id| graph.try_lookup_or_insert_commit(id.into(), |_| {}).transpose())
+            .and_then(|id| graph.get_or_insert_commit(id.into(), |_| {}).transpose())
             .transpose()?
         {
             remote_ref_target_known[mapping_idx] = true;
@@ -271,7 +271,7 @@ fn mark_recent_complete_commits(
         for parent_id in commit.parents.clone() {
             let mut was_complete = false;
             if let Some(parent) = graph
-                .try_lookup_or_insert_commit(parent_id, |md| {
+                .get_or_insert_commit(parent_id, |md| {
                     was_complete = md.flags.contains(Flags::COMPLETE);
                     md.flags |= Flags::COMPLETE;
                 })?
@@ -296,7 +296,7 @@ fn mark_all_refs_in_repo(
         let id = local_ref.id().detach();
         let mut is_complete = false;
         if let Some(commit) = graph
-            .try_lookup_or_insert_commit(id, |md| {
+            .get_or_insert_commit(id, |md| {
                 is_complete = md.flags.contains(Flags::COMPLETE);
                 md.flags |= mark;
             })?
