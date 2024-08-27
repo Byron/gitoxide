@@ -823,7 +823,7 @@ fn family_name() -> &'static str {
     }
 }
 
-/// A utility to set environment variables, while unsetting them (or resetting them to their previous value) on drop.
+/// A utility to set and unset environment variables, while restoring or removing them on drop.
 #[derive(Default)]
 pub struct Env<'a> {
     altered_vars: Vec<(&'a str, Option<OsString>)>,
@@ -845,7 +845,7 @@ impl<'a> Env<'a> {
         self
     }
 
-    /// Set `var` to `value`.
+    /// Unset `var`.
     pub fn unset(mut self, var: &'a str) -> Self {
         let prev = std::env::var_os(var);
         std::env::remove_var(var);
@@ -856,7 +856,7 @@ impl<'a> Env<'a> {
 
 impl<'a> Drop for Env<'a> {
     fn drop(&mut self) {
-        for (var, prev_value) in &self.altered_vars {
+        for (var, prev_value) in self.altered_vars.iter().rev() {
             match prev_value {
                 Some(value) => std::env::set_var(var, value),
                 None => std::env::remove_var(var),
