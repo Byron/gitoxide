@@ -1,4 +1,3 @@
-use std::env;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -112,6 +111,7 @@ fn git_cmd(executable: PathBuf) -> Command {
 
     #[cfg(windows)]
     {
+        use std::env;
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
