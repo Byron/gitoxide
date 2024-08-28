@@ -109,23 +109,21 @@ fn exe_info() -> Option<BString> {
 fn git_cmd(executable: PathBuf) -> Command {
     let mut cmd = Command::new(executable);
 
-    #[cfg(windows)]
-    {
-        use std::env;
+    if cfg!(windows) {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
 
-        cmd.current_dir(
-            env::var_os("SystemRoot") // Most reliable env var for path to Windows directory.
-                .or_else(|| env::var_os("windir")) // Less reliable, but some callers are unusual.
-                .map(PathBuf::from)
-                .filter(|p| p.is_absolute())
-                .unwrap_or_else(env::temp_dir),
-        );
+        use std::env;
+        let cwd = env::var_os("SystemRoot") // Usually `C:\Windows`. Not to be confused with `C:\`.
+            .or_else(|| env::var_os("windir")) // Same. Less reliable, but some callers are unusual.
+            .map(PathBuf::from)
+            .filter(|p| p.is_absolute())
+            .unwrap_or_else(env::temp_dir);
+        cmd.current_dir(cwd);
+    } else {
+        cmd.current_dir("/");
     }
-    #[cfg(not(windows))]
-    cmd.current_dir("/");
 
     // Git 2.8.0 and higher support --show-origin. The -l, -z, and --name-only options were
     // supported even before that. In contrast, --show-scope was introduced later, in Git 2.26.0.
@@ -140,7 +138,7 @@ fn git_cmd(executable: PathBuf) -> Command {
     //
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
         .env("GIT_DIR", NULL_DEVICE) // Avoid getting local-scope config.
-        .env("GIT_WORK_TREE", NULL_DEVICE) // Not needed, but clarifies intent.
+        .env("GIT_WORK_TREE", NULL_DEVICE) // Just to avoid confusion when debugging.
         .stdin(Stdio::null())
         .stderr(Stdio::null());
 

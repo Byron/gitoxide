@@ -360,7 +360,7 @@ use std::path::{Path, PathBuf};
 use gix_testtools::tempfile;
 use serial_test::serial;
 
-/// Wrapper for a path to a location kept from accidentally existing, until drop.
+/// Wrapper for a valid path to a plausible location, kept from accidentally existing (until drop).
 #[derive(Debug)]
 struct NonexistentLocation {
     _empty: tempfile::TempDir,
@@ -443,8 +443,8 @@ fn exe_info_tolerates_broken_temp() {
 #[test]
 #[serial]
 fn exe_info_tolerates_oversanitized_env() {
-    // This test runs on all systems, but it is a regression test for Windows.
-    // Also, having both a broken temp dir and an over-sanitized environment is not supported.
+    // This test runs on all systems, but it is only checking for a Windows regression. Also, on
+    // Windows, having both a broken temp dir and an over-sanitized environment is not supported.
     let _env = unset_windows_directory_vars();
     check_exe_info();
 }
@@ -466,7 +466,6 @@ fn exe_info_same_result_with_broken_temp() {
 #[test]
 #[serial]
 fn exe_info_same_result_with_oversanitized_env() {
-    // See `exe_info_tolerates_oversanitized_env`.
     let with_unmodified_env = super::exe_info();
 
     let with_oversanitized_env = {
