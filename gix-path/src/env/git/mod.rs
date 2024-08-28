@@ -117,7 +117,7 @@ fn git_cmd(executable: PathBuf) -> Command {
     }
     let cwd = if cfg!(windows) {
         env::var_os("SystemRoot") // Usually `C:\Windows`. Not to be confused with `C:\`.
-            .or_else(|| env::var_os("windir")) // Same. Less reliable, but some callers are unusual.
+            .or_else(|| env::var_os("windir")) // Same, in case our parent filtered out SystemRoot.
             .map(PathBuf::from)
             .filter(|p| p.is_absolute())
             .unwrap_or_else(env::temp_dir)
@@ -141,7 +141,6 @@ fn git_cmd(executable: PathBuf) -> Command {
         .env("GIT_WORK_TREE", NULL_DEVICE) // Just to avoid confusion when debugging.
         .stdin(Stdio::null())
         .stderr(Stdio::null());
-
     cmd
 }
 
