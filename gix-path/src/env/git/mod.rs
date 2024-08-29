@@ -116,13 +116,12 @@ fn git_cmd(executable: PathBuf) -> Command {
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
     // We will try to run `git` from a location fairly high in the filesystem. This can be faster
-    // than running it from our CWD, if we are deeply nested or on network storage. We try to pick
-    // a place that exists, is unlikely to be a repo, and forbids unprivileged users from putting a
-    // `.git` dir or other entries inside (so not `C:\` on Windows). But we will also be setting
-    // `GIT_DIR` to a location `git` can't read config from, so this is mostly for performance.
+    // than running it from our own CWD, if we are deeply nested or on network storage.
     let cwd = if cfg!(windows) {
-        env::var_os("SystemRoot") // Usually `C:\Windows`. Not to be confused with `C:\`.
-            .or_else(|| env::var_os("windir")) // Same. In case our parent filtered out SystemRoot.
+        // Use the Windows directory (usually `C:\Windows`) if we can tell what it is. Don't use
+        // `C:\`, as limited users can put a `.git` dir there (though up-to-date Git won't use it).
+        env::var_os("SystemRoot")
+            .or_else(|| env::var_os("windir"))
             .map(PathBuf::from)
             .filter(|p| p.is_absolute())
             .unwrap_or_else(env::temp_dir)
