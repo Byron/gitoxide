@@ -115,9 +115,14 @@ fn git_cmd(executable: PathBuf) -> Command {
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
+    // We will try to run `git` from a location fairly high in the filesystem. This can be faster
+    // than running it from our CWD, if we are deeply nested or on network storage. We try to pick
+    // a place that exists, is unlikely to be a repo, and forbids unprivileged users from putting a
+    // `.git` dir or other entries inside (so not `C:\` on Windows). But we will also be setting
+    // `GIT_DIR` to a location `git` can't read config from, so this is mostly for performance.
     let cwd = if cfg!(windows) {
         env::var_os("SystemRoot") // Usually `C:\Windows`. Not to be confused with `C:\`.
-            .or_else(|| env::var_os("windir")) // Same, in case our parent filtered out SystemRoot.
+            .or_else(|| env::var_os("windir")) // Same. In case our parent filtered out SystemRoot.
             .map(PathBuf::from)
             .filter(|p| p.is_absolute())
             .unwrap_or_else(env::temp_dir)
@@ -126,19 +131,18 @@ fn git_cmd(executable: PathBuf) -> Command {
     };
     // Git 2.8.0 and higher support --show-origin. The -l, -z, and --name-only options were
     // supported even before that. In contrast, --show-scope was introduced later, in Git 2.26.0.
-    // Low versions of git are still sometimes used, and this is sometimes reasonable because
+    // Low versions of Git are still sometimes used, and this is sometimes reasonable because
     // downstream distributions often backport security patches without adding most new features.
     // So for now, we forgo the convenience of --show-scope for greater backward compatibility.
     //
     // Separately from that, we can't use --system here, because scopes treated higher than the
     // system scope are possible. This commonly happens on macOS with Apple Git, where the config
-    // file under /Library is shown as an "unknown" scope but takes precedence over the system
-    // scope. Although GIT_CONFIG_NOSYSTEM will suppress this as well, passing --system omits it.
-    //
+    // file under `/Library` is shown as an "unknown" scope but takes precedence over the system
+    // scope. Although `GIT_CONFIG_NOSYSTEM` will suppress this as well, passing --system omits it.
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
         .current_dir(cwd)
         .env("GIT_DIR", NULL_DEVICE) // Avoid getting local-scope config.
-        .env("GIT_WORK_TREE", NULL_DEVICE) // Just to avoid confusion when debugging.
+        .env("GIT_WORK_TREE", NULL_DEVICE) // This is just to avoid confusion when debugging.
         .stdin(Stdio::null())
         .stderr(Stdio::null());
     cmd
