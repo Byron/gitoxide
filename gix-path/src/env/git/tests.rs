@@ -478,7 +478,25 @@ fn exe_info_same_result_with_oversanitized_env() {
 
 #[test]
 #[serial]
+#[cfg(not(target_os = "macos"))] // Assumes no higher "unknown" scope. The `nosystem` case works.
 fn exe_info_never_from_local_scope() {
+    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+
+    let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
+    let _env = gix_testtools::Env::new()
+        .set("GIT_CONFIG_SYSTEM", super::NULL_DEVICE)
+        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE);
+
+    let maybe_path = super::exe_info();
+    assert_eq!(
+        maybe_path, None,
+        "Should find no config path if the config would be local (empty system config)"
+    );
+}
+
+#[test]
+#[serial]
+fn exe_info_never_from_local_scope_nosystem() {
     let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
 
     let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
@@ -489,13 +507,34 @@ fn exe_info_never_from_local_scope() {
     let maybe_path = super::exe_info();
     assert_eq!(
         maybe_path, None,
-        "Should find no config path if the config would be local"
+        "Should find no config path if the config would be local (suppressed system config)"
     );
 }
 
 #[test]
 #[serial]
+#[cfg(not(target_os = "macos"))] // Assumes no higher "unknown" scope. The `nosystem` case works.
 fn exe_info_never_from_local_scope_even_if_temp_is_here() {
+    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
+        .expect("script succeeds")
+        .canonicalize()
+        .expect("repo path is valid and exists");
+
+    let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
+    let _env = set_temp_env_vars(&repo)
+        .set("GIT_CONFIG_SYSTEM", super::NULL_DEVICE)
+        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE);
+
+    let maybe_path = super::exe_info();
+    assert_eq!(
+        maybe_path, None,
+        "Should find no config path if the config would be local even in a `/tmp`-like dir (empty system config)"
+    );
+}
+
+#[test]
+#[serial]
+fn exe_info_never_from_local_scope_even_if_temp_is_here_nosystem() {
     let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
         .expect("script succeeds")
         .canonicalize()
@@ -509,7 +548,7 @@ fn exe_info_never_from_local_scope_even_if_temp_is_here() {
     let maybe_path = super::exe_info();
     assert_eq!(
         maybe_path, None,
-        "Should find no config path if the config would be local even in a `/tmp`-like dir"
+        "Should find no config path if the config would be local even in a `/tmp`-like dir (suppressed system config)"
     );
 }
 
