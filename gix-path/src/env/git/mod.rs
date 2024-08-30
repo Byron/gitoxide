@@ -115,19 +115,6 @@ fn git_cmd(executable: PathBuf) -> Command {
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
-    // We will try to run `git` from a location fairly high in the filesystem. This can be faster
-    // than running it from our own CWD, if we are deeply nested or on network storage.
-    let cwd = if cfg!(windows) {
-        // Try the Windows directory (usually `C:\Windows`) first. It is given by `SystemRoot`,
-        // except in rare cases where our own parent has not passed down that environment variable.
-        env::var_os("SystemRoot")
-            .or_else(|| env::var_os("windir"))
-            .map(PathBuf::from)
-            .filter(|p| p.is_absolute())
-            .unwrap_or_else(env::temp_dir)
-    } else {
-        "/".into()
-    };
     // Git 2.8.0 and higher support --show-origin. The -l, -z, and --name-only options were
     // supported even before that. In contrast, --show-scope was introduced later, in Git 2.26.0.
     // Low versions of Git are still sometimes used, and this is sometimes reasonable because
@@ -139,13 +126,32 @@ fn git_cmd(executable: PathBuf) -> Command {
     // file under `/Library` is shown as an "unknown" scope but takes precedence over the system
     // scope. Although `GIT_CONFIG_NOSYSTEM` will suppress this as well, passing --system omits it.
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
-        .current_dir(cwd)
-        .env_remove("GIT_COMMON_DIR") // We are setting `GIT_DIR`.
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .env_remove("GIT_COMMON_DIR") // Because we are setting `GIT_DIR`.
         .env_remove("GIT_DISCOVERY_ACROSS_FILESYSTEM")
         .env("GIT_DIR", NULL_DEVICE) // Avoid getting local-scope config.
-        .env("GIT_WORK_TREE", NULL_DEVICE) // Avoid confusion when debugging.
-        .stdin(Stdio::null())
-        .stderr(Stdio::null());
+        .env("GIT_WORK_TREE", NULL_DEVICE); // Just to avoid confusion when debugging.
+
+    // We will run `git` from a location fairly high in the filesystem if we can. This can be
+    // faster than running it from our own CWD, if we are deeply nested or on network storage.
+    if cfg!(windows) {
+        // We try the Windows directory (usually `C:\Windows`) first. It is given by `SystemRoot`,
+        // except in rare cases where our own parent has not passed down that environment variable.
+        let cwd = env::var_os("SystemRoot")
+            .or_else(|| env::var_os("windir"))
+            .map(PathBuf::from)
+            .filter(|p| p.is_absolute())
+            .unwrap_or_else(env::temp_dir);
+        if let Some(parent) = cwd.parent().filter(|p| p.is_absolute() && *p != cwd) {
+            cmd.env("GIT_CEILING_DIRECTORIES", parent);
+        }
+        cmd.current_dir(cwd);
+    } else {
+        // The root should always be available, with nothing above it to worry about traversing to.
+        cmd.current_dir("/");
+    }
+
     cmd
 }
 
