@@ -118,8 +118,8 @@ fn git_cmd(executable: PathBuf) -> Command {
     // We will try to run `git` from a location fairly high in the filesystem. This can be faster
     // than running it from our own CWD, if we are deeply nested or on network storage.
     let cwd = if cfg!(windows) {
-        // Use the Windows directory (usually `C:\Windows`) if we can tell what it is. Don't use
-        // `C:\`, as limited users can put a `.git` dir there (though up-to-date Git won't use it).
+        // Try the Windows directory (usually `C:\Windows`) first. It is given by `SystemRoot`,
+        // except in rare cases where our own parent has not passed down that environment variable.
         env::var_os("SystemRoot")
             .or_else(|| env::var_os("windir"))
             .map(PathBuf::from)
