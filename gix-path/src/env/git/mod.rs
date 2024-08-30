@@ -115,8 +115,8 @@ fn git_cmd(executable: PathBuf) -> Command {
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
-    // We will try to run `git` from a location fairly high in the filesystem, in the hope that it
-    // may help if we are deeply nested, on network store, or in a directory that has been deleted.
+    // We will try to run `git` from a location fairly high in the filesystem, in the hope it may
+    // be faster if we are deeply nested, on a slow disk, or in a directory that has been deleted.
     let cwd = if cfg!(windows) {
         // We try the Windows directory (usually `C:\Windows`) first. It is given by `SystemRoot`,
         // except in rare cases where our own parent has not passed down that environment variable.
