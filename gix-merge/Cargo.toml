@@ -1,0 +1,18 @@
+[package]
+name = "gix-merge"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT OR Apache-2.0"
+description = "A crate of the gitoxide project implementing merge algorithms"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2021"
+rust-version = "1.65"
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+

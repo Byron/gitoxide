@@ -326,6 +326,15 @@ Check out the [performance discussion][gix-diff-performance] as well.
 * [ ] working with hunks of data
 * [x] API documentation
     * [ ] Examples
+
+### gix-merge
+
+* [ ] three-way merge analysis of blobs with choice of how to resolve conflicts
+    - [ ] choose how to resolve conflicts on the data-structure
+    - [ ] produce a new blob based on data-structure containing possible resolutions
+        - [ ] `merge` style
+        - [ ] `diff3` style
+        - [ ] `zdiff` style
     
 [gix-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
 

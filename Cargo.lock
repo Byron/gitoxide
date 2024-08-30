@@ -2041,6 +2041,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-merge"
+version = "0.0.0"
+
+[[package]]
 name = "gix-negotiate"
 version = "0.15.0"
 dependencies = [

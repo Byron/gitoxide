@@ -130,10 +130,11 @@ is usable to some extent.
   * [gix-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-submodule)
   * [gix-status](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-status)
   * [gix-worktree-state](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree-state)
-  * `gitoxide-core`
-* **very early**  _(possibly without any documentation and many rough edges)_
   * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
   * [gix-dir](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-dir)
+  * `gitoxide-core`
+* **very early**  _(possibly without any documentation and many rough edges)_
+  * [gix-merge](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-merge)
 * **idea** _(just a name placeholder)_
   * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
   * [gix-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fetchhead)
