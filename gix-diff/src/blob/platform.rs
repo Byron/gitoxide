@@ -383,6 +383,7 @@ impl Platform {
     ///
     /// If one of the resources is binary, the operation reports an error as such resources don't make their data available
     /// which is required for the external diff to run.
+    // TODO: fix this - the diff shouldn't fail if binary (or large) files are used, just copy them into tempfiles.
     pub fn prepare_diff_command(
         &self,
         diff_command: BString,

@@ -2043,6 +2043,22 @@ dependencies = [
 [[package]]
 name = "gix-merge"
 version = "0.0.0"
+dependencies = [
+ "bstr",
+ "document-features",
+ "gix-command",
+ "gix-filter",
+ "gix-fs 0.11.3",
+ "gix-hash 0.14.2",
+ "gix-object 0.44.0",
+ "gix-path 0.10.11",
+ "gix-tempfile 14.0.2",
+ "gix-trace 0.1.10",
+ "gix-worktree 0.36.0",
+ "imara-diff",
+ "serde",
+ "thiserror",
+]
 
 [[package]]
 name = "gix-negotiate"
