@@ -73,9 +73,9 @@ where
 }
 
 #[cfg(windows)]
-pub(super) static EXE_NAME: &str = "git.exe";
+pub(super) const EXE_NAME: &str = "git.exe";
 #[cfg(not(windows))]
-pub(super) static EXE_NAME: &str = "git";
+pub(super) const EXE_NAME: &str = "git";
 
 /// Invoke the git executable to obtain the origin configuration, which is cached and returned.
 ///
