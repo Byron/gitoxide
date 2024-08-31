@@ -916,7 +916,7 @@ mod tests {
                 .expect("the file really exists")
                 .read_to_end(&mut buf)
                 .expect("can read contents");
-            assert_eq!(buf, CONFIG_DATA, "File {:?} should be created", path);
+            assert_eq!(buf, CONFIG_DATA, "File {path:?} should be created");
         }
     }
 
