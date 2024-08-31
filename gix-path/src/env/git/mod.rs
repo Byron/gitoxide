@@ -83,9 +83,9 @@ pub(super) static EXE_NAME: &str = "git";
 pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(exe_info);
 
 #[cfg(windows)]
-static NULL_DEVICE: &str = "NUL";
+const NULL_DEVICE: &str = "NUL";
 #[cfg(not(windows))]
-static NULL_DEVICE: &str = "/dev/null";
+const NULL_DEVICE: &str = "/dev/null";
 
 fn exe_info() -> Option<BString> {
     let mut cmd = git_cmd(EXE_NAME.into());
