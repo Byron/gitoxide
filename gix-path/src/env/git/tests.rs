@@ -1,3 +1,5 @@
+use std::path::Path;
+
 #[cfg(windows)]
 mod locations {
     use std::ffi::{OsStr, OsString};
@@ -355,201 +357,204 @@ mod locations {
     }
 }
 
-use std::path::{Path, PathBuf};
+mod exe_info {
+    use std::path::{Path, PathBuf};
 
-use gix_testtools::tempfile;
-use serial_test::serial;
+    use crate::env::git::{exe_info, NULL_DEVICE};
+    use gix_testtools::tempfile;
+    use serial_test::serial;
 
-/// Wrapper for a valid path to a plausible location, kept from accidentally existing (until drop).
-#[derive(Debug)]
-struct NonexistentLocation {
-    _empty: tempfile::TempDir,
-    nonexistent: PathBuf,
-}
+    /// Wrapper for a valid path to a plausible location, kept from accidentally existing (until drop).
+    #[derive(Debug)]
+    struct NonexistentLocation {
+        _empty: tempfile::TempDir,
+        nonexistent: PathBuf,
+    }
 
-impl NonexistentLocation {
-    fn new() -> Self {
-        let empty = tempfile::tempdir().expect("can create new temporary subdirectory");
+    impl NonexistentLocation {
+        fn new() -> Self {
+            let empty = tempfile::tempdir().expect("can create new temporary subdirectory");
 
-        let nonexistent = empty
-            .path()
-            .canonicalize()
-            .expect("path to the new directory works")
-            .join("nonexistent");
+            let nonexistent = empty
+                .path()
+                .canonicalize()
+                .expect("path to the new directory works")
+                .join("nonexistent");
 
-        assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
+            assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
 
-        Self {
-            _empty: empty,
-            nonexistent,
+            Self {
+                _empty: empty,
+                nonexistent,
+            }
+        }
+
+        fn path(&self) -> &Path {
+            &self.nonexistent
         }
     }
 
-    fn path(&self) -> &Path {
-        &self.nonexistent
+    fn set_temp_env_vars<'a>(path: &Path) -> gix_testtools::Env<'a> {
+        let path_str = path.to_str().expect("valid Unicode");
+
+        let env = gix_testtools::Env::new()
+            .set("TMPDIR", path_str) // Mainly for Unix.
+            .set("TMP", path_str) // Mainly for Windows.
+            .set("TEMP", path_str); // Mainly for Windows, too.
+
+        assert_eq!(
+            std::env::temp_dir(),
+            path,
+            "Possible test bug: Temp dir path may not have been customized successfully"
+        );
+
+        env
     }
-}
 
-fn set_temp_env_vars<'a>(path: &Path) -> gix_testtools::Env<'a> {
-    let path_str = path.to_str().expect("valid Unicode");
+    fn unset_windows_directory_vars<'a>() -> gix_testtools::Env<'a> {
+        gix_testtools::Env::new().unset("windir").unset("SystemRoot")
+    }
 
-    let env = gix_testtools::Env::new()
-        .set("TMPDIR", path_str) // Mainly for Unix.
-        .set("TMP", path_str) // Mainly for Windows.
-        .set("TEMP", path_str); // Mainly for Windows, too.
+    fn check_exe_info() {
+        let path = exe_info()
+            .map(crate::from_bstring)
+            .expect("It is present in the test environment (nonempty config)");
 
-    assert_eq!(
-        std::env::temp_dir(),
-        path,
-        "Possible test bug: Temp dir path may not have been customized successfully"
-    );
+        assert!(
+            path.is_absolute(),
+            "It is absolute (unless overridden such as with GIT_CONFIG_SYSTEM)"
+        );
+        assert!(
+            path.exists(),
+            "It should exist on disk, since `git config` just found an entry there"
+        );
+    }
 
-    env
-}
+    #[test]
+    #[serial]
+    fn with_unmodified_environment() {
+        check_exe_info();
+    }
 
-fn unset_windows_directory_vars<'a>() -> gix_testtools::Env<'a> {
-    gix_testtools::Env::new().unset("windir").unset("SystemRoot")
-}
-
-fn check_exe_info() {
-    let path = super::exe_info()
-        .map(crate::from_bstring)
-        .expect("It is present in the test environment (nonempty config)");
-
-    assert!(
-        path.is_absolute(),
-        "It is absolute (unless overridden such as with GIT_CONFIG_SYSTEM)"
-    );
-    assert!(
-        path.exists(),
-        "It should exist on disk, since `git config` just found an entry there"
-    );
-}
-
-#[test]
-#[serial]
-fn exe_info() {
-    check_exe_info();
-}
-
-#[test]
-#[serial]
-fn exe_info_tolerates_broken_temp() {
-    let non = NonexistentLocation::new();
-    let _env = set_temp_env_vars(non.path());
-    check_exe_info();
-}
-
-#[test]
-#[serial]
-fn exe_info_tolerates_oversanitized_env() {
-    // This test runs on all systems, but it is only checking for a Windows regression. Also, on
-    // Windows, having both a broken temp dir and an over-sanitized environment is not supported.
-    let _env = unset_windows_directory_vars();
-    check_exe_info();
-}
-
-#[test]
-#[serial]
-fn exe_info_same_result_with_broken_temp() {
-    let with_unmodified_temp = super::exe_info();
-
-    let with_nonexistent_temp = {
+    #[test]
+    #[serial]
+    fn tolerates_broken_temp() {
         let non = NonexistentLocation::new();
         let _env = set_temp_env_vars(non.path());
-        super::exe_info()
-    };
+        check_exe_info();
+    }
 
-    assert_eq!(with_unmodified_temp, with_nonexistent_temp);
-}
-
-#[test]
-#[serial]
-fn exe_info_same_result_with_oversanitized_env() {
-    let with_unmodified_env = super::exe_info();
-
-    let with_oversanitized_env = {
+    #[test]
+    #[serial]
+    fn tolerates_oversanitized_env() {
+        // This test runs on all systems, but it is only checking for a Windows regression. Also, on
+        // Windows, having both a broken temp dir and an over-sanitized environment is not supported.
         let _env = unset_windows_directory_vars();
-        super::exe_info()
-    };
+        check_exe_info();
+    }
 
-    assert_eq!(with_unmodified_env, with_oversanitized_env);
-}
+    #[test]
+    #[serial]
+    fn same_result_with_broken_temp() {
+        let with_unmodified_temp = exe_info();
 
-#[test]
-#[serial]
-#[cfg(not(target_os = "macos"))] // Assumes no higher "unknown" scope. The `nosystem` case works.
-fn exe_info_never_from_local_scope() {
-    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+        let with_nonexistent_temp = {
+            let non = NonexistentLocation::new();
+            let _env = set_temp_env_vars(non.path());
+            exe_info()
+        };
 
-    let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
-    let _env = gix_testtools::Env::new()
-        .set("GIT_CONFIG_SYSTEM", super::NULL_DEVICE)
-        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE);
+        assert_eq!(with_unmodified_temp, with_nonexistent_temp);
+    }
 
-    let maybe_path = super::exe_info();
-    assert_eq!(
-        maybe_path, None,
-        "Should find no config path if the config would be local (empty system config)"
-    );
-}
+    #[test]
+    #[serial]
+    fn same_result_with_oversanitized_env() {
+        let with_unmodified_env = exe_info();
 
-#[test]
-#[serial]
-fn exe_info_never_from_local_scope_nosystem() {
-    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+        let with_oversanitized_env = {
+            let _env = unset_windows_directory_vars();
+            exe_info()
+        };
 
-    let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
-    let _env = gix_testtools::Env::new()
-        .set("GIT_CONFIG_NOSYSTEM", "1")
-        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE);
+        assert_eq!(with_unmodified_env, with_oversanitized_env);
+    }
 
-    let maybe_path = super::exe_info();
-    assert_eq!(
-        maybe_path, None,
-        "Should find no config path if the config would be local (suppressed system config)"
-    );
-}
+    #[test]
+    #[serial]
+    #[cfg(not(target_os = "macos"))] // Assumes no higher "unknown" scope. The `nosystem` case works.
+    fn never_from_local_scope() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
 
-#[test]
-#[serial]
-#[cfg(not(target_os = "macos"))] // Assumes no higher "unknown" scope. The `nosystem` case works.
-fn exe_info_never_from_local_scope_even_if_temp_is_here() {
-    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
-        .expect("script succeeds")
-        .canonicalize()
-        .expect("repo path is valid and exists");
+        let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
+        let _env = gix_testtools::Env::new()
+            .set("GIT_CONFIG_SYSTEM", NULL_DEVICE)
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE);
 
-    let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
-    let _env = set_temp_env_vars(&repo)
-        .set("GIT_CONFIG_SYSTEM", super::NULL_DEVICE)
-        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE);
+        let maybe_path = exe_info();
+        assert_eq!(
+            maybe_path, None,
+            "Should find no config path if the config would be local (empty system config)"
+        );
+    }
 
-    let maybe_path = super::exe_info();
-    assert_eq!(
-        maybe_path, None,
-        "Should find no config path if the config would be local even in a `/tmp`-like dir (empty system config)"
-    );
-}
+    #[test]
+    #[serial]
+    fn never_from_local_scope_nosystem() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
 
-#[test]
-#[serial]
-fn exe_info_never_from_local_scope_even_if_temp_is_here_nosystem() {
-    let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
-        .expect("script succeeds")
-        .canonicalize()
-        .expect("repo path is valid and exists");
+        let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
+        let _env = gix_testtools::Env::new()
+            .set("GIT_CONFIG_NOSYSTEM", "1")
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE);
 
-    let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
-    let _env = set_temp_env_vars(&repo)
-        .set("GIT_CONFIG_NOSYSTEM", "1")
-        .set("GIT_CONFIG_GLOBAL", super::NULL_DEVICE);
+        let maybe_path = exe_info();
+        assert_eq!(
+            maybe_path, None,
+            "Should find no config path if the config would be local (suppressed system config)"
+        );
+    }
 
-    let maybe_path = super::exe_info();
-    assert_eq!(
+    #[test]
+    #[serial]
+    #[cfg(not(target_os = "macos"))] // Assumes no higher "unknown" scope. The `nosystem` case works.
+    fn never_from_local_scope_even_if_temp_is_here() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
+            .expect("script succeeds")
+            .canonicalize()
+            .expect("repo path is valid and exists");
+
+        let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
+        let _env = set_temp_env_vars(&repo)
+            .set("GIT_CONFIG_SYSTEM", NULL_DEVICE)
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE);
+
+        let maybe_path = exe_info();
+        assert_eq!(
+            maybe_path, None,
+            "Should find no config path if the config would be local even in a `/tmp`-like dir (empty system config)"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn never_from_local_scope_even_if_temp_is_here_nosystem() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
+            .expect("script succeeds")
+            .canonicalize()
+            .expect("repo path is valid and exists");
+
+        let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
+        let _env = set_temp_env_vars(&repo)
+            .set("GIT_CONFIG_NOSYSTEM", "1")
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE);
+
+        let maybe_path = exe_info();
+        assert_eq!(
         maybe_path, None,
         "Should find no config path if the config would be local even in a `/tmp`-like dir (suppressed system config)"
     );
+    }
 }
 
 #[test]
