@@ -551,9 +551,9 @@ mod exe_info {
 
         let maybe_path = exe_info();
         assert_eq!(
-        maybe_path, None,
-        "Should find no config path if the config would be local even in a `/tmp`-like dir (suppressed system config)"
-    );
+            maybe_path, None,
+            "Should find no config path if the config would be local even in a `/tmp`-like dir (suppressed system config)"
+        );
     }
 }
 
