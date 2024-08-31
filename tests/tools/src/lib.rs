@@ -885,24 +885,29 @@ mod tests {
         assert_eq!(git_version_from_bytes(b"git version 2.37.2\n").unwrap(), (2, 37, 2));
     }
 
-    fn check_configure_clears_scope(scope_option: &str) {
+    fn check_configure_clears_scope(scope_env_var: &str, scope_option: &str) {
         let temp = tempfile::TempDir::new().expect("can create temp dir");
+
         #[cfg(windows)]
-        let names = ["-"];
+        let names = ["config", "-"];
         #[cfg(not(windows))]
-        let names = ["-", ":"];
+        let names = ["config", "-", ":"];
         for name in names {
-            File::create(temp.path().join(name))
+            File::create_new(temp.path().join(name))
                 .expect("can create file")
                 .write_all(b"[foo]\n\tbar = baz\n")
                 .expect("can write contents");
         }
+
         let mut cmd = std::process::Command::new("git");
-        let args = ["config", scope_option, "foo.bar"].map(String::from);
+        cmd.env(scope_env_var, "config"); // configure_command() should override it.
+        let args = ["config", "-l", "--show-origin", scope_option].map(String::from);
         configure_command(&mut cmd, &args, temp.path());
+
         let output = cmd.output().expect("can run git");
         let stdout = output.stdout.to_str().expect("valid UTF-8");
         let status = output.status.code().expect("terminated normally");
+
         assert_eq!(stdout, "", "should be no config variable to display");
         assert_eq!(status, 1, "exit status should indicate config variable is absent");
 
@@ -911,11 +916,11 @@ mod tests {
 
     #[test]
     fn configure_command_clears_system_scope() {
-        check_configure_clears_scope("--system");
+        check_configure_clears_scope("GIT_CONFIG_SYSTEM", "--system");
     }
 
     #[test]
     fn configure_command_clears_global_scope() {
-        check_configure_clears_scope("--global");
+        check_configure_clears_scope("GIT_CONFIG_GLOBAL", "--global");
     }
 }
