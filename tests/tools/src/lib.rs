@@ -868,6 +868,8 @@ impl<'a> Drop for Env<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
+    use std::io::Write;
 
     #[test]
     fn parse_version() {
@@ -881,5 +883,39 @@ mod tests {
     #[test]
     fn parse_version_with_trailing_newline() {
         assert_eq!(git_version_from_bytes(b"git version 2.37.2\n").unwrap(), (2, 37, 2));
+    }
+
+    fn check_configure_clears_scope(scope_option: &str) {
+        let temp = tempfile::TempDir::new().expect("can create temp dir");
+        #[cfg(windows)]
+        let names = ["-"];
+        #[cfg(not(windows))]
+        let names = ["-", ":"];
+        for name in names {
+            File::create(temp.path().join(name))
+                .expect("can create file")
+                .write_all(b"[foo]\n\tbar = baz\n")
+                .expect("can write contents");
+        }
+        let mut cmd = std::process::Command::new("git");
+        let args = ["config", scope_option, "foo.bar"].map(String::from);
+        configure_command(&mut cmd, &args, temp.path());
+        let output = cmd.output().expect("can run git");
+        let stdout = output.stdout.to_str().expect("valid UTF-8");
+        let status = output.status.code().expect("terminated normally");
+        assert_eq!(stdout, "", "should be no config variable to display");
+        assert_eq!(status, 1, "exit status should indicate config variable is absent");
+
+        temp.close().expect("Test bug: Should be able to delete everything");
+    }
+
+    #[test]
+    fn configure_command_clears_system_scope() {
+        check_configure_clears_scope("--system");
+    }
+
+    #[test]
+    fn configure_command_clears_global_scope() {
+        check_configure_clears_scope("--global");
     }
 }
