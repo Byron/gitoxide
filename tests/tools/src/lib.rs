@@ -885,13 +885,16 @@ mod tests {
         assert_eq!(git_version_from_bytes(b"git version 2.37.2\n").unwrap(), (2, 37, 2));
     }
 
-    fn check_configure_clears_scope(scope_env_var: &str, scope_option: &str) {
-        let temp = tempfile::TempDir::new().expect("can create temp dir");
+    fn check_configure_clears_scope(scope_env_key: &str, scope_option: &str) {
+        let scope_env_value = "gitconfig";
 
         #[cfg(windows)]
-        let names = ["config", "-"];
+        let names = [scope_env_value, "-"];
         #[cfg(not(windows))]
-        let names = ["config", "-", ":"];
+        let names = [scope_env_value, "-", ":"];
+
+        let temp = tempfile::TempDir::new().expect("can create temp dir");
+
         for name in names {
             File::create_new(temp.path().join(name))
                 .expect("can create file")
@@ -900,7 +903,7 @@ mod tests {
         }
 
         let mut cmd = std::process::Command::new("git");
-        cmd.env(scope_env_var, "config"); // configure_command() should override it.
+        cmd.env(scope_env_key, scope_env_value); // configure_command() should override it.
         let args = ["config", "-l", "--show-origin", scope_option].map(String::from);
         configure_command(&mut cmd, &args, temp.path());
 
