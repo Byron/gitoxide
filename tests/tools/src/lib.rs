@@ -869,7 +869,7 @@ impl<'a> Drop for Env<'a> {
 mod tests {
     use super::*;
     use std::fs::File;
-    use std::io::Write;
+    use std::io::{Read, Write};
 
     #[test]
     fn parse_version() {
@@ -885,27 +885,44 @@ mod tests {
         assert_eq!(git_version_from_bytes(b"git version 2.37.2\n").unwrap(), (2, 37, 2));
     }
 
-    fn check_configure_clears_scope(scope_env_key: &str, scope_option: &str) {
-        let scope_env_value = "gitconfig";
-        let temp = tempfile::TempDir::new().expect("can create temp dir");
-        let dir = temp.path();
+    const SCOPE_ENV_VALUE: &str = "gitconfig";
+
+    fn populate_ad_hoc_config_files(dir: &Path) {
+        const CONFIG_DATA: &[u8] = b"[foo]\n\tbar = baz\n";
 
         let paths: &[PathBuf] = if cfg!(windows) {
             let unc_literal_nul = dir.canonicalize().expect("directory exists").join("NUL");
-            &[dir.join(scope_env_value), dir.join("-"), unc_literal_nul]
+            &[dir.join(SCOPE_ENV_VALUE), dir.join("-"), unc_literal_nul]
         } else {
-            &[dir.join(scope_env_value), dir.join("-"), dir.join(":")]
+            &[dir.join(SCOPE_ENV_VALUE), dir.join("-"), dir.join(":")]
         };
 
+        // Create the files.
         for path in paths {
             File::create_new(path)
                 .expect("can create file")
-                .write_all(b"[foo]\n\tbar = baz\n")
+                .write_all(CONFIG_DATA)
                 .expect("can write contents");
         }
 
+        // Verify the files. This is mostly to show we really made a `\\?\...\NUL` on Windows.
+        for path in paths {
+            let mut buf = Vec::with_capacity(CONFIG_DATA.len());
+            File::open(path)
+                .expect("the file really exists")
+                .read_to_end(&mut buf)
+                .expect("can read contents");
+            assert_eq!(buf, CONFIG_DATA, "File {:?} should be created", path);
+        }
+    }
+
+    fn check_configure_clears_scope(scope_env_key: &str, scope_option: &str) {
+        let temp = tempfile::TempDir::new().expect("can create temp dir");
+        let dir = temp.path();
+        populate_ad_hoc_config_files(dir);
+
         let mut cmd = std::process::Command::new("git");
-        cmd.env(scope_env_key, scope_env_value); // configure_command() should override it.
+        cmd.env(scope_env_key, SCOPE_ENV_VALUE); // configure_command() should override it.
         let args = ["config", "-l", "--show-origin", scope_option].map(String::from);
         configure_command(&mut cmd, &args, dir);
 
