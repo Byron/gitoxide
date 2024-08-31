@@ -872,8 +872,6 @@ impl<'a> Drop for Env<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::File;
-    use std::io::{Read, Write};
 
     #[test]
     fn parse_version() {
@@ -903,22 +901,12 @@ mod tests {
 
         // Create the files.
         for path in paths {
-            File::options()
-                .write(true)
-                .create_new(true)
-                .open(path)
-                .expect("can create file")
-                .write_all(CONFIG_DATA)
-                .expect("can write contents");
+            std::fs::write(path, CONFIG_DATA).expect("can write contents");
         }
 
         // Verify the files. This is mostly to show we really made a `\\?\...\NUL` on Windows.
         for path in paths {
-            let mut buf = Vec::with_capacity(CONFIG_DATA.len());
-            File::open(path)
-                .expect("the file really exists")
-                .read_to_end(&mut buf)
-                .expect("can read contents");
+            let buf = std::fs::read(path).expect("the file really exists");
             assert_eq!(buf, CONFIG_DATA, "File {path:?} should be created");
         }
     }
