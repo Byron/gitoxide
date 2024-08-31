@@ -1,50 +1,5 @@
 use std::path::Path;
 
-#[test]
-fn config_to_base_path() {
-    for (input, expected) in [
-        (
-            "/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig",
-            "/Applications/Xcode.app/Contents/Developer/usr/share/git-core",
-        ),
-        ("C:/git-sdk-64/etc/gitconfig", "C:/git-sdk-64/etc"),
-        ("C:\\ProgramData/Git/config", "C:\\ProgramData/Git"),
-        ("C:/Program Files/Git/etc/gitconfig", "C:/Program Files/Git/etc"),
-    ] {
-        assert_eq!(super::config_to_base_path(Path::new(input)), Path::new(expected));
-    }
-}
-
-#[test]
-fn first_file_from_config_with_origin() {
-    let macos = "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig	credential.helper=osxkeychain\nfile:/Users/byron/.gitconfig	push.default=simple\n";
-    let win_msys =
-        "file:C:/git-sdk-64/etc/gitconfig	core.symlinks=false\r\nfile:C:/git-sdk-64/etc/gitconfig	core.autocrlf=true";
-    let win_cmd = "file:C:/Program Files/Git/etc/gitconfig	diff.astextplain.textconv=astextplain\r\nfile:C:/Program Files/Git/etc/gitconfig	filter.lfs.clean=gix-lfs clean -- %f\r\n";
-    let win_msys_old = "file:\"C:\\ProgramData/Git/config\"	diff.astextplain.textconv=astextplain\r\nfile:\"C:\\ProgramData/Git/config\"	filter.lfs.clean=git-lfs clean -- %f\r\n";
-    let linux = "file:/home/parallels/.gitconfig	core.excludesfile=~/.gitignore\n";
-    let bogus = "something unexpected";
-    let empty = "";
-
-    for (source, expected) in [
-        (
-            macos,
-            Some("/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig"),
-        ),
-        (win_msys, Some("C:/git-sdk-64/etc/gitconfig")),
-        (win_msys_old, Some("C:\\ProgramData/Git/config")),
-        (win_cmd, Some("C:/Program Files/Git/etc/gitconfig")),
-        (linux, Some("/home/parallels/.gitconfig")),
-        (bogus, None),
-        (empty, None),
-    ] {
-        assert_eq!(
-            super::first_file_from_config_with_origin(source.into()),
-            expected.map(Into::into)
-        );
-    }
-}
-
 #[cfg(windows)]
 mod locations {
     use std::ffi::{OsStr, OsString};
@@ -399,5 +354,252 @@ mod locations {
     #[test]
     fn alternative_locations() {
         assert!(super::super::ALTERNATIVE_LOCATIONS.is_empty());
+    }
+}
+
+mod exe_info {
+    use std::path::{Path, PathBuf};
+
+    use crate::env::git::{exe_info, NULL_DEVICE};
+    use gix_testtools::tempfile;
+    use serial_test::serial;
+
+    /// Wrapper for a valid path to a plausible location, kept from accidentally existing (until drop).
+    #[derive(Debug)]
+    struct NonexistentLocation {
+        _empty: tempfile::TempDir,
+        nonexistent: PathBuf,
+    }
+
+    impl NonexistentLocation {
+        fn new() -> Self {
+            let empty = tempfile::tempdir().expect("can create new temporary subdirectory");
+
+            let nonexistent = empty
+                .path()
+                .canonicalize()
+                .expect("path to the new directory works")
+                .join("nonexistent");
+
+            assert!(!nonexistent.exists(), "Test bug: Need nonexistent directory");
+
+            Self {
+                _empty: empty,
+                nonexistent,
+            }
+        }
+
+        fn path(&self) -> &Path {
+            &self.nonexistent
+        }
+    }
+
+    fn set_temp_env_vars<'a>(path: &Path) -> gix_testtools::Env<'a> {
+        let path_str = path.to_str().expect("valid Unicode");
+
+        let env = gix_testtools::Env::new()
+            .set("TMPDIR", path_str) // Mainly for Unix.
+            .set("TMP", path_str) // Mainly for Windows.
+            .set("TEMP", path_str); // Mainly for Windows, too.
+
+        assert_eq!(
+            std::env::temp_dir(),
+            path,
+            "Possible test bug: Temp dir path may not have been customized successfully"
+        );
+
+        env
+    }
+
+    fn unset_windows_directory_vars<'a>() -> gix_testtools::Env<'a> {
+        gix_testtools::Env::new().unset("windir").unset("SystemRoot")
+    }
+
+    fn check_exe_info() {
+        let path = exe_info()
+            .map(crate::from_bstring)
+            .expect("It is present in the test environment (nonempty config)");
+
+        assert!(
+            path.is_absolute(),
+            "It is absolute (unless overridden such as with GIT_CONFIG_SYSTEM)"
+        );
+        assert!(
+            path.exists(),
+            "It should exist on disk, since `git config` just found an entry there"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn with_unmodified_environment() {
+        check_exe_info();
+    }
+
+    #[test]
+    #[serial]
+    fn tolerates_broken_temp() {
+        let non = NonexistentLocation::new();
+        let _env = set_temp_env_vars(non.path());
+        check_exe_info();
+    }
+
+    #[test]
+    #[serial]
+    fn tolerates_oversanitized_env() {
+        // This test runs on all systems, but it is only checking for a Windows regression. Also, on
+        // Windows, having both a broken temp dir and an over-sanitized environment is not supported.
+        let _env = unset_windows_directory_vars();
+        check_exe_info();
+    }
+
+    #[test]
+    #[serial]
+    fn same_result_with_broken_temp() {
+        let with_unmodified_temp = exe_info();
+
+        let with_nonexistent_temp = {
+            let non = NonexistentLocation::new();
+            let _env = set_temp_env_vars(non.path());
+            exe_info()
+        };
+
+        assert_eq!(with_unmodified_temp, with_nonexistent_temp);
+    }
+
+    #[test]
+    #[serial]
+    fn same_result_with_oversanitized_env() {
+        let with_unmodified_env = exe_info();
+
+        let with_oversanitized_env = {
+            let _env = unset_windows_directory_vars();
+            exe_info()
+        };
+
+        assert_eq!(with_unmodified_env, with_oversanitized_env);
+    }
+
+    #[test]
+    #[serial]
+    #[cfg(not(target_os = "macos"))] // Assumes no higher "unknown" scope. The `nosystem` case works.
+    fn never_from_local_scope() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+
+        let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
+        let _env = gix_testtools::Env::new()
+            .set("GIT_CONFIG_SYSTEM", NULL_DEVICE)
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE);
+
+        let maybe_path = exe_info();
+        assert_eq!(
+            maybe_path, None,
+            "Should find no config path if the config would be local (empty system config)"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn never_from_local_scope_nosystem() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+
+        let _cwd = gix_testtools::set_current_dir(repo).expect("can change to repo dir");
+        let _env = gix_testtools::Env::new()
+            .set("GIT_CONFIG_NOSYSTEM", "1")
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE);
+
+        let maybe_path = exe_info();
+        assert_eq!(
+            maybe_path, None,
+            "Should find no config path if the config would be local (suppressed system config)"
+        );
+    }
+
+    #[test]
+    #[serial]
+    #[cfg(not(target_os = "macos"))] // Assumes no higher "unknown" scope. The `nosystem` case works.
+    fn never_from_local_scope_even_if_temp_is_here() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
+            .expect("script succeeds")
+            .canonicalize()
+            .expect("repo path is valid and exists");
+
+        let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
+        let _env = set_temp_env_vars(&repo)
+            .set("GIT_CONFIG_SYSTEM", NULL_DEVICE)
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE);
+
+        let maybe_path = exe_info();
+        assert_eq!(
+            maybe_path, None,
+            "Should find no config path if the config would be local even in a `/tmp`-like dir (empty system config)"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn never_from_local_scope_even_if_temp_is_here_nosystem() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh")
+            .expect("script succeeds")
+            .canonicalize()
+            .expect("repo path is valid and exists");
+
+        let _cwd = gix_testtools::set_current_dir(&repo).expect("can change to repo dir");
+        let _env = set_temp_env_vars(&repo)
+            .set("GIT_CONFIG_NOSYSTEM", "1")
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE);
+
+        let maybe_path = exe_info();
+        assert_eq!(
+        maybe_path, None,
+        "Should find no config path if the config would be local even in a `/tmp`-like dir (suppressed system config)"
+    );
+    }
+}
+
+#[test]
+fn first_file_from_config_with_origin() {
+    let macos =
+        "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig\0credential.helper\0file:/Users/byron/.gitconfig\0push.default\0";
+    let win_msys = "file:C:/git-sdk-64/etc/gitconfig\0core.symlinks\0file:C:/git-sdk-64/etc/gitconfig\0core.autocrlf\0";
+    let win_cmd =
+        "file:C:/Program Files/Git/etc/gitconfig\0diff.astextplain.textconv\0file:C:/Program Files/Git/etc/gitconfig\0filter.lfs.clean\0";
+    let win_msys_old =
+        "file:C:\\ProgramData/Git/config\0diff.astextplain.textconv\0file:C:\\ProgramData/Git/config\0filter.lfs.clean\0";
+    let linux = "file:/home/parallels/.gitconfig\0core.excludesfile\0";
+    let bogus = "something unexpected";
+    let empty = "";
+
+    for (source, expected) in [
+        (
+            macos,
+            Some("/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig"),
+        ),
+        (win_msys, Some("C:/git-sdk-64/etc/gitconfig")),
+        (win_msys_old, Some("C:\\ProgramData/Git/config")),
+        (win_cmd, Some("C:/Program Files/Git/etc/gitconfig")),
+        (linux, Some("/home/parallels/.gitconfig")),
+        (bogus, None),
+        (empty, None),
+    ] {
+        assert_eq!(
+            super::first_file_from_config_with_origin(source.into()),
+            expected.map(Into::into)
+        );
+    }
+}
+
+#[test]
+fn config_to_base_path() {
+    for (input, expected) in [
+        (
+            "/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig",
+            "/Applications/Xcode.app/Contents/Developer/usr/share/git-core",
+        ),
+        ("C:/git-sdk-64/etc/gitconfig", "C:/git-sdk-64/etc"),
+        ("C:\\ProgramData/Git/config", "C:\\ProgramData/Git"),
+        ("C:/Program Files/Git/etc/gitconfig", "C:/Program Files/Git/etc"),
+    ] {
+        assert_eq!(super::config_to_base_path(Path::new(input)), Path::new(expected));
     }
 }

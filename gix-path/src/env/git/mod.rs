@@ -80,21 +80,14 @@ pub(super) static EXE_NAME: &str = "git";
 /// Invoke the git executable to obtain the origin configuration, which is cached and returned.
 ///
 /// The git executable is the one found in PATH or an alternative location.
-pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
-    let git_cmd = |executable: PathBuf| {
-        let mut cmd = Command::new(executable);
-        #[cfg(windows)]
-        {
-            use std::os::windows::process::CommandExt;
-            const CREATE_NO_WINDOW: u32 = 0x08000000;
-            cmd.creation_flags(CREATE_NO_WINDOW);
-        }
-        cmd.args(["config", "-l", "--show-origin"])
-            .current_dir(env::temp_dir())
-            .stdin(Stdio::null())
-            .stderr(Stdio::null());
-        cmd
-    };
+pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(exe_info);
+
+#[cfg(windows)]
+static NULL_DEVICE: &str = "NUL";
+#[cfg(not(windows))]
+static NULL_DEVICE: &str = "/dev/null";
+
+fn exe_info() -> Option<BString> {
     let mut cmd = git_cmd(EXE_NAME.into());
     gix_trace::debug!(cmd = ?cmd, "invoking git for installation config path");
     let cmd_output = match cmd.output() {
@@ -112,7 +105,55 @@ pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(|| {
     };
 
     first_file_from_config_with_origin(cmd_output.as_slice().into()).map(ToOwned::to_owned)
-});
+}
+
+fn git_cmd(executable: PathBuf) -> Command {
+    let mut cmd = Command::new(executable);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    // We will try to run `git` from a location fairly high in the filesystem, in the hope it may
+    // be faster if we are deeply nested, on a slow disk, or in a directory that has been deleted.
+    let cwd = if cfg!(windows) {
+        // We try the Windows directory (usually `C:\Windows`) first. It is given by `SystemRoot`,
+        // except in rare cases where our own parent has not passed down that environment variable.
+        env::var_os("SystemRoot")
+            .or_else(|| env::var_os("windir"))
+            .map(PathBuf::from)
+            .filter(|p| p.is_absolute())
+            .unwrap_or_else(env::temp_dir)
+    } else {
+        "/".into()
+    };
+    // Git 2.8.0 and higher support --show-origin. The -l, -z, and --name-only options were
+    // supported even before that. In contrast, --show-scope was introduced later, in Git 2.26.0.
+    // Low versions of Git are still sometimes used, and this is sometimes reasonable because
+    // downstream distributions often backport security patches without adding most new features.
+    // So for now, we forgo the convenience of --show-scope for greater backward compatibility.
+    //
+    // Separately from that, we can't use --system here, because scopes treated higher than the
+    // system scope are possible. This commonly happens on macOS with Apple Git, where the config
+    // file under `/Library` is shown as an "unknown" scope but takes precedence over the system
+    // scope. Although `GIT_CONFIG_NOSYSTEM` will suppress this as well, passing --system omits it.
+    cmd.args(["config", "-lz", "--show-origin", "--name-only"])
+        .current_dir(cwd)
+        .env_remove("GIT_COMMON_DIR") // We are setting `GIT_DIR`.
+        .env_remove("GIT_DISCOVERY_ACROSS_FILESYSTEM")
+        .env("GIT_DIR", NULL_DEVICE) // Avoid getting local-scope config.
+        .env("GIT_WORK_TREE", NULL_DEVICE) // Avoid confusion when debugging.
+        .stdin(Stdio::null())
+        .stderr(Stdio::null());
+    cmd
+}
+
+fn first_file_from_config_with_origin(source: &BStr) -> Option<&BStr> {
+    let file = source.strip_prefix(b"file:")?;
+    let end_pos = file.find_byte(b'\0')?;
+    file[..end_pos].as_bstr().into()
+}
 
 /// Try to find the file that contains git configuration coming with the git installation.
 ///
@@ -133,12 +174,6 @@ pub(super) fn install_config_path() -> Option<&'static BStr> {
         EXE_INFO.clone()
     });
     PATH.as_ref().map(AsRef::as_ref)
-}
-
-fn first_file_from_config_with_origin(source: &BStr) -> Option<&BStr> {
-    let file = source.strip_prefix(b"file:")?;
-    let end_pos = file.find_byte(b'\t')?;
-    file[..end_pos].trim_with(|c| c == '"').as_bstr().into()
 }
 
 /// Given `config_path` as obtained from `install_config_path()`, return the path of the git installation base.
