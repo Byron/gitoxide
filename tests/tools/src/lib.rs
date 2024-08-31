@@ -887,16 +887,18 @@ mod tests {
 
     fn check_configure_clears_scope(scope_env_key: &str, scope_option: &str) {
         let scope_env_value = "gitconfig";
-
-        #[cfg(windows)]
-        let names = [scope_env_value, "-"];
-        #[cfg(not(windows))]
-        let names = [scope_env_value, "-", ":"];
-
         let temp = tempfile::TempDir::new().expect("can create temp dir");
+        let dir = temp.path();
 
-        for name in names {
-            File::create_new(temp.path().join(name))
+        let paths: &[PathBuf] = if cfg!(windows) {
+            let unc_literal_nul = dir.canonicalize().expect("directory exists").join("NUL");
+            &[dir.join(scope_env_value), dir.join("-"), unc_literal_nul]
+        } else {
+            &[dir.join(scope_env_value), dir.join("-"), dir.join(":")]
+        };
+
+        for path in paths {
+            File::create_new(path)
                 .expect("can create file")
                 .write_all(b"[foo]\n\tbar = baz\n")
                 .expect("can write contents");
@@ -905,7 +907,7 @@ mod tests {
         let mut cmd = std::process::Command::new("git");
         cmd.env(scope_env_key, scope_env_value); // configure_command() should override it.
         let args = ["config", "-l", "--show-origin", scope_option].map(String::from);
-        configure_command(&mut cmd, &args, temp.path());
+        configure_command(&mut cmd, &args, dir);
 
         let output = cmd.output().expect("can run git");
         let stdout = output.stdout.to_str().expect("valid UTF-8");
