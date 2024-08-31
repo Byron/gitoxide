@@ -907,9 +907,8 @@ mod tests {
         let output = cmd.output().expect("can run git");
         let stdout = output.stdout.to_str().expect("valid UTF-8");
         let status = output.status.code().expect("terminated normally");
-
-        assert_eq!(stdout, "", "should be no config variable to display");
-        assert_eq!(status, 1, "exit status should indicate config variable is absent");
+        assert_eq!(stdout, "", "should be no config variables to display");
+        assert_eq!(status, 0, "reading the config should nonetheless succeed");
 
         temp.close().expect("Test bug: Should be able to delete everything");
     }
