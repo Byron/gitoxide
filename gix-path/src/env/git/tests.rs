@@ -551,41 +551,42 @@ mod exe_info {
 
         let maybe_path = exe_info();
         assert_eq!(
-        maybe_path, None,
-        "Should find no config path if the config would be local even in a `/tmp`-like dir (suppressed system config)"
-    );
-    }
-}
-
-#[test]
-fn first_file_from_config_with_origin() {
-    let macos =
-        "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig\0credential.helper\0file:/Users/byron/.gitconfig\0push.default\0";
-    let win_msys = "file:C:/git-sdk-64/etc/gitconfig\0core.symlinks\0file:C:/git-sdk-64/etc/gitconfig\0core.autocrlf\0";
-    let win_cmd =
-        "file:C:/Program Files/Git/etc/gitconfig\0diff.astextplain.textconv\0file:C:/Program Files/Git/etc/gitconfig\0filter.lfs.clean\0";
-    let win_msys_old =
-        "file:C:\\ProgramData/Git/config\0diff.astextplain.textconv\0file:C:\\ProgramData/Git/config\0filter.lfs.clean\0";
-    let linux = "file:/home/parallels/.gitconfig\0core.excludesfile\0";
-    let bogus = "something unexpected";
-    let empty = "";
-
-    for (source, expected) in [
-        (
-            macos,
-            Some("/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig"),
-        ),
-        (win_msys, Some("C:/git-sdk-64/etc/gitconfig")),
-        (win_msys_old, Some("C:\\ProgramData/Git/config")),
-        (win_cmd, Some("C:/Program Files/Git/etc/gitconfig")),
-        (linux, Some("/home/parallels/.gitconfig")),
-        (bogus, None),
-        (empty, None),
-    ] {
-        assert_eq!(
-            super::first_file_from_config_with_origin(source.into()),
-            expected.map(Into::into)
+            maybe_path, None,
+            "Should find no config path if the config would be local even in a `/tmp`-like dir (suppressed system config)"
         );
+    }
+
+    #[test]
+    fn first_file_from_config_with_origin() {
+        let macos =
+            "file:/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig\0credential.helper\0file:/Users/byron/.gitconfig\0push.default\0";
+        let win_msys =
+            "file:C:/git-sdk-64/etc/gitconfig\0core.symlinks\0file:C:/git-sdk-64/etc/gitconfig\0core.autocrlf\0";
+        let win_cmd =
+            "file:C:/Program Files/Git/etc/gitconfig\0diff.astextplain.textconv\0file:C:/Program Files/Git/etc/gitconfig\0filter.lfs.clean\0";
+        let win_msys_old =
+            "file:C:\\ProgramData/Git/config\0diff.astextplain.textconv\0file:C:\\ProgramData/Git/config\0filter.lfs.clean\0";
+        let linux = "file:/home/parallels/.gitconfig\0core.excludesfile\0";
+        let bogus = "something unexpected";
+        let empty = "";
+
+        for (source, expected) in [
+            (
+                macos,
+                Some("/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig"),
+            ),
+            (win_msys, Some("C:/git-sdk-64/etc/gitconfig")),
+            (win_msys_old, Some("C:\\ProgramData/Git/config")),
+            (win_cmd, Some("C:/Program Files/Git/etc/gitconfig")),
+            (linux, Some("/home/parallels/.gitconfig")),
+            (bogus, None),
+            (empty, None),
+        ] {
+            assert_eq!(
+                crate::env::git::first_file_from_config_with_origin(source.into()),
+                expected.map(Into::into)
+            );
+        }
     }
 }
 

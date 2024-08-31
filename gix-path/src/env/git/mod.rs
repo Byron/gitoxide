@@ -73,19 +73,19 @@ where
 }
 
 #[cfg(windows)]
-pub(super) static EXE_NAME: &str = "git.exe";
+pub(super) const EXE_NAME: &str = "git.exe";
 #[cfg(not(windows))]
-pub(super) static EXE_NAME: &str = "git";
+pub(super) const EXE_NAME: &str = "git";
 
 /// Invoke the git executable to obtain the origin configuration, which is cached and returned.
 ///
 /// The git executable is the one found in PATH or an alternative location.
-pub(super) static EXE_INFO: Lazy<Option<BString>> = Lazy::new(exe_info);
+pub(super) static GIT_HIGHEST_PRIORITY_CONFIG_PATH: Lazy<Option<BString>> = Lazy::new(exe_info);
 
 #[cfg(windows)]
-static NULL_DEVICE: &str = "NUL";
+const NULL_DEVICE: &str = "NUL";
 #[cfg(not(windows))]
-static NULL_DEVICE: &str = "/dev/null";
+const NULL_DEVICE: &str = "/dev/null";
 
 fn exe_info() -> Option<BString> {
     let mut cmd = git_cmd(EXE_NAME.into());
@@ -171,7 +171,7 @@ pub(super) fn install_config_path() -> Option<&'static BStr> {
             exec_path.push("gitconfig");
             return crate::os_string_into_bstring(exec_path.into()).ok();
         }
-        EXE_INFO.clone()
+        GIT_HIGHEST_PRIORITY_CONFIG_PATH.clone()
     });
     PATH.as_ref().map(AsRef::as_ref)
 }
