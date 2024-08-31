@@ -938,8 +938,6 @@ mod tests {
         let status = output.status.code().expect("terminated normally");
         assert_eq!(stdout, "", "should be no config variables to display");
         assert_eq!(status, 0, "reading the config should nonetheless succeed");
-
-        temp.close().expect("Test bug: Should be able to delete everything");
     }
 
     #[test]
