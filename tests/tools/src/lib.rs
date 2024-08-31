@@ -583,12 +583,16 @@ fn scripted_fixture_read_only_with_args_inner(
     Ok(script_result_directory)
 }
 
+#[cfg(windows)]
+const NULL_DEVICE: &str = "NUL";
+#[cfg(not(windows))]
+const NULL_DEVICE: &str = "/dev/null";
+
 fn configure_command<'a>(
     cmd: &'a mut std::process::Command,
     args: &[String],
     script_result_directory: &Path,
 ) -> &'a mut std::process::Command {
-    let never_path = if cfg!(windows) { "-" } else { ":" };
     let mut msys_for_git_bash_on_windows = std::env::var("MSYS").unwrap_or_default();
     msys_for_git_bash_on_windows.push_str(" winsymlinks:nativestrict");
     cmd.args(args)
@@ -599,8 +603,8 @@ fn configure_command<'a>(
         .env_remove("GIT_ASKPASS")
         .env_remove("SSH_ASKPASS")
         .env("MSYS", msys_for_git_bash_on_windows)
-        .env("GIT_CONFIG_SYSTEM", never_path)
-        .env("GIT_CONFIG_GLOBAL", never_path)
+        .env("GIT_CONFIG_SYSTEM", NULL_DEVICE)
+        .env("GIT_CONFIG_GLOBAL", NULL_DEVICE)
         .env("GIT_TERMINAL_PROMPT", "false")
         .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
         .env("GIT_AUTHOR_EMAIL", "author@example.com")
