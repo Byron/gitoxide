@@ -903,7 +903,10 @@ mod tests {
 
         // Create the files.
         for path in paths {
-            File::create_new(path)
+            File::options()
+                .write(true)
+                .create_new(true)
+                .open(path)
                 .expect("can create file")
                 .write_all(CONFIG_DATA)
                 .expect("can write contents");
