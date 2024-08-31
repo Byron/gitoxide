@@ -80,7 +80,7 @@ pub(super) const EXE_NAME: &str = "git";
 /// Invoke the git executable to obtain the origin configuration, which is cached and returned.
 ///
 /// The git executable is the one found in PATH or an alternative location.
-pub(super) static GIT_HIGHEST_PRIORITY_CONFIG_PATH: Lazy<Option<BString>> = Lazy::new(exe_info);
+pub(super) static GIT_HIGHEST_SCOPE_CONFIG_PATH: Lazy<Option<BString>> = Lazy::new(exe_info);
 
 #[cfg(windows)]
 const NULL_DEVICE: &str = "NUL";
@@ -171,7 +171,7 @@ pub(super) fn install_config_path() -> Option<&'static BStr> {
             exec_path.push("gitconfig");
             return crate::os_string_into_bstring(exec_path.into()).ok();
         }
-        GIT_HIGHEST_PRIORITY_CONFIG_PATH.clone()
+        GIT_HIGHEST_SCOPE_CONFIG_PATH.clone()
     });
     PATH.as_ref().map(AsRef::as_ref)
 }
