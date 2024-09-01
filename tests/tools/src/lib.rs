@@ -603,7 +603,7 @@ fn configure_command<'a>(
         .env_remove("GIT_ASKPASS")
         .env_remove("SSH_ASKPASS")
         .env("MSYS", msys_for_git_bash_on_windows)
-        .env("GIT_CONFIG_SYSTEM", NULL_DEVICE)
+        .env("GIT_CONFIG_NOSYSTEM", "1")
         .env("GIT_CONFIG_GLOBAL", NULL_DEVICE)
         .env("GIT_TERMINAL_PROMPT", "false")
         .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
@@ -898,43 +898,38 @@ mod tests {
         } else {
             &[dir.join(SCOPE_ENV_VALUE), dir.join("-"), dir.join(":")]
         };
-
         // Create the files.
         for path in paths {
             std::fs::write(path, CONFIG_DATA).expect("can write contents");
         }
-
         // Verify the files. This is mostly to show we really made a `\\?\...\NUL` on Windows.
         for path in paths {
             let buf = std::fs::read(path).expect("the file really exists");
-            assert_eq!(buf, CONFIG_DATA, "File {path:?} should be created");
+            assert_eq!(buf, CONFIG_DATA, "{path:?} should be a config file");
         }
     }
 
-    fn check_configure_clears_scope(scope_env_key: &str, scope_option: &str) {
+    #[test]
+    fn configure_command_clears_external_config() {
         let temp = tempfile::TempDir::new().expect("can create temp dir");
-        let dir = temp.path();
-        populate_ad_hoc_config_files(dir);
+        populate_ad_hoc_config_files(temp.path());
 
         let mut cmd = std::process::Command::new("git");
-        cmd.env(scope_env_key, SCOPE_ENV_VALUE); // configure_command() should override it.
-        let args = ["config", "-l", "--show-origin", scope_option].map(String::from);
-        configure_command(&mut cmd, &args, dir);
+        let args = ["config", "-l", "--show-origin"].map(String::from);
+        cmd.env("GIT_CONFIG_SYSTEM", SCOPE_ENV_VALUE);
+        cmd.env("GIT_CONFIG_GLOBAL", SCOPE_ENV_VALUE);
+        configure_command(&mut cmd, &args, temp.path());
 
         let output = cmd.output().expect("can run git");
-        let stdout = output.stdout.to_str().expect("valid UTF-8");
+        let lines: Vec<_> = output
+            .stdout
+            .to_str()
+            .expect("valid UTF-8")
+            .lines()
+            .filter(|line| !line.starts_with("command line:\t"))
+            .collect();
         let status = output.status.code().expect("terminated normally");
-        assert_eq!(stdout, "", "should be no config variables to display");
-        assert_eq!(status, 0, "reading the config should nonetheless succeed");
-    }
-
-    #[test]
-    fn configure_command_clears_system_scope() {
-        check_configure_clears_scope("GIT_CONFIG_SYSTEM", "--system");
-    }
-
-    #[test]
-    fn configure_command_clears_global_scope() {
-        check_configure_clears_scope("GIT_CONFIG_GLOBAL", "--global");
+        assert_eq!(lines, Vec::<&str>::new(), "should be no config variables from files");
+        assert_eq!(status, 0, "reading the config should succeed");
     }
 }
