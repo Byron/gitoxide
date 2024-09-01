@@ -921,7 +921,8 @@ mod tests {
         configure_command(&mut cmd, &args, temp.path());
 
         let output = cmd.output().expect("can run git");
-        let lines: Vec<_> = output.stdout
+        let lines: Vec<_> = output
+            .stdout
             .to_str()
             .expect("valid UTF-8")
             .lines()
