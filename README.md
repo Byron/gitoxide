@@ -198,20 +198,20 @@ There are various build configurations, all of them are [documented here](https:
 for packagers who need to tune external dependencies.
 
 ```
-# A certain way to install `gitoxide` with just Rust and a C compiler installed.
+# A way to install `gitoxide` with just Rust and a C compiler installed.
 # If there are problems with SSL certificates during clones, try to omit `--locked`.
 cargo install gitoxide --locked --no-default-features --features max-pure
 
-# The default installation, 'max', is the fastest, but also needs some libraries available to build successfully.
-# Installing these is platform-dependent and thus can't be explained here.
+# The default installation, 'max', is the fastest, but also needs `cmake` to build successfully.
+# Installing it is platform-dependent.
 cargo install gitoxide
 
-# For smaller binaries and even faster build times that are traded for a less fancy CLI implementation, use `lean`
-# or `lean-termion` respectively.
+# For smaller binaries and even faster build times that are traded for a less fancy CLI implementation, 
+# use the `lean` feature.
 cargo install gitoxide --locked --no-default-features --features lean
 ```
 
-The following installs the latest unpublished release directly from git:
+The following installs the latest unpublished `max` release directly from git:
 
 ```sh
 cargo install --git https://github.com/Byron/gitoxide  gitoxide
