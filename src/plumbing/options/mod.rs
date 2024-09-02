@@ -83,7 +83,7 @@ pub enum Subcommands {
     Archive(archive::Platform),
     #[cfg(feature = "gitoxide-core-tools-clean")]
     Clean(clean::Command),
-    /// Subcommands for interacting with commit-graphs
+    /// Subcommands for interacting with commit-graph files
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
     /// Interact with the object database.
@@ -738,13 +738,13 @@ pub mod credential {
 pub mod commitgraph {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
-        /// Verify the integrity of a commit graph
+        /// Verify the integrity of a commit graph file
         Verify {
-            /// output statistical information about the pack
+            /// output statistical information about the graph.
             #[clap(long, short = 's')]
             statistics: bool,
         },
-        /// List all entries in the commit-graph as reachable by starting from `HEAD`.
+        /// List all entries in the commit-graph file as reachable by starting from `HEAD`.
         List {
             /// The rev-spec to list reachable commits from.
             #[clap(default_value = "@")]
