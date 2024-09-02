@@ -139,7 +139,7 @@ impl crate::Repository {
         }
     }
 
-    fn shared_empty_buf(&self) -> std::cell::RefMut<'_, Vec<u8>> {
+    pub(crate) fn shared_empty_buf(&self) -> std::cell::RefMut<'_, Vec<u8>> {
         let mut bufs = self.bufs.borrow_mut();
         if bufs.last().is_none() {
             bufs.push(Vec::with_capacity(512));
