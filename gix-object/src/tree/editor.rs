@@ -4,6 +4,7 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use gix_hash::ObjectId;
 use gix_hashtable::hash_map::Entry;
 use std::cmp::Ordering;
+use std::fmt::Formatter;
 
 /// A way to constrain all [tree-edits](Editor) to a given subtree.
 pub struct Cursor<'a, 'find> {
@@ -12,6 +13,26 @@ pub struct Cursor<'a, 'find> {
     /// Our own location, used as prefix for all operations.
     /// Note that it's assumed to always contain a tree.
     prefix: BString,
+}
+
+impl std::fmt::Debug for Editor<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Editor")
+            .field("object_hash", &self.object_hash)
+            .field("path_buf", &self.path_buf)
+            .field("trees", &self.trees)
+            .finish()
+    }
+}
+
+/// The error returned by [Editor] or [Cursor] edit operation.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Empty path components are not allowed")]
+    EmptyPathComponent,
+    #[error(transparent)]
+    FindExistingObject(#[from] crate::find::existing_object::Error),
 }
 
 /// Lifecycle
@@ -44,6 +65,12 @@ impl<'a> Editor<'a> {
     /// Future calls to [`upsert`](Self::upsert) or similar will keep working on the last seen state of the
     /// just-written root-tree.
     /// If this is not desired, use [set_root()](Self::set_root()).
+    ///
+    /// ### Validation
+    ///
+    /// Note that no additional validation is performed to assure correctness of entry-names.
+    /// It is absolutely and intentionally possible to write out invalid trees with this method.
+    /// Higher layers are expected to perform detailed validation.
     pub fn write<E>(&mut self, out: impl FnMut(&Tree) -> Result<ObjectId, E>) -> Result<ObjectId, E> {
         self.path_buf.clear();
         self.write_at_pathbuf(out, WriteMode::Normal)
@@ -51,7 +78,9 @@ impl<'a> Editor<'a> {
 
     /// Remove the entry at `rela_path`, loading all trees on the path accordingly.
     /// It's no error if the entry doesn't exist, or if `rela_path` doesn't lead to an existing entry at all.
-    pub fn remove<I, C>(&mut self, rela_path: I) -> Result<&mut Self, crate::find::existing_object::Error>
+    ///
+    /// Note that trying to remove a path with an empty component is also forbidden.
+    pub fn remove<I, C>(&mut self, rela_path: I) -> Result<&mut Self, Error>
     where
         I: IntoIterator<Item = C>,
         C: AsRef<BStr>,
@@ -74,12 +103,7 @@ impl<'a> Editor<'a> {
     ///
     /// `id` can also be an empty tree, along with [the respective `kind`](EntryKind::Tree), even though that's normally not allowed
     /// in Git trees.
-    pub fn upsert<I, C>(
-        &mut self,
-        rela_path: I,
-        kind: EntryKind,
-        id: ObjectId,
-    ) -> Result<&mut Self, crate::find::existing_object::Error>
+    pub fn upsert<I, C>(&mut self, rela_path: I, kind: EntryKind, id: ObjectId) -> Result<&mut Self, Error>
     where
         I: IntoIterator<Item = C>,
         C: AsRef<BStr>,
@@ -130,22 +154,39 @@ impl<'a> Editor<'a> {
                     if tree.entries.is_empty() {
                         parent_to_adjust.entries.remove(entry_idx);
                     } else {
-                        parent_to_adjust.entries[entry_idx].oid = out(&tree)?;
+                        match out(&tree) {
+                            Ok(id) => {
+                                parent_to_adjust.entries[entry_idx].oid = id;
+                            }
+                            Err(err) => {
+                                let root_tree = parents.into_iter().next().expect("root wasn't consumed yet");
+                                self.trees.insert(path_hash(&root_tree.1), root_tree.2);
+                                return Err(err);
+                            }
+                        }
                     }
                 } else if parents.is_empty() {
                     debug_assert!(children.is_empty(), "we consume children before parents");
                     debug_assert_eq!(rela_path, self.path_buf, "this should always be the root tree");
 
                     // There may be left-over trees if they are replaced with blobs for example.
-                    let root_tree_id = out(&tree)?;
-                    match mode {
-                        WriteMode::Normal => {
-                            self.trees.clear();
+                    match out(&tree) {
+                        Ok(id) => {
+                            let root_tree_id = id;
+                            match mode {
+                                WriteMode::Normal => {
+                                    self.trees.clear();
+                                }
+                                WriteMode::FromCursor => {}
+                            }
+                            self.trees.insert(path_hash(&rela_path), tree);
+                            return Ok(root_tree_id);
                         }
-                        WriteMode::FromCursor => {}
+                        Err(err) => {
+                            self.trees.insert(path_hash(&rela_path), tree);
+                            return Err(err);
+                        }
                     }
-                    self.trees.insert(path_hash(&self.path_buf), tree);
-                    return Ok(root_tree_id);
                 } else if !tree.entries.is_empty() {
                     out(&tree)?;
                 }
@@ -161,7 +202,7 @@ impl<'a> Editor<'a> {
         &mut self,
         rela_path: I,
         kind_and_id: Option<(EntryKind, ObjectId, UpsertMode)>,
-    ) -> Result<&mut Self, crate::find::existing_object::Error>
+    ) -> Result<&mut Self, Error>
     where
         I: IntoIterator<Item = C>,
         C: AsRef<BStr>,
@@ -174,6 +215,9 @@ impl<'a> Editor<'a> {
         let new_kind_is_tree = kind_and_id.map_or(false, |(kind, _, _)| kind == EntryKind::Tree);
         while let Some(name) = rela_path.next() {
             let name = name.as_ref();
+            if name.is_empty() {
+                return Err(Error::EmptyPathComponent);
+            }
             let is_last = rela_path.peek().is_none();
             let mut needs_sorting = false;
             let current_level_must_be_tree = !is_last || new_kind_is_tree;
@@ -301,7 +345,7 @@ mod cursor {
         ///
         /// The returned cursor will then allow applying edits to the tree at `rela_path` as root.
         /// If `rela_path` is a single empty string, it is equivalent to using the current instance itself.
-        pub fn cursor_at<I, C>(&mut self, rela_path: I) -> Result<Cursor<'_, 'a>, crate::find::existing_object::Error>
+        pub fn cursor_at<I, C>(&mut self, rela_path: I) -> Result<Cursor<'_, 'a>, super::Error>
         where
             I: IntoIterator<Item = C>,
             C: AsRef<BStr>,
@@ -320,12 +364,7 @@ mod cursor {
 
     impl<'a, 'find> Cursor<'a, 'find> {
         /// Like [`Editor::upsert()`], but with the constraint of only editing in this cursor's tree.
-        pub fn upsert<I, C>(
-            &mut self,
-            rela_path: I,
-            kind: EntryKind,
-            id: ObjectId,
-        ) -> Result<&mut Self, crate::find::existing_object::Error>
+        pub fn upsert<I, C>(&mut self, rela_path: I, kind: EntryKind, id: ObjectId) -> Result<&mut Self, super::Error>
         where
             I: IntoIterator<Item = C>,
             C: AsRef<BStr>,
@@ -337,7 +376,7 @@ mod cursor {
         }
 
         /// Like [`Editor::remove()`], but with the constraint of only editing in this cursor's tree.
-        pub fn remove<I, C>(&mut self, rela_path: I) -> Result<&mut Self, crate::find::existing_object::Error>
+        pub fn remove<I, C>(&mut self, rela_path: I) -> Result<&mut Self, super::Error>
         where
             I: IntoIterator<Item = C>,
             C: AsRef<BStr>,

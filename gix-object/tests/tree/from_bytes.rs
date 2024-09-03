@@ -1,21 +1,32 @@
-use gix_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRef, TreeRefIter};
+use gix_object::{bstr::ByteSlice, tree, tree::EntryRef, Tree, TreeRef, TreeRefIter, WriteTo};
 
 use crate::{fixture_name, hex_to_id};
 
 #[test]
 fn empty() -> crate::Result {
+    let tree_ref = TreeRef::from_bytes(&[])?;
     assert_eq!(
-        TreeRef::from_bytes(&[])?,
+        tree_ref,
         TreeRef { entries: vec![] },
         "empty trees are valid despite usually rare in the wild"
     );
+
+    let mut buf = Vec::new();
+    tree_ref.write_to(&mut buf)?;
+    assert!(buf.is_empty());
+
+    buf.clear();
+    Tree::from(tree_ref).write_to(&mut buf)?;
+    assert!(buf.is_empty());
     Ok(())
 }
 
 #[test]
 fn everything() -> crate::Result {
+    let fixture = fixture_name("tree", "everything.tree");
+    let tree_ref = TreeRef::from_bytes(&fixture)?;
     assert_eq!(
-        TreeRef::from_bytes(&fixture_name("tree", "everything.tree"))?,
+        tree_ref,
         TreeRef {
             entries: vec![
                 EntryRef {
@@ -83,11 +94,8 @@ fn special_trees() -> crate::Result {
         ("special-5", 17),
     ] {
         let fixture = fixture_name("tree", &format!("{name}.tree"));
-        assert_eq!(
-            TreeRef::from_bytes(&fixture)?.entries.len(),
-            expected_entry_count,
-            "{name}"
-        );
+        let actual = TreeRef::from_bytes(&fixture)?;
+        assert_eq!(actual.entries.len(), expected_entry_count, "{name}");
         assert_eq!(
             TreeRefIter::from_bytes(&fixture).map(Result::unwrap).count(),
             expected_entry_count,

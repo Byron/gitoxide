@@ -12,8 +12,8 @@ use crate::{
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("Newlines are invalid in file paths: {name:?}")]
-    NewlineInFilename { name: BString },
+    #[error("Nullbytes are invalid in file paths as they are separators: {name:?}")]
+    NullbyteInFilename { name: BString },
 }
 
 impl From<Error> for io::Error {
@@ -40,8 +40,8 @@ impl crate::WriteTo for Tree {
             out.write_all(mode.as_bytes(&mut buf))?;
             out.write_all(SPACE)?;
 
-            if filename.find_byte(b'\n').is_some() {
-                return Err(Error::NewlineInFilename {
+            if filename.find_byte(0).is_some() {
+                return Err(Error::NullbyteInFilename {
                     name: (*filename).to_owned(),
                 }
                 .into());
@@ -87,8 +87,8 @@ impl<'a> crate::WriteTo for TreeRef<'a> {
             out.write_all(mode.as_bytes(&mut buf))?;
             out.write_all(SPACE)?;
 
-            if filename.find_byte(b'\n').is_some() {
-                return Err(Error::NewlineInFilename {
+            if filename.find_byte(0).is_some() {
+                return Err(Error::NullbyteInFilename {
                     name: (*filename).to_owned(),
                 }
                 .into());

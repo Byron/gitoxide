@@ -111,7 +111,7 @@ fn from_existing_cursor() -> crate::Result {
     odb.access_count_and_clear();
     let mut edit = gix_object::tree::Editor::new(root_tree.clone(), &odb, gix_hash::Kind::Sha1);
 
-    let mut cursor = edit.cursor_at(Some(""))?;
+    let mut cursor = edit.to_cursor();
     let actual = cursor
         .remove(Some("bin"))?
         .remove(Some("bin.d"))?
@@ -333,6 +333,56 @@ fn from_existing_remove() -> crate::Result {
         "`file` is removed as it remains empty"
     );
 
+    Ok(())
+}
+
+#[test]
+fn from_empty_invalid_write() -> crate::Result {
+    let (storage, mut write, _num_writes_and_clear) = new_inmemory_writes();
+    let odb = StorageOdb::new(storage.clone());
+    let mut edit = gix_object::tree::Editor::new(Tree::default(), &odb, gix_hash::Kind::Sha1);
+
+    let actual = edit
+        .upsert(["a", "\n"], EntryKind::Blob, any_blob())?
+        .write(&mut write)
+        .expect("no validation is performed");
+    assert_eq!(
+        display_tree(actual, &storage),
+        "d23290ea39c284156731188dce62c17ac6b71bda
+└── a
+    └── \n bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100644
+"
+    );
+
+    let err = edit
+        .upsert(Some("with\0null"), EntryKind::Blob, any_blob())?
+        .write(&mut write)
+        .unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "Nullbytes are invalid in file paths as they are separators: \"with\\0null\""
+    );
+
+    let err = edit.upsert(Some(""), EntryKind::Blob, any_blob()).unwrap_err();
+    let expected_msg = "Empty path components are not allowed";
+    assert_eq!(err.to_string(), expected_msg);
+    let err = edit
+        .upsert(["fine", "", "previous is not fine"], EntryKind::Blob, any_blob())
+        .unwrap_err();
+    assert_eq!(err.to_string(), expected_msg);
+
+    let actual = edit
+        .remove(Some("a"))?
+        .remove(Some("with\0null"))?
+        .upsert(Some("works"), EntryKind::Blob, any_blob())?
+        .write(&mut write)?;
+    assert_eq!(
+        display_tree(actual, &storage),
+        "d5b913c39b06507c7c64adb16c268ce1102ef5c1
+└── works bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100644
+",
+        "after removing invalid entries, it can write again"
+    );
     Ok(())
 }
 
@@ -666,7 +716,7 @@ mod utils {
 
     pub(super) fn new_inmemory_writes() -> (
         TreeStore,
-        impl FnMut(&Tree) -> Result<ObjectId, std::convert::Infallible>,
+        impl FnMut(&Tree) -> Result<ObjectId, std::io::Error>,
         impl Fn() -> usize,
     ) {
         let store = TreeStore::default();
@@ -677,8 +727,7 @@ mod utils {
             let mut buf = Vec::with_capacity(512);
             move |tree: &Tree| {
                 buf.clear();
-                tree.write_to(&mut buf)
-                    .expect("write to memory can't fail and tree is valid");
+                tree.write_to(&mut buf)?;
                 let header = gix_object::encode::loose_header(gix_object::Kind::Tree, buf.len() as u64);
                 let mut hasher = gix_features::hash::hasher(gix_hash::Kind::Sha1);
                 hasher.update(&header);
