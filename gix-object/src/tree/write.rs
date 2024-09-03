@@ -27,12 +27,12 @@ impl crate::WriteTo for Tree {
     /// Serialize this tree to `out` in the git internal format.
     fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
         debug_assert_eq!(
+            &self.entries,
             &{
                 let mut entries_sorted = self.entries.clone();
                 entries_sorted.sort();
                 entries_sorted
             },
-            &self.entries,
             "entries for serialization must be sorted by filename"
         );
         let mut buf = Default::default();

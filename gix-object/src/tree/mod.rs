@@ -5,6 +5,9 @@ use crate::{
     tree,
 };
 
+mod editor;
+pub use editor::Editor;
+
 mod ref_iter;
 ///
 pub mod write;
