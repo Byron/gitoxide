@@ -2,10 +2,192 @@ use gix_object::tree::EntryKind;
 use gix_object::Tree;
 
 #[test]
+fn from_empty_cursor() -> crate::Result {
+    let (storage, mut write, num_writes_and_clear) = new_inmemory_writes();
+    let odb = StorageOdb::new(storage.clone());
+    let mut edit = gix_object::tree::Editor::new(Tree::default(), &odb, gix_hash::Kind::Sha1);
+
+    edit.upsert(Some("root-file"), EntryKind::Blob, any_blob())?.upsert(
+        ["nested", "from", "root"],
+        EntryKind::BlobExecutable,
+        any_blob(),
+    )?;
+    let cursor_path = ["some", "deeply", "nested", "path"];
+    let mut cursor = edit.cursor_at(cursor_path)?;
+    let actual = cursor
+        .upsert(Some("file"), EntryKind::Blob, any_blob())?
+        .upsert(Some("empty-dir-via-cursor"), EntryKind::Tree, empty_tree())?
+        .upsert(["with-subdir", "dir", "file"], EntryKind::Blob, any_blob())?
+        .upsert(["with-subdir2", "dir", "file"], EntryKind::Blob, any_blob())?
+        .remove(Some("file"))?
+        .remove(["with-subdir", "dir", "file"])?
+        .remove(Some("with-subdir2"))?
+        .remove(Some("with-subdir2"))?
+        .write(&mut write)?;
+    assert_eq!(
+        display_tree(actual, &storage),
+        "e2339a3f62e2f3fc54a406739a62a4173ee3b5ac
+└── empty-dir-via-cursor (empty)
+",
+        "only one item is left in the tree, which also keeps it alive"
+    );
+    assert_eq!(num_writes_and_clear(), 1, "root tree");
+
+    let actual = edit.write(&mut write)?;
+    assert_eq!(
+        display_tree(actual, &storage),
+        "76e0729de84047d19711d90cfcbb4e60bb432682
+├── nested
+│   └── from
+│       └── root bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100755
+├── root-file bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100644
+└── some
+    └── deeply
+        └── nested
+            └── path
+                └── empty-dir-via-cursor (empty)
+"
+    );
+
+    let mut cursor = edit.cursor_at(cursor_path)?;
+    let actual = cursor.remove(Some("empty-dir-via-cursor"))?.write(&mut write)?;
+    assert_eq!(actual, empty_tree(), "it keeps the empty tree like the editor would");
+
+    let actual = edit.write(&mut write)?;
+    assert_eq!(
+        display_tree(actual, &storage),
+        "6cc592046dcaac06d3c619b4892d9ac78738fb5d
+├── nested
+│   └── from
+│       └── root bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100755
+└── root-file bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100644
+",
+        "now the editor naturally prunes all empty trees thus far, removing the cursor root"
+    );
+
+    let mut cursor = edit.cursor_at(cursor_path)?;
+    let actual = cursor
+        .upsert(Some("root-file"), EntryKind::BlobExecutable, any_blob())?
+        .upsert(["nested", "from"], EntryKind::BlobExecutable, any_blob())?
+        .write(&mut write)?;
+
+    assert_eq!(
+        display_tree(actual, &storage),
+        "4580ae6d4c22b407cee521d7575e69708ff980a1
+├── nested
+│   └── from bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100755
+└── root-file bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100755
+",
+        "it is able to write the sub-tree, even though names from the top-level tree are re-used"
+    );
+
+    let actual = edit.write(&mut write)?;
+    assert_eq!(
+        display_tree(actual, &storage),
+        "8febb45a1c34e405d70a7ae059d57abdd8254063
+├── nested
+│   └── from
+│       └── root bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100755
+├── root-file bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100644
+└── some
+    └── deeply
+        └── nested
+            └── path
+                ├── nested
+                │   └── from bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100755
+                └── root-file bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100755
+",
+        "it places the subtree exactly where it's expected"
+    );
+    Ok(())
+}
+
+#[test]
+fn from_existing_cursor() -> crate::Result {
+    let (storage, mut write, num_writes_and_clear) = new_inmemory_writes();
+    let odb = StorageOdb::new_with_odb(storage.clone(), tree_odb()?);
+    let root_tree_id = hex_to_id("ff7e7d2aecae1c3fb15054b289a4c58aa65b8646");
+    let root_tree = find_tree(&odb, root_tree_id)?;
+    odb.access_count_and_clear();
+    let mut edit = gix_object::tree::Editor::new(root_tree.clone(), &odb, gix_hash::Kind::Sha1);
+
+    let mut cursor = edit.cursor_at(Some(""))?;
+    let actual = cursor
+        .remove(Some("bin"))?
+        .remove(Some("bin.d"))?
+        .remove(Some("file.to"))?
+        .remove(Some("file.toml"))?
+        .remove(Some("file.toml.bin"))?
+        .upsert(["some", "nested", "file"], EntryKind::Blob, any_blob())?
+        .write(&mut write)?;
+    assert_eq!(
+        num_writes_and_clear(),
+        1 + 2,
+        "just the altered root tree, and two of trees towards `some/tested/file`"
+    );
+    assert_eq!(
+        display_tree_with_odb(actual, &storage, &odb),
+        "10364deb76aeee372eb486c1216dca2a98dbd379
+├── file
+│   └── a e69de29bb2d1d6434b8b29ae775ad8c2e48c5391.100644
+├── file0 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391.100644
+└── some
+    └── nested
+        └── file bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100644
+",
+        "a cursor at '' is equivalent to 'as_cursor()', or the editor itself"
+    );
+    let mut cursor = edit.cursor_at(["some", "nested"])?;
+    let actual = cursor
+        .upsert(Some("hello-from-cursor"), EntryKind::Blob, any_blob())?
+        .remove(Some("file"))?
+        .write(&mut write)?;
+    assert_eq!(
+        display_tree_with_odb(actual, &storage, &odb),
+        "0f090b7c09c94f7895d0d8ce63c1da7693c026b3
+└── hello-from-cursor bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100644
+"
+    );
+
+    let mut cursor = edit.set_root(root_tree).to_cursor();
+    let actual = cursor
+        .remove(Some("bin"))?
+        .remove(Some("bin.d"))?
+        .remove(Some("file.to"))?
+        .remove(Some("file.toml"))?
+        .remove(Some("file.toml.bin"))?
+        .upsert(["some", "nested", "file"], EntryKind::Blob, any_blob())?
+        .write(&mut write)?;
+    assert_eq!(
+        display_tree_with_odb(actual, &storage, &odb),
+        "10364deb76aeee372eb486c1216dca2a98dbd379
+├── file
+│   └── a e69de29bb2d1d6434b8b29ae775ad8c2e48c5391.100644
+├── file0 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391.100644
+└── some
+    └── nested
+        └── file bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100644
+",
+        "this cursor is the same as the editor"
+    );
+    let actual = cursor.remove(["some", "nested", "file"])?.write(&mut write)?;
+    assert_eq!(
+        display_tree_with_odb(actual, &storage, &odb),
+        "6e2806ab1e4d4ae2c9d24ce113a9bb54f8eff97b
+├── file
+│   └── a e69de29bb2d1d6434b8b29ae775ad8c2e48c5391.100644
+└── file0 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391.100644
+",
+        "it's possible to delete a deeply nested file"
+    );
+    Ok(())
+}
+
+#[test]
 fn from_empty_removal() -> crate::Result {
     let (storage, mut write, num_writes_and_clear) = new_inmemory_writes();
     let odb = StorageOdb::new(storage.clone());
-    let mut edit = gix_object::tree::Editor::new(Tree::default(), &odb);
+    let mut edit = gix_object::tree::Editor::new(Tree::default(), &odb, gix_hash::Kind::Sha1);
 
     let actual = edit
         .remove(Some("non-existing"))?
@@ -95,7 +277,7 @@ fn from_existing_remove() -> crate::Result {
     let root_tree_id = hex_to_id("ff7e7d2aecae1c3fb15054b289a4c58aa65b8646");
     let root_tree = find_tree(&odb, root_tree_id)?;
     odb.access_count_and_clear();
-    let mut edit = gix_object::tree::Editor::new(root_tree.clone(), &odb);
+    let mut edit = gix_object::tree::Editor::new(root_tree.clone(), &odb, gix_hash::Kind::Sha1);
 
     let actual = edit
         .remove(["file"])?
@@ -158,7 +340,7 @@ fn from_existing_remove() -> crate::Result {
 fn from_empty_add() -> crate::Result {
     let (storage, mut write, num_writes_and_clear) = new_inmemory_writes();
     let odb = StorageOdb::new(storage.clone());
-    let mut edit = gix_object::tree::Editor::new(Tree::default(), &odb);
+    let mut edit = gix_object::tree::Editor::new(Tree::default(), &odb, gix_hash::Kind::Sha1);
 
     let actual = edit.write(&mut write).expect("no changes are fine");
     assert_eq!(actual, empty_tree(), "empty stays empty");
@@ -310,7 +492,7 @@ fn from_existing_add() -> crate::Result {
     let root_tree_id = hex_to_id("ff7e7d2aecae1c3fb15054b289a4c58aa65b8646");
     let root_tree = find_tree(&odb, root_tree_id)?;
     odb.access_count_and_clear();
-    let mut edit = gix_object::tree::Editor::new(root_tree.clone(), &odb);
+    let mut edit = gix_object::tree::Editor::new(root_tree.clone(), &odb, gix_hash::Kind::Sha1);
 
     let actual = edit.write(&mut write).expect("no changes are fine");
     assert_eq!(actual, root_tree_id, "it rewrites the same tree");

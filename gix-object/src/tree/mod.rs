@@ -1,16 +1,46 @@
-use std::cmp::Ordering;
-
 use crate::{
     bstr::{BStr, BString},
-    tree,
+    tree, Tree,
 };
+use gix_hash::ObjectId;
+use std::cmp::Ordering;
 
-mod editor;
-pub use editor::Editor;
+///
+pub mod editor;
 
 mod ref_iter;
 ///
 pub mod write;
+
+/// The state needed to apply edits instantly to in-memory trees.
+///
+/// It's made so that each tree is looked at in the object database at most once, and held in memory for
+/// all edits until everything is flushed to write all changed trees.
+///
+/// The editor is optimized to edit existing trees, but can deal with building entirely new trees as well
+/// with some penalties.
+///
+/// ### Note
+///
+/// For reasons of efficiency, internally a SHA1 based hashmap is used to avoid having to store full paths
+/// to each edited tree. The chance of collision is low, but could be engineered to overwrite or write into
+/// an unintended tree.
+#[doc(alias = "TreeUpdateBuilder", alias = "git2")]
+#[derive(Clone)]
+pub struct Editor<'a> {
+    /// A way to lookup trees.
+    find: &'a dyn crate::FindExt,
+    /// The kind of hashes to produce
+    object_hash: gix_hash::Kind,
+    /// All trees we currently hold in memory. Each of these may change while adding and removing entries.
+    /// null-object-ids mark tree-entries whose value we don't know yet, they are placeholders that will be
+    /// dropped when writing at the latest.
+    trees: gix_hashtable::HashMap<ObjectId, Tree>,
+    /// A buffer to build up paths when finding the tree to edit.
+    path_buf: BString,
+    /// Our buffer for storing tree-data in, right before decoding it.
+    tree_buf: Vec<u8>,
+}
 
 /// The mode of items storable in a tree, similar to the file mode on a unix file system.
 ///
@@ -204,7 +234,7 @@ impl<'a> Ord for EntryRef<'a> {
     }
 }
 
-/// An entry in a [`Tree`][crate::Tree], similar to an entry in a directory.
+/// An entry in a [`Tree`], similar to an entry in a directory.
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
