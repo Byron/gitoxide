@@ -2,8 +2,8 @@ use crate::tree::{Editor, EntryKind};
 use crate::{tree, Tree};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use gix_hash::ObjectId;
-use gix_hashtable::hash_map::Entry;
 use std::cmp::Ordering;
+use std::collections::{hash_map, HashMap};
 use std::fmt::Formatter;
 
 /// A way to constrain all [tree-edits](Editor) to a given subtree.
@@ -45,7 +45,7 @@ impl<'a> Editor<'a> {
         Editor {
             find,
             object_hash,
-            trees: gix_hashtable::HashMap::from_iter(Some((empty_path_hash(), root))),
+            trees: HashMap::from_iter(Some((empty_path(), root))),
             path_buf: Vec::with_capacity(256).into(),
             tree_buf: Vec::with_capacity(512),
         }
@@ -160,7 +160,7 @@ impl<'a> Editor<'a> {
                             }
                             Err(err) => {
                                 let root_tree = parents.into_iter().next().expect("root wasn't consumed yet");
-                                self.trees.insert(path_hash(&root_tree.1), root_tree.2);
+                                self.trees.insert(root_tree.1, root_tree.2);
                                 return Err(err);
                             }
                         }
@@ -179,11 +179,11 @@ impl<'a> Editor<'a> {
                                 }
                                 WriteMode::FromCursor => {}
                             }
-                            self.trees.insert(path_hash(&rela_path), tree);
+                            self.trees.insert(rela_path, tree);
                             return Ok(root_tree_id);
                         }
                         Err(err) => {
-                            self.trees.insert(path_hash(&rela_path), tree);
+                            self.trees.insert(rela_path, tree);
                             return Err(err);
                         }
                     }
@@ -297,8 +297,8 @@ impl<'a> Editor<'a> {
             push_path_component(&mut self.path_buf, name);
             let path_id = path_hash(&self.path_buf);
             cursor = match self.trees.entry(path_id) {
-                Entry::Occupied(e) => e.into_mut(),
-                Entry::Vacant(e) => e.insert(
+                hash_map::Entry::Occupied(e) => e.into_mut(),
+                hash_map::Entry::Vacant(e) => e.insert(
                     if let Some(tree_id) = tree_to_lookup.filter(|tree_id| !tree_id.is_empty_tree()) {
                         self.find.find_tree(&tree_id, &mut self.tree_buf)?.into()
                     } else {
@@ -317,7 +317,7 @@ impl<'a> Editor<'a> {
     /// This is useful if the same editor is re-used for various trees.
     pub fn set_root(&mut self, root: Tree) -> &mut Self {
         self.trees.clear();
-        self.trees.insert(empty_path_hash(), root);
+        self.trees.insert(empty_path(), root);
         self
     }
 }
@@ -420,14 +420,12 @@ fn filename(path: &BStr) -> &BStr {
     path.rfind_byte(b'/').map_or(path, |pos| &path[pos + 1..])
 }
 
-fn empty_path_hash() -> ObjectId {
-    gix_features::hash::hasher(gix_hash::Kind::Sha1).digest().into()
+fn empty_path() -> BString {
+    BString::default()
 }
 
-fn path_hash(path: &[u8]) -> ObjectId {
-    let mut hasher = gix_features::hash::hasher(gix_hash::Kind::Sha1);
-    hasher.update(path);
-    hasher.digest().into()
+fn path_hash(path: &[u8]) -> BString {
+    path.to_vec().into()
 }
 
 fn push_path_component(base: &mut BString, component: &[u8]) -> usize {

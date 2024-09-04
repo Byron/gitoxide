@@ -2,7 +2,6 @@ use crate::{
     bstr::{BStr, BString},
     tree, Tree,
 };
-use gix_hash::ObjectId;
 use std::cmp::Ordering;
 
 ///
@@ -19,12 +18,6 @@ pub mod write;
 ///
 /// The editor is optimized to edit existing trees, but can deal with building entirely new trees as well
 /// with some penalties.
-///
-/// ### Note
-///
-/// For reasons of efficiency, internally a SHA1 based hashmap is used to avoid having to store full paths
-/// to each edited tree. The chance of collision is low, but could be engineered to overwrite or write into
-/// an unintended tree.
 #[doc(alias = "TreeUpdateBuilder", alias = "git2")]
 #[derive(Clone)]
 pub struct Editor<'a> {
@@ -35,7 +28,7 @@ pub struct Editor<'a> {
     /// All trees we currently hold in memory. Each of these may change while adding and removing entries.
     /// null-object-ids mark tree-entries whose value we don't know yet, they are placeholders that will be
     /// dropped when writing at the latest.
-    trees: gix_hashtable::HashMap<ObjectId, Tree>,
+    trees: std::collections::HashMap<BString, Tree>,
     /// A buffer to build up paths when finding the tree to edit.
     path_buf: BString,
     /// Our buffer for storing tree-data in, right before decoding it.
