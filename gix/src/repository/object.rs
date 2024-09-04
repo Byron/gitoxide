@@ -12,7 +12,23 @@ use smallvec::SmallVec;
 
 use crate::{commit, ext::ObjectIdExt, object, tag, Blob, Commit, Id, Object, Reference, Tag, Tree};
 
-/// Methods related to object creation.
+/// Tree editing
+#[cfg(feature = "tree-editor")]
+impl crate::Repository {
+    /// Return an editor for adjusting the tree at `id`.
+    ///
+    /// This can be the [empty tree id](ObjectId::empty_tree) to build a tree from scratch.
+    #[doc(alias = "treebuilder", alias = "git2")]
+    pub fn edit_tree(
+        &self,
+        id: impl Into<ObjectId>,
+    ) -> Result<object::tree::Editor<'_>, crate::repository::edit_tree::Error> {
+        let tree = self.find_tree(id)?;
+        Ok(tree.edit()?)
+    }
+}
+
+/// Find objects of various kins
 impl crate::Repository {
     /// Find the object with `id` in the object database or return an error if it could not be found.
     ///
@@ -138,7 +154,10 @@ impl crate::Repository {
             None => Ok(None),
         }
     }
+}
 
+/// Write objects of any type.
+impl crate::Repository {
     pub(crate) fn shared_empty_buf(&self) -> std::cell::RefMut<'_, Vec<u8>> {
         let mut bufs = self.bufs.borrow_mut();
         if bufs.last().is_none() {
@@ -217,7 +236,10 @@ impl crate::Repository {
             .map_err(Into::into)
             .map(|oid| oid.attach(self))
     }
+}
 
+/// Create commits and tags
+impl crate::Repository {
     /// Create a tag reference named `name` (without `refs/tags/` prefix) pointing to a newly created tag object
     /// which in turn points to `target` and return the newly created reference.
     ///

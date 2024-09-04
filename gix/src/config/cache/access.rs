@@ -251,7 +251,7 @@ impl Cache {
         })
     }
 
-    #[cfg(feature = "index")]
+    #[cfg(any(feature = "index", feature = "tree-editor"))]
     pub(crate) fn protect_options(&self) -> Result<gix_validate::path::component::Options, config::boolean::Error> {
         const IS_WINDOWS: bool = cfg!(windows);
         const IS_MACOS: bool = cfg!(target_os = "macos");

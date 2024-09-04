@@ -67,7 +67,7 @@ impl<'a> Drop for Blob<'a> {
 /// A decoded tree object with access to its owning repository.
 #[derive(Clone)]
 pub struct Tree<'repo> {
-    /// The id of the tree
+    /// Thek[ id of the tree
     pub id: ObjectId,
     /// The fully decoded tree data
     pub data: Vec<u8>,

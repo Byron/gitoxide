@@ -4,6 +4,14 @@ use gix_object::{bstr::BStr, FindExt, TreeRefIter};
 
 use crate::{object::find, Id, ObjectDetached, Tree};
 
+/// All state needed to conveniently edit a tree, using only [update-or-insert](Editor::upsert()) and [removals](Editor::remove()).
+#[cfg(feature = "tree-editor")]
+pub struct Editor<'repo> {
+    inner: gix_object::tree::Editor<'repo>,
+    validate: gix_validate::path::component::Options,
+    repo: &'repo crate::Repository,
+}
+
 /// Initialization
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
@@ -162,6 +170,10 @@ impl<'repo> Tree<'repo> {
         }))
     }
 }
+
+///
+#[cfg(feature = "tree-editor")]
+pub mod editor;
 
 ///
 #[cfg(feature = "blob-diff")]
