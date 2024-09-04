@@ -19,6 +19,11 @@ name = "decode-objects"
 harness = false
 path = "./benches/decode_objects.rs"
 
+[[bench]]
+name = "edit-tree"
+harness = false
+path = "./benches/edit_tree.rs"
+
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
