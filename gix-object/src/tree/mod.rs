@@ -1,6 +1,6 @@
 use crate::{
     bstr::{BStr, BString},
-    tree, Tree,
+    tree, Tree, TreeRef,
 };
 use std::cmp::Ordering;
 
@@ -191,6 +191,21 @@ impl EntryMode {
             res
         }
         .into()
+    }
+}
+
+impl TreeRef<'_> {
+    /// Convert this instance into its own version, creating a copy of all data.
+    ///
+    /// This will temporarily allocate an extra copy in memory, so at worst three copies of the tree exist
+    /// at some intermediate point in time. Use [`Self::into_owned()`] to avoid this.
+    pub fn to_owned(&self) -> Tree {
+        self.clone().into()
+    }
+
+    /// Convert this instance into its own version, creating a copy of all data.
+    pub fn into_owned(self) -> Tree {
+        self.into()
     }
 }
 
