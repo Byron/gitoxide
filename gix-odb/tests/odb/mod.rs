@@ -18,6 +18,7 @@ fn db_small_packs() -> gix_odb::Handle {
 pub mod alternate;
 pub mod find;
 pub mod header;
+pub mod memory;
 pub mod regression;
 pub mod sink;
 pub mod store;

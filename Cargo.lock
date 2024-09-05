@@ -2115,6 +2115,7 @@ dependencies = [
  "gix-features 0.38.2",
  "gix-fs 0.11.3",
  "gix-hash 0.14.2",
+ "gix-hashtable 0.5.2",
  "gix-object 0.44.0",
  "gix-pack",
  "gix-path 0.10.10",

@@ -66,6 +66,9 @@ pub fn sink(object_hash: gix_hash::Kind) -> Sink {
     }
 }
 
+///
+pub mod memory;
+
 mod sink;
 
 ///
