@@ -232,7 +232,7 @@ pub struct TreeRefIter<'a> {
 }
 
 /// A mutable Tree, containing other trees, blobs or commits.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree {
     /// The directories and files contained in this tree. They must be and remain sorted by [`filename`][tree::Entry::filename].

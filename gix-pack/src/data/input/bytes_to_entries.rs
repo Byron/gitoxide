@@ -1,6 +1,6 @@
 use std::{fs, io};
 
-use gix_features::{hash::Sha1, zlib::Decompress};
+use gix_features::{hash::Hasher, zlib::Decompress};
 use gix_hash::ObjectId;
 
 use crate::data::input;
@@ -15,7 +15,7 @@ pub struct BytesToEntriesIter<BR> {
     had_error: bool,
     version: crate::data::Version,
     objects_left: u32,
-    hash: Option<Sha1>,
+    hash: Option<Hasher>,
     mode: input::Mode,
     compressed: input::EntryDataMode,
     compressed_buf: Option<Vec<u8>>,
@@ -303,7 +303,7 @@ where
 /// A utility to automatically generate a hash while writing into an inner writer.
 pub struct HashWrite<'a, T> {
     /// The hash implementation.
-    pub hash: &'a mut Sha1,
+    pub hash: &'a mut Hasher,
     /// The inner writer.
     pub inner: T,
 }

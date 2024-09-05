@@ -67,7 +67,7 @@ impl<'a> Drop for Blob<'a> {
 /// A decoded tree object with access to its owning repository.
 #[derive(Clone)]
 pub struct Tree<'repo> {
-    /// The id of the tree
+    /// Thek[ id of the tree
     pub id: ObjectId,
     /// The fully decoded tree data
     pub data: Vec<u8>,
@@ -247,7 +247,7 @@ pub struct PathspecDetached {
     /// The prepared search to use for checking matches.
     pub search: gix_pathspec::Search,
     /// A thread-safe version of an ODB.
-    pub odb: gix_odb::HandleArc,
+    pub odb: crate::OdbHandleArc,
 }
 
 /// A stand-in for the submodule of a particular name.

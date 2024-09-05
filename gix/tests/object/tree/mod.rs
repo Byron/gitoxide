@@ -17,11 +17,6 @@ fn find_entry() -> crate::Result {
 fn lookup_entry_by_path() -> crate::Result {
     let repo = named_subrepo_opts("make_worktree_repo.sh", "repo", gix::open::Options::isolated())?;
     let tree = repo.head_commit()?.tree()?;
-    assert_eq!(
-        tree.lookup_entry_by_path("dir/c", &mut Vec::new())?
-            .expect("present")
-            .filename(),
-        "c"
-    );
+    assert_eq!(tree.lookup_entry_by_path("dir/c")?.expect("present").filename(), "c");
     Ok(())
 }

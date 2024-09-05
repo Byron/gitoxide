@@ -1303,6 +1303,7 @@ dependencies = [
  "anyhow",
  "async-std",
  "document-features",
+ "gix",
  "gix-actor 0.32.0",
  "gix-archive",
  "gix-attributes 0.22.5",
@@ -1360,6 +1361,7 @@ dependencies = [
  "serial_test",
  "signal-hook",
  "smallvec",
+ "termtree",
  "thiserror",
  "walkdir",
 ]
@@ -2089,6 +2091,8 @@ dependencies = [
  "gix-date 0.9.0",
  "gix-features 0.38.2",
  "gix-hash 0.14.2",
+ "gix-hashtable 0.5.2",
+ "gix-odb",
  "gix-testtools",
  "gix-utils 0.1.12",
  "gix-validate 0.9.0",
@@ -2096,6 +2100,7 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "smallvec",
+ "termtree",
  "thiserror",
  "winnow",
 ]
@@ -2110,6 +2115,7 @@ dependencies = [
  "gix-features 0.38.2",
  "gix-fs 0.11.3",
  "gix-hash 0.14.2",
+ "gix-hashtable 0.5.2",
  "gix-object 0.44.0",
  "gix-pack",
  "gix-path 0.10.10",
@@ -4675,6 +4681,12 @@ dependencies = [
  "rustix 0.38.34",
  "windows-sys 0.48.0",
 ]
+
+[[package]]
+name = "termtree"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f50febec83f5ee1df3015341d8bd429f2d1cc62bcba7ea2076759d315084683"
 
 [[package]]
 name = "thiserror"

@@ -88,6 +88,41 @@ mod commit {
 }
 
 mod tree {
+    use gix_object::tree::EntryKind;
+    use gix_object::{tree, WriteTo};
+
+    #[test]
+    fn write_to_does_not_validate() {
+        let mut tree = gix_object::Tree::empty();
+        tree.entries.push(tree::Entry {
+            mode: EntryKind::Blob.into(),
+            filename: "".into(),
+            oid: gix_hash::Kind::Sha1.null(),
+        });
+        tree.entries.push(tree::Entry {
+            mode: EntryKind::Tree.into(),
+            filename: "something\nwith\newlines\n".into(),
+            oid: gix_hash::ObjectId::empty_tree(gix_hash::Kind::Sha1),
+        });
+        tree.write_to(&mut std::io::sink())
+            .expect("write succeeds, no validation is performed");
+    }
+
+    #[test]
+    fn write_to_does_not_allow_separator() {
+        let mut tree = gix_object::Tree::empty();
+        tree.entries.push(tree::Entry {
+            mode: EntryKind::Blob.into(),
+            filename: "hi\0ho".into(),
+            oid: gix_hash::Kind::Sha1.null(),
+        });
+        let err = tree.write_to(&mut std::io::sink()).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "Nullbytes are invalid in file paths as they are separators: \"hi\\0ho\""
+        );
+    }
+
     round_trip!(gix_object::Tree, gix_object::TreeRef, "tree/everything.tree");
 }
 

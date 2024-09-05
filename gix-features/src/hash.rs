@@ -5,7 +5,7 @@
 //! Otherwise, a minimal yet performant implementation is used instead for a decent trade-off between compile times and run-time performance.
 #[cfg(all(feature = "rustsha1", not(feature = "fast-sha1")))]
 mod _impl {
-    use super::Sha1Digest;
+    use super::Digest;
 
     /// A implementation of the Sha1 hash, which can be used once.
     #[derive(Default, Clone)]
@@ -17,21 +17,19 @@ mod _impl {
             self.0.update(bytes);
         }
         /// Finalize the hash and produce a digest.
-        pub fn digest(self) -> Sha1Digest {
+        pub fn digest(self) -> Digest {
             self.0.digest().bytes()
         }
     }
 }
 
-/// A 20 bytes digest produced by a [`Sha1`] hash implementation.
+/// A hash-digest produced by a [`Hasher`] hash implementation.
 #[cfg(any(feature = "fast-sha1", feature = "rustsha1"))]
-pub type Sha1Digest = [u8; 20];
+pub type Digest = [u8; 20];
 
 #[cfg(feature = "fast-sha1")]
 mod _impl {
     use sha1::Digest;
-
-    use super::Sha1Digest;
 
     /// A implementation of the Sha1 hash, which can be used once.
     #[derive(Default, Clone)]
@@ -43,14 +41,14 @@ mod _impl {
             self.0.update(bytes);
         }
         /// Finalize the hash and produce a digest.
-        pub fn digest(self) -> Sha1Digest {
+        pub fn digest(self) -> super::Digest {
             self.0.finalize().into()
         }
     }
 }
 
 #[cfg(any(feature = "rustsha1", feature = "fast-sha1"))]
-pub use _impl::Sha1;
+pub use _impl::Sha1 as Hasher;
 
 /// Compute a CRC32 hash from the given `bytes`, returning the CRC32 hash.
 ///
@@ -76,9 +74,9 @@ pub fn crc32(bytes: &[u8]) -> u32 {
 
 /// Produce a hasher suitable for the given kind of hash.
 #[cfg(any(feature = "rustsha1", feature = "fast-sha1"))]
-pub fn hasher(kind: gix_hash::Kind) -> Sha1 {
+pub fn hasher(kind: gix_hash::Kind) -> Hasher {
     match kind {
-        gix_hash::Kind::Sha1 => Sha1::default(),
+        gix_hash::Kind::Sha1 => Hasher::default(),
     }
 }
 
@@ -127,7 +125,7 @@ pub fn bytes(
 pub fn bytes_with_hasher(
     read: &mut dyn std::io::Read,
     num_bytes_from_start: u64,
-    mut hasher: Sha1,
+    mut hasher: Hasher,
     progress: &mut dyn crate::progress::Progress,
     should_interrupt: &std::sync::atomic::AtomicBool,
 ) -> std::io::Result<gix_hash::ObjectId> {
@@ -160,12 +158,12 @@ pub fn bytes_with_hasher(
 
 #[cfg(any(feature = "rustsha1", feature = "fast-sha1"))]
 mod write {
-    use crate::hash::Sha1;
+    use crate::hash::Hasher;
 
     /// A utility to automatically generate a hash while writing into an inner writer.
     pub struct Write<T> {
         /// The hash implementation.
-        pub hash: Sha1,
+        pub hash: Hasher,
         /// The inner writer.
         pub inner: T,
     }
@@ -194,7 +192,7 @@ mod write {
             match object_hash {
                 gix_hash::Kind::Sha1 => Write {
                     inner,
-                    hash: Sha1::default(),
+                    hash: Hasher::default(),
                 },
             }
         }

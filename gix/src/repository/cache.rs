@@ -39,3 +39,14 @@ impl crate::Repository {
         (ten_mb_for_every_10k_files as usize).max(4 * 1024)
     }
 }
+
+/// Handling of InMemory object writing
+impl crate::Repository {
+    /// When writing objects, keep them in memory instead of writing them to disk.
+    /// This makes any change to the object database non-persisting, while keeping the view
+    /// to the object database consistent for this instance.
+    pub fn with_object_memory(mut self) -> Self {
+        self.objects.enable_object_memory();
+        self
+    }
+}

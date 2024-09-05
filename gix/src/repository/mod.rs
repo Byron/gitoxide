@@ -73,6 +73,20 @@ mod thread_safe;
 mod worktree;
 
 ///
+#[cfg(feature = "tree-editor")]
+pub mod edit_tree {
+    /// The error returned by [Repository::edit_tree()](crate::Repository::edit_tree).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        FindTree(#[from] crate::object::find::existing::with_conversion::Error),
+        #[error(transparent)]
+        InitEditor(#[from] crate::object::tree::editor::init::Error),
+    }
+}
+
+///
 #[cfg(feature = "revision")]
 pub mod merge_base {
     /// The error returned by [Repository::merge_base()](crate::Repository::merge_base()).

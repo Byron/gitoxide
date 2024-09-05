@@ -4,6 +4,14 @@ use gix_object::{bstr::BStr, FindExt, TreeRefIter};
 
 use crate::{object::find, Id, ObjectDetached, Tree};
 
+/// All state needed to conveniently edit a tree, using only [update-or-insert](Editor::upsert()) and [removals](Editor::remove()).
+#[cfg(feature = "tree-editor")]
+pub struct Editor<'repo> {
+    inner: gix_object::tree::Editor<'repo>,
+    validate: gix_validate::path::component::Options,
+    repo: &'repo crate::Repository,
+}
+
 /// Initialization
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
@@ -41,7 +49,6 @@ impl<'repo> Tree<'repo> {
 
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
-    /// Use `buf` as temporary location for sub-trees to avoid allocating a temporary buffer for each lookup.
     ///
     /// # Performance Notes
     ///
@@ -49,16 +56,18 @@ impl<'repo> Tree<'repo> {
     /// to reuse a vector and use a binary search instead, which might be able to improve performance over all.
     /// However, a benchmark should be created first to have some data and see which trade-off to choose here.
     ///
-    pub fn lookup_entry<I, P>(&self, path: I, buf: &mut Vec<u8>) -> Result<Option<Entry<'repo>>, find::existing::Error>
+    pub fn lookup_entry<I, P>(&self, path: I) -> Result<Option<Entry<'repo>>, find::existing::Error>
     where
         I: IntoIterator<Item = P>,
         P: PartialEq<BStr>,
     {
-        let mut path = path.into_iter().peekable();
+        let mut buf = self.repo.shared_empty_buf();
         buf.clear();
+
+        let mut path = path.into_iter().peekable();
         buf.extend_from_slice(&self.data);
         while let Some(component) = path.next() {
-            match TreeRefIter::from_bytes(buf)
+            match TreeRefIter::from_bytes(&buf)
                 .filter_map(Result::ok)
                 .find(|entry| component.eq(entry.filename))
             {
@@ -70,7 +79,7 @@ impl<'repo> Tree<'repo> {
                         }));
                     } else {
                         let next_id = entry.oid.to_owned();
-                        let obj = self.repo.objects.find(&next_id, buf)?;
+                        let obj = self.repo.objects.find(&next_id, &mut buf)?;
                         if !obj.kind.is_tree() {
                             return Ok(None);
                         }
@@ -134,17 +143,13 @@ impl<'repo> Tree<'repo> {
     pub fn lookup_entry_by_path(
         &self,
         relative_path: impl AsRef<std::path::Path>,
-        buf: &mut Vec<u8>,
     ) -> Result<Option<Entry<'repo>>, find::existing::Error> {
         use crate::bstr::ByteSlice;
-        self.lookup_entry(
-            relative_path.as_ref().components().map(|c: std::path::Component<'_>| {
-                gix_path::os_str_into_bstr(c.as_os_str())
-                    .unwrap_or_else(|_| "".into())
-                    .as_bytes()
-            }),
-            buf,
-        )
+        self.lookup_entry(relative_path.as_ref().components().map(|c: std::path::Component<'_>| {
+            gix_path::os_str_into_bstr(c.as_os_str())
+                .unwrap_or_else(|_| "".into())
+                .as_bytes()
+        }))
     }
 
     /// Like [`Self::peel_to_entry()`], but takes a `Path` directly via `relative_path`, a path relative to this tree.
@@ -165,6 +170,10 @@ impl<'repo> Tree<'repo> {
         }))
     }
 }
+
+///
+#[cfg(feature = "tree-editor")]
+pub mod editor;
 
 ///
 #[cfg(feature = "blob-diff")]

@@ -178,7 +178,7 @@ async fn prefixed_data_to_write(prefix: &[u8], data: &[u8], out: impl AsyncWrite
 
 /// Write a `text` message to `out`, which is assured to end in a newline.
 pub async fn text_to_write(text: &[u8], out: impl AsyncWrite + Unpin) -> io::Result<usize> {
-    prefixed_and_suffixed_data_to_write(&[], text, &[b'\n'], out).await
+    prefixed_and_suffixed_data_to_write(&[], text, b"\n", out).await
 }
 
 /// Write a `data` message to `out`.

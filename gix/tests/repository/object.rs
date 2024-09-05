@@ -1,5 +1,210 @@
 use gix_testtools::tempfile;
 
+#[cfg(feature = "tree-editor")]
+mod edit_tree {
+    use crate::util::hex_to_id;
+    use gix::bstr::{BStr, BString};
+    use gix_object::tree::EntryKind;
+
+    #[test]
+    // Some part of the test validation the implementation for this exists, but it's needless nonetheless.
+    #[allow(clippy::needless_borrows_for_generic_args)]
+    fn from_head_tree() -> crate::Result {
+        let (repo, _tmp) = crate::repo_rw("make_packed_and_loose.sh")?;
+        let head_tree_id = repo.head_tree_id()?;
+        assert_eq!(
+            display_tree(head_tree_id, &repo),
+            "24374df94315568adfaee119d038f710d1f45397
+├── that ce013625030ba8dba906f756967f9e9ca394464a.100644
+└── this 317e9677c3bcffd006f9fc84bbb0a54ef1676197.100644
+"
+        );
+        let this_id = hex_to_id("317e9677c3bcffd006f9fc84bbb0a54ef1676197");
+        let that_id = hex_to_id("ce013625030ba8dba906f756967f9e9ca394464a");
+        let mut editor = repo.edit_tree(head_tree_id)?;
+        let actual = editor
+            .upsert("a/b", EntryKind::Blob, this_id)?
+            .upsert(String::from("this/subdir/that"), EntryKind::Blob, this_id)?
+            .upsert(BString::from("that/other/that"), EntryKind::Blob, that_id)?
+            .remove(BStr::new("that"))?
+            .remove(&String::from("that"))?
+            .remove(&BString::from("that"))?
+            .write()?;
+
+        assert_eq!(
+            display_tree(actual, &repo),
+            "fe02a8bd15e4c0476d938f772f1eece6d164b1bd
+├── a
+│   └── b 317e9677c3bcffd006f9fc84bbb0a54ef1676197.100644
+└── this
+    └── subdir
+        └── that 317e9677c3bcffd006f9fc84bbb0a54ef1676197.100644
+",
+            "all trees are actually written, or else we couldn't visualize them."
+        );
+
+        let actual = editor
+            .upsert("a/b", EntryKind::Blob, that_id)?
+            .upsert(String::from("this/subdir/that"), EntryKind::Blob, this_id)?
+            .remove(BStr::new("does-not-exist"))?
+            .write()?;
+        assert_eq!(
+            display_tree(actual, &repo),
+            "219596ff52fc84b6b39bc327f202d408cc02e1db
+├── a
+│   └── b ce013625030ba8dba906f756967f9e9ca394464a.100644
+└── this
+    └── subdir
+        └── that 317e9677c3bcffd006f9fc84bbb0a54ef1676197.100644
+",
+            "existing blobs can also be changed"
+        );
+
+        let mut cursor = editor.cursor_at("something/very/nested/to/add/entries/to")?;
+        let actual = cursor
+            .upsert("a/b", EntryKind::Blob, this_id)?
+            .upsert(String::from("this/subdir/that"), EntryKind::Blob, that_id)?
+            .upsert(BString::from("that/other/that"), EntryKind::Blob, that_id)?
+            .remove(BStr::new("that"))?
+            .write()?;
+
+        assert_eq!(
+            display_tree(actual, &repo),
+            "35ea623106198f21b6959dd2731740e5153db2bb
+├── a
+│   └── b 317e9677c3bcffd006f9fc84bbb0a54ef1676197.100644
+└── this
+    └── subdir
+        └── that ce013625030ba8dba906f756967f9e9ca394464a.100644
+",
+            "all remaining subtrees are written from the cursor position"
+        );
+
+        let actual = editor.write()?;
+        assert_eq!(
+            display_tree(actual, &repo),
+            "9ebdc2c1d22e91636fa876a51521464f8a88dd6f
+├── a
+│   └── b ce013625030ba8dba906f756967f9e9ca394464a.100644
+├── something
+│   └── very
+│       └── nested
+│           └── to
+│               └── add
+│                   └── entries
+│                       └── to
+│                           ├── a
+│                           │   └── b 317e9677c3bcffd006f9fc84bbb0a54ef1676197.100644
+│                           └── this
+│                               └── subdir
+│                                   └── that ce013625030ba8dba906f756967f9e9ca394464a.100644
+└── this
+    └── subdir
+        └── that 317e9677c3bcffd006f9fc84bbb0a54ef1676197.100644
+",
+            "it looks as it should when seen from the root tree"
+        );
+
+        editor.set_root(&head_tree_id.object()?.into_tree())?;
+        let actual = editor.write()?;
+        assert_eq!(
+            display_tree(actual, &repo),
+            "24374df94315568adfaee119d038f710d1f45397
+├── that ce013625030ba8dba906f756967f9e9ca394464a.100644
+└── this 317e9677c3bcffd006f9fc84bbb0a54ef1676197.100644
+",
+            "it's possible to set the editor to any tree after creating it, could help with memory re-use"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn missing_objects_and_illformed_path_components_trigger_error() -> crate::Result {
+        let (repo, _tmp) = crate::repo_rw("make_packed_and_loose.sh")?;
+        let tree = repo.head_tree_id()?.object()?.into_tree();
+        let mut editor = tree.edit()?;
+        let actual = editor
+            .upsert("non-existing", EntryKind::Blob, repo.object_hash().null())?
+            .write()?;
+        assert_eq!(
+            actual,
+            tree.id(),
+            "nulls are pruned before writing the tree, so it just rewrites the same tree"
+        );
+
+        let err = editor
+            .upsert(
+                "non-existing",
+                EntryKind::Blob,
+                hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+            )?
+            .write()
+            .unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "The object aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (100644) at 'non-existing' could not be found",
+            "each entry to be written is checked for existence"
+        );
+
+        let this_id = hex_to_id("317e9677c3bcffd006f9fc84bbb0a54ef1676197");
+        let err = editor
+            .remove("non-existing")?
+            .upsert(".git", EntryKind::Blob, this_id)?
+            .write()
+            .expect_err(".git is universally forbidden in trees");
+        assert_eq!(
+            err.to_string(),
+            "The object 317e9677c3bcffd006f9fc84bbb0a54ef1676197 (100644) has an invalid filename: '.git'",
+            "each component is validated"
+        );
+
+        Ok(())
+    }
+
+    mod utils {
+        use gix::bstr::{BStr, ByteSlice};
+        use gix::Repository;
+        use gix_hash::ObjectId;
+
+        fn display_tree_recursive(
+            tree_id: ObjectId,
+            repo: &Repository,
+            name: Option<&BStr>,
+        ) -> anyhow::Result<termtree::Tree<String>> {
+            let tree = repo.find_tree(tree_id)?.decode()?.to_owned();
+            let mut termtree = termtree::Tree::new(if let Some(name) = name {
+                if tree.entries.is_empty() {
+                    format!("{name} (empty)")
+                } else {
+                    name.to_string()
+                }
+            } else {
+                tree_id.to_string()
+            });
+
+            for entry in &tree.entries {
+                if entry.mode.is_tree() {
+                    termtree.push(display_tree_recursive(entry.oid, repo, Some(entry.filename.as_bstr()))?);
+                } else {
+                    termtree.push(format!(
+                        "{} {}.{}",
+                        entry.filename,
+                        entry.oid,
+                        entry.mode.kind().as_octal_str()
+                    ));
+                }
+            }
+            Ok(termtree)
+        }
+
+        pub(super) fn display_tree(tree_id: impl Into<ObjectId>, odb: &Repository) -> String {
+            display_tree_recursive(tree_id.into(), odb, None)
+                .expect("tree exists and everything was written")
+                .to_string()
+        }
+    }
+    use utils::display_tree;
+}
 mod write_object {
     use crate::repository::object::empty_bare_repo;
 
@@ -24,8 +229,24 @@ mod write_blob {
     #[test]
     fn from_slice() -> crate::Result {
         let (_tmp, repo) = empty_bare_repo()?;
+        let expected = hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f");
+        assert!(!repo.has_object(expected));
+
         let oid = repo.write_blob(b"hello world")?;
-        assert_eq!(oid, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
+        assert_eq!(oid, expected);
+
+        let mut other_repo = gix::open_opts(repo.path(), gix::open::Options::isolated())?;
+        other_repo.objects.enable_object_memory();
+        assert!(
+            other_repo.has_object(oid),
+            "we definitely don't accidentally write to memory only"
+        );
+        let in_memory_id = other_repo.write_blob("hello world - to memory")?;
+        assert!(!repo.has_object(in_memory_id), "the object was never written to disk…");
+        assert!(
+            other_repo.has_object(in_memory_id),
+            "…and exists only in the instance that wrote it"
+        );
         Ok(())
     }
 

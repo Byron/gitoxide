@@ -146,8 +146,8 @@ check:
 
 # Run cargo doc on all crates
 doc $RUSTDOCFLAGS="-D warnings":
-    cargo doc --all --no-deps
-    cargo doc --features=max,lean,small --all --no-deps
+    cargo doc --all --no-deps --features need-more-recent-msrv
+    cargo doc --features=max,lean,small --all --no-deps --features need-more-recent-msrv
 
 # run all unit tests
 unit-tests:
@@ -183,7 +183,7 @@ unit-tests:
     cargo nextest run -p gix-protocol --features blocking-client
     cargo nextest run -p gix-protocol --features async-client
     cargo nextest run -p gix --no-default-features
-    cargo nextest run -p gix --no-default-features --features basic,extras,comfort
+    cargo nextest run -p gix --no-default-features --features basic,extras,comfort,need-more-recent-msrv
     cargo nextest run -p gix --features async-network-client
     cargo nextest run -p gix --features blocking-network-client
     cargo nextest run -p gitoxide-core --lib
