@@ -109,7 +109,7 @@ impl crate::Repository {
     #[doc(alias = "exists", alias = "git2")]
     pub fn has_object(&self, id: impl AsRef<gix_hash::oid>) -> bool {
         let id = id.as_ref();
-        if id == ObjectId::empty_tree(self.object_hash()) {
+        if id.to_owned().is_empty_tree() {
             true
         } else {
             self.objects.exists(id)

@@ -229,8 +229,24 @@ mod write_blob {
     #[test]
     fn from_slice() -> crate::Result {
         let (_tmp, repo) = empty_bare_repo()?;
+        let expected = hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f");
+        assert!(!repo.has_object(expected));
+
         let oid = repo.write_blob(b"hello world")?;
-        assert_eq!(oid, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
+        assert_eq!(oid, expected);
+
+        let mut other_repo = gix::open_opts(repo.path(), gix::open::Options::isolated())?;
+        other_repo.objects.enable_object_memory();
+        assert!(
+            other_repo.has_object(oid),
+            "we definitely don't accidentally write to memory only"
+        );
+        let in_memory_id = other_repo.write_blob("hello world - to memory")?;
+        assert!(!repo.has_object(in_memory_id), "the object was never written to disk…");
+        assert!(
+            other_repo.has_object(in_memory_id),
+            "…and exists only in the instance that wrote it"
+        );
         Ok(())
     }
 

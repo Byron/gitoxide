@@ -158,7 +158,10 @@ pub mod path;
 /// The standard type for a store to handle git references.
 pub type RefStore = gix_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
-pub type OdbHandle = gix_odb::Handle;
+pub type OdbHandle = gix_odb::memory::Proxy<gix_odb::Handle>;
+/// A handle for finding objects in an object database, abstracting away caches for moving across threads.
+pub type OdbHandleArc = gix_odb::memory::Proxy<gix_odb::HandleArc>;
+
 /// A way to access git configuration
 pub(crate) type Config = OwnShared<gix_config::File<'static>>;
 
