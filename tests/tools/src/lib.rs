@@ -593,8 +593,8 @@ fn configure_command<'a>(
     args: &[String],
     script_result_directory: &Path,
 ) -> &'a mut std::process::Command {
-    let mut msys_for_git_bash_on_windows = std::env::var("MSYS").unwrap_or_default();
-    msys_for_git_bash_on_windows.push_str(" winsymlinks:nativestrict");
+    let mut msys_for_git_bash_on_windows = std::env::var_os("MSYS").unwrap_or_default();
+    msys_for_git_bash_on_windows.push(" winsymlinks:nativestrict");
     cmd.args(args)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
