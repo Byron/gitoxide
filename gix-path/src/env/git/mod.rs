@@ -140,8 +140,11 @@ fn git_cmd(executable: PathBuf) -> Command {
     // scope. Although `GIT_CONFIG_NOSYSTEM` will suppress this as well, passing --system omits it.
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
         .current_dir(cwd)
-        .env_remove("GIT_COMMON_DIR") // We are setting `GIT_DIR`.
+        .env_remove("GIT_CONFIG")
         .env_remove("GIT_DISCOVERY_ACROSS_FILESYSTEM")
+        .env_remove("GIT_OBJECT_DIRECTORY")
+        .env_remove("GIT_ALTERNATE_OBJECT_DIRECTORIES")
+        .env_remove("GIT_COMMON_DIR")
         .env("GIT_DIR", NULL_DEVICE) // Avoid getting local-scope config.
         .env("GIT_WORK_TREE", NULL_DEVICE) // Avoid confusion when debugging.
         .stdin(Stdio::null())

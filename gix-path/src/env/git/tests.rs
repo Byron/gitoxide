@@ -455,6 +455,13 @@ mod exe_info {
 
     #[test]
     #[serial]
+    fn tolerates_git_config_env_var() {
+        let _env = gix_testtools::Env::new().set("GIT_CONFIG", NULL_DEVICE);
+        check_exe_info();
+    }
+
+    #[test]
+    #[serial]
     fn same_result_with_broken_temp() {
         let with_unmodified_temp = exe_info();
 
@@ -478,6 +485,19 @@ mod exe_info {
         };
 
         assert_eq!(with_unmodified_env, with_oversanitized_env);
+    }
+
+    #[test]
+    #[serial]
+    fn same_result_with_git_config_env_var() {
+        let with_unmodified_env = exe_info();
+
+        let with_git_config_env_var = {
+            let _env = gix_testtools::Env::new().set("GIT_CONFIG", NULL_DEVICE);
+            exe_info()
+        };
+
+        assert_eq!(with_unmodified_env, with_git_config_env_var);
     }
 
     #[test]
@@ -553,6 +573,33 @@ mod exe_info {
         assert_eq!(
             maybe_path, None,
             "Should find no config path if the config would be local even in a `/tmp`-like dir (suppressed system config)"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn never_from_git_config_env_var() {
+        let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
+
+        // Get an absolute path to a config file that is non-UNC if possible so any Git accepts it.
+        let config_path = std::env::current_dir()
+            .expect("got CWD")
+            .join(repo)
+            .join(".git")
+            .join("config")
+            .to_str()
+            .expect("valid UTF-8")
+            .to_owned();
+
+        let _env = gix_testtools::Env::new()
+            .set("GIT_CONFIG_NOSYSTEM", "1")
+            .set("GIT_CONFIG_GLOBAL", NULL_DEVICE)
+            .set("GIT_CONFIG", config_path);
+
+        let maybe_path = exe_info();
+        assert_eq!(
+            maybe_path, None,
+            "Should find no config path from GIT_CONFIG (even if nonempty)"
         );
     }
 
