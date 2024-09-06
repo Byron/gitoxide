@@ -581,11 +581,10 @@ mod exe_info {
     fn never_from_git_config_env_var() {
         let repo = gix_testtools::scripted_fixture_read_only("local_config.sh").expect("script succeeds");
 
-        // FIXME: exe_info() changes directory, so this is not seen, which results in this test
-        // wrongly passing even if exe_info() does not really ensure GIT_CONFIG is ignore. So
-        // either make this path an absolute non-UNC path (non-UNC to ensure all versions of Git
-        // accept it) or use a newly created temporary file rather than the fixture.
-        let config_path = repo
+        // Get an absolute path to a config file that is non-UNC if possible so any Git accepts it.
+        let config_path = std::env::current_dir()
+            .expect("got CWD")
+            .join(repo)
             .join(".git")
             .join("config")
             .to_str()
