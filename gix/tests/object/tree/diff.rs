@@ -392,13 +392,12 @@ mod track_rewrites {
     }
 
     #[test]
+    #[cfg_attr(
+        windows,
+        ignore = "Fails on some Window systems, like the fixture doesn't get set up correctly."
+    )]
     fn jj_realistic_needs_to_be_more_clever() -> crate::Result {
         let repo = named_subrepo_opts("make_diff_repos.sh", "jj-trackcopy-1", gix::open::Options::isolated())?;
-        if cfg!(windows) && is_ci::cached() {
-            // Somehow, CI has problems getting the same result even though it works fine in a local VM.
-            // It's like the fixture doesn't get setup correctly.
-            return Ok(());
-        }
 
         let mut expected = HashMap::<&BStr, (&BStr, u32)>::new();
         expected.insert(
