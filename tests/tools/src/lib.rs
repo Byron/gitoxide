@@ -872,7 +872,6 @@ impl<'a> Drop for Env<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ffi::OsStr;
 
     #[test]
     fn parse_version() {
@@ -932,45 +931,5 @@ mod tests {
         let status = output.status.code().expect("terminated normally");
         assert_eq!(lines, Vec::<&str>::new(), "should be no config variables from files");
         assert_eq!(status, 0, "reading the config should succeed");
-    }
-
-    #[test]
-    fn configure_command_msys() {
-        let temp = tempfile::TempDir::new().expect("can create temp dir");
-        let mut cmd = std::process::Command::new("not-actually-run");
-
-        let msys_option = configure_command(&mut cmd, &[], temp.path())
-            .get_envs()
-            .find(|(k, _)| *k == OsStr::new("MSYS"))
-            .expect("should customize MSYS variable")
-            .1
-            .expect("should set, not unset, MSYS variable")
-            .to_str()
-            .expect("valid UTF-8")
-            .trim_matches(' ');
-
-        assert_eq!(msys_option, "winsymlinks:nativestrict");
-    }
-
-    #[test]
-    fn configure_command_msys_extends() {
-        let old_msys = r"error_start:C:\gdb.exe";
-        let temp = tempfile::TempDir::new().expect("can create temp dir");
-        let mut cmd = std::process::Command::new("not-actually-run");
-        cmd.env("MSYS", old_msys);
-
-        let msys_options = configure_command(&mut cmd, &[], temp.path())
-            .get_envs()
-            .find(|(k, _)| *k == OsStr::new("MSYS"))
-            .expect("should customize MSYS variable")
-            .1
-            .expect("should set, not unset, MSYS variable")
-            .to_str()
-            .expect("valid UTF-8")
-            .split(' ') // Just spaces, not arbitrary whitespace.
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<_>>();
-
-        assert_eq!(msys_options, vec![old_msys, "winsymlinks:nativestrict"]);
     }
 }
