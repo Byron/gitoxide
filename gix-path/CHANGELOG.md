@@ -5,6 +5,229 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.10.11 (2024-09-06)
+
+### Bug Fixes
+
+<csr-id-7280a2d2f8b55a594ae134dd9a0a7a1668b7b56c/>
+<csr-id-650a1b5cf25e086197cc55a68525a411e1c28031/>
+
+ - <csr-id-f70b904bc520b2962dd2a77c035b6d9c47bb1cb8/> Don't require usable temp dir to get installation config
+   When running `git config -l ...` to find the configuration file
+   path associated with the `git` installation itself, the current
+   working directory for the subprocess was set to the current
+   directory prior to #1523, and to `/tmp` or a `/tmp`-like directory
+   since #1523 (which improved performance and security).
+   
+   This builds on #1523, as well as on subsequent changes to run `git`
+   in a way that its behavior depends less on its CWD, by making an
+   even more robust choice of CWD for the subprocess, so that the CWD
+   is less likely to be deeply nested or on network storage; more
+   likely to exist; and, on Unix-like systems, less likely to contain
+   a `.git` entry (though a `git` with security updates should refuse
+   to take any configuration from such a repository unless it is owned
+   by the user).
+   
+   Due to a combination of other measures that harden against
+   malicious or unusual contents (especially setting `GIT_DIR`), the
+   most significant benefit of this change is to fix the problem that
+   a nonexistent temp dir would prevent the command from succeeding.
+   
+   The main way that could happen is if `TMPDIR` on Unix-like systems,
+   or `TMP` or `TEMP` on Windows, is set to an incorrect value.
+   Because these variables are sometimes reasonable to customize for
+   specific purposes, it is plausible for them to be set to incorrect
+   values by accident.
+   
+   Except on Windows, this always uses `/` as the CWD for the
+   subprocess.
+   
+   On Windows, we use the Windows directory (usually `C:\Windows`)
+   rather than the root of the system drive (usually `C:\`), because:
+   
+   - We are currently obtaining this information from environment
+   variables, and it is possible for our own parent process to pass
+   down an overly sanitized environment.
+   
+   Although this can be so sanitized we cannot find the Windows
+   directory, this is less likely to occur than being unable to find
+   the root of the system drive.
+   
+   This due to moderately broad awareness that the `SystemRoot`
+   environment variable (which, somewhat confusingly, holds the path
+   of the Windows directory, not the root of the system drive)
+   should be preserved even when clearing most other variables.
+   
+   Some libraries will even automatically preserve `SystemRoot` when
+   clearing others or restore it. For example:
+   
+   * https://go-review.googlesource.com/c/go/+/174318
+- Under the current behavior of `env::temp_dir()`, which is now a
+     fallback if we cannot determine the Windows directory, we already
+     fall back to the Windows directory evenutally, if temp dir
+     related environment variables are also unset.
+   
+     This is because `env::temp_dir()` usually calls `GetTempDir2` in
+     the Windows API, which implements that fallback behavior (after
+     first trying the user's user profile directory).
+   
+     Avoiding adding yet another place to fall back to that would not
+     otherwise be attempted slightly decreases behavioral complexity,
+     and there is no reason to think a directory like `C:\` would work
+     when a directory like `C:\Windows` doesn't.
+- The root of the system drive on a Windows system usually permits
+     limited user accounts to create new directories there, so a
+     directory like `C:\` on Windows actually has most of the
+     disadvantages of a location like `/tmp` on a Unix-like system.
+   
+     * https://github.com/git-for-windows/git/security/advisories/GHSA-vw2c-22j4-2fh2
+     * https://github.com/Byron/gitoxide/security/advisories/GHSA-mgvv-9p9g-3jv4
+   
+     This is actually a much less significant reason to prefer a
+     directory like `C:\Windows` to a directory like `C:\` than it
+     might seem. After all, if `C:\.git` exists and and `git` uses it
+     when run from `C:\`, then `git` would usually also use it when
+     run from `C:\Windows` (and from numerous other locations)!
+   
+     However, the reason there is still a small reason to prefer a
+     location like `C:\Windows` to a location like `C:\` is that, if a
+     system has a vulnerable `git` but a user or system administrator
+     has sought to work around it by listing `C:\` in
+     `GIT_CEILING_DIRECTORIES`, then that may keep `git` from
+     traversing upward into `C:\`, but it would not keep `C:\` from
+     being used if that is where we already are.
+   
+     An even more significant reason this motivation is a minor one is
+     that the other measures we are taking, including setting
+     `GIT_DIR`, should be sufficient to avoid at least the security
+     dimension of the problem, which arises from actually using the
+     configuration from a repo that is discovered.
+* https://github.com/Byron/gitoxide/security/advisories/GHSA-mgvv-9p9g-3jv4
+- The user profile directory may be more deeply nested.
+- The user profile directory may sometimes be on slow network
+     storage when the discovered Windows directory is not.
+- In some situations, the user profile directory does not actually
+     exist, or does not exist yet.
+- Overly sanitized environments are more likely to lack the
+     `USERPROFILE` vairable than the `SystemRoot` variable.
+- Users may occasionally choose to have their entire user profile
+     directory be a Git repository.
+- It's no easier to avoid the problem of using `C:\.git` in a user
+     profile directory than in `C:\Windows`: they're usually both under
+     `C:\`, and are both not the same as `C:\`. (If the user profile
+     directory is a repository, then that will avoid that problem, yet
+     be its own problem, if not for other measures that prevent both.)
+- If the `git` command is an old and unpatched vulnerable version
+     in which `safe.directory` is not yet implemented, or in which
+     https://github.com/git/git/security/advisories/GHSA-j342-m5hw-rr3v
+     or other vulnerabilities where `git` would perform operations on
+     untrusted local repositories owned by other users are unpatched,
+     then a `.git` subdirectory of a shared `/tmp` or `/tmp`-like
+     directory could be created by another account, and its local
+     configuration would still have been used. (This is not a bug in
+     gitoxide per se; having vulnerable software installed that other
+     software may use is inherently insecure. But it is nice to offer
+     a small amount of protection against this when readily feasible.)
+- If the `/tmp`-like location is a Git repository owned by the
+     current user, then its local configuration would have been used.
+- https://github.com/dotnet/docs/issues/41193
+- https://github.com/python/cpython/pull/95486#issuecomment-1881469554
+- https://github.com/python/cpython/pull/95486#issuecomment-1882134234
+- Parsing is more reliable for paths containing unusual characters,
+     because `-z`/`--null` causes all paths to be output literally.
+   
+     Previously, `"` characters were trimmed from the ends, but this
+     would not always extract a correct path, because when a path
+     contains characters that cause `git` to enclose it in double
+     quotes, those characters are usually represented in a symbolic
+     form, usually with `\` escapes.
+   
+     In some scenarios, such as usually on Windows when the escaped
+     character is itself a `\` and not in the leading position, the
+     mangled path would be usable, but more often it would not.
+- The volume of output is less, because `--name-only` casues values
+     not to be included in the output.
+- The combination of `-z`/`--null` and `--name-only` makes the
+     output format simpler, and the parsing logic is accordingly
+     simpler.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 56 commits contributed to the release.
+ - 14 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare changelogs prior to release. ([`c759819`](https://github.com/Byron/gitoxide/commit/c759819666fdad1ba743eed8e9458517f5cdf63c))
+    - Merge pull request #1569 from EliahKagan/config-origin-naming ([`3cf9694`](https://github.com/Byron/gitoxide/commit/3cf969487e07c4bf5d5b89b4e372d70b95ebbe36))
+    - Rename to `GIT_HIGHEST_SCOPE_CONFIG_PATH` ([`0672576`](https://github.com/Byron/gitoxide/commit/067257684918f2802f56eb3933f5e324bf35f914))
+    - Merge pull request #1568 from EliahKagan/config-origin-next ([`adbaa2a`](https://github.com/Byron/gitoxide/commit/adbaa2ab6840fd247c14701c39dcda3d280d86c0))
+    - Rename `EXE_INFO` to something that probably captures its contents better. ([`dd2d666`](https://github.com/Byron/gitoxide/commit/dd2d6665981425f5878318d5469216f27c3ac278))
+    - Run `cargo fmt` ([`b11f7db`](https://github.com/Byron/gitoxide/commit/b11f7db7d16c06c040619cf0fb5feab85734bc06))
+    - Make `EXE_NAME` a `const` too ([`fb0b6d8`](https://github.com/Byron/gitoxide/commit/fb0b6d8823354b50f3bd2eb3a8eb6ea3da56b5b6))
+    - Make `NULL_DEVICE` a `const`, rather than a `static` item ([`9917d47`](https://github.com/Byron/gitoxide/commit/9917d4719ed32fd34628594aaea6d4ca816448e3))
+    - Put `first_file_from_config_with_origin` test with related ones ([`57e9a6f`](https://github.com/Byron/gitoxide/commit/57e9a6fa1d354eb9a29e6e6fd2a1d09190292804))
+    - Fix indentation nit ([`7cd20bb`](https://github.com/Byron/gitoxide/commit/7cd20bba2ccb8224b25eeb6a579c6130d0c9ce2e))
+    - Merge pull request #1567 from EliahKagan/config-origin ([`dd65e7b`](https://github.com/Byron/gitoxide/commit/dd65e7bd0adf7afeec377f47ba67970ae5126fa3))
+    - Improve structure of `exe_info` tests ([`5ac5f74`](https://github.com/Byron/gitoxide/commit/5ac5f741f8fdae5b7425f89cfc73d7ebecd5b92b))
+    - Clarify comment about where we run `git` from ([`5200184`](https://github.com/Byron/gitoxide/commit/5200184ecbe888d5c18617f7b3b9c4c6fdef2c5f))
+    - Test no local scope with empty system config ([`6160a83`](https://github.com/Byron/gitoxide/commit/6160a8308038cee1e604b6fb86c9bfb779b3b835))
+    - Don't set/change ceiling directories ([`2bce0d2`](https://github.com/Byron/gitoxide/commit/2bce0d20c876f076e899e9e0ea03e571487309d9))
+    - Explore also setting a ceiling directory ([`073e277`](https://github.com/Byron/gitoxide/commit/073e27783c752901211fb18acb6b4a917ad91d0e))
+    - Fix misstatement of Windows directory rationale ([`4e936bc`](https://github.com/Byron/gitoxide/commit/4e936bc99c781c9829b6529de32e2bb0bb1debbd))
+    - Unset a couple env vars just in case ([`8f6d39d`](https://github.com/Byron/gitoxide/commit/8f6d39d2a6988e2e6c69a4f15f5d8aa6c917c6a6))
+    - Simplify the new comments ([`b827813`](https://github.com/Byron/gitoxide/commit/b8278138271835ace4e520ccdc1e5c7e4556992a))
+    - Explain why we run `git` from a different directory ([`7fa5e35`](https://github.com/Byron/gitoxide/commit/7fa5e3530620e2540d615dd3195c645d0c9446e9))
+    - Small clarity tweaks ([`598c487`](https://github.com/Byron/gitoxide/commit/598c487e25c5463a90130c8e77884f272b3ef1c3))
+    - Fix `os::windows` error on non-Windows ([`1305114`](https://github.com/Byron/gitoxide/commit/130511452bc5605d5af48c10c53ba2f6e9ddce3d))
+    - Refactor for readability; clarify comments ([`ab0dcc1`](https://github.com/Byron/gitoxide/commit/ab0dcc168a8ecd2caedffc63f9e00e468e2628c2))
+    - Fix unused import on non-Windows systems ([`8472447`](https://github.com/Byron/gitoxide/commit/847244728e9464cf2924509bd09b8b698e83fc09))
+    - Don't require usable temp dir to get installation config ([`f70b904`](https://github.com/Byron/gitoxide/commit/f70b904bc520b2962dd2a77c035b6d9c47bb1cb8))
+    - Explain why we don't just use `--system` ([`29c6cca`](https://github.com/Byron/gitoxide/commit/29c6ccabf99c3cd694d5f503fb45fceac986ebb6))
+    - Explain why we don't just use `--show-scope` ([`f35e44c`](https://github.com/Byron/gitoxide/commit/f35e44c41cc2ae4216c8c76075cdeedd5c4076c7))
+    - Fix a test name for consistency ([`15e7b67`](https://github.com/Byron/gitoxide/commit/15e7b67ba7447a7a630550d14543d721ee05b696))
+    - Add another broken temp test ([`c80d562`](https://github.com/Byron/gitoxide/commit/c80d562fc0b0dd6298c01e8ba48f6fde211a732c))
+    - Extract nonexistent directory logic to a test helper struct ([`e60540f`](https://github.com/Byron/gitoxide/commit/e60540fe4592b26b9b5858750312b9b5cbe92f6a))
+    - Maybe slightly decrease risk of test precondition check failure ([`56dab13`](https://github.com/Byron/gitoxide/commit/56dab133353c5605121bfd9ab362bf05f8848945))
+    - Adjust some test code for clarity ([`5c1b4c0`](https://github.com/Byron/gitoxide/commit/5c1b4c0a912847551803c3f29da21778e736b23c))
+    - Check `env::temp_dir()` in both tests that set temp vars ([`79af259`](https://github.com/Byron/gitoxide/commit/79af25969e148efd456dacb05100fb2a90ebc054))
+    - Clarify assert and expect messages ([`703f882`](https://github.com/Byron/gitoxide/commit/703f882f1887b3c69553c79a8d6e4d3214be904f))
+    - Test EXE_INFO no local config even if temp dir doesn't exist ([`60465a5`](https://github.com/Byron/gitoxide/commit/60465a5b5900916d3e7ab80e025e01f237c21e7b))
+    - Slightly improve quality of test failure messages ([`9641660`](https://github.com/Byron/gitoxide/commit/9641660ebf0f330b5f02db8d7bda8dd3266e890b))
+    - Set GIT_WORK_TREE along with GIT_DIR, to avoid confusion ([`5723077`](https://github.com/Byron/gitoxide/commit/572307708e52f57624b5ef5dabfbb4b4eb68982d))
+    - More robustly ensure "installation" config is not local ([`7280a2d`](https://github.com/Byron/gitoxide/commit/7280a2d2f8b55a594ae134dd9a0a7a1668b7b56c))
+    - Check that the test affects `env::temp_dir()` as desired ([`15cec4e`](https://github.com/Byron/gitoxide/commit/15cec4ed114b2cd8acc333bb847ff18a9b59589c))
+    - Fix bug in new test where temp dir should be a repo ([`744bb38`](https://github.com/Byron/gitoxide/commit/744bb38726309cd2d97003ca721fc7850866eefa))
+    - Test EXE_INFO no local config even if temp dir is a repo ([`287f267`](https://github.com/Byron/gitoxide/commit/287f2676b7c4603d3eb412f9c2478db9f7ec2647))
+    - Code formatting ([`65d5151`](https://github.com/Byron/gitoxide/commit/65d51518e7fcb7fd69f5121e76d2abd2a01446d4))
+    - Fix EXE_INFO no local scope test for macOS ([`49e0715`](https://github.com/Byron/gitoxide/commit/49e0715f67d6fa6b8d009dbf684f7ce013b4104c))
+    - Add generated archive for local_config.sh ([`fd065ac`](https://github.com/Byron/gitoxide/commit/fd065ac281f64c4bee18e0ce68930b1c8444a4c7))
+    - Test that EXE_INFO never has local scope config ([`5a300e6`](https://github.com/Byron/gitoxide/commit/5a300e6c827b62a0883aeb328f828f9e898ed76b))
+    - Make EXE_INFO testable and add a basic test for it ([`1ee98bf`](https://github.com/Byron/gitoxide/commit/1ee98bfa9383888e73219b47234f369930d51332))
+    - Reorder gix_path::env::git tests to match order in code ([`ccd0401`](https://github.com/Byron/gitoxide/commit/ccd04018905bd0c00857f4ef10ce6f1156b6e835))
+    - Extract git_cmd helper for EXE_INFO ([`de2f35f`](https://github.com/Byron/gitoxide/commit/de2f35f5c355cacb0c076674126e8243ce24ec5c))
+    - Parse installation config path more robustly ([`650a1b5`](https://github.com/Byron/gitoxide/commit/650a1b5cf25e086197cc55a68525a411e1c28031))
+    - Comment Git version compatibility for EXE_INFO ([`9df57aa`](https://github.com/Byron/gitoxide/commit/9df57aaec4dc5df3da4d4ee2e16db648cd735432))
+    - Merge pull request #1557 from Byron/merge-base ([`649f588`](https://github.com/Byron/gitoxide/commit/649f5882cbebadf1133fa5f310e09b4aab77217e))
+    - Allow empty-docs ([`beba720`](https://github.com/Byron/gitoxide/commit/beba7204a50a84b30e3eb81413d968920599e226))
+    - Merge branch 'global-lints' ([`37ba461`](https://github.com/Byron/gitoxide/commit/37ba4619396974ec9cc41d1e882ac5efaf3816db))
+    - Workspace Clippy lint management ([`2e0ce50`](https://github.com/Byron/gitoxide/commit/2e0ce506968c112b215ca0056bd2742e7235df48))
+    - Merge pull request #1546 from nyurik/semilocons ([`f992fb7`](https://github.com/Byron/gitoxide/commit/f992fb773b443454015bd14658cfaa2f3ac07997))
+    - Add missing semicolons ([`ec69c88`](https://github.com/Byron/gitoxide/commit/ec69c88fc119f3aa1967a7e7f5fca30e3ce97595))
+</details>
+
+<csr-unknown>
+As far as I know, such treatment of SystemDrive is less common.And also these two considerations, which are minor by comparison:This is actually a much less significant reason to prefer adirectory like C:\Windows to a directory like C:\ than itmight seem. After all, if C:\.git exists and and git uses itwhen run from C:\, then git would usually also use it whenrun from C:\Windows (and from numerous other locations)!However, the reason there is still a small reason to prefer alocation like C:\Windows to a location like C:\ is that, if asystem has a vulnerable git but a user or system administratorhas sought to work around it by listing C:\ inGIT_CEILING_DIRECTORIES, then that may keep git fromtraversing upward into C:\, but it would not keep C:\ frombeing used if that is where we already are.An even more significant reason this motivation is a minor one isthat the other measures we are taking, including settingGIT_DIR, should be sufficient to avoid at least the securitydimension of the problem, which arises from actually using theconfiguration from a repo that is discovered.The reason we do not prefer the user’s user profile directory is: More robustly ensure “installation” config is not localWhen invoking git to find the configuration file path associatedwith the git installation itself, this sets GIT_DIR to a paththat cannot be a .git directory for any repository, to keepgit config -l from including any local scope entries in theoutput of the git config -l ... command that is used to find theorigin for the first Git configuration variable.Specifically, a path to the null device is used. This is/dev/null on Unix and NUL on Windows. This is not a directory,and when treated as a file it is always treated as empty: readingfrom it, if successful, reaches end-of-file immediately.This problem is unlikely since #1523, which caused this gitinvocation to use a /tmp-like location (varying by system andenvironment) as its current working directory. Although the goal ofthat change was just to improve performance, it pretty much fixedthe bug where local-scope configuration could be treated asinstallation-level configuration when no configuration variablesare available from higher scopes.This change further hardens against two edge cases:Any path guaranteed to point to a nonexistent entry or one that isguaranteed to be (or to be treated as) an empty file or directoryshould be sufficient here. Using the null device, even though it isnot directory-like, seems like a reasonably intuitive way to do it.A note for Windows: There is more than one reasonable path to thenull device. One is DOS-style relative path NUL, as used here.One of the others, which NUL in effect resolves to when opened,is the fully qualified Windows device namespace path \\.\NUL. Iused the former here to ensure we avoid any situation where gitwould misinterpret a \ in \\.\NUL in a POSIX-like fashion. Thisseems unlikely, and it could be looked into further if reasonssurface to prefer \\.\NUL.One possible reason to prefer \\.\NUL is that which names aretreated as reserved legacy DOS device names changes from version toversion of Windows, with Windows 11 treating some of them asordinary filenames. However, while this affects names such asCON, it does not affect NUL, at least written unsuffixed. I’mnot sure if any Microsoft documentation has yet been updated toexplain this in detail, but see:At least historically, it has been possible on Windows, thoughrare, for the null device to be absent. This was the case onWindows Fundamentals for Legacy PCs (WinFPE). Even if that somehowwere ever to happen today, this usage should be okay, becauseattempting to open the device would still fail rather than opensome other file (as may even be happening in Git for Windowsalready), the name NUL would still presumably be reserved (muchas the names COM? where ? is replaced with a Unicodesuperscript 1, 2, or 3 are reserved even though those devices don’treally exist), and I think git config -l commands should stillshrug off the error opening the file and give non-local-scopeconfiguration, as it does when GIT_DIR is set to a nonexistentlocation. Parse installation config path more robustlyThis adds the -z/--null and --name-only options in the gitinvocation that tries to obtain the configuration file pathassociated with the git installation itself. The benefits are:git has supported the -z/--null and --name-only optionseven before support for --show-origin was added in Git 2.8.0, sothis change should have no effect on Git version compatibility.<csr-unknown/>
+
 ## 0.10.10 (2024-08-22)
 
 A maintenance release without user-facing changes.
@@ -13,7 +236,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 12 calendar days.
+ - 7 commits contributed to the release.
  - 35 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -25,6 +248,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-date v0.9.0, gix-actor v0.31.6, gix-validate v0.9.0, gix-object v0.43.0, gix-path v0.10.10, gix-attributes v0.22.4, gix-command v0.3.9, gix-packetline-blocking v0.17.5, gix-filter v0.12.0, gix-fs v0.11.3, gix-revwalk v0.14.0, gix-traverse v0.40.0, gix-worktree-stream v0.14.0, gix-archive v0.14.0, gix-ref v0.46.0, gix-config v0.39.0, gix-prompt v0.8.7, gix-url v0.27.5, gix-credentials v0.24.5, gix-ignore v0.11.4, gix-index v0.34.0, gix-worktree v0.35.0, gix-diff v0.45.0, gix-discover v0.34.0, gix-dir v0.7.0, gix-mailmap v0.23.6, gix-negotiate v0.14.0, gix-pack v0.52.0, gix-odb v0.62.0, gix-packetline v0.17.6, gix-transport v0.42.3, gix-protocol v0.45.3, gix-revision v0.28.0, gix-refspec v0.24.0, gix-status v0.12.0, gix-submodule v0.13.0, gix-worktree-state v0.12.0, gix v0.65.0, gix-fsck v0.5.0, gitoxide-core v0.40.0, gitoxide v0.38.0, safety bump 25 crates ([`d19af16`](https://github.com/Byron/gitoxide/commit/d19af16e1d2031d4f0100e76b6cd410a5d252af1))
     - Prepare changelogs prior to release ([`0f25841`](https://github.com/Byron/gitoxide/commit/0f2584178ae88e425f1c629eb85b69f3b4310d9f))
     - Merge pull request #1523 from martinvonz/push-xmsuurxprnnw ([`83c9de0`](https://github.com/Byron/gitoxide/commit/83c9de0db43761b7692a122f1a337964a7cfeb7a))
     - Remove `--system` from `git config` call as it fails on MacOS ([`6b1c243`](https://github.com/Byron/gitoxide/commit/6b1c2432f096b3de770a77694a23b93b8d29dc8d))
@@ -53,7 +277,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 36 commits contributed to the release over the course of 3 calendar days.
+ - 36 commits contributed to the release.
  - 23 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -116,7 +340,6 @@ A maintenance release without user-facing changes.
 <csr-read-only-do-not-edit/>
 
  - 5 commits contributed to the release over the course of 3 calendar days.
- - 101 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -338,8 +561,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 46 calendar days.
- - 88 days passed between releases.
+ - 6 commits contributed to the release.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#1103](https://github.com/Byron/gitoxide/issues/1103)
 
@@ -642,7 +864,6 @@ A maintenance release without user-facing changes.
 <csr-read-only-do-not-edit/>
 
  - 4 commits contributed to the release.
- - 37 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -810,7 +1031,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 189 commits contributed to the release over the course of 296 calendar days.
+ - 189 commits contributed to the release.
  - 20 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#422](https://github.com/Byron/gitoxide/issues/422), [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#691](https://github.com/Byron/gitoxide/issues/691)
 

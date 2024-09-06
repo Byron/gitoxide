@@ -30,10 +30,10 @@ gix-object = { version = "^0.44.0", path = "../gix-object" }
 gix-filter = { version = "^0.13.0", path = "../gix-filter", optional = true }
 gix-worktree = { version = "^0.36.0", path = "../gix-worktree", default-features = false, features = ["attributes"], optional = true }
 gix-command = { version = "^0.3.9", path = "../gix-command", optional = true }
-gix-path = { version = "^0.10.10", path = "../gix-path", optional = true }
+gix-path = { version = "^0.10.11", path = "../gix-path", optional = true }
 gix-fs = { version = "^0.11.3", path = "../gix-fs", optional = true }
 gix-tempfile = { version = "^14.0.0", path = "../gix-tempfile", optional = true }
-gix-trace = { version = "^0.1.9", path = "../gix-trace", optional = true }
+gix-trace = { version = "^0.1.10", path = "../gix-trace", optional = true }
 
 thiserror = "1.0.32"
 imara-diff = { version = "0.1.7", optional = true }

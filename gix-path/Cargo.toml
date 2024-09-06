@@ -2,7 +2,7 @@ lints.workspace = true
 
 [package]
 name = "gix-path"
-version = "0.10.10"
+version = "0.10.11"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing paths and their conversions"
@@ -15,7 +15,7 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-trace = { version = "^0.1.8", path = "../gix-trace" }
+gix-trace = { version = "^0.1.10", path = "../gix-trace" }
 bstr = { version = "1.3.0", default-features = false, features = ["std"] }
 thiserror = "1.0.26"
 once_cell = "1.17.1"

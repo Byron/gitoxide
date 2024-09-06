@@ -22,7 +22,7 @@ gix-attributes = { version = "^0.22.5", path = "../gix-attributes" }
 gix-filter = { version = "^0.13.0", path = "../gix-filter" }
 gix-traverse = { version = "^0.41.0", path = "../gix-traverse" }
 gix-fs = { version = "^0.11.3", path = "../gix-fs" }
-gix-path = { version = "^0.10.10", path = "../gix-path" }
+gix-path = { version = "^0.10.11", path = "../gix-path" }
 
 thiserror = "1.0.26"
 parking_lot = "0.12.1"

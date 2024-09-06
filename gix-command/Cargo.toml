@@ -15,8 +15,8 @@ include = ["src/lib.rs", "LICENSE-*"]
 doctest = false
 
 [dependencies]
-gix-trace = { version = "^0.1.8", path = "../gix-trace" }
-gix-path = { version = "^0.10.10", path = "../gix-path" }
+gix-trace = { version = "^0.1.10", path = "../gix-trace" }
+gix-path = { version = "^0.10.11", path = "../gix-path" }
 
 bstr = { version = "1.5.0", default-features = false, features = ["std", "unicode"] }
 shell-words = "1.0"

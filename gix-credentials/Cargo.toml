@@ -21,11 +21,11 @@ serde = ["dep:serde", "bstr/serde", "gix-sec/serde"]
 [dependencies]
 gix-sec = { version = "^0.10.8", path = "../gix-sec" }
 gix-url = { version = "^0.27.5", path = "../gix-url" }
-gix-path = { version = "^0.10.10", path = "../gix-path" }
+gix-path = { version = "^0.10.11", path = "../gix-path" }
 gix-command = { version = "^0.3.9", path = "../gix-command" }
 gix-config-value = { version = "^0.14.8", path = "../gix-config-value" }
 gix-prompt = { version = "^0.8.7", path = "../gix-prompt" }
-gix-trace = { version = "^0.1.8", path = "../gix-trace" }
+gix-trace = { version = "^0.1.10", path = "../gix-trace" }
 
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }

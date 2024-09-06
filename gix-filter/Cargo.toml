@@ -16,12 +16,12 @@ doctest = false
 
 [dependencies]
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-gix-trace = { version = "^0.1.9", path = "../gix-trace" }
+gix-trace = { version = "^0.1.10", path = "../gix-trace" }
 gix-object = { version = "^0.44.0", path = "../gix-object" }
 gix-command = { version = "^0.3.9", path = "../gix-command" }
 gix-quote = { version = "^0.4.12", path = "../gix-quote" }
 gix-utils = { version = "^0.1.12", path = "../gix-utils" }
-gix-path = { version = "^0.10.10", path = "../gix-path" }
+gix-path = { version = "^0.10.11", path = "../gix-path" }
 gix-packetline = { package = "gix-packetline-blocking", version = "^0.17.5", path = "../gix-packetline-blocking" }
 gix-attributes = { version = "^0.22.5", path = "../gix-attributes" }
 
