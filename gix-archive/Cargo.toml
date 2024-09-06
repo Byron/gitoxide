@@ -29,7 +29,7 @@ zip = ["dep:zip"]
 [dependencies]
 gix-worktree-stream = { version = "^0.15.0", path = "../gix-worktree-stream" }
 gix-object = { version = "^0.44.0", path = "../gix-object" }
-gix-path = { version = "^0.10.10", path = "../gix-path", optional = true }
+gix-path = { version = "^0.10.11", path = "../gix-path", optional = true }
 gix-date = { version = "^0.9.0", path = "../gix-date" }
 
 flate2 = { version = "1.0.33", optional = true }

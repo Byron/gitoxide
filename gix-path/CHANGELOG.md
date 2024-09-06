@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.10.11 (2024-09-06)
 
 ### Bug Fixes
+
+<csr-id-7280a2d2f8b55a594ae134dd9a0a7a1668b7b56c/>
+<csr-id-650a1b5cf25e086197cc55a68525a411e1c28031/>
 
  - <csr-id-f70b904bc520b2962dd2a77c035b6d9c47bb1cb8/> Don't require usable temp dir to get installation config
    When running `git config -l ...` to find the configuration file
@@ -43,28 +46,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    rather than the root of the system drive (usually `C:\`), because:
    
    - We are currently obtaining this information from environment
-     variables, and it is possible for our own parent process to pass
-     down an overly sanitized environment.
+   variables, and it is possible for our own parent process to pass
+   down an overly sanitized environment.
    
-     Although this can be so sanitized we cannot find the Windows
-     directory, this is less likely to occur than being unable to find
-     the root of the system drive.
+   Although this can be so sanitized we cannot find the Windows
+   directory, this is less likely to occur than being unable to find
+   the root of the system drive.
    
-     This due to moderately broad awareness that the `SystemRoot`
-     environment variable (which, somewhat confusingly, holds the path
-     of the Windows directory, not the root of the system drive)
-     should be preserved even when clearing most other variables.
+   This due to moderately broad awareness that the `SystemRoot`
+   environment variable (which, somewhat confusingly, holds the path
+   of the Windows directory, not the root of the system drive)
+   should be preserved even when clearing most other variables.
    
-     Some libraries will even automatically preserve `SystemRoot` when
-     clearing others or restore it. For example:
+   Some libraries will even automatically preserve `SystemRoot` when
+   clearing others or restore it. For example:
    
-     * https://go-review.googlesource.com/c/go/+/174318
-   
-     As far as I know, such treatment of `SystemDrive` is less common.
-   
-   And also these two considerations, which are minor by comparison:
-   
-   - Under the current behavior of `env::temp_dir()`, which is now a
+   * https://go-review.googlesource.com/c/go/+/174318
+- Under the current behavior of `env::temp_dir()`, which is now a
      fallback if we cannot determine the Windows directory, we already
      fall back to the Windows directory evenutally, if temp dir
      related environment variables are also unset.
@@ -77,8 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      otherwise be attempted slightly decreases behavioral complexity,
      and there is no reason to think a directory like `C:\` would work
      when a directory like `C:\Windows` doesn't.
-   
-   - The root of the system drive on a Windows system usually permits
+- The root of the system drive on a Windows system usually permits
      limited user accounts to create new directories there, so a
      directory like `C:\` on Windows actually has most of the
      disadvantages of a location like `/tmp` on a Unix-like system.
@@ -105,52 +102,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      `GIT_DIR`, should be sufficient to avoid at least the security
      dimension of the problem, which arises from actually using the
      configuration from a repo that is discovered.
-   
-   The reason we do not prefer the user's user profile directory is:
-   
-   - The user profile directory may be more deeply nested.
-   
-   - The user profile directory may sometimes be on slow network
+* https://github.com/Byron/gitoxide/security/advisories/GHSA-mgvv-9p9g-3jv4
+- The user profile directory may be more deeply nested.
+- The user profile directory may sometimes be on slow network
      storage when the discovered Windows directory is not.
-   
-   - In some situations, the user profile directory does not actually
+- In some situations, the user profile directory does not actually
      exist, or does not exist yet.
-   
-   - Overly sanitized environments are more likely to lack the
+- Overly sanitized environments are more likely to lack the
      `USERPROFILE` vairable than the `SystemRoot` variable.
-   
-   - Users may occasionally choose to have their entire user profile
+- Users may occasionally choose to have their entire user profile
      directory be a Git repository.
-   
-   - It's no easier to avoid the problem of using `C:\.git` in a user
+- It's no easier to avoid the problem of using `C:\.git` in a user
      profile directory than in `C:\Windows`: they're usually both under
      `C:\`, and are both not the same as `C:\`. (If the user profile
      directory is a repository, then that will avoid that problem, yet
      be its own problem, if not for other measures that prevent both.)
- - <csr-id-7280a2d2f8b55a594ae134dd9a0a7a1668b7b56c/> More robustly ensure "installation" config is not local
-   When invoking `git` to find the configuration file path associated
-   with the `git` installation itself, this sets `GIT_DIR` to a path
-   that cannot be a `.git` directory for any repository, to keep
-   `git config -l` from including any local scope entries in the
-   output of the `git config -l ...` command that is used to find the
-   origin for the first Git configuration variable.
-   
-   Specifically, a path to the null device is used. This is
-   `/dev/null` on Unix and `NUL` on Windows. This is not a directory,
-   and when treated as a file it is always treated as empty: reading
-   from it, if successful, reaches end-of-file immediately.
-   
-   This problem is unlikely since #1523, which caused this `git`
-   invocation to use a `/tmp`-like location (varying by system and
-   environment) as its current working directory. Although the goal of
-   that change was just to improve performance, it pretty much fixed
-   the bug where local-scope configuration could be treated as
-   installation-level configuration when no configuration variables
-   are available from higher scopes.
-   
-   This change further hardens against two edge cases:
-   
-   - If the `git` command is an old and unpatched vulnerable version
+- If the `git` command is an old and unpatched vulnerable version
      in which `safe.directory` is not yet implemented, or in which
      https://github.com/git/git/security/advisories/GHSA-j342-m5hw-rr3v
      or other vulnerabilities where `git` would perform operations on
@@ -161,55 +128,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      gitoxide per se; having vulnerable software installed that other
      software may use is inherently insecure. But it is nice to offer
      a small amount of protection against this when readily feasible.)
-   
-   - If the `/tmp`-like location is a Git repository owned by the
+- If the `/tmp`-like location is a Git repository owned by the
      current user, then its local configuration would have been used.
-   
-   Any path guaranteed to point to a nonexistent entry or one that is
-   guaranteed to be (or to be treated as) an empty file or directory
-   should be sufficient here. Using the null device, even though it is
-   not directory-like, seems like a reasonably intuitive way to do it.
-   
-   A note for Windows: There is more than one reasonable path to the
-   null device. One is DOS-style relative path `NUL`, as used here.
-   One of the others, which `NUL` in effect resolves to when opened,
-   is the fully qualified Windows device namespace path `\\.\NUL`. I
-   used the former here to ensure we avoid any situation where `git`
-   would misinterpret a `\` in `\\.\NUL` in a POSIX-like fashion. This
-   seems unlikely, and it could be looked into further if reasons
-   surface to prefer `\\.\NUL`.
-   
-   One possible reason to prefer `\\.\NUL` is that which names are
-   treated as reserved legacy DOS device names changes from version to
-   version of Windows, with Windows 11 treating some of them as
-   ordinary filenames. However, while this affects names such as
-   `CON`, it does not affect `NUL`, at least written unsuffixed. I'm
-   not sure if any Microsoft documentation has yet been updated to
-   explain this in detail, but see:
-   
-   - https://github.com/dotnet/docs/issues/41193
-   - https://github.com/python/cpython/pull/95486#issuecomment-1881469554
-   - https://github.com/python/cpython/pull/95486#issuecomment-1882134234
-   
-   At least historically, it has been possible on Windows, though
-   rare, for the null device to be absent. This was the case on
-   Windows Fundamentals for Legacy PCs (WinFPE). Even if that somehow
-   were ever to happen today, this usage should be okay, because
-   attempting to open the device would still fail rather than open
-   some other file (as may even be happening in Git for Windows
-   already), the name `NUL` would still presumably be reserved (much
-   as the names `COM?` where `?` is replaced with a Unicode
-   superscript 1, 2, or 3 are reserved even though those devices don't
-   really exist), and I think `git config -l` commands should still
-   shrug off the error opening the file and give non-local-scope
-   configuration, as it does when `GIT_DIR` is set to a nonexistent
-   location.
- - <csr-id-650a1b5cf25e086197cc55a68525a411e1c28031/> Parse installation config path more robustly
-   This adds the `-z`/`--null` and `--name-only` options in the `git`
-   invocation that tries to obtain the configuration file path
-   associated with the `git` installation itself. The benefits are:
-   
-   - Parsing is more reliable for paths containing unusual characters,
+- https://github.com/dotnet/docs/issues/41193
+- https://github.com/python/cpython/pull/95486#issuecomment-1881469554
+- https://github.com/python/cpython/pull/95486#issuecomment-1882134234
+- Parsing is more reliable for paths containing unusual characters,
      because `-z`/`--null` causes all paths to be output literally.
    
      Previously, `"` characters were trimmed from the ends, but this
@@ -221,23 +145,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      In some scenarios, such as usually on Windows when the escaped
      character is itself a `\` and not in the leading position, the
      mangled path would be usable, but more often it would not.
-   
-   - The volume of output is less, because `--name-only` casues values
+- The volume of output is less, because `--name-only` casues values
      not to be included in the output.
-   
-   - The combination of `-z`/`--null` and `--name-only` makes the
+- The combination of `-z`/`--null` and `--name-only` makes the
      output format simpler, and the parsing logic is accordingly
      simpler.
-   
-   `git` has supported the `-z`/`--null` and `--name-only` options
-   even before support for `--show-origin` was added in Git 2.8.0, so
-   this change should have no effect on Git version compatibility.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 55 commits contributed to the release.
+ - 56 commits contributed to the release.
  - 14 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -249,6 +167,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Prepare changelogs prior to release. ([`c759819`](https://github.com/Byron/gitoxide/commit/c759819666fdad1ba743eed8e9458517f5cdf63c))
     - Merge pull request #1569 from EliahKagan/config-origin-naming ([`3cf9694`](https://github.com/Byron/gitoxide/commit/3cf969487e07c4bf5d5b89b4e372d70b95ebbe36))
     - Rename to `GIT_HIGHEST_SCOPE_CONFIG_PATH` ([`0672576`](https://github.com/Byron/gitoxide/commit/067257684918f2802f56eb3933f5e324bf35f914))
     - Merge pull request #1568 from EliahKagan/config-origin-next ([`adbaa2a`](https://github.com/Byron/gitoxide/commit/adbaa2ab6840fd247c14701c39dcda3d280d86c0))
@@ -305,6 +224,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge pull request #1546 from nyurik/semilocons ([`f992fb7`](https://github.com/Byron/gitoxide/commit/f992fb773b443454015bd14658cfaa2f3ac07997))
     - Add missing semicolons ([`ec69c88`](https://github.com/Byron/gitoxide/commit/ec69c88fc119f3aa1967a7e7f5fca30e3ce97595))
 </details>
+
+<csr-unknown>
+As far as I know, such treatment of SystemDrive is less common.And also these two considerations, which are minor by comparison:This is actually a much less significant reason to prefer adirectory like C:\Windows to a directory like C:\ than itmight seem. After all, if C:\.git exists and and git uses itwhen run from C:\, then git would usually also use it whenrun from C:\Windows (and from numerous other locations)!However, the reason there is still a small reason to prefer alocation like C:\Windows to a location like C:\ is that, if asystem has a vulnerable git but a user or system administratorhas sought to work around it by listing C:\ inGIT_CEILING_DIRECTORIES, then that may keep git fromtraversing upward into C:\, but it would not keep C:\ frombeing used if that is where we already are.An even more significant reason this motivation is a minor one isthat the other measures we are taking, including settingGIT_DIR, should be sufficient to avoid at least the securitydimension of the problem, which arises from actually using theconfiguration from a repo that is discovered.The reason we do not prefer the user’s user profile directory is: More robustly ensure “installation” config is not localWhen invoking git to find the configuration file path associatedwith the git installation itself, this sets GIT_DIR to a paththat cannot be a .git directory for any repository, to keepgit config -l from including any local scope entries in theoutput of the git config -l ... command that is used to find theorigin for the first Git configuration variable.Specifically, a path to the null device is used. This is/dev/null on Unix and NUL on Windows. This is not a directory,and when treated as a file it is always treated as empty: readingfrom it, if successful, reaches end-of-file immediately.This problem is unlikely since #1523, which caused this gitinvocation to use a /tmp-like location (varying by system andenvironment) as its current working directory. Although the goal ofthat change was just to improve performance, it pretty much fixedthe bug where local-scope configuration could be treated asinstallation-level configuration when no configuration variablesare available from higher scopes.This change further hardens against two edge cases:Any path guaranteed to point to a nonexistent entry or one that isguaranteed to be (or to be treated as) an empty file or directoryshould be sufficient here. Using the null device, even though it isnot directory-like, seems like a reasonably intuitive way to do it.A note for Windows: There is more than one reasonable path to thenull device. One is DOS-style relative path NUL, as used here.One of the others, which NUL in effect resolves to when opened,is the fully qualified Windows device namespace path \\.\NUL. Iused the former here to ensure we avoid any situation where gitwould misinterpret a \ in \\.\NUL in a POSIX-like fashion. Thisseems unlikely, and it could be looked into further if reasonssurface to prefer \\.\NUL.One possible reason to prefer \\.\NUL is that which names aretreated as reserved legacy DOS device names changes from version toversion of Windows, with Windows 11 treating some of them asordinary filenames. However, while this affects names such asCON, it does not affect NUL, at least written unsuffixed. I’mnot sure if any Microsoft documentation has yet been updated toexplain this in detail, but see:At least historically, it has been possible on Windows, thoughrare, for the null device to be absent. This was the case onWindows Fundamentals for Legacy PCs (WinFPE). Even if that somehowwere ever to happen today, this usage should be okay, becauseattempting to open the device would still fail rather than opensome other file (as may even be happening in Git for Windowsalready), the name NUL would still presumably be reserved (muchas the names COM? where ? is replaced with a Unicodesuperscript 1, 2, or 3 are reserved even though those devices don’treally exist), and I think git config -l commands should stillshrug off the error opening the file and give non-local-scopeconfiguration, as it does when GIT_DIR is set to a nonexistentlocation. Parse installation config path more robustlyThis adds the -z/--null and --name-only options in the gitinvocation that tries to obtain the configuration file pathassociated with the git installation itself. The benefits are:git has supported the -z/--null and --name-only optionseven before support for --show-origin was added in Git 2.8.0, sothis change should have no effect on Git version compatibility.<csr-unknown/>
 
 ## 0.10.10 (2024-08-22)
 

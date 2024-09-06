@@ -14,11 +14,11 @@ rust-version = "1.65"
 doctest = false
 
 [dependencies]
-gix-trace = { version = "^0.1.9", path = "../gix-trace" }
+gix-trace = { version = "^0.1.10", path = "../gix-trace" }
 gix-index = { version = "^0.35.0", path = "../gix-index" }
 gix-discover = { version = "^0.35.0", path = "../gix-discover" }
 gix-fs = { version = "^0.11.3", path = "../gix-fs" }
-gix-path = { version = "^0.10.10", path = "../gix-path" }
+gix-path = { version = "^0.10.11", path = "../gix-path" }
 gix-pathspec = { version = "^0.7.7", path = "../gix-pathspec" }
 gix-worktree = { version = "^0.36.0", path = "../gix-worktree", default-features = false }
 gix-object = { version = "^0.44.0", path = "../gix-object" }

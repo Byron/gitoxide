@@ -18,7 +18,7 @@ doctest = false
 gix-pathspec = { version = "^0.7.7", path = "../gix-pathspec" }
 gix-refspec = { version = "^0.25.0", path = "../gix-refspec" }
 gix-config = { version = "^0.40.0", path = "../gix-config" }
-gix-path = { version = "^0.10.10", path = "../gix-path" }
+gix-path = { version = "^0.10.11", path = "../gix-path" }
 gix-url = { version = "^0.27.5", path = "../gix-url" }
 
 bstr = { version = "1.5.0", default-features = false }

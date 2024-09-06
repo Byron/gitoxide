@@ -120,7 +120,7 @@ required-features = ["io-pipe"]
 
 [dependencies]
 gix-hash = { version = "^0.14.2", path = "../gix-hash" }
-gix-trace = { version = "^0.1.8", path = "../gix-trace" }
+gix-trace = { version = "^0.1.10", path = "../gix-trace" }
 
 # for walkdir
 gix-utils = { version = "^0.1.11", path = "../gix-utils", optional = true }

@@ -41,7 +41,7 @@ path = "tests/blocking-packetline.rs"
 required-features = ["blocking-io", "maybe-async/is_sync"]
 
 [dependencies]
-gix-trace = { version = "^0.1.8", path = "../gix-trace" }
+gix-trace = { version = "^0.1.10", path = "../gix-trace" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"] }
 thiserror = "1.0.34"

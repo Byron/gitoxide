@@ -333,7 +333,7 @@ gix-revision = { version = "^0.29.0", path = "../gix-revision", default-features
 gix-revwalk = { version = "^0.15.0", path = "../gix-revwalk" }
 gix-negotiate = { version = "^0.15.0", path = "../gix-negotiate", optional = true }
 
-gix-path = { version = "^0.10.10", path = "../gix-path" }
+gix-path = { version = "^0.10.11", path = "../gix-path" }
 gix-url = { version = "^0.27.5", path = "../gix-url" }
 gix-traverse = { version = "^0.41.0", path = "../gix-traverse" }
 gix-diff = { version = "^0.46.0", path = "../gix-diff", default-features = false }
@@ -342,7 +342,7 @@ gix-features = { version = "^0.38.2", path = "../gix-features", features = [
     "progress",
     "once_cell",
 ] }
-gix-trace = { version = "^0.1.9", path = "../gix-trace" }
+gix-trace = { version = "^0.1.10", path = "../gix-trace" }
 
 gix-glob = { version = "^0.16.5", path = "../gix-glob" }
 gix-credentials = { version = "^0.24.5", path = "../gix-credentials", optional = true }
