@@ -35,7 +35,7 @@ A neat optimization is also implemented, as the protocol V2 supports the special
 
 ### Celebrating 100k lines of code
 
-In case you have missed it, here is the post [on reddit](https://www.reddit.com/r/rust/comments/xj6ncq/media_gitoxide_celebrating_100k_lines_of_rust_code/). This has to come with the correction that it is in fact just code, not Rust code exlusively. Tokei now reports 95k of Rust, so nearly there.
+In case you have missed it, here is the post [on reddit](https://www.reddit.com/r/rust/comments/xj6ncq/media_gitoxide_celebrating_100k_lines_of_rust_code/). This has to come with the correction that it is in fact just code, not Rust code exclusively. Tokei now reports 95k of Rust, so nearly there.
 
 `codevis`, the tool behind the picture, was irresistible to me as it produces pretty visualizations and is hackable! After trying it I was inspired and wanted to play more, so I added `clap` to what was just a pre-configured program before. From there, I ended up adding `prodash` for nicer progress, multi-threading and various optimizations to be able to render pictures of any size even on memory constrained systems.
 

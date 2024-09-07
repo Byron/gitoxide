@@ -46,7 +46,7 @@ Another side-effect of this work is that we thought once again how error handlin
 
 Enter [`therror`](https://github.com/Byron/therror), which could one day be the `thiserror` we always wanted. Because as it turns out, even though `thiserror` is exactly what I'd expect from error handling in a library, having these detailed, three-like errors made of enums is also a lot of work to maintain and quite cumbersome to match on. 
 
-That's two problems that need solving. For one, what if there was a programatically accessible tree of errors, so it can be queried at runtime? This would have the advantage that changes in errors don't break compiles anymore, even though failures would then be likely to occur at runtime or or consuming code simply doesn't work anymore.
+That's two problems that need solving. For one, what if there was a programmatically accessible tree of errors, so it can be queried at runtime? This would have the advantage that changes in errors don't break compiles anymore, even though failures would then be likely to occur at runtime or or consuming code simply doesn't work anymore.
 
 Secondly, what if one could just declare and pass any kind of error information along right where it happens so building errors made of enums isn't needed in the first place?
 

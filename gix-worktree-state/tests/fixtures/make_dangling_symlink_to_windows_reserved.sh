@@ -10,4 +10,4 @@ git update-index --index-info <<EOF
 120000 $con_oid	dangling-con-symlink
 EOF
 
-git commit -m "dangling symlinks with Widnows reserved target in index"
+git commit -m "dangling symlinks with Windows reserved target in index"

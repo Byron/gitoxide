@@ -72,7 +72,7 @@ One of its major benefits is that its author, [Pascal Kuthe](https://github.com/
 ## `crates-index-diff` performance and correctness upgrade ([docs.rs](http://docs.rs/) team work)
 
 `crates-index-diff` was able to miss changes which caused a single crate version not to be built (as far as we know, at least), and that was quite a shock as I spent a lot of time already to isolate the test suite and test everything…except for certain edge cases apparently. Thanks to said test system it was possible to add the issue at hand as fixture for a reproduction. Fixing the issue was possible, but it was clear that the current diff implementation couldn't really be trusted. Who could know if such an issue 
-couldn't happen agin?
+couldn't happen again?
 
 So I started to [work furiously](https://github.com/Byron/crates-index-diff-rs/issues/26) on solving the issue… by asking for help! [Pascal Kuthe](https://github.com/pascalkuthe) answered the call and completely redesigned the diffing algorithm within hours (and mostly at night!) into something that is faster AND simpler AND logically correct.
 

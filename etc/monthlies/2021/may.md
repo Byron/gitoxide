@@ -25,7 +25,7 @@ A new release was cut with a bunch of new user-facing features. The most notable
 
 ### Everything else
 
-GitPython took some time to maintain and there has been some back and forth with me trying to cut a release and immediately yanking it a few hours later due to unforseen breakage. The main cause was the addition of types, and another my inability to properly review python code.
+GitPython took some time to maintain and there has been some back and forth with me trying to cut a release and immediately yanking it a few hours later due to unforeseen breakage. The main cause was the addition of types, and another my inability to properly review python code.
 
 As a major change of attitude I stopped considering GitPython a burden that I keep around like the 30 year old child that lives in the basement and really doesn't want to leave. Instead I see its massive user base as asset and plan to overhaul it with a new, and hopefully the last, major version that is literally gitoxides python bindings. Even thinking about it, it seems a little bit forced to turn GitPython into something else entirely, but that seems more sustainable than keeping GitPython around in its current form any longer.
 In other words, GitPython can help push gitoxide to the masses and maybe even become the best, fastest, safest and most convenient way to interact with git repositories (besides using Rust directly, of course ;)).

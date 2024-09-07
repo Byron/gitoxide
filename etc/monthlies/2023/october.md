@@ -31,7 +31,7 @@ I even tried to change the mode of parallelism to match the one of `git` so the 
 
 ### Packetline tracing
 
-A hang could occour when fetching via `file://` or `ssh://` (and possibly `git://` ) *and* the V1 protocol and [it took a long time]((https://github.com/Byron/gitoxide/issues/1061)) to figure out a fix.
+A hang could occur when fetching via `file://` or `ssh://` (and possibly `git://` ) *and* the V1 protocol and [it took a long time]((https://github.com/Byron/gitoxide/issues/1061)) to figure out a fix.
 
 One step on the way was to finally make it possible to observe all packetlines as they are sent over the wire just like `GIT_TRACE_PACKET` does for `git`. As `gix` integrates this with its tracing engine which supports structure and hierarchy, it looks really *nice* and it becomes immediately obvious which lines are sent along with which ‘stage’ of the protocol.
 

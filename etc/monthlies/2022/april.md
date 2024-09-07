@@ -61,7 +61,7 @@ Now all crates which use an `FnMut(oid, buf) -> Option<Object>` closure have bee
 
 While improving the API surface of `git-repository` to be more useful for prospect users of the crates I also had to find definitive answers to how to expose object information. The question really was whether to expose the underlying object, or to return wrapped higher-level objects instead for convenience.
 
-The answer now is usually: 'both', while avoiding any allocation when extracting fields of objects like commits by default. This is a trade-off geared towards leveraging the incredibly fast object parsing performance while avoiding memory fragmentation for allocations which could otherwise occour. This is done using the object iterators, that lazily return one decoded token at a time. That way one can stop decoding once the field of interest is reached, but one will also decode portions of the object multiple times if more than one field is requested.
+The answer now is usually: 'both', while avoiding any allocation when extracting fields of objects like commits by default. This is a trade-off geared towards leveraging the incredibly fast object parsing performance while avoiding memory fragmentation for allocations which could otherwise occur. This is done using the object iterators, that lazily return one decoded token at a time. That way one can stop decoding once the field of interest is reached, but one will also decode portions of the object multiple times if more than one field is requested.
 
 This also means that users who want to access all fields of a commit, for example, are probably better off decoding the commit once and using the lower-level commit from the `git-object` crate, which is fully decoded once.
 
@@ -74,7 +74,7 @@ Additionally, all these object-decode-iterators will not squelch decode errors a
 Out of a desire to improve performance, the `onefetch` maintainers reached out to see if they could use `gitoxide` instead.
 I went right to work which results in this PR being merged: https://github.com/o2sh/onefetch/pull/635 and me being a collaborator. `onefetch` is now ~2.2x faster in the repositories I tested and is more correct as well.
 
-`git2`, however, is still needed for accessing the git configuration, so some more work is still waiting to be done to complete the transision from `git2` to `gitoxide` ([tracking issue](https://github.com/Byron/gitoxide/issues/364)).
+`git2`, however, is still needed for accessing the git configuration, so some more work is still waiting to be done to complete the transition from `git2` to `gitoxide` ([tracking issue](https://github.com/Byron/gitoxide/issues/364)).
 
 #### `git-mailmap`
 

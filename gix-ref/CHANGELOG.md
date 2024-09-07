@@ -2080,7 +2080,7 @@ A maintenance release without user-facing changes.
     - [ref #139] peeling for all refs to be written to a pack ([`cc891a1`](https://github.com/Byron/gitoxide/commit/cc891a1809a6678f168b08766f67644742386a5d))
     - [ref #139] refactor ([`7e15817`](https://github.com/Byron/gitoxide/commit/7e1581788356889a936f4a778119b0bce36d3041))
     - [ref #139] Allow packed-refs creation in the presence of updates ([`0cf7314`](https://github.com/Byron/gitoxide/commit/0cf7314df7a6ab79478525544e0ed28d07cf3642))
-    - [ref #139] impl of loose ref deletion, but it doens't work yet… ([`f6631ad`](https://github.com/Byron/gitoxide/commit/f6631ad537b4c7fd6dec2a511214552e606462d4))
+    - [ref #139] impl of loose ref deletion, but it doesn't work yet… ([`f6631ad`](https://github.com/Byron/gitoxide/commit/f6631ad537b4c7fd6dec2a511214552e606462d4))
     - [ref #139] a failing test for pruning loose refs into packed refs ([`437c610`](https://github.com/Byron/gitoxide/commit/437c610eeb3b4a5874f001ba6fbbd42c7dc1188e))
     - [ref #139] refactor ([`62558cb`](https://github.com/Byron/gitoxide/commit/62558cb562747d3c6f2b4e1b62dd44e4f1e95019))
     - [ref #139] a first sketch to resolve object chains for packed ref peeling ([`54bc116`](https://github.com/Byron/gitoxide/commit/54bc1161128f0c719622935728a870820918038b))

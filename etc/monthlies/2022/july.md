@@ -4,10 +4,10 @@ And the one crate that has been a huge thorn in my eye was `git-config`, so I th
 
 ## Pushing `git-config` towards 1.0
 
-While Svetlin was already making valuable contributions to add support for handling `include.path` and conditional includes via `includeIf`, the crate lacked behind in 'style', naming, and code structure, while being generally quite unknown to me which I considered technical debt. When taking out the loan by merging without proper review, I was quite aware one day it had to be payed back. 
+While Svetlin was already making valuable contributions to add support for handling `include.path` and conditional includes via `includeIf`, the crate lacked behind in 'style', naming, and code structure, while being generally quite unknown to me which I considered technical debt. When taking out the loan by merging without proper review, I was quite aware one day it had to be paid back.
 So I started combing through each line of code to not only make it similar in structure to the ones in its sibling crates, but also to validate their functionality. All 4500 lines!
 
-###### testing 
+###### testing
 
 In the course of this, 127 tests were added on top of the already impressive test suite to nearly 300, luring out a surprising amount of bugs in all levels of the library. I also revived and for the first time ran the fuzzer, powered by `cargo-fuzz`, to try over a billion different inputs for the parser. That run though was after it immediately found a crash in the parser, showing me that from now on fuzzing of parsers will be standard fare. Thanks to `cargo fuzz` it's also super easy to do, something that is a game changer for me as someone who always thought it must be too complicated to setup.
 
@@ -41,7 +41,7 @@ This section I want to keep in all sponsor updates moving forward to the end of 
 
 Early after the grant timeframe began I reached out via the shallow clone ticket to get a conversation going on how to proceed, but will have to try harder to reach the folks who can provide the answers. Even though I took some liberty in finishing `git-config` it's clear that soon I have to align my work towards integrating `gitoxide` into `cargo` with or without feedback, to be able to implement what's needed to make it superior to what `git2` is currently offering.
 
-At this time there is no reason to worry, but the clock is ticking for me :D. 
+At this time there is no reason to worry, but the clock is ticking for me :D.
 
 ## Outlook
 

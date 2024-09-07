@@ -256,7 +256,7 @@ fn absolute_paths_are_invalid() -> crate::Result {
     assert_eq!(
         s.current(),
         p("./b\\"),
-        "trailing backslashes are fine both on Windows and Unix - on Unix it's part fo the filename"
+        "trailing backslashes are fine both on Windows and Unix - on Unix it's part of the filename"
     );
 
     #[cfg(windows)]
