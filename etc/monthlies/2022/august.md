@@ -47,7 +47,7 @@ What's notable is its performance, as when constructing worst-case scenarios wit
 
 ## The flattening of `gix repo`
 
-With `gix` gaining more and more commands that are benefiting from `git-repository`, it seemed only reasonable to make these commands more accesible as well by removing the `repo` sub-command and folding all commands that need a repository to the top-level. This also means that all commands that where there previously have now been placed under the `no-repo|free` sub-command. These of course still have their use but will be generally be more niche than what's now on the top-level. Definitely a win for ergonomics.
+With `gix` gaining more and more commands that are benefiting from `git-repository`, it seemed only reasonable to make these commands more accessible as well by removing the `repo` sub-command and folding all commands that need a repository to the top-level. This also means that all commands that where there previously have now been placed under the `no-repo|free` sub-command. These of course still have their use but will be generally be more niche than what's now on the top-level. Definitely a win for ergonomics.
 
 ## complete `ref-spec` parsing
 

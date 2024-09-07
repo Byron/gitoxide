@@ -114,10 +114,10 @@ mod find {
         );
 
         let err = tag_ref.peel_to_kind(gix::object::Kind::Blob).unwrap_err();
-        let expectd_err = "Last encountered object 4b825dc was tree while trying to peel to blob";
+        let expected_err = "Last encountered object 4b825dc was tree while trying to peel to blob";
         assert_eq!(
             err.to_string(),
-            expectd_err,
+            expected_err,
             "it's an error if the desired type isn't actually present"
         );
         match tag_ref.peel_to_blob() {
@@ -125,7 +125,7 @@ mod find {
                 unreachable!("target is a commit")
             }
             Err(err) => {
-                assert_eq!(err.to_string(), expectd_err);
+                assert_eq!(err.to_string(), expected_err);
             }
         }
 

@@ -368,7 +368,7 @@ jobs:
       - name: Show all individual asset names
         run: cat assets.txt
 
-      # The `features` array is repeated because GHA doen't support YAML anchors.
+      # The `features` array is repeated because GHA doesn't support YAML anchors.
       # We will check that the macOS `universal` features match the others exactly.
       # In the future this and the next step may be removed, or expanded to do more validation.
       - name: Extract macOS asset names by architecture

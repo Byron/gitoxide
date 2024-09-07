@@ -1,4 +1,4 @@
-[Gitoxide in Febuary]: `gix index` sub-command, more contributions along with a new close contributor
+[Gitoxide in February]: `gix index` sub-command, more contributions along with a new close contributor
 
 ### The new `gix index` sub-command
 

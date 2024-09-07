@@ -114,7 +114,7 @@ mod message {
             );
         }
         #[test]
-        fn version_2_without_host_and_version_and_exta_parameters() {
+        fn version_2_without_host_and_version_and_extra_parameters() {
             assert_eq!(
                 git::message::connect(
                     Service::UploadPack,

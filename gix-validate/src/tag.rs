@@ -34,7 +34,7 @@ pub mod name {
 }
 
 /// Assure the given `input` resemble a valid git tag name, which is returned unchanged on success.
-/// Tag names are provided as names, lik` v1.0` or `alpha-1`, without paths.
+/// Tag names are provided as names, like `v1.0` or `alpha-1`, without paths.
 pub fn name(input: &BStr) -> Result<&BStr, name::Error> {
     match name_inner(input, Mode::Validate)? {
         None => Ok(input),
