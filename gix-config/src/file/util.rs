@@ -118,7 +118,7 @@ impl<'event> File<'event> {
         &'a self,
         section_name: &'a str,
         subsection_name: Option<&BStr>,
-    ) -> Result<impl ExactSizeIterator<Item = SectionId> + DoubleEndedIterator + '_, lookup::existing::Error> {
+    ) -> Result<impl ExactSizeIterator<Item = SectionId> + DoubleEndedIterator + 'a, lookup::existing::Error> {
         let section_name = section::Name::from_str_unchecked(section_name);
         let section_ids = self
             .section_lookup_tree
@@ -146,7 +146,7 @@ impl<'event> File<'event> {
     pub(crate) fn section_ids_by_name<'a>(
         &'a self,
         section_name: &'a str,
-    ) -> Result<impl Iterator<Item = SectionId> + '_, lookup::existing::Error> {
+    ) -> Result<impl Iterator<Item = SectionId> + 'a, lookup::existing::Error> {
         let section_name = section::Name::from_str_unchecked(section_name);
         match self.section_lookup_tree.get(&section_name) {
             Some(lookup) => {

@@ -215,7 +215,7 @@ impl State {
         directory: &BStr,
         ignore_case: bool,
         lookup: &AccelerateLookup<'a>,
-    ) -> Option<&Entry> {
+    ) -> Option<&'a Entry> {
         lookup
             .icase_dirs
             .find(AccelerateLookup::icase_hash(directory), |dir| {
