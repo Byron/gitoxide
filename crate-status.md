@@ -97,6 +97,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
         * [ ] create [signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
         * **trees**
             * [x] lookup path
+            * [x] edit 
     * **references**
         * [x] peel to end
         * [x] ref-log access
@@ -213,6 +214,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
     * [x] tag
       * [x] [name validation][tagname-validation]
 * [x] transform borrowed to owned objects
+* [x] edit trees efficiently and write changes back
 * [x] API documentation
     * [ ] Some examples
 

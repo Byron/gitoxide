@@ -56,7 +56,7 @@ impl File {
         ) -> bool
                      + 'a),
     ) -> Result<
-        impl Iterator<Item = (&BStr, Result<bool, gix_config::value::Error>)> + 'a,
+        impl Iterator<Item = (&'a BStr, Result<bool, gix_config::value::Error>)> + 'a,
         crate::is_active_platform::Error,
     > {
         let mut platform = self.is_active_platform(config, defaults)?;

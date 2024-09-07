@@ -312,7 +312,10 @@ impl<'event> File<'event> {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     #[must_use]
-    pub fn sections_by_name<'a>(&'a self, name: &'a str) -> Option<impl Iterator<Item = &file::Section<'event>> + '_> {
+    pub fn sections_by_name<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> Option<impl Iterator<Item = &'a file::Section<'event>> + 'a> {
         self.section_ids_by_name(name).ok().map(move |ids| {
             ids.map(move |id| {
                 self.sections
@@ -328,7 +331,7 @@ impl<'event> File<'event> {
     pub fn sections_and_ids_by_name<'a>(
         &'a self,
         name: &'a str,
-    ) -> Option<impl Iterator<Item = (&file::Section<'event>, SectionId)> + '_> {
+    ) -> Option<impl Iterator<Item = (&'a file::Section<'event>, SectionId)> + 'a> {
         self.section_ids_by_name(name).ok().map(move |ids| {
             ids.map(move |id| {
                 (
@@ -347,7 +350,7 @@ impl<'event> File<'event> {
         &'a self,
         name: &'a str,
         filter: &'a mut MetadataFilter,
-    ) -> Option<impl Iterator<Item = &file::Section<'event>> + '_> {
+    ) -> Option<impl Iterator<Item = &'a file::Section<'event>> + 'a> {
         self.section_ids_by_name(name).ok().map(move |ids| {
             ids.filter_map(move |id| {
                 let s = self

@@ -22,6 +22,7 @@ pub type Index = gix_fs::SharedFileSnapshot<gix_index::File>;
 
 /// A type to represent an index which either was loaded from disk as it was persisted there, or created on the fly in memory.
 #[cfg(feature = "index")]
+#[allow(clippy::large_enum_variant)]
 pub enum IndexPersistedOrInMemory {
     /// The index as loaded from disk, and shared across clones of the owning `Repository`.
     Persisted(Index),
