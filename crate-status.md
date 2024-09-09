@@ -196,6 +196,9 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
    * [x] probe capabilities
    * [x] symlink creation and removal
    * [x] file snapshots
+* [ ] **BString Interner with Arena-Backing and arbitrary value association**
+    - probably based on [`internment`](https://docs.rs/internment/latest/internment/struct.Arena.html#),
+      but needs `bumpalo` support to avoid item allocations/boxing, and avoid internal `Mutex`. (key type is pointer based).
     
 ### gix-fs
 * [x] probe capabilities
@@ -215,6 +218,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
       * [x] [name validation][tagname-validation]
 * [x] transform borrowed to owned objects
 * [x] edit trees efficiently and write changes back
+    - [ ] See if `gix-fs::InternedMap` improves performance.
 * [x] API documentation
     * [ ] Some examples
 
