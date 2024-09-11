@@ -2577,8 +2577,6 @@ dependencies = [
  "fs_extra",
  "gix-discover 0.32.0",
  "gix-fs 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-ignore 0.11.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "gix-index 0.33.1",
  "gix-lock 14.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-tempfile 14.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gix-worktree 0.34.1",

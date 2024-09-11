@@ -27,9 +27,6 @@ xz = ["dep:xz2"]
 [dependencies]
 gix-lock = "14.0.0"
 gix-discover = "0.32.0"
-# TODO(ST) remove once `gix-worktree` exports `index`.
-gix-ignore = "0.11.2"
-gix-index = "0.33.0"
 gix-worktree = "0.34.0"
 gix-fs = "0.11"
 gix-tempfile = { version = "^14.0.0", default-features = false, features = ["signals"] }

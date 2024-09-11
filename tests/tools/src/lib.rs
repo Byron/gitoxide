@@ -67,11 +67,11 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<gix_worktree::Stack>>> = Lazy::new(|| {
         let mut buf = Vec::with_capacity(512);
         let case = gix_fs::Capabilities::probe(&work_tree)
             .ignore_case
-            .then_some(gix_ignore::glob::pattern::Case::Fold)
+            .then_some(gix_worktree::ignore::glob::pattern::Case::Fold)
             .unwrap_or_default();
         let state = gix_worktree::stack::State::IgnoreStack(gix_worktree::stack::state::Ignore::new(
             Default::default(),
-            gix_ignore::Search::from_git_dir(&gix_dir, None, &mut buf).ok()?,
+            gix_worktree::ignore::Search::from_git_dir(&gix_dir, None, &mut buf).ok()?,
             None,
             gix_worktree::stack::state::ignore::Source::WorktreeThenIdMappingIfNotSkipped,
         ));
@@ -707,7 +707,7 @@ fn is_excluded(archive: &Path) -> bool {
             cache
                 .at_path(
                     relative_path,
-                    Some(gix_index::entry::Mode::FILE),
+                    Some(gix_worktree::index::entry::Mode::FILE),
                     &gix_worktree::object::find::Never,
                 )
                 .ok()?
