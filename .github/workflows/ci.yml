@@ -98,7 +98,7 @@ jobs:
       - name: Doctest
         run: cargo test --doc
       - name: Check that tracked archives are up to date
-        run: git diff  # If this fails, the fix is usually to commit a regenerated archive.
+        run: git diff --exit-code  # If this fails, the fix is usually to commit a regenerated archive.
 
   test-32bit:
     runs-on: ubuntu-latest
