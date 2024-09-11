@@ -642,12 +642,12 @@ fn is_lfs_pointer_file(path: &Path) -> bool {
         .map_or(false, |_| buf.starts_with(PREFIX))
 }
 
-/// The `script_identity` will be baked into the soon to be created `archive` as it identitifies the script
+/// The `script_identity` will be baked into the soon to be created `archive` as it identifies the script
 /// that created the contents of `source_dir`.
 fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identity: u32) -> std::io::Result<()> {
-    // on windows, we fail to remove the meta_dir and can't do anything about it, which means tests will see more
-    // in the directory than they should which makes them fail. It's probably a bad idea to generate archives on windows
-    // anyway. Either unix is portable OR no archive is created anywhere. This also means that windows users can't create
+    // On Windows, we fail to remove the meta_dir and can't do anything about it, which means tests will see more
+    // in the directory than they should which makes them fail. It's probably a bad idea to generate archives on Windows
+    // anyway. Either Unix is portable OR no archive is created anywhere. This also means that Windows users can't create
     // archives, but that's not a deal-breaker.
     if cfg!(windows) || is_ci::cached() || is_excluded(archive) {
         return Ok(());
