@@ -11,7 +11,7 @@
 use std::{
     collections::BTreeMap,
     env,
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     io::Read,
     path::{Path, PathBuf},
     str::FromStr,
@@ -589,11 +589,15 @@ const NULL_DEVICE: &str = "NUL";
 #[cfg(not(windows))]
 const NULL_DEVICE: &str = "/dev/null";
 
-fn configure_command<'a>(
+fn configure_command<'a, I, S>(
     cmd: &'a mut std::process::Command,
-    args: &[String],
+    args: I,
     script_result_directory: &Path,
-) -> &'a mut std::process::Command {
+) -> &'a mut std::process::Command
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
     let mut msys_for_git_bash_on_windows = env::var_os("MSYS").unwrap_or_default();
     msys_for_git_bash_on_windows.push(" winsymlinks:nativestrict");
     cmd.args(args)
@@ -925,10 +929,9 @@ mod tests {
         populate_ad_hoc_config_files(temp.path());
 
         let mut cmd = std::process::Command::new("git");
-        let args = ["config", "-l", "--show-origin"].map(String::from);
         cmd.env("GIT_CONFIG_SYSTEM", SCOPE_ENV_VALUE);
         cmd.env("GIT_CONFIG_GLOBAL", SCOPE_ENV_VALUE);
-        configure_command(&mut cmd, &args, temp.path());
+        configure_command(&mut cmd, ["config", "-l", "--show-origin"], temp.path());
 
         let output = cmd.output().expect("can run git");
         let lines: Vec<_> = output
