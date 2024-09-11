@@ -569,7 +569,7 @@ fn scripted_fixture_read_only_with_args_inner(
                     output.stdout.as_bstr(),
                     output.stderr.as_bstr()
                 );
-                create_archive_if_not_on_ci(
+                create_archive_if_we_should(
                     &script_result_directory,
                     &archive_file_path,
                     script_identity_for_archive,
@@ -644,7 +644,7 @@ fn is_lfs_pointer_file(path: &Path) -> bool {
 
 /// The `script_identity` will be baked into the soon to be created `archive` as it identifies the script
 /// that created the contents of `source_dir`.
-fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identity: u32) -> std::io::Result<()> {
+fn create_archive_if_we_should(source_dir: &Path, archive: &Path, script_identity: u32) -> std::io::Result<()> {
     // On Windows, we fail to remove the meta_dir and can't do anything about it, which means tests will see more
     // in the directory than they should which makes them fail. It's probably a bad idea to generate archives on Windows
     // anyway. Either Unix is portable OR no archive is created anywhere. This also means that Windows users can't create
