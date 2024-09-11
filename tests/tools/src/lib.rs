@@ -638,7 +638,7 @@ fn should_skip_all_archive_creation() -> bool {
     // in the directory than they should which makes them fail. It's probably a bad idea to generate archives on Windows
     // anyway. Either Unix is portable OR no archive is created anywhere. This also means that Windows users can't create
     // archives, but that's not a deal-breaker.
-    cfg!(windows) || (is_ci::cached() && !env::var_os("GIX_TEST_CREATE_ARCHIVES_EVEN_ON_CI").is_some())
+    cfg!(windows) || (is_ci::cached() && env::var_os("GIX_TEST_CREATE_ARCHIVES_EVEN_ON_CI").is_none())
 }
 
 fn is_lfs_pointer_file(path: &Path) -> bool {
