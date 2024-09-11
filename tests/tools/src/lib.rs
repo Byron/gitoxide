@@ -589,15 +589,11 @@ const NULL_DEVICE: &str = "NUL";
 #[cfg(not(windows))]
 const NULL_DEVICE: &str = "/dev/null";
 
-fn configure_command<'a, I, S>(
+fn configure_command<'a, I: IntoIterator<Item = S>, S: AsRef<OsStr>>(
     cmd: &'a mut std::process::Command,
     args: I,
     script_result_directory: &Path,
-) -> &'a mut std::process::Command
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
-{
+) -> &'a mut std::process::Command {
     let mut msys_for_git_bash_on_windows = env::var_os("MSYS").unwrap_or_default();
     msys_for_git_bash_on_windows.push(" winsymlinks:nativestrict");
     cmd.args(args)
