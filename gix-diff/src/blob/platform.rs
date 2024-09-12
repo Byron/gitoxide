@@ -184,7 +184,7 @@ pub mod prepare_diff {
 
     use crate::blob::platform::Resource;
 
-    /// The kind of operation that was performed during the [`diff`](super::Platform::prepare_diff()) operation.
+    /// The kind of operation that should be performed based on the configuration of the resources involved in the diff.
     #[derive(Debug, Copy, Clone, Eq, PartialEq)]
     pub enum Operation<'a> {
         /// The [internal diff algorithm](imara_diff::diff) should be called with the provided arguments.

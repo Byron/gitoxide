@@ -22,6 +22,7 @@ pub struct WorktreeRoots {
     pub new_root: Option<PathBuf>,
 }
 
+/// Access
 impl WorktreeRoots {
     /// Return the root path for the given `kind`
     pub fn by_kind(&self, kind: ResourceKind) -> Option<&Path> {
@@ -29,6 +30,11 @@ impl WorktreeRoots {
             ResourceKind::OldOrSource => self.old_root.as_deref(),
             ResourceKind::NewOrDestination => self.new_root.as_deref(),
         }
+    }
+
+    /// Return `true` if all worktree roots are unset.
+    pub fn is_unset(&self) -> bool {
+        self.new_root.is_none() && self.old_root.is_none()
     }
 }
 
@@ -184,6 +190,8 @@ impl Pipeline {
 /// Access
 impl Pipeline {
     /// Return all drivers that this instance was initialized with.
+    ///
+    /// They are sorted by [`name`](Driver::name) to support binary searches.
     pub fn drivers(&self) -> &[super::Driver] {
         &self.drivers
     }
@@ -445,7 +453,7 @@ impl Pipeline {
                                         }
                                     }
                                     .map_err(|err| {
-                                        convert_to_diffable::Error::CreateTempfile {
+                                        convert_to_diffable::Error::StreamCopy {
                                             source: err,
                                             rela_path: rela_path.to_owned(),
                                         }
@@ -533,6 +541,8 @@ impl Driver {
     pub fn prepare_binary_to_text_cmd(&self, path: &Path) -> Option<std::process::Command> {
         let command: &BStr = self.binary_to_text_command.as_ref()?.as_ref();
         let cmd = gix_command::prepare(gix_path::from_bstr(command).into_owned())
+            // TODO: Add support for an actual Context, validate it *can* match Git
+            .with_context(Default::default())
             .with_shell()
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
