@@ -594,7 +594,7 @@ fn configure_command<'a, I: IntoIterator<Item = S>, S: AsRef<OsStr>>(
     args: I,
     script_result_directory: &Path,
 ) -> &'a mut std::process::Command {
-    // For simplicity, we extend the `MSYS` variable from from our own environment. This disregards
+    // For simplicity, we extend the `MSYS` variable from our own environment. This disregards
     // state from any prior `cmd.env("MSYS")` or `cmd.env_remove("MSYS")` calls. Such calls should
     // either be avoided, or made after this function returns (but before spawning the command).
     let mut msys_for_git_bash_on_windows = env::var_os("MSYS").unwrap_or_default();
