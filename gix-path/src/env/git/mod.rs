@@ -136,8 +136,9 @@ fn git_cmd(executable: PathBuf) -> Command {
     //
     // Separately from that, we can't use --system here, because scopes treated higher than the
     // system scope are possible. This commonly happens on macOS with Apple Git, where the config
-    // file under `/Library` is shown as an "unknown" scope but takes precedence over the system
-    // scope. Although `GIT_CONFIG_NOSYSTEM` will suppress this as well, passing --system omits it.
+    // file under `/Library` or `/Applications` is shown as an "unknown" scope but takes precedence
+    // over the system scope. Although `GIT_CONFIG_NOSYSTEM` suppresses this scope along with the
+    // system scope, passing --system selects only the system scope and omit this "unknown" scope.
     cmd.args(["config", "-lz", "--show-origin", "--name-only"])
         .current_dir(cwd)
         .env_remove("GIT_CONFIG")
