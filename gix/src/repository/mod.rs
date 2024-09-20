@@ -17,25 +17,6 @@ pub enum Kind {
     },
 }
 
-/// Internal
-impl crate::Repository {
-    #[inline]
-    pub(crate) fn free_buf(&self) -> Vec<u8> {
-        self.bufs.borrow_mut().pop().unwrap_or_default()
-    }
-
-    /// This method is commonly called from the destructor of objects that previously claimed an entry
-    /// in the free-list with `free_buf()`.
-    /// They are welcome to take out the data themselves, for instance when the object is detached, to avoid
-    /// it to be reclaimed.
-    #[inline]
-    pub(crate) fn reuse_buffer(&self, data: &mut Vec<u8>) {
-        if data.capacity() > 0 {
-            self.bufs.borrow_mut().push(std::mem::take(data));
-        }
-    }
-}
-
 #[cfg(any(feature = "attributes", feature = "excludes"))]
 pub mod attributes;
 mod cache;
@@ -49,6 +30,8 @@ mod dirwalk;
 ///
 #[cfg(feature = "attributes")]
 pub mod filter;
+///
+pub mod freelist;
 mod graph;
 pub(crate) mod identity;
 mod impls;

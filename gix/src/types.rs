@@ -151,7 +151,7 @@ pub struct Repository {
     /// The path to the resolved common directory if this is a linked worktree repository or it is otherwise set.
     pub(crate) common_dir: Option<PathBuf>,
     /// A free-list of reusable object backing buffers
-    pub(crate) bufs: RefCell<Vec<Vec<u8>>>,
+    pub(crate) bufs: Option<RefCell<Vec<Vec<u8>>>>,
     /// A pre-assembled selection of often-accessed configuration values for quick access.
     pub(crate) config: crate::config::Cache,
     /// the options obtained when instantiating this repository.

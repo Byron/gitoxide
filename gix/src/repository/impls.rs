@@ -1,6 +1,6 @@
 impl Clone for crate::Repository {
     fn clone(&self) -> Self {
-        crate::Repository::from_refs_and_objects(
+        let mut new = crate::Repository::from_refs_and_objects(
             self.refs.clone(),
             self.objects.clone(),
             self.work_tree.clone(),
@@ -12,7 +12,13 @@ impl Clone for crate::Repository {
             self.shallow_commits.clone(),
             #[cfg(feature = "attributes")]
             self.modules.clone(),
-        )
+        );
+
+        if self.bufs.is_none() {
+            new.bufs.take();
+        }
+
+        new
     }
 }
 

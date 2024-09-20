@@ -61,7 +61,7 @@ impl<'repo> Tree<'repo> {
         I: IntoIterator<Item = P>,
         P: PartialEq<BStr>,
     {
-        let mut buf = self.repo.shared_empty_buf();
+        let mut buf = self.repo.empty_reusable_buffer();
         buf.clear();
 
         let mut path = path.into_iter().peekable();
