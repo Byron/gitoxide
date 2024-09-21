@@ -17,7 +17,15 @@ pub fn is_path_owned_by_current_user(path: &Path) -> std::io::Result<bool> {
     impl_::is_path_owned_by_current_user(path)
 }
 
-#[cfg(not(windows))]
+// Wasi doesn't have a concept of a user, so this is implicitly true.
+#[cfg(target_os = "wasi")]
+mod impl_ {
+    pub fn is_path_owned_by_current_user(_path: &std::path::Path) -> std::io::Result<bool> {
+        Ok(true)
+    }
+}
+
+#[cfg(all(not(windows), not(target_os = "wasi")))]
 mod impl_ {
     use std::path::Path;
 
