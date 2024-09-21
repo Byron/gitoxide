@@ -177,6 +177,9 @@ jobs:
       - name: Install Rust
         run: rustup update stable && rustup default stable && rustup target add ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
+      - run: set +x; for name in gix-sec; do (cd $name && cargo build --target ${{ matrix.target }}); done
+        name: "WASI only: crates without feature toggle"
+        if: endsWith(matrix.target, '-wasi')
       - run: set +x; for name in gix-actor gix-attributes gix-bitmap gix-chunk gix-command gix-commitgraph gix-config-value gix-date gix-glob gix-hash gix-hashtable gix-mailmap gix-object gix-packetline gix-path gix-pathspec gix-prompt gix-quote gix-refspec gix-revision gix-traverse gix-url gix-validate; do (cd $name && cargo build --target ${{ matrix.target }}); done
         name: crates without feature toggles
       - run: set +x; for feature in progress fs-walkdir-parallel parallel io-pipe crc32 zlib zlib-rust-backend fast-sha1 rustsha1 cache-efficiency-debug; do (cd gix-features && cargo build --features $feature --target ${{ matrix.target }}); done
