@@ -54,8 +54,11 @@ pub enum Ref {
 pub struct Outcome {
     /// The protocol version the server responded with. It might have downgraded the desired version.
     pub server_protocol_version: gix_transport::Protocol,
-    /// The references reported as part of the Protocol::V1 handshake, or `None` otherwise as V2 requires a separate request.
+    /// The references reported as part of the `Protocol::V1` handshake, or `None` otherwise as V2 requires a separate request.
     pub refs: Option<Vec<Ref>>,
+    /// Shallow updates as part of the `Protocol::V1`, to shallow a particular object.
+    /// Note that unshallowing isn't supported here.
+    pub v1_shallow_updates: Option<Vec<ShallowUpdate>>,
     /// The server capabilities.
     pub capabilities: Capabilities,
 }
@@ -93,6 +96,7 @@ mod error {
         }
     }
 }
+use crate::fetch::response::ShallowUpdate;
 pub use error::Error;
 
 pub(crate) mod function;

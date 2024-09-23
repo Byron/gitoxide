@@ -71,6 +71,7 @@ where
     let crate::handshake::Outcome {
         server_protocol_version: protocol_version,
         refs,
+        v1_shallow_updates: _ignored_shallow_updates_as_it_is_deprecated,
         capabilities,
     } = crate::fetch::handshake(
         &mut transport,

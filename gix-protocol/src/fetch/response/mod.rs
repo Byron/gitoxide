@@ -203,6 +203,15 @@ impl Response {
         &self.shallows
     }
 
+    /// Append the given `updates` which may have been obtained from a
+    /// (handshake::Outcome)[crate::handshake::Outcome::v1_shallow_updates].
+    ///
+    /// In V2, these are received as part of the pack, but V1 sends them early, so we
+    /// offer to re-integrate them here.
+    pub fn append_v1_shallow_updates(&mut self, updates: Option<Vec<ShallowUpdate>>) {
+        self.shallows.extend(updates.into_iter().flatten());
+    }
+
     /// Return all wanted-refs [parsed previously][Response::from_line_reader()].
     pub fn wanted_refs(&self) -> &[WantedRef] {
         &self.wanted_refs

@@ -79,7 +79,7 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/gix-commitgraph-v0.0.0
 21c9b7500cb144b3169a6537961ec2b9e865be81 refs/tags/gix-commitgraph-v0.0.0^{}"
             .as_bytes(),
     );
-    let out = refs::from_v1_refs_received_as_part_of_handshake_and_capabilities(
+    let (out, shallow) = refs::from_v1_refs_received_as_part_of_handshake_and_capabilities(
         input,
         Capabilities::from_bytes(b"\0symref=HEAD:refs/heads/main symref=MISSING_NAMESPACE_TARGET:(null)")
             .expect("valid capabilities")
@@ -88,6 +88,68 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/gix-commitgraph-v0.0.0
     )
     .await
     .expect("no failure from valid input");
+    assert!(shallow.is_empty());
+    assert_eq!(
+        out,
+        vec![
+            Ref::Symbolic {
+                full_ref_name: "HEAD".into(),
+                target: "refs/heads/main".into(),
+                tag: None,
+                object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
+            },
+            Ref::Direct {
+                full_ref_name: "MISSING_NAMESPACE_TARGET".into(),
+                object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
+            },
+            Ref::Direct {
+                full_ref_name: "refs/heads/main".into(),
+                object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
+            },
+            Ref::Direct {
+                full_ref_name: "refs/pull/13/head".into(),
+                object: oid("8e472f9ccc7d745927426cbb2d9d077de545aa4e")
+            },
+            Ref::Peeled {
+                full_ref_name: "refs/tags/gix-commitgraph-v0.0.0".into(),
+                tag: oid("dce0ea858eef7ff61ad345cc5cdac62203fb3c10"),
+                object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
+            },
+        ]
+    );
+}
+
+#[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+async fn extract_references_from_v1_refs_with_shallow() {
+    use crate::fetch::response::ShallowUpdate;
+    let input = &mut Fixture(
+        "73a6868963993a3328e7d8fe94e5a6ac5078a944 HEAD
+21c9b7500cb144b3169a6537961ec2b9e865be81 MISSING_NAMESPACE_TARGET
+73a6868963993a3328e7d8fe94e5a6ac5078a944 refs/heads/main
+8e472f9ccc7d745927426cbb2d9d077de545aa4e refs/pull/13/head
+dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/gix-commitgraph-v0.0.0
+21c9b7500cb144b3169a6537961ec2b9e865be81 refs/tags/gix-commitgraph-v0.0.0^{}
+shallow 21c9b7500cb144b3169a6537961ec2b9e865be81
+shallow dce0ea858eef7ff61ad345cc5cdac62203fb3c10"
+            .as_bytes(),
+    );
+    let (out, shallow) = refs::from_v1_refs_received_as_part_of_handshake_and_capabilities(
+        input,
+        Capabilities::from_bytes(b"\0symref=HEAD:refs/heads/main symref=MISSING_NAMESPACE_TARGET:(null)")
+            .expect("valid capabilities")
+            .0
+            .iter(),
+    )
+    .await
+    .expect("no failure from valid input");
+
+    assert_eq!(
+        shallow,
+        vec![
+            ShallowUpdate::Shallow(oid("21c9b7500cb144b3169a6537961ec2b9e865be81")),
+            ShallowUpdate::Shallow(oid("dce0ea858eef7ff61ad345cc5cdac62203fb3c10"))
+        ]
+    );
     assert_eq!(
         out,
         vec![

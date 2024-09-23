@@ -95,9 +95,14 @@ where
         (actual_protocol, parsed_refs, capabilities)
     }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
 
+    let (refs, v1_shallow_updates) = refs
+        .map(|(refs, shallow)| (Some(refs), Some(shallow)))
+        .unwrap_or_default();
+
     Ok(Outcome {
         server_protocol_version,
         refs,
+        v1_shallow_updates,
         capabilities,
     })
 }
