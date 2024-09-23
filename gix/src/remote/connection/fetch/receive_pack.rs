@@ -100,6 +100,7 @@ where
             });
         }
 
+        let v1_shallow_updates = self.ref_map.handshake.v1_shallow_updates.take();
         let handshake = &self.ref_map.handshake;
         let protocol_version = handshake.server_protocol_version;
 
@@ -253,7 +254,9 @@ where
                 drop(graph_repo);
                 drop(negotiate_span);
 
-                let previous_response = previous_response.expect("knowledge of a pack means a response was received");
+                let mut previous_response =
+                    previous_response.expect("knowledge of a pack means a response was received");
+                previous_response.append_v1_shallow_updates(v1_shallow_updates);
                 if !previous_response.shallow_updates().is_empty() && shallow_lock.is_none() {
                     let reject_shallow_remote = repo
                         .config
