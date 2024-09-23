@@ -1,3 +1,4 @@
+use crate::fetch::response::ShallowUpdate;
 use crate::handshake::{refs, refs::parse::Error, Ref};
 
 /// Parse refs from the given input line by line. Protocol V2 is required for this to succeed.
@@ -26,8 +27,9 @@ pub async fn from_v2_refs(in_refs: &mut dyn gix_transport::client::ReadlineBufRe
 pub async fn from_v1_refs_received_as_part_of_handshake_and_capabilities<'a>(
     in_refs: &mut dyn gix_transport::client::ReadlineBufRead,
     capabilities: impl Iterator<Item = gix_transport::client::capabilities::Capability<'a>>,
-) -> Result<Vec<Ref>, refs::parse::Error> {
+) -> Result<(Vec<Ref>, Vec<ShallowUpdate>), refs::parse::Error> {
     let mut out_refs = refs::shared::from_capabilities(capabilities)?;
+    let mut out_shallow = Vec::new();
     let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
 
     while let Some(line) = in_refs
@@ -37,7 +39,12 @@ pub async fn from_v1_refs_received_as_part_of_handshake_and_capabilities<'a>(
         .transpose()?
         .and_then(|l| l.as_bstr())
     {
-        refs::shared::parse_v1(number_of_possible_symbolic_refs_for_lookup, &mut out_refs, line)?;
+        refs::shared::parse_v1(
+            number_of_possible_symbolic_refs_for_lookup,
+            &mut out_refs,
+            &mut out_shallow,
+            line,
+        )?;
     }
-    Ok(out_refs.into_iter().map(Into::into).collect())
+    Ok((out_refs.into_iter().map(Into::into).collect(), out_shallow))
 }

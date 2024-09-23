@@ -1,3 +1,4 @@
+use crate::fetch::response::ShallowUpdate;
 use crate::handshake::{refs::parse::Error, Ref};
 use bstr::{BStr, BString, ByteSlice};
 
@@ -122,6 +123,7 @@ pub(crate) fn from_capabilities<'a>(
 pub(in crate::handshake::refs) fn parse_v1(
     num_initial_out_refs: usize,
     out_refs: &mut Vec<InternalRef>,
+    out_shallow: &mut Vec<ShallowUpdate>,
     line: &BStr,
 ) -> Result<(), Error> {
     let trimmed = line.trim_end();
@@ -162,7 +164,9 @@ pub(in crate::handshake::refs) fn parse_v1(
             let object = match gix_hash::ObjectId::from_hex(hex_hash.as_bytes()) {
                 Ok(id) => id,
                 Err(_) if hex_hash.as_bstr() == "shallow" => {
-                    todo!("shallow");
+                    let id = gix_hash::ObjectId::from_hex(path)?;
+                    out_shallow.push(ShallowUpdate::Shallow(id));
+                    return Ok(());
                 }
                 Err(err) => return Err(err.into()),
             };
