@@ -15,7 +15,7 @@ impl crate::Repository {
     ) -> Self {
         setup_objects(&mut objects, &config);
         crate::Repository {
-            bufs: RefCell::new(Vec::with_capacity(4)),
+            bufs: Some(RefCell::new(Vec::with_capacity(4))),
             work_tree,
             common_dir,
             objects,

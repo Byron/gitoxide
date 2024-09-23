@@ -255,6 +255,7 @@ mod write_blob {
         let (_tmp, repo) = empty_bare_repo()?;
         let mut cursor = std::io::Cursor::new(b"hello world");
         let mut seek_cursor = cursor.clone();
+        let mut repo = repo.without_freelist();
         let oid = repo.write_blob_stream(&mut cursor)?;
         assert_eq!(oid, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
 
@@ -271,13 +272,15 @@ mod write_blob {
             &b"world"[..],
             "the seek position is taken into account, so only part of the input data is written"
         );
+
+        assert!(repo.set_freelist(None).is_none(), "previous list was already dropped");
         Ok(())
     }
 }
 
 #[test]
 fn writes_avoid_io_using_duplicate_check() -> crate::Result {
-    let repo = crate::named_repo("make_packed_and_loose.sh")?;
+    let mut repo = crate::named_repo("make_packed_and_loose.sh")?;
     let store = gix::odb::loose::Store::at(repo.git_dir().join("objects"), repo.object_hash());
     let loose_count = store.iter().count();
     assert_eq!(loose_count, 3, "there are some loose objects");
@@ -325,6 +328,26 @@ fn writes_avoid_io_using_duplicate_check() -> crate::Result {
         store.iter().count(),
         loose_count,
         "no new object was written as all of them already existed"
+    );
+
+    {
+        let buf = repo.empty_reusable_buffer();
+        assert!(buf.is_empty(), "the freelist buffer must be clearerd");
+        let mut other_buf = buf.clone();
+        other_buf.inner = Vec::new();
+    }
+
+    let freelist = repo.set_freelist(None).expect("free list is present by default");
+    assert_eq!(
+        freelist.len(),
+        2,
+        "only one object was read at a time, and one is written"
+    );
+
+    let mut repo_clone = repo.clone();
+    assert!(
+        repo_clone.set_freelist(None).is_none(),
+        "new instances inherit the free-list configuration of their parent"
     );
     Ok(())
 }

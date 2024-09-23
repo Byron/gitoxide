@@ -158,24 +158,12 @@ impl crate::Repository {
 
 /// Write objects of any type.
 impl crate::Repository {
-    pub(crate) fn shared_empty_buf(&self) -> std::cell::RefMut<'_, Vec<u8>> {
-        let mut bufs = self.bufs.borrow_mut();
-        if bufs.last().is_none() {
-            bufs.push(Vec::with_capacity(512));
-        }
-        std::cell::RefMut::map(bufs, |bufs| {
-            let buf = bufs.last_mut().expect("we assure one is present");
-            buf.clear();
-            buf
-        })
-    }
-
     /// Write the given object into the object database and return its object id.
     ///
     /// Note that we hash the object in memory to avoid storing objects that are already present. That way,
     /// we avoid writing duplicate objects using slow disks that will eventually have to be garbage collected.
     pub fn write_object(&self, object: impl gix_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
-        let mut buf = self.shared_empty_buf();
+        let mut buf = self.empty_reusable_buffer();
         object.write_to(buf.deref_mut()).expect("write to memory works");
 
         self.write_object_inner(&buf, object.kind())
@@ -219,7 +207,7 @@ impl crate::Repository {
         &self,
         mut bytes: impl std::io::Read + std::io::Seek,
     ) -> Result<Id<'_>, object::write::Error> {
-        let mut buf = self.shared_empty_buf();
+        let mut buf = self.empty_reusable_buffer();
         std::io::copy(&mut bytes, buf.deref_mut()).expect("write to memory works");
 
         self.write_blob_stream_inner(&buf)
