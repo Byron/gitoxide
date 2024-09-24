@@ -511,7 +511,7 @@ fn scripted_fixture_read_only_with_args_inner(
 
     let _marker = gix_lock::Marker::acquire_to_hold_resource(
         script_basename,
-        gix_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(3 * 60)),
+        gix_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(6 * 60)),
         None,
     )?;
     let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");
