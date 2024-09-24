@@ -4,5 +4,8 @@
 **/tests/fixtures/**/*.sh text crlf=input	eol=lf
 /justfile text crlf=input	eol=lf
 
+# have GitHub include fixture-making scripts when it counts code
+**/tests/fixtures/**/*.sh linguist-vendored=false
+
 # have GitHub treat the gix-packetline-blocking src copy as auto-generated
 gix-packetline-blocking/src/ linguist-generated=true
