@@ -1,7 +1,18 @@
 name: CIFuzz
 on:
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+    paths:
+      - '.github/**'
+      - 'ci/**'
+      - 'etc/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'cargo-*/**'
+      - 'gix*/**'
+      - '*.toml'
+      - Makefile
   workflow_dispatch:
 jobs:
  Fuzzing:
