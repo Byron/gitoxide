@@ -324,19 +324,23 @@ Check out the [performance discussion][gix-diff-performance] as well.
     * [x] prepare invocation of external diff program
         - [ ] pass meta-info
 * [ ] working with hunks of data
+* [ ] diff-heuristics match Git perfectly
 * [x] API documentation
     * [ ] Examples
 
+[gix-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
+
 ### gix-merge
 
-* [ ] three-way merge analysis of blobs with choice of how to resolve conflicts
+* [x] three-way merge analysis of blobs with choice of how to resolve conflicts
     - [ ] choose how to resolve conflicts on the data-structure
     - [ ] produce a new blob based on data-structure containing possible resolutions
-        - [ ] `merge` style
-        - [ ] `diff3` style
-        - [ ] `zdiff` style
-    
-[gix-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
+        - [x] `merge` style
+        - [x] `diff3` style
+        - [x] `zdiff` style
+* [ ] diff-heuristics match Git perfectly
+* [x] API documentation
+    * [ ] Examples
 
 ### gix-traverse
 

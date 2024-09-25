@@ -137,7 +137,7 @@ pub mod merge {
         pub other: ResourceRef<'parent>,
     }
 
-    #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
     pub struct Options {
         /// If `true`, the resources being merged are contained in a virtual ancestor,
         /// which is the case when merge bases are merged into one.

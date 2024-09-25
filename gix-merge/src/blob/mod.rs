@@ -11,16 +11,20 @@ pub mod pipeline;
 ///
 pub mod platform;
 
-/// Identify a merge resolution.
+/// Define if a merge is conflicted or not.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Resolution {
     /// Everything could be resolved during the merge.
+    ///
+    /// Conflicts may have been resolved automatically, depending on the options.
     Complete,
-    /// A conflict is still present.
+    /// A conflict is still present in the form of conflict markers.
+    ///
+    /// Note that this won't be the case if conflicts were automatically resolved.
     Conflict,
 }
 
-/// A way to classify a resource suitable for merging.
+/// A way to classify the side of a resource for merging.
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum ResourceKind {
     /// Our side of the state.
@@ -31,7 +35,7 @@ pub enum ResourceKind {
     CommonAncestorOrBase,
 }
 
-/// Define a driver program that merges
+/// Define a built-in way of performing a three-way merge, including auto-resolution support.
 ///
 /// Some values are related to diffing, some are related to conversions.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -59,7 +63,7 @@ pub enum BuiltinDriver {
     Union,
 }
 
-/// Define a driver program that merges
+/// Define a driver program that performs a three-way merge.
 ///
 /// Some values are related to diffing, some are related to conversions.
 #[derive(Default, Debug, Clone, PartialEq, Eq)]

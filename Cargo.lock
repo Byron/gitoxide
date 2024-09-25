@@ -2053,9 +2053,11 @@ dependencies = [
  "gix-object 0.44.0",
  "gix-path 0.10.11",
  "gix-tempfile 14.0.2",
+ "gix-testtools",
  "gix-trace 0.1.10",
  "gix-worktree 0.36.0",
  "imara-diff",
+ "pretty_assertions",
  "serde",
  "thiserror",
 ]
