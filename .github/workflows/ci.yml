@@ -12,29 +12,9 @@ on:
       - '**/run-ci/**'
     tags-ignore:
       - '*'
-    paths:
-      - '.github/**'
-      - 'ci/**'
-      - 'etc/**'
-      - 'src/**'
-      - 'tests/**'
-      - 'cargo-*/**'
-      - 'gix*/**'
-      - '*.toml'
-      - Makefile
   pull_request:
     branches:
       - main
-    paths:
-      - '.github/**'
-      - 'ci/**'
-      - 'etc/**'
-      - 'src/**'
-      - 'tests/**'
-      - 'cargo-*/**'
-      - 'gix*/**'
-      - '*.toml'
-      - Makefile
   workflow_dispatch:
 
 jobs:
