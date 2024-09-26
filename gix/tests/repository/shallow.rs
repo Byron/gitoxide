@@ -44,6 +44,7 @@ fn yes() -> crate::Result {
 }
 
 mod traverse {
+    use gix_traverse::commit::simple::CommitTimeOrder;
     use serial_test::parallel;
 
     use crate::util::{hex_to_id, named_subrepo_opts};
@@ -53,8 +54,11 @@ mod traverse {
     fn boundary_is_detected_triggering_no_error() -> crate::Result {
         for sorting in [
             gix::revision::walk::Sorting::BreadthFirst,
-            gix::revision::walk::Sorting::ByCommitTimeNewestFirst,
-            gix::revision::walk::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: 0 },
+            gix::revision::walk::Sorting::ByCommitTime(CommitTimeOrder::NewestFirst),
+            gix::revision::walk::Sorting::ByCommitTimeCutoff {
+                order: CommitTimeOrder::NewestFirst,
+                seconds: 0,
+            },
         ] {
             for toggle in [false, true] {
                 for name in ["shallow.git", "shallow"] {
@@ -97,7 +101,7 @@ mod traverse {
                     .head_id()?
                     .ancestors()
                     .use_commit_graph(toggle)
-                    .sorting(gix::revision::walk::Sorting::ByCommitTimeNewestFirst)
+                    .sorting(gix::revision::walk::Sorting::ByCommitTime(CommitTimeOrder::NewestFirst))
                     .all()?
                     .map(|c| c.map(|c| c.id))
                     .collect::<Result<_, _>>()?;

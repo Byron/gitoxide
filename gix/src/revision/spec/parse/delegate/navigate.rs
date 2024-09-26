@@ -192,7 +192,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     match oid
                         .attach(repo)
                         .ancestors()
-                        .sorting(crate::revision::walk::Sorting::ByCommitTimeNewestFirst)
+                        .sorting(crate::revision::walk::Sorting::ByCommitTime(Default::default()))
                         .all()
                     {
                         Ok(iter) => {
@@ -245,7 +245,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                     .filter(|r| r.id().header().ok().map_or(false, |obj| obj.kind().is_commit()))
                                     .filter_map(|r| r.detach().peeled),
                             )
-                            .sorting(crate::revision::walk::Sorting::ByCommitTimeNewestFirst)
+                            .sorting(crate::revision::walk::Sorting::ByCommitTime(Default::default()))
                             .all()
                         {
                             Ok(iter) => {

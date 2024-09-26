@@ -154,19 +154,19 @@ pub(crate) fn update(
                                                 .find_object(local_id)?
                                                 .try_into_commit()
                                                 .map_err(|_| ())
-                                                .and_then(|c| {
-                                                    c.committer().map(|a| a.time.seconds).map_err(|_| ())
-                                                }).and_then(|local_commit_time|
-                                                remote_id
-                                                    .to_owned()
-                                                    .ancestors(&repo.objects)
-                                                    .sorting(
-                                                        gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-                                                            seconds: local_commit_time
-                                                        },
-                                                    )
-                                                    .map_err(|_| ())
-                                            );
+                                                .and_then(|c| c.committer().map(|a| a.time.seconds).map_err(|_| ()))
+                                                .and_then(|local_commit_time| {
+                                                    remote_id
+                                                        .to_owned()
+                                                        .ancestors(&repo.objects)
+                                                        .sorting(
+                                                            gix_traverse::commit::simple::Sorting::ByCommitTimeCutoff {
+                                                                order: Default::default(),
+                                                                seconds: local_commit_time,
+                                                            },
+                                                        )
+                                                        .map_err(|_| ())
+                                                });
                                             match ancestors {
                                                 Ok(mut ancestors) => {
                                                     ancestors.any(|cid| cid.map_or(false, |c| c.id == local_id))
