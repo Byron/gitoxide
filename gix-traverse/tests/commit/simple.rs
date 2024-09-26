@@ -92,7 +92,7 @@ impl TraversalAssertion<'_> {
 }
 
 mod different_date_intermixed {
-    use gix_traverse::commit::simple::Sorting;
+    use gix_traverse::commit::simple::{CommitTimeOrder, Sorting};
 
     use crate::commit::simple::TraversalAssertion;
 
@@ -114,6 +114,7 @@ mod different_date_intermixed {
                 "65d6af66f60b8e39fd1ba6a1423178831e764ec5", /* c1 */
             ],
         )
+        .with_sorting(Sorting::BreadthFirst)
         .check()
     }
 
@@ -134,13 +135,30 @@ mod different_date_intermixed {
                 "65d6af66f60b8e39fd1ba6a1423178831e764ec5", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
+        .with_sorting(Sorting::ByCommitTime(CommitTimeOrder::NewestFirst))
+        .check()?;
+
+        TraversalAssertion::new_at(
+            "make_repos.sh",
+            "intermixed",
+            &["58912d92944087dcb09dca79cdd2a937cc158bed"], /* merge */
+            &[
+                "a9c28710e058af4e5163699960234adb9fb2abc7", /* b2c2 */
+                "b648f955b930ca95352fae6f22cb593ee0244b27", /* b2c1 */
+                "ad33ff2d0c4fc77d56b5fbff6f86f332fe792d83", /* c2 */
+                "65d6af66f60b8e39fd1ba6a1423178831e764ec5", /* c1 */
+                "0f6632a5a7d81417488b86692b729e49c1b73056", /* b1c2 */
+                "77fd3c6832c0cd542f7a39f3af9250c3268db979", /* b1c1 */
+                "2dce37be587e07caef8c4a5ab60b423b13a8536a", /* c3 */
+            ],
+        )
+        .with_sorting(Sorting::ByCommitTime(CommitTimeOrder::OldestFirst))
         .check()
     }
 }
 
 mod different_date {
-    use gix_traverse::commit::simple::Sorting;
+    use gix_traverse::commit::simple::{CommitTimeOrder, Sorting};
 
     use crate::commit::simple::TraversalAssertion;
 
@@ -186,16 +204,34 @@ mod different_date {
                 "65d6af66f60b8e39fd1ba6a1423178831e764ec5", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
+        .with_sorting(Sorting::ByCommitTime(CommitTimeOrder::NewestFirst))
+        .check()?;
+        TraversalAssertion::new_at(
+            "make_repos.sh",
+            "simple",
+            &["f49838d84281c3988eeadd988d97dd358c9f9dc4"], /* merge */
+            &[
+                "48e8dac19508f4238f06c8de2b10301ce64a641c", /* b2c2 */
+                "cb6a6befc0a852ac74d74e0354e0f004af29cb79", /* b2c1 */
+                "8cb5f13b66ce52a49399a2c49f537ee2b812369c", /* c4 */
+                "33aa07785dd667c0196064e3be3c51dd9b4744ef", /* c3 */
+                "ad33ff2d0c4fc77d56b5fbff6f86f332fe792d83", /* c2 */
+                "65d6af66f60b8e39fd1ba6a1423178831e764ec5", /* c1 */
+                "66a309480201c4157b0eae86da69f2d606aadbe7", /* b1c2 */
+                "80947acb398362d8236fcb8bf0f8a9dac640583f", /* b1c1 */
+                "0edb95c0c0d9933d88f532ec08fcd405d0eee882", /* c5 */
+            ],
+        )
+        .with_sorting(Sorting::ByCommitTime(CommitTimeOrder::OldestFirst))
         .check()
     }
 }
 
 /// Same dates are somewhat special as they show how sorting-details on priority queues affects ordering
 mod same_date {
-    use gix_traverse::commit::{simple::Sorting, Parents};
-
     use crate::{commit::simple::TraversalAssertion, hex_to_id};
+    use gix_traverse::commit::simple::CommitTimeOrder;
+    use gix_traverse::commit::{simple::Sorting, Parents};
 
     #[test]
     fn c4_breadth_first() -> crate::Result {
@@ -208,6 +244,7 @@ mod same_date {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
+        .with_sorting(Sorting::BreadthFirst)
         .check()
     }
 
@@ -229,6 +266,7 @@ mod same_date {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
+        .with_sorting(Sorting::BreadthFirst)
         .check()
     }
 
@@ -247,7 +285,23 @@ mod same_date {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
+        .with_sorting(Sorting::ByCommitTime(CommitTimeOrder::NewestFirst))
+        .check()?;
+
+        TraversalAssertion::new(
+            "make_traversal_repo_for_commits_same_date.sh",
+            &["01ec18a3ebf2855708ad3c9d244306bc1fae3e9b"], /* m1b1 */
+            &[
+                "efd9a841189668f1bab5b8ebade9cd0a1b139a37", /* c5 */
+                "ce2e8ffaa9608a26f7b21afc1db89cadb54fd353", /* b1c2 */
+                "9556057aee5abb06912922e9f26c46386a816822", /* c4 */
+                "9152eeee2328073cf23dcf8e90c949170b711659", /* b1c1 */
+                "17d78c64cef6c33a10a604573fd2c429e477fd63", /* c3 */
+                "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7", /* c2 */
+                "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
+            ],
+        )
+        .with_sorting(Sorting::ByCommitTime(CommitTimeOrder::OldestFirst))
         .check()
     }
 
@@ -265,6 +319,7 @@ mod same_date {
             ],
         )
         .with_parents(Parents::First)
+        .with_sorting(Sorting::BreadthFirst)
         .check()
     }
 
@@ -285,6 +340,7 @@ mod same_date {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
+        .with_sorting(Sorting::BreadthFirst)
         .check()
     }
 
@@ -306,6 +362,7 @@ mod same_date {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
+        .with_sorting(Sorting::BreadthFirst)
         .check_with_predicate(|id| id != hex_to_id("9152eeee2328073cf23dcf8e90c949170b711659"))
     }
 
@@ -323,6 +380,7 @@ mod same_date {
                 "9152eeee2328073cf23dcf8e90c949170b711659", /* b1c1 */
             ],
         )
+        .with_sorting(Sorting::BreadthFirst)
         .check_with_predicate(move |id| {
             if id == hex_to_id("9556057aee5abb06912922e9f26c46386a816822") {
                 assert!(!seen);
@@ -337,9 +395,9 @@ mod same_date {
 
 /// Some dates adjusted to be a year apart, but still 'c1' and 'c2' with the same date.
 mod adjusted_dates {
-    use gix_traverse::commit::{simple::Sorting, Parents, Simple};
-
     use crate::{commit::simple::TraversalAssertion, hex_to_id};
+    use gix_traverse::commit::simple::CommitTimeOrder;
+    use gix_traverse::commit::{simple::Sorting, Parents, Simple};
 
     #[test]
     fn head_breadth_first() -> crate::Result {
@@ -354,6 +412,7 @@ mod adjusted_dates {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
+        .with_sorting(Sorting::BreadthFirst)
         .check()
     }
 
@@ -368,55 +427,115 @@ mod adjusted_dates {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
-        .check()
-    }
-
-    #[test]
-    fn head_date_order_with_cutoff() -> crate::Result {
-        TraversalAssertion::new(
-            "make_traversal_repo_for_commits_with_dates.sh",
-            &["288e509293165cb5630d08f4185bdf2445bf6170"], /* m1b1 */
-            &["bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac"], /* b1c1 */
-        )
-        .with_sorting(Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-            seconds: 978393600, // =2001-01-02 00:00:00 +0000
-        })
-        .check()
-    }
-
-    #[test]
-    fn date_order_with_cutoff_is_applied_to_starting_position() -> crate::Result {
-        let dir =
-            gix_testtools::scripted_fixture_read_only_standalone("make_traversal_repo_for_commits_with_dates.sh")?;
-        let store = gix_odb::at(dir.join(".git").join("objects"))?;
-        let iter = Simple::new(
-            Some(hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7" /* c2 */)),
-            &store,
-        )
-        .sorting(Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
-            seconds: 978393600, // =2001-01-02 00:00:00 +0000
-        })?;
-        assert_eq!(
-            iter.count(),
-            0,
-            "initial tips that don't pass cutoff value are not returned either"
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn head_date_order_first_parent_only() -> crate::Result {
+        .with_sorting(Sorting::ByCommitTime(CommitTimeOrder::NewestFirst))
+        .check()?;
         TraversalAssertion::new(
             "make_traversal_repo_for_commits_with_dates.sh",
             &["288e509293165cb5630d08f4185bdf2445bf6170"], /* m1b1 */
             &[
                 "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7", /* c2 */
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
+                "bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac", /* b1c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
-        .with_parents(Parents::First)
+        .with_sorting(Sorting::ByCommitTime(CommitTimeOrder::OldestFirst))
         .check()
+    }
+
+    #[test]
+    fn head_date_order_with_cutoff() -> crate::Result {
+        for order in all_commit_time_orderings() {
+            TraversalAssertion::new(
+                "make_traversal_repo_for_commits_with_dates.sh",
+                &["288e509293165cb5630d08f4185bdf2445bf6170"], /* m1b1 */
+                &["bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac"], /* b1c1 */
+            )
+            .with_sorting(Sorting::ByCommitTimeCutoff {
+                order,
+                seconds: 978393600, // =2001-01-02 00:00:00 +0000
+            })
+            .check()?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn head_date_order_with_cutoff_disabled() -> crate::Result {
+        let very_early = 878393600; // an early date before any commit
+        TraversalAssertion::new(
+            "make_traversal_repo_for_commits_with_dates.sh",
+            &["288e509293165cb5630d08f4185bdf2445bf6170"], /* m1b1 */
+            &[
+                "bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac", /* b1c1 */
+                "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7", /* c2 */
+                "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
+            ],
+        )
+        .with_sorting(Sorting::ByCommitTimeCutoff {
+            order: CommitTimeOrder::NewestFirst,
+            seconds: very_early,
+        })
+        .check()?;
+
+        TraversalAssertion::new(
+            "make_traversal_repo_for_commits_with_dates.sh",
+            &["288e509293165cb5630d08f4185bdf2445bf6170"], /* m1b1 */
+            &[
+                "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7", /* c2 */
+                "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
+                "bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac", /* b1c1 */
+            ],
+        )
+        .with_sorting(Sorting::ByCommitTimeCutoff {
+            order: CommitTimeOrder::OldestFirst,
+            seconds: very_early,
+        })
+        .check()?;
+        Ok(())
+    }
+
+    #[test]
+    fn date_order_with_cutoff_is_applied_to_starting_position() -> crate::Result {
+        for order in all_commit_time_orderings() {
+            let dir =
+                gix_testtools::scripted_fixture_read_only_standalone("make_traversal_repo_for_commits_with_dates.sh")?;
+            let store = gix_odb::at(dir.join(".git").join("objects"))?;
+            let iter = Simple::new(
+                Some(hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7" /* c2 */)),
+                &store,
+            )
+            .sorting(Sorting::ByCommitTimeCutoff {
+                order,
+                seconds: 978393600, // =2001-01-02 00:00:00 +0000
+            })?;
+            assert_eq!(
+                iter.count(),
+                0,
+                "initial tips that don't pass cutoff value are not returned either"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn head_date_order_first_parent_only() -> crate::Result {
+        for order in all_commit_time_orderings() {
+            TraversalAssertion::new(
+                "make_traversal_repo_for_commits_with_dates.sh",
+                &["288e509293165cb5630d08f4185bdf2445bf6170"], /* m1b1 */
+                &[
+                    "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7", /* c2 */
+                    "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
+                ],
+            )
+            .with_sorting(Sorting::ByCommitTime(order))
+            .with_parents(Parents::First)
+            .check()?;
+        }
+        Ok(())
+    }
+
+    fn all_commit_time_orderings() -> [CommitTimeOrder; 2] {
+        [CommitTimeOrder::NewestFirst, CommitTimeOrder::OldestFirst]
     }
 }

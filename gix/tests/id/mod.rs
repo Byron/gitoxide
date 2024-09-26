@@ -85,7 +85,7 @@ mod ancestors {
             let commits_by_commit_date = head
                 .ancestors()
                 .use_commit_graph(!use_commit_graph)
-                .sorting(gix::revision::walk::Sorting::ByCommitTimeNewestFirst)
+                .sorting(gix::revision::walk::Sorting::ByCommitTime(Default::default()))
                 .all()?
                 .map(|c| c.map(gix::revision::walk::Info::detach))
                 .collect::<Result<Vec<_>, _>>()?;
@@ -119,7 +119,7 @@ mod ancestors {
             let head = repo.head()?.into_peeled_id()?;
             let commits = head
                 .ancestors()
-                .sorting(gix::revision::walk::Sorting::ByCommitTimeNewestFirst) // assure we have time set
+                .sorting(gix::revision::walk::Sorting::ByCommitTime(Default::default())) // assure we have time set
                 .use_commit_graph(use_commit_graph)
                 .all()?
                 .collect::<Result<Vec<_>, _>>()?;
@@ -162,8 +162,11 @@ mod ancestors {
         for use_commit_graph in [false, true] {
             for sorting in [
                 gix::revision::walk::Sorting::BreadthFirst,
-                gix::revision::walk::Sorting::ByCommitTimeNewestFirst,
-                gix::revision::walk::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: 0 },
+                gix::revision::walk::Sorting::ByCommitTime(Default::default()),
+                gix::revision::walk::Sorting::ByCommitTimeCutoff {
+                    order: Default::default(),
+                    seconds: 0,
+                },
             ] {
                 let commits_graph_order = head
                     .ancestors()

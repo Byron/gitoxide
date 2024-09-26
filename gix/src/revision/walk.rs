@@ -1,5 +1,6 @@
 use gix_hash::ObjectId;
 use gix_object::FindExt;
+use gix_traverse::commit::simple::CommitTimeOrder;
 
 use crate::{ext::ObjectIdExt, revision, Repository};
 
@@ -39,24 +40,27 @@ pub enum Sorting {
     /// as it avoids overlapping branches.
     #[default]
     BreadthFirst,
-    /// Commits are sorted by their commit time in descending order, that is newest first.
+    /// Commits are sorted by their commit time in the order specified, either newest or oldest first.
     ///
     /// The sorting applies to all currently queued commit ids and thus is full.
     ///
-    /// In the *sample history* the order would be `8, 7, 6, 4, 5, 2, 3, 1`
+    /// In the *sample history* the order would be `8, 7, 6, 5, 4, 3, 2, 1` for [`NewestFirst`](CommitTimeOrder::NewestFirst),
+    /// or `1, 2, 3, 4, 5, 6, 7, 8` for [`OldestFirst`](CommitTimeOrder::OldestFirst).
     ///
     /// # Performance
     ///
     /// This mode benefits greatly from having an [object cache](crate::Repository::object_cache_size) configured
     /// to avoid having to look up each commit twice.
-    ByCommitTimeNewestFirst,
-    /// This sorting is similar to `ByCommitTimeNewestFirst`, but adds a cutoff to not return commits older than
+    ByCommitTime(CommitTimeOrder),
+    /// This sorting is similar to [`ByCommitTime`](Sorting::ByCommitTimeCutoff), but adds a cutoff to not return commits older than
     /// a given time, stopping the iteration once no younger commits is queued to be traversed.
     ///
     /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
     ///
     /// In the *sample history* and a cut-off date of 4, the returned list of commits would be `8, 7, 6, 4`
-    ByCommitTimeNewestFirstCutoffOlderThan {
+    ByCommitTimeCutoff {
+        /// The order in wich to prioritize lookups
+        order: CommitTimeOrder,
         /// The amount of seconds since unix epoch to use as cut-off time.
         seconds: gix_date::SecondsSinceUnixEpoch,
     },
@@ -66,9 +70,9 @@ impl Sorting {
     fn into_simple(self) -> Option<gix_traverse::commit::simple::Sorting> {
         Some(match self {
             Sorting::BreadthFirst => gix_traverse::commit::simple::Sorting::BreadthFirst,
-            Sorting::ByCommitTimeNewestFirst => gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirst,
-            Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => {
-                gix_traverse::commit::simple::Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds }
+            Sorting::ByCommitTime(order) => gix_traverse::commit::simple::Sorting::ByCommitTime(order),
+            Sorting::ByCommitTimeCutoff { seconds, order } => {
+                gix_traverse::commit::simple::Sorting::ByCommitTimeCutoff { order, seconds }
             }
         })
     }
@@ -208,15 +212,16 @@ impl<'repo> Platform<'repo> {
     /// Prune the commit with the given `ids` such that they won't be returned, and such that none of their ancestors is returned either.
     ///
     /// Note that this forces the [sorting](Self::sorting) to
-    /// [`ByCommitTimeNewestFirstCutoffOlderThan`](Sorting::ByCommitTimeNewestFirstCutoffOlderThan) configured with
+    /// [`ByCommitTimeCutoff`](Sorting::ByCommitTimeCutoff) configured with
     /// the oldest available commit time, ensuring that no commits older than the oldest of `ids` will be returned either.
     ///
     /// Also note that commits that can't be accessed or are missing are simply ignored for the purpose of obtaining the cutoff date.
     #[doc(alias = "hide", alias = "git2")]
     pub fn with_pruned(mut self, ids: impl IntoIterator<Item = impl Into<ObjectId>>) -> Self {
-        let mut cutoff = match self.sorting {
-            Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => Some(seconds),
-            Sorting::BreadthFirst | Sorting::ByCommitTimeNewestFirst => None,
+        let (mut cutoff, order) = match self.sorting {
+            Sorting::ByCommitTimeCutoff { seconds, order } => (Some(seconds), order),
+            Sorting::ByCommitTime(order) => (None, order),
+            Sorting::BreadthFirst => (None, CommitTimeOrder::default()),
         };
         for id in ids.into_iter() {
             let id = id.into();
@@ -231,7 +236,7 @@ impl<'repo> Platform<'repo> {
         }
 
         if let Some(cutoff) = cutoff {
-            self.sorting = Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds: cutoff }
+            self.sorting = Sorting::ByCommitTimeCutoff { seconds: cutoff, order }
         }
         self
     }

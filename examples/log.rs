@@ -79,7 +79,7 @@ fn run(args: Args) -> anyhow::Result<()> {
         Sorting::BreadthFirst
     } else {
         // else if args.newest_first {
-        Sorting::ByCommitTimeNewestFirst
+        Sorting::ByCommitTime(Default::default())
     };
 
     let mut min_parents = args.min_parents.unwrap_or(0);

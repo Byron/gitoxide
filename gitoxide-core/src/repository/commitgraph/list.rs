@@ -30,7 +30,7 @@ pub(crate) mod function {
             .context("Need committish as starting point")?
             .id()
             .ancestors()
-            .sorting(Sorting::ByCommitTimeNewestFirst)
+            .sorting(Sorting::ByCommitTime(Default::default()))
             .all()?;
         for commit in commits {
             let commit = commit?;
