@@ -134,7 +134,7 @@ mod different_date_intermixed {
                 "65d6af66f60b8e39fd1ba6a1423178831e764ec5", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
+        .with_sorting(Sorting::ByCommitTime(Default::default()))
         .check()
     }
 }
@@ -186,7 +186,7 @@ mod different_date {
                 "65d6af66f60b8e39fd1ba6a1423178831e764ec5", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
+        .with_sorting(Sorting::ByCommitTime(Default::default()))
         .check()
     }
 }
@@ -247,7 +247,7 @@ mod same_date {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
+        .with_sorting(Sorting::ByCommitTime(Default::default()))
         .check()
     }
 
@@ -368,7 +368,7 @@ mod adjusted_dates {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
+        .with_sorting(Sorting::ByCommitTime(Default::default()))
         .check()
     }
 
@@ -379,7 +379,8 @@ mod adjusted_dates {
             &["288e509293165cb5630d08f4185bdf2445bf6170"], /* m1b1 */
             &["bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac"], /* b1c1 */
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+        .with_sorting(Sorting::ByCommitTimeCutoff {
+            order: Default::default(),
             seconds: 978393600, // =2001-01-02 00:00:00 +0000
         })
         .check()
@@ -394,7 +395,8 @@ mod adjusted_dates {
             Some(hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7" /* c2 */)),
             &store,
         )
-        .sorting(Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+        .sorting(Sorting::ByCommitTimeCutoff {
+            order: Default::default(),
             seconds: 978393600, // =2001-01-02 00:00:00 +0000
         })?;
         assert_eq!(
@@ -415,7 +417,7 @@ mod adjusted_dates {
                 "134385f6d781b7e97062102c6a483440bfda2a03", /* c1 */
             ],
         )
-        .with_sorting(Sorting::ByCommitTimeNewestFirst)
+        .with_sorting(Sorting::ByCommitTime(Default::default()))
         .with_parents(Parents::First)
         .check()
     }

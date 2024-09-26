@@ -2,7 +2,18 @@ use gix_date::SecondsSinceUnixEpoch;
 use gix_hash::ObjectId;
 use gix_hashtable::HashSet;
 use smallvec::SmallVec;
+use std::cmp::Reverse;
 use std::collections::VecDeque;
+
+#[derive(Default, Debug, Copy, Clone)]
+/// The order with which to prioritize the search
+pub enum CommitTimeOrder {
+    #[default]
+    /// sort commits by newest first
+    NewestFirst,
+    /// sort commits by oldest first
+    OldestFirst,
+}
 
 /// Specify how to sort commits during a [simple](super::Simple) traversal.
 ///
@@ -28,24 +39,27 @@ pub enum Sorting {
     /// as it avoids overlapping branches.
     #[default]
     BreadthFirst,
-    /// Commits are sorted by their commit time in descending order, that is newest first.
+    /// Commits are sorted by their commit time in the order specified, either newest or oldest first.
     ///
     /// The sorting applies to all currently queued commit ids and thus is full.
     ///
-    /// In the *sample history* the order would be `8, 7, 6, 5, 4, 3, 2, 1`
+    /// In the *sample history* the order would be `8, 7, 6, 5, 4, 3, 2, 1` for NewestFirst
+    /// Or `1, 2, 3, 4, 5, 6, 7, 8` for OldestFirst
     ///
     /// # Performance
     ///
     /// This mode benefits greatly from having an object_cache in `find()`
     /// to avoid having to lookup each commit twice.
-    ByCommitTimeNewestFirst,
-    /// This sorting is similar to `ByCommitTimeNewestFirst`, but adds a cutoff to not return commits older than
+    ByCommitTime(CommitTimeOrder),
+    /// This sorting is similar to `ByCommitTime`, but adds a cutoff to not return commits older than
     /// a given time, stopping the iteration once no younger commits is queued to be traversed.
     ///
     /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
     ///
     /// In the *sample history* and a cut-off date of 4, the returned list of commits would be `8, 7, 6, 4`
-    ByCommitTimeNewestFirstCutoffOlderThan {
+    ByCommitTimeCutoff {
+        /// The order in wich to prioritize lookups
+        order: CommitTimeOrder,
         /// The amount of seconds since unix epoch, the same value obtained by any `gix_date::Time` structure and the way git counts time.
         seconds: gix_date::SecondsSinceUnixEpoch,
     },
@@ -61,11 +75,14 @@ pub enum Error {
     ObjectDecode(#[from] gix_object::decode::Error),
 }
 
+use Result as Either;
+type QueueKey<T> = Either<T, Reverse<T>>;
+
 /// The state used and potentially shared by multiple graph traversals.
 #[derive(Clone)]
 pub(super) struct State {
     next: VecDeque<ObjectId>,
-    queue: gix_revwalk::PriorityQueue<SecondsSinceUnixEpoch, ObjectId>,
+    queue: gix_revwalk::PriorityQueue<QueueKey<SecondsSinceUnixEpoch>, ObjectId>,
     buf: Vec<u8>,
     seen: HashSet<ObjectId>,
     parents_buf: Vec<u8>,
@@ -77,10 +94,13 @@ mod init {
     use gix_date::SecondsSinceUnixEpoch;
     use gix_hash::{oid, ObjectId};
     use gix_object::{CommitRefIter, FindExt};
+    use std::cmp::Reverse;
+    use Err as Oldest;
+    use Ok as Newest;
 
     use super::{
         super::{simple::Sorting, Either, Info, ParentIds, Parents, Simple},
-        collect_parents, Error, State,
+        collect_parents, CommitTimeOrder, Error, State,
     };
 
     impl Default for State {
@@ -105,6 +125,14 @@ mod init {
         }
     }
 
+    fn order_time(i: i64, order: CommitTimeOrder) -> super::QueueKey<i64> {
+        if let CommitTimeOrder::NewestFirst = order {
+            Newest(i)
+        } else {
+            Oldest(Reverse(i))
+        }
+    }
+
     /// Builder
     impl<Find, Predicate> Simple<Find, Predicate>
     where
@@ -117,19 +145,23 @@ mod init {
                 Sorting::BreadthFirst => {
                     self.queue_to_vecdeque();
                 }
-                Sorting::ByCommitTimeNewestFirst | Sorting::ByCommitTimeNewestFirstCutoffOlderThan { .. } => {
+                Sorting::ByCommitTime(order) | Sorting::ByCommitTimeCutoff { order, .. } => {
                     let cutoff_time = self.sorting.cutoff_time();
                     let state = &mut self.state;
                     for commit_id in state.next.drain(..) {
                         let commit_iter = self.objects.find_commit_iter(&commit_id, &mut state.buf)?;
                         let time = commit_iter.committer()?.time.seconds;
-                        match cutoff_time {
-                            Some(cutoff_time) if time >= cutoff_time => {
-                                state.queue.insert(time, commit_id);
+                        let ordered_time = order_time(time, order);
+                        match (cutoff_time, order) {
+                            (Some(cutoff_time), CommitTimeOrder::NewestFirst) if time >= cutoff_time => {
+                                state.queue.insert(ordered_time, commit_id);
                             }
-                            Some(_) => {}
-                            None => {
-                                state.queue.insert(time, commit_id);
+                            (Some(cutoff_time), CommitTimeOrder::OldestFirst) if time <= cutoff_time => {
+                                state.queue.insert(ordered_time, commit_id);
+                            }
+                            (Some(_), _) => {}
+                            (None, _) => {
+                                state.queue.insert(ordered_time, commit_id);
                             }
                         }
                     }
@@ -254,10 +286,8 @@ mod init {
             } else {
                 match self.sorting {
                     Sorting::BreadthFirst => self.next_by_topology(),
-                    Sorting::ByCommitTimeNewestFirst => self.next_by_commit_date(None),
-                    Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => {
-                        self.next_by_commit_date(seconds.into())
-                    }
+                    Sorting::ByCommitTime(order) => self.next_by_commit_date(order, None),
+                    Sorting::ByCommitTimeCutoff { seconds, order } => self.next_by_commit_date(order, seconds.into()),
                 }
             }
         }
@@ -267,7 +297,7 @@ mod init {
         /// If not topo sort, provide the cutoff date if present.
         fn cutoff_time(&self) -> Option<SecondsSinceUnixEpoch> {
             match self {
-                Sorting::ByCommitTimeNewestFirstCutoffOlderThan { seconds } => Some(*seconds),
+                Sorting::ByCommitTimeCutoff { seconds, .. } => Some(*seconds),
                 _ => None,
             }
         }
@@ -281,18 +311,21 @@ mod init {
     {
         fn next_by_commit_date(
             &mut self,
-            cutoff_older_than: Option<SecondsSinceUnixEpoch>,
+            order: CommitTimeOrder,
+            cutoff: Option<SecondsSinceUnixEpoch>,
         ) -> Option<Result<Info, Error>> {
             let state = &mut self.state;
 
-            let (commit_time, oid) = state.queue.pop()?;
+            let (commit_time, oid) = match state.queue.pop()? {
+                (Newest(t) | Oldest(Reverse(t)), o) => (t, o),
+            };
             let mut parents: ParentIds = Default::default();
             match super::super::find(self.cache.as_ref(), &self.objects, &oid, &mut state.buf) {
                 Ok(Either::CachedCommit(commit)) => {
                     if !collect_parents(&mut state.parent_ids, self.cache.as_ref(), commit.iter_parents()) {
                         // drop corrupt caches and try again with ODB
                         self.cache = None;
-                        return self.next_by_commit_date(cutoff_older_than);
+                        return self.next_by_commit_date(order, cutoff);
                     }
                     for (id, parent_commit_time) in state.parent_ids.drain(..) {
                         parents.push(id);
@@ -301,9 +334,19 @@ mod init {
                             continue;
                         }
 
-                        match cutoff_older_than {
-                            Some(cutoff_older_than) if parent_commit_time < cutoff_older_than => continue,
-                            Some(_) | None => state.queue.insert(parent_commit_time, id),
+                        let time = order_time(parent_commit_time, order);
+                        match (cutoff, order) {
+                            (Some(cutoff_older_than), CommitTimeOrder::NewestFirst)
+                                if parent_commit_time < cutoff_older_than =>
+                            {
+                                continue
+                            }
+                            (Some(cutoff_newer_than), CommitTimeOrder::OldestFirst)
+                                if parent_commit_time > cutoff_newer_than =>
+                            {
+                                continue
+                            }
+                            (Some(_) | None, _) => state.queue.insert(time, id),
                         }
                     }
                 }
@@ -323,9 +366,19 @@ mod init {
                                     .and_then(|parent| parent.committer().ok().map(|committer| committer.time.seconds))
                                     .unwrap_or_default();
 
-                                match cutoff_older_than {
-                                    Some(cutoff_older_than) if parent_commit_time < cutoff_older_than => continue,
-                                    Some(_) | None => state.queue.insert(parent_commit_time, id),
+                                let time = order_time(parent_commit_time, order);
+                                match (cutoff, order) {
+                                    (Some(cutoff_older_than), CommitTimeOrder::NewestFirst)
+                                        if parent_commit_time < cutoff_older_than =>
+                                    {
+                                        continue
+                                    }
+                                    (Some(cutoff_newer_than), CommitTimeOrder::OldestFirst)
+                                        if parent_commit_time > cutoff_newer_than =>
+                                    {
+                                        continue
+                                    }
+                                    (Some(_) | None, _) => state.queue.insert(time, id),
                                 }
                             }
                             Ok(_unused_token) => break,
