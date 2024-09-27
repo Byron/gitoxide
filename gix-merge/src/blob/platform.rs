@@ -1,7 +1,6 @@
-use bstr::{BStr, BString};
-
-use crate::blob::pipeline::DriverChoice;
-use crate::blob::{pipeline, Pipeline, Platform, ResourceKind};
+use crate::blob::{pipeline, BuiltinDriver, Pipeline, Platform, ResourceKind};
+use bstr::{BStr, BString, ByteSlice};
+use gix_filter::attributes;
 
 /// A stored value representing a resource that participates in a merge.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
@@ -10,8 +9,8 @@ pub(super) struct Resource {
     id: gix_hash::ObjectId,
     /// The repository-relative path where the resource lives in the tree.
     rela_path: BString,
-    /// The outcome of converting a resource into a diffable format using [Pipeline::convert_to_mergeable()].
-    conversion: pipeline::Outcome,
+    /// The outcome of converting a resource into a mergable format using [Pipeline::convert_to_mergeable()].
+    data: Option<pipeline::Data>,
     /// The kind of the resource we are looking at. Only possible values are `Blob` and `BlobExecutable`.
     mode: gix_object::tree::EntryKind,
     /// A possibly empty buffer, depending on `conversion.data` which may indicate the data is considered binary
@@ -26,12 +25,49 @@ pub struct ResourceRef<'a> {
     pub data: resource::Data<'a>,
     /// The location of the resource, relative to the working tree.
     pub rela_path: &'a BStr,
-    /// Which driver to use according to the resource's configuration.
-    pub driver_choice: DriverChoice,
     /// The id of the content as it would be stored in `git`, or `null` if the content doesn't exist anymore at
     /// `rela_path` or if it was never computed. This can happen with content read from the worktree, which
     /// after its 'to-git' conversion never had its hash computed.
     pub id: &'a gix_hash::oid,
+}
+
+/// Options for use in a [`Platform`].
+#[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub struct Options {
+    /// Define which driver to use by name if the `merge` attribute for a resource is unspecified.
+    ///
+    /// This is the value of the `merge.default` git configuration.
+    pub default_driver: Option<BString>,
+}
+
+/// The selection of the driver to use by a resource obtained with [`Pipeline::convert_to_mergeable()`].
+///
+/// If available, an index into the `drivers` field to access more diff-related information of the driver for items
+/// at the given path, as previously determined by git-attributes.
+///
+/// * `merge` is set
+///     - Use the [`BuiltinDriver::Text`]
+/// * `-merge` is unset
+///     - Use the [`BuiltinDriver::Binary`]
+/// * `!merge` is unspecified
+///     - Use [`Options::default_driver`] or [`BuiltinDriver::Text`].
+/// * `merge=name`
+///     - Search for a user-configured or built-in driver called `name`.
+///     - If not found, silently default to [`BuiltinDriver::Text`]
+///
+/// Note that drivers are queried even if there is no object available.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
+pub enum DriverChoice {
+    /// Use the given built-in driver to perform the merge.
+    BuiltIn(BuiltinDriver),
+    /// Use the user-provided driver program using the index into [the pipelines driver array](Pipeline::drivers().
+    Index(usize),
+}
+
+impl Default for DriverChoice {
+    fn default() -> Self {
+        DriverChoice::BuiltIn(Default::default())
+    }
 }
 
 ///
@@ -44,11 +80,10 @@ pub mod resource {
     impl<'a> ResourceRef<'a> {
         pub(super) fn new(cache: &'a Resource) -> Self {
             ResourceRef {
-                data: cache.conversion.data.map_or(Data::Missing, |data| match data {
+                data: cache.data.map_or(Data::Missing, |data| match data {
                     pipeline::Data::Buffer => Data::Buffer(&cache.buffer),
-                    pipeline::Data::Binary { size } => Data::Binary { size },
+                    pipeline::Data::TooLarge { size } => Data::Binary { size },
                 }),
-                driver_choice: cache.conversion.driver,
                 rela_path: cache.rela_path.as_ref(),
                 id: &cache.id,
             }
@@ -118,7 +153,7 @@ pub mod set_resource {
 
 ///
 pub mod merge {
-    use crate::blob::pipeline::DriverChoice;
+    use crate::blob::platform::DriverChoice;
     use crate::blob::platform::ResourceRef;
     use crate::blob::{builtin_driver, BuiltinDriver, Driver, Resolution};
     use bstr::BString;
@@ -135,6 +170,9 @@ pub mod merge {
         pub ancestor: ResourceRef<'parent>,
         /// The other or their side of the merge operation.
         pub other: ResourceRef<'parent>,
+        /// Which driver to use according to the resource's configuration,
+        /// using the path of `current` to read git-attributes.
+        pub driver_choice: DriverChoice,
     }
 
     #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -267,9 +305,9 @@ pub mod merge {
         /// Return the configured driver program for use with [`Self::prepare_external_driver()`], or `Err`
         /// with the built-in driver to use instead.
         pub fn configured_driver(&self) -> Result<&'parent Driver, BuiltinDriver> {
-            match self.current.driver_choice {
+            match self.driver_choice {
                 DriverChoice::BuiltIn(builtin) => Err(builtin),
-                DriverChoice::Index(idx) => self.parent.filter.drivers.get(idx).ok_or(BuiltinDriver::default()),
+                DriverChoice::Index(idx) => self.parent.drivers.get(idx).ok_or(BuiltinDriver::default()),
             }
         }
     }
@@ -299,14 +337,21 @@ pub mod merge {
 
 ///
 pub mod prepare_merge {
+    use crate::blob::ResourceKind;
+    use bstr::BString;
+
     /// The error returned by [Platform::prepare_merge()](super::Platform::prepare_merge_state()).
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
         #[error("The 'current', 'ancestor' or 'other' resource for the merge operation were not set")]
         UnsetResource,
-        #[error("Tried to merge 'current' and 'other' where at least one of them is removed")]
-        CurrentOrOtherRemoved,
+        #[error("Failed to obtain attributes for {kind:?} resource at '{rela_path}'")]
+        Attributes {
+            rela_path: BString,
+            kind: ResourceKind,
+            source: std::io::Error,
+        },
     }
 }
 
@@ -315,15 +360,41 @@ impl Platform {
     /// Create a new instance with a way to `filter` data from the object database and turn it into something that is merge-able.
     /// `filter_mode` decides how to do that specifically.
     /// Use `attr_stack` to access attributes pertaining worktree filters and merge settings.
-    pub fn new(filter: Pipeline, filter_mode: pipeline::Mode, attr_stack: gix_worktree::Stack) -> Self {
+    /// `drivers` are the list of available merge drivers that individual paths can refer to by means of git attributes.
+    /// `options` further configure the operation.
+    pub fn new(
+        filter: Pipeline,
+        filter_mode: pipeline::Mode,
+        attr_stack: gix_worktree::Stack,
+        mut drivers: Vec<super::Driver>,
+        options: Options,
+    ) -> Self {
+        drivers.sort_by(|a, b| a.name.cmp(&b.name));
         Platform {
+            drivers,
             current: None,
             ancestor: None,
             other: None,
             filter,
             filter_mode,
             attr_stack,
+            attrs: {
+                let mut out = attributes::search::Outcome::default();
+                out.initialize_with_selection(&Default::default(), Some("merge"));
+                out
+            },
+            options,
         }
+    }
+}
+
+/// Access
+impl Platform {
+    /// Return all drivers that this instance was initialized with.
+    ///
+    /// They are sorted by [`name`](super::Driver::name) to support binary searches.
+    pub fn drivers(&self) -> &[super::Driver] {
+        &self.drivers
     }
 }
 
@@ -351,33 +422,62 @@ impl Platform {
         self.set_resource_inner(id, mode, rela_path, kind, objects)
     }
 
-    /// Returns the resource of the given kind if it was set.
-    pub fn resource(&self, kind: ResourceKind) -> Option<ResourceRef<'_>> {
-        let cache = match kind {
-            ResourceKind::CurrentOrOurs => self.current.as_ref(),
-            ResourceKind::CommonAncestorOrBase => self.ancestor.as_ref(),
-            ResourceKind::OtherOrTheirs => self.other.as_ref(),
-        }?;
-        ResourceRef::new(cache).into()
-    }
-
     /// Prepare all state needed for performing a merge, using all [previously set](Self::set_resource()) resources.
-    pub fn prepare_merge_state(&self) -> Result<merge::State<'_>, prepare_merge::Error> {
+    /// Note that no additional validation is performed here to facilitate inspection.
+    pub fn prepare_merge_state(
+        &mut self,
+        objects: &impl gix_object::Find,
+    ) -> Result<merge::State<'_>, prepare_merge::Error> {
         let current = self.current.as_ref().ok_or(prepare_merge::Error::UnsetResource)?;
         let ancestor = self.ancestor.as_ref().ok_or(prepare_merge::Error::UnsetResource)?;
         let other = self.other.as_ref().ok_or(prepare_merge::Error::UnsetResource)?;
 
+        let entry = self
+            .attr_stack
+            .at_entry(current.rela_path.as_bstr(), None, objects)
+            .map_err(|err| prepare_merge::Error::Attributes {
+                source: err,
+                kind: ResourceKind::CurrentOrOurs,
+                rela_path: current.rela_path.clone(),
+            })?;
+        entry.matching_attributes(&mut self.attrs);
+        let attr = self.attrs.iter_selected().next().expect("pre-initialized with 'diff'");
+        let driver = match attr.assignment.state {
+            attributes::StateRef::Set => DriverChoice::BuiltIn(BuiltinDriver::Text),
+            attributes::StateRef::Unset => DriverChoice::BuiltIn(BuiltinDriver::Binary),
+            attributes::StateRef::Value(_) | attributes::StateRef::Unspecified => {
+                let name = match attr.assignment.state {
+                    attributes::StateRef::Value(name) => Some(name.as_bstr()),
+                    attributes::StateRef::Unspecified => {
+                        self.options.default_driver.as_ref().map(|name| name.as_bstr())
+                    }
+                    _ => unreachable!("only value and unspecified are possible here"),
+                };
+                name.and_then(|name| {
+                    self.drivers
+                        .binary_search_by(|d| d.name.as_bstr().cmp(name))
+                        .ok()
+                        .map(DriverChoice::Index)
+                        .or_else(|| {
+                            name.to_str()
+                                .ok()
+                                .and_then(BuiltinDriver::by_name)
+                                .map(DriverChoice::BuiltIn)
+                        })
+                })
+                .unwrap_or_default()
+            }
+        };
+
         let out = merge::State {
             parent: self,
+            driver_choice: driver,
             current: ResourceRef::new(current),
             ancestor: ResourceRef::new(ancestor),
             other: ResourceRef::new(other),
         };
 
-        match (current.conversion.data, other.conversion.data) {
-            (None, None) => Err(prepare_merge::Error::CurrentOrOtherRemoved),
-            (_, _) => Ok(out),
-        }
+        Ok(out)
     }
 }
 
@@ -430,7 +530,7 @@ impl Platform {
                 *storage = Some(Resource {
                     id,
                     rela_path: rela_path.to_owned(),
-                    conversion: out,
+                    data: out,
                     mode,
                     buffer: buf_storage,
                 });
@@ -438,7 +538,7 @@ impl Platform {
             Some(storage) => {
                 storage.id = id;
                 storage.rela_path = rela_path.to_owned();
-                storage.conversion = out;
+                storage.data = out;
                 storage.mode = mode;
             }
         };

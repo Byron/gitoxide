@@ -123,8 +123,8 @@ mod text {
             "Number of expected diverging cases must match the actual one - probably the implementation improved"
         );
         assert_eq!(
-            (num_diverging as f32 / num_cases as f32) * 100.0,
-            12.053572,
+            ((num_diverging as f32 / num_cases as f32) * 100.0) as usize,
+            12,
             "Just to show the percentage of skipped tests - this should get better"
         );
         Ok(())

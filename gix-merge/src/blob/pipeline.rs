@@ -1,6 +1,5 @@
-use super::{BuiltinDriver, Pipeline, ResourceKind};
-use bstr::{BStr, ByteSlice};
-use gix_filter::attributes;
+use super::{Pipeline, ResourceKind};
+use bstr::BStr;
 use gix_filter::driver::apply::{Delay, MaybeDelayed};
 use gix_filter::pipeline::convert::{ToGitOutcome, ToWorktreeOutcome};
 use gix_object::tree::EntryKind;
@@ -8,7 +7,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 /// Options for use in a [`Pipeline`].
-#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+#[derive(Default, Clone, PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
 pub struct Options {
     /// The amount of bytes that an object has to reach before being treated as binary.
     /// These objects will not be queried, nor will their data be processed in any way.
@@ -20,12 +19,6 @@ pub struct Options {
     /// However, if they are to be retrieved from the worktree, the worktree size is what matters,
     /// even though that also might be a `git-lfs` file which is small in Git.
     pub large_file_threshold_bytes: u64,
-    /// Capabilities of the file system which affect how we read worktree files.
-    pub fs: gix_fs::Capabilities,
-    /// Define which driver to use if the `merge` attribute for a resource is unspecified.
-    ///
-    /// This is the value of the `merge.default` git configuration.
-    pub default_driver: Option<BuiltinDriver>,
 }
 
 /// The specific way to convert a resource.
@@ -78,50 +71,30 @@ impl Pipeline {
     /// Create a new instance of a pipeline which produces blobs suitable for merging.
     ///
     /// `roots` allow to read worktree files directly, and `worktree_filter` is used
-    /// to transform object database data directly. `drivers` further configure individual paths.
-    /// `options` are used to further configure the way we act..
-    pub fn new(
-        roots: WorktreeRoots,
-        worktree_filter: gix_filter::Pipeline,
-        mut drivers: Vec<super::Driver>,
-        options: Options,
-    ) -> Self {
-        drivers.sort_by(|a, b| a.name.cmp(&b.name));
+    /// to transform object database data directly.
+    /// `options` are used to further configure the way we act.
+    pub fn new(roots: WorktreeRoots, worktree_filter: gix_filter::Pipeline, options: Options) -> Self {
         Pipeline {
             roots,
             filter: worktree_filter,
-            drivers,
             options,
-            attrs: {
-                let mut out = gix_filter::attributes::search::Outcome::default();
-                out.initialize_with_selection(&Default::default(), Some("merge"));
-                out
-            },
             path: Default::default(),
         }
     }
 }
 
 /// Access
-impl Pipeline {
-    /// Return all drivers that this instance was initialized with.
-    ///
-    /// They are sorted by [`name`](super::Driver::name) to support binary searches.
-    pub fn drivers(&self) -> &[super::Driver] {
-        &self.drivers
-    }
-}
+impl Pipeline {}
 
-/// Data as part of an [Outcome].
+/// Data as returned by [`Pipeline::convert_to_mergeable()`].
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum Data {
     /// The data to use for merging was written into the buffer that was passed during the call to [`Pipeline::convert_to_mergeable()`].
     Buffer,
-    /// The size that the binary blob had at the given revision, without having applied filters, as it's either
-    /// considered binary or above the big-file threshold.
+    /// The file or blob is above the big-file threshold and cannot be processed.
     ///
-    /// In this state, the binary file cannot be merged.
-    Binary {
+    /// In this state, the file cannot be merged.
+    TooLarge {
         /// The size of the object prior to performing any filtering or as it was found on disk.
         ///
         /// Note that technically, the size isn't always representative of the same 'state' of the
@@ -129,44 +102,6 @@ pub enum Data {
         /// in the worktree - both can differ a lot depending on filters.
         size: u64,
     },
-}
-
-/// The selection of the driver to use by a resource obtained with [`Pipeline::convert_to_mergeable()`].
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
-pub enum DriverChoice {
-    /// Use the given built-in driver to perform the merge.
-    BuiltIn(BuiltinDriver),
-    /// Use the user-provided driver program using the index into [the pipelines driver array](Pipeline::drivers().
-    Index(usize),
-}
-
-impl Default for DriverChoice {
-    fn default() -> Self {
-        DriverChoice::BuiltIn(Default::default())
-    }
-}
-
-/// The outcome returned by [Pipeline::convert_to_mergeable()].
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
-pub struct Outcome {
-    /// If available, an index into the `drivers` field to access more diff-related information of the driver for items
-    /// at the given path, as previously determined by git-attributes.
-    ///
-    /// * `merge` is set
-    ///     - Use the [`BuiltinDriver::Text`]
-    /// * `-merge` is unset
-    ///     - Use the [`BuiltinDriver::Binary`]
-    /// * `!merge` is unspecified
-    ///     - Use [`Options::default_driver`] or [`BuiltinDriver::Text`].
-    /// * `merge=name`
-    ///     - Search for a user-configured or built-in driver called `name`.
-    ///     - If not found, silently default to [`BuiltinDriver::Text`]
-    ///
-    /// Note that drivers are queried even if there is no object available.
-    pub driver: DriverChoice,
-    /// The data itself, suitable for diffing, and if the object or worktree item is present at all.
-    /// Otherwise, it's `None`.
-    pub data: Option<Data>,
 }
 
 ///
@@ -202,15 +137,18 @@ pub mod convert_to_mergeable {
 /// Conversion
 impl Pipeline {
     /// Convert the object at `id`, `mode`, `rela_path` and `kind`, providing access to `attributes` and `objects`.
-    /// The resulting merge-able data is written into `out`, if it's not too large or considered binary.
-    /// The returned [`Outcome`] contains information on how to use `out`, or if it's filled at all.
+    /// The resulting merge-able data is written into `out`, if it's not too large.
+    /// The returned [`Data`] contains information on how to use `out`, which will be cleared if it is `None`, indicating
+    /// that no object was found at the location *on disk* - it's always an error to provide an object ID that doesn't exist
+    /// in the object database.
     ///
-    /// `attributes` must be returning the attributes at `rela_path`, and `objects` must be usable if `kind` is
-    /// a resource in the object database, i.e. if no worktree root is available. It's notable that if a worktree root
-    /// is present for `kind`, then a `rela_path` is used to access it on disk.
+    /// `attributes` must be returning the attributes at `rela_path` and is used for obtaining worktree filter settings,
+    /// and `objects` must be usable if `kind` is a resource in the object database,
+    /// i.e. if no worktree root is available. It's notable that if a worktree root is present for `kind`,
+    /// then a `rela_path` is used to access it on disk.
     ///
     /// If `id` [is null](gix_hash::ObjectId::is_null()) or the file in question doesn't exist in the worktree in case
-    /// [a root](WorktreeRoots) is present, then `out` will be left cleared and [Outcome::data] will be `None`.
+    /// [a root](WorktreeRoots) is present, then `out` will be left cleared and the output data will be `None`.
     /// This is useful to simplify the calling code as empty buffers signal that nothing is there.
     ///
     /// Note that `mode` is trusted, and we will not re-validate that the entry in the worktree actually is of that mode.
@@ -228,7 +166,7 @@ impl Pipeline {
         objects: &dyn gix_object::FindObjectOrHeader,
         convert: Mode,
         out: &mut Vec<u8>,
-    ) -> Result<Outcome, convert_to_mergeable::Error> {
+    ) -> Result<Option<Data>, convert_to_mergeable::Error> {
         if !matches!(mode, EntryKind::Blob | EntryKind::BlobExecutable) {
             return Err(convert_to_mergeable::Error::InvalidEntryKind {
                 rela_path: rela_path.to_owned(),
@@ -237,31 +175,6 @@ impl Pipeline {
         }
 
         out.clear();
-        attributes(rela_path, &mut self.attrs);
-        let attr = self.attrs.iter_selected().next().expect("pre-initialized with 'diff'");
-        let driver = match attr.assignment.state {
-            attributes::StateRef::Set => DriverChoice::BuiltIn(BuiltinDriver::Text),
-            attributes::StateRef::Unset => DriverChoice::BuiltIn(BuiltinDriver::Binary),
-            attributes::StateRef::Value(name) => {
-                let name = name.as_bstr();
-                self.drivers
-                    .binary_search_by(|d| d.name.as_bstr().cmp(name))
-                    .ok()
-                    .map(DriverChoice::Index)
-                    .or_else(|| {
-                        name.to_str()
-                            .ok()
-                            .and_then(BuiltinDriver::by_name)
-                            .map(DriverChoice::BuiltIn)
-                    })
-                    .unwrap_or_default()
-            }
-            attributes::StateRef::Unspecified => self
-                .options
-                .default_driver
-                .map(DriverChoice::BuiltIn)
-                .unwrap_or_default(),
-        };
         match self.roots.by_kind(kind) {
             Some(root) => {
                 self.path.clear();
@@ -279,7 +192,7 @@ impl Pipeline {
                     .transpose()?;
                 let data = match size_in_bytes {
                     Some(None) => None, // missing as identified by the size check
-                    Some(Some(size)) if size > self.options.large_file_threshold_bytes => Some(Data::Binary { size }),
+                    Some(Some(size)) if size > self.options.large_file_threshold_bytes => Some(Data::TooLarge { size }),
                     _ => {
                         let file = none_if_missing(std::fs::File::open(&self.path)).map_err(|err| {
                             convert_to_mergeable::Error::OpenOrRead {
@@ -295,7 +208,13 @@ impl Pipeline {
                                         file,
                                         gix_path::from_bstr(rela_path).as_ref(),
                                         attributes,
-                                        &mut |buf| objects.try_find(id, buf).map(|obj| obj.map(|_| ())),
+                                        &mut |buf| {
+                                            if convert == Mode::Renormalize {
+                                                Ok(None)
+                                            } else {
+                                                objects.try_find(id, buf).map(|obj| obj.map(|_| ()))
+                                            }
+                                        },
                                     )?;
 
                                     match res {
@@ -324,19 +243,13 @@ impl Pipeline {
                                 }
                             }
 
-                            Some(if is_binary_buf(out) {
-                                let size = out.len() as u64;
-                                out.clear();
-                                Data::Binary { size }
-                            } else {
-                                Data::Buffer
-                            })
+                            Some(Data::Buffer)
                         } else {
                             None
                         }
                     }
                 };
-                Ok(Outcome { driver, data })
+                Ok(data)
             }
             None => {
                 let data = if id.is_null() {
@@ -349,7 +262,7 @@ impl Pipeline {
                     let is_binary = self.options.large_file_threshold_bytes > 0
                         && header.size > self.options.large_file_threshold_bytes;
                     let data = if is_binary {
-                        Data::Binary { size: header.size }
+                        Data::TooLarge { size: header.size }
                     } else {
                         objects
                             .try_find(id, out)
@@ -357,66 +270,62 @@ impl Pipeline {
                             .ok_or_else(|| gix_object::find::existing_object::Error::NotFound { oid: id.to_owned() })?;
 
                         if convert == Mode::Renormalize {
-                            let res = self
-                                .filter
-                                .convert_to_worktree(out, rela_path, attributes, Delay::Forbid)?;
+                            {
+                                let res = self
+                                    .filter
+                                    .convert_to_worktree(out, rela_path, attributes, Delay::Forbid)?;
+
+                                match res {
+                                    ToWorktreeOutcome::Unchanged(_) => {}
+                                    ToWorktreeOutcome::Buffer(src) => {
+                                        out.clear();
+                                        out.try_reserve(src.len())?;
+                                        out.extend_from_slice(src);
+                                    }
+                                    ToWorktreeOutcome::Process(MaybeDelayed::Immediate(mut stream)) => {
+                                        std::io::copy(&mut stream, out).map_err(|err| {
+                                            convert_to_mergeable::Error::StreamCopy {
+                                                rela_path: rela_path.to_owned(),
+                                                source: err,
+                                            }
+                                        })?;
+                                    }
+                                    ToWorktreeOutcome::Process(MaybeDelayed::Delayed(_)) => {
+                                        unreachable!("we prohibit this")
+                                    }
+                                };
+                            }
+
+                            let res = self.filter.convert_to_git(
+                                &**out,
+                                &gix_path::from_bstr(rela_path),
+                                attributes,
+                                &mut |_buf| Ok(None),
+                            )?;
 
                             match res {
-                                ToWorktreeOutcome::Unchanged(_) => {}
-                                ToWorktreeOutcome::Buffer(src) => {
-                                    out.clear();
-                                    out.try_reserve(src.len())?;
-                                    out.extend_from_slice(src);
-                                }
-                                ToWorktreeOutcome::Process(MaybeDelayed::Immediate(mut stream)) => {
-                                    std::io::copy(&mut stream, out).map_err(|err| {
-                                        convert_to_mergeable::Error::StreamCopy {
+                                ToGitOutcome::Unchanged(_) => {}
+                                ToGitOutcome::Process(mut stream) => {
+                                    stream
+                                        .read_to_end(out)
+                                        .map_err(|err| convert_to_mergeable::Error::OpenOrRead {
                                             rela_path: rela_path.to_owned(),
                                             source: err,
-                                        }
-                                    })?;
+                                        })?;
                                 }
-                                ToWorktreeOutcome::Process(MaybeDelayed::Delayed(_)) => {
-                                    unreachable!("we prohibit this")
+                                ToGitOutcome::Buffer(buf) => {
+                                    out.clear();
+                                    out.try_reserve(buf.len())?;
+                                    out.extend_from_slice(buf);
                                 }
-                            };
-                        }
-
-                        let res = self.filter.convert_to_git(
-                            &**out,
-                            &gix_path::from_bstr(rela_path),
-                            attributes,
-                            &mut |buf| objects.try_find(id, buf).map(|obj| obj.map(|_| ())),
-                        )?;
-
-                        match res {
-                            ToGitOutcome::Unchanged(_) => {}
-                            ToGitOutcome::Process(mut stream) => {
-                                stream
-                                    .read_to_end(out)
-                                    .map_err(|err| convert_to_mergeable::Error::OpenOrRead {
-                                        rela_path: rela_path.to_owned(),
-                                        source: err,
-                                    })?;
-                            }
-                            ToGitOutcome::Buffer(buf) => {
-                                out.clear();
-                                out.try_reserve(buf.len())?;
-                                out.extend_from_slice(buf);
                             }
                         }
 
-                        if is_binary_buf(out) {
-                            let size = out.len() as u64;
-                            out.clear();
-                            Data::Binary { size }
-                        } else {
-                            Data::Buffer
-                        }
+                        Data::Buffer
                     };
                     Some(data)
                 };
-                Ok(Outcome { driver, data })
+                Ok(data)
             }
         }
     }
@@ -428,9 +337,4 @@ fn none_if_missing<T>(res: std::io::Result<T>) -> std::io::Result<Option<T>> {
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(err) => Err(err),
     }
-}
-
-fn is_binary_buf(buf: &[u8]) -> bool {
-    let buf = &buf[..buf.len().min(8000)];
-    buf.contains(&0)
 }

@@ -125,12 +125,6 @@ pub struct Pipeline {
     pub filter: gix_filter::Pipeline,
     /// Options affecting the way we read files.
     pub options: pipeline::Options,
-    /// All available merge drivers.
-    ///
-    /// They are referenced in git-attributes by name, and we hand out indices into this array.
-    drivers: Vec<Driver>,
-    /// Pre-configured attributes to obtain additional merge-related information.
-    attrs: gix_filter::attributes::search::Outcome,
     /// A buffer to produce disk-accessible paths from worktree roots.
     path: PathBuf,
 }
@@ -152,7 +146,14 @@ pub struct Platform {
     pub filter: Pipeline,
     /// A way to access `.gitattributes`
     pub attr_stack: gix_worktree::Stack,
-
+    /// Further configuration that affects the merge.
+    pub options: platform::Options,
+    /// All available merge drivers.
+    ///
+    /// They are referenced in git-attributes by name, and we hand out indices into this array.
+    drivers: Vec<Driver>,
+    /// Pre-configured attributes to obtain additional merge-related information.
+    attrs: gix_filter::attributes::search::Outcome,
     /// The way we convert resources into mergeable states.
     filter_mode: pipeline::Mode,
 }
