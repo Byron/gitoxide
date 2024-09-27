@@ -23,9 +23,9 @@ impl<'a> ValueRef<'a> {
 }
 
 /// Access and conversions
-impl ValueRef<'_> {
+impl<'a> ValueRef<'a> {
     /// Access this value as byte string.
-    pub fn as_bstr(&self) -> &BStr {
+    pub fn as_bstr(&self) -> &'a BStr {
         self.0.as_bytes().as_bstr()
     }
 
