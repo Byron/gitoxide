@@ -57,8 +57,10 @@ pub(crate) mod function {
     /// Return `true` if `buf` was written or `false` if nothing had to be done.
     /// Depending on the state in `buf`, `index_object` is called to write the version of `src` as stored in the index
     /// into the buffer and if it is a blob, or return `Ok(None)` if no such object exists.
-    /// If renormalization is desired, let it return `Ok(None)` at all times to not let it have any influence over the
-    /// outcome of this function.
+    ///
+    /// *If renormalization is desired*, let it return `Ok(None)` at all times to not let it have any influence over the
+    /// outcome of this function. Otherwise, it will check if the in-index buffer already has newlines that it would now
+    /// want to change, and avoid doing so as what's in Git should be what's desired (except for when *renormalizing*).
     /// If `round_trip_check` is not `None`, round-tripping will be validated and handled accordingly.
     pub fn convert_to_git(
         src: &[u8],
