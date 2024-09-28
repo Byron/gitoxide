@@ -89,12 +89,10 @@ mod text {
             let actual = gix_merge::blob::builtin_driver::text(
                 &mut out,
                 &mut input,
+                case.labels(),
                 &case.ours,
-                Some(case.ours_marker.as_str().as_ref()),
                 &case.base,
-                Some(case.base_marker.as_str().as_ref()),
                 &case.theirs,
-                Some(case.theirs_marker.as_str().as_ref()),
                 case.options,
             );
             if is_case_diverging(&case) {
@@ -124,7 +122,7 @@ mod text {
         );
         assert_eq!(
             ((num_diverging as f32 / num_cases as f32) * 100.0) as usize,
-            12,
+            11,
             "Just to show the percentage of skipped tests - this should get better"
         );
         Ok(())
@@ -132,7 +130,7 @@ mod text {
 
     mod baseline {
         use bstr::BString;
-        use gix_merge::blob::builtin_driver::text::{ConflictStyle, ResolveWith};
+        use gix_merge::blob::builtin_driver::text::{Conflict, ConflictStyle};
         use std::path::Path;
 
         #[derive(Debug)]
@@ -146,6 +144,16 @@ mod text {
             pub name: BString,
             pub expected: BString,
             pub options: gix_merge::blob::builtin_driver::text::Options,
+        }
+
+        impl Expectation {
+            pub fn labels(&self) -> gix_merge::blob::builtin_driver::text::Labels<'_> {
+                gix_merge::blob::builtin_driver::text::Labels {
+                    ancestor: Some(self.base_marker.as_str().as_ref()),
+                    current: Some(self.ours_marker.as_str().as_ref()),
+                    other: Some(self.theirs_marker.as_str().as_ref()),
+                }
+            }
         }
 
         pub struct Expectations<'a> {
@@ -178,12 +186,18 @@ mod text {
 
                 let mut options = gix_merge::blob::builtin_driver::text::Options::default();
                 for arg in words {
-                    match arg {
-                        "--diff3" => options.conflict_style = ConflictStyle::Diff3,
-                        "--zdiff3" => options.conflict_style = ConflictStyle::ZealousDiff3,
-                        "--ours" => options.on_conflict = Some(ResolveWith::Ours),
-                        "--theirs" => options.on_conflict = Some(ResolveWith::Theirs),
-                        "--union" => options.on_conflict = Some(ResolveWith::Union),
+                    options.conflict = match arg {
+                        "--diff3" => Conflict::Keep {
+                            style: ConflictStyle::Diff3,
+                            marker_size: 7,
+                        },
+                        "--zdiff3" => Conflict::Keep {
+                            style: ConflictStyle::ZealousDiff3,
+                            marker_size: 7,
+                        },
+                        "--ours" => Conflict::ResolveWithOurs,
+                        "--theirs" => Conflict::ResolveWithTheirs,
+                        "--union" => Conflict::ResolveWithUnion,
                         _ => panic!("Unknown argument to parse into options: '{arg}'"),
                     }
                 }

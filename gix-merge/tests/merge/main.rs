@@ -1,3 +1,5 @@
+extern crate core;
+
 #[cfg(feature = "blob")]
 mod blob;
 

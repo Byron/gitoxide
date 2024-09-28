@@ -1,6 +1,7 @@
 // TODO: remove this - only needed while &mut Vec<u8> isn't used.
 #![allow(clippy::ptr_arg)]
 
+use crate::blob::platform::{DriverChoice, ResourceRef};
 use bstr::BString;
 use std::path::PathBuf;
 
@@ -83,7 +84,7 @@ pub struct Driver {
     /// * **%L**
     ///     - The conflict-marker size as positive number.
     /// * **%P**
-    ///     - The path in which the merged result will be stored.
+    ///     - The path in which the merged result would be stored, as workspace-relative path, of the current/ours side.
     /// * **%S**
     ///     - The conflict-label for the common ancestor or *base*.
     /// * **%X**
@@ -98,6 +99,8 @@ pub struct Driver {
     /// ```
     /// <driver-program> .merge_file_nR2Qs1 .merge_file_WYXCJe .merge_file_UWbzrm 7 file e2a2970 HEAD feature
     /// ```
+    ///
+    /// The driver is expected to leave its version in the file at `%A`, by overwriting it.
     pub command: BString,
     /// If `true`, this is the `name` of the driver to use when a virtual-merge-base is created, as a merge of all
     /// available merge-bases if there are more than one.
@@ -156,4 +159,25 @@ pub struct Platform {
     attrs: gix_filter::attributes::search::Outcome,
     /// The way we convert resources into mergeable states.
     filter_mode: pipeline::Mode,
+}
+
+/// The product of a [`prepare_merge()`](Platform::prepare_merge()) call to finally
+/// perform the merge and retrieve the merge results.
+#[derive(Copy, Clone)]
+pub struct PlatformRef<'parent> {
+    /// The platform that hosts the resources, used to access drivers.
+    pub(super) parent: &'parent Platform,
+    /// The current or our side of the merge operation.
+    pub current: ResourceRef<'parent>,
+    /// The ancestor or base of the merge operation.
+    pub ancestor: ResourceRef<'parent>,
+    /// The other or their side of the merge operation.
+    pub other: ResourceRef<'parent>,
+    /// Which driver to use according to the resource's configuration,
+    /// using the path of `current` to read git-attributes.
+    pub driver: DriverChoice,
+    /// Possibly processed options for use when performing the actual merge.
+    ///
+    /// They may be inspected before the merge, or altered at will.
+    pub options: platform::merge::Options,
 }

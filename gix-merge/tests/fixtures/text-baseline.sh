@@ -615,6 +615,14 @@ EOF
   )
 )
 
+mkdir line-ending-change
+(cd line-ending-change
+
+  echo -e "a\n" > base.blob
+  echo -e "a\r\n" > ours.blob
+  echo -e "a\n" > theirs.blob
+)
+
 
 for dir in  simple \
             multi-change \
@@ -629,6 +637,7 @@ for dir in  simple \
             zdiff3-evil \
             no-change-add \
             no-change-remove \
+            line-ending-change \
             complex/no-change \
             complex/no-conflict \
             complex/no-conflict-too \

@@ -168,7 +168,6 @@ fn ancestor_hunk(start: u32, num_lines: u32) -> Hunk {
 ///
 /// Return a new vector of all the hunks that were removed from front and back, with partial hunks inserted,
 /// along with the amount of hunks that go front, with the remaining going towards the back.
-// TODO: refactor so hunks and their associated data can go into an array for easier handling.
 #[must_use]
 pub fn zealously_contract_hunks(
     a_hunks: &mut Vec<Hunk>,

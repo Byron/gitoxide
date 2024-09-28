@@ -2052,6 +2052,7 @@ dependencies = [
  "gix-hash 0.14.2",
  "gix-object 0.44.0",
  "gix-path 0.10.11",
+ "gix-quote 0.4.12",
  "gix-tempfile 14.0.2",
  "gix-testtools",
  "gix-trace 0.1.10",

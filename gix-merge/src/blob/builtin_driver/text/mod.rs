@@ -1,3 +1,5 @@
+use bstr::BStr;
+
 /// The way the built-in [text driver](crate::blob::BuiltinDriver::Text) will express
 /// merge conflicts in the resulting file.
 #[derive(Default, Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -48,27 +50,31 @@ pub enum ConflictStyle {
     ZealousDiff3,
 }
 
+/// The set of labels to annotate conflict markers with.
+///
+/// That way it becomes clearer where the content of conflicts are originating from.
+#[derive(Default, Copy, Clone, Debug, Eq, PartialEq)]
+pub struct Labels<'a> {
+    pub ancestor: Option<&'a BStr>,
+    pub current: Option<&'a BStr>,
+    pub other: Option<&'a BStr>,
+}
+
 /// Options for the builtin [text driver](crate::blob::BuiltinDriver::Text).
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Options {
     /// Determine of the diff will be performed.
     /// Defaults to [`imara_diff::Algorithm::Myers`].
     pub diff_algorithm: imara_diff::Algorithm,
-    /// How to visualize conflicts in merged files.
-    pub conflict_style: ConflictStyle,
-    /// The amount of markers to draw, defaults to 7, i.e. `<<<<<<<`
-    pub marker_size: usize,
-    /// Decide what to do to automatically resolve conflicts.
+    /// Decide what to do to automatically resolve conflicts, or to keep them
     /// If `None`, add conflict markers according to `conflict_style` and `marker_size`.
-    pub on_conflict: Option<ResolveWith>,
+    pub conflict: Conflict,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Options {
-            conflict_style: Default::default(),
-            marker_size: 7,
-            on_conflict: None,
+            conflict: Default::default(),
             diff_algorithm: imara_diff::Algorithm::Myers,
         }
     }
@@ -76,13 +82,42 @@ impl Default for Options {
 
 /// What to do to resolve a conflict.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum ResolveWith {
+pub enum Conflict {
+    /// Keep the conflict by marking it in the source file.
+    Keep {
+        /// How to visualize conflicts in merged files.
+        style: ConflictStyle,
+        /// The amount of markers to draw, defaults to 7, i.e. `<<<<<<<`
+        marker_size: usize,
+    },
     /// Chose our side to resolve a conflict.
-    Ours,
+    ResolveWithOurs,
     /// Chose their side to resolve a conflict.
-    Theirs,
+    ResolveWithTheirs,
     /// Place our and their lines one after another, in any order
-    Union,
+    ResolveWithUnion,
+}
+
+impl Conflict {
+    /// The amount of conflict marker characters to print by default.
+    pub const DEFAULT_MARKER_SIZE: usize = 7;
+
+    /// The amount of conflict markers to print if this instance contains them, or `None` otherwise
+    pub fn marker_size(&self) -> Option<usize> {
+        match self {
+            Conflict::Keep { marker_size, .. } => Some(*marker_size),
+            Conflict::ResolveWithOurs | Conflict::ResolveWithTheirs | Conflict::ResolveWithUnion => None,
+        }
+    }
+}
+
+impl Default for Conflict {
+    fn default() -> Self {
+        Conflict::Keep {
+            style: Default::default(),
+            marker_size: Conflict::DEFAULT_MARKER_SIZE,
+        }
+    }
 }
 
 pub(super) mod function;

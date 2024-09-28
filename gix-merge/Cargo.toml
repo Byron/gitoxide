@@ -17,7 +17,7 @@ doctest = false
 [features]
 default = ["blob"]
 ## Enable diffing of blobs using imara-diff, which also allows for a generic rewrite tracking implementation.
-blob = ["dep:imara-diff", "dep:gix-filter", "dep:gix-worktree", "dep:gix-path", "dep:gix-fs", "dep:gix-command", "dep:gix-tempfile", "dep:gix-trace"]
+blob = ["dep:imara-diff", "dep:gix-filter", "dep:gix-worktree", "dep:gix-path", "dep:gix-fs", "dep:gix-command", "dep:gix-tempfile", "dep:gix-trace", "dep:gix-quote"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde = ["dep:serde", "gix-hash/serde", "gix-object/serde"]
 
@@ -31,6 +31,7 @@ gix-path = { version = "^0.10.11", path = "../gix-path", optional = true }
 gix-fs = { version = "^0.11.3", path = "../gix-fs", optional = true }
 gix-tempfile = { version = "^14.0.0", path = "../gix-tempfile", optional = true }
 gix-trace = { version = "^0.1.10", path = "../gix-trace", optional = true }
+gix-quote = { version = "^0.4.12", path = "../gix-quote", optional = true }
 
 thiserror = "1.0.63"
 imara-diff = { version = "0.1.7", optional = true }
