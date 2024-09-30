@@ -1325,6 +1325,7 @@ dependencies = [
  "gix-index 0.35.0",
  "gix-lock 14.0.0",
  "gix-mailmap",
+ "gix-merge",
  "gix-negotiate",
  "gix-object 0.44.0",
  "gix-odb",
