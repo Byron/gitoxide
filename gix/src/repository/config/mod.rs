@@ -120,6 +120,14 @@ impl crate::Repository {
     pub fn object_hash(&self) -> gix_hash::Kind {
         self.config.object_hash
     }
+
+    /// Return the algorithm to perform diffs or merges with.
+    ///
+    /// In case of merges, a diff is performed under the hood in order to learn which hunks need merging.
+    #[cfg(feature = "blob-diff")]
+    pub fn diff_algorithm(&self) -> Result<gix_diff::blob::Algorithm, config::diff::algorithm::Error> {
+        self.config.diff_algorithm()
+    }
 }
 
 mod branch;

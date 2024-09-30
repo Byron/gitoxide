@@ -100,6 +100,51 @@ impl Cache {
         Ok(out)
     }
 
+    #[cfg(feature = "blob-merge")]
+    pub(crate) fn merge_drivers(&self) -> Result<Vec<gix_merge::blob::Driver>, config::merge::drivers::Error> {
+        let mut out = Vec::<gix_merge::blob::Driver>::new();
+        for section in self
+            .resolved
+            .sections_by_name("merge")
+            .into_iter()
+            .flatten()
+            .filter(|s| (self.filter_config_section)(s.meta()))
+        {
+            let Some(name) = section.header().subsection_name().filter(|n| !n.is_empty()) else {
+                continue;
+            };
+
+            let driver = match out.iter_mut().find(|d| d.name == name) {
+                Some(existing) => existing,
+                None => {
+                    out.push(gix_merge::blob::Driver {
+                        name: name.into(),
+                        display_name: name.into(),
+                        ..Default::default()
+                    });
+                    out.last_mut().expect("just pushed")
+                }
+            };
+
+            if let Some(command) = section.value(config::tree::Merge::DRIVER_COMMAND.name) {
+                driver.command = command.into_owned();
+            }
+            if let Some(recursive_name) = section.value(config::tree::Merge::DRIVER_RECURSIVE.name) {
+                driver.recursive = Some(recursive_name.into_owned());
+            }
+        }
+        Ok(out)
+    }
+
+    #[cfg(feature = "blob-merge")]
+    pub(crate) fn merge_pipeline_options(
+        &self,
+    ) -> Result<gix_merge::blob::pipeline::Options, config::merge::pipeline_options::Error> {
+        Ok(gix_merge::blob::pipeline::Options {
+            large_file_threshold_bytes: self.big_file_threshold()?,
+        })
+    }
+
     #[cfg(feature = "blob-diff")]
     pub(crate) fn diff_pipeline_options(
         &self,

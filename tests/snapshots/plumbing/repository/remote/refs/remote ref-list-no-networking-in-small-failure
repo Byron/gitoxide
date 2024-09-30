@@ -1,6 +1,6 @@
 error: unrecognized subcommand 'remote'
 
-  tip: some similar subcommands exist: 'r', 'tree', 'free'
+  tip: some similar subcommands exist: 'r', 'merge', 'tree', 'free'
 
 Usage: gix [OPTIONS] <COMMAND>
 

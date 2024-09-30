@@ -23,7 +23,7 @@ mod cache;
 mod config;
 ///
 #[cfg(feature = "blob-diff")]
-pub mod diff;
+mod diff;
 ///
 #[cfg(feature = "dirwalk")]
 mod dirwalk;
@@ -42,6 +42,9 @@ mod kind;
 mod location;
 #[cfg(feature = "mailmap")]
 mod mailmap;
+///
+#[cfg(feature = "blob-merge")]
+mod merge;
 mod object;
 #[cfg(feature = "attributes")]
 mod pathspec;
@@ -54,6 +57,60 @@ mod state;
 mod submodule;
 mod thread_safe;
 mod worktree;
+
+///
+#[cfg(feature = "blob-merge")]
+pub mod blob_merge_options {
+    /// The error returned by [Repository::blob_merge_options()](crate::Repository::blob_merge_options()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        DiffAlgorithm(#[from] crate::config::diff::algorithm::Error),
+        #[error(transparent)]
+        ConflictStyle(#[from] crate::config::key::GenericErrorWithValue),
+    }
+}
+
+///
+#[cfg(feature = "blob-merge")]
+pub mod merge_resource_cache {
+    /// The error returned by [Repository::merge_resource_cache()](crate::Repository::merge_resource_cache()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        RenormalizeConfig(#[from] crate::config::boolean::Error),
+        #[error(transparent)]
+        PipelineOptions(#[from] crate::config::merge::pipeline_options::Error),
+        #[error(transparent)]
+        Index(#[from] crate::repository::index_or_load_from_head::Error),
+        #[error(transparent)]
+        AttributeStack(#[from] crate::config::attribute_stack::Error),
+        #[error(transparent)]
+        CommandContext(#[from] crate::config::command_context::Error),
+        #[error(transparent)]
+        FilterPipeline(#[from] crate::filter::pipeline::options::Error),
+        #[error(transparent)]
+        DriversConfig(#[from] crate::config::merge::drivers::Error),
+    }
+}
+
+///
+#[cfg(feature = "blob-diff")]
+pub mod diff_resource_cache {
+    /// The error returned by [Repository::diff_resource_cache()](crate::Repository::diff_resource_cache()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not obtain resource cache for diffing")]
+        ResourceCache(#[from] crate::diff::resource_cache::Error),
+        #[error(transparent)]
+        Index(#[from] crate::repository::index_or_load_from_head::Error),
+        #[error(transparent)]
+        AttributeStack(#[from] crate::config::attribute_stack::Error),
+    }
+}
 
 ///
 #[cfg(feature = "tree-editor")]

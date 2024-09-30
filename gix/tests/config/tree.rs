@@ -365,6 +365,33 @@ mod diff {
     }
 }
 
+#[cfg(feature = "blob-merge")]
+mod merge {
+    use crate::config::tree::bcow;
+    use gix::config::tree::{Key, Merge};
+    use gix_merge::blob::builtin_driver::text::ConflictStyle;
+
+    #[test]
+    fn conflict_style() -> crate::Result {
+        for (actual, expected) in [
+            ("merge", ConflictStyle::Merge),
+            ("diff3", ConflictStyle::Diff3),
+            ("zdiff3", ConflictStyle::ZealousDiff3),
+        ] {
+            assert_eq!(Merge::CONFLICT_STYLE.try_into_conflict_style(bcow(actual))?, expected);
+            assert!(Merge::CONFLICT_STYLE.validate(actual.into()).is_ok());
+        }
+        assert_eq!(
+            Merge::CONFLICT_STYLE
+                .try_into_conflict_style(bcow("foo"))
+                .unwrap_err()
+                .to_string(),
+            "The key \"merge.conflictStyle=foo\" was invalid"
+        );
+        Ok(())
+    }
+}
+
 mod core {
     use std::time::Duration;
 

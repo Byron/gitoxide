@@ -66,8 +66,7 @@ pub struct Options {
     /// Determine of the diff will be performed.
     /// Defaults to [`imara_diff::Algorithm::Myers`].
     pub diff_algorithm: imara_diff::Algorithm,
-    /// Decide what to do to automatically resolve conflicts, or to keep them
-    /// If `None`, add conflict markers according to `conflict_style` and `marker_size`.
+    /// Decide what to do to automatically resolve conflicts, or to keep them.
     pub conflict: Conflict,
 }
 

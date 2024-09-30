@@ -14,6 +14,7 @@ use gitoxide_core as core;
 use gitoxide_core::{pack::verify, repository::PathsOrPatterns};
 use gix::bstr::{io::BufReadExt, BString};
 
+use crate::plumbing::options::merge;
 use crate::plumbing::{
     options::{
         attributes, commit, commitgraph, config, credential, exclude, free, fsck, index, mailmap, odb, revision, tree,
@@ -141,6 +142,42 @@ pub fn main() -> Result<()> {
     }
 
     match cmd {
+        Subcommands::Merge(merge::Platform { cmd }) => match cmd {
+            merge::SubCommands::File {
+                resolve_with,
+                ours,
+                base,
+                theirs,
+            } => prepare_and_run(
+                "merge-file",
+                trace,
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::repository::merge::file(
+                        repository(Mode::Lenient)?,
+                        out,
+                        format,
+                        resolve_with.map(|c| match c {
+                            merge::ResolveWith::Union => {
+                                gix::merge::blob::builtin_driver::text::Conflict::ResolveWithUnion
+                            }
+                            merge::ResolveWith::Ours => {
+                                gix::merge::blob::builtin_driver::text::Conflict::ResolveWithOurs
+                            }
+                            merge::ResolveWith::Theirs => {
+                                gix::merge::blob::builtin_driver::text::Conflict::ResolveWithTheirs
+                            }
+                        }),
+                        base,
+                        ours,
+                        theirs,
+                    )
+                },
+            ),
+        },
         Subcommands::MergeBase(crate::plumbing::options::merge_base::Command { first, others }) => prepare_and_run(
             "merge-base",
             trace,

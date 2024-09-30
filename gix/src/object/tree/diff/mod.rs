@@ -121,7 +121,7 @@ pub mod stats {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        CreateResourceCache(#[from] crate::repository::diff::resource_cache::Error),
+        CreateResourceCache(#[from] crate::repository::diff_resource_cache::Error),
         #[error(transparent)]
         ForEachChange(#[from] crate::object::tree::diff::for_each::Error),
     }

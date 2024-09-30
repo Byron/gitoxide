@@ -46,6 +46,7 @@ pub mod index;
 pub mod mailmap;
 mod merge_base;
 pub use merge_base::merge_base;
+pub mod merge;
 pub mod odb;
 pub mod remote;
 pub mod revision;
