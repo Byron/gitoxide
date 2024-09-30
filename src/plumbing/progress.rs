@@ -147,10 +147,6 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned("We can read sparse indices and support for it will be added early on")
     },
     Record {
-        config: "merge.renormalize",
-        usage: Planned("Once merging is being implemented, renormalization should be respected")
-    },
-    Record {
         config: "sparse.expectFilesOutsideOfPatterns",
         usage: Planned("A feature definitely worth having")
     },

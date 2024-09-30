@@ -76,6 +76,10 @@ mod init;
 pub struct Mailmap;
 mod mailmap;
 
+#[derive(Copy, Clone, Default)]
+pub struct Merge;
+mod merge;
+
 /// The `pack` top-level section.
 #[derive(Copy, Clone, Default)]
 pub struct Pack;
