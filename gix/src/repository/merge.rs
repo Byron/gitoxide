@@ -61,7 +61,7 @@ impl Repository {
             is_virtual_ancestor: false,
             resolve_binary_with: None,
             text: gix_merge::blob::builtin_driver::text::Options {
-                diff_algorithm: self.config.diff_algorithm()?,
+                diff_algorithm: self.diff_algorithm()?,
                 conflict: text::Conflict::Keep {
                     style: self
                         .config

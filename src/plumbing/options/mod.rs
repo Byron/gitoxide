@@ -139,6 +139,7 @@ pub enum Subcommands {
     #[cfg(feature = "gitoxide-core-tools-corpus")]
     Corpus(corpus::Platform),
     MergeBase(merge_base::Command),
+    Merge(merge::Platform),
     Worktree(worktree::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
@@ -334,6 +335,47 @@ pub mod corpus {
         },
         /// Re-read all repositories under the corpus directory, and add or update them.
         Refresh,
+    }
+}
+
+pub mod merge {
+    use gix::bstr::BString;
+
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+    pub enum ResolveWith {
+        /// Use ours then theirs in case of conflict.
+        Union,
+        /// Use only ours in case of conflict.
+        Ours,
+        /// Use only theirs in case of conflict.
+        Theirs,
+    }
+
+    #[derive(Debug, clap::Parser)]
+    #[command(about = "perform merges of various kinds")]
+    pub struct Platform {
+        #[clap(subcommand)]
+        pub cmd: SubCommands,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum SubCommands {
+        /// Merge a file by specifying ours, base and theirs.
+        File {
+            /// Decide how to resolve conflicts. If unset, write conflict markers and fail.
+            #[clap(long, short = 'c')]
+            resolve_with: Option<ResolveWith>,
+
+            /// A path or revspec to our file
+            #[clap(value_name = "OURS", value_parser = crate::shared::AsBString)]
+            ours: BString,
+            /// A path or revspec to the base for both ours and theirs
+            #[clap(value_name = "BASE", value_parser = crate::shared::AsBString)]
+            base: BString,
+            /// A path or revspec to their file
+            #[clap(value_name = "OURS", value_parser = crate::shared::AsBString)]
+            theirs: BString,
+        },
     }
 }
 
