@@ -158,7 +158,7 @@ pub struct Platform {
     /// Pre-configured attributes to obtain additional merge-related information.
     attrs: gix_filter::attributes::search::Outcome,
     /// The way we convert resources into mergeable states.
-    filter_mode: pipeline::Mode,
+    pub filter_mode: pipeline::Mode,
 }
 
 /// The product of a [`prepare_merge()`](Platform::prepare_merge()) call to finally
