@@ -2,6 +2,7 @@ use crate::config::cache::util::ApplyLeniencyDefault;
 use crate::config::tree;
 use crate::repository::merge_resource_cache;
 use crate::Repository;
+use std::borrow::Cow;
 
 /// Merge-utilities
 impl Repository {
@@ -47,11 +48,7 @@ impl Repository {
         let filter = gix_filter::Pipeline::new(self.command_context()?, crate::filter::Pipeline::options(self)?);
         let filter = gix_merge::blob::Pipeline::new(worktree_roots, filter, self.config.merge_pipeline_options()?);
         let options = gix_merge::blob::platform::Options {
-            default_driver: self
-                .config
-                .resolved
-                .string(&tree::Merge::DEFAULT)
-                .map(|name| name.into_owned()),
+            default_driver: self.config.resolved.string(&tree::Merge::DEFAULT).map(Cow::into_owned),
         };
         let drivers = self.config.merge_drivers()?;
         Ok(gix_merge::blob::Platform::new(filter, mode, attrs, drivers, options))

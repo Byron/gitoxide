@@ -127,10 +127,10 @@ impl Cache {
             };
 
             if let Some(command) = section.value(config::tree::Merge::DRIVER_COMMAND.name) {
-                driver.command = command.into_owned().into();
+                driver.command = command.into_owned();
             }
             if let Some(recursive_name) = section.value(config::tree::Merge::DRIVER_RECURSIVE.name) {
-                driver.recursive = Some(recursive_name.into_owned().into());
+                driver.recursive = Some(recursive_name.into_owned());
             }
         }
         Ok(out)

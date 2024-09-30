@@ -1,19 +1,5 @@
+use crate::repository::diff_resource_cache;
 use crate::Repository;
-
-///
-pub mod resource_cache {
-    /// The error returned by [Repository::diff_resource_cache()](super::Repository::diff_resource_cache()).
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error("Could not obtain resource cache for diffing")]
-        ResourceCache(#[from] crate::diff::resource_cache::Error),
-        #[error(transparent)]
-        Index(#[from] crate::repository::index_or_load_from_head::Error),
-        #[error(transparent)]
-        AttributeStack(#[from] crate::config::attribute_stack::Error),
-    }
-}
 
 /// Diff-utilities
 impl Repository {
@@ -31,7 +17,7 @@ impl Repository {
         &self,
         mode: gix_diff::blob::pipeline::Mode,
         worktree_roots: gix_diff::blob::pipeline::WorktreeRoots,
-    ) -> Result<gix_diff::blob::Platform, resource_cache::Error> {
+    ) -> Result<gix_diff::blob::Platform, diff_resource_cache::Error> {
         let index = self.index_or_load_from_head()?;
         Ok(crate::diff::resource_cache(
             self,
@@ -52,7 +38,7 @@ impl Repository {
     /// Return a resource cache suitable for diffing blobs from trees directly, where no worktree checkout exists.
     ///
     /// For more control, see [`diff_resource_cache()`](Self::diff_resource_cache).
-    pub fn diff_resource_cache_for_tree_diff(&self) -> Result<gix_diff::blob::Platform, resource_cache::Error> {
+    pub fn diff_resource_cache_for_tree_diff(&self) -> Result<gix_diff::blob::Platform, diff_resource_cache::Error> {
         self.diff_resource_cache(
             gix_diff::blob::pipeline::Mode::ToGit,
             gix_diff::blob::pipeline::WorktreeRoots::default(),

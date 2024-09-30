@@ -23,7 +23,7 @@ mod cache;
 mod config;
 ///
 #[cfg(feature = "blob-diff")]
-pub mod diff;
+mod diff;
 ///
 #[cfg(feature = "dirwalk")]
 mod dirwalk;
@@ -79,6 +79,22 @@ pub mod merge_resource_cache {
         FilterPipeline(#[from] crate::filter::pipeline::options::Error),
         #[error(transparent)]
         DriversConfig(#[from] crate::config::merge::drivers::Error),
+    }
+}
+
+///
+#[cfg(feature = "blob-diff")]
+pub mod diff_resource_cache {
+    /// The error returned by [Repository::diff_resource_cache()](crate::Repository::diff_resource_cache()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not obtain resource cache for diffing")]
+        ResourceCache(#[from] crate::diff::resource_cache::Error),
+        #[error(transparent)]
+        Index(#[from] crate::repository::index_or_load_from_head::Error),
+        #[error(transparent)]
+        AttributeStack(#[from] crate::config::attribute_stack::Error),
     }
 }
 
