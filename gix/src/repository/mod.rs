@@ -60,6 +60,20 @@ mod worktree;
 
 ///
 #[cfg(feature = "blob-merge")]
+pub mod blob_merge_options {
+    /// The error returned by [Repository::blob_merge_options()](crate::Repository::blob_merge_options()).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        DiffAlgorithm(#[from] crate::config::diff::algorithm::Error),
+        #[error(transparent)]
+        ConflictStyle(#[from] crate::config::key::GenericErrorWithValue),
+    }
+}
+
+///
+#[cfg(feature = "blob-merge")]
 pub mod merge_resource_cache {
     /// The error returned by [Repository::merge_resource_cache()](crate::Repository::merge_resource_cache()).
     #[derive(Debug, thiserror::Error)]

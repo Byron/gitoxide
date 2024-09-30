@@ -1,7 +1,8 @@
 use crate::config::cache::util::ApplyLeniencyDefault;
 use crate::config::tree;
-use crate::repository::merge_resource_cache;
+use crate::repository::{blob_merge_options, merge_resource_cache};
 use crate::Repository;
+use gix_merge::blob::builtin_driver::text;
 use std::borrow::Cow;
 
 /// Merge-utilities
@@ -52,5 +53,30 @@ impl Repository {
         };
         let drivers = self.config.merge_drivers()?;
         Ok(gix_merge::blob::Platform::new(filter, mode, attrs, drivers, options))
+    }
+
+    /// Return options for use with [`gix_merge::blob::PlatformRef::merge()`].
+    pub fn blob_merge_options(&self) -> Result<gix_merge::blob::platform::merge::Options, blob_merge_options::Error> {
+        Ok(gix_merge::blob::platform::merge::Options {
+            is_virtual_ancestor: false,
+            resolve_binary_with: None,
+            text: gix_merge::blob::builtin_driver::text::Options {
+                diff_algorithm: self.config.diff_algorithm()?,
+                conflict: text::Conflict::Keep {
+                    style: self
+                        .config
+                        .resolved
+                        .string(&tree::Merge::CONFLICT_STYLE)
+                        .map(|value| {
+                            tree::Merge::CONFLICT_STYLE
+                                .try_into_conflict_style(value)
+                                .with_lenient_default(self.config.lenient_config)
+                        })
+                        .transpose()?
+                        .unwrap_or_default(),
+                    marker_size: text::Conflict::DEFAULT_MARKER_SIZE,
+                },
+            },
+        })
     }
 }
