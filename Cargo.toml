@@ -243,6 +243,7 @@ members = [
     "gix-object",
     "gix-glob",
     "gix-diff",
+    "gix-merge",
     "gix-date",
     "gix-traverse",
     "gix-dir",

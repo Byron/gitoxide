@@ -196,6 +196,9 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
    * [x] probe capabilities
    * [x] symlink creation and removal
    * [x] file snapshots
+* [ ] **BString Interner with Arena-Backing and arbitrary value association**
+    - probably based on [`internment`](https://docs.rs/internment/latest/internment/struct.Arena.html#),
+      but needs `bumpalo` support to avoid item allocations/boxing, and avoid internal `Mutex`. (key type is pointer based).
     
 ### gix-fs
 * [x] probe capabilities
@@ -215,6 +218,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
       * [x] [name validation][tagname-validation]
 * [x] transform borrowed to owned objects
 * [x] edit trees efficiently and write changes back
+    - [ ] See if `gix-fs::InternedMap` improves performance.
 * [x] API documentation
     * [ ] Some examples
 
@@ -320,10 +324,23 @@ Check out the [performance discussion][gix-diff-performance] as well.
     * [x] prepare invocation of external diff program
         - [ ] pass meta-info
 * [ ] working with hunks of data
+* [ ] diff-heuristics match Git perfectly
 * [x] API documentation
     * [ ] Examples
-    
+
 [gix-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
+
+### gix-merge
+
+* [x] three-way merge analysis of blobs with choice of how to resolve conflicts
+    - [ ] choose how to resolve conflicts on the data-structure
+    - [ ] produce a new blob based on data-structure containing possible resolutions
+        - [x] `merge` style
+        - [x] `diff3` style
+        - [x] `zdiff` style
+* [ ] diff-heuristics match Git perfectly
+* [x] API documentation
+    * [ ] Examples
 
 ### gix-traverse
 

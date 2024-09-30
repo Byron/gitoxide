@@ -38,10 +38,10 @@ impl Repository {
             mode,
             self.attributes_only(
                 &index,
-                if worktree_roots.new_root.is_some() || worktree_roots.old_root.is_some() {
-                    gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping
-                } else {
+                if worktree_roots.is_unset() {
                     gix_worktree::stack::state::attributes::Source::IdMapping
+                } else {
+                    gix_worktree::stack::state::attributes::Source::WorktreeThenIdMapping
                 },
             )?
             .inner,
