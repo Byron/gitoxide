@@ -46,6 +46,7 @@ impl Platform {
         kind: ResourceKind,
         objects: &impl gix_object::FindObjectOrHeader,
     ) -> Result<(), Error> {
+        gix_trace::detail!("gix_merge::blob::Platform::set_resource()", %id, %rela_path);
         if !matches!(
             mode,
             gix_object::tree::EntryKind::Blob | gix_object::tree::EntryKind::BlobExecutable
