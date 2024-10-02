@@ -139,11 +139,19 @@ where
     ) -> gix_diff::tree::visit::Action {
         use gix_diff::tree::visit::Change::*;
         let event = match change {
-            Addition { entry_mode, oid } => change::Event::Addition {
+            Addition {
+                entry_mode,
+                oid,
+                relation: _,
+            } => change::Event::Addition {
                 entry_mode,
                 id: oid.attach(other_repo),
             },
-            Deletion { entry_mode, oid } => change::Event::Deletion {
+            Deletion {
+                entry_mode,
+                oid,
+                relation: _,
+            } => change::Event::Deletion {
                 entry_mode,
                 id: oid.attach(repo),
             },

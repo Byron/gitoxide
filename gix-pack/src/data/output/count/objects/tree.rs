@@ -42,7 +42,12 @@ pub mod changes {
 
         fn visit(&mut self, change: Change) -> Action {
             match change {
-                Change::Addition { oid, entry_mode } | Change::Modification { oid, entry_mode, .. } => {
+                Change::Addition {
+                    oid,
+                    entry_mode,
+                    relation: _,
+                }
+                | Change::Modification { oid, entry_mode, .. } => {
                     if entry_mode.is_commit() {
                         return Action::Continue;
                     }
