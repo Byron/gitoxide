@@ -2,9 +2,10 @@ use std::{borrow::BorrowMut, collections::VecDeque};
 
 use gix_object::{tree::EntryRef, FindExt};
 
+use crate::tree::visit::{ChangeId, Relation};
 use crate::{
     tree,
-    tree::{visit::Change, TreeInfoPair},
+    tree::{visit::Change, TreeInfoTuple},
 };
 
 /// The error returned by [`tree::Changes::needed_to_obtain()`].
@@ -43,21 +44,21 @@ impl<'a> tree::Changes<'a> {
     ///
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/gix-object/src/mutable/tree.rs#L52-L55
-    pub fn needed_to_obtain<R, StateMut>(
+    pub fn needed_to_obtain<StateMut>(
         mut self,
         other: gix_object::TreeRefIter<'_>,
         mut state: StateMut,
         objects: impl gix_object::Find,
-        delegate: &mut R,
+        delegate: &mut impl tree::Visit,
     ) -> Result<(), Error>
     where
-        R: tree::Visit,
         StateMut: BorrowMut<tree::State>,
     {
         let state = state.borrow_mut();
         state.clear();
         let mut lhs_entries = peekable(self.0.take().unwrap_or_default());
         let mut rhs_entries = peekable(other);
+        let mut relation = None;
         let mut pop_path = false;
 
         loop {
@@ -69,20 +70,23 @@ impl<'a> tree::Changes<'a> {
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => {
                     match state.trees.pop_front() {
-                        Some((None, Some(rhs))) => {
+                        Some((None, Some(rhs), relation_to_propagate)) => {
                             delegate.pop_front_tracked_path_and_set_current();
+                            relation = relation_to_propagate;
                             rhs_entries = peekable(objects.find_tree_iter(&rhs, &mut state.buf2)?);
                         }
-                        Some((Some(lhs), Some(rhs))) => {
+                        Some((Some(lhs), Some(rhs), relation_to_propagate)) => {
                             delegate.pop_front_tracked_path_and_set_current();
                             lhs_entries = peekable(objects.find_tree_iter(&lhs, &mut state.buf1)?);
                             rhs_entries = peekable(objects.find_tree_iter(&rhs, &mut state.buf2)?);
+                            relation = relation_to_propagate;
                         }
-                        Some((Some(lhs), None)) => {
+                        Some((Some(lhs), None, relation_to_propagate)) => {
                             delegate.pop_front_tracked_path_and_set_current();
                             lhs_entries = peekable(objects.find_tree_iter(&lhs, &mut state.buf1)?);
+                            relation = relation_to_propagate;
                         }
-                        Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
+                        Some((None, None, _)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
                     };
                     pop_path = false;
@@ -91,18 +95,41 @@ impl<'a> tree::Changes<'a> {
                     use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
                     match compare(&lhs, &rhs) {
-                        Equal => handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, &mut state.trees, delegate)?,
-                        Less => catchup_lhs_with_rhs(&mut lhs_entries, lhs, rhs, &mut state.trees, delegate)?,
-                        Greater => catchup_rhs_with_lhs(&mut rhs_entries, lhs, rhs, &mut state.trees, delegate)?,
+                        Equal => handle_lhs_and_rhs_with_equal_filenames(
+                            lhs,
+                            rhs,
+                            &mut state.trees,
+                            &mut state.change_id,
+                            relation,
+                            delegate,
+                        )?,
+                        Less => catchup_lhs_with_rhs(
+                            &mut lhs_entries,
+                            lhs,
+                            rhs,
+                            &mut state.trees,
+                            &mut state.change_id,
+                            relation,
+                            delegate,
+                        )?,
+                        Greater => catchup_rhs_with_lhs(
+                            &mut rhs_entries,
+                            lhs,
+                            rhs,
+                            &mut state.trees,
+                            &mut state.change_id,
+                            relation,
+                            delegate,
+                        )?,
                     }
                 }
                 (Some(lhs), None) => {
                     let lhs = lhs?;
-                    delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
+                    delete_entry_schedule_recursion(lhs, &mut state.trees, &mut state.change_id, relation, delegate)?;
                 }
                 (None, Some(rhs)) => {
                     let rhs = rhs?;
-                    add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
+                    add_entry_schedule_recursion(rhs, &mut state.trees, &mut state.change_id, relation, delegate)?;
                 }
             }
         }
@@ -118,39 +145,57 @@ fn compare(a: &EntryRef<'_>, b: &EntryRef<'_>) -> std::cmp::Ordering {
     })
 }
 
-fn delete_entry_schedule_recursion<R: tree::Visit>(
+fn delete_entry_schedule_recursion(
     entry: EntryRef<'_>,
-    queue: &mut VecDeque<TreeInfoPair>,
-    delegate: &mut R,
+    queue: &mut VecDeque<TreeInfoTuple>,
+    change_id: &mut ChangeId,
+    relation_to_propagate: Option<Relation>,
+    delegate: &mut impl tree::Visit,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
-    if delegate
+    let relation = relation_to_propagate.or_else(|| {
+        entry.mode.is_tree().then(|| {
+            *change_id += 1;
+            Relation::Parent(*change_id)
+        })
+    });
+    let is_cancelled = delegate
         .visit(Change::Deletion {
             entry_mode: entry.mode,
             oid: entry.oid.to_owned(),
+            relation,
         })
-        .cancelled()
-    {
+        .cancelled();
+    if is_cancelled {
         return Err(Error::Cancelled);
     }
     if entry.mode.is_tree() {
         delegate.pop_path_component();
         delegate.push_back_tracked_path_component(entry.filename);
-        queue.push_back((Some(entry.oid.to_owned()), None));
+        queue.push_back((Some(entry.oid.to_owned()), None, to_child(relation)));
     }
     Ok(())
 }
 
-fn add_entry_schedule_recursion<R: tree::Visit>(
+fn add_entry_schedule_recursion(
     entry: EntryRef<'_>,
-    queue: &mut VecDeque<TreeInfoPair>,
-    delegate: &mut R,
+    queue: &mut VecDeque<TreeInfoTuple>,
+    change_id: &mut ChangeId,
+    relation_to_propagate: Option<Relation>,
+    delegate: &mut impl tree::Visit,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
+    let relation = relation_to_propagate.or_else(|| {
+        entry.mode.is_tree().then(|| {
+            *change_id += 1;
+            Relation::Parent(*change_id)
+        })
+    });
     if delegate
         .visit(Change::Addition {
             entry_mode: entry.mode,
             oid: entry.oid.to_owned(),
+            relation,
         })
         .cancelled()
     {
@@ -159,43 +204,53 @@ fn add_entry_schedule_recursion<R: tree::Visit>(
     if entry.mode.is_tree() {
         delegate.pop_path_component();
         delegate.push_back_tracked_path_component(entry.filename);
-        queue.push_back((None, Some(entry.oid.to_owned())));
+        queue.push_back((None, Some(entry.oid.to_owned()), to_child(relation)));
     }
     Ok(())
 }
-fn catchup_rhs_with_lhs<R: tree::Visit>(
+
+fn catchup_rhs_with_lhs(
     rhs_entries: &mut IteratorType<gix_object::TreeRefIter<'_>>,
     lhs: EntryRef<'_>,
     rhs: EntryRef<'_>,
-    queue: &mut VecDeque<TreeInfoPair>,
-    delegate: &mut R,
+    queue: &mut VecDeque<TreeInfoTuple>,
+    change_id: &mut ChangeId,
+    relation_to_propagate: Option<Relation>,
+    delegate: &mut impl tree::Visit,
 ) -> Result<(), Error> {
     use std::cmp::Ordering::*;
-    add_entry_schedule_recursion(rhs, queue, delegate)?;
+    add_entry_schedule_recursion(rhs, queue, change_id, relation_to_propagate, delegate)?;
     loop {
         match rhs_entries.peek() {
             Some(Ok(rhs)) => match compare(&lhs, rhs) {
                 Equal => {
                     let rhs = rhs_entries.next().transpose()?.expect("the peeked item to be present");
                     delegate.pop_path_component();
-                    handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, queue, delegate)?;
+                    handle_lhs_and_rhs_with_equal_filenames(
+                        lhs,
+                        rhs,
+                        queue,
+                        change_id,
+                        relation_to_propagate,
+                        delegate,
+                    )?;
                     break;
                 }
                 Greater => {
                     let rhs = rhs_entries.next().transpose()?.expect("the peeked item to be present");
                     delegate.pop_path_component();
-                    add_entry_schedule_recursion(rhs, queue, delegate)?;
+                    add_entry_schedule_recursion(rhs, queue, change_id, relation_to_propagate, delegate)?;
                 }
                 Less => {
                     delegate.pop_path_component();
-                    delete_entry_schedule_recursion(lhs, queue, delegate)?;
+                    delete_entry_schedule_recursion(lhs, queue, change_id, relation_to_propagate, delegate)?;
                     break;
                 }
             },
             Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
             None => {
                 delegate.pop_path_component();
-                delete_entry_schedule_recursion(lhs, queue, delegate)?;
+                delete_entry_schedule_recursion(lhs, queue, change_id, relation_to_propagate, delegate)?;
                 break;
             }
         }
@@ -203,39 +258,48 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
     Ok(())
 }
 
-fn catchup_lhs_with_rhs<R: tree::Visit>(
+fn catchup_lhs_with_rhs(
     lhs_entries: &mut IteratorType<gix_object::TreeRefIter<'_>>,
     lhs: EntryRef<'_>,
     rhs: EntryRef<'_>,
-    queue: &mut VecDeque<TreeInfoPair>,
-    delegate: &mut R,
+    queue: &mut VecDeque<TreeInfoTuple>,
+    change_id: &mut ChangeId,
+    relation_to_propagate: Option<Relation>,
+    delegate: &mut impl tree::Visit,
 ) -> Result<(), Error> {
     use std::cmp::Ordering::*;
-    delete_entry_schedule_recursion(lhs, queue, delegate)?;
+    delete_entry_schedule_recursion(lhs, queue, change_id, relation_to_propagate, delegate)?;
     loop {
         match lhs_entries.peek() {
             Some(Ok(lhs)) => match compare(lhs, &rhs) {
                 Equal => {
                     let lhs = lhs_entries.next().expect("the peeked item to be present")?;
                     delegate.pop_path_component();
-                    handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, queue, delegate)?;
+                    handle_lhs_and_rhs_with_equal_filenames(
+                        lhs,
+                        rhs,
+                        queue,
+                        change_id,
+                        relation_to_propagate,
+                        delegate,
+                    )?;
                     break;
                 }
                 Less => {
                     let lhs = lhs_entries.next().expect("the peeked item to be present")?;
                     delegate.pop_path_component();
-                    delete_entry_schedule_recursion(lhs, queue, delegate)?;
+                    delete_entry_schedule_recursion(lhs, queue, change_id, relation_to_propagate, delegate)?;
                 }
                 Greater => {
                     delegate.pop_path_component();
-                    add_entry_schedule_recursion(rhs, queue, delegate)?;
+                    add_entry_schedule_recursion(rhs, queue, change_id, relation_to_propagate, delegate)?;
                     break;
                 }
             },
             Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
             None => {
                 delegate.pop_path_component();
-                add_entry_schedule_recursion(rhs, queue, delegate)?;
+                add_entry_schedule_recursion(rhs, queue, change_id, relation_to_propagate, delegate)?;
                 break;
             }
         }
@@ -243,11 +307,13 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
     Ok(())
 }
 
-fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
+fn handle_lhs_and_rhs_with_equal_filenames(
     lhs: EntryRef<'_>,
     rhs: EntryRef<'_>,
-    queue: &mut VecDeque<TreeInfoPair>,
-    delegate: &mut R,
+    queue: &mut VecDeque<TreeInfoTuple>,
+    change_id: &mut ChangeId,
+    relation_to_propagate: Option<Relation>,
+    delegate: &mut impl tree::Visit,
 ) -> Result<(), Error> {
     match (lhs.mode.is_tree(), rhs.mode.is_tree()) {
         (true, true) => {
@@ -264,7 +330,11 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             {
                 return Err(Error::Cancelled);
             }
-            queue.push_back((Some(lhs.oid.to_owned()), Some(rhs.oid.to_owned())));
+            queue.push_back((
+                Some(lhs.oid.to_owned()),
+                Some(rhs.oid.to_owned()),
+                relation_to_propagate,
+            ));
         }
         (_, true) => {
             delegate.push_back_tracked_path_component(lhs.filename);
@@ -272,28 +342,40 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
                 .visit(Change::Deletion {
                     entry_mode: lhs.mode,
                     oid: lhs.oid.to_owned(),
+                    relation: None,
                 })
                 .cancelled()
             {
                 return Err(Error::Cancelled);
             };
+
+            let relation = relation_to_propagate.or_else(|| {
+                *change_id += 1;
+                Some(Relation::Parent(*change_id))
+            });
             if delegate
                 .visit(Change::Addition {
                     entry_mode: rhs.mode,
                     oid: rhs.oid.to_owned(),
+                    relation,
                 })
                 .cancelled()
             {
                 return Err(Error::Cancelled);
             };
-            queue.push_back((None, Some(rhs.oid.to_owned())));
+            queue.push_back((None, Some(rhs.oid.to_owned()), to_child(relation)));
         }
         (true, _) => {
             delegate.push_back_tracked_path_component(lhs.filename);
+            let relation = relation_to_propagate.or_else(|| {
+                *change_id += 1;
+                Some(Relation::Parent(*change_id))
+            });
             if delegate
                 .visit(Change::Deletion {
                     entry_mode: lhs.mode,
                     oid: lhs.oid.to_owned(),
+                    relation,
                 })
                 .cancelled()
             {
@@ -303,12 +385,13 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
                 .visit(Change::Addition {
                     entry_mode: rhs.mode,
                     oid: rhs.oid.to_owned(),
+                    relation: None,
                 })
                 .cancelled()
             {
                 return Err(Error::Cancelled);
             };
-            queue.push_back((Some(lhs.oid.to_owned()), None));
+            queue.push_back((Some(lhs.oid.to_owned()), None, to_child(relation)));
         }
         (false, false) => {
             delegate.push_path_component(lhs.filename);
@@ -331,6 +414,13 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
 }
 
 type IteratorType<I> = std::mem::ManuallyDrop<std::iter::Peekable<I>>;
+
+fn to_child(r: Option<Relation>) -> Option<Relation> {
+    r.map(|r| match r {
+        Relation::Parent(id) => Relation::ChildOfParent(id),
+        Relation::ChildOfParent(id) => Relation::ChildOfParent(id),
+    })
+}
 
 fn peekable<I: Iterator>(iter: I) -> IteratorType<I> {
     std::mem::ManuallyDrop::new(iter.peekable())

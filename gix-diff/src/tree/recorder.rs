@@ -4,7 +4,8 @@ use gix_object::{
     tree,
 };
 
-use crate::tree::{visit, Recorder};
+use crate::tree::visit::Relation;
+use crate::tree::{visit, Recorder, Visit};
 
 /// Describe how to track the location of a change.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -17,7 +18,7 @@ pub enum Location {
     FileName,
 }
 
-/// A Change as observed by a call to [`visit(…)`][visit::Visit::visit()], enhanced with the path affected by the change.
+/// A Change as observed by a call to [`visit(…)`](Visit::visit()), enhanced with the path affected by the change.
 /// Its similar to [`visit::Change`] but includes the path that changed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[allow(missing_docs)]
@@ -26,11 +27,13 @@ pub enum Change {
         entry_mode: tree::EntryMode,
         oid: ObjectId,
         path: BString,
+        relation: Option<Relation>,
     },
     Deletion {
         entry_mode: tree::EntryMode,
         oid: ObjectId,
         path: BString,
+        relation: Option<Relation>,
     },
     Modification {
         previous_entry_mode: tree::EntryMode,
@@ -93,7 +96,7 @@ impl Recorder {
     }
 }
 
-impl visit::Visit for Recorder {
+impl Visit for Recorder {
     fn pop_front_tracked_path_and_set_current(&mut self) {
         if let Some(Location::Path) = self.location {
             self.path = self.path_deque.pop_front().expect("every parent is set only once");
@@ -136,15 +139,25 @@ impl visit::Visit for Recorder {
     fn visit(&mut self, change: visit::Change) -> visit::Action {
         use visit::Change::*;
         self.records.push(match change {
-            Deletion { entry_mode, oid } => Change::Deletion {
+            Deletion {
+                entry_mode,
+                oid,
+                relation,
+            } => Change::Deletion {
                 entry_mode,
                 oid,
                 path: self.path_clone(),
+                relation,
             },
-            Addition { entry_mode, oid } => Change::Addition {
+            Addition {
+                entry_mode,
+                oid,
+                relation,
+            } => Change::Addition {
                 entry_mode,
                 oid,
                 path: self.path_clone(),
+                relation,
             },
             Modification {
                 previous_entry_mode,
