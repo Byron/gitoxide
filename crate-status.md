@@ -311,10 +311,13 @@ Check out the [performance discussion][gix-diff-performance] as well.
 * **lines**
     * [x] Simple line-by-line diffs powered by the `imara-diff` crate.
 * **generic rename tracker to find renames and copies**
-    * [x] find by exact match
-    * [x] find by similarity check
+    * [x] find blobs by exact match
+    * [x] find blobs by similarity check
     * [ ] heuristics to find best candidate
-    * [ ] find by basename to help detecting simple moves
+    * [ ] find by basename to support similarity check
+    * [x] directory tracking
+        - [x] by identity
+        - [ ] by similarity
 * **blob**
     * [x] a choice of to-worktree, to-git and to-worktree-if-needed conversions
     * [x] `textconv` filters

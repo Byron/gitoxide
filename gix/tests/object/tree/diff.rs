@@ -1270,10 +1270,10 @@ rename to gix-sec/tests/sec.rs
                 "gix-sec/src/permission.rs",
                 "git-sec/src/trust.rs",
                 "gix-sec/src/trust.rs",
+                "git-sec/tests/identity/mod.rs",
+                "gix-sec/tests/identity/mod.rs",
                 "git-sec/tests/sec.rs",
                 "gix-sec/tests/sec.rs",
-                "git-sec/tests/identity/mod.rs",
-                "gix-sec/tests/identity/mod.rs"
             ]
         );
 
