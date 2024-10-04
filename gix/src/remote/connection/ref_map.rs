@@ -71,7 +71,7 @@ impl Default for Options {
     }
 }
 
-impl<'remote, 'repo, T> Connection<'remote, 'repo, T>
+impl<T> Connection<'_, '_, T>
 where
     T: Transport,
 {

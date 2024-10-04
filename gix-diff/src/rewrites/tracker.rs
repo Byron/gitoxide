@@ -641,7 +641,7 @@ mod diff {
         pub input: &'a crate::blob::intern::InternedInput<&'data [u8]>,
     }
 
-    impl<'a, 'data> crate::blob::Sink for Statistics<'a, 'data> {
+    impl crate::blob::Sink for Statistics<'_, '_> {
         type Out = usize;
 
         fn process_change(&mut self, before: Range<u32>, _after: Range<u32>) {

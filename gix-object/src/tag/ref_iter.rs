@@ -153,7 +153,7 @@ pub enum Token<'a> {
     },
 }
 
-impl<'a> Token<'a> {
+impl Token<'_> {
     /// Return the object id of this token if its a [Target][Token::Target].
     pub fn id(&self) -> Option<&oid> {
         match self {

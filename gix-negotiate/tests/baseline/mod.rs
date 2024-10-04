@@ -154,7 +154,7 @@ impl<'a> ParseRounds<'a> {
     }
 }
 
-impl<'a> Iterator for ParseRounds<'a> {
+impl Iterator for ParseRounds<'_> {
     type Item = Round;
 
     fn next(&mut self) -> Option<Self::Item> {

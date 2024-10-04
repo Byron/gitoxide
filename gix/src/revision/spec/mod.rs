@@ -9,7 +9,7 @@ mod impls {
 
     use crate::revision::Spec;
 
-    impl<'repo> Deref for Spec<'repo> {
+    impl Deref for Spec<'_> {
         type Target = gix_revision::Spec;
 
         fn deref(&self) -> &Self::Target {
@@ -17,19 +17,19 @@ mod impls {
         }
     }
 
-    impl<'repo> DerefMut for Spec<'repo> {
+    impl DerefMut for Spec<'_> {
         fn deref_mut(&mut self) -> &mut Self::Target {
             &mut self.inner
         }
     }
 
-    impl<'repo> PartialEq for Spec<'repo> {
+    impl PartialEq for Spec<'_> {
         fn eq(&self, other: &Self) -> bool {
             self.inner == other.inner
         }
     }
 
-    impl<'repo> Eq for Spec<'repo> {}
+    impl Eq for Spec<'_> {}
 }
 
 /// Initialization

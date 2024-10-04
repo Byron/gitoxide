@@ -263,7 +263,7 @@ pub struct WriteWithProgress<'a, T> {
     pub progress: &'a AtomicUsize,
 }
 
-impl<'a, T> std::io::Write for WriteWithProgress<'a, T>
+impl<T> std::io::Write for WriteWithProgress<'_, T>
 where
     T: std::io::Write,
 {

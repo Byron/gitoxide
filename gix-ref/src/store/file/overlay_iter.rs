@@ -40,7 +40,7 @@ pub struct Platform<'s> {
     packed: Option<file::packed::SharedBufferSnapshot>,
 }
 
-impl<'p, 's> LooseThenPacked<'p, 's> {
+impl<'p> LooseThenPacked<'p, '_> {
     fn strip_namespace(&self, mut r: Reference) -> Reference {
         if let Some(namespace) = &self.namespace {
             r.strip_namespace(namespace);
@@ -112,7 +112,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
     }
 }
 
-impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
+impl Iterator for LooseThenPacked<'_, '_> {
     type Item = Result<Reference, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -187,7 +187,7 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
     }
 }
 
-impl<'s> Platform<'s> {
+impl Platform<'_> {
     /// Return an iterator over all references, loose or `packed`, sorted by their name.
     ///
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themselves.

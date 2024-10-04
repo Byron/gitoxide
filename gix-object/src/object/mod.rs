@@ -8,7 +8,7 @@ mod write {
     use crate::{Kind, Object, ObjectRef, WriteTo};
 
     /// Serialization
-    impl<'a> WriteTo for ObjectRef<'a> {
+    impl WriteTo for ObjectRef<'_> {
         /// Write the contained object to `out` in the git serialization format.
         fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
             use crate::ObjectRef::*;

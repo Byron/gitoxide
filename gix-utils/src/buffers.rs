@@ -37,7 +37,7 @@ pub struct WithForeignSource<'src, 'bufs> {
     dest: &'bufs mut Vec<u8>,
 }
 
-impl<'bufs> WithForeignSource<'_, 'bufs> {
+impl WithForeignSource<'_, '_> {
     /// Must be called after every change (i.e. when it's known that `dest` was written.
     pub fn swap(&mut self) {
         self.ro_src.take();

@@ -89,7 +89,7 @@ impl crate::Repository {
                 .transpose()?
                 .map(Ok)
                 .or_else(|| self.find_default_remote(remote::Direction::Fetch))
-                .ok_or_else(|| find::for_fetch::Error::ExactlyOneRemoteNotAvailable)??,
+                .ok_or(find::for_fetch::Error::ExactlyOneRemoteNotAvailable)??,
         })
     }
 

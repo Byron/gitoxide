@@ -50,7 +50,7 @@ impl<'repo> Reference<'repo> {
     }
 }
 
-impl<'repo> std::fmt::Debug for Reference<'repo> {
+impl std::fmt::Debug for Reference<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.inner, f)
     }

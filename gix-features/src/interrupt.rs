@@ -29,7 +29,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for Iter<'a, I>
+impl<I> Iterator for Iter<'_, I>
 where
     I: Iterator,
 {
@@ -67,7 +67,7 @@ where
     }
 }
 
-impl<'a, I, EFN, E> Iterator for IterWithErr<'a, I, EFN>
+impl<I, EFN, E> Iterator for IterWithErr<'_, I, EFN>
 where
     I: Iterator,
     EFN: FnOnce() -> E,
@@ -99,7 +99,7 @@ pub struct Read<'a, R> {
     pub should_interrupt: &'a AtomicBool,
 }
 
-impl<'a, R> io::Read for Read<'a, R>
+impl<R> io::Read for Read<'_, R>
 where
     R: io::Read,
 {
@@ -111,7 +111,7 @@ where
     }
 }
 
-impl<'a, R> io::BufRead for Read<'a, R>
+impl<R> io::BufRead for Read<'_, R>
 where
     R: io::BufRead,
 {

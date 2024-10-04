@@ -28,7 +28,7 @@ pub mod changes {
         }
     }
 
-    impl<'a, H> Visit for AllNew<'a, H>
+    impl<H> Visit for AllNew<'_, H>
     where
         H: InsertImmutable,
     {
@@ -90,7 +90,7 @@ pub mod traverse {
         }
     }
 
-    impl<'a, H> Visit for AllUnseen<'a, H>
+    impl<H> Visit for AllUnseen<'_, H>
     where
         H: InsertImmutable,
     {

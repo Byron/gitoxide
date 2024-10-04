@@ -112,7 +112,7 @@ impl Entry<'_> {
     }
 }
 
-impl<'a> Drop for Entry<'a> {
+impl Drop for Entry<'_> {
     fn drop(&mut self) {
         if self.remaining == Some(0) {
             self.parent.path_buf = self.path_buf.take();

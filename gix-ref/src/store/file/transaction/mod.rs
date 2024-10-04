@@ -77,7 +77,7 @@ impl file::Store {
     }
 }
 
-impl<'s, 'p> Transaction<'s, 'p> {
+impl<'p> Transaction<'_, 'p> {
     /// Configure the way packed refs are handled during the transaction
     pub fn packed_refs(mut self, packed_refs: PackedRefs<'p>) -> Self {
         self.packed_refs = packed_refs;

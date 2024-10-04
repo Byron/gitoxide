@@ -260,7 +260,7 @@ pub enum ToWorktreeOutcome<'input, 'pipeline> {
     Process(driver::apply::MaybeDelayed<'pipeline>),
 }
 
-impl<'input, 'pipeline> ToWorktreeOutcome<'input, 'pipeline> {
+impl ToWorktreeOutcome<'_, '_> {
     /// Return true if this outcome is delayed. In that case, one isn't allowed to use [`Read`] or cause a panic.
     pub fn is_delayed(&self) -> bool {
         matches!(
@@ -297,7 +297,7 @@ impl<'input, 'pipeline> ToWorktreeOutcome<'input, 'pipeline> {
     }
 }
 
-impl<'input, 'pipeline> std::io::Read for ToWorktreeOutcome<'input, 'pipeline> {
+impl std::io::Read for ToWorktreeOutcome<'_, '_> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         match self {
             ToWorktreeOutcome::Unchanged(b) => b.read(buf),
@@ -310,7 +310,7 @@ impl<'input, 'pipeline> std::io::Read for ToWorktreeOutcome<'input, 'pipeline> {
     }
 }
 
-impl<'pipeline, R> std::io::Read for ToGitOutcome<'pipeline, R>
+impl<R> std::io::Read for ToGitOutcome<'_, R>
 where
     R: std::io::Read,
 {

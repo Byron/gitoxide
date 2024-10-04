@@ -70,7 +70,7 @@ impl crate::WriteTo for Tree {
 }
 
 /// Serialization
-impl<'a> crate::WriteTo for TreeRef<'a> {
+impl crate::WriteTo for TreeRef<'_> {
     /// Serialize this tree to `out` in the git internal format.
     fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
         debug_assert_eq!(

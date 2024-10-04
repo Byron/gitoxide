@@ -18,7 +18,7 @@ use crate::{
     Object,
 };
 
-impl<'repo> delegate::Navigate for Delegate<'repo> {
+impl delegate::Navigate for Delegate<'_> {
     fn traverse(&mut self, kind: Traversal) -> Option<()> {
         self.unset_disambiguate_call();
         self.follow_refs_to_objects_if_needed()?;

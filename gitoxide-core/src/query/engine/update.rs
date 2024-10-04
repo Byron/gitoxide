@@ -369,7 +369,7 @@ pub fn update(
             }
         }
 
-        impl<'a, Find> gix::prelude::Find for Db<'a, Find>
+        impl<Find> gix::prelude::Find for Db<'_, Find>
         where
             Find: gix::prelude::Find + Clone,
         {

@@ -47,7 +47,7 @@ mod error {
         },
     }
 
-    impl<'a> fmt::Display for Error<'a> {
+    impl fmt::Display for Error<'_> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
                 Error::Intermediate { dir, kind } => write!(
@@ -69,7 +69,7 @@ mod error {
         }
     }
 
-    impl<'a> std::error::Error for Error<'a> {
+    impl std::error::Error for Error<'_> {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             match self {
                 Error::Permanent { err, .. } => Some(err),

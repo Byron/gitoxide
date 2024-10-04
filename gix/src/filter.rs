@@ -128,7 +128,7 @@ impl<'repo> Pipeline<'repo> {
 }
 
 /// Conversions
-impl<'repo> Pipeline<'repo> {
+impl Pipeline<'_> {
     /// Convert a `src` stream (to be found at `rela_path`, a repo-relative path) to a representation suitable for storage in `git`
     /// by using all attributes at `rela_path` and configuration of the repository to know exactly which filters apply.
     /// `index` is used in particularly rare cases where the CRLF filter in auto-mode tries to determine whether to apply itself,

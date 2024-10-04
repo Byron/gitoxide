@@ -17,7 +17,7 @@ where
     cap: usize,
 }
 
-impl<'a, T, F> Drop for WithSidebands<'a, T, F>
+impl<T, F> Drop for WithSidebands<'_, T, F>
 where
     T: io::Read,
 {
@@ -129,7 +129,7 @@ where
     }
 }
 
-impl<'a, T, F> BufRead for WithSidebands<'a, T, F>
+impl<T, F> BufRead for WithSidebands<'_, T, F>
 where
     T: io::Read,
     F: FnMut(bool, &[u8]) -> ProgressAction,
@@ -204,7 +204,7 @@ where
     }
 }
 
-impl<'a, T, F> io::Read for WithSidebands<'a, T, F>
+impl<T, F> io::Read for WithSidebands<'_, T, F>
 where
     T: io::Read,
     F: FnMut(bool, &[u8]) -> ProgressAction,

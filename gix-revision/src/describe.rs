@@ -59,7 +59,7 @@ pub struct Format<'a> {
     pub dirty_suffix: Option<String>,
 }
 
-impl<'a> Format<'a> {
+impl Format<'_> {
     /// Return true if the `name` is directly associated with `id`, i.e. there are no commits between them.
     pub fn is_exact_match(&self) -> bool {
         self.depth == 0
@@ -75,7 +75,7 @@ impl<'a> Format<'a> {
     }
 }
 
-impl<'a> Display for Format<'a> {
+impl Display for Format<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if let Some(name) = self.name.as_deref() {
             if !self.long && self.is_exact_match() {
@@ -116,7 +116,7 @@ pub struct Options<'name> {
     pub first_parent: bool,
 }
 
-impl<'name> Default for Options<'name> {
+impl Default for Options<'_> {
     fn default() -> Self {
         Options {
             max_candidates: 10, // the same number as git uses, otherwise we perform worse by default on big repos

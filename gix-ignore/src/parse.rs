@@ -17,7 +17,7 @@ impl<'a> Lines<'a> {
     }
 }
 
-impl<'a> Iterator for Lines<'a> {
+impl Iterator for Lines<'_> {
     type Item = (gix_glob::Pattern, usize, crate::Kind);
 
     fn next(&mut self) -> Option<Self::Item> {

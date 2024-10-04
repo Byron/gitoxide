@@ -30,7 +30,7 @@ impl<'r> Iter<'r> {
     }
 }
 
-impl<'r> Platform<'r> {
+impl Platform<'_> {
     /// Return an iterator over all references in the repository.
     ///
     /// Even broken or otherwise unparsable or inaccessible references are returned and have to be handled by the caller on a
@@ -73,7 +73,7 @@ impl<'r> Platform<'r> {
     }
 }
 
-impl<'r> Iter<'r> {
+impl Iter<'_> {
     /// Automatically peel references before yielding them during iteration.
     ///
     /// This has the same effect as using `iter.map(|r| {r.peel_to_id_in_place(); r})`.

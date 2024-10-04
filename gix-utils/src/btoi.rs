@@ -1,17 +1,17 @@
-/// A module with utilities to turn byte slices with decimal numbers back into their
-/// binary representation.
-///
-/// ### Credits
-///
-/// This module was ported from <https://github.com/niklasf/rust-btoi> version 0.4.3
-/// see <https://github.com/Byron/gitoxide/issues/729> for how it came to be in order
-/// to save 2.2 seconds of per-core compile time by not compiling the `num-traits` crate
-/// anymore.
-///
-/// Licensed with compatible licenses [MIT] and [Apache]
-///
-/// [MIT]: https://github.com/niklasf/rust-btoi/blob/master/LICENSE-MIT
-/// [Apache]: https://github.com/niklasf/rust-btoi/blob/master/LICENSE-APACHE
+//! A module with utilities to turn byte slices with decimal numbers back into their
+//! binary representation.
+//!
+//! ### Credits
+//!
+//! This module was ported from <https://github.com/niklasf/rust-btoi> version 0.4.3
+//! see <https://github.com/Byron/gitoxide/issues/729> for how it came to be in order
+//! to save 2.2 seconds of per-core compile time by not compiling the `num-traits` crate
+//! anymore.
+//!
+//! Licensed with compatible licenses [MIT] and [Apache]
+//!
+//! [MIT]: https://github.com/niklasf/rust-btoi/blob/master/LICENSE-MIT
+//! [Apache]: https://github.com/niklasf/rust-btoi/blob/master/LICENSE-APACHE
 
 /// An error that can occur when parsing an integer.
 ///

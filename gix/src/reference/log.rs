@@ -8,7 +8,7 @@ use crate::{
     Reference,
 };
 
-impl<'repo> Reference<'repo> {
+impl Reference<'_> {
     /// Return a platform for obtaining iterators over reference logs.
     pub fn log_iter(&self) -> gix_ref::file::log::iter::Platform<'_, '_> {
         self.inner.log_iter(&self.repo.refs)

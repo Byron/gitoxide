@@ -153,7 +153,7 @@ pub mod diff {
         }
     }
 
-    impl<'a> Platform<'a> {
+    impl Platform<'_> {
         /// Perform a diff on lines between the old and the new version of a blob, passing each hunk of lines to `process_hunk`.
         /// The diffing algorithm is determined by the `diff.algorithm` configuration, or individual diff drivers.
         /// Note that `process_hunk` is not called if one of the involved resources are binary, but that can be determined

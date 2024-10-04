@@ -13,7 +13,7 @@ use crate::{
     revision::spec::parse::{Delegate, Error, RefsHint},
 };
 
-impl<'repo> delegate::Revision for Delegate<'repo> {
+impl delegate::Revision for Delegate<'_> {
     fn find_ref(&mut self, name: &BStr) -> Option<()> {
         self.unset_disambiguate_call();
         if !self.err.is_empty() && self.refs[self.idx].is_some() {

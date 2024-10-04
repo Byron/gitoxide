@@ -83,7 +83,7 @@ struct IsActiveState {
 }
 
 ///Access
-impl<'repo> Submodule<'repo> {
+impl Submodule<'_> {
     /// Return the submodule's name.
     pub fn name(&self) -> &BStr {
         self.name.as_ref()
@@ -304,7 +304,7 @@ pub mod status {
         IndexWorktreeStatus(#[from] crate::status::index_worktree::Error),
     }
 
-    impl<'repo> Submodule<'repo> {
+    impl Submodule<'_> {
         /// Return the status of the submodule.
         ///
         /// Use `ignore` to control the portion of the submodule status to ignore. It can be obtained from

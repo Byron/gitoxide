@@ -50,7 +50,7 @@ impl crate::WriteTo for Commit {
     }
 }
 
-impl<'a> crate::WriteTo for CommitRef<'a> {
+impl crate::WriteTo for CommitRef<'_> {
     /// Serializes this instance to `out` in the git serialization format.
     fn write_to(&self, mut out: &mut dyn io::Write) -> io::Result<()> {
         encode::trusted_header_id(b"tree", &self.tree(), &mut out)?;

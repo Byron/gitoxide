@@ -21,7 +21,7 @@ mod error {
 pub use error::Error;
 
 /// Remove Lifetime
-impl<'repo> Commit<'repo> {
+impl Commit<'_> {
     /// Create an owned instance of this object, copying our data in the process.
     pub fn detached(&self) -> ObjectDetached {
         ObjectDetached {
@@ -167,7 +167,7 @@ impl<'repo> Commit<'repo> {
     }
 }
 
-impl<'r> std::fmt::Debug for Commit<'r> {
+impl std::fmt::Debug for Commit<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Commit({})", self.id)
     }

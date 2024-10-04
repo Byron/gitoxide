@@ -291,7 +291,7 @@ pub struct DecompressRead<'a, R> {
     pub decompressor: &'a mut Decompress,
 }
 
-impl<'a, R> io::Read for DecompressRead<'a, R>
+impl<R> io::Read for DecompressRead<'_, R>
 where
     R: io::BufRead,
 {
@@ -308,7 +308,7 @@ pub struct HashWrite<'a, T> {
     pub inner: T,
 }
 
-impl<'a, T> std::io::Write for HashWrite<'a, T>
+impl<T> std::io::Write for HashWrite<'_, T>
 where
     T: std::io::Write,
 {

@@ -74,7 +74,7 @@ pub struct Platform<'a, 'repo> {
 }
 
 /// Configuration
-impl<'a, 'repo> Platform<'a, 'repo> {
+impl Platform<'_, '_> {
     /// Keep track of file-names, which makes the [`location`][Change::location] field usable with the filename of the changed item.
     pub fn track_filename(&mut self) -> &mut Self {
         self.tracking = Some(Location::FileName);
@@ -128,7 +128,7 @@ pub mod stats {
 }
 
 /// Convenience
-impl<'a, 'repo> Platform<'a, 'repo> {
+impl Platform<'_, '_> {
     /// Calculate statistics about the lines of the diff between our current and the `other` tree.
     ///
     /// ### Performance Notes

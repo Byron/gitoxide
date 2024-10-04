@@ -79,7 +79,7 @@ impl<'repo> Snapshot<'repo> {
 }
 
 /// Utilities and additional access
-impl<'repo> Snapshot<'repo> {
+impl Snapshot<'_> {
     /// Returns the underlying configuration implementation for a complete API, despite being a little less convenient.
     ///
     /// It's expected that more functionality will move up depending on demand.

@@ -120,7 +120,7 @@ impl<'event> Body<'event> {
     }
 }
 
-impl<'event> Body<'event> {
+impl Body<'_> {
     pub(crate) fn as_ref(&self) -> &[Event<'_>] {
         &self.0
     }

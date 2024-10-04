@@ -65,7 +65,7 @@ mod entries {
         }
     }
 
-    impl<'repo, 'a> gix::traverse::tree::Visit for Traverse<'repo, 'a> {
+    impl gix::traverse::tree::Visit for Traverse<'_, '_> {
         fn pop_front_tracked_path_and_set_current(&mut self) {
             self.path = self.path_deque.pop_front().expect("every parent is set only once");
         }

@@ -57,7 +57,7 @@ impl crate::WriteTo for Tag {
     }
 }
 
-impl<'a> crate::WriteTo for TagRef<'a> {
+impl crate::WriteTo for TagRef<'_> {
     fn write_to(&self, mut out: &mut dyn io::Write) -> io::Result<()> {
         encode::trusted_header_field(b"object", self.target, &mut out)?;
         encode::trusted_header_field(b"type", self.target_kind.as_bytes(), &mut out)?;

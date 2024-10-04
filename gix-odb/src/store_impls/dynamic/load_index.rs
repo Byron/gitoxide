@@ -683,7 +683,7 @@ impl<'a> IncOnNewAndDecOnDrop<'a> {
         Self(v)
     }
 }
-impl<'a> Drop for IncOnNewAndDecOnDrop<'a> {
+impl Drop for IncOnNewAndDecOnDrop<'_> {
     fn drop(&mut self) {
         self.0.fetch_sub(1, Ordering::SeqCst);
     }

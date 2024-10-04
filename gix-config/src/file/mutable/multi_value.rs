@@ -35,7 +35,7 @@ pub struct MultiValueMut<'borrow, 'lookup, 'event> {
     pub(crate) offsets: HashMap<SectionId, Vec<usize>>,
 }
 
-impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
+impl<'lookup, 'event> MultiValueMut<'_, 'lookup, 'event> {
     /// Returns the actual values.
     pub fn get(&self) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         let mut expect_value = false;

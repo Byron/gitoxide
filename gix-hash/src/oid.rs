@@ -41,7 +41,7 @@ pub struct HexDisplay<'a> {
     hex_len: usize,
 }
 
-impl<'a> std::fmt::Display for HexDisplay<'a> {
+impl std::fmt::Display for HexDisplay<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut hex = Kind::hex_buf();
         let max_len = self.inner.hex_to_buf(hex.as_mut());

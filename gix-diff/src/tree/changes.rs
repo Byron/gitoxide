@@ -20,7 +20,7 @@ pub enum Error {
     EntriesDecode(#[from] gix_object::decode::Error),
 }
 
-impl<'a> tree::Changes<'a> {
+impl tree::Changes<'_> {
     /// Calculate the changes that would need to be applied to `self` to get `other` using `objects` to obtain objects as needed for traversal.
     ///
     /// * The `state` maybe owned or mutably borrowed to allow reuses allocated data structures through multiple runs.

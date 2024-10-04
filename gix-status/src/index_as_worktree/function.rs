@@ -327,7 +327,7 @@ impl<'index> State<'_, 'index> {
     /// isn't really a race-condition to worry about. This also explains why removing the `return` here doesn't have an apparent effect.
     /// This entire branch here is just the optimization of "don't even look at index entries where the stat hasn't changed".
     /// If we don't have this optimization the result shouldn't change, our status implementation will just be super slow :D
-
+    ///
     /// We calculate whether this change is `racy_clean`, so if the last `timestamp` is before or the same as the `mtime` of the entry
     /// which is what `new_stat.is_racy(..)` does in the branch, and only if we are sure that there is no race condition
     /// do we `return` early. Since we don't `return` early we just do a full content comparison below,
@@ -335,7 +335,7 @@ impl<'index> State<'_, 'index> {
     ///
     /// If a file showed up as racily clean and didn't change then we don't need to do anything. After this status check is
     /// complete and the file won't show up as racily clean anymore, since it's mtime is now before the new timestamp.
-    /// However if the file did actually change then we really ran into one of those rare race conditions in that case we,
+    /// However, if the file did actually change then we really ran into one of those rare race conditions in that case we,
     /// and git does the same, set the size of the file in the index to 0. This will always make the file show up as changed.
     /// This adds the need to treat all files of size 0 in the index as changed. This is not quite right of course because 0 sized files
     /// could be entirely valid and unchanged. Therefore this only applies if the oid doesn't match the oid of an empty file,

@@ -60,7 +60,7 @@ pub trait ExtendedBufRead<'a>: ReadlineBufRead {
 }
 
 #[async_trait(?Send)]
-impl<'a, T: ReadlineBufRead + ?Sized + 'a + Unpin> ReadlineBufRead for Box<T> {
+impl<T: ReadlineBufRead + ?Sized + Unpin> ReadlineBufRead for Box<T> {
     async fn readline(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, gix_packetline::decode::Error>>> {
         self.deref_mut().readline().await
     }

@@ -31,7 +31,7 @@ pub struct Outcome {
 }
 
 /// Add the item to compare to.
-impl<'a, 'old> Platform<'a, 'old> {
+impl<'old> Platform<'_, 'old> {
     /// Call `for_each` repeatedly with all changes that are needed to convert the source of the diff to the tree to `other`.
     ///
     /// `other` could also be created with the [`empty_tree()`][crate::Repository::empty_tree()] method to handle the first commit
@@ -123,7 +123,7 @@ struct Delegate<'a, 'old, 'new, VisitFn, E> {
     err: Option<E>,
 }
 
-impl<'a, 'old, 'new, VisitFn, E> Delegate<'a, 'old, 'new, VisitFn, E>
+impl<'old, 'new, VisitFn, E> Delegate<'_, 'old, 'new, VisitFn, E>
 where
     VisitFn: for<'delegate> FnMut(Change<'delegate, 'old, 'new>) -> Result<Action, E>,
     E: Into<Box<dyn std::error::Error + Sync + Send + 'static>>,
@@ -245,7 +245,7 @@ where
     }
 }
 
-impl<'a, 'old, 'new, VisitFn, E> gix_diff::tree::Visit for Delegate<'a, 'old, 'new, VisitFn, E>
+impl<'old, 'new, VisitFn, E> gix_diff::tree::Visit for Delegate<'_, 'old, 'new, VisitFn, E>
 where
     VisitFn: for<'delegate> FnMut(Change<'delegate, 'old, 'new>) -> Result<Action, E>,
     E: Into<Box<dyn std::error::Error + Sync + Send + 'static>>,

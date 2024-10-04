@@ -2,7 +2,7 @@ use std::{convert::Infallible, io};
 
 use crate::{Blob, BlobRef, Kind};
 
-impl<'a> crate::WriteTo for BlobRef<'a> {
+impl crate::WriteTo for BlobRef<'_> {
     /// Write the blobs data to `out` verbatim.
     fn write_to(&self, out: &mut dyn io::Write) -> io::Result<()> {
         out.write_all(self.data)
@@ -39,7 +39,7 @@ impl Blob {
     }
 }
 
-impl<'a> BlobRef<'a> {
+impl BlobRef<'_> {
     /// Instantiate a `Blob` from the given `data`, which is used as-is.
     pub fn from_bytes(data: &[u8]) -> Result<BlobRef<'_>, Infallible> {
         Ok(BlobRef { data })

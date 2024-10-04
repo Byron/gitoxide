@@ -26,7 +26,7 @@ use crate::{
     Repository,
 };
 
-impl<'remote, 'repo, T> Prepare<'remote, 'repo, T>
+impl<T> Prepare<'_, '_, T>
 where
     T: Transport,
 {

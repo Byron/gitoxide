@@ -27,7 +27,7 @@ pub struct SectionMut<'a, 'event> {
 }
 
 /// Mutating methods.
-impl<'a, 'event> SectionMut<'a, 'event> {
+impl<'event> SectionMut<'_, 'event> {
     /// Adds an entry to the end of this section name `value_name` and `value`. If `value` is `None`, no equal sign will be written leaving
     /// just the key. This is useful for boolean values which are true if merely the key exists.
     pub fn push<'b>(&mut self, value_name: ValueName<'event>, value: Option<&'b BStr>) -> &mut Self {

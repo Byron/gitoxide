@@ -163,7 +163,7 @@ impl ChangeDetached {
     }
 }
 
-impl<'a, 'old, 'new> super::Change<'a, 'old, 'new> {
+impl super::Change<'_, '_, '_> {
     /// Produce a platform for performing a line-diff no matter whether the underlying [Event] is an addition, modification,
     /// deletion or rewrite.
     /// Use `resource_cache` to store the diffable data and possibly reuse previously stored data, usually obtained with
@@ -271,7 +271,7 @@ impl EventDetached {
     }
 }
 
-impl<'a, 'old, 'new> Event<'a, 'old, 'new> {
+impl Event<'_, '_, '_> {
     /// Return the current mode of this instance.
     pub fn entry_mode(&self) -> gix_object::tree::EntryMode {
         match self {

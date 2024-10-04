@@ -88,7 +88,7 @@ pub struct Platform<'a, 's> {
     pub buf: Vec<u8>,
 }
 
-impl<'a, 's> Platform<'a, 's> {
+impl Platform<'_, '_> {
     /// Return a forward iterator over all log-lines, most recent to oldest.
     pub fn rev(&mut self) -> std::io::Result<Option<log::iter::Reverse<'_, std::fs::File>>> {
         self.buf.clear();
@@ -158,7 +158,7 @@ pub mod reverse {
     }
 }
 
-impl<'a, F> Iterator for Reverse<'a, F>
+impl<F> Iterator for Reverse<'_, F>
 where
     F: std::io::Read + std::io::Seek,
 {

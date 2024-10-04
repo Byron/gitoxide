@@ -5,7 +5,7 @@ use bstr::BStr;
 use crate::{file::MetadataFilter, value, AsKey, File};
 
 /// Comfortable API for accessing values
-impl<'event> File<'event> {
+impl File<'_> {
     /// Like [`string_by()`](File::string_by()), but suitable for statically known `key`s like `remote.origin.url`.
     pub fn string(&self, key: impl AsKey) -> Option<Cow<'_, BStr>> {
         self.string_filter(key, &mut |_| true)

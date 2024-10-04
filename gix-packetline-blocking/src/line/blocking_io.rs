@@ -4,7 +4,7 @@ use std::io;
 
 use crate::{encode, BandRef, Channel, ErrorRef, PacketLineRef, TextRef};
 
-impl<'a> BandRef<'a> {
+impl BandRef<'_> {
     /// Serialize this instance to `out`, returning the amount of bytes written.
     ///
     /// The data written to `out` can be decoded with [`Borrowed::decode_band()]`.
@@ -17,23 +17,23 @@ impl<'a> BandRef<'a> {
     }
 }
 
-impl<'a> TextRef<'a> {
+impl TextRef<'_> {
     /// Serialize this instance to `out`, appending a newline if there is none, returning the amount of bytes written.
     pub fn write_to(&self, out: impl io::Write) -> io::Result<usize> {
         encode::text_to_write(self.0, out)
     }
 }
 
-impl<'a> ErrorRef<'a> {
+impl ErrorRef<'_> {
     /// Serialize this line as error to `out`.
     ///
-    /// This includes a marker to allow decoding it outside of a side-band channel, returning the amount of bytes written.
+    /// This includes a marker to allow decoding it outside a side-band channel, returning the amount of bytes written.
     pub fn write_to(&self, out: impl io::Write) -> io::Result<usize> {
         encode::error_to_write(self.0, out)
     }
 }
 
-impl<'a> PacketLineRef<'a> {
+impl PacketLineRef<'_> {
     /// Serialize this instance to `out` in git `packetline` format, returning the amount of bytes written to `out`.
     pub fn write_to(&self, out: impl io::Write) -> io::Result<usize> {
         match self {

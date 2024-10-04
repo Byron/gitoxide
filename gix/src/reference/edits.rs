@@ -19,7 +19,7 @@ pub mod set_target_id {
     }
     pub use error::Error;
 
-    impl<'repo> Reference<'repo> {
+    impl Reference<'_> {
         /// Set the id of this direct reference to `id` and use `reflog_message` for the reflog (if enabled in the repository).
         ///
         /// Note that the operation will fail on symbolic references, to change their type use the lower level reference database,
@@ -56,7 +56,7 @@ pub mod delete {
 
     use crate::Reference;
 
-    impl<'repo> Reference<'repo> {
+    impl Reference<'_> {
         /// Delete this reference or fail if it was changed since last observed.
         /// Note that this instance remains available in memory but probably shouldn't be used anymore.
         pub fn delete(&self) -> Result<(), crate::reference::edit::Error> {

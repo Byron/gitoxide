@@ -338,8 +338,8 @@ pub enum Token<'a> {
     Message(&'a BStr),
 }
 
-impl<'a> Token<'a> {
-    /// Return the object id of this token if its a [tree][Token::Tree] or a [parent commit][Token::Parent].
+impl Token<'_> {
+    /// Return the object id of this token if it's a [tree][Token::Tree] or a [parent commit][Token::Parent].
     pub fn id(&self) -> Option<&oid> {
         match self {
             Token::Tree { id } | Token::Parent { id } => Some(id.as_ref()),
@@ -347,7 +347,7 @@ impl<'a> Token<'a> {
         }
     }
 
-    /// Return the owned object id of this token if its a [tree][Token::Tree] or a [parent commit][Token::Parent].
+    /// Return the owned object id of this token if it's a [tree][Token::Tree] or a [parent commit][Token::Parent].
     pub fn try_into_id(self) -> Option<ObjectId> {
         match self {
             Token::Tree { id } | Token::Parent { id } => Some(id),

@@ -871,7 +871,7 @@ impl<'a> Env<'a> {
     }
 }
 
-impl<'a> Drop for Env<'a> {
+impl Drop for Env<'_> {
     fn drop(&mut self) {
         for (var, prev_value) in self.altered_vars.iter().rev() {
             match prev_value {

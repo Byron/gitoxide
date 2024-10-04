@@ -212,14 +212,14 @@ fn extract_symbolic_references_from_capabilities() -> Result<(), client::Error> 
 struct Fixture<'a>(&'a [u8]);
 
 #[cfg(feature = "blocking-client")]
-impl<'a> std::io::Read for Fixture<'a> {
+impl std::io::Read for Fixture<'_> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.0.read(buf)
     }
 }
 
 #[cfg(feature = "blocking-client")]
-impl<'a> std::io::BufRead for Fixture<'a> {
+impl std::io::BufRead for Fixture<'_> {
     fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
         self.0.fill_buf()
     }
@@ -230,7 +230,7 @@ impl<'a> std::io::BufRead for Fixture<'a> {
 }
 
 #[cfg(feature = "blocking-client")]
-impl<'a> gix_transport::client::ReadlineBufRead for Fixture<'a> {
+impl gix_transport::client::ReadlineBufRead for Fixture<'_> {
     fn readline(
         &mut self,
     ) -> Option<std::io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>> {
@@ -268,7 +268,7 @@ impl<'a> Fixture<'a> {
 }
 
 #[cfg(feature = "async-client")]
-impl<'a> futures_io::AsyncRead for Fixture<'a> {
+impl futures_io::AsyncRead for Fixture<'_> {
     fn poll_read(
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
@@ -279,7 +279,7 @@ impl<'a> futures_io::AsyncRead for Fixture<'a> {
 }
 
 #[cfg(feature = "async-client")]
-impl<'a> futures_io::AsyncBufRead for Fixture<'a> {
+impl futures_io::AsyncBufRead for Fixture<'_> {
     fn poll_fill_buf(
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
@@ -294,7 +294,7 @@ impl<'a> futures_io::AsyncBufRead for Fixture<'a> {
 
 #[cfg(feature = "async-client")]
 #[async_trait::async_trait(?Send)]
-impl<'a> gix_transport::client::ReadlineBufRead for Fixture<'a> {
+impl gix_transport::client::ReadlineBufRead for Fixture<'_> {
     async fn readline(
         &mut self,
     ) -> Option<std::io::Result<Result<gix_packetline::PacketLineRef<'_>, gix_packetline::decode::Error>>> {

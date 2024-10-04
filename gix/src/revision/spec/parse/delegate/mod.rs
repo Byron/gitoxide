@@ -110,7 +110,7 @@ impl<'repo> Delegate<'repo> {
     }
 }
 
-impl<'repo> parse::Delegate for Delegate<'repo> {
+impl parse::Delegate for Delegate<'_> {
     fn done(&mut self) {
         self.follow_refs_to_objects_if_needed();
         self.disambiguate_objects_by_fallback_hint(
@@ -121,7 +121,7 @@ impl<'repo> parse::Delegate for Delegate<'repo> {
     }
 }
 
-impl<'repo> delegate::Kind for Delegate<'repo> {
+impl delegate::Kind for Delegate<'_> {
     fn kind(&mut self, kind: gix_revision::spec::Kind) -> Option<()> {
         use gix_revision::spec::Kind::*;
         self.kind = Some(kind);
@@ -137,7 +137,7 @@ impl<'repo> delegate::Kind for Delegate<'repo> {
     }
 }
 
-impl<'repo> Delegate<'repo> {
+impl Delegate<'_> {
     fn kind_implies_committish(&self) -> bool {
         self.kind.unwrap_or(gix_revision::spec::Kind::IncludeReachable) != gix_revision::spec::Kind::IncludeReachable
     }

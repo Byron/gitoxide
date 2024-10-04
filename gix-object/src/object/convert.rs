@@ -78,7 +78,7 @@ impl From<tree::EntryRef<'_>> for tree::Entry {
     }
 }
 
-impl<'a> From<ObjectRef<'a>> for Object {
+impl From<ObjectRef<'_>> for Object {
     fn from(v: ObjectRef<'_>) -> Self {
         match v {
             ObjectRef::Tree(v) => Object::Tree(v.into()),

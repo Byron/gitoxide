@@ -256,7 +256,7 @@ struct ReadProcessOutputAndStatus<'a> {
     inner: PacketlineReader<'a>,
 }
 
-impl<'a> std::io::Read for ReadProcessOutputAndStatus<'a> {
+impl std::io::Read for ReadProcessOutputAndStatus<'_> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let num_read = self.inner.read(buf)?;
         if num_read == 0 {

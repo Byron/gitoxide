@@ -24,9 +24,9 @@ pub trait TreeIterExt: Sealed {
         V: gix_traverse::tree::Visit;
 }
 
-impl<'d> Sealed for TreeRefIter<'d> {}
+impl Sealed for TreeRefIter<'_> {}
 
-impl<'d> TreeIterExt for TreeRefIter<'d> {
+impl TreeIterExt for TreeRefIter<'_> {
     fn traverse<StateMut, Find, V>(
         &self,
         state: StateMut,

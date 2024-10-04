@@ -2,7 +2,7 @@ use crate::status::{index_worktree, OwnedOrStaticAtomicBool, Platform, Submodule
 use std::sync::atomic::AtomicBool;
 
 /// Builder
-impl<'repo, Progress> Platform<'repo, Progress>
+impl<Progress> Platform<'_, Progress>
 where
     Progress: gix_features::progress::Progress,
 {

@@ -13,7 +13,7 @@ use crate::{
     FullName, FullNameRef, Reference, Target,
 };
 
-impl<'s, 'p> Transaction<'s, 'p> {
+impl Transaction<'_, '_> {
     fn lock_ref_and_apply_change(
         store: &file::Store,
         lock_fail_mode: gix_lock::acquire::Fail,
@@ -196,7 +196,7 @@ impl<'s, 'p> Transaction<'s, 'p> {
     }
 }
 
-impl<'s, 'p> Transaction<'s, 'p> {
+impl Transaction<'_, '_> {
     /// Prepare for calling [`commit(…)`][Transaction::commit()] in a way that can be rolled back perfectly.
     ///
     /// If the operation succeeds, the transaction can be committed or dropped to cause a rollback automatically.

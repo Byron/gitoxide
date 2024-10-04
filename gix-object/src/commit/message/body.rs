@@ -101,13 +101,13 @@ impl<'a> BodyRef<'a> {
     }
 }
 
-impl<'a> AsRef<BStr> for BodyRef<'a> {
+impl AsRef<BStr> for BodyRef<'_> {
     fn as_ref(&self) -> &BStr {
         self.body_without_trailer
     }
 }
 
-impl<'a> Deref for BodyRef<'a> {
+impl Deref for BodyRef<'_> {
     type Target = BStr;
 
     fn deref(&self) -> &Self::Target {

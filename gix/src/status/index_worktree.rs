@@ -610,7 +610,7 @@ pub mod iter {
     }
 
     /// Lifecycle
-    impl<'repo, Progress> Platform<'repo, Progress>
+    impl<Progress> Platform<'_, Progress>
     where
         Progress: gix_features::progress::Progress,
     {

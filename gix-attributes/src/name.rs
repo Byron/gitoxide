@@ -2,7 +2,7 @@ use crate::{Name, NameRef};
 use bstr::{BStr, BString, ByteSlice};
 use kstring::KStringRef;
 
-impl<'a> NameRef<'a> {
+impl NameRef<'_> {
     /// Turn this ref into its owned counterpart.
     pub fn to_owned(self) -> Name {
         Name(self.0.into())

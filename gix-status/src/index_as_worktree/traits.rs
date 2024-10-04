@@ -84,7 +84,7 @@ pub mod read_data {
         }
     }
 
-    impl<'a> std::io::Read for Stream<'a> {
+    impl std::io::Read for Stream<'_> {
         fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
             let n = self.inner.read(buf)?;
             if let Some(bytes) = self.bytes {
