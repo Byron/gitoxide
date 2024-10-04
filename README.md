@@ -45,6 +45,9 @@ What follows is a high-level list of features and those which are planned:
 * [ ] status
 * [x] blob-diff
 * [ ] merge
+    - [x] blobs
+    - [ ] trees
+    - [ ] commits
 * [ ] rebase
 * [ ] commit
 * [x] worktree checkout and worktree stream
