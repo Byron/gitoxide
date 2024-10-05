@@ -14,7 +14,7 @@ use crate::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    Diff(#[from] gix_diff::tree::changes::Error),
+    Diff(#[from] gix_diff::tree::Error),
     #[error("The user-provided callback failed")]
     ForEach(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     #[error(transparent)]
@@ -88,7 +88,8 @@ impl<'old> Platform<'_, 'old> {
             tracked: self.rewrites.map(rewrites::Tracker::new),
             err: None,
         };
-        match gix_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
+        match gix_diff::tree(
+            TreeRefIter::from_bytes(&self.lhs.data),
             TreeRefIter::from_bytes(&other.data),
             &mut self.state,
             &repo.objects,
@@ -103,9 +104,9 @@ impl<'old> Platform<'_, 'old> {
                     None => Ok(outcome),
                 }
             }
-            Err(gix_diff::tree::changes::Error::Cancelled) => delegate
+            Err(gix_diff::tree::Error::Cancelled) => delegate
                 .err
-                .map_or(Err(Error::Diff(gix_diff::tree::changes::Error::Cancelled)), |err| {
+                .map_or(Err(Error::Diff(gix_diff::tree::Error::Cancelled)), |err| {
                     Err(Error::ForEach(err.into()))
                 }),
             Err(err) => Err(err.into()),
