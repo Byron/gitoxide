@@ -1,136 +1,117 @@
 use std::{borrow::BorrowMut, collections::VecDeque};
 
-use gix_object::{tree::EntryRef, FindExt};
+use gix_object::{tree::EntryRef, FindExt, TreeRefIter};
 
 use crate::tree::visit::{ChangeId, Relation};
-use crate::{
-    tree,
-    tree::{visit::Change, TreeInfoTuple},
-};
+use crate::tree::{visit::Change, Error, State, TreeInfoTuple, Visit};
 
-/// The error returned by [`tree::Changes::needed_to_obtain()`].
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error(transparent)]
-    Find(#[from] gix_object::find::existing_iter::Error),
-    #[error("The delegate cancelled the operation")]
-    Cancelled,
-    #[error(transparent)]
-    EntriesDecode(#[from] gix_object::decode::Error),
-}
+/// Calculate the changes that would need to be applied to `lhs` to get `rhs` using `objects` to obtain objects as needed for traversal.
+/// `state` can be used between multiple calls to re-use memory.
+///
+/// * The `state` maybe owned or mutably borrowed to allow reuses allocated data structures through multiple runs.
+/// * `delegate` will receive the computed changes, see the [`Visit`] trait for more information on what to expect.
+///
+/// # Notes
+///
+/// * `lhs` can be an empty tree to simulate what would happen if the left-hand side didn't exist.
+/// * To obtain progress, implement it within the `delegate`.
+/// * Tree entries are expected to be ordered using [`tree-entry-comparison`][git_cmp_c] (the same [in Rust][git_cmp_rs])
+/// * it does a breadth first iteration as buffer space only fits two trees, the current one on the one we compare with.
+/// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
+///   by the delegate implementation which should be as specific as possible. Rename tracking can be computed on top of the changes
+///   received by the `delegate`.
+/// * cycle checking is not performed, but can be performed in the delegate which can return
+///   [`tree::visit::Action::Cancel`](crate::tree::visit::Action::Cancel) to stop the traversal.
+///
+/// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
+/// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/gix-object/src/mutable/tree.rs#L52-L55
+#[doc(alias = "diff_tree_to_tree", alias = "git2")]
+pub fn diff<StateMut>(
+    lhs: TreeRefIter<'_>,
+    rhs: TreeRefIter<'_>,
+    mut state: StateMut,
+    objects: impl gix_object::Find,
+    delegate: &mut impl Visit,
+) -> Result<(), Error>
+where
+    StateMut: BorrowMut<State>,
+{
+    let state = state.borrow_mut();
+    state.clear();
+    let mut lhs_entries = peekable(lhs);
+    let mut rhs_entries = peekable(rhs);
+    let mut relation = None;
+    let mut pop_path = false;
 
-impl tree::Changes<'_> {
-    /// Calculate the changes that would need to be applied to `self` to get `other` using `objects` to obtain objects as needed for traversal.
-    ///
-    /// * The `state` maybe owned or mutably borrowed to allow reuses allocated data structures through multiple runs.
-    /// * `locate` is a function `f(object_id, &mut buffer) -> Option<TreeIter>` to return a `TreeIter` for the given object id backing
-    ///   its data in the given buffer. Returning `None` is unexpected as these trees are obtained during iteration, and in a typical
-    ///   database errors are not expected either which is why the error case is omitted. To allow proper error reporting, [`Error::Find`]
-    ///   should be converted into a more telling error.
-    /// * `delegate` will receive the computed changes, see the [`Visit`][`tree::Visit`] trait for more information on what to expect.
-    ///
-    /// # Notes
-    ///
-    /// * To obtain progress, implement it within the `delegate`.
-    /// * Tree entries are expected to be ordered using [`tree-entry-comparison`][git_cmp_c] (the same [in Rust][git_cmp_rs])
-    /// * it does a breadth first iteration as buffer space only fits two trees, the current one on the one we compare with.
-    /// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
-    ///   by the delegate implementation which should be as specific as possible. Rename tracking can be computed on top of the changes
-    ///   received by the `delegate`.
-    /// * cycle checking is not performed, but can be performed in the delegate which can return [`tree::visit::Action::Cancel`] to stop the traversal.
-    /// * [`std::mem::ManuallyDrop`] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
-    ///   borrowcheck complains as Drop is present (even though it's not)
-    ///
-    /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
-    /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/gix-object/src/mutable/tree.rs#L52-L55
-    pub fn needed_to_obtain<StateMut>(
-        mut self,
-        other: gix_object::TreeRefIter<'_>,
-        mut state: StateMut,
-        objects: impl gix_object::Find,
-        delegate: &mut impl tree::Visit,
-    ) -> Result<(), Error>
-    where
-        StateMut: BorrowMut<tree::State>,
-    {
-        let state = state.borrow_mut();
-        state.clear();
-        let mut lhs_entries = peekable(self.0.take().unwrap_or_default());
-        let mut rhs_entries = peekable(other);
-        let mut relation = None;
-        let mut pop_path = false;
+    loop {
+        if pop_path {
+            delegate.pop_path_component();
+        }
+        pop_path = true;
 
-        loop {
-            if pop_path {
-                delegate.pop_path_component();
-            }
-            pop_path = true;
-
-            match (lhs_entries.next(), rhs_entries.next()) {
-                (None, None) => {
-                    match state.trees.pop_front() {
-                        Some((None, Some(rhs), relation_to_propagate)) => {
-                            delegate.pop_front_tracked_path_and_set_current();
-                            relation = relation_to_propagate;
-                            rhs_entries = peekable(objects.find_tree_iter(&rhs, &mut state.buf2)?);
-                        }
-                        Some((Some(lhs), Some(rhs), relation_to_propagate)) => {
-                            delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(objects.find_tree_iter(&lhs, &mut state.buf1)?);
-                            rhs_entries = peekable(objects.find_tree_iter(&rhs, &mut state.buf2)?);
-                            relation = relation_to_propagate;
-                        }
-                        Some((Some(lhs), None, relation_to_propagate)) => {
-                            delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(objects.find_tree_iter(&lhs, &mut state.buf1)?);
-                            relation = relation_to_propagate;
-                        }
-                        Some((None, None, _)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
-                        None => return Ok(()),
-                    };
-                    pop_path = false;
-                }
-                (Some(lhs), Some(rhs)) => {
-                    use std::cmp::Ordering::*;
-                    let (lhs, rhs) = (lhs?, rhs?);
-                    match compare(&lhs, &rhs) {
-                        Equal => handle_lhs_and_rhs_with_equal_filenames(
-                            lhs,
-                            rhs,
-                            &mut state.trees,
-                            &mut state.change_id,
-                            relation,
-                            delegate,
-                        )?,
-                        Less => catchup_lhs_with_rhs(
-                            &mut lhs_entries,
-                            lhs,
-                            rhs,
-                            &mut state.trees,
-                            &mut state.change_id,
-                            relation,
-                            delegate,
-                        )?,
-                        Greater => catchup_rhs_with_lhs(
-                            &mut rhs_entries,
-                            lhs,
-                            rhs,
-                            &mut state.trees,
-                            &mut state.change_id,
-                            relation,
-                            delegate,
-                        )?,
+        match (lhs_entries.next(), rhs_entries.next()) {
+            (None, None) => {
+                match state.trees.pop_front() {
+                    Some((None, Some(rhs), relation_to_propagate)) => {
+                        delegate.pop_front_tracked_path_and_set_current();
+                        relation = relation_to_propagate;
+                        rhs_entries = peekable(objects.find_tree_iter(&rhs, &mut state.buf2)?);
                     }
+                    Some((Some(lhs), Some(rhs), relation_to_propagate)) => {
+                        delegate.pop_front_tracked_path_and_set_current();
+                        lhs_entries = peekable(objects.find_tree_iter(&lhs, &mut state.buf1)?);
+                        rhs_entries = peekable(objects.find_tree_iter(&rhs, &mut state.buf2)?);
+                        relation = relation_to_propagate;
+                    }
+                    Some((Some(lhs), None, relation_to_propagate)) => {
+                        delegate.pop_front_tracked_path_and_set_current();
+                        lhs_entries = peekable(objects.find_tree_iter(&lhs, &mut state.buf1)?);
+                        relation = relation_to_propagate;
+                    }
+                    Some((None, None, _)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
+                    None => return Ok(()),
+                };
+                pop_path = false;
+            }
+            (Some(lhs), Some(rhs)) => {
+                use std::cmp::Ordering::*;
+                let (lhs, rhs) = (lhs?, rhs?);
+                match compare(&lhs, &rhs) {
+                    Equal => handle_lhs_and_rhs_with_equal_filenames(
+                        lhs,
+                        rhs,
+                        &mut state.trees,
+                        &mut state.change_id,
+                        relation,
+                        delegate,
+                    )?,
+                    Less => catchup_lhs_with_rhs(
+                        &mut lhs_entries,
+                        lhs,
+                        rhs,
+                        &mut state.trees,
+                        &mut state.change_id,
+                        relation,
+                        delegate,
+                    )?,
+                    Greater => catchup_rhs_with_lhs(
+                        &mut rhs_entries,
+                        lhs,
+                        rhs,
+                        &mut state.trees,
+                        &mut state.change_id,
+                        relation,
+                        delegate,
+                    )?,
                 }
-                (Some(lhs), None) => {
-                    let lhs = lhs?;
-                    delete_entry_schedule_recursion(lhs, &mut state.trees, &mut state.change_id, relation, delegate)?;
-                }
-                (None, Some(rhs)) => {
-                    let rhs = rhs?;
-                    add_entry_schedule_recursion(rhs, &mut state.trees, &mut state.change_id, relation, delegate)?;
-                }
+            }
+            (Some(lhs), None) => {
+                let lhs = lhs?;
+                delete_entry_schedule_recursion(lhs, &mut state.trees, &mut state.change_id, relation, delegate)?;
+            }
+            (None, Some(rhs)) => {
+                let rhs = rhs?;
+                add_entry_schedule_recursion(rhs, &mut state.trees, &mut state.change_id, relation, delegate)?;
             }
         }
     }
@@ -150,7 +131,7 @@ fn delete_entry_schedule_recursion(
     queue: &mut VecDeque<TreeInfoTuple>,
     change_id: &mut ChangeId,
     relation_to_propagate: Option<Relation>,
-    delegate: &mut impl tree::Visit,
+    delegate: &mut impl Visit,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
     let relation = relation_to_propagate.or_else(|| {
@@ -182,7 +163,7 @@ fn add_entry_schedule_recursion(
     queue: &mut VecDeque<TreeInfoTuple>,
     change_id: &mut ChangeId,
     relation_to_propagate: Option<Relation>,
-    delegate: &mut impl tree::Visit,
+    delegate: &mut impl Visit,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
     let relation = relation_to_propagate.or_else(|| {
@@ -210,13 +191,13 @@ fn add_entry_schedule_recursion(
 }
 
 fn catchup_rhs_with_lhs(
-    rhs_entries: &mut IteratorType<gix_object::TreeRefIter<'_>>,
+    rhs_entries: &mut IteratorType<TreeRefIter<'_>>,
     lhs: EntryRef<'_>,
     rhs: EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoTuple>,
     change_id: &mut ChangeId,
     relation_to_propagate: Option<Relation>,
-    delegate: &mut impl tree::Visit,
+    delegate: &mut impl Visit,
 ) -> Result<(), Error> {
     use std::cmp::Ordering::*;
     add_entry_schedule_recursion(rhs, queue, change_id, relation_to_propagate, delegate)?;
@@ -259,13 +240,13 @@ fn catchup_rhs_with_lhs(
 }
 
 fn catchup_lhs_with_rhs(
-    lhs_entries: &mut IteratorType<gix_object::TreeRefIter<'_>>,
+    lhs_entries: &mut IteratorType<TreeRefIter<'_>>,
     lhs: EntryRef<'_>,
     rhs: EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoTuple>,
     change_id: &mut ChangeId,
     relation_to_propagate: Option<Relation>,
-    delegate: &mut impl tree::Visit,
+    delegate: &mut impl Visit,
 ) -> Result<(), Error> {
     use std::cmp::Ordering::*;
     delete_entry_schedule_recursion(lhs, queue, change_id, relation_to_propagate, delegate)?;
@@ -313,7 +294,7 @@ fn handle_lhs_and_rhs_with_equal_filenames(
     queue: &mut VecDeque<TreeInfoTuple>,
     change_id: &mut ChangeId,
     relation_to_propagate: Option<Relation>,
-    delegate: &mut impl tree::Visit,
+    delegate: &mut impl Visit,
 ) -> Result<(), Error> {
     match (lhs.mode.is_tree(), rhs.mode.is_tree()) {
         (true, true) => {
@@ -413,7 +394,7 @@ fn handle_lhs_and_rhs_with_equal_filenames(
     Ok(())
 }
 
-type IteratorType<I> = std::mem::ManuallyDrop<std::iter::Peekable<I>>;
+type IteratorType<I> = std::iter::Peekable<I>;
 
 fn to_child(r: Option<Relation>) -> Option<Relation> {
     r.map(|r| match r {
@@ -423,7 +404,7 @@ fn to_child(r: Option<Relation>) -> Option<Relation> {
 }
 
 fn peekable<I: Iterator>(iter: I) -> IteratorType<I> {
-    std::mem::ManuallyDrop::new(iter.peekable())
+    iter.peekable()
 }
 
 #[cfg(test)]

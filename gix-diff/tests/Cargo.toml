@@ -14,7 +14,7 @@ rust-version = "1.65"
 [[test]]
 doctest = false
 name = "diff"
-path = "diff.rs"
+path = "diff/main.rs"
 
 [dev-dependencies]
 gix-diff = { path = ".." }

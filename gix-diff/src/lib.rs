@@ -45,6 +45,7 @@ pub mod rewrites;
 
 ///
 pub mod tree;
+pub use tree::function::diff as tree;
 
 ///
 #[cfg(feature = "blob")]

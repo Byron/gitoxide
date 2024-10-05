@@ -59,7 +59,8 @@ mod changes {
             let mut buf2 = Vec::new();
             let rhs_tree = locate_tree_by_commit(db, rhs, &mut buf2)?;
             let mut recorder = gix_diff::tree::Recorder::default().track_location(location);
-            gix_diff::tree::Changes::from(lhs_tree).needed_to_obtain(
+            gix_diff::tree(
+                lhs_tree.unwrap_or_default(),
                 rhs_tree,
                 gix_diff::tree::State::default(),
                 db,
@@ -102,7 +103,8 @@ mod changes {
             };
 
             let mut recorder = gix_diff::tree::Recorder::default();
-            gix_diff::tree::Changes::from(previous_tree).needed_to_obtain(
+            gix_diff::tree(
+                previous_tree.unwrap_or_default(),
                 current_tree,
                 &mut gix_diff::tree::State::default(),
                 db,

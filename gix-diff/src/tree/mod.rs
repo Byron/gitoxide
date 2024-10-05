@@ -1,8 +1,20 @@
 use crate::tree::visit::Relation;
 use bstr::BStr;
 use gix_hash::ObjectId;
-use gix_object::{bstr::BString, TreeRefIter};
+use gix_object::bstr::BString;
 use std::collections::VecDeque;
+
+/// The error returned by [`tree()`](super::tree()).
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    Find(#[from] gix_object::find::existing_iter::Error),
+    #[error("The delegate cancelled the operation")]
+    Cancelled,
+    #[error(transparent)]
+    EntriesDecode(#[from] gix_object::decode::Error),
+}
 
 /// A trait to allow responding to a traversal designed to figure out the [changes](visit::Change)
 /// to turn tree A into tree B.
@@ -21,7 +33,7 @@ pub trait Visit {
     fn visit(&mut self, change: visit::Change) -> visit::Action;
 }
 
-/// The state required to visit [Changes] to be instantiated with `State::default()`.
+/// The state required to run [tree-diffs](super::tree()).
 #[derive(Default, Clone)]
 pub struct State {
     buf1: Vec<u8>,
@@ -41,20 +53,7 @@ impl State {
     }
 }
 
-/// An iterator over changes of a tree, instantiated using `Changes::from(…)`.
-pub struct Changes<'a>(Option<TreeRefIter<'a>>);
-
-impl<'a, T> From<T> for Changes<'a>
-where
-    T: Into<Option<TreeRefIter<'a>>>,
-{
-    fn from(v: T) -> Self {
-        Changes(v.into())
-    }
-}
-
-///
-pub mod changes;
+pub(super) mod function;
 
 ///
 pub mod visit;
