@@ -1117,6 +1117,15 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
+        Subcommands::Cat { revspec } => prepare_and_run(
+            "cat",
+            trace,
+            verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |_progress, out, _err| core::repository::cat(repository(Mode::Lenient)?, &revspec, out),
+        ),
         Subcommands::Commit(cmd) => match cmd {
             commit::Subcommands::Verify { rev_spec } => prepare_and_run(
                 "commit-verify",

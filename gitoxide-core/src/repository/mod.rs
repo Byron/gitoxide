@@ -19,6 +19,8 @@ pub enum PathsOrPatterns {
 
 #[cfg(feature = "archive")]
 pub mod archive;
+pub mod cat;
+pub use cat::function::cat;
 pub mod commit;
 pub mod config;
 mod credential;

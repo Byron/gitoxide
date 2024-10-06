@@ -130,6 +130,11 @@ pub enum Subcommands {
     /// Interact with submodules.
     #[clap(alias = "submodules")]
     Submodule(submodule::Platform),
+    /// Show whatever object is at the given spec.
+    Cat {
+        /// The object to print to stdout.
+        revspec: String,
+    },
     IsClean,
     IsChanged,
     /// Show which git configuration values are used or planned.
