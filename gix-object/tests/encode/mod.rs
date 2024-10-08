@@ -24,7 +24,7 @@ macro_rules! round_trip {
                 let mut output = Vec::new();
                 let item = <$borrowed>::from_bytes(&input)?;
                 item.write_to(&mut output)?;
-                assert_eq!(output.as_bstr(), input.as_bstr());
+                assert_eq!(output.as_bstr(), input.as_bstr(), "borrowed");
 
                 let item: $owned = item.into();
                 output.clear();
@@ -35,12 +35,12 @@ macro_rules! round_trip {
                 let item = ObjectRef::from(<$borrowed>::from_bytes(&input)?);
                 output.clear();
                 item.write_to(&mut output)?;
-                assert_eq!(output.as_bstr(), input.as_bstr());
+                assert_eq!(output.as_bstr(), input.as_bstr(), "object-ref");
 
                 let item: Object = item.into();
                 output.clear();
                 item.write_to(&mut output)?;
-                assert_eq!(output.as_bstr(), input.as_bstr());
+                assert_eq!(output.as_bstr(), input.as_bstr(), "owned");
 
                 // Test the loose serialisation -> parse chain for an object kind
                 let item = <$borrowed>::from_bytes(&input)?;
@@ -51,7 +51,7 @@ macro_rules! round_trip {
                 item.write_to(w)?;
                 let parsed = ObjectRef::from_loose(&output)?;
                 let item2 = <$borrowed>::try_from(parsed).or(Err(super::Error::TryFromError))?;
-                assert_eq!(item2, item);
+                assert_eq!(item2, item, "object-ref looose");
             }
             Ok(())
         }
@@ -83,7 +83,8 @@ mod commit {
         "commit/signed-with-encoding.txt",
         "commit/unsigned.txt",
         "commit/whitespace.txt",
-        "commit/with-encoding.txt"
+        "commit/with-encoding.txt",
+        "commit/subtle.txt"
     );
 }
 

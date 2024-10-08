@@ -1,0 +1,18 @@
+tree de33f909dd559dd60753264ccf9e80183a32c9cc
+parent 2305aad7ac23331e75465eccf425f899fa53a8d8
+author Brezak <bezak.adamko@gmail.com> 1724180029 +0200
+committer Brezak <bezak.adamko@gmail.com> 1728251787 +0200
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ iQEzBAABCAAdFiEE6+MMXTYlBWl/3EAJyziR4rEnnXwFAmcDB4sACgkQyziR4rEn
+ nXy8owf9EkHTtmxUKhXiZ8ThGlpqwzcUaaYOBSX6Pmwacz+mqsA7fwLN/AxyN/Wv
+ d7zVhCYX01aZi7lutN4rVa08S9ZoXeZOBHm1u2YtrtETcjiBpVIVt33spkLendvB
+ 1C5UyuVhZ4m8bHG5A3kmJlg0Mf9cwKvNTZiozb+lG79p1b3rc8PJHilHdAMmaUkb
+ 58/7dUXM1B/LLd9p4IyJdLVA0jZmAagm+akiH/A1lji7zSvLJqhr1xOlD6L/K/Ao
+ TM6Kk0i2+eido5vaoutUFuKx+u4j4OtA3lDohvmu36RwyZbfa3OSAg+TWChgYBc/
+ ctOcWsB0EKL3XKz7X8Sw2EIS1Fcd4w==
+ =aZq+
+ -----END PGP SIGNATURE-----
+ 
+
+Check that `#[pointee]` is applied only to generic arguments
