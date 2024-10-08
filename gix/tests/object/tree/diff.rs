@@ -24,10 +24,9 @@ fn changes_against_tree_modified() -> crate::Result {
             let (expected_previous_entry_mode, expected_previous_data, expected_entry_mode, expected_data) =
                 expected_modifications[i];
 
-            assert_eq!(
-                change.location(),
-                "",
-                "without configuration the location field is empty"
+            assert!(
+                !change.location().is_empty(),
+                "without configuration the location field is set"
             );
             match change {
                 Change::Modification {

@@ -133,7 +133,7 @@ impl<'repo> Tree<'repo> {
         Ok(Platform {
             state: Default::default(),
             lhs: self,
-            location: None,
+            location: Some(Location::Path),
             rewrites: self.repo.config.diff_renames()?.unwrap_or_default().into(),
         })
     }
@@ -150,13 +150,19 @@ pub struct Platform<'a, 'repo> {
 
 /// Configuration
 impl Platform<'_, '_> {
+    /// Do not keep track of filepaths at all, which will leave all [`location`][Change::location] fields empty.
+    pub fn no_locations(&mut self) -> &mut Self {
+        self.location = Some(Location::FileName);
+        self
+    }
+
     /// Keep track of file-names, which makes the [`location`][Change::location] field usable with the filename of the changed item.
     pub fn track_filename(&mut self) -> &mut Self {
         self.location = Some(Location::FileName);
         self
     }
 
-    /// Keep track of the entire path of a change, relative to the repository.
+    /// Keep track of the entire path of a change, relative to the repository. (default).
     ///
     /// This makes the [`location`][Change::location] field usable.
     pub fn track_path(&mut self) -> &mut Self {
