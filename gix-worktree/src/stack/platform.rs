@@ -64,7 +64,7 @@ impl<'a> Platform<'a> {
     }
 }
 
-impl<'a> std::fmt::Debug for Platform<'a> {
+impl std::fmt::Debug for Platform<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.path(), f)
     }

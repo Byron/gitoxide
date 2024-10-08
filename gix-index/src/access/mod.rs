@@ -389,7 +389,7 @@ impl State {
     }
 }
 
-impl<'a> AccelerateLookup<'a> {
+impl AccelerateLookup<'_> {
     fn with_capacity(cap: usize) -> Self {
         let ratio_of_entries_to_dirs_in_webkit = 20; // 400k entries and 20k dirs
         Self {

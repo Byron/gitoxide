@@ -117,7 +117,7 @@ mod intercept {
         }
     }
 
-    impl<'a, T> Delegate for InterceptRev<'a, T>
+    impl<T> Delegate for InterceptRev<'_, T>
     where
         T: Delegate,
     {
@@ -127,7 +127,7 @@ mod intercept {
         }
     }
 
-    impl<'a, T> delegate::Revision for InterceptRev<'a, T>
+    impl<T> delegate::Revision for InterceptRev<'_, T>
     where
         T: Delegate,
     {
@@ -158,7 +158,7 @@ mod intercept {
         }
     }
 
-    impl<'a, T> delegate::Navigate for InterceptRev<'a, T>
+    impl<T> delegate::Navigate for InterceptRev<'_, T>
     where
         T: Delegate,
     {
@@ -179,7 +179,7 @@ mod intercept {
         }
     }
 
-    impl<'a, T> delegate::Kind for InterceptRev<'a, T>
+    impl<T> delegate::Kind for InterceptRev<'_, T>
     where
         T: Delegate,
     {

@@ -28,7 +28,7 @@ pub mod changes {
         }
     }
 
-    impl<'a, H> Visit for AllNew<'a, H>
+    impl<H> Visit for AllNew<'_, H>
     where
         H: InsertImmutable,
     {
@@ -42,7 +42,12 @@ pub mod changes {
 
         fn visit(&mut self, change: Change) -> Action {
             match change {
-                Change::Addition { oid, entry_mode } | Change::Modification { oid, entry_mode, .. } => {
+                Change::Addition {
+                    oid,
+                    entry_mode,
+                    relation: _,
+                }
+                | Change::Modification { oid, entry_mode, .. } => {
                     if entry_mode.is_commit() {
                         return Action::Continue;
                     }
@@ -85,7 +90,7 @@ pub mod traverse {
         }
     }
 
-    impl<'a, H> Visit for AllUnseen<'a, H>
+    impl<H> Visit for AllUnseen<'_, H>
     where
         H: InsertImmutable,
     {

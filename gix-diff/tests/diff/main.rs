@@ -7,6 +7,7 @@ fn hex_to_id(hex: &str) -> gix_hash::ObjectId {
 mod blob;
 mod rewrites;
 mod tree;
+mod tree_with_rewrites;
 
 mod util {
     use std::collections::HashMap;

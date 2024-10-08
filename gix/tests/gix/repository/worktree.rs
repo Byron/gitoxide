@@ -159,7 +159,7 @@ mod baseline {
 
     use super::Baseline;
 
-    impl<'a> Baseline<'a> {
+    impl Baseline<'_> {
         pub fn collect(dir: impl AsRef<Path>) -> std::io::Result<Vec<Worktree>> {
             let content = std::fs::read(dir.as_ref().join("worktree-list.baseline"))?;
             Ok(Baseline { lines: content.lines() }.collect())
@@ -179,7 +179,7 @@ mod baseline {
         pub prunable: Option<Reason>,
     }
 
-    impl<'a> Iterator for Baseline<'a> {
+    impl Iterator for Baseline<'_> {
         type Item = Worktree;
 
         fn next(&mut self) -> Option<Self::Item> {

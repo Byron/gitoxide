@@ -14,8 +14,8 @@ pub struct WorkByPerson {
     pub lines: LineStats,
 }
 
-impl<'a> WorkByPerson {
-    pub fn merge(&mut self, other: &'a WorkByEmail) {
+impl WorkByPerson {
+    pub fn merge(&mut self, other: &WorkByEmail) {
         if !self.name.contains(&other.name) {
             self.name.push(other.name);
         }

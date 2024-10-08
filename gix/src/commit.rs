@@ -40,7 +40,7 @@ pub mod describe {
         pub id: crate::Id<'repo>,
     }
 
-    impl<'repo> Resolution<'repo> {
+    impl Resolution<'_> {
         /// Turn this instance into something displayable.
         pub fn format(self) -> Result<gix_revision::describe::Format<'static>, Error> {
             let prefix = self.id.shorten()?;

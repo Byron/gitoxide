@@ -55,7 +55,7 @@ pub struct Reference<'a> {
     pub object: Option<&'a BStr>,
 }
 
-impl<'a> Reference<'a> {
+impl Reference<'_> {
     /// Decode the target as object
     pub fn target(&self) -> ObjectId {
         gix_hash::ObjectId::from_hex(self.target).expect("parser validation")

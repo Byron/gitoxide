@@ -125,22 +125,23 @@ pub fn spawn_tree_delta_threads<'scope>(
                                 None => continue,
                             };
                             from.changes()?
-                                .track_filename()
-                                .track_rewrites(None)
+                                .options(|opts| {
+                                    opts.track_filename().track_rewrites(None);
+                                })
                                 .for_each_to_obtain_tree(&to, |change| {
-                                    use gix::object::tree::diff::change::Event::*;
+                                    use gix::object::tree::diff::Change::*;
                                     changes.fetch_add(1, Ordering::Relaxed);
-                                    match change.event {
+                                    match change {
                                         Rewrite { .. } => {
                                             unreachable!("we turned that off")
                                         }
-                                        Addition { entry_mode, id } => {
+                                        Addition { entry_mode, id, .. } => {
                                             if entry_mode.is_no_tree() {
                                                 files.added += 1;
                                                 add_lines(line_stats, &lines_count, &mut lines, id);
                                             }
                                         }
-                                        Deletion { entry_mode, id } => {
+                                        Deletion { entry_mode, id, .. } => {
                                             if entry_mode.is_no_tree() {
                                                 files.removed += 1;
                                                 remove_lines(line_stats, &lines_count, &mut lines, id);
@@ -151,6 +152,7 @@ pub fn spawn_tree_delta_threads<'scope>(
                                             previous_entry_mode,
                                             id,
                                             previous_id,
+                                            ..
                                         } => match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
                                             (false, false) => {}
                                             (false, true) => {

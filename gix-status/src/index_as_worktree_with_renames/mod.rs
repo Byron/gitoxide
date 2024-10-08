@@ -385,7 +385,7 @@ pub(super) mod function {
             pub(super) should_interrupt: &'a AtomicBool,
         }
 
-        impl<'index, 'a, T, U> gix_dir::walk::Delegate for Delegate<'index, 'a, T, U> {
+        impl<T, U> gix_dir::walk::Delegate for Delegate<'_, '_, T, U> {
             fn emit(&mut self, entry: EntryRef<'_>, collapsed_directory_status: Option<Status>) -> Action {
                 let entry = entry.to_owned();
                 self.tx.send(Event::DirEntry(entry, collapsed_directory_status)).ok();
@@ -404,6 +404,7 @@ pub(super) mod function {
         use crate::index_as_worktree_with_renames::{Entry, Error};
         use bstr::BStr;
         use gix_diff::rewrites::tracker::ChangeKind;
+        use gix_diff::tree::visit::Relation;
         use gix_dir::entry::Kind;
         use gix_filter::pipeline::convert::ToGitOutcome;
         use gix_hash::oid;
@@ -425,7 +426,7 @@ pub(super) mod function {
             },
         }
 
-        impl<'index, T, U> gix_diff::rewrites::tracker::Change for ModificationOrDirwalkEntry<'index, T, U>
+        impl<T, U> gix_diff::rewrites::tracker::Change for ModificationOrDirwalkEntry<'_, T, U>
         where
             T: Clone,
             U: Clone,
@@ -435,6 +436,12 @@ pub(super) mod function {
                     ModificationOrDirwalkEntry::Modification(m) => &m.entry.id,
                     ModificationOrDirwalkEntry::DirwalkEntry { id, .. } => id,
                 }
+            }
+
+            fn relation(&self) -> Option<Relation> {
+                // TODO: figure out if index or worktree can provide containerization - worktree should be possible.
+                //       index would take some processing.
+                None
             }
 
             fn kind(&self) -> ChangeKind {

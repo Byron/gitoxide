@@ -96,7 +96,7 @@ impl<'a> StateRef<'a> {
 }
 
 /// Access
-impl<'a> StateRef<'a> {
+impl StateRef<'_> {
     /// Turn ourselves into our owned counterpart.
     pub fn to_owned(self) -> State {
         self.into()

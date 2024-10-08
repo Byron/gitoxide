@@ -197,7 +197,7 @@ where
     }
 }
 
-impl<'remote, 'repo, T> Prepare<'remote, 'repo, T>
+impl<T> Prepare<'_, '_, T>
 where
     T: Transport,
 {
@@ -227,7 +227,7 @@ where
 }
 
 /// Builder
-impl<'remote, 'repo, T> Prepare<'remote, 'repo, T>
+impl<T> Prepare<'_, '_, T>
 where
     T: Transport,
 {
@@ -267,7 +267,7 @@ where
     }
 }
 
-impl<'remote, 'repo, T> Drop for Prepare<'remote, 'repo, T>
+impl<T> Drop for Prepare<'_, '_, T>
 where
     T: Transport,
 {

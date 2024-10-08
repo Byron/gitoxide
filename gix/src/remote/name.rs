@@ -85,7 +85,7 @@ impl From<BString> for Name<'static> {
     }
 }
 
-impl<'a> AsRef<BStr> for Name<'a> {
+impl AsRef<BStr> for Name<'_> {
     fn as_ref(&self) -> &BStr {
         self.as_bstr()
     }

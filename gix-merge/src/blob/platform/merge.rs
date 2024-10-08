@@ -376,6 +376,10 @@ impl<'parent> PlatformRef<'parent> {
         labels: builtin_driver::text::Labels<'_>,
         context: gix_command::Context,
     ) -> Result<(inner::builtin_merge::Pick, Resolution), Error> {
+        let _span = gix_trace::coarse!(
+            "gix_merge::blob::PlatformRef::merge()",
+            current_rela_path = %self.current.rela_path
+        );
         match self.configured_driver() {
             Ok(driver) => {
                 let mut cmd = self.prepare_external_driver(driver.command.clone(), labels, context)?;

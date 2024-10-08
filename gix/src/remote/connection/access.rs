@@ -4,16 +4,16 @@ use crate::{
 };
 
 /// Builder
-impl<'a, 'repo, T> Connection<'a, 'repo, T> {
+impl<'a, T> Connection<'a, '_, T> {
     /// Set a custom credentials callback to provide credentials if the remotes require authentication.
     ///
-    /// Otherwise we will use the git configuration to perform the same task as the `git credential` helper program,
+    /// Otherwise, we will use the git configuration to perform the same task as the `git credential` helper program,
     /// which is calling other helper programs in succession while resorting to a prompt to obtain credentials from the
     /// user.
     ///
     /// A custom function may also be used to prevent accessing resources with authentication.
     ///
-    /// Use the [`configured_credentials()`][Connection::configured_credentials()] method to obtain the implementation
+    /// Use the [`configured_credentials()`](Connection::configured_credentials()) method to obtain the implementation
     /// that would otherwise be used, which can be useful to proxy the default configuration and obtain information about the
     /// URLs to authenticate with.
     pub fn with_credentials(
@@ -25,7 +25,7 @@ impl<'a, 'repo, T> Connection<'a, 'repo, T> {
     }
 
     /// Provide configuration to be used before the first handshake is conducted.
-    /// It's typically created by initializing it with [`Repository::transport_options()`][crate::Repository::transport_options()], which
+    /// It's typically created by initializing it with [`Repository::transport_options()`](crate::Repository::transport_options()), which
     /// is also the default if this isn't set explicitly. Note that all of the default configuration is created from `git`
     /// configuration, which can also be manipulated through overrides to affect the default configuration.
     ///
@@ -38,8 +38,8 @@ impl<'a, 'repo, T> Connection<'a, 'repo, T> {
 }
 
 /// Mutation
-impl<'a, 'repo, T> Connection<'a, 'repo, T> {
-    /// Like [`with_credentials()`][Self::with_credentials()], but without consuming the connection.
+impl<'a, T> Connection<'a, '_, T> {
+    /// Like [`with_credentials()`](Self::with_credentials()), but without consuming the connection.
     pub fn set_credentials(
         &mut self,
         helper: impl FnMut(gix_credentials::helper::Action) -> gix_credentials::protocol::Result + 'a,
@@ -48,7 +48,7 @@ impl<'a, 'repo, T> Connection<'a, 'repo, T> {
         self
     }
 
-    /// Like [`with_transport_options()`][Self::with_transport_options()], but without consuming the connection.
+    /// Like [`with_transport_options()`](Self::with_transport_options()), but without consuming the connection.
     pub fn set_transport_options(&mut self, config: Box<dyn std::any::Any>) -> &mut Self {
         self.transport_options = Some(config);
         self
@@ -56,11 +56,11 @@ impl<'a, 'repo, T> Connection<'a, 'repo, T> {
 }
 
 /// Access
-impl<'a, 'repo, T> Connection<'a, 'repo, T> {
+impl<'repo, T> Connection<'_, 'repo, T> {
     /// A utility to return a function that will use this repository's configuration to obtain credentials, similar to
     /// what `git credential` is doing.
     ///
-    /// It's meant to be used by users of the [`with_credentials()`][Self::with_credentials()] builder to gain access to the
+    /// It's meant to be used by users of the [`with_credentials()`](Self::with_credentials()) builder to gain access to the
     /// default way of handling credentials, which they can call as fallback.
     pub fn configured_credentials(
         &self,
@@ -76,9 +76,9 @@ impl<'a, 'repo, T> Connection<'a, 'repo, T> {
     }
 
     /// Provide a mutable transport to allow interacting with it according to its actual type.
-    /// Note that the caller _should not_ call [`configure()`][gix_protocol::transport::client::TransportWithoutIO::configure()]
+    /// Note that the caller _should not_ call [`configure()`](gix_protocol::transport::client::TransportWithoutIO::configure())
     /// as we will call it automatically before performing the handshake. Instead, to bring in custom configuration,
-    /// call [`with_transport_options()`][Connection::with_transport_options()].
+    /// call [`with_transport_options()`](Connection::with_transport_options()).
     pub fn transport_mut(&mut self) -> &mut T {
         &mut self.transport
     }

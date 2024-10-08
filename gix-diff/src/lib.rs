@@ -45,6 +45,13 @@ pub mod rewrites;
 
 ///
 pub mod tree;
+pub use tree::function::diff as tree;
+
+///
+#[cfg(feature = "blob")]
+pub mod tree_with_rewrites;
+#[cfg(feature = "blob")]
+pub use tree_with_rewrites::function::diff as tree_with_rewrites;
 
 ///
 #[cfg(feature = "blob")]

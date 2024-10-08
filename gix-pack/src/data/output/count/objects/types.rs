@@ -90,7 +90,7 @@ pub enum Error {
     #[error(transparent)]
     TreeTraverse(gix_traverse::tree::breadthfirst::Error),
     #[error(transparent)]
-    TreeChanges(gix_diff::tree::changes::Error),
+    TreeChanges(gix_diff::tree::Error),
     #[error("Operation interrupted")]
     Interrupted,
 }

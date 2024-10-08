@@ -86,7 +86,7 @@ pub mod interpolate {
     }
 }
 
-impl<'a> std::ops::Deref for Path<'a> {
+impl std::ops::Deref for Path<'_> {
     type Target = BStr;
 
     fn deref(&self) -> &Self::Target {
@@ -94,13 +94,13 @@ impl<'a> std::ops::Deref for Path<'a> {
     }
 }
 
-impl<'a> AsRef<[u8]> for Path<'a> {
+impl AsRef<[u8]> for Path<'_> {
     fn as_ref(&self) -> &[u8] {
         self.value.as_ref()
     }
 }
 
-impl<'a> AsRef<BStr> for Path<'a> {
+impl AsRef<BStr> for Path<'_> {
     fn as_ref(&self) -> &BStr {
         self.value.as_ref()
     }

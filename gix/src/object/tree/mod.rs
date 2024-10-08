@@ -186,7 +186,7 @@ pub mod traverse;
 mod iter;
 pub use iter::EntryRef;
 
-impl<'r> std::fmt::Debug for Tree<'r> {
+impl std::fmt::Debug for Tree<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Tree({})", self.id)
     }

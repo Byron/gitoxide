@@ -176,7 +176,7 @@ impl<'repo> Platform<'repo> {
 }
 
 /// Create-time builder methods
-impl<'repo> Platform<'repo> {
+impl Platform<'_> {
     /// Set the sort mode for commits to the given value. The default is to order topologically breadth-first.
     pub fn sorting(mut self, sorting: Sorting) -> Self {
         self.sorting = sorting;

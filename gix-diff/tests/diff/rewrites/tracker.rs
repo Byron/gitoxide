@@ -1,3 +1,8 @@
+use crate::{
+    hex_to_id,
+    rewrites::{Change, NULL_ID},
+};
+use gix_diff::tree::visit::Relation;
 use gix_diff::{
     blob::DiffLineStats,
     rewrites,
@@ -13,11 +18,6 @@ use gix_diff::{
 };
 use gix_object::tree::EntryKind;
 use pretty_assertions::assert_eq;
-
-use crate::{
-    hex_to_id,
-    rewrites::{Change, NULL_ID},
-};
 
 #[test]
 fn rename_by_id() -> crate::Result {
@@ -523,6 +523,211 @@ fn rename_by_50_percent_similarity() -> crate::Result {
 }
 
 #[test]
+fn directories_without_relation_are_ignored() -> crate::Result {
+    let mut track = util::new_tracker(Default::default());
+    let tree_without_relation = Change {
+        id: NULL_ID,
+        kind: ChangeKind::Deletion,
+        mode: EntryKind::Tree.into(),
+        relation: None,
+    };
+    assert_eq!(
+        track.try_push_change(tree_without_relation, "dir".into()),
+        Some(tree_without_relation),
+        "trees, or non-blobs, are ignored, particularly when they have no relation"
+    );
+    Ok(())
+}
+
+#[test]
+fn directory_renames_by_id_can_fail_gracefully() -> crate::Result {
+    let rename_by_similarity = Rewrites {
+        copies: None,
+        percentage: Some(0.5),
+        limit: 0,
+    };
+    let mut track = util::new_tracker(rename_by_similarity);
+    let tree_dst_id = 1;
+    let tree_id = hex_to_id("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+    assert!(track
+        .try_push_change(
+            Change {
+                id: tree_id,
+                kind: ChangeKind::Addition,
+                mode: EntryKind::Tree.into(),
+                relation: Some(Relation::Parent(tree_dst_id)),
+            },
+            "d-renamed".into()
+        )
+        .is_none());
+
+    let tree_src_id = 3;
+    let tree_id = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    assert!(track
+        .try_push_change(
+            Change {
+                id: tree_id,
+                kind: ChangeKind::Addition,
+                mode: EntryKind::Tree.into(),
+                relation: Some(Relation::Parent(tree_src_id)),
+            },
+            "d".into()
+        )
+        .is_none());
+    let odb = util::add_retained_blobs(
+        &mut track,
+        [
+            (Change::deletion_in_tree(tree_src_id), "d/a", "a"),
+            (Change::deletion_in_tree(tree_src_id), "d/c", "c"),
+            (Change::deletion_in_tree(tree_src_id), "d/subdir/d", "d"),
+            (Change::addition_in_tree(tree_dst_id), "d-renamed/a", "a"),
+            (Change::addition_in_tree(tree_dst_id), "d-renamed/subdir/c", "c"),
+            (Change::deletion(), "a", "first\nsecond\n"),
+            (Change::addition(), "b", "firt\nsecond\n"),
+        ],
+    );
+    let mut calls = 0;
+    let out = util::assert_emit_with_objects(
+        &mut track,
+        |dst, src| {
+            match calls {
+                0..=2 => {
+                    let src = src.unwrap();
+                    let (expected_src, expected_dst) =
+                        &[("d/a", "d-renamed/a"), ("d/c", "d-renamed/subdir/c"), ("a", "b")][calls];
+                    assert_eq!(src.location, expected_src);
+                    assert_eq!(dst.location, expected_dst);
+                }
+                3..=6 => {
+                    assert_eq!(src, None);
+                    let expected_dst = ["d", "d-renamed", "d/subdir/d"][calls - 3];
+                    assert_eq!(dst.location, expected_dst);
+                }
+                _ => unreachable!("Should have expected emission call {calls}"),
+            }
+            calls += 1;
+            Action::Continue
+        },
+        &odb,
+    );
+    assert_eq!(
+        out,
+        rewrites::Outcome {
+            options: rename_by_similarity,
+            num_similarity_checks: 1,
+            ..Default::default()
+        }
+    );
+    assert_eq!(calls, 6, "Should not have too few calls");
+    Ok(())
+}
+
+#[test]
+fn simple_directory_rename_by_id() -> crate::Result {
+    let renames_by_identity = Rewrites {
+        copies: None,
+        percentage: None,
+        limit: 0,
+    };
+    let mut track = util::new_tracker(renames_by_identity);
+    let tree_dst_id = 1;
+    assert!(track
+        .try_push_change(Change::tree_addition(tree_dst_id), "d-renamed".into())
+        .is_none());
+    let tree_src_id = 3;
+    assert!(track
+        .try_push_change(Change::tree_deletion(tree_src_id), "d".into())
+        .is_none());
+    let tree_id = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    assert!(
+        track
+            .try_push_change(
+                Change {
+                    id: tree_id, /* does not matter for trees */
+                    kind: ChangeKind::Deletion,
+                    mode: EntryKind::Tree.into(),
+                    relation: Some(Relation::ChildOfParent(tree_src_id)),
+                },
+                "d/subdir".into(),
+            )
+            .is_some(),
+        "trees that are children are simply ignored. It's easier to compare views of worktrees (`gix-dirwalk`) \
+        and trees/indices that way."
+    );
+    assert!(track
+        .try_push_change(
+            Change {
+                id: tree_id,
+                kind: ChangeKind::Addition,
+                mode: EntryKind::Tree.into(),
+                relation: Some(Relation::ChildOfParent(tree_dst_id)),
+            },
+            "d-renamed/subdir".into(),
+        )
+        .is_some());
+    let _odb = util::add_retained_blobs(
+        &mut track,
+        [
+            (Change::deletion_in_tree(tree_src_id), "d/a", "a"),
+            (Change::deletion_in_tree(tree_src_id), "d/b", "b"),
+            (Change::deletion_in_tree(tree_src_id), "d/c", "c"),
+            (Change::deletion_in_tree(tree_src_id), "d/subdir/d", "d"),
+            (Change::addition_in_tree(tree_dst_id), "d-renamed/a", "a"),
+            (Change::addition_in_tree(tree_dst_id), "d-renamed/b", "b"),
+            (Change::addition_in_tree(tree_dst_id), "d-renamed/c", "c"),
+            (Change::addition_in_tree(tree_dst_id), "d-renamed/subdir/d", "d"),
+            (Change::deletion(), "a", "first\nsecond\n"),
+            (Change::addition(), "b", "firt\nsecond\n"),
+        ],
+    );
+    let mut calls = 0;
+    let out = util::assert_emit(&mut track, |dst, src| {
+        match calls {
+            0 => {
+                let src = src.unwrap();
+                assert_eq!(src.location, "d");
+                assert_eq!(src.entry_mode.kind(), EntryKind::Tree);
+                assert_eq!(src.change.relation, Some(Relation::Parent(3)));
+                assert_eq!(dst.location, "d-renamed", "it found the renamed directory");
+                assert_eq!(dst.change.relation, Some(Relation::Parent(1)));
+                assert_eq!(dst.change.mode.kind(), EntryKind::Tree);
+            }
+            1..=4 => {
+                let src = src.unwrap();
+                let (expected_src, expected_dst) = &[
+                    ("d/a", "d-renamed/a"),
+                    ("d/c", "d-renamed/c"),
+                    ("d/b", "d-renamed/b"),
+                    ("d/subdir/d", "d-renamed/subdir/d"),
+                ][calls - 1];
+                assert_eq!(src.location, expected_src);
+                assert_eq!(dst.location, expected_dst);
+            }
+            5 => {
+                assert_eq!(src, None);
+                assert_eq!(dst.location, "a");
+            }
+            6 => {
+                assert_eq!(src, None);
+                assert_eq!(dst.location, "b");
+            }
+            _ => unreachable!("Should have expected emission call {calls}"),
+        }
+        calls += 1;
+        Action::Continue
+    });
+    assert_eq!(
+        out,
+        rewrites::Outcome {
+            options: renames_by_identity,
+            ..Default::default()
+        }
+    );
+    assert_eq!(calls, 7, "Should not have too few calls");
+    Ok(())
+}
+
+#[test]
 fn remove_only() -> crate::Result {
     let mut track = util::new_tracker(Default::default());
     assert!(
@@ -554,7 +759,7 @@ fn add_only() -> crate::Result {
     let out = util::assert_emit(&mut track, |dst, src| {
         assert!(!called);
         called = true;
-        assert!(src.is_none(), "there is just a single deletion, no pair");
+        assert!(src.is_none(), "there is just a single addition, no pair");
         assert_eq!(dst.location, "a");
         assert_eq!(dst.change.kind, ChangeKind::Addition);
         Action::Continue

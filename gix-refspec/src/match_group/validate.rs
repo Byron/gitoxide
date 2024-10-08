@@ -88,7 +88,7 @@ impl std::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-impl<'spec, 'item> Outcome<'spec, 'item> {
+impl Outcome<'_, '_> {
     /// Validate all mappings or dissolve them into an error stating the discovered issues.
     /// Return `(modified self, issues)` providing a fixed-up set of mappings in `self` with the fixed `issues`
     /// provided as part of it.

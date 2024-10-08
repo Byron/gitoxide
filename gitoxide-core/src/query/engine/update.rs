@@ -207,15 +207,21 @@ pub fn update(
                                         rewrite_cache.clear_resource_cache_keep_allocation();
                                         diff_cache.clear_resource_cache_keep_allocation();
                                         from.changes()?
-                                            .track_path()
-                                            .track_rewrites(Some(rewrites))
+                                            .options(|opts| {
+                                                opts.track_path().track_rewrites(Some(rewrites));
+                                            })
                                             .for_each_to_obtain_tree_with_cache(&to, &mut rewrite_cache, |change| {
-                                                use gix::object::tree::diff::change::Event::*;
+                                                use gix::object::tree::diff::Change::*;
                                                 change_counter.fetch_add(1, Ordering::SeqCst);
-                                                match change.event {
-                                                    Addition { entry_mode, id } => {
+                                                match change {
+                                                    Addition {
+                                                        entry_mode,
+                                                        id,
+                                                        location,
+                                                        ..
+                                                    } => {
                                                         if entry_mode.is_blob_or_symlink() {
-                                                            add_lines(&mut out, change.location, &lines_counter, id);
+                                                            add_lines(&mut out, location, &lines_counter, id);
                                                         }
                                                     }
                                                     Modification {
@@ -223,18 +229,14 @@ pub fn update(
                                                         previous_entry_mode,
                                                         id,
                                                         previous_id,
+                                                        location,
                                                     } => match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
                                                         (false, false) => {}
                                                         (false, true) => {
-                                                            add_lines(&mut out, change.location, &lines_counter, id);
+                                                            add_lines(&mut out, location, &lines_counter, id);
                                                         }
                                                         (true, false) => {
-                                                            add_lines(
-                                                                &mut out,
-                                                                change.location,
-                                                                &lines_counter,
-                                                                previous_id,
-                                                            );
+                                                            add_lines(&mut out, location, &lines_counter, previous_id);
                                                         }
                                                         (true, true) => {
                                                             if let Ok(cache) =
@@ -266,7 +268,7 @@ pub fn update(
                                                                             lines_counter
                                                                                 .fetch_add(nl, Ordering::SeqCst);
                                                                             out.push(FileChange {
-                                                                                relpath: change.location.to_owned(),
+                                                                                relpath: location.to_owned(),
                                                                                 mode: FileMode::Modified,
                                                                                 source_relpath: None,
                                                                                 lines: Some(lines),
@@ -281,19 +283,25 @@ pub fn update(
                                                             }
                                                         }
                                                     },
-                                                    Deletion { entry_mode, id } => {
+                                                    Deletion {
+                                                        entry_mode,
+                                                        id,
+                                                        location,
+                                                        ..
+                                                    } => {
                                                         if entry_mode.is_blob_or_symlink() {
-                                                            remove_lines(&mut out, change.location, &lines_counter, id);
+                                                            remove_lines(&mut out, location, &lines_counter, id);
                                                         }
                                                     }
                                                     Rewrite {
                                                         source_location,
                                                         diff,
                                                         copy,
+                                                        location,
                                                         ..
                                                     } => {
                                                         out.push(FileChange {
-                                                            relpath: change.location.to_owned(),
+                                                            relpath: location.to_owned(),
                                                             source_relpath: Some(source_location.to_owned()),
                                                             mode: if copy { FileMode::Copy } else { FileMode::Rename },
                                                             lines: diff.map(|d| LineStats {
@@ -369,7 +377,7 @@ pub fn update(
             }
         }
 
-        impl<'a, Find> gix::prelude::Find for Db<'a, Find>
+        impl<Find> gix::prelude::Find for Db<'_, Find>
         where
             Find: gix::prelude::Find + Clone,
         {

@@ -27,7 +27,7 @@ pub(crate) struct StackDelegate<'a, 'find> {
     pub statistics: &'a mut super::Statistics,
 }
 
-impl<'a, 'find> gix_fs::stack::Delegate for StackDelegate<'a, 'find> {
+impl gix_fs::stack::Delegate for StackDelegate<'_, '_> {
     fn push_directory(&mut self, stack: &gix_fs::Stack) -> std::io::Result<()> {
         self.statistics.delegate.push_directory += 1;
         let rela_dir_bstr = gix_path::into_bstr(stack.current_relative());

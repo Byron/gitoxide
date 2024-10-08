@@ -7,7 +7,7 @@ mod ask {
     /// execution environment. This is necessary because certain environment variables and
     /// configuration options can change its location (e.g. CARGO_TARGET_DIR).
     fn evaluate_target_dir() -> String {
-        let manifest_proc = std::process::Command::new(env!("CARGO"))
+        let mut manifest_proc = std::process::Command::new(env!("CARGO"))
             .args(["metadata", "--format-version", "1"])
             .stdout(std::process::Stdio::piped())
             .spawn()
@@ -15,7 +15,7 @@ mod ask {
 
         let jq_proc = std::process::Command::new("jq")
             .args(["-r", ".target_directory"]) // -r makes it output raw strings
-            .stdin(manifest_proc.stdout.unwrap())
+            .stdin(manifest_proc.stdout.take().unwrap())
             .stdout(std::process::Stdio::piped())
             .spawn()
             .expect("jq utility is available in PATH");
@@ -23,6 +23,7 @@ mod ask {
         let output = jq_proc
             .wait_with_output()
             .expect(".target_directory is a valid search path for manifest format version 1");
+        manifest_proc.wait().unwrap();
 
         output
             .stdout

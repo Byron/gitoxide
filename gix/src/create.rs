@@ -53,14 +53,14 @@ struct PathCursor<'a>(&'a mut PathBuf);
 
 struct NewDir<'a>(&'a mut PathBuf);
 
-impl<'a> PathCursor<'a> {
+impl PathCursor<'_> {
     fn at(&mut self, component: &str) -> &Path {
         self.0.push(component);
         self.0.as_path()
     }
 }
 
-impl<'a> NewDir<'a> {
+impl NewDir<'_> {
     fn at(self, component: &str) -> Result<Self, Error> {
         self.0.push(component);
         create_dir(self.0)?;
@@ -71,13 +71,13 @@ impl<'a> NewDir<'a> {
     }
 }
 
-impl<'a> Drop for NewDir<'a> {
+impl Drop for NewDir<'_> {
     fn drop(&mut self) {
         self.0.pop();
     }
 }
 
-impl<'a> Drop for PathCursor<'a> {
+impl Drop for PathCursor<'_> {
     fn drop(&mut self) {
         self.0.pop();
     }

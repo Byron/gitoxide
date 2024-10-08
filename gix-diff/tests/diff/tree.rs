@@ -2,6 +2,7 @@ mod changes {
     mod to_obtain_tree {
         use std::collections::HashMap;
 
+        use gix_diff::tree::visit::Relation;
         use gix_diff::tree::{
             recorder,
             recorder::{Change::*, Location},
@@ -58,7 +59,8 @@ mod changes {
             let mut buf2 = Vec::new();
             let rhs_tree = locate_tree_by_commit(db, rhs, &mut buf2)?;
             let mut recorder = gix_diff::tree::Recorder::default().track_location(location);
-            gix_diff::tree::Changes::from(lhs_tree).needed_to_obtain(
+            gix_diff::tree(
+                lhs_tree.unwrap_or_default(),
                 rhs_tree,
                 gix_diff::tree::State::default(),
                 db,
@@ -101,7 +103,8 @@ mod changes {
             };
 
             let mut recorder = gix_diff::tree::Recorder::default();
-            gix_diff::tree::Changes::from(previous_tree).needed_to_obtain(
+            gix_diff::tree(
+                previous_tree.unwrap_or_default(),
                 current_tree,
                 &mut gix_diff::tree::State::default(),
                 db,
@@ -161,7 +164,8 @@ mod changes {
                 vec![Addition {
                     entry_mode: EntryKind::Blob.into(),
                     oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                    path: "f".into()
+                    path: "f".into(),
+                    relation: None
                 }],
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      f"
             );
@@ -183,7 +187,8 @@ mod changes {
                 vec![Deletion {
                     entry_mode: EntryKind::Blob.into(),
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
-                    path: "f".into()
+                    path: "f".into(),
+                    relation: None
                 }],
                 ":100644 000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 0000000000000000000000000000000000000000 D	f
             "
@@ -195,17 +200,20 @@ mod changes {
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
-                        path: "f".into()
+                        path: "f".into(),
+                        relation: None
                     },
                     Addition {
                         entry_mode: EntryKind::Tree.into(),
                         oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
-                        path: "f".into()
+                        path: "f".into(),
+                        relation: Some(Relation::Parent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
-                        path: "f/f".into()
+                        path: "f/f".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     }
                 ],
                 ":100644 000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 0000000000000000000000000000000000000000 D      f
@@ -218,12 +226,14 @@ mod changes {
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a".into()
+                        path: "a".into(),
+                        relation: None
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "b".into()
+                        path: "b".into(),
+                        relation: None
                     }
                 ],
                 "simple rename, same level
@@ -283,27 +293,32 @@ mod changes {
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "f".into()
+                        path: "f".into(),
+                        relation: None
                     },
                     Deletion {
                         entry_mode: EntryKind::Tree.into(),
                         oid: tree_with_link_id,
-                        path: "f".into()
+                        path: "f".into(),
+                        relation: Some(Relation::Parent(1))
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "f/a".into()
+                        path: "f/a".into(),
+                        relation: Some(Relation::ChildOfParent(1))
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "f/b".into()
+                        path: "f/b".into(),
+                        relation: Some(Relation::ChildOfParent(1))
                     },
                     Deletion {
                         entry_mode: link_entry_mode.into(),
                         oid: link_entry_oid,
-                        path: "f/f".into()
+                        path: "f/f".into(),
+                        relation: Some(Relation::ChildOfParent(1))
                     },
                 ],
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	f
@@ -317,12 +332,14 @@ mod changes {
                     Deletion {
                         entry_mode: EntryKind::Tree.into(),
                         oid: hex_to_id("3d5a503f4062d198b443db5065ca727f8354e7df"),
-                        path: "d".into()
+                        path: "d".into(),
+                        relation: Some(Relation::Parent(1))
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "d/f".into()
+                        path: "d/f".into(),
+                        relation: Some(Relation::ChildOfParent(1))
                     },
                 ],
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	d/f"
@@ -333,17 +350,20 @@ mod changes {
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "c".into()
+                        path: "c".into(),
+                        relation: None,
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "d".into()
+                        path: "d".into(),
+                        relation: None,
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "e".into()
+                        path: "e".into(),
+                        relation: None,
                     },
                 ],
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	c
@@ -356,12 +376,14 @@ mod changes {
                     Addition {
                         entry_mode: EntryKind::Tree.into(),
                         oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
-                        path: "g".into()
+                        path: "g".into(),
+                        relation: Some(Relation::Parent(1))
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "g/a".into()
+                        path: "g/a".into(),
+                        relation: Some(Relation::ChildOfParent(1))
                     },
                 ],
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	g/a"
@@ -372,17 +394,20 @@ mod changes {
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "c".into()
+                        path: "c".into(),
+                        relation: None
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "d".into()
+                        path: "d".into(),
+                        relation: None
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "e".into()
+                        path: "e".into(),
+                        relation: None
                     },
                 ],
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	c
@@ -395,12 +420,14 @@ mod changes {
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "f".into()
+                        path: "f".into(),
+                        relation: None
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "ff".into()
+                        path: "ff".into(),
+                        relation: None
                     },
                 ],
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	f
@@ -419,12 +446,14 @@ mod changes {
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "g/a".into()
+                        path: "g/a".into(),
+                        relation: None
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "g/aa".into()
+                        path: "g/aa".into(),
+                        relation: None
                     },
                 ],
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	g/a
@@ -436,12 +465,14 @@ mod changes {
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "f".into()
+                        path: "f".into(),
+                        relation: None,
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "ff".into()
+                        path: "ff".into(),
+                        relation: None,
                     },
                 ],
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	f
@@ -460,12 +491,14 @@ mod changes {
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "g/a".into()
+                        path: "g/a".into(),
+                        relation: None,
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "g/aa".into()
+                        path: "g/aa".into(),
+                        relation: None,
                     },
                 ],
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	g/a
@@ -485,12 +518,14 @@ mod changes {
                     Addition {
                         entry_mode: EntryKind::Tree.into(),
                         oid: hex_to_id("3d5a503f4062d198b443db5065ca727f8354e7df"),
-                        path: "a".into()
+                        path: "a".into(),
+                        relation: Some(Relation::Parent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a/f".into()
+                        path: "a/f".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     }
                 ],
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      a/f"
@@ -538,17 +573,20 @@ mod changes {
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "".into()
+                        path: "".into(),
+                        relation: None
                     },
                     Addition {
                         entry_mode: EntryKind::Tree.into(),
                         oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
-                        path: "".into()
+                        path: "".into(),
+                        relation: Some(Relation::Parent(1))
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "".into()
+                        path: "".into(),
+                        relation: Some(Relation::ChildOfParent(1))
                     }
                 ]
             );
@@ -558,17 +596,20 @@ mod changes {
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "b".into()
+                        path: "b".into(),
+                        relation: None
                     },
                     Deletion {
                         entry_mode: EntryKind::Tree.into(),
                         oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
-                        path: "g".into()
+                        path: "g".into(),
+                        relation: Some(Relation::Parent(1))
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a".into()
+                        path: "a".into(),
+                        relation: Some(Relation::ChildOfParent(1))
                     }
                 ]
             );
@@ -586,42 +627,50 @@ mod changes {
                     Addition {
                         entry_mode: EntryKind::Tree.into(),
                         oid: hex_to_id("0df4d0ed769eacd0a231e7512fca25d3cabdeca4"),
-                        path: "a".into()
+                        path: "a".into(),
+                        relation: Some(Relation::Parent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a/b".into()
+                        path: "a/b".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a/c".into()
+                        path: "a/c".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a/d".into()
+                        path: "a/d".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a/e".into()
+                        path: "a/e".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a/f".into()
+                        path: "a/f".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Tree.into(),
                         oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
-                        path: "a/g".into()
+                        path: "a/g".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "a/g/a".into()
+                        path: "a/g/a".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     }
                 ]
             );
@@ -629,32 +678,72 @@ mod changes {
         }
 
         #[test]
-        fn interesting_rename() -> crate::Result {
+        fn directory_rename() -> crate::Result {
             let db = db(None)?;
             let all_commits = all_commits(&db);
 
             assert_eq!(
-                diff_with_previous_commit_from(&db, &all_commits["interesting rename 1"])?,
+                diff_with_previous_commit_from(&db, &all_commits["rename git-sec to gix-sec"])?,
                 vec![
                     Deletion {
                         entry_mode: EntryKind::Tree.into(),
-                        oid: hex_to_id("f84fc275158a2973cb4a79b1618b79ec7f573a95"),
-                        path: "git-sec".into()
+                        oid: hex_to_id("d8c30fb72173778ed57fac5813c5e37038a8746c"),
+                        path: "git-sec".into(),
+                        relation: Some(Relation::Parent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Tree.into(),
-                        oid: hex_to_id("f84fc275158a2973cb4a79b1618b79ec7f573a95"),
-                        path: "gix-sec".into()
+                        oid: hex_to_id("d8c30fb72173778ed57fac5813c5e37038a8746c"),
+                        path: "gix-sec".into(),
+                        relation: Some(Relation::Parent(2)),
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "git-sec/2".into()
+                        path: "git-sec/2".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
+                    },
+                    Deletion {
+                        entry_mode: EntryKind::Blob.into(),
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "git-sec/7".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
+                    },
+                    Deletion {
+                        entry_mode: EntryKind::Tree.into(),
+                        oid: hex_to_id("fd7938a0c18f993c89eda3f40a6d06fa6785833c"),
+                        path: "git-sec/subdir".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "gix-sec/2".into()
+                        path: "gix-sec/2".into(),
+                        relation: Some(Relation::ChildOfParent(2)),
+                    },
+                    Addition {
+                        entry_mode: EntryKind::Blob.into(),
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "gix-sec/7".into(),
+                        relation: Some(Relation::ChildOfParent(2)),
+                    },
+                    Addition {
+                        entry_mode: EntryKind::Tree.into(),
+                        oid: hex_to_id("fd7938a0c18f993c89eda3f40a6d06fa6785833c"),
+                        path: "gix-sec/subdir".into(),
+                        relation: Some(Relation::ChildOfParent(2)),
+                    },
+                    Deletion {
+                        entry_mode: EntryKind::Blob.into(),
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "git-sec/subdir/6".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
+                    },
+                    Addition {
+                        entry_mode: EntryKind::Blob.into(),
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "gix-sec/subdir/6".into(),
+                        relation: Some(Relation::ChildOfParent(2)),
                     }
                 ]
             );
@@ -662,32 +751,72 @@ mod changes {
         }
 
         #[test]
-        fn interesting_rename_2() -> crate::Result {
+        fn reverse_directory_rename() -> crate::Result {
             let db = db(None)?;
             let all_commits = all_commits(&db);
 
             assert_eq!(
-                diff_with_previous_commit_from(&db, &all_commits["interesting rename 2"])?,
+                diff_with_previous_commit_from(&db, &all_commits["rename gix-sec to git-sec"])?,
                 vec![
                     Addition {
                         entry_mode: EntryKind::Tree.into(),
-                        oid: hex_to_id("f84fc275158a2973cb4a79b1618b79ec7f573a95"),
-                        path: "git-sec".into()
+                        oid: hex_to_id("d8c30fb72173778ed57fac5813c5e37038a8746c"),
+                        path: "git-sec".into(),
+                        relation: Some(Relation::Parent(1)),
                     },
                     Deletion {
                         entry_mode: EntryKind::Tree.into(),
-                        oid: hex_to_id("f84fc275158a2973cb4a79b1618b79ec7f573a95"),
-                        path: "gix-sec".into()
+                        oid: hex_to_id("d8c30fb72173778ed57fac5813c5e37038a8746c"),
+                        path: "gix-sec".into(),
+                        relation: Some(Relation::Parent(2)),
                     },
                     Addition {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "git-sec/2".into()
+                        path: "git-sec/2".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
+                    },
+                    Addition {
+                        entry_mode: EntryKind::Blob.into(),
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "git-sec/7".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
+                    },
+                    Addition {
+                        entry_mode: EntryKind::Tree.into(),
+                        oid: hex_to_id("fd7938a0c18f993c89eda3f40a6d06fa6785833c"),
+                        path: "git-sec/subdir".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
                     },
                     Deletion {
                         entry_mode: EntryKind::Blob.into(),
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
-                        path: "gix-sec/2".into()
+                        path: "gix-sec/2".into(),
+                        relation: Some(Relation::ChildOfParent(2)),
+                    },
+                    Deletion {
+                        entry_mode: EntryKind::Blob.into(),
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "gix-sec/7".into(),
+                        relation: Some(Relation::ChildOfParent(2)),
+                    },
+                    Deletion {
+                        entry_mode: EntryKind::Tree.into(),
+                        oid: hex_to_id("fd7938a0c18f993c89eda3f40a6d06fa6785833c"),
+                        path: "gix-sec/subdir".into(),
+                        relation: Some(Relation::ChildOfParent(2)),
+                    },
+                    Addition {
+                        entry_mode: EntryKind::Blob.into(),
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "git-sec/subdir/6".into(),
+                        relation: Some(Relation::ChildOfParent(1)),
+                    },
+                    Deletion {
+                        entry_mode: EntryKind::Blob.into(),
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "gix-sec/subdir/6".into(),
+                        relation: Some(Relation::ChildOfParent(2)),
                     }
                 ]
             );

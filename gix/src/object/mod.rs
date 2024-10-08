@@ -142,7 +142,7 @@ impl<'repo> Object<'repo> {
     }
 }
 
-impl<'repo> Object<'repo> {
+impl Object<'_> {
     /// Create an owned instance of this object, copying our data in the process.
     pub fn detached(&self) -> ObjectDetached {
         ObjectDetached {

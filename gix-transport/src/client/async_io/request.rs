@@ -21,7 +21,7 @@ pin_project! {
         trace: bool,
     }
 }
-impl<'a> futures_io::AsyncWrite for RequestWriter<'a> {
+impl futures_io::AsyncWrite for RequestWriter<'_> {
     fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
         self.project().writer.poll_write(cx, buf)
     }

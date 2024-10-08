@@ -42,7 +42,7 @@ pub struct Object<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
-impl<'a> Drop for Object<'a> {
+impl Drop for Object<'_> {
     fn drop(&mut self) {
         self.repo.reuse_buffer(&mut self.data);
     }
@@ -58,7 +58,7 @@ pub struct Blob<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
-impl<'a> Drop for Blob<'a> {
+impl Drop for Blob<'_> {
     fn drop(&mut self) {
         self.repo.reuse_buffer(&mut self.data);
     }
@@ -74,7 +74,7 @@ pub struct Tree<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
-impl<'a> Drop for Tree<'a> {
+impl Drop for Tree<'_> {
     fn drop(&mut self) {
         self.repo.reuse_buffer(&mut self.data);
     }
@@ -90,7 +90,7 @@ pub struct Tag<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
-impl<'a> Drop for Tag<'a> {
+impl Drop for Tag<'_> {
     fn drop(&mut self) {
         self.repo.reuse_buffer(&mut self.data);
     }
@@ -106,7 +106,7 @@ pub struct Commit<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
-impl<'a> Drop for Commit<'a> {
+impl Drop for Commit<'_> {
     fn drop(&mut self) {
         self.repo.reuse_buffer(&mut self.data);
     }

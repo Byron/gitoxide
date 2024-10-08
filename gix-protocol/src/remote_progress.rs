@@ -21,7 +21,7 @@ pub struct RemoteProgress<'a> {
     pub max: Option<usize>,
 }
 
-impl<'a> RemoteProgress<'a> {
+impl RemoteProgress<'_> {
     /// Parse the progress from a typical git progress `line` as sent by the remote.
     pub fn from_bytes(mut line: &[u8]) -> Option<RemoteProgress<'_>> {
         parse_progress(&mut line).ok().and_then(|r| {

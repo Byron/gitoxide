@@ -23,7 +23,7 @@ where
     cap: usize,
 }
 
-impl<'a, T, F> Drop for WithSidebands<'a, T, F>
+impl<T, F> Drop for WithSidebands<'_, T, F>
 where
     T: AsyncRead,
 {
@@ -70,7 +70,7 @@ enum State<'a, T> {
 /// to a thread possibly.
 // TODO: Is it possible to declare it as it should be?
 #[allow(unsafe_code, clippy::non_send_fields_in_send_ty)]
-unsafe impl<'a, T> Send for State<'a, T> where T: Send {}
+unsafe impl<T> Send for State<'_, T> where T: Send {}
 
 impl<'a, T, F> WithSidebands<'a, T, F>
 where
@@ -180,7 +180,7 @@ pub struct ReadDataLineFuture<'a, 'b, T: AsyncRead, F> {
     buf: &'b mut Vec<u8>,
 }
 
-impl<'a, 'b, T, F> Future for ReadDataLineFuture<'a, 'b, T, F>
+impl<T, F> Future for ReadDataLineFuture<'_, '_, T, F>
 where
     T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
@@ -207,7 +207,7 @@ pub struct ReadLineFuture<'a, 'b, T: AsyncRead, F> {
     buf: &'b mut String,
 }
 
-impl<'a, 'b, T, F> Future for ReadLineFuture<'a, 'b, T, F>
+impl<T, F> Future for ReadLineFuture<'_, '_, T, F>
 where
     T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
@@ -230,7 +230,7 @@ where
     }
 }
 
-impl<'a, T, F> AsyncBufRead for WithSidebands<'a, T, F>
+impl<T, F> AsyncBufRead for WithSidebands<'_, T, F>
 where
     T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,
@@ -348,7 +348,7 @@ where
     }
 }
 
-impl<'a, T, F> AsyncRead for WithSidebands<'a, T, F>
+impl<T, F> AsyncRead for WithSidebands<'_, T, F>
 where
     T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]) -> ProgressAction + Unpin,

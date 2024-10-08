@@ -374,7 +374,7 @@ impl<'a> Options<'a> {
     }
 }
 
-impl<'a> Default for Options<'a> {
+impl Default for Options<'_> {
     fn default() -> Self {
         Options {
             fresh_index: true,

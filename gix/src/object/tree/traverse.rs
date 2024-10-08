@@ -24,7 +24,7 @@ pub struct BreadthFirstPresets<'a, 'repo> {
     root: &'a Tree<'repo>,
 }
 
-impl<'a, 'repo> BreadthFirstPresets<'a, 'repo> {
+impl BreadthFirstPresets<'_, '_> {
     /// Returns all entries and their file paths, recursively, as reachable from this tree.
     pub fn files(&self) -> Result<Vec<gix_traverse::tree::recorder::Entry>, gix_traverse::tree::breadthfirst::Error> {
         let mut recorder = gix_traverse::tree::Recorder::default();
@@ -37,7 +37,7 @@ impl<'a, 'repo> BreadthFirstPresets<'a, 'repo> {
     }
 }
 
-impl<'a, 'repo> Platform<'a, 'repo> {
+impl Platform<'_, '_> {
     /// Start a breadth-first, recursive traversal using `delegate`, for which a [`Recorder`][gix_traverse::tree::Recorder] can be used to get started.
     ///
     /// # Note

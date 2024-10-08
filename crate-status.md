@@ -304,17 +304,24 @@ Check out the [performance discussion][gix-diff-performance] as well.
 
 * **tree**
     * [x] changes needed to obtain _other tree_
-* **patches**    
-    * There are various ways to generate a patch from two blobs.
-    * [ ] text
-    * [ ] binary
-* **lines**
-    * [x] Simple line-by-line diffs powered by the `imara-diff` crate.
+* **blobs** 
+    * **patches**    
+        * There are various ways to generate a patch from two blobs.
+        * [ ] text
+        * [ ] binary
+        * [ ] `git-apply` compatibility
+        * [ ] merge hunks that are close enough based on line-setting (`interhunk-lines`)
+        * [ ] white-space related settings
+    * **lines**
+        * [x] Simple line-by-line diffs powered by the `imara-diff` crate.
 * **generic rename tracker to find renames and copies**
-    * [x] find by exact match
-    * [x] find by similarity check
+    * [x] find blobs by exact match
+    * [x] find blobs by similarity check
     * [ ] heuristics to find best candidate
-    * [ ] find by basename to help detecting simple moves
+    * [ ] find by basename to support similarity check
+    * [x] directory tracking
+        - [x] by identity
+        - [ ] by similarity
 * **blob**
     * [x] a choice of to-worktree, to-git and to-worktree-if-needed conversions
     * [x] `textconv` filters
@@ -332,12 +339,13 @@ Check out the [performance discussion][gix-diff-performance] as well.
 
 ### gix-merge
 
-* [x] three-way merge analysis of blobs with choice of how to resolve conflicts
+* [x] three-way merge analysis of **blobs** with choice of how to resolve conflicts
     - [ ] choose how to resolve conflicts on the data-structure
     - [ ] produce a new blob based on data-structure containing possible resolutions
         - [x] `merge` style
         - [x] `diff3` style
         - [x] `zdiff` style
+    - [ ] a way to control inter-hunk merging based on proximity (maybe via `gix-diff` feature which could use the same)
 * [ ] diff-heuristics match Git perfectly
 * [x] API documentation
     * [ ] Examples

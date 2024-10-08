@@ -42,7 +42,7 @@ mod not_parallel {
         }
     }
 
-    impl<'scope, 'env> Scope<'scope, 'env> {
+    impl<'scope> Scope<'scope, '_> {
         /// Provided with this scope, let `f` start new threads that live within it.
         pub fn spawn<F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
         where

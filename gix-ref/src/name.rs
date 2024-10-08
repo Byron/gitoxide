@@ -7,7 +7,7 @@ use crate::{Category, FullName, FullNameRef, PartialName, PartialNameRef};
 /// The error used in the [`PartialNameRef`]`::try_from`(…) implementations.
 pub type Error = gix_validate::reference::name::Error;
 
-impl<'a> Category<'a> {
+impl Category<'_> {
     /// Return the prefix that would contain all references of our kind, or an empty string if the reference would
     /// be directly inside of the [`git_dir()`][crate::file::Store::git_dir()].
     pub fn prefix(&self) -> &BStr {

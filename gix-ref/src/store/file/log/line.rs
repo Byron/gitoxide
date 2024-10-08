@@ -2,7 +2,7 @@ use gix_hash::ObjectId;
 
 use crate::{log::Line, store_impl::file::log::LineRef};
 
-impl<'a> LineRef<'a> {
+impl LineRef<'_> {
     /// Convert this instance into its mutable counterpart
     pub fn to_owned(&self) -> Line {
         (*self).into()
@@ -48,7 +48,7 @@ mod write {
     }
 }
 
-impl<'a> LineRef<'a> {
+impl LineRef<'_> {
     /// The previous object id of the ref. It will be a null hash if there was no previous id as
     /// this ref is being created.
     pub fn previous_oid(&self) -> ObjectId {

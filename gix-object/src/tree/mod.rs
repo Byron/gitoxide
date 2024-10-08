@@ -224,13 +224,13 @@ pub struct EntryRef<'a> {
     pub oid: &'a gix_hash::oid,
 }
 
-impl<'a> PartialOrd for EntryRef<'a> {
+impl PartialOrd for EntryRef<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<'a> Ord for EntryRef<'a> {
+impl Ord for EntryRef<'_> {
     fn cmp(&self, b: &Self) -> Ordering {
         let a = self;
         let common = a.filename.len().min(b.filename.len());

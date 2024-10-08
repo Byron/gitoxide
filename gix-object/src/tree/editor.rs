@@ -53,7 +53,7 @@ impl<'a> Editor<'a> {
 }
 
 /// Operations
-impl<'a> Editor<'a> {
+impl Editor<'_> {
     /// Write the entire in-memory state of all changed trees (and only changed trees) to `out`.
     /// Note that the returned object id *can* be the empty tree if everything was removed or if nothing
     /// was added to the tree.
@@ -362,7 +362,7 @@ mod cursor {
         }
     }
 
-    impl<'a, 'find> Cursor<'a, 'find> {
+    impl Cursor<'_, '_> {
         /// Like [`Editor::upsert()`], but with the constraint of only editing in this cursor's tree.
         pub fn upsert<I, C>(&mut self, rela_path: I, kind: EntryKind, id: ObjectId) -> Result<&mut Self, super::Error>
         where

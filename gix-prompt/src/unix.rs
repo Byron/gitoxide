@@ -58,7 +58,7 @@ pub(crate) mod imp {
         fd: File,
     }
 
-    impl<'a> Read for RestoreTerminalStateOnDrop<'a> {
+    impl Read for RestoreTerminalStateOnDrop<'_> {
         fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
             self.fd.read(buf)
         }
@@ -68,7 +68,7 @@ pub(crate) mod imp {
         }
     }
 
-    impl<'a> Write for RestoreTerminalStateOnDrop<'a> {
+    impl Write for RestoreTerminalStateOnDrop<'_> {
         #[inline(always)]
         fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
             self.fd.write(buf)
@@ -85,7 +85,7 @@ pub(crate) mod imp {
         }
     }
 
-    impl<'a> RestoreTerminalStateOnDrop<'a> {
+    impl RestoreTerminalStateOnDrop<'_> {
         fn restore_term_state(mut self) -> Result<(), Error> {
             let state = self.state.take().expect("BUG: we exist only if something is saved");
             termios::tcsetattr(&self.fd, termios::OptionalActions::Flush, &state)?;
@@ -93,7 +93,7 @@ pub(crate) mod imp {
         }
     }
 
-    impl<'a> Drop for RestoreTerminalStateOnDrop<'a> {
+    impl Drop for RestoreTerminalStateOnDrop<'_> {
         fn drop(&mut self) {
             if let Some(state) = self.state.take() {
                 termios::tcsetattr(&self.fd, termios::OptionalActions::Flush, &state).ok();

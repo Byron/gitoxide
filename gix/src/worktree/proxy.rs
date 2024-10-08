@@ -33,7 +33,7 @@ impl<'repo> Proxy<'repo> {
     }
 }
 
-impl<'repo> Proxy<'repo> {
+impl Proxy<'_> {
     /// Read the location of the checkout, the base of the work tree.
     /// Note that the location might not exist.
     pub fn base(&self) -> std::io::Result<PathBuf> {

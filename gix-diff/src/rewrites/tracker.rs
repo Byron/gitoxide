@@ -4,11 +4,13 @@
 //!
 //! - it's less sophisticated and doesn't use any ranking of candidates. Instead, it picks the first possible match.
 //! - the set used for copy-detection is probably smaller by default.
+
 use std::ops::Range;
 
-use bstr::BStr;
+use bstr::{BStr, ByteSlice};
 use gix_object::tree::{EntryKind, EntryMode};
 
+use crate::tree::visit::{Action, ChangeId, Relation};
 use crate::{
     blob::{platform::prepare_diff::Operation, DiffLineStats, ResourceKind},
     rewrites::{CopySource, Outcome, Tracker},
@@ -28,11 +30,22 @@ pub enum ChangeKind {
 
 /// A trait providing all functionality to abstract over the concept of a change, as seen by the [`Tracker`].
 pub trait Change: Clone {
-    /// Return the hash of this change for identification.
+    /// Return the hash of the object behind this change for identification.
     ///
     /// Note that this is the id of the object as stored in `git`, i.e. it must have gone through workspace
-    /// conversions.
+    /// conversions. What matters is that the IDs are comparable.
     fn id(&self) -> &gix_hash::oid;
+    /// Return the relation that this change may have with other changes.
+    ///
+    /// It allows to associate a directory with its children that are added or removed at the same moment.
+    /// Note that this is ignored for modifications.
+    ///
+    /// If rename-tracking should always be on leaf-level, this should be set to `None` consistently.
+    /// Note that trees will never be looked up by their `id` as their children are assumed to be passed in
+    /// with the respective relationship.
+    ///
+    /// Also note that the tracker only sees what's given to it, it will not lookup trees or match paths itself.
+    fn relation(&self) -> Option<Relation>;
     /// Return the kind of this change.
     fn kind(&self) -> ChangeKind;
     /// Return more information about the kind of entry affected by this change.
@@ -55,11 +68,11 @@ impl<T: Change> Item<T> {
     fn location<'a>(&self, backing: &'a [u8]) -> &'a BStr {
         backing[self.path.clone()].as_ref()
     }
-    fn entry_mode_compatible(&self, mode: EntryMode) -> bool {
+    fn entry_mode_compatible(&self, other: EntryMode) -> bool {
         use EntryKind::*;
         matches!(
-            (mode.kind(), self.change.entry_mode().kind()),
-            (Blob | BlobExecutable, Blob | BlobExecutable) | (Link, Link)
+            (other.kind(), self.change.entry_mode().kind()),
+            (Blob | BlobExecutable, Blob | BlobExecutable) | (Link, Link) | (Tree, Tree)
         )
     }
 
@@ -108,7 +121,7 @@ pub mod visit {
     }
 
     /// A change along with a location.
-    #[derive(Clone)]
+    #[derive(Debug, Clone)]
     pub struct Destination<'a, T: Clone> {
         /// The change at the given `location`.
         pub change: T,
@@ -150,23 +163,25 @@ impl<T: Change> Tracker<T> {
 impl<T: Change> Tracker<T> {
     /// We may refuse the push if that information isn't needed for what we have to track.
     pub fn try_push_change(&mut self, change: T, location: &BStr) -> Option<T> {
-        if !change.entry_mode().is_blob_or_symlink() {
+        let change_kind = change.kind();
+        if let (None, ChangeKind::Modification { .. }) = (self.rewrites.copies, change_kind) {
             return Some(change);
-        }
-        let keep = match (self.rewrites.copies, change.kind()) {
-            (Some(_find_copies), _) => true,
-            (None, ChangeKind::Modification { .. }) => false,
-            (None, _) => true,
         };
 
-        if !keep {
+        let relation = change
+            .relation()
+            .filter(|_| matches!(change_kind, ChangeKind::Addition | ChangeKind::Deletion));
+        let entry_kind = change.entry_mode().kind();
+        if let (None | Some(Relation::ChildOfParent(_)), EntryKind::Commit | EntryKind::Tree) = (relation, entry_kind) {
             return Some(change);
-        }
+        };
 
         let start = self.path_backing.len();
         self.path_backing.extend_from_slice(location);
+        let path = start..self.path_backing.len();
+
         self.items.push(Item {
-            path: start..self.path_backing.len(),
+            path,
             change,
             emitted: false,
         });
@@ -178,6 +193,8 @@ impl<T: Change> Tracker<T> {
     /// `cb(destination, source)` is called for each item, either with `Some(source)` if it's
     /// the destination of a copy or rename, or with `None` for source if no relation to other
     /// items in the tracked set exist, which is like saying 'no rename or rewrite or copy' happened.
+    /// Note that directories with [relation](Relation) will be emitted if there is a match, along with all their matching
+    /// child-items which are similarly bundled as rename.
     ///
     /// `objects` is used to access blob data for similarity checks if required and is taken directly from the object database.
     /// Worktree filters and text conversions will be applied afterwards automatically. Note that object-caching *should not*
@@ -195,7 +212,7 @@ impl<T: Change> Tracker<T> {
     /// will panic if `change` is not a modification, and it's valid to not call `push` at all.
     pub fn emit<PushSourceTreeFn, E>(
         &mut self,
-        mut cb: impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> crate::tree::visit::Action,
+        mut cb: impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> Action,
         diff_cache: &mut crate::blob::Platform,
         objects: &impl gix_object::FindObjectOrHeader,
         mut push_source_tree: PushSourceTreeFn,
@@ -272,7 +289,7 @@ impl<T: Change> Tracker<T> {
                     change: item.change,
                 },
                 None,
-            ) == crate::tree::visit::Action::Cancel
+            ) == Action::Cancel
             {
                 break;
             }
@@ -285,7 +302,7 @@ impl<T: Change> Tracker<T> {
     fn match_pairs_of_kind(
         &mut self,
         kind: visit::SourceKind,
-        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> crate::tree::visit::Action,
+        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> Action,
         percentage: Option<f32>,
         out: &mut Outcome,
         diff_cache: &mut crate::blob::Platform,
@@ -293,9 +310,7 @@ impl<T: Change> Tracker<T> {
     ) -> Result<(), emit::Error> {
         // we try to cheaply reduce the set of possibilities first, before possibly looking more exhaustively.
         let needs_second_pass = !needs_exact_match(percentage);
-        if self.match_pairs(cb, None /* by identity */, kind, out, diff_cache, objects)?
-            == crate::tree::visit::Action::Cancel
-        {
+        if self.match_pairs(cb, None /* by identity */, kind, out, diff_cache, objects)? == Action::Cancel {
             return Ok(());
         }
         if needs_second_pass {
@@ -328,13 +343,13 @@ impl<T: Change> Tracker<T> {
 
     fn match_pairs(
         &mut self,
-        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> crate::tree::visit::Action,
+        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> Action,
         percentage: Option<f32>,
         kind: visit::SourceKind,
         stats: &mut Outcome,
         diff_cache: &mut crate::blob::Platform,
         objects: &impl gix_object::FindObjectOrHeader,
-    ) -> Result<crate::tree::visit::Action, emit::Error> {
+    ) -> Result<Action, emit::Error> {
         let mut dest_ofs = 0;
         while let Some((mut dest_idx, dest)) = self.items[dest_ofs..].iter().enumerate().find_map(|(idx, item)| {
             (!item.emitted && matches!(item.change.kind(), ChangeKind::Addition)).then_some((idx, item))
@@ -368,26 +383,100 @@ impl<T: Change> Tracker<T> {
                     src_idx,
                 )
             });
-            if src.is_none() {
+            let Some((src, src_idx)) = src else {
                 continue;
-            }
+            };
             let location = dest.location(&self.path_backing);
             let change = dest.change.clone();
             let dest = visit::Destination { change, location };
-            let src_idx = src.as_ref().map(|t| t.1);
-            let res = cb(dest, src.map(|t| t.0));
+            let relations = if percentage.is_none() {
+                src.change.relation().zip(dest.change.relation())
+            } else {
+                None
+            };
+            let res = cb(dest, Some(src));
 
             self.items[dest_idx].emitted = true;
-            if let Some(src_idx) = src_idx {
-                self.items[src_idx].emitted = true;
+            self.items[src_idx].emitted = true;
+
+            if res == Action::Cancel {
+                return Ok(Action::Cancel);
             }
 
-            if res == crate::tree::visit::Action::Cancel {
-                return Ok(crate::tree::visit::Action::Cancel);
+            if let Some((Relation::Parent(src), Relation::Parent(dst))) = relations {
+                let res = self.emit_child_renames_matching_identity(cb, kind, src, dst)?;
+                if res == Action::Cancel {
+                    return Ok(Action::Cancel);
+                }
             }
         }
-        Ok(crate::tree::visit::Action::Continue)
+        Ok(Action::Continue)
     }
+
+    /// Emit the children of `src_parent_id` and `dst_parent_id` as pairs of exact matches, which are assumed
+    /// as `src` and `dst` were an exact match (so all children have to match exactly).
+    fn emit_child_renames_matching_identity(
+        &mut self,
+        cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> Action,
+        kind: visit::SourceKind,
+        src_parent_id: ChangeId,
+        dst_parent_id: ChangeId,
+    ) -> Result<Action, emit::Error> {
+        debug_assert_ne!(
+            src_parent_id, dst_parent_id,
+            "src and destination directories must be distinct"
+        );
+        let (mut src_items, mut dst_items) = (Vec::with_capacity(1), Vec::with_capacity(1));
+        for item in self.items.iter_mut().filter(|item| !item.emitted) {
+            match item.change.relation() {
+                Some(Relation::ChildOfParent(id)) if id == src_parent_id => {
+                    src_items.push((item.change.id().to_owned(), item));
+                }
+                Some(Relation::ChildOfParent(id)) if id == dst_parent_id => {
+                    dst_items.push((item.change.id().to_owned(), item));
+                }
+                _ => continue,
+            };
+        }
+
+        for ((src_id, src_item), (dst_id, dst_item)) in src_items.into_iter().zip(dst_items) {
+            // Since the parent items are already identical by ID, we know that the children will also match, we just
+            // double-check to still have a chance to be correct in case some of that goes wrong.
+            if src_id == dst_id
+                && filename(src_item.location(&self.path_backing)) == filename(dst_item.location(&self.path_backing))
+            {
+                let entry_mode = src_item.change.entry_mode();
+                let location = src_item.location(&self.path_backing);
+                let src = visit::Source {
+                    entry_mode,
+                    id: src_id,
+                    kind,
+                    location,
+                    change: &src_item.change,
+                    diff: None,
+                };
+                let location = dst_item.location(&self.path_backing);
+                let change = dst_item.change.clone();
+                let dst = visit::Destination { change, location };
+                let res = cb(dst, Some(src));
+
+                src_item.emitted = true;
+                dst_item.emitted = true;
+
+                if res == Action::Cancel {
+                    return Ok(res);
+                }
+            } else {
+                gix_trace::warn!("Children of parents with change-id {src_parent_id} and {dst_parent_id} were not equal, even though their parents claimed to be");
+                break;
+            }
+        }
+        Ok(Action::Continue)
+    }
+}
+
+fn filename(path: &BStr) -> &BStr {
+    path.rfind_byte(b'/').map_or(path, |idx| path[idx + 1..].as_bstr())
 }
 
 /// Returns the amount of viable sources and destinations for `items` as eligible for the given `kind` of operation.
@@ -473,13 +562,9 @@ fn find_match<'a, T: Change>(
         if let Some(src) = res {
             return Ok(Some(src));
         }
-    } else {
+    } else if item_mode.is_blob() {
         let mut has_new = false;
         let percentage = percentage.expect("it's set to something below 1.0 and we assured this");
-        debug_assert!(
-            item_mode.is_blob(),
-            "symlinks are matched exactly, and trees aren't used here"
-        );
 
         for (can_idx, src) in items
             .iter()
@@ -556,7 +641,7 @@ mod diff {
         pub input: &'a crate::blob::intern::InternedInput<&'data [u8]>,
     }
 
-    impl<'a, 'data> crate::blob::Sink for Statistics<'a, 'data> {
+    impl crate::blob::Sink for Statistics<'_, '_> {
         type Out = usize;
 
         fn process_change(&mut self, before: Range<u32>, _after: Range<u32>) {

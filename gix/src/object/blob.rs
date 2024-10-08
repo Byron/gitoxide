@@ -5,12 +5,9 @@ use crate::{Blob, ObjectDetached};
 pub mod diff {
     use std::ops::Range;
 
-    use gix_diff::blob::{platform::prepare_diff::Operation, ResourceKind};
+    use gix_diff::blob::platform::prepare_diff::Operation;
 
-    use crate::{
-        bstr::ByteSlice,
-        object::{blob::diff::lines::Change, tree::diff::change::Event},
-    };
+    use crate::bstr::ByteSlice;
 
     /// A platform to keep temporary information to perform line diffs on modified blobs.
     ///
@@ -21,97 +18,8 @@ pub mod diff {
 
     ///
     pub mod init {
-        /// The error returned by [`Platform::from_tree_change()`][super::Platform::from_tree_change()].
+        /// The error returned by [`object::tree::diff::Change::diff`](crate::object::tree::diff::Change::diff()).
         pub type Error = gix_diff::blob::platform::set_resource::Error;
-    }
-
-    impl<'a> Platform<'a> {
-        /// Produce a platform for performing various diffs after obtaining the data from a single `tree_change`.
-        pub fn from_tree_change(
-            tree_change: &crate::object::tree::diff::Change<'_, '_, '_>,
-            resource_cache: &'a mut gix_diff::blob::Platform,
-        ) -> Result<Platform<'a>, init::Error> {
-            match tree_change.event {
-                Event::Addition { entry_mode, id } => {
-                    resource_cache.set_resource(
-                        id.repo.object_hash().null(),
-                        entry_mode.kind(),
-                        tree_change.location,
-                        ResourceKind::OldOrSource,
-                        &id.repo.objects,
-                    )?;
-                    resource_cache.set_resource(
-                        id.inner,
-                        entry_mode.kind(),
-                        tree_change.location,
-                        ResourceKind::NewOrDestination,
-                        &id.repo.objects,
-                    )?;
-                }
-                Event::Deletion { entry_mode, id } => {
-                    resource_cache.set_resource(
-                        id.inner,
-                        entry_mode.kind(),
-                        tree_change.location,
-                        ResourceKind::OldOrSource,
-                        &id.repo.objects,
-                    )?;
-                    resource_cache.set_resource(
-                        id.repo.object_hash().null(),
-                        entry_mode.kind(),
-                        tree_change.location,
-                        ResourceKind::NewOrDestination,
-                        &id.repo.objects,
-                    )?;
-                }
-                Event::Modification {
-                    previous_entry_mode,
-                    previous_id,
-                    entry_mode,
-                    id,
-                } => {
-                    resource_cache.set_resource(
-                        previous_id.inner,
-                        previous_entry_mode.kind(),
-                        tree_change.location,
-                        ResourceKind::OldOrSource,
-                        &previous_id.repo.objects,
-                    )?;
-                    resource_cache.set_resource(
-                        id.inner,
-                        entry_mode.kind(),
-                        tree_change.location,
-                        ResourceKind::NewOrDestination,
-                        &id.repo.objects,
-                    )?;
-                }
-                Event::Rewrite {
-                    source_location,
-                    source_entry_mode,
-                    source_id,
-                    entry_mode,
-                    id,
-                    diff: _,
-                    copy: _,
-                } => {
-                    resource_cache.set_resource(
-                        source_id.inner,
-                        source_entry_mode.kind(),
-                        source_location,
-                        ResourceKind::OldOrSource,
-                        &source_id.repo.objects,
-                    )?;
-                    resource_cache.set_resource(
-                        id.inner,
-                        entry_mode.kind(),
-                        tree_change.location,
-                        ResourceKind::NewOrDestination,
-                        &id.repo.objects,
-                    )?;
-                }
-            }
-            Ok(Self { resource_cache })
-        }
     }
 
     ///
@@ -153,7 +61,7 @@ pub mod diff {
         }
     }
 
-    impl<'a> Platform<'a> {
+    impl Platform<'_> {
         /// Perform a diff on lines between the old and the new version of a blob, passing each hunk of lines to `process_hunk`.
         /// The diffing algorithm is determined by the `diff.algorithm` configuration, or individual diff drivers.
         /// Note that `process_hunk` is not called if one of the involved resources are binary, but that can be determined
@@ -195,11 +103,11 @@ pub mod diff {
                         let hunk_before = &lines[..end_of_before];
                         let hunk_after = &lines[end_of_before..];
                         if hunk_after.is_empty() {
-                            err = process_hunk(Change::Deletion { lines: hunk_before }).err();
+                            err = process_hunk(lines::Change::Deletion { lines: hunk_before }).err();
                         } else if hunk_before.is_empty() {
-                            err = process_hunk(Change::Addition { lines: hunk_after }).err();
+                            err = process_hunk(lines::Change::Addition { lines: hunk_after }).err();
                         } else {
-                            err = process_hunk(Change::Modification {
+                            err = process_hunk(lines::Change::Modification {
                                 lines_before: hunk_before,
                                 lines_after: hunk_after,
                             })

@@ -46,7 +46,7 @@ impl<'repo, 'a> EntryRef<'repo, 'a> {
     }
 }
 
-impl<'repo, 'a> std::fmt::Display for EntryRef<'repo, 'a> {
+impl std::fmt::Display for EntryRef<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

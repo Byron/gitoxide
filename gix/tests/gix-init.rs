@@ -1,14 +1,21 @@
-pub mod util;
-
+#![allow(clippy::result_large_err)]
 mod with_overrides {
     use std::borrow::Cow;
 
+    use gix::{Repository, ThreadSafeRepository};
     use gix_object::bstr::BStr;
     use gix_sec::Permission;
     use gix_testtools::Env;
     use serial_test::serial;
 
-    use crate::util::named_subrepo_opts;
+    pub fn named_subrepo_opts(
+        fixture: &str,
+        name: &str,
+        opts: gix::open::Options,
+    ) -> std::result::Result<Repository, gix::open::Error> {
+        let repo_path = gix_testtools::scripted_fixture_read_only(fixture).unwrap().join(name);
+        Ok(ThreadSafeRepository::open_opts(repo_path, opts)?.to_thread_local())
+    }
 
     #[test]
     #[serial]

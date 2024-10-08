@@ -119,7 +119,7 @@ pub struct Parents<'graph, 'cache> {
     >,
 }
 
-impl<'graph, 'cache> Iterator for Parents<'graph, 'cache> {
+impl Iterator for Parents<'_, '_> {
     type Item = Result<gix_hash::ObjectId, iter_parents::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {

@@ -53,13 +53,13 @@ use gix_date::SecondsSinceUnixEpoch;
 /// This number is only available natively if there is a commit-graph.
 pub type Generation = u32;
 
-impl<'find, 'cache, T: std::fmt::Debug> std::fmt::Debug for Graph<'find, 'cache, T> {
+impl<T: std::fmt::Debug> std::fmt::Debug for Graph<'_, '_, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.map, f)
     }
 }
 
-impl<'find, 'cache, T: Default> Graph<'find, 'cache, T> {
+impl<'cache, T: Default> Graph<'_, 'cache, T> {
     /// Lookup `id` without failing if the commit doesn't exist, and assure that `id` is inserted into our set.
     /// If it wasn't, associate it with the default value. Assure `update_data(data)` gets run.
     /// Return the commit when done.
@@ -74,7 +74,7 @@ impl<'find, 'cache, T: Default> Graph<'find, 'cache, T> {
 }
 
 /// Access and mutation
-impl<'find, 'cache, T> Graph<'find, 'cache, T> {
+impl<'cache, T> Graph<'_, 'cache, T> {
     /// Returns the amount of entries in the graph.
     pub fn len(&self) -> usize {
         self.map.len()
@@ -226,7 +226,7 @@ impl<'find, 'cache, T> Graph<'find, 'cache, T> {
 }
 
 /// Commit based methods
-impl<'find, 'cache, T> Graph<'find, 'cache, Commit<T>> {
+impl<T> Graph<'_, '_, Commit<T>> {
     /// Lookup `id` in the graph, but insert it if it's not yet present by looking it up without failing if the commit doesn't exist.
     /// Call `new_data()` to obtain data for a newly inserted commit.
     /// `update_data(data)` gets run either on existing or on new data.
@@ -263,7 +263,7 @@ impl<'find, 'cache, T> Graph<'find, 'cache, Commit<T>> {
 }
 
 /// Commit based methods
-impl<'find, 'cache, T: Default> Graph<'find, 'cache, Commit<T>> {
+impl<T: Default> Graph<'_, '_, Commit<T>> {
     /// Lookup `id` in the graph, but insert it if it's not yet present by looking it up without failing if the commit doesn't exist.
     /// Newly inserted commits are populated with default data.
     /// `update_data(data)` gets run either on existing or on new data.
@@ -309,7 +309,7 @@ impl<'find, 'cache, T: Default> Graph<'find, 'cache, Commit<T>> {
 }
 
 /// Lazy commit access
-impl<'find, 'cache, T> Graph<'find, 'cache, T> {
+impl<'cache, T> Graph<'_, 'cache, T> {
     /// Lookup `id` without failing if the commit doesn't exist or `id` isn't a commit,
     /// and assure that `id` is inserted into our set
     /// with a `default` value assigned to it.
@@ -390,7 +390,7 @@ fn try_lookup<'graph, 'cache>(
     )
 }
 
-impl<'a, 'find, 'cache, T> Index<&'a gix_hash::oid> for Graph<'find, 'cache, T> {
+impl<'a, T> Index<&'a gix_hash::oid> for Graph<'_, '_, T> {
     type Output = T;
 
     fn index(&self, index: &'a oid) -> &Self::Output {

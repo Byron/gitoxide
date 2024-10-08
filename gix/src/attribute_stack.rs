@@ -32,7 +32,7 @@ impl DerefMut for AttributeStack<'_> {
 }
 
 /// Platform retrieval
-impl<'repo> AttributeStack<'repo> {
+impl AttributeStack<'_> {
     /// Append the `relative` path to the root directory of the cache and load all attribute or ignore files on the way as needed.
     /// Use `mode` to specify what kind of item lives at `relative` - directories may match against rules specifically.
     /// If `mode` is `None`, the item at `relative` is assumed to be a file.
