@@ -1,4 +1,108 @@
+use gix_diff::tree::recorder::Location;
 pub use gix_diff::*;
+
+///
+pub mod options {
+    ///
+    pub mod init {
+        /// The error returned when instantiating [diff options](crate::diff::Options).
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[cfg(feature = "blob-diff")]
+            #[error(transparent)]
+            RewritesConfiguration(#[from] crate::diff::new_rewrites::Error),
+        }
+    }
+}
+
+/// General diff-related options for configuring rename-tracking and blob diffs.
+#[derive(Debug, Copy, Clone)]
+pub struct Options {
+    location: Option<Location>,
+    #[cfg(feature = "blob-diff")]
+    rewrites: Option<gix_diff::Rewrites>,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            location: Some(Location::Path),
+            #[cfg(feature = "blob-diff")]
+            rewrites: None,
+        }
+    }
+}
+
+#[cfg(feature = "blob-diff")]
+impl From<Options> for gix_diff::tree_with_rewrites::Options {
+    fn from(opts: Options) -> Self {
+        gix_diff::tree_with_rewrites::Options {
+            location: opts.location,
+            #[cfg(feature = "blob-diff")]
+            rewrites: opts.rewrites,
+        }
+    }
+}
+
+/// Lifecycle
+impl Options {
+    #[cfg(feature = "blob-diff")]
+    pub(crate) fn from_configuration(config: &crate::config::Cache) -> Result<Self, options::init::Error> {
+        Ok(Options {
+            location: Some(Location::Path),
+            rewrites: config.diff_renames()?.unwrap_or_default().into(),
+        })
+    }
+}
+
+/// Setters
+impl Options {
+    /// Do not keep track of filepaths at all, which will leave all `location` fields empty.
+    pub fn no_locations(&mut self) -> &mut Self {
+        self.location = Some(Location::FileName);
+        self
+    }
+
+    /// Keep track of file-names, which makes `location` fields usable with the filename of the changed item.
+    pub fn track_filename(&mut self) -> &mut Self {
+        self.location = Some(Location::FileName);
+        self
+    }
+
+    /// Keep track of the entire path of a change, relative to the repository. (default).
+    ///
+    /// This makes the `location` field fully usable.
+    pub fn track_path(&mut self) -> &mut Self {
+        self.location = Some(Location::Path);
+        self
+    }
+
+    /// Provide `None` to disable rewrite tracking entirely, or pass `Some(<configuration>)` to control to
+    /// what extent rename and copy tracking is performed.
+    ///
+    /// Note that by default, the git configuration determines rewrite tracking and git defaults are used
+    /// if nothing is configured, which turns rename tracking with 50% similarity on, while not tracking copies at all.
+    #[cfg(feature = "blob-diff")]
+    pub fn track_rewrites(&mut self, renames: Option<gix_diff::Rewrites>) -> &mut Self {
+        self.rewrites = renames;
+        self
+    }
+}
+
+/// Builder
+impl Options {
+    /// Provide `None` to disable rewrite tracking entirely, or pass `Some(<configuration>)` to control to
+    /// what extent rename and copy tracking is performed.
+    ///
+    /// Note that by default, the git configuration determines rewrite tracking and git defaults are used
+    /// if nothing is configured, which turns rename tracking with 50% similarity on, while not tracking copies at all.
+    #[cfg(feature = "blob-diff")]
+    pub fn with_rewrites(mut self, renames: Option<gix_diff::Rewrites>) -> Self {
+        self.rewrites = renames;
+        self
+    }
+}
 
 ///
 pub mod rename {

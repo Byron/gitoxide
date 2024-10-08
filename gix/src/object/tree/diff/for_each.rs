@@ -74,6 +74,7 @@ impl<'old> Platform<'_, 'old> {
             }
             Some(cache) => cache,
         };
+        let opts = self.options.into();
         Ok(gix_diff::tree_with_rewrites(
             TreeRefIter::from_bytes(&self.lhs.data),
             TreeRefIter::from_bytes(&other.data),
@@ -86,10 +87,7 @@ impl<'old> Platform<'_, 'old> {
                     Action::Cancel => gix_diff::tree_with_rewrites::Action::Cancel,
                 })
             },
-            gix_diff::tree_with_rewrites::Options {
-                location: self.location,
-                rewrites: self.rewrites,
-            },
+            opts,
         )?)
     }
 }

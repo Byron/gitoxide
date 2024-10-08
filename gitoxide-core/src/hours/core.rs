@@ -125,8 +125,9 @@ pub fn spawn_tree_delta_threads<'scope>(
                                 None => continue,
                             };
                             from.changes()?
-                                .track_filename()
-                                .track_rewrites(None)
+                                .options(|opts| {
+                                    opts.track_filename().track_rewrites(None);
+                                })
                                 .for_each_to_obtain_tree(&to, |change| {
                                     use gix::object::tree::diff::Change::*;
                                     changes.fetch_add(1, Ordering::Relaxed);

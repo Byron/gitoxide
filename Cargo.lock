@@ -1370,6 +1370,7 @@ dependencies = [
  "gix-worktree 0.36.0",
  "gix-worktree-state",
  "gix-worktree-stream",
+ "insta",
  "is_ci",
  "once_cell",
  "parking_lot",

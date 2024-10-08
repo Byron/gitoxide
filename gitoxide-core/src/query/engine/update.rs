@@ -207,8 +207,9 @@ pub fn update(
                                         rewrite_cache.clear_resource_cache_keep_allocation();
                                         diff_cache.clear_resource_cache_keep_allocation();
                                         from.changes()?
-                                            .track_path()
-                                            .track_rewrites(Some(rewrites))
+                                            .options(|opts| {
+                                                opts.track_path().track_rewrites(Some(rewrites));
+                                            })
                                             .for_each_to_obtain_tree_with_cache(&to, &mut rewrite_cache, |change| {
                                                 use gix::object::tree::diff::Change::*;
                                                 change_counter.fetch_add(1, Ordering::SeqCst);

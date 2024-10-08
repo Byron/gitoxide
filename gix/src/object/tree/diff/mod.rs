@@ -1,7 +1,6 @@
 use gix_diff::tree;
-use gix_diff::tree::recorder::Location;
 
-use crate::{bstr::BStr, diff::Rewrites, Id, Tree};
+use crate::{bstr::BStr, Id, Tree};
 
 /// Returned by the `for_each` function to control flow.
 #[derive(Default, Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
@@ -18,9 +17,9 @@ pub enum Action {
 pub enum Change<'a, 'old, 'new> {
     /// An entry was added, like the addition of a file or directory.
     Addition {
-        /// The location of the file or directory, if [tracking](Platform::track_path) was enabled.
+        /// The location of the file or directory, if [tracking](crate::diff::Options::track_path) was enabled.
         ///
-        /// It may be empty if neither [file names](Platform::track_filename()) nor [file paths](Platform::track_path())
+        /// It may be empty if neither [file names](crate::diff::Options::track_filename()) nor [file paths](crate::diff::Options::track_path())
         /// are tracked.
         location: &'a BStr,
         /// The mode of the added entry.
@@ -33,7 +32,7 @@ pub enum Change<'a, 'old, 'new> {
     },
     /// An entry was deleted, like the deletion of a file or directory.
     Deletion {
-        /// The location of the file or directory, if [tracking](Platform::track_path) was enabled.
+        /// The location of the file or directory, if [tracking](crate::diff::Options::track_path) was enabled.
         ///
         /// Otherwise, this value is always an empty path.
         location: &'a BStr,
@@ -48,9 +47,9 @@ pub enum Change<'a, 'old, 'new> {
     /// An entry was modified, e.g. changing the contents of a file adjusts its object id and turning
     /// a file into a symbolic link adjusts its mode.
     Modification {
-        /// The location of the file or directory, if [tracking](Platform::track_path) was enabled.
+        /// The location of the file or directory, if [tracking](crate::diff::Options::track_path) was enabled.
         ///
-        /// It may be empty if neither [file names](Platform::track_filename()) nor [file paths](Platform::track_path())
+        /// It may be empty if neither [file names](crate::diff::Options::track_filename()) nor [file paths](crate::diff::Options::track_path())
         /// are tracked.
         location: &'a BStr,
         /// The mode of the entry before the modification.
@@ -70,13 +69,13 @@ pub enum Change<'a, 'old, 'new> {
     ///
     /// In case of copies, the `copy` flag is true and typically represents a perfect copy of a source was made.
     ///
-    /// This variant can only be encountered if [rewrite tracking](Platform::track_rewrites()) is enabled.
+    /// This variant can only be encountered if [rewrite tracking](crate::diff::Options::track_rewrites()) is enabled.
     ///
     /// Note that mode changes may have occurred as well, i.e. changes from executable to non-executable or vice-versa.
     Rewrite {
         /// The location of the source of the rename operation.
         ///
-        /// It may be empty if neither [file names](Platform::track_filename()) nor [file paths](Platform::track_path())
+        /// It may be empty if neither [file names](crate::diff::Options::track_filename()) nor [file paths](crate::diff::Options::track_path())
         /// are tracked.
         source_location: &'a BStr,
         /// Identifies a relationship between the source and another source,
@@ -86,7 +85,7 @@ pub enum Change<'a, 'old, 'new> {
         source_entry_mode: gix_object::tree::EntryMode,
         /// The object id of the entry before the rename.
         ///
-        /// Note that this is the same as `id` if we require the [similarity to be 100%](Rewrites::percentage), but may
+        /// Note that this is the same as `id` if we require the [similarity to be 100%](gix_diff::Rewrites::percentage), but may
         /// be different otherwise.
         source_id: Id<'old>,
         /// Information about the diff we performed to detect similarity and match the `source_id` with the current state at `id`.
@@ -95,9 +94,9 @@ pub enum Change<'a, 'old, 'new> {
         /// The mode of the entry after the rename.
         /// It could differ but still be considered a rename as we are concerned only about content.
         entry_mode: gix_object::tree::EntryMode,
-        /// The location of the destination file or directory, if [tracking](Platform::track_path) was enabled.
+        /// The location of the destination file or directory, if [tracking](crate::diff::Options::track_path) was enabled.
         ///
-        /// It may be empty if neither [file names](Platform::track_filename()) nor [file paths](Platform::track_path())
+        /// It may be empty if neither [file names](crate::diff::Options::track_filename()) nor [file paths](crate::diff::Options::track_path())
         /// are tracked.
         location: &'a BStr,
         /// The object id after the rename.
@@ -126,15 +125,14 @@ impl<'repo> Tree<'repo> {
     ///
     /// Note that if a clone with `--filter=blob=none` was created, rename tracking may fail as it might
     /// try to access blobs to compute a similarity metric. Thus, it's more compatible to turn rewrite tracking off
-    /// using [`Platform::track_rewrites()`].
+    /// using [`Options::track_rewrites()`](crate::diff::Options::track_rewrites()).
     #[allow(clippy::result_large_err)]
     #[doc(alias = "diff_tree_to_tree", alias = "git2")]
-    pub fn changes<'a>(&'a self) -> Result<Platform<'a, 'repo>, crate::diff::new_rewrites::Error> {
+    pub fn changes<'a>(&'a self) -> Result<Platform<'a, 'repo>, crate::diff::options::init::Error> {
         Ok(Platform {
             state: Default::default(),
             lhs: self,
-            location: Some(Location::Path),
-            rewrites: self.repo.config.diff_renames()?.unwrap_or_default().into(),
+            options: crate::diff::Options::from_configuration(&self.repo.config)?,
         })
     }
 }
@@ -144,39 +142,13 @@ impl<'repo> Tree<'repo> {
 pub struct Platform<'a, 'repo> {
     state: gix_diff::tree::State,
     lhs: &'a Tree<'repo>,
-    location: Option<Location>,
-    rewrites: Option<Rewrites>,
+    options: crate::diff::Options,
 }
 
-/// Configuration
 impl Platform<'_, '_> {
-    /// Do not keep track of filepaths at all, which will leave all [`location`][Change::location] fields empty.
-    pub fn no_locations(&mut self) -> &mut Self {
-        self.location = Some(Location::FileName);
-        self
-    }
-
-    /// Keep track of file-names, which makes the [`location`][Change::location] field usable with the filename of the changed item.
-    pub fn track_filename(&mut self) -> &mut Self {
-        self.location = Some(Location::FileName);
-        self
-    }
-
-    /// Keep track of the entire path of a change, relative to the repository. (default).
-    ///
-    /// This makes the [`location`][Change::location] field usable.
-    pub fn track_path(&mut self) -> &mut Self {
-        self.location = Some(Location::Path);
-        self
-    }
-
-    /// Provide `None` to disable rewrite tracking entirely, or pass `Some(<configuration>)` to control to
-    /// what extent rename and copy tracking is performed.
-    ///
-    /// Note that by default, the git configuration determines rewrite tracking and git defaults are used
-    /// if nothing is configured, which turns rename tracking with 50% similarity on, while not tracking copies at all.
-    pub fn track_rewrites(&mut self, renames: Option<Rewrites>) -> &mut Self {
-        self.rewrites = renames;
+    /// Adjust diff options with `change_opts`.
+    pub fn options(&mut self, change_opts: impl FnOnce(&mut crate::diff::Options)) -> &mut Self {
+        change_opts(&mut self.options);
         self
     }
 }
@@ -214,7 +186,7 @@ impl Platform<'_, '_> {
     ///
     /// ### Performance Notes
     ///
-    /// Be sure to forcefully disable [`track_rewrites(None)`](Self::track_rewrites) to avoid
+    /// Be sure to forcefully disable [`track_rewrites(None)`](crate::diff::Options::track_rewrites) to avoid
     /// rename tracking, an operation that doesn't affect the statistics currently.
     /// As diffed resources aren't cached, if highly repetitive blobs are expected, performance
     /// may be diminished. In real-world scenarios where blobs are mostly unique, that's not an issue though.
