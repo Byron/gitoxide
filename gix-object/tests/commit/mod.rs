@@ -2,7 +2,7 @@ use gix_object::{CommitRef, CommitRefIter};
 
 use crate::fixture_name;
 
-const SIGNATURE: & [u8; 487] = b"-----BEGIN PGP SIGNATURE-----\n\niQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7q2DsACgkQ7gKdHl60\nAwDvewgAkL5UjEztzeVXlzceom0uCrAkCw9wSGLTmYcMKW3JwEaTRgQ4FX+sDuFT\nLZ8DoPu3UHUP0QnKrUwHulTTlKcOAvsczHbVPIKtXCxo6QpUfhsJQwz/J29kiE4L\nsOd+lqKGnn4oati/de2xwqNGi081fO5KILX75z6KfsAe7Qz7R3jxRF4uzHI033O+\nJc2Y827XeaELxW40SmzoLanWgEcdreXf3PstXEWW77CAu0ozXmvYj56vTviVybxx\nG7bc8lwc+SSKVe2VVB+CCfVbs0i541gmghUpZfMhUgaqttcCH8ysrUJDhne1BLG8\nCrOJIWTwAeEDtomV1p76qrMeqr1GFg==\n=qlSN\n-----END PGP SIGNATURE-----";
+const SIGNATURE: & [u8] = b"-----BEGIN PGP SIGNATURE-----\n\niQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7q2DsACgkQ7gKdHl60\nAwDvewgAkL5UjEztzeVXlzceom0uCrAkCw9wSGLTmYcMKW3JwEaTRgQ4FX+sDuFT\nLZ8DoPu3UHUP0QnKrUwHulTTlKcOAvsczHbVPIKtXCxo6QpUfhsJQwz/J29kiE4L\nsOd+lqKGnn4oati/de2xwqNGi081fO5KILX75z6KfsAe7Qz7R3jxRF4uzHI033O+\nJc2Y827XeaELxW40SmzoLanWgEcdreXf3PstXEWW77CAu0ozXmvYj56vTviVybxx\nG7bc8lwc+SSKVe2VVB+CCfVbs0i541gmghUpZfMhUgaqttcCH8ysrUJDhne1BLG8\nCrOJIWTwAeEDtomV1p76qrMeqr1GFg==\n=qlSN\n-----END PGP SIGNATURE-----\n";
 
 const LONG_MESSAGE: &str = "Merge tag 'thermal-v5.8-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/thermal/linux
 
@@ -133,9 +133,10 @@ O53SmJAwS5zxLOd8QA5nfSWP9FYYMuCR2AHj8BUCmxiAjXZLPNB/Hz2RRBr7q0MF
 zRo/4HJ04mSQYp0kluP/EBhz9g2wM/htIPyWRveB/ByKEYt3UNKjB++PJmPbu5UG
 dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
 =T+RI
------END PGP SIGNATURE-----";
+-----END PGP SIGNATURE-----
+";
 
-const OTHER_SIGNATURE: &[u8; 455] = b"-----BEGIN PGP SIGNATURE-----
+const OTHER_SIGNATURE: &[u8] = b"-----BEGIN PGP SIGNATURE-----
 
 wsBcBAABCAAQBQJeqxW4CRBK7hj4Ov3rIwAAdHIIAFD98qgN/k8ybukCLf6kpzvi
 5V8gf6BflONXc/oIDySurW7kfS9/r6jOgu08UN8KlQx4Q4g8yY7PROABhwGI70B3
@@ -145,6 +146,7 @@ k7D0LqGSXjU5wrQrKnemC7nWhmQsqaXDe89XXmliClCAx4/bepPiXK0eT/DNIKUr
 iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
 =HLmy
 -----END PGP SIGNATURE-----
+
 ";
 
 mod method {

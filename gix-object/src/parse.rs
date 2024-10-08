@@ -26,10 +26,9 @@ pub(crate) fn any_header_field_multi_line<'a, E: ParserError<&'a [u8]> + AddCont
             .map(|o: &[u8]| {
                 let bytes = o.as_bstr();
                 let mut out = BString::from(Vec::with_capacity(bytes.len()));
-                let mut lines = bytes.lines();
+                let mut lines = bytes.lines_with_terminator();
                 out.push_str(lines.next().expect("first line"));
                 for line in lines {
-                    out.push(b'\n');
                     out.push_str(&line[1..]); // cut leading space
                 }
                 out
