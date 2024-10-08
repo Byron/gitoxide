@@ -41,8 +41,8 @@ impl crate::WriteTo for Commit {
                 .extra_headers
                 .iter()
                 .map(|(name, value)| {
-                    // each header *value* is preceded by a space and followed by a newline
-                    name.len() + value.split_str("\n").map(|s| s.len() + 2).sum::<usize>()
+                    // each header *value* is preceded by a space, and it starts right after the name.
+                    name.len() + value.lines_with_terminator().map(|s| s.len() + 1).sum::<usize>() + usize::from(!value.ends_with_str(b"\n"))
                 })
                 .sum::<usize>()
             + 1 /* nl */
@@ -87,8 +87,8 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
                 .extra_headers
                 .iter()
                 .map(|(name, value)| {
-                    // each header *value* is preceded by a space and followed by a newline
-                    name.len() + value.split_str("\n").map(|s| s.len() + 2).sum::<usize>()
+                    // each header *value* is preceded by a space, and it starts right after the name.
+                    name.len() + value.lines_with_terminator().map(|s| s.len() + 1).sum::<usize>() + usize::from(!value.ends_with_str(b"\n"))
                 })
                 .sum::<usize>()
             + 1 /* nl */

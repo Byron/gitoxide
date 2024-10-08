@@ -16,15 +16,15 @@ macro_rules! round_trip {
             use gix_object::{ObjectRef, Object, WriteTo};
             use bstr::ByteSlice;
 
-            for input in &[
+            for input_name in &[
                 $( $files ),*
             ] {
-                let input = fixture_bytes(input);
+                let input = fixture_bytes(input_name);
                 // Test the parse->borrowed->owned->write chain for an object kind
                 let mut output = Vec::new();
                 let item = <$borrowed>::from_bytes(&input)?;
                 item.write_to(&mut output)?;
-                assert_eq!(output.as_bstr(), input.as_bstr());
+                assert_eq!(output.as_bstr(), input.as_bstr(), "borrowed: {input_name}");
 
                 let item: $owned = item.into();
                 output.clear();
@@ -35,23 +35,35 @@ macro_rules! round_trip {
                 let item = ObjectRef::from(<$borrowed>::from_bytes(&input)?);
                 output.clear();
                 item.write_to(&mut output)?;
-                assert_eq!(output.as_bstr(), input.as_bstr());
+                assert_eq!(output.as_bstr(), input.as_bstr(), "object-ref");
 
                 let item: Object = item.into();
                 output.clear();
                 item.write_to(&mut output)?;
-                assert_eq!(output.as_bstr(), input.as_bstr());
+                assert_eq!(output.as_bstr(), input.as_bstr(), "owned");
 
                 // Test the loose serialisation -> parse chain for an object kind
                 let item = <$borrowed>::from_bytes(&input)?;
+                // serialise a borowed item to a tagged loose object
                 output.clear();
-                // serialise to a tagged loose object
+                {
+                    let w = &mut output;
+                    w.write_all(&item.loose_header())?;
+                    item.write_to(w)?;
+                    let parsed = ObjectRef::from_loose(&output)?;
+                    let item2 = <$borrowed>::try_from(parsed).or(Err(super::Error::TryFromError))?;
+                    assert_eq!(item2, item, "object-ref loose: {input_name} {:?}\n{:?}", output.as_bstr(), input.as_bstr());
+                }
+
+                let item: $owned = item.into();
+                // serialise an owned to a tagged loose object
+                output.clear();
                 let w = &mut output;
                 w.write_all(&item.loose_header())?;
                 item.write_to(w)?;
                 let parsed = ObjectRef::from_loose(&output)?;
-                let item2 = <$borrowed>::try_from(parsed).or(Err(super::Error::TryFromError))?;
-                assert_eq!(item2, item);
+                let item2: $owned = <$borrowed>::try_from(parsed).or(Err(super::Error::TryFromError))?.into();
+                assert_eq!(item2, item, "object-ref loose owned: {input_name} {:?}\n{:?}", output.as_bstr(), input.as_bstr());
             }
             Ok(())
         }
@@ -83,7 +95,8 @@ mod commit {
         "commit/signed-with-encoding.txt",
         "commit/unsigned.txt",
         "commit/whitespace.txt",
-        "commit/with-encoding.txt"
+        "commit/with-encoding.txt",
+        "commit/subtle.txt"
     );
 }
 
