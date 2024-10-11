@@ -1,8 +1,8 @@
+use super::ChangeDetached;
 use crate::bstr::{BStr, ByteSlice};
 use crate::ext::ObjectIdExt;
 use crate::object::tree::diff::Change;
 use crate::Repository;
-use gix_diff::tree_with_rewrites::Change as ChangeDetached;
 
 impl Change<'_, '_, '_> {
     /// Produce a platform for performing a line-diff no matter whether the underlying [Change] is an addition, modification,

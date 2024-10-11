@@ -12,6 +12,8 @@ pub enum Action {
     Cancel,
 }
 
+pub use gix_diff::tree_with_rewrites::Change as ChangeDetached;
+
 /// Represents any possible change in order to turn one tree into another.
 #[derive(Debug, Clone, Copy)]
 pub enum Change<'a, 'old, 'new> {
