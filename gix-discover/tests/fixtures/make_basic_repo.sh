@@ -15,6 +15,17 @@ mkdir -p some/very/deeply/nested/subdir
 
 git clone --bare --shared . bare.git
 
+git clone --bare --shared . non-bare-without-worktree
+(cd non-bare-without-worktree
+  git config core.bare false
+)
+
+git clone --bare --shared . non-bare-without-worktree-with-index
+(cd non-bare-without-worktree
+  git config core.bare false
+  cp ../.git/index .
+)
+
 git worktree add worktrees/a
 git worktree add worktrees/b-private-dir-deleted
 rm -R .git/worktrees/b-private-dir-deleted
