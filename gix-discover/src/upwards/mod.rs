@@ -38,11 +38,11 @@ pub(crate) mod function {
         // Normalize the path so that `Path::parent()` _actually_ gives
         // us the parent directory. (`Path::parent` just strips off the last
         // path component, which means it will not do what you expect when
-        // working with paths paths that contain '..'.)
+        // working with paths that contain '..'.)
         let cwd = current_dir.map_or_else(
             || {
                 // The paths we return are relevant to the repository, but at this time it's impossible to know
-                // what `core.precomposeUnicode` is going to be. Hence the one using these paths will have to
+                // what `core.precomposeUnicode` is going to be. Hence, the one using these paths will have to
                 // transform the paths as needed, because we can't. `false` means to leave the obtained path as is.
                 gix_fs::current_dir(false).map(Cow::Owned)
             },
@@ -130,7 +130,7 @@ pub(crate) mod function {
                     cursor_metadata_backup = cursor_metadata.take();
                 }
                 if let Ok(kind) = match cursor_metadata.take() {
-                    Some(metadata) => is_git_with_metadata(&cursor, metadata),
+                    Some(metadata) => is_git_with_metadata(&cursor, metadata, &cwd),
                     None => is_git(&cursor),
                 } {
                     match filter_by_trust(&cursor)? {

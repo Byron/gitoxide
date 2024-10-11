@@ -42,6 +42,7 @@ mod dirwalk {
             ("bare.git".into(), Directory),
             ("empty-core-excludes".into(), Repository),
             ("non-bare-repo-without-index".into(), Repository),
+            ("non-bare-without-worktree".into(), Directory),
             ("some".into(), Directory),
         ];
         assert_eq!(

@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
-use std::{borrow::Cow, path::PathBuf};
-
 use gix_features::threading::OwnShared;
+use std::ffi::OsStr;
+use std::{borrow::Cow, path::PathBuf};
 
 use super::{Error, Options};
 use crate::{
@@ -86,7 +86,7 @@ impl ThreadSafeRepository {
             }
         };
 
-        // The be altered later based on `core.precomposeUnicode`.
+        // To be altered later based on `core.precomposeUnicode`.
         let cwd = gix_fs::current_dir(false)?;
         let (git_dir, worktree_dir) = gix_discover::repository::Path::from_dot_git_dir(path, kind, &cwd)
             .expect("we have sanitized path with is_git()")
@@ -284,7 +284,7 @@ impl ThreadSafeRepository {
         }
 
         match worktree_dir {
-            None if !config.is_bare => {
+            None if !config.is_bare && refs.git_dir().extension() == Some(OsStr::new(gix_discover::DOT_GIT_DIR)) => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
             }
             Some(_) => {

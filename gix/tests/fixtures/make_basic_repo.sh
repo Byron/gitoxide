@@ -37,3 +37,8 @@ git init empty-core-excludes
 (cd empty-core-excludes
   echo $'[core]\n\texcludesFile = ' >> .git/config
 )
+
+git clone --bare . non-bare-without-worktree
+(cd non-bare-without-worktree
+  git config core.bare false
+)

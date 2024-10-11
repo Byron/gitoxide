@@ -59,6 +59,30 @@ fn bare_repo_with_index_file_looks_still_looks_like_bare() -> crate::Result {
 }
 
 #[test]
+fn non_bare_repo_without_workdir() -> crate::Result {
+    let repo = repo_path()?.join("non-bare-without-worktree");
+    let kind = gix_discover::is_git(&repo)?;
+    assert_eq!(
+        kind,
+        gix_discover::repository::Kind::PossiblyBare,
+        "typically due to misconfiguration, but worktrees could also be configured in Git configuration"
+    );
+    Ok(())
+}
+
+#[test]
+fn non_bare_repo_without_workdir_with_index() -> crate::Result {
+    let repo = repo_path()?.join("non-bare-without-worktree-with-index");
+    let kind = gix_discover::is_git(&repo)?;
+    assert_eq!(
+        kind,
+        gix_discover::repository::Kind::PossiblyBare,
+        "this means it has to be validated later"
+    );
+    Ok(())
+}
+
+#[test]
 fn bare_repo_with_index_file_looks_still_looks_like_bare_if_it_was_renamed() -> crate::Result {
     for repo_name in ["bare-with-index-bare", "bare-with-index-no-config-bare"] {
         let repo = repo_path()?.join(repo_name);

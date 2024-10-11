@@ -62,6 +62,30 @@ fn bare_repo_with_index() -> crate::Result {
         repo.is_bare(),
         "it's properly classified as it reads the configuration (and has no worktree)"
     );
+    assert_eq!(repo.work_dir(), None);
+    Ok(())
+}
+
+#[test]
+fn non_bare_non_git_repo_without_worktree() -> crate::Result {
+    let repo = named_subrepo_opts(
+        "make_basic_repo.sh",
+        "non-bare-without-worktree",
+        gix::open::Options::isolated(),
+    )?;
+    assert!(!repo.is_bare());
+    assert_eq!(repo.work_dir(), None, "it doesn't assume that workdir exists");
+
+    let repo = gix::open_opts(
+        repo.git_dir().join("objects").join(".."),
+        gix::open::Options::isolated(),
+    )?;
+    assert!(!repo.is_bare());
+    assert_eq!(
+        repo.work_dir(),
+        None,
+        "it figures this out even if a non-normalized gitdir is used"
+    );
     Ok(())
 }
 

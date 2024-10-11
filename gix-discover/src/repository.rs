@@ -14,8 +14,10 @@ pub enum Path {
     /// The currently checked out or nascent work tree of a git repository
     WorkTree(PathBuf),
     /// The git repository itself, typically bare and without known worktree.
+    /// It could also be non-bare with a worktree configured using git configuration, or no worktree at all despite
+    /// not being bare (due to mis-configuration for example).
     ///
-    /// Note that it might still have linked work-trees which can be accessed later, weather bare or not, or it might be a
+    /// Note that it might still have linked work-trees which can be accessed later, bare or not, or it might be a
     /// submodule git directory in the `.git/modules/**/<name>` directory of the parent repository.
     Repository(PathBuf),
 }
@@ -112,8 +114,11 @@ pub enum Kind {
     /// Note that this is merely a guess at this point as we didn't read the configuration yet.
     ///
     /// Also note that due to optimizing for performance and *just* making an educated *guess in some situations*,
-    /// we may consider a non-bare repository bare if it it doesn't have an index yet due to be freshly initialized.
-    /// The caller is has to handle this, typically by reading the configuration.
+    /// we may consider a non-bare repository bare if it doesn't have an index yet due to be freshly initialized.
+    /// The caller has to handle this, typically by reading the configuration.
+    ///
+    /// It could also be a directory which is non-bare by configuration, but is *not* named `.git`.
+    /// Unusual, but it's possible that a worktree is configured via `core.worktree`.
     PossiblyBare,
     /// A `git` repository along with checked out files in a work tree.
     WorkTree {
