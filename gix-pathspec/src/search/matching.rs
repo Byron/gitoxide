@@ -28,7 +28,7 @@ impl Search {
     pub fn pattern_matching_relative_path(
         &mut self,
         relative_path: &BStr,
-        is_dir: Option<bool>,
+        is_dir: bool,
         attributes: &mut dyn FnMut(&BStr, Case, bool, &mut gix_attributes::search::Outcome) -> bool,
     ) -> Option<Match<'_>> {
         static MATCH_ALL_STAND_IN: Pattern = Pattern {
@@ -54,7 +54,6 @@ impl Search {
             return None;
         }
 
-        let is_dir = is_dir.unwrap_or(false);
         let patterns_len = self.patterns.len();
         let res = self.patterns.iter_mut().find_map(|mapping| {
             let ignore_case = mapping.value.pattern.signature.contains(MagicSignature::ICASE);
