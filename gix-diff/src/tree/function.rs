@@ -23,8 +23,8 @@ use crate::tree::{visit::Change, Error, State, TreeInfoTuple, Visit};
 /// * cycle checking is not performed, but can be performed in the delegate which can return
 ///   [`tree::visit::Action::Cancel`](crate::tree::visit::Action::Cancel) to stop the traversal.
 ///
-/// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
-/// [git_cmp_rs]: https://github.com/GitoxideLabs/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/gix-object/src/mutable/tree.rs#L52-L55
+/// [git_cmp_c]: https://github.com/git/git/blob/ef8ce8f3d4344fd3af049c17eeba5cd20d98b69f/tree-diff.c#L72-L88
+/// [git_cmp_rs]: https://github.com/GitoxideLabs/gitoxide/blob/795962b107d86f58b1f7c75006da256d19cc80ad/gix-object/src/tree/mod.rs#L263-L273
 #[doc(alias = "diff_tree_to_tree", alias = "git2")]
 pub fn diff<StateMut>(
     lhs: TreeRefIter<'_>,
