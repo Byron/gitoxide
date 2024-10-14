@@ -141,12 +141,12 @@ $(baseline_asset_fixture):
 		sed -i '' 's/master/main/g' $$(find . -type f)
 
 transport_fixtures = gix-transport/tests/fixtures
-base_url = https://github.com/Byron/gitoxide.git
+base_url = https://github.com/GitoxideLabs/gitoxide.git
 update-curl-fixtures: ## use curl to fetch raw fixtures for use in unit test. Changes there might break them
 	curl -D - -L "$(base_url)/info/refs?service=git-upload-pack"  > $(transport_fixtures)/v1/http-handshake.response
 	curl -D - -H 'Git-Protocol: version=2' -L "$(base_url)/info/refs?service=git-upload-pack"  > $(transport_fixtures)/v2/http-handshake.response
-	curl -H 'User-Agent: git/oxide-0.1.0' -D - -H 'Git-Protocol: version=1' -L "https://github.com/Byron/foo/info/refs?service=git-upload-pack"  > $(transport_fixtures)/http-401.response
-	curl -D - -H 'Git-Protocol: version=1' -L "https://github.com/Byron/gitoxide/info/refs?service=git-upload-pack"  > $(transport_fixtures)/http-404.response
+	curl -H 'User-Agent: git/oxide-0.1.0' -D - -H 'Git-Protocol: version=1' -L "https://github.com/GitoxideLabs/foo/info/refs?service=git-upload-pack"  > $(transport_fixtures)/http-401.response
+	curl -D - -H 'Git-Protocol: version=1' -L "https://github.com/GitoxideLabs/gitoxide/info/refs?service=git-upload-pack"  > $(transport_fixtures)/http-404.response
 
 update-assets: $(baseline_asset_fixture) ## refresh assets compiled into the binaries from their source
 	-rm -Rf $(baseline_asset_dir)
