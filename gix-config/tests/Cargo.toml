@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-config-tests"
 version = "0.0.0"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 description = "Tests for the gix-config crate"
 license = "MIT OR Apache-2.0"
 authors = ["Edward Shen <code@eddie.sh>"]

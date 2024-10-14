@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-utils"
 version = "0.1.12"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate with `gitoxide` utilities that don't need feature toggles"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

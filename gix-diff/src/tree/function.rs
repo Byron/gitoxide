@@ -24,7 +24,7 @@ use crate::tree::{visit::Change, Error, State, TreeInfoTuple, Visit};
 ///   [`tree::visit::Action::Cancel`](crate::tree::visit::Action::Cancel) to stop the traversal.
 ///
 /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
-/// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/gix-object/src/mutable/tree.rs#L52-L55
+/// [git_cmp_rs]: https://github.com/GitoxideLabs/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/gix-object/src/mutable/tree.rs#L52-L55
 #[doc(alias = "diff_tree_to_tree", alias = "git2")]
 pub fn diff<StateMut>(
     lhs: TreeRefIter<'_>,

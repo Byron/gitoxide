@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-odb-tests"
 version = "0.0.0"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"
 description = "Tests for gix-odb with feature-toggle support"

@@ -92,7 +92,7 @@ where
     let entry_index_offset = range.start;
     let entries = &entries[range];
 
-    let _span = gix_features::trace::detail!("gix_status::index_as_worktree", 
+    let _span = gix_features::trace::detail!("gix_status::index_as_worktree",
                                              num_entries = entries.len(),
                                              chunk_size = chunk_size,
                                              thread_limit = ?thread_limit);
@@ -341,7 +341,7 @@ impl<'index> State<'_, 'index> {
     /// could be entirely valid and unchanged. Therefore this only applies if the oid doesn't match the oid of an empty file,
     /// which is a constant.
     ///
-    /// Adapted from [here](https://github.com/Byron/gitoxide/pull/805#discussion_r1164676777).
+    /// Adapted from [here](https://github.com/GitoxideLabs/gitoxide/pull/805#discussion_r1164676777).
     fn compute_status<T, U, Find, E>(
         &mut self,
         entry: &gix_index::Entry,

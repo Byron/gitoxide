@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-worktree-stream"
 version = "0.15.0"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "generate a byte-stream from a git-tree"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

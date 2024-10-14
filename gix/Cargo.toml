@@ -2,7 +2,7 @@ lints.workspace = true
 
 [package]
 name = "gix"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 description = "Interact with git repositories just like git would"
 license = "MIT OR Apache-2.0"
 version = "0.66.0"

@@ -8,7 +8,7 @@ don't support that as we would have to keep both the future and the parent that 
 pointers, one could implement the magical part by hand, a custom future, which happily dissolves into its mutable parent iter ref.
 That would be quite some work though.
 
-[WithSidebands]: https://github.com/Byron/gitoxide/blob/fed6c69fd8b2877a66fe9d87916f3d54a3fc342b/gix-packetline/src/read/sidebands/async_io.rs#L197
+[WithSidebands]: https://github.com/GitoxideLabs/gitoxide/blob/64872690e60efdd9267d517f4d9971eecd3b875c/gix-packetline/src/read/sidebands/async_io.rs#L270
 
 ## Potential for improving performance
 
@@ -16,12 +16,12 @@ That would be quite some work though.
 
 * Finding an object in a loose object store [costs an extra disk IO operation][extra-iop] to pacify the borrow checker. This wouldn't be an issue with polonius.
 
-[extra-iop]: https://github.com/Byron/gitoxide/blob/2958145a0ae1ef582bbf88352f5567d5c2b5eaf0/gix-odb/src/store/linked/find.rs#L33
+[extra-iop]: https://github.com/GitoxideLabs/gitoxide/blob/2958145a0ae1ef582bbf88352f5567d5c2b5eaf0/gix-odb/src/store/linked/find.rs#L33
 
 ### gix-object
 
 * **tree-parsing performance**
-  * when diffing trees parsing [can take substantial time](https://github.com/Byron/gitoxide/discussions/74#discussioncomment-684927). Maybe optimizations are possible here.
+  * when diffing trees parsing [can take substantial time](https://github.com/GitoxideLabs/gitoxide/discussions/74#discussioncomment-684927). Maybe optimizations are possible here.
 
 ### NLL/Borrowcheck limitation gix-odb::(compound|linked)::Db cause additional code complexity
 
@@ -33,7 +33,7 @@ That would be quite some work though.
 
 * [ ] Pack decoding takes [5x more memory][android-base-discussion] than git on the [android-base repository][android-base-repo].
 * [ ] On **ARM64 on MacOS** the SHA1 implementation of the [`sha-1` crate](https://github.com/RustCrypto/hashes) is capped at about 550MB/s, half the speed of what I saw on Intel and about 50% slower than what's implemented in `libcorecrypto.dylib`. Get that fast and the decoding stage will be able
-      to beat git on fewer cores. [See this comment for more](https://github.com/Byron/gitoxide/discussions/46#discussioncomment-511268). Right now we only do when scaling beyond what `git` can do due to lock contention.
+      to beat git on fewer cores. [See this comment for more](https://github.com/GitoxideLabs/gitoxide/discussions/46#discussioncomment-511268). Right now we only do when scaling beyond what `git` can do due to lock contention.
     * This should work once the `asm` feature can be enabled in the `sha-1` crate, which currently fails but is tracked [in this issue](https://github.com/RustCrypto/asm-hashes/issues/28).
         * If it's not fast enough, one might hope that ARM8 instructions can improve performance, but right now they [aren't available](https://github.com/rust-lang/stdarch/issues/1055#issuecomment-803737796).
         * Maybe the path forward for that crate is to [use system or openssl dylibs](https://github.com/RustCrypto/asm-hashes/issues/5).
@@ -54,6 +54,6 @@ That would be quite some work though.
   * Note that there is tension between adding more latency to build such tree and the algorithms ability to (otherwise) start instantly.
   * potential savings: unknown
 
-[android-base-discussion]: https://github.com/Byron/gitoxide/pull/81
+[android-base-discussion]: https://github.com/GitoxideLabs/gitoxide/pull/81
 [android-base-repo]: https://android.googlesource.com/platform/frameworks/base
-[josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602
+[josh-aug-12]: https://github.com/GitoxideLabs/gitoxide/issues/1#issuecomment-672566602

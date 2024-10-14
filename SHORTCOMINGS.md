@@ -25,7 +25,7 @@ This file is for tracking features that are less well implemented or less powerf
 * **Objects larger than 32 bits cannot be loaded on 32 bit systems**
     * in-memory representations objects cannot handle objects greater than the amount of addressable memory.
     * This will not affect git LFS though.
-    
+
 ### `gix`
 
 * object replacements are read once upon opening the repository from their refs and changes to these won't be picked up.
@@ -38,5 +38,5 @@ This file is for tracking features that are less well implemented or less powerf
 
 ### `gix-features`
 
-* **sha1** isn't hardened (i.e. doesn't have collision detection). Needs [to be contributed](https://github.com/Byron/gitoxide/issues/585).
+* **sha1** isn't hardened (i.e. doesn't have collision detection). Needs [to be contributed](https://github.com/GitoxideLabs/gitoxide/issues/585).
 * **local time** is currently impeded by [this issue](https://github.com/time-rs/time/issues/293#issuecomment-909158529) but it's planned to resolve it eventually.

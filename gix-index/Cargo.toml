@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-index"
 version = "0.35.0"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

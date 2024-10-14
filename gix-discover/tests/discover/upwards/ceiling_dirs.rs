@@ -36,7 +36,7 @@ fn ceiling_dir_is_ignored_if_we_are_standing_on_the_ceiling_and_no_match_is_requ
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     // the ceiling dir is equal to the input dir, which itself doesn't contain a repository.
-    // But we can ignore that just like git does (see https://github.com/Byron/gitoxide/pull/723 for more information)
+    // But we can ignore that just like git does (see https://github.com/GitoxideLabs/gitoxide/pull/723 for more information)
     // and imagine us to 'stand on the ceiling', hence we are already past it.
     let (repo_path, _trust) = gix_discover::upwards_opts(
         &dir.clone(),

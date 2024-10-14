@@ -268,13 +268,13 @@ fn sections_by_name() -> crate::Result {
         bare = false
         logallrefupdates = true
     [remote "origin"]
-        url = git@github.com:Byron/gitoxide.git
+        url = git@github.com:GitoxideLabs/gitoxide.git
         fetch = +refs/heads/*:refs/remotes/origin/*
     "#;
 
     let config = File::try_from(config)?;
     let value = config.string_by("remote", Some("origin".into()), "url").unwrap();
-    assert_eq!(value, cow_str("git@github.com:Byron/gitoxide.git"));
+    assert_eq!(value, cow_str("git@github.com:GitoxideLabs/gitoxide.git"));
     Ok(())
 }
 

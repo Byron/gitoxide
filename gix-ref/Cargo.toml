@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-ref"
 version = "0.47.0"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate to handle git references"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

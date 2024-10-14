@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-url"
 version = "0.27.5"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project implementing parsing and serialization of gix-url"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

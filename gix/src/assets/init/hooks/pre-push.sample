@@ -8,8 +8,8 @@
 #
 # The following arguments are provided:
 #
-# $1 - The symbolic name of the remote to push to, like "origin" or the URL like "https://github.com/Byron/gitoxide" if there is no such name.
-# $2 - The URL of the remote to push to, like "https://github.com/Byron/gitoxide".
+# $1 - The symbolic name of the remote to push to, like "origin" or the URL like "https://github.com/GitoxideLabs/gitoxide" if there is no such name.
+# $2 - The URL of the remote to push to, like "https://github.com/GitoxideLabs/gitoxide".
 #
 # The hook should then read from standard input in a line-by-line fashion and split the following space-separated fields:
 #

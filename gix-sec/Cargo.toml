@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-sec"
 version = "0.10.8"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project providing a shared trust model"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

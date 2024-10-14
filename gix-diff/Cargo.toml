@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-diff"
 version = "0.46.0"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "Calculate differences between various git objects"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

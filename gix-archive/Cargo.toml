@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-archive"
 version = "0.15.0"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "archive generation from of a worktree stream"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
