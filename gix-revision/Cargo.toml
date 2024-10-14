@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-revision"
 version = "0.29.0"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing with finding names for revisions and parsing specifications"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

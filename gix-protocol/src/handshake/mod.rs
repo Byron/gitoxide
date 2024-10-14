@@ -29,7 +29,7 @@ pub enum Ref {
         ///
         /// See issue [#205] for details
         ///
-        /// [#205]: https://github.com/Byron/gitoxide/issues/205
+        /// [#205]: https://github.com/GitoxideLabs/gitoxide/issues/205
         target: BString,
         /// The hash of the annotated tag the ref points to, if present.
         ///

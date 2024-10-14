@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-packetline-blocking"
 version = "0.17.5"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A duplicate of `gix-packetline` with the `blocking-io` feature pre-selected"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

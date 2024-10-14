@@ -34,55 +34,55 @@ our [collaboration guide].
 The following schematic helps to visualize what follows.
 
 ```text
-                Release Software v1.X                 
-    Stability Tier 1 ═════════════════════════════╗   
-    ║                                             ║   
-    ║    gix──────────────┐ ein──────────────┐    ║   
-    ║    │  plumbing app  │ │  porcelain app │    ║   
-    ║    └────────────────┘ └────────────────┘    ║   
-    ║             │                  │            ║   
-    ║             ▼                  ▼            ║   
-    ║    gitoxide-core───────────────────────┐    ║   
-    ║    │        application functionality  │    ║   
-    ║    └───────────────────────────────────┘    ║   
-    ║                      │                      ║   
-    ║                      ▼                      ║   
-    ║    gix   ──────────────────────────────┐    ║   
-    ║    │                application crate  │─ ─ ╬ ─ 
+                Release Software v1.X
+    Stability Tier 1 ═════════════════════════════╗
+    ║                                             ║
+    ║    gix──────────────┐ ein──────────────┐    ║
+    ║    │  plumbing app  │ │  porcelain app │    ║
+    ║    └────────────────┘ └────────────────┘    ║
+    ║             │                  │            ║
+    ║             ▼                  ▼            ║
+    ║    gitoxide-core───────────────────────┐    ║
+    ║    │        application functionality  │    ║
+    ║    └───────────────────────────────────┘    ║
+    ║                      │                      ║
+    ║                      ▼                      ║
+    ║    gix   ──────────────────────────────┐    ║
+    ║    │                application crate  │─ ─ ╬ ─
     ║    └───────────────────────────────────┘    ║  │
-    ║                      │                      ║   
+    ║                      │                      ║
     ║                      ▼                      ║  │
-    ║    Foundation Crates───────────────────┐    ║   
+    ║    Foundation Crates───────────────────┐    ║
     ║    │ ┌─────────────┐   ┌─────────────┐ │    ║  │
-    ║    │ │  gix-hash   │   │  gix-actor  │ │    ║   
+    ║    │ │  gix-hash   │   │  gix-actor  │ │    ║
     ║    │ └─────────────┘   └─────────────┘ │    ║  │
-    ║    │ ┌─────────────┐   ┌─────────────┐ │    ║   
+    ║    │ ┌─────────────┐   ┌─────────────┐ │    ║
     ║    │ │   gix-ref   │   │ gix-config  │ │    ║  │
-    ║    │ └─────────────┘   └─────────────┘ │    ║   
+    ║    │ └─────────────┘   └─────────────┘ │    ║
     ║    │ ┌─────────────┐   ┌─────────────┐ │    ║  │
-    ║    │ │ gix-object  │   │  gix-lock   │ │    ║   
+    ║    │ │ gix-object  │   │  gix-lock   │ │    ║
     ║    │ └─────────────┘   └─────────────┘ │    ║  │
-    ║    │ ┌───────────────────────────────┐ │    ║   
+    ║    │ ┌───────────────────────────────┐ │    ║
     ║    │ │         gix-features          │ │    ║  │
-    ║    │ └───────────────────────────────┘ │    ║   
+    ║    │ └───────────────────────────────┘ │    ║
     ║    └───────────────────────────────────┘    ║  │
-    ║                                             ║   
+    ║                                             ║
     ╚═════════════════════════════════════════════╝  │
-                                                      
+
     Stability Tier 2 ─────────────────────────────┐  │
-    │                                             │   
+    │                                             │
     │    Plumbing Crates─────────────────────┐    │  │
-    │    │ ┌─────────────┐   ┌─────────────┐ │    │   
+    │    │ ┌─────────────┐   ┌─────────────┐ │    │
     │    │ │   gix-odb   │   │  gix-diff   │ │    │  │
-    │    │ └─────────────┘   └─────────────┘ │    │   
+    │    │ └─────────────┘   └─────────────┘ │    │
     │    │ ┌─────────────┐   ┌─────────────┐ │    │  │
-    │    │ │gix-traverse │   │  gix-pack   │ │◀ ─ ┼ ─ 
-    │    │ └─────────────┘   └─────────────┘ │    │   
-    │    │ ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐ │    │   
-    │    │            …many more…            │    │   
-    │    │ └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘ │    │   
-    │    └───────────────────────────────────┘    │   
-    │                                             │   
+    │    │ │gix-traverse │   │  gix-pack   │ │◀ ─ ┼ ─
+    │    │ └─────────────┘   └─────────────┘ │    │
+    │    │ ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐ │    │
+    │    │            …many more…            │    │
+    │    │ └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘ │    │
+    │    └───────────────────────────────────┘    │
+    │                                             │
     └─────────────────────────────────────────────┘
 ```
 
@@ -151,4 +151,4 @@ Apps and application crates may take longer as they are larger in scope. A good 
 use. Their scope should also be narrowed to a minimal viable product.
 
 [semver]: https://semver.org
-[collaboration guide]: https://github.com/Byron/gitoxide/blob/main/COLLABORATING.md
+[collaboration guide]: https://github.com/GitoxideLabs/gitoxide/blob/main/COLLABORATING.md

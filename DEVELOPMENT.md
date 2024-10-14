@@ -16,7 +16,7 @@
    * handle all errors, never `unwrap()`. If needed, `expect("why")`.
    * provide an error chain and make it easy to understand what went wrong.
    * We `thiserror` generally.
- * Adhere to the [stability guide](https://github.com/Byron/gitoxide/blob/main/STABILITY.md)
+ * Adhere to the [stability guide](https://github.com/GitoxideLabs/gitoxide/blob/main/STABILITY.md)
 
 ## Commit Messages
 
@@ -196,7 +196,7 @@ In _porcelain_ crates, like `gix`, we have `Platforms` which are typically cheap
 should keep a reference to the `Repository` instance that created them as the user is expected to clone the `Repository` if there is the need.
 However, if these structures are more expensive, call them `Cache` or `<NotPlatform>` and prefer to clone the `Repository` into them or otherwise keep them free of lifetimes
 to allow the user to keep this structure around for repeated calls. References for this paragraph are [this PR](https://github.com/Canop/bacon/pull/98) and
-[this discussion](https://github.com/Byron/gitoxide/discussions/675).
+[this discussion](https://github.com/GitoxideLabs/gitoxide/discussions/675).
 
 ## Examples, Porcelain CLI and Plumbing CLI - which does what?
 

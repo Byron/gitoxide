@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-quote"
 version = "0.4.12"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "A crate of the gitoxide project dealing with various quotations used by git"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

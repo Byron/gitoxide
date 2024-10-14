@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gitoxide"
 description = "A command-line application for interacting with git repositories"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"

@@ -1,4 +1,4 @@
-[![CI](https://github.com/Byron/gitoxide/workflows/ci/badge.svg)](https://github.com/Byron/gitoxide/actions)
+[![CI](https://github.com/GitoxideLabs/gitoxide/workflows/ci/badge.svg)](https://github.com/GitoxideLabs/gitoxide/actions)
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 <img src="etc/msrv-badge.svg">
 
@@ -17,11 +17,11 @@ like `fetch` and `clone`, and to validate the usability and control of the API o
 ## Development Status
 
 The command-line tools as well as the status of each crate is described in
-[the crate status document](https://github.com/Byron/gitoxide/blob/main/crate-status.md).
+[the crate status document](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md).
 
-For use in applications, look for the [`gix`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) crate,
+For use in applications, look for the [`gix`](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix) crate,
 which serves as entrypoint to the functionality provided by various lower-level plumbing crates like
-[`gix-config`](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config).
+[`gix-config`](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-config).
 
 ### Feature Discovery
 
@@ -29,7 +29,7 @@ which serves as entrypoint to the functionality provided by various lower-level 
 
 The above can be hard to answer and this paragraph is here to help with feature discovery.
 
-Look at [`crate-status.md`](https://github.com/Byron/gitoxide/blob/main/crate-status.md) for a rather exhaustive document that contains
+Look at [`crate-status.md`](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md) for a rather exhaustive document that contains
 both implemented and planned features.
 
 Further, the [`gix` crate documentation with the `git2` search term](https://docs.rs/gix/0.54.1/gix/?search=git2) helps to find all currently
@@ -68,24 +68,24 @@ Follow linked crate name for detailed status. Please note that all crates follow
 ### Production Grade
 
 * **Stability Tier 1**
-  - [gix-lock](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.md)
+  - [gix-lock](https://github.com/GitoxideLabs/gitoxide/blob/main/gix-lock/README.md)
 
 * **Stability Tier 2**
-  - [gix-tempfile](https://github.com/Byron/gitoxide/blob/main/gix-tempfile/README.md)
+  - [gix-tempfile](https://github.com/GitoxideLabs/gitoxide/blob/main/gix-tempfile/README.md)
 
 ### Stabilization Candidates
 
 Crates that seem feature complete and need to see some more use before they can be released as 1.0.
 Documentation is complete and was reviewed at least once.
 
-* [gix-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-mailmap)
-* [gix-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-chunk)
-* [gix-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-ref)
-* [gix-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config)
-* [gix-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-config-value)
-* [gix-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-glob)
-* [gix-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-actor)
-* [gix-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hash)
+* [gix-mailmap](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-mailmap)
+* [gix-chunk](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-chunk)
+* [gix-ref](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-ref)
+* [gix-config](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-config)
+* [gix-config-value](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-config-value)
+* [gix-glob](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-glob)
+* [gix-actor](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-actor)
+* [gix-hash](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-hash)
 
 ### Initial Development
 
@@ -93,61 +93,61 @@ These crates may be missing some features and thus are somewhat incomplete, but 
 is usable to some extent.
 
 * **usable** _(with rough but complete docs, possibly incomplete functionality)_
-  * [gix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix) (**⬅ entrypoint**)
-  * [gix-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-object)
-  * [gix-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-validate)
-  * [gix-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-url)
-  * [gix-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-packetline)
-  * [gix-packetline-blocking](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-packetline)
-  * [gix-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-transport)
-  * [gix-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-protocol)
-  * [gix-pack](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-pack)
-  * [gix-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-odb)
-  * [gix-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-commitgraph)
-  * [gix-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-diff)
-  * [gix-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-traverse)
-  * [gix-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-features)
-  * [gix-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-credentials)
-  * [gix-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sec)
-  * [gix-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-quote)
-  * [gix-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-discover)
-  * [gix-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-path)
-  * [gix-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-attributes)
-  * [gix-ignore](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-ignore)
-  * [gix-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-pathspec)
-  * [gix-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-index)
-  * [gix-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-revision)
-  * [gix-revwalk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-revwalk)
-  * [gix-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-command)
-  * [gix-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-prompt)
-  * [gix-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-refspec)
-  * [gix-fs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fs)
-  * [gix-utils](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-utils)
-  * [gix-hashtable](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-hashtable)
-  * [gix-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree)
-  * [gix-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bitmap)
-  * [gix-negotiate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-negotiate)
-  * [gix-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-filter)
-  * [gix-worktree-stream](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree-stream)
-  * [gix-archive](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-archive)
-  * [gix-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-submodule)
-  * [gix-status](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-status)
-  * [gix-worktree-state](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-worktree-state)
-  * [gix-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-date)
-  * [gix-dir](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-dir)
+  * [gix](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix) (**⬅ entrypoint**)
+  * [gix-object](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-object)
+  * [gix-validate](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-validate)
+  * [gix-url](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-url)
+  * [gix-packetline](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-packetline)
+  * [gix-packetline-blocking](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-packetline)
+  * [gix-transport](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-transport)
+  * [gix-protocol](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-protocol)
+  * [gix-pack](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-pack)
+  * [gix-odb](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-odb)
+  * [gix-commitgraph](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-commitgraph)
+  * [gix-diff](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-diff)
+  * [gix-traverse](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-traverse)
+  * [gix-features](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-features)
+  * [gix-credentials](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-credentials)
+  * [gix-sec](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-sec)
+  * [gix-quote](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-quote)
+  * [gix-discover](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-discover)
+  * [gix-path](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-path)
+  * [gix-attributes](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-attributes)
+  * [gix-ignore](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-ignore)
+  * [gix-pathspec](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-pathspec)
+  * [gix-index](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-index)
+  * [gix-revision](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-revision)
+  * [gix-revwalk](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-revwalk)
+  * [gix-command](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-command)
+  * [gix-prompt](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-prompt)
+  * [gix-refspec](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-refspec)
+  * [gix-fs](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-fs)
+  * [gix-utils](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-utils)
+  * [gix-hashtable](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-hashtable)
+  * [gix-worktree](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-worktree)
+  * [gix-bitmap](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-bitmap)
+  * [gix-negotiate](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-negotiate)
+  * [gix-filter](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-filter)
+  * [gix-worktree-stream](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-worktree-stream)
+  * [gix-archive](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-archive)
+  * [gix-submodule](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-submodule)
+  * [gix-status](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-status)
+  * [gix-worktree-state](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-worktree-state)
+  * [gix-date](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-date)
+  * [gix-dir](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-dir)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
-  * [gix-merge](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-merge)
+  * [gix-merge](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-merge)
 * **idea** _(just a name placeholder)_
-  * [gix-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-note)
-  * [gix-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fetchhead)
-  * [gix-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-lfs)
-  * [gix-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-rebase)
-  * [gix-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-sequencer)
-  * [gix-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tui)
-  * [gix-tix](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-tix)
-  * [gix-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-bundle)
-  * [gix-fsck](https://github.com/Byron/gitoxide/blob/main/crate-status.md#gix-fsck)
+  * [gix-note](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-note)
+  * [gix-fetchhead](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-fetchhead)
+  * [gix-lfs](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-lfs)
+  * [gix-rebase](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-rebase)
+  * [gix-sequencer](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-sequencer)
+  * [gix-tui](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-tui)
+  * [gix-tix](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-tix)
+  * [gix-bundle](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-bundle)
+  * [gix-fsck](https://github.com/GitoxideLabs/gitoxide/blob/main/crate-status.md#gix-fsck)
 
 ### Stress Testing
   * [x] Verify huge packs
@@ -159,7 +159,7 @@ is usable to some extent.
 
 Our [stability guide] helps to judge how much churn can be expected when depending on crates in this workspace.
 
-[stability guide]: https://github.com/Byron/gitoxide/blob/main/STABILITY.md
+[stability guide]: https://github.com/GitoxideLabs/gitoxide/blob/main/STABILITY.md
 
 ## Installation
 
@@ -173,7 +173,7 @@ Then install gitoxide with `cargo binstall gitoxide`.
 See the [releases section][releases] for manual installation and various alternative builds that are _slimmer_ or _smaller_, depending
 on your needs, for _Linux_, _MacOS_ and _Windows_.
 
-[releases]: https://github.com/Byron/gitoxide/releases
+[releases]: https://github.com/GitoxideLabs/gitoxide/releases
 
 ### Download from Arch-Repository
 
@@ -195,7 +195,7 @@ cave resolve -x gitoxide
 `cargo` is the Rust package manager which can easily be obtained through [rustup]. With it, you can build your own binary
 effortlessly and for your particular CPU for additional performance gains.
 
-The minimum supported Rust version is [documented in the CI configuration](https://github.com/Byron/gitoxide/blob/main/.github/workflows/msrv.yml#L23),
+The minimum supported Rust version is [documented in the CI configuration](https://github.com/GitoxideLabs/gitoxide/blob/main/.github/workflows/msrv.yml#L23),
 the latest stable one will work as well.
 
 There are various build configurations, all of them are [documented here](https://docs.rs/crate/gitoxide/latest). The documentation should also be useful
@@ -210,7 +210,7 @@ cargo install gitoxide --locked --no-default-features --features max-pure
 # Installing it is platform-dependent.
 cargo install gitoxide
 
-# For smaller binaries and even faster build times that are traded for a less fancy CLI implementation, 
+# For smaller binaries and even faster build times that are traded for a less fancy CLI implementation,
 # use the `lean` feature.
 cargo install gitoxide --locked --no-default-features --features lean
 ```
@@ -218,7 +218,7 @@ cargo install gitoxide --locked --no-default-features --features lean
 The following installs the latest unpublished `max` release directly from git:
 
 ```sh
-cargo install --git https://github.com/Byron/gitoxide  gitoxide
+cargo install --git https://github.com/GitoxideLabs/gitoxide  gitoxide
 ```
 
 #### How to deal with build failures
@@ -229,18 +229,18 @@ with `cargo install gitoxide --no-default-features --features max-pure`.
 What follows is a list of known failures.
 
 - On Fedora, `perl` needs to be installed for `OpenSSL` to build properly. This can be done with the following command:
-  `dnf install perl` (see [this issue](https://github.com/Byron/gitoxide/issues/592)).
-- 
+  `dnf install perl` (see [this issue](https://github.com/GitoxideLabs/gitoxide/issues/592)).
+-
 ### Using Docker
 
-Some CI/CD pipelines leverage repository cloning. Below is a copy-paste-able example to build docker images for such workflows. 
+Some CI/CD pipelines leverage repository cloning. Below is a copy-paste-able example to build docker images for such workflows.
 As no official image exists (at this time), an image must first be built.
 
 > [!NOTE]
 > The dockerfile isn't continuously tested as it costs too much time and thus might already be broken.
 > PRs are welcome.
 
-#### Building the most compatible base image 
+#### Building the most compatible base image
 
 ```sh
 docker build -f etc/docker/Dockerfile.alpine -t gitoxide:latest --compress . --target=pipeline
@@ -248,7 +248,7 @@ docker build -f etc/docker/Dockerfile.alpine -t gitoxide:latest --compress . --t
 
 #### Basic usage in a Pipeline
 
-For example, if a `Dockerfile` currently uses something like `RUN git clone https://github.com/Byron/gitoxide`, first build the image:
+For example, if a `Dockerfile` currently uses something like `RUN git clone https://github.com/GitoxideLabs/gitoxide`, first build the image:
 
 ```sh
 docker build -f etc/docker/Dockerfile.alpine -t gitoxide:latest --compress .
@@ -260,11 +260,11 @@ Then copy the binaries into your image and replace the `git` directive with a `g
 COPY --from gitoxide:latest /bin/gix /usr/local/bin/
 COPY --from gitoxide:latest /bin/ein /usr/local/bin/
 
-RUN /usr/local/bin/gix clone --depth 1 https://github.com/Byron/gitoxide gitoxide
+RUN /usr/local/bin/gix clone --depth 1 https://github.com/GitoxideLabs/gitoxide gitoxide
 ```
 
 
-[releases]: https://github.com/Byron/gitoxide/releases
+[releases]: https://github.com/GitoxideLabs/gitoxide/releases
 [rustup]: https://rustup.rs
 
 ## Usage
@@ -304,7 +304,7 @@ Project goals can change over time as we learn more, and they can be challenged.
    * IO errors due to insufficient amount of open file handles don't always lead to operation failure
  * **Cross platform support, including Windows**
    * With the tools and experience available here there is no reason not to support Windows.
-   * [Windows is tested on CI](https://github.com/Byron/gitoxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
+   * [Windows is tested on CI](https://github.com/GitoxideLabs/gitoxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
      and failures do prevent releases.
 
 ## Non-Goals
@@ -335,9 +335,9 @@ to pick a task. If it's empty or you have other questions, feel free to [start a
 
 For additional details, also take a look at the [collaboration guide].
 
-[collaboration guide]: https://github.com/Byron/gitoxide/blob/main/COLLABORATING.md
-[project-board]: https://github.com/Byron/gitoxide/projects
-[discussions]: https://github.com/Byron/gitoxide/discussions
+[collaboration guide]: https://github.com/GitoxideLabs/gitoxide/blob/main/COLLABORATING.md
+[project-board]: https://github.com/GitoxideLabs/gitoxide/projects
+[discussions]: https://github.com/GitoxideLabs/gitoxide/discussions
 [keybase]: https://keybase.io/byronbates
 [cargo-diet]: https://crates.io/crates/cargo-diet
 
@@ -410,7 +410,7 @@ Provide a CLI to for the most basic user journey:
 
 ## Shortcomings & Limitations
 
-Please take a look at the [`SHORTCOMINGS.md` file](https://github.com/Byron/gitoxide/blob/main/SHORTCOMINGS.md) for details.
+Please take a look at the [`SHORTCOMINGS.md` file](https://github.com/GitoxideLabs/gitoxide/blob/main/SHORTCOMINGS.md) for details.
 
 ## Credits
 

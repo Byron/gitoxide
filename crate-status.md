@@ -25,7 +25,7 @@ and itself relies on all `gix-*` crates. It's not meant for consumption, for app
 
 [skim]: https://github.com/lotabout/skim
 [git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
-[git-hours-discussion]: https://github.com/Byron/gitoxide/discussions/78
+[git-hours-discussion]: https://github.com/GitoxideLabs/gitoxide/discussions/78
 
 ### gix
 
@@ -94,10 +94,10 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
     * **Objects**
         * [x] lookup
         * [x] peel to object kind
-        * [ ] create [signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
+        * [ ] create [signed commits and tags](https://github.com/GitoxideLabs/gitoxide/issues/12)
         * **trees**
             * [x] lookup path
-            * [x] edit 
+            * [x] edit
     * **references**
         * [x] peel to end
         * [x] ref-log access
@@ -199,7 +199,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
 * [ ] **BString Interner with Arena-Backing and arbitrary value association**
     - probably based on [`internment`](https://docs.rs/internment/latest/internment/struct.Arena.html#),
       but needs `bumpalo` support to avoid item allocations/boxing, and avoid internal `Mutex`. (key type is pointer based).
-    
+
 ### gix-fs
 * [x] probe capabilities
 * [x] symlink creation and removal
@@ -209,7 +209,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
 ### gix-object
 * *decode (zero-copy)* borrowed objects
     * [x] commit
-      * [ ] parse [trailers](https://git-scm.com/docs/git-interpret-trailers#_description) 
+      * [ ] parse [trailers](https://git-scm.com/docs/git-interpret-trailers#_description)
     * [x] tree
 * encode owned objects
     * [x] commit
@@ -229,7 +229,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
         * [x] decode (zero copy)
         * [x] verify checksum
     * [x] simple and fast pack traversal
-        * [ ] [fast pack traversal works with ref-deltas](https://github.com/Byron/gitoxide/blob/8f9a55bb31af32b266d7c53426bc925361a627b2/gix-pack/src/cache/delta/from_offsets.rs#L101-L105)
+        * [ ] [fast pack traversal works with ref-deltas](https://github.com/GitoxideLabs/gitoxide/blob/8f9a55bb31af32b266d7c53426bc925361a627b2/gix-pack/src/cache/delta/from_offsets.rs#L101-L105)
     * [x] decode
         * [x] full objects
         * [x] deltified objects
@@ -258,7 +258,7 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
     * **advanced**
         * [x] Multi-Pack index file (MIDX)
             * [x] read
-            * [x] write 
+            * [x] write
             * [x] verify
         * [ ] 'bitmap' file
         * [ ] [special handling for networked packs](https://github.com/git/git/blob/89b43f80a514aee58b662ad606e6352e03eaeee4/packfile.c#L949:L949)
@@ -297,15 +297,15 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
 * [x] API documentation
     * [ ] Some examples
-    
+
 ### gix-diff
 
 Check out the [performance discussion][gix-diff-performance] as well.
 
 * **tree**
     * [x] changes needed to obtain _other tree_
-* **blobs** 
-    * **patches**    
+* **blobs**
+    * **patches**
         * There are various ways to generate a patch from two blobs.
         * [ ] text
         * [ ] binary
@@ -335,7 +335,7 @@ Check out the [performance discussion][gix-diff-performance] as well.
 * [x] API documentation
     * [ ] Examples
 
-[gix-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
+[gix-diff-performance]: https://github.com/GitoxideLabs/gitoxide/discussions/74
 
 ### gix-merge
 
@@ -361,8 +361,8 @@ Check out the [performance discussion][gix-traverse-performance] as well.
   * [ ] `commitgraph` support
 * [x] API documentation
     * [ ] Examples
-    
-[gix-traverse-performance]: https://github.com/Byron/gitoxide/discussions/76
+
+[gix-traverse-performance]: https://github.com/GitoxideLabs/gitoxide/discussions/76
 
 ### gix-url
 * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
@@ -419,7 +419,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
     * [ ] general purpose `accept(…)` for servers
 * [x] API documentation
     * [ ] Some examples
-    
+
 #### Advanced HTTP transport features
 
 | **feature** | **curl** | **reqwest** |
@@ -435,7 +435,7 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 * **03** -> custom request configuration via fn(request)
 * **04** -> proxy authentication
 * **05** -> [reauthentication after redirect](https://github.com/git/git/blob/eea7033409a0ed713c78437fc76486983d211e25/http.c#L1931)
-    
+
 ### gix-protocol
 * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
 * [x] **credentials**
@@ -464,14 +464,14 @@ Check out the [performance discussion][gix-traverse-performance] as well.
 * [ ] an attributes stack for matching paths to their attributes, with support for built-in `binary` macro for `-text -diff -merge`
 
 ### gix-ignore
-* [x] parse `.gitignore` files 
+* [x] parse `.gitignore` files
 * [x] an attributes stack for checking if paths are excluded
 
 ### gix-quote
 * **ansi-c**
   * [x] quote
   * [ ] unquote
-   
+
 ### gix-mailmap
 * [x] parsing
 * [x] lookup and mapping of author names
@@ -525,7 +525,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 ### gix-fetchhead
 * [ ] parse `FETCH_HEAD` information back entirely
 * [ ] write typical fetch-head lines
- 
+
 ### gix-discover
 
 * [x] check if a git directory is a git repository
@@ -539,7 +539,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 ### gix-date
 * [ ] parse git dates
 * [ ] serialize `Time`
- 
+
 ### gix-credentials
 * [x] launch git credentials helpers with a given action
   - [x] built-in `git credential` program
@@ -555,7 +555,7 @@ Provide base-implementations for dealing with smudge and clean filters as well a
 * [ ] clean filter base
 * [ ] smudge filter base
 * [ ] filter process base
- 
+
 ### gix-sec
 
 Provides a trust model to share across gitoxide crates. It helps configuring how to interact with external processes, among other things.
@@ -580,7 +580,7 @@ Make it the best-performing implementation and the most convenient one.
 ### gix-glob
 * [x] parse pattern
 * [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.
- 
+
 ### gix-status
 * [x] differences between index and worktree to turn index into worktree
     - [x] rename tracking
@@ -588,7 +588,7 @@ Make it the best-performing implementation and the most convenient one.
     - [ ] support for fs-monitor for modification checks
 * [ ] differences between index and index to learn what changed
     - [ ] rename tracking
- 
+
 ### gix-worktree-state
 * handle the working **tree/checkout**
     - [x] checkout an index of files, executables and symlinks just as fast as git
@@ -612,17 +612,17 @@ Make it the best-performing implementation and the most convenient one.
 
 ### gix-worktree
 * [x] A stack to to efficiently generate attribute lists for matching paths against.
- 
+
 ### gix-revision
 * [x] `describe()` (similar to `git name-rev`)
-* parse specifications 
+* parse specifications
     * [x] parsing and navigation
     * [x] revision ranges
     * [ ] full date parsing support (depends on `gix-date`)
- 
+
 ### gix-revision
 * [x] primitives to help with graph traversal, along with commit-graph acceleration.
- 
+
 ### gix-submodule
 * [x] read `.gitmodule` files, access all their fields, and apply overrides
 * [x] check if a submodule is 'active'
@@ -655,7 +655,7 @@ A git directory walk.
 
 The git staging area.
 
-* read 
+* read
   * [x] V2 - the default, including long-paths support
   * [x] V3 - extended flags
   * [x] V4 - delta-compression for paths
@@ -679,11 +679,11 @@ The git staging area.
   * [x] V3 - extension bits
   * [ ] V4
   * extensions
-      * [x] TREE 
-      * [ ] REUC 
+      * [x] TREE
+      * [ ] REUC
       * [ ] UNTR
       * [ ] FSMN
-      * [x] EOIE 
+      * [x] EOIE
       * [x] 'sdir'
       * [ ] 'link'
           - **note** that we currently **dissolve** any shared index we read so when writing this extension is removed.
@@ -716,17 +716,17 @@ The git staging area.
 * [ ] create and update graphs and graph files
 * [x] API documentation
     * [ ] Some examples
-    
+
 ### gix-tempfile
 
-See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-tempfile/README.md).
+See its [README.md](https://github.com/GitoxideLabs/gitoxide/blob/main/gix-tempfile/README.md).
 
 ### gix-lock
 
-See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.md).
+See its [README.md](https://github.com/GitoxideLabs/gitoxide/blob/main/gix-lock/README.md).
 
 ### gix-config-value
-* **parse** 
+* **parse**
     * [x] boolean
     * [x] integer
     * [x] color
@@ -734,11 +734,11 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
     * [x] path (incl. resolution)
     * [ ] date
     * [ ] [permission][https://github.com/git/git/blob/71a8fab31b70c417e8f5b5f716581f89955a7082/setup.c#L1526:L1526]
-    
+
 ### gix-config
 * [x] read
     * zero-copy parsing with event emission
-    * all config values as per the `gix-config-value` crate  
+    * all config values as per the `gix-config-value` crate
     * **includeIf**
       * [x] `gitdir`,  `gitdir/i`, and `onbranch`
       * [ ] `hasconfig`
@@ -764,7 +764,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 * [ ] support for submodule inclusion
 * [x] API documentation
     * [ ] Some examples
-     
+
 ### gix-archive
 
 * [x] `write_to()` for creating an archive with various container formats
@@ -820,7 +820,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
         * [x] avoid packing refs which are worktree private
     * ~~symbolic ref support, using symbolic links~~
         * This is a legacy feature which is not in use anymore.
-    * **transactions** 
+    * **transactions**
       * [x] delete, create or update single ref or multiple refs while handling the _reflog_
       * [x] set any valid ref value (not just object ids)
       * [x] reflog changes can be entirely disabled (i.e. for bare repos)
@@ -838,7 +838,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
       * [x] find single ref by name
       * [x] iterate refs with optional prefix
       * [x] handle unsorted packed refs and those without a header
-  * [ ] **[reftable][reftable-spec]**, 
+  * [ ] **[reftable][reftable-spec]**,
     * see [here for a Go/C implementation][reftable-impl]
 * [x] API documentation
     * [ ] Some examples
@@ -864,7 +864,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/gix-lock/README.
 ### gix-tui
 * _a terminal user interface seeking to replace and improve on `tig`_
 * Can display complex history in novel ways to make them graspable. Maybe [this post] can be an inspiration.
- 
+
 ### gix-tix
 
 A re-implementation of a minimal `tig` like UI that aims to be fast and to the point.
@@ -873,7 +873,7 @@ A re-implementation of a minimal `tig` like UI that aims to be fast and to the p
 
 Definitely optimize for performance and see how we fare compared to [oxen](https://github.com/Oxen-AI/oxen-release/blob/main/Performance.md).
 Right now, `git lfs` is 40x slower, due to sequential uploads and lack of fast compression. It seems this can be greatly improved to get
-close to 6min for 200k images (1.4GB). GitHub seems to cap upload speeds to 100kb/s, one major reason it's so slow, and it can only do 
+close to 6min for 200k images (1.4GB). GitHub seems to cap upload speeds to 100kb/s, one major reason it's so slow, and it can only do
 it sequentially as `git-lfs` doesn't use the new `filter-process` protocol which would allow parallelization.
 Oxen uses the XXH3 (30gb/s) which greatly outperforms SHA1 - however, it doesn't look like the hash is necessarily the bottleneck in typical benchmarks.
 

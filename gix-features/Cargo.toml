@@ -3,7 +3,7 @@ lints.workspace = true
 [package]
 name = "gix-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
-repository = "https://github.com/Byron/gitoxide"
+repository = "https://github.com/GitoxideLabs/gitoxide"
 version = "0.38.2"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT OR Apache-2.0"

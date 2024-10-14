@@ -4,7 +4,7 @@
 //! ### Credits
 //!
 //! This module was ported from <https://github.com/niklasf/rust-btoi> version 0.4.3
-//! see <https://github.com/Byron/gitoxide/issues/729> for how it came to be in order
+//! see <https://github.com/GitoxideLabs/gitoxide/issues/729> for how it came to be in order
 //! to save 2.2 seconds of per-core compile time by not compiling the `num-traits` crate
 //! anymore.
 //!
