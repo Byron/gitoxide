@@ -50,7 +50,7 @@ fn complex_lossless_roundtrip() {
             logallrefupdates = true
         
         [remote "origin"]
-            url = git@github.com:Byron/gitoxide.git
+            url = git@github.com:GitoxideLabs/gitoxide.git
             fetch = +refs/heads/*:refs/remotes/origin/*
 
         [test]  # other comment

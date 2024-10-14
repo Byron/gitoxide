@@ -173,12 +173,12 @@ mod to_url {
                 username: Some("user".into()),
                 password: Some("secret".into()),
                 host: Some("example.com:8080".into()),
-                path: Some("Byron/gitoxide".into()),
+                path: Some("GitoxideLabs/gitoxide".into()),
                 ..Default::default()
             }
             .to_url()
             .unwrap(),
-            "https://user@example.com:8080/Byron/gitoxide"
+            "https://user@example.com:8080/GitoxideLabs/gitoxide"
         );
     }
 }
