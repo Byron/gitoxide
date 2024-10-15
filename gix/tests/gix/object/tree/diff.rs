@@ -510,101 +510,29 @@ mod track_rewrites {
             .collect();
         insta::assert_debug_snapshot!(actual, @r#"
         [
-            Addition {
-                location: "c/src",
-                relation: Some(
-                    ChildOfParent(
-                        1,
-                    ),
-                ),
-                entry_mode: EntryMode(
+            Rewrite {
+                source_location: "cli",
+                source_entry_mode: EntryMode(
                     16384,
                 ),
-                id: Sha1(80e5b08f25f75c2050afbcb794e8434f4cf082f1),
-            },
-            Addition {
-                location: "c/tests",
-                relation: Some(
-                    ChildOfParent(
-                        1,
-                    ),
-                ),
-                entry_mode: EntryMode(
-                    16384,
-                ),
-                id: Sha1(17be3b367831653883a36a2f2a8dea418b8d96b7),
-            },
-            Deletion {
-                location: "cli/src",
-                relation: Some(
-                    ChildOfParent(
+                source_relation: Some(
+                    Parent(
                         2,
                     ),
                 ),
+                source_id: Sha1(f203064a6a81df47498fb415a2064a8ec568ed67),
+                diff: None,
                 entry_mode: EntryMode(
                     16384,
                 ),
-                id: Sha1(80e5b08f25f75c2050afbcb794e8434f4cf082f1),
-            },
-            Deletion {
-                location: "cli/tests",
+                id: Sha1(f203064a6a81df47498fb415a2064a8ec568ed67),
+                location: "c",
                 relation: Some(
-                    ChildOfParent(
-                        2,
-                    ),
-                ),
-                entry_mode: EntryMode(
-                    16384,
-                ),
-                id: Sha1(17be3b367831653883a36a2f2a8dea418b8d96b7),
-            },
-            Addition {
-                location: "c/src/commands",
-                relation: Some(
-                    ChildOfParent(
+                    Parent(
                         1,
                     ),
                 ),
-                entry_mode: EntryMode(
-                    16384,
-                ),
-                id: Sha1(f414de88468352d59c129d0e7686fb1e1f387929),
-            },
-            Deletion {
-                location: "cli/src/commands",
-                relation: Some(
-                    ChildOfParent(
-                        2,
-                    ),
-                ),
-                entry_mode: EntryMode(
-                    16384,
-                ),
-                id: Sha1(f414de88468352d59c129d0e7686fb1e1f387929),
-            },
-            Addition {
-                location: "c/src/commands/file",
-                relation: Some(
-                    ChildOfParent(
-                        1,
-                    ),
-                ),
-                entry_mode: EntryMode(
-                    16384,
-                ),
-                id: Sha1(0f3bc154b577b84fb5ce31383e25acc99c2f24a5),
-            },
-            Deletion {
-                location: "cli/src/commands/file",
-                relation: Some(
-                    ChildOfParent(
-                        2,
-                    ),
-                ),
-                entry_mode: EntryMode(
-                    16384,
-                ),
-                id: Sha1(0f3bc154b577b84fb5ce31383e25acc99c2f24a5),
+                copy: false,
             },
             Rewrite {
                 source_location: "cli/src/commands/file/print.rs",
@@ -623,6 +551,54 @@ mod track_rewrites {
                 ),
                 id: Sha1(081093be2ba0d2be62d14363f43859355bee2aa2),
                 location: "c/src/commands/file/print.rs",
+                relation: Some(
+                    ChildOfParent(
+                        1,
+                    ),
+                ),
+                copy: false,
+            },
+            Rewrite {
+                source_location: "cli/src/commands/file",
+                source_entry_mode: EntryMode(
+                    16384,
+                ),
+                source_relation: Some(
+                    ChildOfParent(
+                        2,
+                    ),
+                ),
+                source_id: Sha1(0f3bc154b577b84fb5ce31383e25acc99c2f24a5),
+                diff: None,
+                entry_mode: EntryMode(
+                    16384,
+                ),
+                id: Sha1(0f3bc154b577b84fb5ce31383e25acc99c2f24a5),
+                location: "c/src/commands/file",
+                relation: Some(
+                    ChildOfParent(
+                        1,
+                    ),
+                ),
+                copy: false,
+            },
+            Rewrite {
+                source_location: "cli/tests",
+                source_entry_mode: EntryMode(
+                    16384,
+                ),
+                source_relation: Some(
+                    ChildOfParent(
+                        2,
+                    ),
+                ),
+                source_id: Sha1(17be3b367831653883a36a2f2a8dea418b8d96b7),
+                diff: None,
+                entry_mode: EntryMode(
+                    16384,
+                ),
+                id: Sha1(17be3b367831653883a36a2f2a8dea418b8d96b7),
+                location: "c/tests",
                 relation: Some(
                     ChildOfParent(
                         1,
@@ -695,6 +671,30 @@ mod track_rewrites {
                 ),
                 id: Sha1(5253f0ff160e8b7001a7bd271ca4a07968ff81a3),
                 location: "c/tests/runner.rs",
+                relation: Some(
+                    ChildOfParent(
+                        1,
+                    ),
+                ),
+                copy: false,
+            },
+            Rewrite {
+                source_location: "cli/src",
+                source_entry_mode: EntryMode(
+                    16384,
+                ),
+                source_relation: Some(
+                    ChildOfParent(
+                        2,
+                    ),
+                ),
+                source_id: Sha1(80e5b08f25f75c2050afbcb794e8434f4cf082f1),
+                diff: None,
+                entry_mode: EntryMode(
+                    16384,
+                ),
+                id: Sha1(80e5b08f25f75c2050afbcb794e8434f4cf082f1),
+                location: "c/src",
                 relation: Some(
                     ChildOfParent(
                         1,
@@ -943,24 +943,24 @@ mod track_rewrites {
                 copy: false,
             },
             Rewrite {
-                source_location: "cli",
+                source_location: "cli/src/commands",
                 source_entry_mode: EntryMode(
                     16384,
                 ),
                 source_relation: Some(
-                    Parent(
+                    ChildOfParent(
                         2,
                     ),
                 ),
-                source_id: Sha1(f203064a6a81df47498fb415a2064a8ec568ed67),
+                source_id: Sha1(f414de88468352d59c129d0e7686fb1e1f387929),
                 diff: None,
                 entry_mode: EntryMode(
                     16384,
                 ),
-                id: Sha1(f203064a6a81df47498fb415a2064a8ec568ed67),
-                location: "c",
+                id: Sha1(f414de88468352d59c129d0e7686fb1e1f387929),
+                location: "c/src/commands",
                 relation: Some(
-                    Parent(
+                    ChildOfParent(
                         1,
                     ),
                 ),

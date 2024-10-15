@@ -172,7 +172,10 @@ impl<T: Change> Tracker<T> {
             .relation()
             .filter(|_| matches!(change_kind, ChangeKind::Addition | ChangeKind::Deletion));
         let entry_kind = change.entry_mode().kind();
-        if let (None | Some(Relation::ChildOfParent(_)), EntryKind::Commit | EntryKind::Tree) = (relation, entry_kind) {
+        if entry_kind == EntryKind::Commit {
+            return Some(change);
+        }
+        if let (None, EntryKind::Tree) = (relation, entry_kind) {
             return Some(change);
         };
 
@@ -221,20 +224,38 @@ impl<T: Change> Tracker<T> {
         PushSourceTreeFn: FnMut(&mut dyn FnMut(T, &BStr)) -> Result<(), E>,
         E: std::error::Error + Send + Sync + 'static,
     {
+        fn is_parent(change: &impl Change) -> bool {
+            matches!(change.relation(), Some(Relation::Parent(_)))
+        }
         diff_cache.options.skip_internal_diff_if_external_is_configured = false;
 
+        // The point of this is to optimize for identity-based lookups, which should be easy to find
+        // by partitioning.
         fn by_id_and_location<T: Change>(a: &Item<T>, b: &Item<T>) -> std::cmp::Ordering {
             a.change
                 .id()
                 .cmp(b.change.id())
                 .then_with(|| a.path.start.cmp(&b.path.start).then(a.path.end.cmp(&b.path.end)))
         }
-        self.items.sort_by(by_id_and_location);
 
         let mut out = Outcome {
             options: self.rewrites,
             ..Default::default()
         };
+        self.items.sort_by(by_id_and_location);
+
+        // Rewrites by directory can be pruned out quickly, quickly pruning candidates
+        // for the following per-item steps.
+        self.match_pairs_of_kind(
+            visit::SourceKind::Rename,
+            &mut cb,
+            None, /* by identity for parents */
+            &mut out,
+            diff_cache,
+            objects,
+            Some(is_parent),
+        )?;
+
         self.match_pairs_of_kind(
             visit::SourceKind::Rename,
             &mut cb,
@@ -242,6 +263,7 @@ impl<T: Change> Tracker<T> {
             &mut out,
             diff_cache,
             objects,
+            None,
         )?;
 
         if let Some(copies) = self.rewrites.copies {
@@ -252,6 +274,7 @@ impl<T: Change> Tracker<T> {
                 &mut out,
                 diff_cache,
                 objects,
+                None,
             )?;
 
             match copies.source {
@@ -275,6 +298,7 @@ impl<T: Change> Tracker<T> {
                         &mut out,
                         diff_cache,
                         objects,
+                        None,
                     )?;
                 }
             }
@@ -299,6 +323,7 @@ impl<T: Change> Tracker<T> {
 }
 
 impl<T: Change> Tracker<T> {
+    #[allow(clippy::too_many_arguments)]
     fn match_pairs_of_kind(
         &mut self,
         kind: visit::SourceKind,
@@ -307,10 +332,11 @@ impl<T: Change> Tracker<T> {
         out: &mut Outcome,
         diff_cache: &mut crate::blob::Platform,
         objects: &impl gix_object::FindObjectOrHeader,
+        filter: Option<fn(&T) -> bool>,
     ) -> Result<(), emit::Error> {
         // we try to cheaply reduce the set of possibilities first, before possibly looking more exhaustively.
         let needs_second_pass = !needs_exact_match(percentage);
-        if self.match_pairs(cb, None /* by identity */, kind, out, diff_cache, objects)? == Action::Cancel {
+        if self.match_pairs(cb, None /* by identity */, kind, out, diff_cache, objects, filter)? == Action::Cancel {
             return Ok(());
         }
         if needs_second_pass {
@@ -335,12 +361,13 @@ impl<T: Change> Tracker<T> {
                 }
             };
             if !is_limited {
-                self.match_pairs(cb, percentage, kind, out, diff_cache, objects)?;
+                self.match_pairs(cb, percentage, kind, out, diff_cache, objects, None)?;
             }
         }
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn match_pairs(
         &mut self,
         cb: &mut impl FnMut(visit::Destination<'_, T>, Option<visit::Source<'_, T>>) -> Action,
@@ -349,10 +376,14 @@ impl<T: Change> Tracker<T> {
         stats: &mut Outcome,
         diff_cache: &mut crate::blob::Platform,
         objects: &impl gix_object::FindObjectOrHeader,
+        filter: Option<fn(&T) -> bool>,
     ) -> Result<Action, emit::Error> {
         let mut dest_ofs = 0;
         while let Some((mut dest_idx, dest)) = self.items[dest_ofs..].iter().enumerate().find_map(|(idx, item)| {
-            (!item.emitted && matches!(item.change.kind(), ChangeKind::Addition)).then_some((idx, item))
+            (!item.emitted
+                && matches!(item.change.kind(), ChangeKind::Addition)
+                && filter.map_or(true, |f| f(&item.change)))
+            .then_some((idx, item))
         }) {
             dest_idx += dest_ofs;
             dest_ofs = dest_idx + 1;
