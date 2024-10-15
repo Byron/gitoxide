@@ -189,6 +189,22 @@ pub fn main() -> Result<()> {
                 core::repository::merge_base(repository(Mode::Lenient)?, first, others, out, format)
             },
         ),
+        Subcommands::Diff(crate::plumbing::options::diff::Platform { cmd }) => match cmd {
+            crate::plumbing::options::diff::SubCommands::Tree {
+                old_treeish,
+                new_treeish,
+            } => prepare_and_run(
+                "diff-tree",
+                trace,
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::repository::diff::tree(repository(Mode::Lenient)?, out, old_treeish, new_treeish)
+                },
+            ),
+        },
         Subcommands::Worktree(crate::plumbing::options::worktree::Platform { cmd }) => match cmd {
             crate::plumbing::options::worktree::SubCommands::List => prepare_and_run(
                 "worktree-list",
