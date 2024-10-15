@@ -14,4 +14,10 @@ git init jj-trackcopy-1
   rm -f "$index"
   git update-index --index-info < "$ROOT/assets/jj-trackcopy-1/47bd6f4aa4a7eeef8b01ce168c6c771bdfffcbd3.tree"
   git commit --allow-empty -F "$ROOT/assets/jj-trackcopy-1/47bd6f4aa4a7eeef8b01ce168c6c771bdfffcbd3.msg"
+
+  git checkout -f HEAD
+  git mv cli c
+  git commit -m "renamed cli to c"
+
+  rm -Rf c/
 )

@@ -650,9 +650,9 @@ fn simple_directory_rename_by_id() -> crate::Result {
                 },
                 "d/subdir".into(),
             )
-            .is_some(),
-        "trees that are children are simply ignored. It's easier to compare views of worktrees (`gix-dirwalk`) \
-        and trees/indices that way."
+            .is_none(),
+        "trees that are children are kept and matched. That way, they can quickly be pruned which is done first.\
+        Those who don't need them can prune them in a later step."
     );
     assert!(track
         .try_push_change(
@@ -664,7 +664,7 @@ fn simple_directory_rename_by_id() -> crate::Result {
             },
             "d-renamed/subdir".into(),
         )
-        .is_some());
+        .is_none());
     let _odb = util::add_retained_blobs(
         &mut track,
         [
@@ -692,22 +692,23 @@ fn simple_directory_rename_by_id() -> crate::Result {
                 assert_eq!(dst.change.relation, Some(Relation::Parent(1)));
                 assert_eq!(dst.change.mode.kind(), EntryKind::Tree);
             }
-            1..=4 => {
+            1..=5 => {
                 let src = src.unwrap();
                 let (expected_src, expected_dst) = &[
                     ("d/a", "d-renamed/a"),
                     ("d/c", "d-renamed/c"),
                     ("d/b", "d-renamed/b"),
+                    ("d/subdir", "d-renamed/subdir"),
                     ("d/subdir/d", "d-renamed/subdir/d"),
                 ][calls - 1];
                 assert_eq!(src.location, expected_src);
                 assert_eq!(dst.location, expected_dst);
             }
-            5 => {
+            6 => {
                 assert_eq!(src, None);
                 assert_eq!(dst.location, "a");
             }
-            6 => {
+            7 => {
                 assert_eq!(src, None);
                 assert_eq!(dst.location, "b");
             }
@@ -723,7 +724,7 @@ fn simple_directory_rename_by_id() -> crate::Result {
             ..Default::default()
         }
     );
-    assert_eq!(calls, 7, "Should not have too few calls");
+    assert_eq!(calls, 8, "Should not have too few calls");
     Ok(())
 }
 
