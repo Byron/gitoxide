@@ -145,6 +145,7 @@ pub enum Subcommands {
     Corpus(corpus::Platform),
     MergeBase(merge_base::Command),
     Merge(merge::Platform),
+    Diff(diff::Platform),
     Worktree(worktree::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
@@ -371,15 +372,39 @@ pub mod merge {
             #[clap(long, short = 'c')]
             resolve_with: Option<ResolveWith>,
 
-            /// A path or revspec to our file
+            /// A path or revspec to our file.
             #[clap(value_name = "OURS", value_parser = crate::shared::AsBString)]
             ours: BString,
-            /// A path or revspec to the base for both ours and theirs
+            /// A path or revspec to the base for both ours and theirs.
             #[clap(value_name = "BASE", value_parser = crate::shared::AsBString)]
             base: BString,
-            /// A path or revspec to their file
+            /// A path or revspec to their file.
             #[clap(value_name = "OURS", value_parser = crate::shared::AsBString)]
             theirs: BString,
+        },
+    }
+}
+
+pub mod diff {
+    use gix::bstr::BString;
+
+    /// Print all changes between two objects
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        #[clap(subcommand)]
+        pub cmd: SubCommands,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum SubCommands {
+        /// Diff two trees.
+        Tree {
+            /// A rev-spec representing the 'before' or old tree.
+            #[clap(value_parser = crate::shared::AsBString)]
+            old_treeish: BString,
+            /// A rev-spec representing the 'after' or new tree.
+            #[clap(value_parser = crate::shared::AsBString)]
+            new_treeish: BString,
         },
     }
 }
