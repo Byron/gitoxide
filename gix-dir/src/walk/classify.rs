@@ -180,7 +180,7 @@ pub fn path(
     }
     let pathspec_could_match = ctx
         .pathspec
-        .can_match_relative_path(rela_path.as_bstr(), disk_kind.map(|ft| ft.is_dir()));
+        .can_match_relative_path(rela_path.as_bstr(), disk_kind.map_or(false, |ft| ft.is_dir()));
     if !pathspec_could_match {
         return Ok(out.with_status(entry::Status::Pruned));
     }
