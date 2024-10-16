@@ -229,7 +229,6 @@ The top-level crate that acts as hub to all functionality provided by the `gix-*
         * [x] decode (zero copy)
         * [x] verify checksum
     * [x] simple and fast pack traversal
-        * [ ] [fast pack traversal works with ref-deltas](https://github.com/GitoxideLabs/gitoxide/blob/8f9a55bb31af32b266d7c53426bc925361a627b2/gix-pack/src/cache/delta/from_offsets.rs#L101-L105)
     * [x] decode
         * [x] full objects
         * [x] deltified objects

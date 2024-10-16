@@ -1,5 +1,7 @@
 ## General
 
+*Note: Some of these items may be out of date.*
+
 ### Get rid of unsafe pointer magic [WithSidebands] _(cost: high)_
 
 What needs to be done is to transform the &mut StreamingPeekableIter into a child future, and when exhausted, it must be transformed back
@@ -11,12 +13,6 @@ That would be quite some work though.
 [WithSidebands]: https://github.com/GitoxideLabs/gitoxide/blob/64872690e60efdd9267d517f4d9971eecd3b875c/gix-packetline/src/read/sidebands/async_io.rs#L270
 
 ## Potential for improving performance
-
-### gix-odb
-
-* Finding an object in a loose object store [costs an extra disk IO operation][extra-iop] to pacify the borrow checker. This wouldn't be an issue with polonius.
-
-[extra-iop]: https://github.com/GitoxideLabs/gitoxide/blob/2958145a0ae1ef582bbf88352f5567d5c2b5eaf0/gix-odb/src/store/linked/find.rs#L33
 
 ### gix-object
 
