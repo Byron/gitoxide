@@ -532,6 +532,24 @@ fn from_empty_add() -> crate::Result {
         "still, only the root-tree changes effectively"
     );
     assert_eq!(odb.access_count_and_clear(), 0);
+
+    let actual = edit
+        .upsert(["a", "b"], EntryKind::Tree, empty_tree())?
+        .upsert(["a", "b", "c"], EntryKind::BlobExecutable, any_blob())?
+        // .upsert(["a", "b", "d"], EntryKind::Blob, any_blob())?
+        .write(&mut write)?;
+    assert_eq!(
+        display_tree(actual, &storage),
+        "d8d3f558776965f70452625b72363234f517b290
+└── a
+    └── b
+        └── c bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.100755
+",
+        "the intermediate tree is rewritten to be suitable to hold the blob"
+    );
+    assert_eq!(num_writes_and_clear(), 3, "root, and two child-trees");
+    assert_eq!(odb.access_count_and_clear(), 0);
+
     Ok(())
 }
 
