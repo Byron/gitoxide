@@ -366,6 +366,7 @@ fn resolve_entry(range: data::EntryRange, mapped_file: &memmap2::Mmap) -> Option
     mapped_file.get(range.start as usize..range.end as usize)
 }
 
+#[allow(clippy::type_complexity)] // cannot typedef impl Fn
 fn new_pack_file_resolver(
     data_file: SharedTempFile,
 ) -> io::Result<(
