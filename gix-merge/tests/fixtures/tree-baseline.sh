@@ -31,8 +31,8 @@ function baseline () (
   their_commit_id="$(git rev-parse "$their_committish")"
 
   local merge_info="${output_name}.merge-info"
-  git merge-tree -z --write-tree "$our_commit_id" "$their_commit_id" > "$merge_info" || :
-  echo "$dir" "$our_commit_id" "$their_commit_id" "$merge_info" >> ../baseline.cases
+  git merge-tree -z --write-tree "$our_committish" "$their_committish" > "$merge_info" || :
+  echo "$dir" "$our_commit_id" "$our_committish" "$their_commit_id" "$their_committish" "$merge_info" >> ../baseline.cases
 )
 
 git init simple
@@ -88,3 +88,4 @@ git init simple
 )
 
 baseline simple without-conflict side1 side3
+baseline simple various-conflicts side1 side2
