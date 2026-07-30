@@ -2221,6 +2221,7 @@ dependencies = [
  "parking_lot",
  "pretty_assertions",
  "serde",
+ "tar",
  "tempfile",
 ]
 
