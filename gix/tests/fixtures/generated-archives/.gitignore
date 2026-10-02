@@ -97,3 +97,6 @@
 # Generate this small commit-graph fixture and apply Rust post-processing locally.
 /make_corrupt_commit_graph.tar
 /make_corrupt_commit_graph_sha256.tar
+# Generate these small status fixtures with host-local symlink preflight and index timestamps.
+/make_status_attribute_and_ignore_repos.tar
+/make_status_attribute_and_ignore_repos_sha256.tar

@@ -412,6 +412,62 @@ mod index_worktree {
         use crate::status::{repo, submodule_repo};
 
         #[test]
+        #[cfg(unix)]
+        fn status_reads_only_required_attribute_and_ignore_files() -> TestResult {
+            fn assert_symlink(path: &std::path::Path) -> TestResult {
+                assert!(
+                    path.symlink_metadata()?.file_type().is_symlink(),
+                    "{} must be an unreadable symlink loop",
+                    path.display()
+                );
+                Ok(())
+            }
+
+            let fixture = gix_testtools::scripted_fixture_read_only("make_status_attribute_and_ignore_repos.sh")?;
+            if !gix_testtools::fixture_has_symlinks(&fixture)? {
+                return Ok(());
+            }
+            let tracked_root = fixture.join("tracked");
+            assert_symlink(&tracked_root.join(".gitignore"))?;
+            let tracked = gix::open_opts(tracked_root, gix::open::Options::isolated())?;
+            for (pattern, expected_count) in [("file", 1), (":(attr:visible)*", 1), (":(attr:missing)*", 0)] {
+                let items = tracked
+                    .status(gix::progress::Discard)?
+                    .untracked_files(gix::status::UntrackedFiles::None)
+                    .into_index_worktree_iter([pattern.into()])?
+                    .collect::<std::result::Result<Vec<_>, _>>()?;
+                assert_eq!(
+                    items.len(),
+                    expected_count,
+                    "tracked status needs attributes for pathspecs and filters, but never ignores: {pattern}"
+                );
+                if let Some(item) = items.first() {
+                    assert_eq!(item.rela_path(), "file", "the changed tracked file is selected");
+                    assert_eq!(
+                        item.summary(),
+                        Some(gix::status::index_worktree::iter::Summary::Modified),
+                        "the equal-sized content change is detected"
+                    );
+                }
+            }
+
+            let untracked_root = fixture.join("untracked");
+            assert_symlink(&untracked_root.join(".gitattributes"))?;
+            let untracked = gix::open_opts(untracked_root, gix::open::Options::isolated())?;
+            let items = untracked
+                .status(gix::progress::Discard)?
+                .into_index_worktree_iter(None)?
+                .collect::<std::result::Result<Vec<_>, _>>()?;
+            assert_eq!(
+                items.len(),
+                1,
+                "untracked status applies ignores without reading attributes"
+            );
+            assert_eq!(items[0].rela_path(), "untracked", "only the unignored file is reported");
+            Ok(())
+        }
+
+        #[test]
         fn item_size() {
             let actual = std::mem::size_of::<Item>();
             let sha1 = 280;
