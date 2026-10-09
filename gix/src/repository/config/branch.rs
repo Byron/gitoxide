@@ -145,6 +145,8 @@ impl crate::Repository {
     /// Return `Ok(None)` if there is no remote with fetch-refspecs that would match `tracking_branch` on the right-hand side,
     /// or `Err` if the matches were ambiguous. All configured remotes are searched, and their fetch refspecs are reverse-mapped.
     /// A single valid mapping is required: mappings from multiple remotes or multiple mappings within one remote are ambiguous.
+    /// Destinations match literally, and the source must be a valid full reference name; abbreviated sources
+    /// aren't expanded into branch names.
     pub fn upstream_branch_and_remote_for_tracking_branch(
         &self,
         tracking_branch: &FullNameRef,
@@ -156,23 +158,11 @@ impl crate::Repository {
             )));
         }
 
-        let null = self.object_hash().null();
-        let item_to_search = gix_refspec::match_group::Item {
-            full_ref_name: tracking_branch.as_bstr(),
-            target: &null,
-            object: None,
-        };
         let mut candidates = Vec::new();
         let mut ambiguous_remotes = Vec::new();
         for remote_name in self.remote_names() {
             let remote = self.find_remote(remote_name)?;
-            let match_group = gix_refspec::MatchGroup::from_fetch_specs(
-                remote
-                    .refspecs(remote::Direction::Fetch)
-                    .iter()
-                    .map(|spec| spec.to_ref()),
-            );
-            let out = match_group.match_rhs(Some(item_to_search).into_iter());
+            let out = remote.reverse_map_tracking_ref(tracking_branch);
             match &out.mappings[..] {
                 [] => {}
                 [one] => candidates.push((remote.clone(), one.lhs.clone().into_owned())),

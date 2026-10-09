@@ -682,6 +682,21 @@ title "gix commit-graph"
             it "persists the origin remote" && {
               expect_run_sh $SUCCESSFULLY 'test -n "$(git -C clone config --get remote.origin.url)"'
             }
+            it "records the remote default as a symbolic tracking reference" && {
+              expect_run_sh $SUCCESSFULLY 'test "$(git -C clone symbolic-ref refs/remotes/origin/HEAD)" = refs/remotes/origin/main'
+              expect_run_sh $SUCCESSFULLY 'test "$(git -C clone rev-parse refs/remotes/origin/HEAD)" = "$(git -C remote rev-parse HEAD)"'
+            }
+            it "prints the initial bare mapping without persisting it" && {
+              function clone-bare() {
+                "$exe_plumbing" --no-verbose clone --bare "$PWD/remote" bare >bare-output
+              }
+              expect_run $SUCCESSFULLY clone-bare
+              expect_run $SUCCESSFULLY grep -Fq '+refs/heads/*:refs/heads/*' bare-output
+              expect_run_sh $SUCCESSFULLY 'test "$(git -C bare rev-parse refs/heads/main)" = "$(git -C remote rev-parse HEAD)"'
+              expect_run_sh $SUCCESSFULLY 'test "$(git -C bare for-each-ref --format="%(refname)" refs/remotes)" = ""'
+              expect_run_sh $SUCCESSFULLY 'test "$(git -C bare config --get-all remote.origin.fetch)" = ""'
+              expect_run_sh $SUCCESSFULLY 'test "$(git -C bare config --get branch.main.remote)" = ""'
+            }
           )
         )
         (with "an ambiguous ssh username which could be mistaken for an argument"

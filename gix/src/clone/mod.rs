@@ -88,6 +88,13 @@ impl PrepareFetch {
     /// Create a new repository at `path` with `create_opts` which is ready to clone from `url`, possibly after making additional adjustments to
     /// configuration and settings.
     ///
+    /// [`Kind::Bare`][crate::create::Kind::Bare] uses Git's bare-clone branch layout and omits the default fetch and upstream
+    /// configuration. [`Kind::WithWorktree`][crate::create::Kind::WithWorktree] with [`fetch_only()`][Self::fetch_only()]
+    /// clones without a checkout.
+    /// Explicit refspecs supplied through [`Self::configure_remote()`] are still honored and persisted.
+    /// For bare clones that callback receives no default refspecs; leaving it empty uses the bare
+    /// branch mapping for the initial fetch only.
+    ///
     /// Note that this is merely a handle to perform the actual connection to the remote, and if any of it fails the freshly initialized repository
     /// will be removed automatically as soon as this instance drops.
     ///
@@ -186,8 +193,6 @@ impl PrepareFetch {
 pub struct PrepareCheckout {
     /// A freshly initialized repository owned by us, or `None` once returned to the caller, including after interruption.
     pub(self) repo: Option<crate::Repository>,
-    /// The name of the reference to check out. If `None`, the reference pointed to by `HEAD` will be checked out.
-    pub(self) ref_name: Option<gix_ref::PartialName>,
     /// If `true`, drop removes the entire worktree. Otherwise leave it alone.
     pub(self) remove_worktree_on_drop: bool,
 }

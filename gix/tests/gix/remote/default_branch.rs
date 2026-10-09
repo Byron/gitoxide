@@ -1,3 +1,5 @@
+use gix::bstr::ByteSlice;
+
 use crate::{Result, remote};
 
 fn default_branch(repo: &gix::Repository, remote_name: &str) -> Result<Option<String>> {
@@ -10,17 +12,12 @@ fn default_branch(repo: &gix::Repository, remote_name: &str) -> Result<Option<St
 #[test]
 fn maps_the_remote_head_to_the_branch_on_the_remote() -> Result {
     let repo = remote::repo("remote-default-branch");
-    let baseline = std::fs::read_to_string(remote::repo_path("remote-default-branch").join("baseline.git"))?;
-    let remote_head_target = baseline
-        .lines()
-        .next()
-        .and_then(|line| line.strip_prefix("ref: "))
-        .and_then(|line| line.strip_suffix("\tHEAD"))
-        .expect("`git ls-remote --symref` shows what the remote `HEAD` points to");
+    let remote_repo = remote::repo("base");
+    let remote_head_target = remote_repo.head_name()?.expect("the fixture has a symbolic HEAD");
 
     assert_eq!(
         default_branch(&repo, "origin")?.as_deref(),
-        Some(remote_head_target),
+        Some(remote_head_target.as_bstr().to_str()?),
         "`git clone` records the branch that the remote `HEAD` points to"
     );
     assert_eq!(
@@ -47,15 +44,101 @@ fn maps_the_remote_head_to_the_branch_on_the_remote() -> Result {
 }
 
 #[test]
+fn preserves_fetch_sources_when_deriving_the_branch() -> Result {
+    let repo = remote::repo("remote-default-branch");
+    let remote_repo = remote::repo("base");
+    let commit_id = remote_repo.find_reference("refs/heads/main")?.peel_to_id()?.to_string();
+    let mut remote = repo.find_remote("origin")?;
+
+    for (source, expected_branch) in [
+        ("refs/heads/main", Some("refs/heads/main")),
+        ("heads/main", Some("refs/heads/main")),
+        ("refs/heads/*", Some("refs/heads/main")),
+        ("heads/*", None),
+        ("main", None),
+        ("HEAD", None),
+        ("@", None),
+        ("", None),
+        (commit_id.as_str(), None),
+        ("refs/tags/b-tag", None),
+        ("tags/b-tag", None),
+        ("b-tag", None),
+    ] {
+        let destination = if source.contains('*') {
+            "refs/remotes/origin/*"
+        } else {
+            "refs/remotes/origin/main"
+        };
+        let refspec = format!("+{source}:{destination}");
+        remote.replace_refspecs(Some(refspec.as_str()), gix::remote::Direction::Fetch)?;
+
+        assert_eq!(
+            remote
+                .default_branch()?
+                .map(|name| name.as_bstr().to_string())
+                .as_deref(),
+            expected_branch,
+            "`{refspec}` identifies a branch only when its source has a branch namespace"
+        );
+    }
+
+    let remote = repo.find_remote("broad")?;
+    assert_eq!(
+        remote
+            .default_branch()?
+            .map(|name| name.as_bstr().to_string())
+            .as_deref(),
+        Some("refs/heads/main"),
+        "a broad glob still identifies a branch when the reverse mapping has its full namespace"
+    );
+    Ok(())
+}
+
+#[test]
+fn an_exact_source_identifies_a_branch_even_if_a_glob_produces_the_same_mapping() -> gix_testtools::TestResult {
+    let repo = remote::repo("remote-default-branch");
+    let mut remote = repo.find_remote("origin")?;
+    for refspecs in [
+        ["heads/*:refs/remotes/origin/*", "heads/main:refs/remotes/origin/main"],
+        ["heads/main:refs/remotes/origin/main", "heads/*:refs/remotes/origin/*"],
+    ] {
+        remote.replace_refspecs(refspecs, gix::remote::Direction::Fetch)?;
+        assert_eq!(
+            remote
+                .default_branch()?
+                .map(|name| name.as_bstr().to_string())
+                .as_deref(),
+            Some("refs/heads/main"),
+            "the exact source identifies the branch regardless of which duplicate mapping is retained"
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn fails_if_more_than_one_remote_reference_maps_to_the_remote_head_target() -> Result {
     let repo = remote::repo("remote-default-branch");
-    let err = repo
-        .find_remote("ambiguous")?
-        .default_branch()
-        .expect_err("`refs/heads/main` and `refs/tags/main` both map to `refs/remotes/ambiguous/main`");
-    let message = err.to_string();
-    for ref_name in ["refs/heads/main", "refs/tags/main"] {
-        assert!(message.contains(ref_name), "the error mentions `{ref_name}`: {message}");
+    let mut remote = repo.find_remote("ambiguous")?;
+    let mut refspecs = vec![
+        "+refs/heads/main:refs/remotes/ambiguous/main",
+        "+refs/tags/main:refs/remotes/ambiguous/main",
+    ];
+    for num_mappings in [2, 3] {
+        if num_mappings == 3 {
+            refspecs.push("+refs/heads/a:refs/remotes/ambiguous/main");
+        }
+        remote.replace_refspecs(refspecs.iter().copied(), gix::remote::Direction::Fetch)?;
+        let err = remote
+            .default_branch()
+            .expect_err("multiple remote references map to `refs/remotes/ambiguous/main`");
+        let message = err.to_string();
+        for ref_name in ["refs/heads/main", "refs/tags/main", "refs/remotes/ambiguous/main"] {
+            assert!(message.contains(ref_name), "the error mentions `{ref_name}`: {message}");
+        }
+        assert!(
+            message.contains(&format!("Found {num_mappings} mappings")),
+            "the error counts all mappings, not just the two examples: {message}"
+        );
     }
     Ok(())
 }

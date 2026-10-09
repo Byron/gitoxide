@@ -1,5 +1,5 @@
 use gix_error::{ResultExt, bail};
-use gix_ref::FullName;
+use gix_ref::{FullName, FullNameRef};
 use gix_refspec::{MatchGroup, RefSpec, match_group};
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
@@ -38,15 +38,16 @@ impl<'repo> Remote<'repo> {
     /// Return the name of the default branch on the remote, like `refs/heads/main`, as recorded locally,
     /// or `None` if it isn't known.
     ///
-    /// The record is the symbolic reference `refs/remotes/<name>/HEAD`. `git clone` and `git remote set-head`
+    /// The record is the symbolic reference `refs/remotes/<name>/HEAD`. Cloning with `git` or `gix`, and `git remote set-head`,
     /// point it to the remote-tracking branch of the default branch, like `refs/remotes/origin/main`,
     /// and since Git 2.48, `git fetch` creates it if it's missing. The fetch refspecs of this remote then
     /// map this remote-tracking branch back to the branch on the remote, and it's an error if they map
     /// more than one remote reference to it.
     ///
     /// `None` is returned if this remote has no name, if `refs/remotes/<name>/HEAD` doesn't exist or isn't symbolic,
-    /// or if no fetch refspec maps a remote reference to its target. Note that clones made with `gix` currently store
-    /// `refs/remotes/<name>/HEAD` as a direct reference, so `None` is returned for them.
+    /// or if no fetch refspec maps a remote reference to its target. The source must identify a branch in `refs/heads/`
+    /// (also accepting exact names like `heads/main`); sources like `HEAD`, object IDs, tags, or unqualified names like
+    /// `main` return `None` as their branch cannot be determined offline.
     ///
     /// As the remote isn't contacted, it may have changed its default branch since, and the returned branch
     /// may not exist anymore. `git2::Remote::default_branch()`, on the other hand, asks the connected remote
@@ -71,32 +72,54 @@ impl<'repo> Remote<'repo> {
             return Ok(None);
         };
 
-        let null_id = self.repo.object_hash().null();
-        let mut mappings = MatchGroup::from_fetch_specs(self.fetch_specs.iter().map(RefSpec::to_ref))
-            .match_rhs(std::iter::once(match_group::Item {
-                full_ref_name: tracking_branch.as_bstr(),
-                target: &null_id,
-                object: None,
-            }))
-            .mappings
-            .into_iter();
+        let outcome = self.reverse_map_tracking_ref(tracking_branch);
+        let num_mappings = outcome.mappings.len();
+        let mut mappings = outcome.mappings.into_iter();
         let Some(mapping) = mappings.next() else {
             return Ok(None);
         };
         if let Some(other_mapping) = mappings.next() {
             bail!(gix_error::validation(format!(
-                "Both '{}' and '{}' map to '{}', so the default branch is ambiguous",
+                "Found {num_mappings} mappings to '{}', including '{}' and '{}', so the default branch is ambiguous",
+                tracking_branch.as_bstr(),
                 mapping.lhs,
-                other_mapping.lhs,
-                tracking_branch.as_bstr()
+                other_mapping.lhs
             )));
         }
         let match_group::SourceRef::FullName(remote_branch) = mapping.lhs else {
             return Ok(None);
         };
-        FullName::try_from(remote_branch.into_owned())
+        let remote_branch = if remote_branch.starts_with(b"refs/heads/") {
+            remote_branch.into_owned()
+        } else if remote_branch.starts_with(b"heads/")
+            && outcome.group.specs.iter().any(|spec| {
+                spec.source() == Some(remote_branch.as_ref()) && spec.destination() == Some(tracking_branch.as_bstr())
+            })
+        {
+            // Git expands exact sources, not globs. Check all specs as identical mappings are deduplicated.
+            let mut full_name = BString::from("refs/");
+            full_name.push_str(remote_branch.as_ref());
+            full_name
+        } else {
+            return Ok(None);
+        };
+        FullName::try_from(remote_branch)
             .map(Some)
             .or_raise(|| gix_error::validation("The remote reference that the remote HEAD maps to has an invalid name"))
+    }
+
+    /// Reverse-map a local tracking reference through this remote's fetch refspecs by name only.
+    pub(crate) fn reverse_map_tracking_ref<'spec, 'name>(
+        &'spec self,
+        tracking_ref: &'name FullNameRef,
+    ) -> match_group::match_rhs::Outcome<'spec, 'name> {
+        MatchGroup::from_fetch_specs(self.fetch_specs.iter().map(RefSpec::to_ref)).match_rhs(std::iter::once(
+            match_group::Item {
+                full_ref_name: tracking_ref.as_bstr(),
+                target: self.repo.object_hash().null_ref(),
+                object: None,
+            },
+        ))
     }
 
     /// Return the first url used for the given `direction` with rewrites from `url.<base>.insteadOf|pushInsteadOf`, unless the instance

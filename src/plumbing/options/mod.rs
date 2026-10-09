@@ -797,7 +797,7 @@ pub mod clone {
         #[clap(long, short = 'H')]
         pub handshake_info: bool,
 
-        /// The clone will be bare and a working tree checkout won't be available.
+        /// Clone branches into refs/heads without remote-tracking refs, upstream configuration, or a working tree.
         #[clap(long)]
         pub bare: bool,
 

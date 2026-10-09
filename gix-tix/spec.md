@@ -293,13 +293,17 @@ without trading responsiveness for metadata that is not visible.
   exports its saved remaining todo without requiring a hidden boundary. Its
   `--edit-and-apply` form edits that continuation. Scope and target options are
   rejected until the active operation is completed or stopped.
-- `tix show`, `tix ref-tree`, and `tix rebase todo` automatically inspect symbolic
-  `refs/remotes/<remote>/HEAD` references. Their targets are reverse-mapped
-  through each remote's fetch refspec, and existing local commit branches are
-  added to the explicit hidden revisions. Multiple remote defaults are
-  deduplicated; stale, direct, ambiguous, unmappable, missing, and non-commit
-  results are ignored. At least one explicit or inferred hidden revision is
-  required by commands that need a hidden boundary. `--no-auto-hide` disables
+- `tix show`, `tix ref-tree`, and `tix rebase todo` automatically infer default
+  branches with `gix::Remote::default_branch()`, without contacting remotes.
+  It reverse-maps each symbolic `refs/remotes/<remote>/HEAD` target through that
+  remote's own fetch refspecs, including custom tracking destinations; mappings
+  from other remotes do not affect its result. Only branch sources identified
+  in `refs/heads/` (including exact `heads/<name>` sources) qualify, and existing
+  local commit branches with those names are added to the explicit hidden
+  revisions. Multiple remote defaults are deduplicated; invalid remote
+  configurations and stale, direct, ambiguous, unmappable, missing, and
+  non-commit results are ignored. At least one explicit or inferred hidden
+  revision is required by commands that need a hidden boundary. `--no-auto-hide` disables
   inference for these commands. A directly launched interactive history applies
   explicit `-x` filters immediately. `tix -X` / `tix --auto-hide`, also available
   through `gix tix`, applies the same inferred local defaults at startup and adds

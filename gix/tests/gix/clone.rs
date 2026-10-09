@@ -136,7 +136,7 @@ mod blocking_io {
         let called_configure_remote = std::sync::Arc::new(AtomicBool::default());
         let remote_name = "special";
         let desired_fetch_tags = gix::remote::fetch::Tags::Included;
-        let mut prepare = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+        let mut prepare = gix::prepare_clone(remote::repo("base").path(), tmp.path())?
             .with_remote_name(remote_name)?
             .configure_remote({
                 move |r| {
@@ -199,7 +199,7 @@ mod blocking_io {
             return Ok(());
         }
         let tmp = gix_testtools::tempfile::TempDir::new()?;
-        let (repo, _out) = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+        let (repo, _out) = gix::prepare_clone(remote::repo("base").path(), tmp.path())?
             .with_shallow(Shallow::DepthAtRemote(1.try_into()?))
             .fetch_only(gix::progress::Discard, &AtomicBool::default())?;
 
@@ -221,6 +221,7 @@ mod blocking_io {
             refspec_str, "+refs/heads/main:refs/remotes/origin/main",
             "shallow clone refspec should not use wildcard and should be the main branch: {refspec_str}"
         );
+        assert_remote_default_branch(&repo, "origin", "refs/remotes/origin/main", "refs/heads/main")?;
 
         Ok(())
     }
@@ -278,6 +279,15 @@ mod blocking_io {
             vec!["+refs/heads/b:refs/remotes/origin/b"],
             "the shallow clone follows only the chosen branch"
         );
+        assert_eq!(
+            remote.default_branch()?,
+            None,
+            "the remote default main cannot be recorded symbolically when only b is tracked"
+        );
+        assert!(
+            repo.try_find_reference("refs/remotes/origin/HEAD")?.is_none(),
+            "Git creates no tracking HEAD when its source is excluded"
+        );
 
         Ok(())
     }
@@ -314,7 +324,7 @@ mod blocking_io {
             return Ok(());
         }
         let tmp = gix_testtools::tempfile::TempDir::new()?;
-        let (repo, _change) = gix::prepare_clone_bare(remote::repo("base.shallow").path(), tmp.path())?
+        let (repo, _change) = gix::prepare_clone(remote::repo("base.shallow").path(), tmp.path())?
             .with_in_memory_config_overrides(Some("my.marker=1"))
             .fetch_only(gix::progress::Discard, &AtomicBool::default())?;
         assert_eq!(
@@ -346,7 +356,7 @@ mod blocking_io {
             return Ok(());
         }
         let tmp = gix_testtools::tempfile::TempDir::new()?;
-        let (repo, _change) = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+        let (repo, _change) = gix::prepare_clone(remote::repo("base").path(), tmp.path())?
             .with_shallow(Shallow::DepthAtRemote(2.try_into()?))
             .configure_remote(|mut r| {
                 r.replace_refspecs(Some("refs/heads/main:refs/remotes/origin/main"), Direction::Fetch)?;
@@ -414,7 +424,7 @@ mod blocking_io {
         let tmp = gix_testtools::tempfile::TempDir::new()?;
         let excluded_leaf_refs = ["g", "h", "j"];
 
-        let (repo, _change) = gix::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+        let (repo, _change) = gix::prepare_clone(remote::repo("base").path(), tmp.path())?
             .with_fetch_options(gix::remote::ref_map::Options {
                 extra_refspecs: vec![
                     gix::refspec::parse("refs/heads/*:refs/remotes/origin/*".into(), Operation::Fetch)?.into(),
@@ -462,7 +472,7 @@ mod blocking_io {
         let mut prepare = gix::clone::PrepareFetch::new(
             remote::repo("base").path(),
             tmp.path(),
-            gix::create::Kind::Bare,
+            gix::create::Kind::WithWorktree,
             Default::default(),
             gix::open::Options::isolated().config_overrides([
                 Init::DEFAULT_BRANCH.validated_assignment_fmt(&"unused-as-overridden-by-remote")?,
@@ -495,6 +505,7 @@ mod blocking_io {
             num_refspecs, 2,
             "our added spec was stored as well, but no implied specs due to the `Tags::All` setting"
         );
+        assert_remote_default_branch(&repo, remote_name, "refs/remotes/special/main", "refs/heads/main")?;
         assert_eq!(
             remote.fetch_tags(),
             desired_fetch_tags,
@@ -537,12 +548,12 @@ mod blocking_io {
             .expect("packed refs should be present");
         assert_eq!(
             repo.refs.loose_iter()?.count(),
-            1,
-            "HEAD is the only remaining loose symbolic ref as born remote symrefs are stored peeled"
+            2,
+            "HEAD and the remote HEAD are loose symbolic refs; other born remote symrefs are stored peeled"
         );
         assert_eq!(
             packed_refs.iter()?.count(),
-            15,
+            13,
             "all non-symbolic refs should be stored, if reachable from our refs"
         );
         let sig = repo
@@ -583,22 +594,10 @@ mod blocking_io {
                                 .1
                                 .starts_with_str(remote_name)
                         );
-                        match r.target() {
-                            TargetRef::Object(_) => {
-                                let mut logs = r.log_iter();
-                                assert_reflog(logs.all())?;
-                            }
-                            TargetRef::Symbolic(_) => {
-                                // TODO: it *should* be possible to set the reflog here based on the referent if deref = true
-                                //       when setting up the edits. But it doesn't seem to work. Also, some tests are
-                                //       missing for `leaf_referent_previous_oid`.
-                                assert!(
-                                    !r.log_exists()?,
-                                    "symbolic refs don't have object ids, so they can't get \
-                                      into the reflog as these need previous and new oid"
-                                );
-                            }
-                        }
+                        assert!(
+                            r.log_iter().all()?.is_none(),
+                            "Git clone writes initial packed refs without reflogs"
+                        );
                     }
                 }
                 let mut out_of_graph_tags = Vec::new();
@@ -630,12 +629,11 @@ mod blocking_io {
         }
 
         let remote_repo = remote::repo("base");
-        let remote_head = repo.find_reference(&format!("refs/remotes/{remote_name}/HEAD"))?;
-        let remote_head_id = remote_repo.head_id()?;
+        let mut remote_head = repo.find_reference(&format!("refs/remotes/{remote_name}/HEAD"))?;
         assert_eq!(
-            remote_head.target().try_id(),
-            Some(remote_head_id.as_ref()),
-            "remote HEAD is stored as the peeled object id advertised by the remote"
+            remote_head.peel_to_id()?,
+            remote_repo.head_id()?,
+            "the symbolic remote HEAD resolves to the object advertised by the remote"
         );
 
         let head = repo.head()?;
@@ -677,12 +675,31 @@ mod blocking_io {
         Ok(())
     }
 
+    fn assert_remote_default_branch(
+        repo: &gix::Repository,
+        remote_name: &str,
+        tracking_branch: &str,
+        default_branch: &str,
+    ) -> TestResult {
+        let remote_head = repo.find_reference(&format!("refs/remotes/{remote_name}/HEAD"))?;
+        assert_eq!(
+            remote_head.target().try_name().map(gix::refs::FullNameRef::as_bstr),
+            Some(tracking_branch.as_bytes().as_bstr()),
+            "cloning records remote HEAD as a symbolic reference to its mapped tracking branch"
+        );
+        assert_eq!(
+            repo.find_remote(remote_name)?
+                .default_branch()?
+                .as_ref()
+                .map(gix::refs::FullName::as_bstr),
+            Some(default_branch.as_bytes().as_bstr()),
+            "the remote's default branch can be determined offline after cloning"
+        );
+        Ok(())
+    }
+
     fn assert_reflog(log: std::io::Result<Option<gix_ref::file::log::iter::Forward<'_>>>) -> Result {
-        let lines = log
-            .unwrap()
-            .expect("log present")
-            .collect::<std::result::Result<Vec<_>, _>>()
-            .unwrap();
+        let lines = log?.expect("log present").collect::<std::result::Result<Vec<_>, _>>()?;
         assert_eq!(lines.len(), 1, "just created");
         let line = &lines[0];
         assert!(
@@ -711,6 +728,7 @@ mod blocking_io {
         let (mut checkout, _out) = prepare.fetch_then_checkout(gix::progress::Discard, &AtomicBool::default())?;
         let (repo, _) = checkout.main_worktree(gix::progress::Discard, &AtomicBool::default())?;
 
+        assert_remote_default_branch(&repo, "origin", "refs/remotes/origin/main", "refs/heads/main")?;
         let index = repo.index()?;
         assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
 
@@ -1024,6 +1042,7 @@ mod blocking_io {
             remote_ref_name,
             "the merge configuration is using the given name"
         );
+        assert_remote_default_branch(&repo, "origin", "refs/remotes/origin/main", "refs/heads/main")?;
 
         let index = repo.index()?;
         assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
@@ -1077,8 +1096,8 @@ mod blocking_io {
             );
             assert_eq!(
                 remote.fetch_tags(),
-                gix::remote::fetch::Tags::None,
-                "later fetches do not follow tags"
+                gix::remote::fetch::Tags::Included,
+                "revision clones persist no tag option, like Git"
             );
         }
         Ok(())
@@ -1218,7 +1237,7 @@ mod blocking_io {
     }
 
     #[test]
-    fn fetch_retries_without_the_implicit_head_refspec_on_conflict() -> TestResult {
+    fn remote_head_overwrites_a_branch_named_head() -> TestResult {
         if gix_testtools::run_in_isolated_process()? {
             return Ok(());
         }
@@ -1236,12 +1255,9 @@ mod blocking_io {
         let (repo, _) = checkout.main_worktree(gix::progress::Discard, &AtomicBool::default())?;
         assert!(
             repo.head().is_ok(),
-            "the clone completed after recovering from the conflict"
+            "the clone succeeds when a branch named HEAD is overwritten"
         );
-        assert!(
-            repo.try_find_reference("refs/remotes/origin/HEAD")?.is_some(),
-            "retrying without the implicit refspec still fetches the remote branch named HEAD"
-        );
+        assert_remote_default_branch(&repo, "origin", "refs/remotes/origin/main", "refs/heads/main")?;
         Ok(())
     }
 
@@ -1292,15 +1308,14 @@ mod blocking_io {
                 );
             }
 
-            let checked_out_ref = repo.head_ref()?.expect("head points to ref");
-            assert_eq!(checked_out_ref, remote_ref_name, "it also works with tags");
-
+            assert!(repo.head_ref()?.is_none(), "tag clones detach HEAD, like Git");
             assert_eq!(
-                checked_out_ref
-                    .remote_ref_name(gix::remote::Direction::Fetch)
-                    .transpose()?,
-                None,
-                "there is no merge configuration for tags"
+                repo.head_id()?,
+                remote_repo
+                    .find_reference(remote_ref_name.as_str())?
+                    .peel_to_commit()?
+                    .id,
+                "HEAD points at the tag's peeled commit"
             );
         }
         Ok(())
@@ -1367,6 +1382,79 @@ mod blocking_io {
     }
 
     #[test]
+    fn fetch_only_with_custom_tracking_branch() -> TestResult {
+        if gix_testtools::run_in_isolated_process()? {
+            return Ok(());
+        }
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let (repo, _) = gix::clone::PrepareFetch::new(
+            remote::repo("base").path(),
+            tmp.path(),
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
+        )?
+        .with_remote_name("team/origin")?
+        .configure_remote(|mut remote| {
+            remote.replace_refspecs(
+                Some("+refs/heads/main:refs/tracking/default"),
+                gix::remote::Direction::Fetch,
+            )?;
+            Ok(remote)
+        })
+        .fetch_only(gix::progress::Discard, &AtomicBool::default())?;
+        assert_remote_default_branch(&repo, "team/origin", "refs/tracking/default", "refs/heads/main")?;
+        let persisted = gix::open_opts(repo.git_dir(), restricted())?;
+        assert_remote_default_branch(&persisted, "team/origin", "refs/tracking/default", "refs/heads/main")?;
+        Ok(())
+    }
+
+    #[test]
+    fn remote_head_uses_the_first_peer_before_local_head_updates() -> TestResult {
+        if gix_testtools::run_in_isolated_process()? {
+            return Ok(());
+        }
+        let remote_repo = remote::repo("base");
+        assert_ne!(
+            remote_repo.head_id()?,
+            remote_repo.find_reference("refs/heads/b")?.peel_to_id()?,
+            "the requested branch must differ from the remote default for the collision to be observable"
+        );
+        for additional_mapping in [false, true] {
+            let tmp = gix_testtools::tempfile::TempDir::new()?;
+            let (repo, _) = gix::clone::PrepareFetch::new(
+                remote_repo.path(),
+                tmp.path(),
+                gix::create::Kind::WithWorktree,
+                Default::default(),
+                restricted(),
+            )?
+            .with_ref_name(Some("b"))?
+            .configure_remote(move |mut remote| {
+                let mut refspecs = vec!["+refs/heads/main:refs/heads/b"];
+                if additional_mapping {
+                    refspecs.push("+refs/heads/main:refs/remotes/origin/main");
+                }
+                remote.replace_refspecs(refspecs, gix::remote::Direction::Fetch)?;
+                Ok(remote)
+            })
+            .fetch_only(gix::progress::Discard, &AtomicBool::default())?;
+            assert_eq!(
+                repo.head_id()?,
+                remote_repo.find_reference("refs/heads/b")?.peel_to_id()?,
+                "the requested local branch overwrites the custom destination for remote main"
+            );
+            assert_remote_default_branch(&repo, "origin", "refs/heads/b", "refs/heads/main")?;
+            assert_eq!(
+                repo.find_reference("refs/remotes/origin/HEAD")?.peel_to_id()?,
+                repo.head_id()?,
+                "Git keeps the first mapped peer even after local HEAD overwrites it"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
     fn fetch_only_without_configuration() -> TestResult {
         if gix_testtools::run_in_isolated_process()? {
             return Ok(());
@@ -1375,12 +1463,13 @@ mod blocking_io {
         let (repo, out) = gix::clone::PrepareFetch::new(
             remote::repo("base").path(),
             tmp.path(),
-            gix::create::Kind::Bare,
+            gix::create::Kind::WithWorktree,
             Default::default(),
             restricted(),
         )?
         .fetch_only(gix::progress::Discard, &AtomicBool::default())?;
         assert!(repo.find_remote("origin").is_ok(), "default remote name is 'origin'");
+        assert_remote_default_branch(&repo, "origin", "refs/remotes/origin/main", "refs/heads/main")?;
         match out.status {
             gix::remote::fetch::Status::Change { write_pack_bundle, .. } => {
                 assert!(
@@ -1427,6 +1516,15 @@ mod blocking_io {
             persisted.object_hash(),
             gix::hash::Kind::Sha256,
             "the adopted object format is persisted on disk, not just in memory"
+        );
+        assert!(
+            persisted.try_find_reference("refs/remotes/origin/HEAD")?.is_none(),
+            "bare clones have no tracking HEAD"
+        );
+        assert_eq!(
+            persisted.head_name()?.as_ref().map(gix::refs::FullName::as_bstr),
+            Some("refs/heads/main".into()),
+            "a detached remote HEAD matching main selects that branch, like Git"
         );
         let config = persisted.config_snapshot();
         let origin_remotes = config.plumbing().sections_by_name("remote").map_or(0, |sections| {

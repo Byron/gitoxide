@@ -466,8 +466,6 @@ git init empty-core-askpass
 # None of them is ever fetched, so nothing depends on how a particular Git version lets `git fetch` maintain it.
 git clone --shared base remote-default-branch
 (cd remote-default-branch
-  # What the `HEAD` of the remote really points to, to compare the record of `origin` with.
-  git ls-remote --symref origin HEAD > baseline.git
 
   # `HEAD` points to `a`, while the `HEAD` of the remote still points to `main`.
   git remote add other-head ../base
@@ -479,6 +477,12 @@ git clone --shared base remote-default-branch
   git config remote.renamed.fetch +refs/heads/main:refs/remotes/renamed/default
   git update-ref refs/remotes/renamed/default origin/main
   git remote set-head renamed default
+
+  # A broad glob retains the branch namespace in its destination and can be reversed offline.
+  git remote add broad ../base
+  git config remote.broad.fetch '+refs/*:refs/remotes/broad/*'
+  git update-ref refs/remotes/broad/heads/main origin/main
+  git symbolic-ref refs/remotes/broad/HEAD refs/remotes/broad/heads/main
 
   # Remote names may contain slashes, which also nest their remote-tracking branches.
   git remote add team/origin ../base

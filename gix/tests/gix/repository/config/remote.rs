@@ -218,6 +218,53 @@ mod branch_remote {
     }
 
     #[test]
+    fn upstream_reverse_mapping_preserves_sources_and_matches_destinations_literally() -> TestResult {
+        let repo = |name| {
+            named_subrepo_opts(
+                "make_remote_reverse_mapping_repos.sh",
+                name,
+                gix::open::Options::isolated(),
+            )
+        };
+        let tracking_branch = "refs/remotes/origin/main".try_into()?;
+        for (name, expected) in [
+            ("full-source", Some("refs/heads/main")),
+            ("partial-source", Some("heads/main")),
+            ("head-source", Some("HEAD")),
+            ("short-source", None),
+            ("object-id-source", None),
+        ] {
+            let repo = repo(name)?;
+            let result = repo.upstream_branch_and_remote_for_tracking_branch(tracking_branch);
+            if let Some(expected) = expected {
+                let (upstream, remote) = result?.expect("the full destination matches");
+                assert_eq!(
+                    upstream.as_bstr(),
+                    expected,
+                    "the parsed source isn't expanded into a branch"
+                );
+                assert_eq!(
+                    remote.name().expect("named remote"),
+                    "origin",
+                    "the source belongs to origin"
+                );
+            } else {
+                assert!(
+                    result.is_err(),
+                    "the source in `{name}` cannot be turned into a full reference name offline"
+                );
+            }
+        }
+        let repo = repo("abbreviated-destination")?;
+        assert!(
+            repo.upstream_branch_and_remote_for_tracking_branch(tracking_branch)?
+                .is_none(),
+            "an abbreviated destination doesn't match a full tracking-reference name"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn push_default() -> TestResult {
         let repo = repo("fetch")?;
 

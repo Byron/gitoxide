@@ -2090,21 +2090,13 @@ pub(crate) fn available_hidden_revisions(
 fn auto_hidden_revisions(repo: &gix::Repository) -> Result<Vec<OsString>> {
     let mut branches = BTreeSet::new();
     for remote_name in repo.remote_names() {
-        let mut head = BString::from("refs/remotes/");
-        head.extend_from_slice(&remote_name);
-        head.extend_from_slice(b"/HEAD");
-        let Ok(Some(reference)) = repo.try_find_reference(head.as_bstr()) else {
+        let Ok(remote) = repo.find_remote(remote_name) else {
             continue;
         };
-        let target = reference.target();
-        let Some(tracking) = target.try_name() else { continue };
-        let Ok(Some((upstream, remote))) = repo.upstream_branch_and_remote_for_tracking_branch(tracking) else {
+        let Ok(Some(branch)) = remote.default_branch() else {
             continue;
         };
-        if remote.name().map(gix::remote::Name::as_bstr) != Some(remote_name.as_bstr()) {
-            continue;
-        }
-        let Ok(Some(mut local)) = repo.try_find_reference(upstream.as_ref()) else {
+        let Ok(Some(mut local)) = repo.try_find_reference(branch.as_ref()) else {
             continue;
         };
         let Ok(id) = local.peel_to_id() else { continue };
@@ -2112,7 +2104,7 @@ fn auto_hidden_revisions(repo: &gix::Repository) -> Result<Vec<OsString>> {
             .find_header(id)
             .is_ok_and(|header| header.kind() == gix::object::Kind::Commit)
         {
-            branches.insert(upstream);
+            branches.insert(branch);
         }
     }
     branches
@@ -2628,6 +2620,16 @@ mod tests {
                 "+refs/heads/missing:refs/remotes/stale/default",
                 "refs/remotes/stale/default",
             ),
+            (
+                "custom",
+                "+refs/heads/merged:refs/tracking/custom/default",
+                "refs/tracking/custom/default",
+            ),
+            (
+                "overlap",
+                "+refs/heads/topic:refs/remotes/origin/main",
+                "refs/remotes/origin/main",
+            ),
         ] {
             git(&["config", &format!("remote.{remote}.url"), "https://example.com/repo"])?;
             git(&["config", &format!("remote.{remote}.fetch"), fetch])?;
@@ -2641,17 +2643,89 @@ mod tests {
         let repo = crate::test_repository::open(path)?;
         assert_eq!(
             auto_hidden_revisions(&repo)?,
-            [OsString::from("refs/heads/main"), OsString::from("refs/heads/trunk")],
-            "remote defaults are reverse-mapped, deduplicated, and limited to existing local branches"
+            [
+                "refs/heads/main",
+                "refs/heads/merged",
+                "refs/heads/topic",
+                "refs/heads/trunk"
+            ]
+            .map(OsString::from),
+            "each remote's own refspecs determine its default, even with overlapping or custom tracking destinations"
         );
         assert_eq!(
             available_hidden_revisions(&repo, &[OsString::from("topic")], true)?.0,
             [
                 OsString::from("topic"),
                 OsString::from("refs/heads/main"),
+                OsString::from("refs/heads/merged"),
+                OsString::from("refs/heads/topic"),
                 OsString::from("refs/heads/trunk")
             ],
-            "explicit and inferred hidden revisions are combined"
+            "explicit and inferred hidden revisions are combined and remote defaults are deduplicated"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn remote_defaults_ignore_unknown_invalid_and_non_commit_branches() -> TestResult {
+        let fixture = gix_testtools::scripted_fixture_writable("history.sh")?;
+        let path = fixture.path();
+        let repo = crate::test_repository::open(path)?;
+        let blob_id = repo.write_blob(b"not a commit")?;
+        repo.reference(
+            "refs/heads/not-a-commit",
+            blob_id,
+            gix::refs::transaction::PreviousValue::MustNotExist,
+            "prepare a non-commit default branch",
+        )?;
+        for (remote, source) in [
+            ("valid", "refs/heads/merged"),
+            ("no-head", "refs/heads/main"),
+            ("direct", "refs/heads/topic"),
+            ("unmapped", "refs/heads/main"),
+            ("ambiguous", "refs/heads/main"),
+            ("tag", "refs/tags/v1"),
+            ("unqualified", "topic"),
+            ("head-source", "HEAD"),
+            ("non-commit", "refs/heads/not-a-commit"),
+            ("invalid-config", "invalid refspec"),
+        ] {
+            let tracking = format!("refs/remotes/{remote}/default");
+            gix_testtools::git(path, &format!("config remote.{remote}.url https://example.com/repo"))?;
+            let output = gix_testtools::git_command(path)
+                .args([
+                    "config",
+                    &format!("remote.{remote}.fetch"),
+                    &format!("+{source}:{tracking}"),
+                ])
+                .output()?;
+            assert!(output.status.success(), "configure the fetch refspec for {remote}");
+            if remote == "direct" {
+                gix_testtools::git(path, &format!("update-ref refs/remotes/{remote}/HEAD main"))?;
+            } else if remote != "no-head" {
+                let target = if remote == "unmapped" {
+                    format!("{tracking}-other")
+                } else {
+                    tracking
+                };
+                gix_testtools::git(path, &format!("update-ref {target} main"))?;
+                gix_testtools::git(path, &format!("symbolic-ref refs/remotes/{remote}/HEAD {target}"))?;
+            }
+        }
+        gix_testtools::git(
+            path,
+            "config --add remote.ambiguous.fetch +refs/heads/topic:refs/remotes/ambiguous/default",
+        )?;
+
+        let repo = crate::test_repository::open(path)?;
+        assert!(
+            repo.find_remote("ambiguous")?.default_branch().is_err(),
+            "multiple branches mapping to the same target make a remote default ambiguous"
+        );
+        assert_eq!(
+            auto_hidden_revisions(&repo)?,
+            [OsString::from("refs/heads/merged")],
+            "invalid remotes and unknown or non-commit defaults do not prevent hiding a valid local default"
         );
         Ok(())
     }

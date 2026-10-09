@@ -107,15 +107,13 @@ pub(crate) mod function {
             Status::Change {
                 update_refs, negotiate, ..
             } => {
-                let remote = repo
-                    .find_default_remote(gix::remote::Direction::Fetch)
-                    .expect("one origin remote")?;
-                let ref_specs = remote.refspecs(gix::remote::Direction::Fetch);
+                // Bare clones don't persist the refspecs used for their initial fetch.
+                let ref_specs = fetch_outcome.ref_map.refspecs.clone();
                 print_updates(
                     &repo,
                     &negotiate,
                     update_refs,
-                    ref_specs,
+                    &ref_specs,
                     fetch_outcome.ref_map,
                     &mut out,
                     &mut err,
