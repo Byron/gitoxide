@@ -17,4 +17,4 @@ doctest = true
 test = false
 
 [dependencies]
-gix-error = { version = "^0.5.0", path = "../gix-error", features = ["bstr"] }
+gix-error = { version = "^0.5.1", path = "../gix-error", features = ["bstr"] }

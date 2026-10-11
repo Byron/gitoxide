@@ -26,9 +26,9 @@ serde = ["dep:serde", "gix-hash/serde", "gix-object/serde", "gix-pack/serde"]
 [dependencies]
 crc32fast = "1.5.0"
 gix-trace = { version = "^0.3.0", path = "../gix-trace" }
-gix-utils = { version = "^0.5.0", path = "../gix-utils", features = ["progress"] }
+gix-utils = { version = "^0.5.1", path = "../gix-utils", features = ["progress"] }
 gix-parallel = { version = "^0.50.0", path = "../gix-parallel" }
-gix-error = { version = "^0.5.0", path = "../gix-error" }
+gix-error = { version = "^0.5.1", path = "../gix-error" }
 gix-zlib = { version = "^0.3.0", path = "../gix-zlib" }
 gix-hashtable = { version = "^0.18.0", path = "../gix-hashtable" }
 gix-hash = { version = "^0.28.0", path = "../gix-hash" }

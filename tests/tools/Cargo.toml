@@ -62,7 +62,7 @@ xz = ["dep:xz2"]
 sbom = ["dep:serde_json"]
 
 [dependencies]
-gix-error = { version = "^0.5.0", path = "../../gix-error", features = ["error-print-location"] }
+gix-error = { version = "^0.5.1", path = "../../gix-error", features = ["error-print-location"] }
 gix-hash = { version = "^0.28.0", path = "../../gix-hash" }
 gix-lock = { version = "^26.0.0", path = "../../gix-lock" }
 gix-path = { version = "^0.14.0", path = "../../gix-path" }

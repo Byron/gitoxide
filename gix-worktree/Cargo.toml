@@ -31,8 +31,8 @@ remove = ["dep:dua-core", "dep:gix-trace", "gix-utils/progress"]
 
 [dependencies]
 gix-trace = { version = "^0.3.0", path = "../gix-trace", optional = true }
-gix-utils = { version = "^0.5.0", path = "../gix-utils", optional = true }
-gix-error = { version = "^0.5.0", path = "../gix-error" }
+gix-utils = { version = "^0.5.1", path = "../gix-utils", optional = true }
+gix-error = { version = "^0.5.1", path = "../gix-error" }
 gix-index = { version = "^0.57.0", path = "../gix-index" }
 gix-fs = { version = "^0.24.0", path = "../gix-fs" }
 gix-hash = { version = "^0.28.0", path = "../gix-hash" }

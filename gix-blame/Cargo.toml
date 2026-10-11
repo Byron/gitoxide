@@ -18,7 +18,7 @@ sha1 = ["gix-hash/sha1"]
 sha256 = ["gix-hash/sha256"]
 
 [dependencies]
-gix-error = { version = "^0.5.0", path = "../gix-error" }
+gix-error = { version = "^0.5.1", path = "../gix-error" }
 gix-commitgraph = { version = "^0.41.0", path = "../gix-commitgraph" }
 gix-revwalk = { version = "^0.37.0", path = "../gix-revwalk" }
 gix-trace = { version = "^0.3.0", path = "../gix-trace" }
