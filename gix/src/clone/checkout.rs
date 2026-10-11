@@ -30,8 +30,8 @@ pub mod main_worktree {
 
     /// Modification
     impl PrepareCheckout {
-        /// Checkout the main worktree, determining how many threads to use by looking at `checkout.workers`, defaulting to using
-        /// on thread per logical core.
+        /// Checkout the main worktree, determining how many threads to use by looking at `checkout.workers`.
+        /// Automatic threading uses one worker per logical core, capped at four on macOS.
         ///
         /// Note that this is a no-op if the remote was empty, leaving this repository empty as well. This can be validated by checking
         /// if the `head()` of the returned repository is *not* unborn.

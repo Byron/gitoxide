@@ -1880,7 +1880,7 @@ dependencies = [
 
 [[package]]
 name = "gix-error"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "bstr",
@@ -2706,7 +2706,7 @@ dependencies = [
 
 [[package]]
 name = "gix-utils"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bstr",
  "bytes",

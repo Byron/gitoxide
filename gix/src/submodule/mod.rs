@@ -199,9 +199,10 @@ impl Submodule<'_> {
 
     /// Return the path at which the repository of the submodule should be located.
     ///
-    /// The retunred directory might not exist yet.
+    /// Linked superprojects keep submodule repositories in their private Git directory.
+    /// The returned directory might not exist yet.
     pub fn git_dir(&self) -> Result<PathBuf> {
-        git_dir_from_name(self.state.repo.common_dir(), self.validated_name()?)
+        git_dir_from_name(self.state.repo.git_dir(), self.validated_name()?)
     }
 
     /// Return the path to the location at which the workdir would be checked out.
@@ -347,8 +348,8 @@ impl Submodule<'_> {
 ///
 /// In particular, don't use `Path::join()` for `name`: absolute-looking names are valid in Git,
 /// but joining them as a path would discard the `.git/modules` prefix.
-fn git_dir_from_name(common_dir: &Path, name: &BStr) -> Result<PathBuf> {
-    let mut git_dir = common_dir.join("modules").into_os_string();
+fn git_dir_from_name(git_dir: &Path, name: &BStr) -> Result<PathBuf> {
+    let mut git_dir = git_dir.join("modules").into_os_string();
     git_dir.push(std::path::MAIN_SEPARATOR_STR);
     git_dir.push(gix_path::from_bstr(name)?.as_os_str());
     Ok(git_dir.into())

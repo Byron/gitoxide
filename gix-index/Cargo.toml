@@ -33,14 +33,14 @@ serde = ["dep:serde", "smallvec/serde", "gix-hash/serde"]
 gix-trace = { version = "^0.3.0", path = "../gix-trace" }
 gix-parallel = { version = "^0.50.0", path = "../gix-parallel" }
 gix-hash = { version = "^0.28.0", path = "../gix-hash" }
-gix-error = { version = "^0.5.0", path = "../gix-error" }
+gix-error = { version = "^0.5.1", path = "../gix-error" }
 gix-bitmap = { version = "^0.6.0", path = "../gix-bitmap" }
 gix-object = { version = "^0.66.0", path = "../gix-object" }
 gix-validate = { version = "^0.13.0", path = "../gix-validate" }
 gix-traverse = { version = "^0.63.0", path = "../gix-traverse" }
 gix-lock = { version = "^26.0.0", path = "../gix-lock" }
 gix-fs = { version = "^0.24.0", path = "../gix-fs" }
-gix-utils = { version = "^0.5.0", path = "../gix-utils", features = ["progress"] }
+gix-utils = { version = "^0.5.1", path = "../gix-utils", features = ["progress"] }
 
 hashbrown = "0.17.1"
 fnv = "1.0.7"

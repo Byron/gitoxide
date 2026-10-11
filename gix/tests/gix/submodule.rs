@@ -19,6 +19,73 @@ mod open {
     use crate::{submodule::repo, util::named_subrepo_opts};
 
     #[test]
+    fn linked_superproject_submodule_repositories_are_private() -> TestResult {
+        let fixture = gix_testtools::scripted_fixture_read_only("make_linked_superproject_submodules.sh")?;
+        let main = gix::open_opts(fixture.join("submodule-with-extra-worktree-host"), crate::restricted())?;
+        for (name, repository_exists, worktree_checkout) in [
+            ("linked-superproject-uninitialized", false, false),
+            ("linked-superproject-initialized", true, true),
+            ("linked-superproject-deinitialized", true, false),
+        ] {
+            let linked_path = fixture.join(name);
+            let linked = gix::open_opts(&linked_path, crate::restricted())?;
+            let sm = linked
+                .submodules()?
+                .expect("fixture has submodules")
+                .next()
+                .expect("fixture has m1");
+            let expected_git_dir = linked.git_dir().join("modules/m1");
+            assert_eq!(
+                sm.git_dir()?,
+                expected_git_dir,
+                "linked submodule repositories belong to the private superproject Git directory"
+            );
+            if !repository_exists {
+                assert!(
+                    linked_path.join("m1").is_dir(),
+                    "initial checkout creates the submodule directory"
+                );
+                assert_eq!(
+                    std::fs::read_dir(linked_path.join("m1"))?.count(),
+                    0,
+                    "initial checkout leaves the submodule unpopulated"
+                );
+            }
+            let state = sm.state()?;
+            assert_eq!(state.repository_exists, repository_exists, "repository state in {name}");
+            assert_eq!(state.worktree_checkout, worktree_checkout, "checkout state in {name}");
+            let opened = sm.open()?;
+            assert_eq!(
+                opened.is_some(),
+                repository_exists,
+                "opening follows the linked repository's lifecycle"
+            );
+            if let Some(opened) = opened {
+                assert_eq!(
+                    std::fs::canonicalize(opened.git_dir())?,
+                    std::fs::canonicalize(&expected_git_dir)?,
+                    "opening uses the private submodule repository in {name}"
+                );
+            }
+        }
+        let main_sm = main
+            .submodules()?
+            .expect("fixture has submodules")
+            .next()
+            .expect("fixture has m1");
+        assert_eq!(
+            main_sm.git_dir()?,
+            main.git_dir().join("modules/m1"),
+            "main submodule location is unchanged"
+        );
+        assert!(
+            main_sm.state()?.worktree_checkout,
+            "the main submodule remains populated"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn empty_worktree_config_is_not_an_uninitialized_submodule() -> TestResult {
         let fixture = gix_testtools::scripted_fixture_writable("make_submodule_with_worktree.sh")?;
         let repo = gix::open_opts(

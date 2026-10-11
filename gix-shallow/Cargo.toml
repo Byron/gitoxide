@@ -26,7 +26,7 @@ serde = ["dep:serde", "gix-hash/serde", "nonempty/serialize"]
 [dependencies]
 gix-hash = { version = "^0.28.0", path = "../gix-hash" }
 gix-lock = { version = "^26.0.0", path = "../gix-lock" }
-gix-error = { version = "^0.5.0", path = "../gix-error" }
+gix-error = { version = "^0.5.1", path = "../gix-error" }
 
 bstr = { version = "1.12.0", default-features = false }
 nonempty = "0.12.0"

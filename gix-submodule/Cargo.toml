@@ -22,7 +22,7 @@ sha256 = ["gix-refspec/sha256"]
 
 [dependencies]
 gix-pathspec = { version = "^0.22.0", path = "../gix-pathspec" }
-gix-error = { version = "^0.5.0", path = "../gix-error", features = ["bstr"] }
+gix-error = { version = "^0.5.1", path = "../gix-error", features = ["bstr"] }
 gix-refspec = { version = "^0.47.0", path = "../gix-refspec" }
 gix-config = { version = "^0.62.0", path = "../gix-config" }
 gix-path = { version = "^0.14.0", path = "../gix-path" }

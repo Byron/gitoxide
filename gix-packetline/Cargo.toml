@@ -40,7 +40,7 @@ required-features = ["blocking-io"]
 
 [dependencies]
 gix-trace = { version = "^0.3.0", path = "../gix-trace" }
-gix-error = { version = "^0.5.0", path = "../gix-error" }
+gix-error = { version = "^0.5.1", path = "../gix-error" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"] }
 faster-hex = { version = "0.10.1", default-features = false, features = ["std"] }

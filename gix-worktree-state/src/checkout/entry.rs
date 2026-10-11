@@ -412,6 +412,18 @@ mod tests {
     fn nonexclusive_open_defers_truncation_until_handle_validation() -> gix_testtools::TestResult {
         use std::io::Write;
 
+        #[cfg(target_os = "macos")]
+        assert_eq!(
+            super::super::Options::new(gix_filter::Pipeline::new(
+                Default::default(),
+                gix_testtools::object_hash(),
+                Default::default(),
+            ))
+            .thread_limit(),
+            Some(gix_parallel::num_threads(None).min(4)),
+            "automatic macOS checkout uses at most four workers"
+        );
+
         let dir = gix_testtools::tempfile::tempdir()?;
         let path = dir.path().join("file");
         let original_contents = b"longer original contents";

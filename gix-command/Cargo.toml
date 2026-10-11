@@ -15,7 +15,7 @@ include = ["/src/*.rs", "/LICENSE-*"]
 doctest = true
 
 [dependencies]
-gix-error = { version = "^0.5.0", path = "../gix-error" }
+gix-error = { version = "^0.5.1", path = "../gix-error" }
 gix-trace = { version = "^0.3.0", path = "../gix-trace" }
 gix-path = { version = "^0.14.0", path = "../gix-path" }
 gix-quote = { version = "^0.10.0", path = "../gix-quote" }

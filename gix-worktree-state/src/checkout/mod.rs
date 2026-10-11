@@ -45,9 +45,9 @@ pub struct Options {
     pub fs: gix_fs::Capabilities,
     /// Options to configure how to validate path components.
     pub validate: gix_worktree::validate::path::component::Options,
-    /// If set, don't use more than this amount of threads.
-    /// Otherwise, usually use as many threads as there are logical cores.
-    /// A value of 0 is interpreted as no-limit
+    /// The maximum number of worker threads. `None` and `Some(0)` use the available logical cores,
+    /// capped at four on macOS to limit APFS creation contention. Positive limits override this tuning.
+    /// Without `gix-parallel/parallel`, checkout runs on the calling thread.
     pub thread_limit: Option<usize>,
     /// If true, we assume no file to exist in the target directory, and want exclusive access to it.
     /// This should be enabled when cloning to avoid checks for freshness of files. This also enables
@@ -77,6 +77,14 @@ pub struct Options {
 }
 
 impl Options {
+    fn thread_limit(&self) -> Option<usize> {
+        #[cfg(target_os = "macos")]
+        if self.thread_limit.is_none_or(|threads| threads == 0) {
+            return Some(gix_parallel::num_threads(None).min(4));
+        }
+        self.thread_limit
+    }
+
     /// Create options with the given `filters` and default settings for the checkout operation.
     pub fn new(filters: gix_filter::Pipeline) -> Self {
         Self {

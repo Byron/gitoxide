@@ -24,12 +24,12 @@ worktree-rewrites = ["dep:gix-dir", "dep:gix-diff"]
 
 [dependencies]
 gix-trace = { version = "^0.3.0", path = "../gix-trace" }
-gix-utils = { version = "^0.5.0", path = "../gix-utils", features = ["interrupt", "progress"] }
+gix-utils = { version = "^0.5.1", path = "../gix-utils", features = ["interrupt", "progress"] }
 gix-parallel = { version = "^0.50.0", path = "../gix-parallel" }
 gix-index = { version = "^0.57.0", path = "../gix-index" }
 gix-fs = { version = "^0.24.0", path = "../gix-fs" }
 gix-hash = { version = "^0.28.0", path = "../gix-hash" }
-gix-error = { version = "^0.5.0", path = "../gix-error" }
+gix-error = { version = "^0.5.1", path = "../gix-error" }
 gix-object = { version = "^0.66.0", path = "../gix-object" }
 gix-path = { version = "^0.14.0", path = "../gix-path" }
 gix-filter = { version = "^0.36.0", path = "../gix-filter" }

@@ -30,12 +30,12 @@ serde = ["dep:serde", "gix-hash/serde", "gix-actor/serde", "gix-object/serde"]
 
 [dependencies]
 gix-parallel = { version = "^0.50.0", path = "../gix-parallel" }
-gix-error = { version = "^0.5.0", path = "../gix-error", features = ["bstr"] }
+gix-error = { version = "^0.5.1", path = "../gix-error", features = ["bstr"] }
 gix-fs = { version = "^0.24.0", path = "../gix-fs", features = ["walkdir"] }
 gix-path = { version = "^0.14.0", path = "../gix-path" }
 gix-hash = { version = "^0.28.0", path = "../gix-hash" }
 gix-object = { version = "^0.66.0", path = "../gix-object" }
-gix-utils = { version = "^0.5.0", path = "../gix-utils" }
+gix-utils = { version = "^0.5.1", path = "../gix-utils" }
 gix-validate = { version = "^0.13.0", path = "../gix-validate" }
 gix-actor = { version = "^0.44.0", path = "../gix-actor" }
 gix-lock = { version = "^26.0.0", path = "../gix-lock" }
