@@ -11,7 +11,8 @@ for state in uninitialized initialized deinitialized; do
   linked="linked-superproject-$state"
   git -C submodule-with-extra-worktree-host worktree add --detach "../$linked" HEAD
   if [[ "$state" != uninitialized ]]; then
-    git -C "$linked" submodule update --init --recursive
+    # Private worktree submodule object paths exceed Windows' traditional path limit.
+    git -c core.longpaths=true -C "$linked" submodule update --init --recursive
   fi
   if [[ "$state" == deinitialized ]]; then
     git -C "$linked" submodule deinit -f m1
