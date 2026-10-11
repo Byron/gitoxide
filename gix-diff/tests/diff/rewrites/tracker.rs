@@ -1046,6 +1046,48 @@ fn add_only() -> TestResult {
 }
 
 #[test]
+fn many_additions_without_sources() -> TestResult {
+    // Destinations should only be compared to possible sources, not to all other destinations, which would take
+    // quadratic time.
+    let rewrites = Rewrites {
+        copies: Some(Copies {
+            source: CopySource::FromSetOfModifiedFiles,
+            percentage: Some(0.5),
+        }),
+        percentage: Some(0.5),
+        limit: 0,
+        track_empty: false,
+    };
+    let mut track = util::new_tracker(rewrites);
+    let num_additions = 100_000;
+    for idx in 0..num_additions {
+        assert!(
+            track
+                .try_push_change(Change::addition(), format!("{idx}").as_str().into())
+                .is_none(),
+            "recorded for later matching"
+        );
+    }
+    let mut calls = 0;
+    let out = util::assert_emit(&mut track, |dst, src| {
+        calls += 1;
+        assert!(src.is_none(), "there are no sources to pair with");
+        assert_eq!(
+            dst.change.kind,
+            ChangeKind::Addition,
+            "only the additions are emitted as destinations"
+        );
+        std::ops::ControlFlow::Continue(())
+    });
+    assert_eq!(calls, num_additions, "each addition results in one emitted destination");
+    assert_eq!(
+        out.num_similarity_checks, 0,
+        "without possible sources, no similarity checks are performed"
+    );
+    Ok(())
+}
+
+#[test]
 fn rename_tracking_is_order_independent() -> TestResult {
     // #1832: exactly one of several identical-content additions can be matched as the rename of a
     // deletion. Which one is chosen must not depend on the order in which items are pushed - but

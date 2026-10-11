@@ -81,14 +81,15 @@ impl<T: Change> Item<T> {
         )
     }
 
+    fn is_source_of_kind(&self, kind: visit::SourceKind) -> bool {
+        match kind {
+            visit::SourceKind::Rename => !self.emitted && matches!(self.change.kind(), ChangeKind::Deletion),
+            visit::SourceKind::Copy => matches!(self.change.kind(), ChangeKind::Modification),
+        }
+    }
+
     fn is_source_for_destination_of(&self, kind: visit::SourceKind, dest_item_mode: EntryMode) -> bool {
-        self.entry_mode_compatible(dest_item_mode)
-            && match kind {
-                visit::SourceKind::Rename => !self.emitted && matches!(self.change.kind(), ChangeKind::Deletion),
-                visit::SourceKind::Copy => {
-                    matches!(self.change.kind(), ChangeKind::Modification)
-                }
-            }
+        self.entry_mode_compatible(dest_item_mode) && self.is_source_of_kind(kind)
     }
 }
 
@@ -423,6 +424,18 @@ impl<T: Change> Tracker<T> {
             // can be too slow despite best attempts. So play it save and detect such cases 'roughly' by amount of items.
             if self.items.len() < 100_000 { 0 } else { limit }
         };
+        // Items only stop being possible sources while matching, so this is a superset of the sources for all
+        // destinations. Destinations then only need to be compared to these instead of to all items, which matters
+        // when there are many more destinations than sources.
+        let source_candidates: Vec<usize> = self
+            .items
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, item)| item.is_source_of_kind(kind).then_some(idx))
+            .collect();
+        if source_candidates.is_empty() {
+            return Ok(std::ops::ControlFlow::Continue(()));
+        }
 
         while let Some((mut dest_idx, dest)) = self.items[dest_ofs..].iter().enumerate().find_map(|(idx, item)| {
             (!item.emitted
@@ -447,6 +460,7 @@ impl<T: Change> Tracker<T> {
             self.items[dest_idx].location(&self.path_backing);
             let src = find_match(
                 &self.items,
+                &source_candidates,
                 dest,
                 dest_idx,
                 percentage,
@@ -684,6 +698,7 @@ type SourceTuple<'a, T> = (usize, &'a Item<T>, Option<DiffLineStats>);
 #[expect(clippy::too_many_arguments)]
 fn find_match<'a, T: Change>(
     items: &'a [Item<T>],
+    source_candidates: &[usize],
     item: &Item<T>,
     item_idx: usize,
     percentage: Option<f32>,
@@ -697,25 +712,16 @@ fn find_match<'a, T: Change>(
     let (item_id, item_mode) = item.change.id_and_entry_mode();
     // Symlinks and gitlinks only participate in exact-ID matching; neither has meaningful blob similarity here.
     if needs_exact_match(percentage) || item_mode.is_link() || item_mode.is_commit() {
-        let first_idx = items.partition_point(|a| a.change.id() < item_id);
-        let range = items.get(first_idx..).map(|slice| {
-            let end = slice
-                .iter()
-                .position(|a| a.change.id() != item_id)
-                .map_or(items.len(), |idx| first_idx + idx);
-            first_idx..end
-        });
-        let range = match range {
-            Some(range) => range,
-            None => return Ok(None),
-        };
-        if range.is_empty() {
+        // Items are sorted by id, so the candidates with the same id are a contiguous range of `source_candidates`.
+        let start = source_candidates.partition_point(|&idx| items[idx].change.id() < item_id);
+        let end = source_candidates.partition_point(|&idx| items[idx].change.id() <= item_id);
+        if start == end {
             return Ok(None);
         }
         let item_name = filename(item.location(path_backing));
         let mut fallback = None;
-        for (mut src_idx, src) in items[range.clone()].iter().enumerate() {
-            src_idx += range.start;
+        for &src_idx in &source_candidates[start..end] {
+            let src = &items[src_idx];
             *num_checks += 1;
             if src_idx == item_idx || !src.is_source_for_destination_of(kind, item_mode) {
                 continue;
@@ -738,9 +744,9 @@ fn find_match<'a, T: Change>(
         // Like Git's inexact rename matrix, choose by similarity score first and use basename as
         // a tie-breaker only.
         let mut best: Option<(usize, &Item<T>, DiffLineStats, bool)> = None;
-        for (can_idx, src) in items
+        for (can_idx, src) in source_candidates
             .iter()
-            .enumerate()
+            .map(|&src_idx| (src_idx, &items[src_idx]))
             .filter(|(src_idx, src)| *src_idx != item_idx && src.is_source_for_destination_of(kind, item_mode))
         {
             if !has_new {
