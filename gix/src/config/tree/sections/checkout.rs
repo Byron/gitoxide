@@ -6,7 +6,7 @@ use crate::{
 impl Checkout {
     /// The `checkout.workers` key.
     pub const WORKERS: Workers = Workers::new_with_validate("workers", &config::Tree::CHECKOUT, validate::Workers)
-        .with_deviation("if unset, uses all cores instead of just one");
+        .with_deviation("if unset, uses all cores (capped at four on macOS) instead of just one");
 }
 
 /// The `checkout.workers` key.
@@ -28,8 +28,8 @@ mod workers {
     use crate::{Result, config::tree::checkout::Workers};
 
     impl Workers {
-        /// Return the amount of threads to use for checkout, with `0` meaning all available ones, after decoding our integer value from `config`,
-        /// or `None` if the value isn't set which is typically interpreted as "as many threads as available"
+        /// Decode the checkout worker count from `config`. `None`, zero, and negative values select
+        /// automatic threading, capped at four on macOS. Positive values override the automatic limit.
         pub fn try_from_workers(&'static self, value: Result<Option<i64>>) -> Result<Option<usize>> {
             match value.or_raise(|| crate::config::key::error(self, "Could not decode checkout workers"))? {
                 Some(v) if v < 0 => Ok(Some(0)),

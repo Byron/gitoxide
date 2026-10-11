@@ -56,7 +56,7 @@ where
     let (chunk_size, thread_limit, num_threads) = gix_parallel::optimize_chunk_size_and_thread_limit(
         100,
         index.entries().len().into(),
-        options.thread_limit,
+        options.thread_limit(),
         None,
     );
 
