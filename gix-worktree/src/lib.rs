@@ -73,5 +73,8 @@ pub mod remove;
 #[cfg(feature = "remove")]
 pub use remove::_impl::remove;
 
+/// Read sparse-checkout patterns and apply them to a full index.
+pub mod sparse;
+
 ///
 pub mod stack;

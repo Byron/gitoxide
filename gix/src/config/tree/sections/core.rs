@@ -73,6 +73,11 @@ impl Core {
     /// The `core.sharedRepository` key.
     pub const SHARED_REPOSITORY: SharedRepository =
         SharedRepository::new_with_validate("sharedRepository", &config::Tree::CORE, validate::SharedRepository);
+    /// The `core.sparseCheckout` key.
+    pub const SPARSE_CHECKOUT: keys::Boolean = keys::Boolean::new_boolean("sparseCheckout", &config::Tree::CORE);
+    /// The `core.sparseCheckoutCone` key.
+    pub const SPARSE_CHECKOUT_CONE: keys::Boolean =
+        keys::Boolean::new_boolean("sparseCheckoutCone", &config::Tree::CORE);
     /// The `core.symlinks` key.
     pub const SYMLINKS: keys::Boolean = keys::Boolean::new_boolean("symlinks", &config::Tree::CORE);
     /// The `core.trustCTime` key.
@@ -145,6 +150,8 @@ impl Section for Core {
             &Self::PRECOMPOSE_UNICODE,
             &Self::REPOSITORY_FORMAT_VERSION,
             &Self::SHARED_REPOSITORY,
+            &Self::SPARSE_CHECKOUT,
+            &Self::SPARSE_CHECKOUT_CONE,
             &Self::SYMLINKS,
             &Self::TRUST_C_TIME,
             &Self::WORKTREE,

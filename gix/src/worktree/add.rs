@@ -89,6 +89,9 @@ impl crate::Repository {
     ///
     /// With `extensions.worktreeConfig`, the source's `config.worktree` is copied before checkout, excluding
     /// `core.worktree` and `core.bare` key set to `true`.
+    /// Active `info/sparse-checkout` patterns are copied from the source worktree's private Git directory.
+    /// Checkout applies the destination's patterns and records excluded paths with `SKIP_WORKTREE` in a full index.
+    /// Cone patterns are supported, but a sparse index is not produced yet, left as an optimisation.
     /// The new `HEAD` reflog records its initial commit when `core.logAllRefUpdates` permits it.
     ///
     /// `worktree.useRelativePaths` selects relative links instead of the default absolute links. When enabled,
@@ -176,8 +179,11 @@ impl crate::Repository {
             );
         }
         let prepared = gix_worktree::add::prepare(
-            repo.common_dir(),
             destination,
+            gix_worktree::add::Context {
+                common_dir: repo.common_dir(),
+                git_dir: sparse_checkout_git_dir(&repo)?,
+            },
             gix_worktree::add::Options { relative_paths },
         )
         .or_raise(|| message("Could not prepare the linked worktree"))?;
@@ -294,7 +300,7 @@ impl crate::Repository {
 
 /// A registered linked worktree which owns rollback until persisted or successfully checked out.
 ///
-/// Registration installs `.git`, HEAD and configuration, but no index or tracked files.
+/// Registration installs `.git`, HEAD, configuration and active sparse-checkout patterns, but no index or tracked files.
 /// Drop performs best-effort rollback of checkout and private administration. Shared configuration
 /// upgrades and attached branches are retained. Use [`Self::rollback()`] to observe cleanup errors.
 #[must_use]
@@ -382,6 +388,30 @@ where
         .or_raise(|| message("Could not create an index from the target tree"))?;
     let mut checkout_options = repo.checkout_options(gix_worktree::stack::state::attributes::Source::IdMapping)?;
     checkout_options.destination_is_initially_empty = true;
+    if let Some(git_dir) = sparse_checkout_git_dir(&repo)?
+        && let Some(patterns) = gix_worktree::sparse::read_patterns(git_dir).or_raise(|| {
+            message!(
+                "Could not read sparse-checkout patterns at {}",
+                git_dir.join("info/sparse-checkout").display()
+            )
+        })?
+    {
+        let cone = Core::SPARSE_CHECKOUT_CONE
+            .enrich_error(repo.config.resolved.boolean(Core::SPARSE_CHECKOUT_CONE))
+            .with_leniency(repo.config.lenient_config)?
+            .unwrap_or_default();
+        gix_worktree::sparse::apply_patterns(
+            &mut index,
+            &patterns,
+            &repo.git_dir().join("info/sparse-checkout"),
+            cone,
+            if checkout_options.fs.ignore_case {
+                gix_ignore::glob::pattern::Case::Fold
+            } else {
+                gix_ignore::glob::pattern::Case::Sensitive
+            },
+        )?;
+    }
 
     let mut files = progress.add_child("checkout");
     let mut bytes = progress.add_child("writing");
@@ -408,6 +438,17 @@ where
         .or_raise(|| message("Could not write the linked worktree index"))?;
     Ok(outcome)
 }
+
+/// Select the worktree's private Git directory when sparse checkout is enabled.
+/// Invalid `core.sparseCheckout` configuration follows the repository's leniency setting.
+fn sparse_checkout_git_dir(repo: &crate::Repository) -> Result<Option<&Path>> {
+    let is_enabled = Core::SPARSE_CHECKOUT
+        .enrich_error(repo.config.resolved.boolean(Core::SPARSE_CHECKOUT))
+        .with_leniency(repo.config.lenient_config)?
+        .unwrap_or_default();
+    Ok(is_enabled.then_some(repo.git_dir()))
+}
+
 fn copy_worktree_config(source: &Path, destination: &Path) -> Result<()> {
     let mut config = match gix_config::File::from_path_no_includes(source.to_owned(), gix_config::Source::Worktree) {
         Ok(config) => config,

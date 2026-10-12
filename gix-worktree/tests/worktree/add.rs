@@ -2,6 +2,167 @@ use std::{fs, io};
 
 use gix_path::{into_bstr, to_unix_separators_on_windows};
 use gix_testtools::tempfile::tempdir;
+use gix_worktree::add::Context;
+
+#[test]
+fn copies_sparse_patterns_from_the_source_private_git_directory() -> gix_testtools::TestResult {
+    let tmp = tempdir()?;
+    let common_dir = tmp.path().join("repo.git");
+    let source_git_dir = common_dir.join("worktrees/source");
+    let work_dir = tmp.path().join("worktree");
+    fs::create_dir_all(common_dir.join("info"))?;
+    fs::create_dir_all(source_git_dir.join("info"))?;
+    fs::write(common_dir.join("info/sparse-checkout"), b"/common-only/\n")?;
+    let patterns = b"/private-only/
+!ignored
+\xff";
+    fs::write(source_git_dir.join("info/sparse-checkout"), patterns)?;
+
+    let prepared = gix_worktree::add::prepare(
+        &work_dir,
+        Context {
+            common_dir: &common_dir,
+            git_dir: Some(&source_git_dir),
+        },
+        Default::default(),
+    )?;
+
+    assert_eq!(
+        fs::read(prepared.git_dir().join("info/sparse-checkout"))?,
+        patterns,
+        "private patterns are copied verbatim, not read from the common directory or interpreted"
+    );
+    assert!(
+        !prepared.git_dir().join("index").exists(),
+        "preparation does not create an index"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn no_source_git_directory_disables_sparse_pattern_inheritance() -> gix_testtools::TestResult {
+    let tmp = tempdir()?;
+    let common_dir = tmp.path().join("repo.git");
+    let source_git_dir = common_dir.join("worktrees/source");
+    let work_dir = tmp.path().join("worktree");
+    fs::create_dir_all(common_dir.join("info"))?;
+    fs::create_dir_all(source_git_dir.join("info"))?;
+    fs::write(common_dir.join("info/sparse-checkout"), b"/common-only/\n")?;
+    fs::write(source_git_dir.join("info/sparse-checkout"), b"/private-only/\n")?;
+
+    let prepared = gix_worktree::add::prepare(&work_dir, Context::new(&common_dir), Default::default())?;
+
+    assert!(
+        !prepared.git_dir().join("info").exists(),
+        "None ignores existing private and common patterns without creating an info directory"
+    );
+    Ok(())
+}
+
+#[test]
+fn missing_source_sparse_patterns_are_skipped() -> gix_testtools::TestResult {
+    let tmp = tempdir()?;
+    let common_dir = tmp.path().join("repo.git");
+    let source_git_dir = common_dir.join("worktrees/source");
+    let work_dir = tmp.path().join("worktree");
+    fs::create_dir_all(common_dir.join("info"))?;
+    fs::create_dir_all(source_git_dir.join("info"))?;
+    fs::write(common_dir.join("info/sparse-checkout"), b"/common-only/\n")?;
+
+    let prepared = gix_worktree::add::prepare(
+        &work_dir,
+        Context {
+            common_dir: &common_dir,
+            git_dir: Some(&source_git_dir),
+        },
+        Default::default(),
+    )?;
+
+    assert!(
+        !prepared.git_dir().join("info").exists(),
+        "a missing private pattern file is skipped without falling back to common patterns"
+    );
+    Ok(())
+}
+
+#[test]
+fn empty_source_sparse_pattern_file_is_copied() -> gix_testtools::TestResult {
+    let tmp = tempdir()?;
+    let common_dir = tmp.path().join("repo.git");
+    let source_git_dir = common_dir.join("worktrees/source");
+    let work_dir = tmp.path().join("worktree");
+    fs::create_dir_all(source_git_dir.join("info"))?;
+    fs::write(source_git_dir.join("info/sparse-checkout"), b"")?;
+
+    let prepared = gix_worktree::add::prepare(
+        &work_dir,
+        Context {
+            common_dir: &common_dir,
+            git_dir: Some(&source_git_dir),
+        },
+        Default::default(),
+    )?;
+
+    assert_eq!(
+        fs::read(prepared.git_dir().join("info/sparse-checkout"))?,
+        b"",
+        "an empty source produces an existing empty file, not a missing file"
+    );
+    Ok(())
+}
+
+#[test]
+fn invalid_source_sparse_pattern_file_rolls_back_new_and_caller_owned_destinations() -> gix_testtools::TestResult {
+    for caller_owned in [false, true] {
+        let tmp = tempdir()?;
+        let common_dir = tmp.path().join("repo.git");
+        let source_git_dir = common_dir.join("worktrees/source");
+        let source_patterns = source_git_dir.join("info/sparse-checkout");
+        let work_dir = tmp.path().join("worktree");
+        fs::create_dir_all(&source_patterns)?;
+        if caller_owned {
+            fs::create_dir(&work_dir)?;
+        }
+        let expected_error = fs::read(&source_patterns).expect_err("a directory cannot be read as a pattern file");
+
+        let err = gix_worktree::add::prepare(
+            &work_dir,
+            Context {
+                common_dir: &common_dir,
+                git_dir: Some(&source_git_dir),
+            },
+            Default::default(),
+        )
+        .expect_err("an invalid pattern file fails preparation after initializing links");
+
+        assert_eq!(
+            err.kind(),
+            expected_error.kind(),
+            "caller_owned={caller_owned}: the native read error kind is preserved"
+        );
+        if caller_owned {
+            assert!(work_dir.is_dir(), "a caller-owned destination remains after failure");
+            assert_eq!(
+                fs::read_dir(&work_dir)?.count(),
+                0,
+                "rollback removes the link file from the caller-owned destination"
+            );
+        } else {
+            assert!(
+                !work_dir.exists(),
+                "a newly created destination is removed after failure"
+            );
+        }
+        assert!(source_patterns.is_dir(), "rollback leaves the invalid source untouched");
+        assert_eq!(
+            fs::read_dir(common_dir.join("worktrees"))?.count(),
+            1,
+            "caller_owned={caller_owned}: only the source registration remains after rollback"
+        );
+    }
+    Ok(())
+}
 
 #[test]
 fn relative_input_paths_are_made_absolute_with_default_options() -> gix_testtools::TestResult {
@@ -12,7 +173,7 @@ fn relative_input_paths_are_made_absolute_with_default_options() -> gix_testtool
     let destination = relative.join("worktree");
     fs::create_dir(&common_dir)?;
 
-    let prepared = gix_worktree::add::prepare(&common_dir, &destination, Default::default())?;
+    let prepared = gix_worktree::add::prepare(&destination, Context::new(&common_dir), Default::default())?;
 
     assert_eq!(
         prepared.common_dir(),
@@ -33,7 +194,11 @@ fn prepares_git_compatible_links_and_unique_sanitized_names() -> gix_testtools::
     let common_dir = tmp.path().join("repo.git");
     fs::create_dir(&common_dir)?;
 
-    let first = gix_worktree::add::prepare(&common_dir, tmp.path().join("a b.lock"), Default::default())?;
+    let first = gix_worktree::add::prepare(
+        tmp.path().join("a b.lock"),
+        Context::new(&common_dir),
+        Default::default(),
+    )?;
     assert!(first.common_dir().is_absolute(), "the common directory is absolute");
     assert!(first.work_dir().is_absolute(), "the worktree directory is absolute");
     assert_eq!(
@@ -41,7 +206,11 @@ fn prepares_git_compatible_links_and_unique_sanitized_names() -> gix_testtools::
         Some("a-b".as_ref()),
         "the destination basename is sanitized like a reference component"
     );
-    let lock_name = gix_worktree::add::prepare(&common_dir, tmp.path().join(".lock.lock"), Default::default())?;
+    let lock_name = gix_worktree::add::prepare(
+        tmp.path().join(".lock.lock"),
+        Context::new(&common_dir),
+        Default::default(),
+    )?;
     assert_eq!(
         lock_name.git_dir().file_name(),
         Some("-lock".as_ref()),
@@ -65,7 +234,11 @@ fn prepares_git_compatible_links_and_unique_sanitized_names() -> gix_testtools::
     );
 
     let second_parent = tmp.path().join("other");
-    let second = gix_worktree::add::prepare(&common_dir, second_parent.join("a b.lock"), Default::default())?;
+    let second = gix_worktree::add::prepare(
+        second_parent.join("a b.lock"),
+        Context::new(&common_dir),
+        Default::default(),
+    )?;
     assert_eq!(
         second.git_dir().file_name(),
         Some("a-b1".as_ref()),
@@ -103,7 +276,7 @@ fn rollback_preserves_a_caller_owned_empty_directory() -> gix_testtools::TestRes
     fs::create_dir(&common_dir)?;
     fs::create_dir(&work_dir)?;
 
-    let prepared = gix_worktree::add::prepare(&common_dir, &work_dir, Default::default())?;
+    let prepared = gix_worktree::add::prepare(&work_dir, Context::new(&common_dir), Default::default())?;
     let git_dir = prepared.git_dir().to_owned();
     fs::write(work_dir.join("checkout-file"), b"created after preparation")?;
     fs::create_dir(work_dir.join("checkout-dir"))?;
@@ -126,7 +299,7 @@ fn explicit_rollback_removes_new_directories_but_preserves_their_parents() -> gi
     let common_dir = tmp.path().join("repo.git");
     let work_dir = tmp.path().join("new-parent/worktree");
     fs::create_dir(&common_dir)?;
-    let prepared = gix_worktree::add::prepare(&common_dir, &work_dir, Default::default())?;
+    let prepared = gix_worktree::add::prepare(&work_dir, Context::new(&common_dir), Default::default())?;
     let git_dir = prepared.git_dir().to_owned();
     fs::write(work_dir.join("checkout-file"), b"created after preparation")?;
 
@@ -152,7 +325,7 @@ fn explicit_rollback_attempts_both_directories_even_if_one_fails() -> gix_testto
     let work_dir = tmp.path().join("worktree");
     fs::create_dir(&common_dir)?;
     for remove_work_dir in [false, true] {
-        let prepared = gix_worktree::add::prepare(&common_dir, &work_dir, Default::default())?;
+        let prepared = gix_worktree::add::prepare(&work_dir, Context::new(&common_dir), Default::default())?;
         let git_dir = prepared.git_dir().to_owned();
         fs::remove_dir_all(if remove_work_dir { &work_dir } else { &git_dir })?;
 
@@ -181,7 +354,7 @@ fn rollback_removes_directory_symlinks_without_touching_their_target() -> gix_te
     fs::create_dir(&target)?;
     fs::write(target.join("keep"), b"user data")?;
 
-    let prepared = gix_worktree::add::prepare(&common_dir, &work_dir, Default::default())?;
+    let prepared = gix_worktree::add::prepare(&work_dir, Context::new(&common_dir), Default::default())?;
     let link = work_dir.join("checkout-link");
     if let Err(err) = gix_fs::symlink::create(&target, &link) {
         #[cfg(windows)]
@@ -210,8 +383,11 @@ fn linking_paths_preserve_backslashes_in_unix_filenames() -> gix_testtools::Test
     fs::create_dir(&common_dir)?;
 
     for relative_paths in [false, true] {
-        let prepared =
-            gix_worktree::add::prepare(&common_dir, &work_dir, gix_worktree::add::Options { relative_paths })?;
+        let prepared = gix_worktree::add::prepare(
+            &work_dir,
+            Context::new(&common_dir),
+            gix_worktree::add::Options { relative_paths },
+        )?;
         let dot_git = prepared.work_dir().join(".git");
         let git_dir = gix_discover::path::from_gitdir_file(&dot_git)?;
         let backlink = gix_discover::path::from_plain_file_relative_to_file(&prepared.git_dir().join("gitdir"))
@@ -241,7 +417,11 @@ fn linking_paths_resolve_symlinked_parent_directories() -> gix_testtools::TestRe
     let common_dir = linked_parent.join("repo.git");
     fs::create_dir(&common_dir)?;
 
-    let prepared = gix_worktree::add::prepare(&common_dir, linked_parent.join("worktree"), Default::default())?;
+    let prepared = gix_worktree::add::prepare(
+        linked_parent.join("worktree"),
+        Context::new(&common_dir),
+        Default::default(),
+    )?;
     let actual_common_dir = gix_path::realpath(actual_parent.join("repo.git"))?;
     let actual_work_dir = gix_path::realpath(actual_parent.join("worktree"))?;
     assert_eq!(
@@ -277,7 +457,7 @@ fn rejects_occupied_destinations() -> gix_testtools::TestResult {
     fs::create_dir(&nonempty)?;
     fs::write(nonempty.join("file"), b"content")?;
     assert_eq!(
-        gix_worktree::add::prepare(&common_dir, &nonempty, Default::default())
+        gix_worktree::add::prepare(&nonempty, Context::new(&common_dir), Default::default())
             .expect_err("nonempty directories are rejected")
             .kind(),
         io::ErrorKind::AlreadyExists
@@ -286,7 +466,7 @@ fn rejects_occupied_destinations() -> gix_testtools::TestResult {
     let file = tmp.path().join("file");
     fs::write(&file, b"content")?;
     assert_eq!(
-        gix_worktree::add::prepare(&common_dir, &file, Default::default())
+        gix_worktree::add::prepare(&file, Context::new(&common_dir), Default::default())
             .expect_err("files are rejected")
             .kind(),
         io::ErrorKind::AlreadyExists
@@ -297,7 +477,7 @@ fn rejects_occupied_destinations() -> gix_testtools::TestResult {
         let link = tmp.path().join("link");
         std::os::unix::fs::symlink(tmp.path().join("missing"), &link)?;
         assert_eq!(
-            gix_worktree::add::prepare(&common_dir, &link, Default::default())
+            gix_worktree::add::prepare(&link, Context::new(&common_dir), Default::default())
                 .expect_err("symbolic links are rejected")
                 .kind(),
             io::ErrorKind::AlreadyExists

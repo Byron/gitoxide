@@ -11,6 +11,12 @@ impl Mode {
         *self == Self::DIR | Self::SYMLINK
     }
 
+    /// Return whether this entry is a directory for ignore and sparse-pattern matching.
+    /// Sparse directories and gitlinks are directories regardless of whether they exist on disk.
+    pub fn is_dir_for_pattern_matching(&self) -> bool {
+        self.is_sparse() || self.is_submodule()
+    }
+
     /// Convert this instance to a tree's entry mode, or return `None` if for some
     /// and unexpected reason the bitflags don't resemble any known entry-mode.
     pub fn to_tree_entry_mode(&self) -> Option<gix_object::tree::EntryMode> {
