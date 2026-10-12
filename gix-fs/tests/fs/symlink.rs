@@ -1,0 +1,81 @@
+use std::{
+    os::windows::fs::FileTypeExt,
+    path::{Path, PathBuf},
+};
+
+#[test]
+fn empty_and_root_link_paths_are_errors() -> gix_testtools::TestResult {
+    for link in ["", "/", "\\", "C:", "C:\\", "C:/"] {
+        let link = Path::new(link);
+        assert!(link.parent().is_none(), "the link path has no parent: {link:?}");
+        let err = gix_fs::symlink::create(Path::new("target"), link)
+            .expect_err("a link path without a parent must return an error instead of panicking");
+        assert_eq!(
+            err.kind(),
+            std::io::ErrorKind::InvalidInput,
+            "parentless link paths are invalid when the target must be probed: {link:?}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn slash_prefixed_targets_with_empty_link_paths_return_native_errors() -> gix_testtools::TestResult {
+    let link = Path::new("");
+    for original in ["/target", "\\target"] {
+        let original = Path::new(original);
+        let expected =
+            std::os::windows::fs::symlink_file(original, link).expect_err("an empty link path cannot be created");
+        let actual = gix_fs::symlink::create(original, link).expect_err("an empty link path cannot be created");
+        assert_eq!(
+            actual.raw_os_error(),
+            expected.raw_os_error(),
+            "slash-prefixed targets bypass the parent check and preserve the native error: {original:?}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn slash_prefixed_targets_are_created_as_file_links() -> gix_testtools::TestResult {
+    // Keep all targets local, including the verbatim path, while exercising the same
+    // leading separators as UNC and NT namespace paths. Never contact a network share.
+    let dir = gix_testtools::tempfile::tempdir_in(std::env::current_dir()?)?;
+    let target = dir.path().join("target");
+    std::fs::create_dir(&target)?;
+    let rooted: PathBuf = target.components().skip(1).collect();
+    for (name, original) in [
+        ("backslash", rooted.clone()),
+        ("slash", PathBuf::from(rooted.to_string_lossy().replace('\\', "/"))),
+        ("verbatim", target.canonicalize()?),
+    ] {
+        assert!(
+            original.is_dir(),
+            "the local target exists as a directory: {original:?}"
+        );
+        let link = dir.path().join(name);
+        gix_fs::symlink::create(&original, &link)?;
+        assert!(
+            link.symlink_metadata()?.file_type().is_symlink_file(),
+            "slash-prefixed targets must use file links without probing the target: {original:?}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn relative_and_drive_qualified_directory_targets_are_detected() -> gix_testtools::TestResult {
+    let dir = gix_testtools::tempfile::tempdir_in(std::env::current_dir()?)?;
+    let target = dir.path().join("target");
+    std::fs::create_dir(&target)?;
+    for (name, original) in [("relative", PathBuf::from("target")), ("absolute", target)] {
+        let link = dir.path().join(name);
+        gix_fs::symlink::create(&original, &link)?;
+        assert!(
+            link.symlink_metadata()?.file_type().is_symlink_dir(),
+            "local directory targets without a leading slash retain directory detection: {original:?}"
+        );
+        assert!(link.is_dir(), "the directory link can be followed");
+    }
+    Ok(())
+}

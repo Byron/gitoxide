@@ -64,12 +64,22 @@ pub fn remove(path: &Path) -> io::Result<()> {
 /// Note that if a symlink target (the `original`) isn't present on disk, it's assumed to be a
 /// file, creating a dangling file symlink. This is similar to a dangling symlink on Unix,
 /// which doesn't have to care about the target type though.
+/// Targets starting with `/` or `\` are also treated as files without probing them, as Windows
+/// can interpret these as network shares and probing them could disclose credentials.
 #[cfg(windows)]
 pub fn create(original: &Path, link: &Path) -> io::Result<()> {
     use std::os::windows::fs::{symlink_dir, symlink_file};
-    // TODO: figure out if links to links count as files or whatever they point at
-    let orig_abs = link.parent().expect("dir for link").join(original);
-    if orig_abs.is_dir() {
+
+    // Match Git's `process_phantom_symlink()`: a leading separator can introduce a UNC
+    // share or an NT namespace path. Check the original spelling before any target probe.
+    let starts_with_slash = matches!(original.as_os_str().as_encoded_bytes().first(), Some(b'/' | b'\\'));
+    if !starts_with_slash
+        && link
+            .parent()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "symlink path has no parent directory"))?
+            .join(original)
+            .is_dir()
+    {
         symlink_dir(original, link)
     } else {
         symlink_file(original, link)

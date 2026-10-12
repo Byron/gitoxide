@@ -6,6 +6,8 @@ mod file;
 mod read_dir;
 mod snapshot;
 mod stack;
+#[cfg(windows)]
+mod symlink;
 #[cfg(feature = "walkdir")]
 mod walkdir;
 
