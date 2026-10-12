@@ -59,6 +59,15 @@ fn slash_prefixed_targets_are_created_as_file_links() -> gix_testtools::TestResu
             link.symlink_metadata()?.file_type().is_symlink_file(),
             "slash-prefixed targets must use file links without probing the target: {original:?}"
         );
+        let delayed_link = dir.path().join(format!("{name}-delayed"));
+        assert!(
+            gix_fs::symlink::create_or_delay(&original, &delayed_link)?,
+            "slash-prefixed targets must not be queued for later probing"
+        );
+        assert!(
+            delayed_link.symlink_metadata()?.file_type().is_symlink_file(),
+            "the retry API uses the same guarded file fallback"
+        );
     }
     Ok(())
 }
@@ -77,5 +86,33 @@ fn relative_and_drive_qualified_directory_targets_are_detected() -> gix_testtool
         );
         assert!(link.is_dir(), "the directory link can be followed");
     }
+    Ok(())
+}
+
+#[test]
+fn unresolved_targets_can_be_retried_before_creating_a_link() -> gix_testtools::TestResult {
+    let dir = gix_testtools::tempfile::tempdir()?;
+    let original = std::path::Path::new("target");
+    let link = dir.path().join("link");
+    assert!(
+        !gix_fs::symlink::create_or_delay(original, &link)?,
+        "an unknown target type delays creation"
+    );
+    assert_eq!(
+        link.symlink_metadata()
+            .expect_err("no provisional link is created")
+            .kind(),
+        std::io::ErrorKind::NotFound,
+        "delaying a link leaves its destination available"
+    );
+    std::fs::create_dir(dir.path().join(original))?;
+    assert!(
+        gix_fs::symlink::create_or_delay(original, &link)?,
+        "creation succeeds after the target becomes available"
+    );
+    assert!(
+        link.symlink_metadata()?.file_type().is_symlink_dir(),
+        "the retry creates a directory link"
+    );
     Ok(())
 }

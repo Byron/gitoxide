@@ -729,6 +729,157 @@ fn symlinks_to_directories_are_usable() -> TestResult {
 }
 
 #[test]
+fn symlink_chains_match_git() -> TestResult {
+    use gix_object::FindExt;
+    #[cfg(windows)]
+    use std::os::windows::fs::FileTypeExt;
+
+    let mut opts = opts_from_probe();
+    assert!(opts.fs.symlink, "the fixture requires native symlinks");
+    for thread_limit in [Some(1), Some(2)] {
+        opts.thread_limit = thread_limit;
+        let (source, destination, index, outcome) =
+            checkout_index_in_tmp_dir(opts.clone(), "make_symlink_chains", None)?;
+        let objects = odb_at(source.join(".git/objects"))?;
+        let mut buf = Vec::new();
+        let mut expected_bytes = 0;
+        for entry in index.entries() {
+            let path = gix_path::from_bstr(entry.path(&index))?;
+            let actual = destination.path().join(&path);
+            let expected = source.join("git-checkout").join(&path);
+            expected_bytes += objects.find_blob(&entry.id, &mut buf)?.data.len() as u64;
+            if entry.mode == gix_index::entry::Mode::SYMLINK {
+                assert_eq!(
+                    fs::read_link(&actual)?,
+                    fs::read_link(&expected)?,
+                    "checkout preserves the target of {path:?}"
+                );
+                #[cfg(windows)]
+                assert_eq!(
+                    actual.symlink_metadata()?.file_type().is_symlink_dir(),
+                    expected.symlink_metadata()?.file_type().is_symlink_dir(),
+                    "the native symlink type matches Git for {path:?}"
+                );
+            } else {
+                assert_eq!(fs::read(&actual)?, fs::read(&expected)?, "file contents match Git");
+            }
+            assert_eq!(
+                entry.stat,
+                gix_index::entry::Stat::from_fs(&gix_index::fs::Metadata::from_path_no_follow(&actual)?)?,
+                "the index describes the final filesystem entry at {path:?}"
+            );
+        }
+        for (path, content) in [
+            ("a-dir/file", b"content\n".as_slice()),
+            ("nested/dir-link/file", b"content\n"),
+            ("a-child/file", b"nested content\n"),
+            ("a-file", b"content\n"),
+        ] {
+            assert_eq!(
+                fs::read(destination.path().join(path))?,
+                content,
+                "native filesystem access follows the completed chain at {path}"
+            );
+        }
+        assert_eq!(
+            outcome.bytes_written, expected_bytes,
+            "retries count each blob only once"
+        );
+        assert!(
+            outcome.errors.is_empty(),
+            "dangling and cyclic links are valid checkout output"
+        );
+        assert!(
+            outcome.collisions.is_empty(),
+            "retries do not collide with their own output"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn unresolved_symlink_collisions_are_reported_once() -> TestResult {
+    let mut opts = opts_from_probe();
+    assert!(opts.fs.symlink, "the fixture requires native symlinks");
+    for keep_going in [false, true] {
+        opts.keep_going = keep_going;
+        let (_, destination, _, outcome) = checkout_index_in_tmp_dir_opts(
+            opts.clone(),
+            "make_symlink_chains",
+            None,
+            |_| true,
+            |destination| fs::write(destination.join("a-missing"), b"preserved"),
+        )?;
+        assert_eq!(
+            outcome.collisions.len(),
+            1,
+            "an unresolved link reports its collision once"
+        );
+        assert_eq!(
+            outcome.collisions[0].path, "a-missing",
+            "the blocked link is identified"
+        );
+        assert!(outcome.errors.is_empty(), "collisions do not become checkout errors");
+        assert_eq!(
+            fs::read(destination.path().join("a-missing"))?,
+            b"preserved",
+            "exclusive checkout preserves an existing file"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+#[cfg(windows)]
+fn deferred_symlink_overwrites_preserve_existing_links_until_ready() -> TestResult {
+    use gix_object::Write;
+
+    let mut opts = opts_from_probe();
+    assert!(opts.fs.symlink, "the test requires native symlinks");
+    opts.overwrite_existing = true;
+    opts.thread_limit = Some(1);
+    for destination_is_initially_empty in [false, true] {
+        opts.destination_is_initially_empty = destination_is_initially_empty;
+        let destination = gix_testtools::tempfile::tempdir()?;
+        fs::write(destination.path().join("canary"), b"preserved")?;
+        let link = destination.path().join("a");
+        gix_fs::symlink::create(Path::new("canary"), &link)?;
+
+        let object_hash = gix_testtools::object_hash();
+        let objects = gix_odb::memory::Proxy::new(gix_object::find::Never, object_hash);
+        let target_blob_id = objects.write_buf(gix_object::Kind::Blob, b"unknown-target")?;
+        let mut index = gix_index::State::new(object_hash);
+        for (path, blob_id) in [("a", target_blob_id), ("b", gix_hash::ObjectId::null(object_hash))] {
+            index.dangerously_push_entry(
+                Default::default(),
+                blob_id,
+                gix_index::entry::Flags::empty(),
+                gix_index::entry::Mode::SYMLINK,
+                path.into(),
+            );
+        }
+        index.sort_entries();
+        gix_worktree_state::checkout(
+            &mut index,
+            destination.path(),
+            objects,
+            &progress::Discard,
+            &progress::Discard,
+            &AtomicBool::default(),
+            opts.clone(),
+        )
+        .expect_err("the second link's missing blob aborts checkout before the first can be retried");
+        assert_eq!(
+            fs::read_link(&link)?,
+            Path::new("canary"),
+            "deferral must preserve an existing link until its replacement is ready"
+        );
+        assert_eq!(fs::read(&link)?, b"preserved", "the existing link remains usable");
+    }
+    Ok(())
+}
+
+#[test]
 fn dangling_symlinks_can_be_created() -> TestResult {
     let opts = opts_from_probe();
     assert!(opts.fs.symlink, "The probe must detect to be able to generate symlinks");

@@ -6,13 +6,17 @@ use gix_parallel::in_parallel_with_finalize;
 use gix_utils::interrupt;
 use gix_worktree::{Stack, stack};
 
-use crate::checkout::chunk;
+use crate::checkout::{chunk, entry};
 
 /// Checkout the entire `index` into `dir`, and resolve objects found in index entries with `objects` to write their content to their
 /// respective path in `dir`.
 /// Use `files` to count each fully checked out file, and count the amount written `bytes`. If `should_interrupt` is `true`, the
 /// operation will abort.
 /// `options` provide a lot of context on how to perform the operation.
+///
+/// Symlinks are created after regular files. On Windows, unresolved targets are retried while
+/// other links are created, allowing directory-link chains to resolve regardless of index order.
+/// Once a pass makes no progress, remaining targets become file links.
 ///
 /// ### Handling the return value
 ///
@@ -87,7 +91,7 @@ where
         mut errors,
         mut bytes_written,
         files: files_updated,
-        delayed_symlinks,
+        mut delayed_symlinks,
         delayed_paths_unknown,
         delayed_paths_unprocessed,
     } = if num_threads == 1 {
@@ -138,19 +142,30 @@ where
         )?
     };
 
-    for (entry, entry_path) in delayed_symlinks {
-        bytes_written += chunk::checkout_entry_handle_result(
-            entry,
-            entry_path,
-            &mut errors,
-            &mut collisions,
-            &num_files,
-            &num_bytes,
-            &mut ctx,
-        )?
-        .as_bytes()
-        .expect("only symlinks are delayed here, they are never filtered (or delayed again)")
-            as u64;
+    while !delayed_symlinks.is_empty() {
+        let previous_len = delayed_symlinks.len();
+        let mut retry = Vec::new();
+        for (entry, entry_path) in interrupt::Iter::new(delayed_symlinks.into_iter(), should_interrupt) {
+            match chunk::checkout_entry_handle_result(
+                entry,
+                entry_path,
+                &mut errors,
+                &mut collisions,
+                &num_files,
+                &num_bytes,
+                &mut ctx,
+            )? {
+                entry::Outcome::Written { bytes } => bytes_written += bytes as u64,
+                entry::Outcome::DelayedSymlink { entry, entry_path } => retry.push((entry, entry_path)),
+                entry::Outcome::Delayed(_) => unreachable!("symlinks are never filtered"),
+            }
+        }
+        if retry.len() == previous_len {
+            // Missing targets and cycles cannot make progress. Create the remaining links
+            // using the file fallback, without replacing any links we already created.
+            ctx.options.delay_symlinks = false;
+        }
+        delayed_symlinks = retry;
     }
 
     ctx.filters
