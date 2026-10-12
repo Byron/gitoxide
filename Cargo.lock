@@ -2738,6 +2738,7 @@ name = "gix-worktree"
 version = "0.58.0"
 dependencies = [
  "bstr",
+ "criterion",
  "document-features",
  "dua-core",
  "gix-attributes",

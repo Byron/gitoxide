@@ -11,6 +11,7 @@ impl Worktree<'_> {
     /// Missing directories and links are recreated, including relative registrations.
     /// Relative repository paths use the current directory captured when the repository was opened.
     /// Main worktrees are rejected. Callers must prevent concurrent changes to the destination.
+    /// The destination's sparse-checkout configuration and patterns are applied to a full index before checkout.
     ///
     /// `progress` reports files checked out and bytes written through the `checkout` and `writing`
     /// child progress items, respectively. Set `should_interrupt` to `true` to request cancellation;

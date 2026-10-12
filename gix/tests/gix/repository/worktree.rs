@@ -609,6 +609,215 @@ mod add {
     }
 
     #[test]
+    fn sparse_checkout_directory_patterns_exclude_absent_gitlinks_like_git() -> gix_testtools::TestResult {
+        let fixture = gix_testtools::scripted_fixture_writable_with_args(
+            "make_worktree_add_repos.sh",
+            ["sparse-gitlink"],
+            gix_testtools::Creation::Execute,
+        )?;
+        let source = gix::open_opts(fixture.path().join("main"), crate::restricted())?;
+        let (created, _) = source.add_worktree(
+            fixture.path().join("gix-created"),
+            gix::worktree::add::Head::Detached(source.head_id()?.detach()),
+            gix::progress::Discard,
+            &AtomicBool::default(),
+        )?;
+        sparse_checkout_matches_git(&created, &fixture.path().join("git-created"))
+    }
+
+    #[test]
+    fn sparse_checkout_inherits_main_and_linked_patterns_like_git() -> gix_testtools::TestResult {
+        for mode in ["cone", "non-cone"] {
+            let fixture = gix_testtools::scripted_fixture_writable_with_args(
+                "make_worktree_add_repos.sh",
+                ["sparse", mode, "inherit"],
+                gix_testtools::Creation::Execute,
+            )?;
+            for name in ["main", "linked"] {
+                let source = gix::open_opts(fixture.path().join(name), crate::restricted())?;
+                assert_eq!(
+                    source.index()?.is_sparse(),
+                    mode == "cone",
+                    "cone mode exercises a sparse source index"
+                );
+                let patterns = std::fs::read(source.git_dir().join("info/sparse-checkout"))?;
+                if name == "linked" {
+                    assert_ne!(
+                        patterns,
+                        std::fs::read(source.common_dir().join("info/sparse-checkout"))?,
+                        "the linked source selects different paths from the main worktree"
+                    );
+                }
+                let expected = fixture.path().join(format!("git-{name}"));
+                let (created, _) = source.add_worktree(
+                    fixture.path().join(format!("gix-{name}")),
+                    gix::worktree::add::Head::Detached(source.find_reference("target")?.peel_to_commit()?.id),
+                    gix::progress::Discard,
+                    &AtomicBool::default(),
+                )?;
+                assert_eq!(
+                    std::fs::read(created.git_dir().join("info/sparse-checkout"))?,
+                    patterns,
+                    "the new worktree inherits the {name} source's patterns"
+                );
+                sparse_checkout_matches_git(&created, &expected)?;
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn sparse_checkout_preparation_copies_patterns_and_deferred_checkout_reads_destination() -> gix_testtools::TestResult
+    {
+        let fixture = gix_testtools::scripted_fixture_writable_with_args(
+            "make_worktree_add_repos.sh",
+            ["sparse", "cone", "deferred"],
+            gix_testtools::Creation::Execute,
+        )?;
+        let source = gix::open_opts(fixture.path().join("main"), crate::restricted())?;
+        let source_patterns = std::fs::read(source.git_dir().join("info/sparse-checkout"))?;
+        let prepared = source.prepare_add_worktree(
+            fixture.path().join("deferred"),
+            gix::worktree::add::Head::Detached(source.find_reference("target")?.peel_to_commit()?.id),
+            &AtomicBool::default(),
+        )?;
+        assert_eq!(
+            std::fs::read(prepared.repo().git_dir().join("info/sparse-checkout"))?,
+            source_patterns,
+            "preparation copies patterns even without checkout"
+        );
+        let created = prepared.persist()?;
+        assert!(!created.index_path().exists(), "persistence does not create the index");
+        let expected = fixture.path().join("git-deferred");
+        let expected_repo = gix::open_opts(&expected, crate::restricted())?;
+        // Intentionally alter the sparse-checkout patterns to ensure these aren't stale.
+        std::fs::copy(
+            expected_repo.git_dir().join("info/sparse-checkout"),
+            created.git_dir().join("info/sparse-checkout"),
+        )?;
+        created
+            .worktree()
+            .expect("persisted registration has a worktree")
+            .checkout(gix::progress::Discard, &AtomicBool::default())?;
+        sparse_checkout_matches_git(&created, &expected)?;
+        assert_eq!(
+            std::fs::read(source.git_dir().join("info/sparse-checkout"))?,
+            source_patterns,
+            "changing destination patterns leaves the source unchanged"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn sparse_checkout_empty_missing_disabled_and_custom_cone_patterns_match_git() -> gix_testtools::TestResult {
+        for (cone, state) in [
+            (false, "missing"),
+            (true, "missing"),
+            (false, "empty"),
+            (true, "empty"),
+            (false, "disabled"),
+            (true, "directory"),
+            (true, "invalid-cone"),
+        ] {
+            let fixture = gix_testtools::scripted_fixture_writable_with_args(
+                "make_worktree_add_repos.sh",
+                ["sparse", if cone { "cone" } else { "non-cone" }, state],
+                gix_testtools::Creation::Execute,
+            )?;
+            let source = gix::open_opts(fixture.path().join("main"), crate::restricted())?;
+            let expected = fixture.path().join("git-created");
+            let (created, _) = source.add_worktree(
+                fixture.path().join("gix-created"),
+                gix::worktree::add::Head::Detached(source.find_reference("target")?.peel_to_commit()?.id),
+                gix::progress::Discard,
+                &AtomicBool::default(),
+            )?;
+            assert_eq!(
+                created.git_dir().join("info/sparse-checkout").exists(),
+                state != "missing" && state != "disabled",
+                "only an active, present patterns file is copied (cone={cone}, state={state})"
+            );
+            sparse_checkout_matches_git(&created, &expected)?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn sparse_checkout_pattern_copy_errors_roll_back() -> gix_testtools::TestResult {
+        let fixture = gix_testtools::scripted_fixture_writable_with_args(
+            "make_worktree_add_repos.sh",
+            ["sparse", "non-cone", "unreadable"],
+            gix_testtools::Creation::Execute,
+        )?;
+        let source = gix::open_opts(fixture.path().join("main"), crate::restricted())?;
+        let patterns = source.git_dir().join("info/sparse-checkout");
+        let destination = fixture.path().join("rejected");
+        source
+            .prepare_add_worktree(
+                &destination,
+                gix::worktree::add::Head::Detached(source.head_id()?.detach()),
+                &AtomicBool::default(),
+            )
+            .expect_err("an unreadable active patterns file must fail preparation");
+        assert!(!destination.exists(), "copy failure removes the checkout directory");
+        assert!(source.worktrees()?.is_empty(), "copy failure removes the registration");
+        assert!(patterns.is_dir(), "copy failure leaves the source untouched");
+        Ok(())
+    }
+
+    fn sparse_checkout_matches_git(created: &gix::Repository, expected: &std::path::Path) -> gix_testtools::TestResult {
+        use std::fmt::Write;
+
+        let index = created.index()?;
+        assert!(
+            !index.is_sparse(),
+            "sparse checkout can retain a full index while we can't do better"
+        );
+        let work_dir = created.workdir().expect("new checkout");
+        let mut listing = String::new();
+        for entry in index.entries() {
+            let skip = entry.flags.contains(gix::index::entry::Flags::SKIP_WORKTREE);
+            let path = entry.path(&index);
+            writeln!(listing, "{} {}", if skip { 'S' } else { 'H' }, path)?;
+            let relative_path = gix_path::from_bstr(path)?;
+            assert_eq!(
+                work_dir.join(&relative_path).exists(),
+                !skip,
+                "persisted flags agree with materialized files at {path}"
+            );
+            assert_eq!(
+                work_dir.join(&relative_path).exists(),
+                expected.join(&relative_path).exists(),
+                "Git and gix materialize the same paths at {path}"
+            );
+            if !skip {
+                assert_eq!(
+                    std::fs::read(work_dir.join(&relative_path))?,
+                    std::fs::read(expected.join(&relative_path))?,
+                    "Git and gix write identical contents at {path}"
+                );
+            }
+        }
+        assert_eq!(
+            listing,
+            std::fs::read_to_string(expected.with_extension("ls-files.baseline"))?,
+            "persisted skip-worktree flags match Git"
+        );
+        let items = created
+            .status(gix::progress::Discard)?
+            .into_iter(None)?
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        assert!(items.is_empty(), "gix recognizes a clean sparse checkout: {items:?}");
+        // Git status may rewrite the full index as sparse when index.sparse is enabled.
+        assert_eq!(
+            gix_testtools::git(work_dir, "status --porcelain")?,
+            "",
+            "Git recognizes a clean sparse checkout"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn worktree_config_is_inherited_before_checkout() -> gix_testtools::TestResult {
         // MSYS sed's text mode would discard CRLF produced before smudge filtering.
         let sed = if cfg!(windows) { "sed -b" } else { "sed" };

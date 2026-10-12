@@ -7,6 +7,29 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Borrowed paths needed to prepare a linked worktree and optionally inherit sparse-checkout patterns.
+#[derive(Clone, Copy, Debug)]
+pub struct Context<'a> {
+    /// Existing shared Git directory, such as `/repo/.git` or `/repo.git`.
+    pub common_dir: &'a Path,
+
+    /// Source worktree's private Git directory when sparse checkout is enabled.
+    ///
+    /// Its `info/sparse-checkout` file is copied verbatim if present, including an empty file. Use `None`
+    /// to disable pattern inheritance. Patterns are never read from `common_dir` instead of this path.
+    pub git_dir: Option<&'a Path>,
+}
+
+impl<'a> Context<'a> {
+    /// Create a context using `common_dir` without inheriting sparse-checkout patterns.
+    pub fn new(common_dir: &'a Path) -> Self {
+        Self {
+            common_dir,
+            git_dir: None,
+        }
+    }
+}
+
 /// Options for linking a new worktree to its shared Git directory.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Options {
@@ -106,19 +129,24 @@ impl Drop for PreparedWorktree {
 
 /// Reserve and initialize the administrative files for a linked worktree at `destination_dir`.
 ///
-/// `common_dir` must be an existing shared Git directory, such as `./repo/.git` for a non-bare repository
-/// or `./repo.git` for a bare repository. `destination` must be absent or an empty directory. Its final
+/// `context.common_dir` must be an existing shared Git directory, such as `./repo/.git` for a non-bare repository
+/// or `./repo.git` for a bare repository. `destination_dir` must be absent or an empty directory. Its final
 /// path component must not be a symbolic link, but parent components may be symbolic links and are resolved
 /// before creating the administrative files. The private Git directory is named after the sanitized destination
 /// basename, with a numeric suffix added when needed.
 ///
+/// After initializing the registration and link files, copy `info/sparse-checkout` verbatim from `context.git_dir`
+/// into the new private Git directory if a source is provided and the file exists. Missing files are skipped;
+/// empty files are copied as well. Other read or write errors roll back the prepared worktree, leaving a caller-owned
+/// empty destination in place. This does not create an index or interpret patterns; matching happens during checkout.
+///
 /// Paths in the returned [`PreparedWorktree`] are absolute regardless of the link format selected by `options`.
 pub fn prepare(
-    common_dir: impl AsRef<Path>,
     destination_dir: impl AsRef<Path>,
+    context: Context<'_>,
     Options { relative_paths }: Options,
 ) -> io::Result<PreparedWorktree> {
-    let common_dir = common_dir.as_ref();
+    let common_dir = context.common_dir;
     ensure_directory(common_dir, "common Git directory")?;
     let work_dir = destination_dir.as_ref();
     let empty_destination_exists = validate_destination(work_dir)?;
@@ -176,6 +204,14 @@ pub fn prepare(
         b"gitdir: ",
         &link_path(&prepared.git_dir, &prepared.work_dir, relative_paths),
     )?;
+
+    if let Some(git_dir) = context.git_dir
+        && let Some(patterns) = crate::sparse::read_patterns(git_dir)?
+    {
+        let info_dir = prepared.git_dir.join("info");
+        fs::create_dir_all(&info_dir)?;
+        fs::write(info_dir.join("sparse-checkout"), patterns)?;
+    }
 
     Ok(prepared)
 }

@@ -4,6 +4,7 @@ use gix_hash::ObjectId;
 mod add;
 #[cfg(feature = "remove")]
 mod remove;
+mod sparse;
 mod stack;
 
 pub use gix_testtools::Result;
