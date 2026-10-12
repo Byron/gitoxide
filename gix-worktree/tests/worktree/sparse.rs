@@ -178,6 +178,52 @@ mod apply_patterns {
     use gix_worktree::sparse::apply_patterns;
 
     #[test]
+    fn non_cone_directory_patterns_include_gitlinks_on_every_host() -> TestResult {
+        use gix_index::entry::Mode;
+
+        let hash = gix_hash::Kind::shortest();
+        let mut index = gix_index::State::new(hash);
+        let initial = Flags::ASSUME_VALID | Flags::UPTODATE;
+        for (path, mode) in [
+            ("file", Mode::FILE),
+            ("executable", Mode::FILE_EXECUTABLE),
+            ("link", Mode::SYMLINK),
+            ("module", Mode::COMMIT),
+            ("nested/file", Mode::FILE),
+        ] {
+            index.dangerously_push_entry(Default::default(), hash.null(), initial, mode, path.into());
+        }
+        for patterns in [b"/*/\n".as_slice(), b"/*\n!/module/\n"] {
+            let mut actual = index.clone();
+            apply_patterns(
+                &mut actual,
+                patterns,
+                Path::new("sparse-checkout"),
+                false,
+                Case::Sensitive,
+            )?;
+            for entry in actual.entries() {
+                let included = if patterns == b"/*/\n" {
+                    entry.mode == Mode::COMMIT || entry.path(&actual) == "nested/file"
+                } else {
+                    entry.mode != Mode::COMMIT
+                };
+                assert_eq!(
+                    entry.flags,
+                    if included {
+                        initial
+                    } else {
+                        initial | Flags::SKIP_WORKTREE | Flags::EXTENDED
+                    },
+                    "{}: directory-only patterns include or exclude absent gitlinks on every host",
+                    entry.path(&actual)
+                );
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
     fn cone_cache_resets_at_directory_boundaries_and_on_out_of_order_paths() -> TestResult {
         assert_membership(
             b"/a/\n",

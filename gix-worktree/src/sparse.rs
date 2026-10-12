@@ -27,7 +27,8 @@ pub fn read_patterns(git_dir: &Path) -> io::Result<Option<Vec<u8>>> {
 ///
 /// `index` must be a full index with no pre-existing `SKIP_WORKTREE` flags. Included entries and their
 /// flags are left unchanged; this does not expand or produce a sparse index or update an existing checkout.
-/// Gitlinks are treated as absent paths, not directories, when matching directory-only patterns.
+/// Gitlinks match directory-only patterns on every host, even if absent from the worktree, using
+/// [`gix_index::entry::Mode::is_dir_for_pattern_matching()`] for Git's intended classification.
 /// `source` identifies the patterns for diagnostics and is not read from disk.
 ///
 /// If `cone` is enabled, valid cone patterns select directories and their parent files. Invalid cone
@@ -67,7 +68,7 @@ pub fn apply_patterns(
                 cone.decide(path, parent) != ConeDecision::Excluded
             }
             None => search
-                .pattern_matching_relative_path(path, Some(false), case)
+                .pattern_matching_relative_path(path, Some(entry.mode.is_dir_for_pattern_matching()), case)
                 .map_or_else(
                     || {
                         pattern_directories.decision(parent_path(path), |path, parent| {

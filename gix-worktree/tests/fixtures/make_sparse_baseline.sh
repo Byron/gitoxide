@@ -28,9 +28,12 @@ Entries are made with NUL-delimited update-index --index-info, not git add.
 The full index already describes the target tree. read-tree -mu applies sparse
 matching without materializing unchanged entries, even literal '*' or backslash
 paths or mode-120000 symlinks. Gitlinks reference a real commit object.
-index.sparse=false keeps both indexes full. No tracked paths are pre-created:
-gitlinks are absent, so directory-only patterns must not select them during
-initial checkout. Directory ancestors of nested files still match as directories.
+index.sparse=false keeps both indexes full. Directory ancestors of nested files
+match as directories. No tracked paths are pre-created except module/ in the
+directory-only gitlink scenario: Git's ce_to_dtype() erroneously byte-swaps an
+already host-order mode on little-endian hosts. Pre-creating that empty directory
+lets filesystem fallback recover Git's intended directory classification. The
+directory is removed after recording the baseline; Rust matches the index alone.
 
 Only the empty_non_cone_patterns_exclude_everything scenario may recover from
 Git's exact 'Sparse checkout leaves no entry on working directory' fatal error
@@ -106,6 +109,10 @@ record() {
     cp ../patterns .git/info/sparse-checkout
     local tree_id status path
     tree_id=$(cat ../tree)
+    if [[ "$current" == "$root/non_cone_directory_patterns_include_gitlinks" ]]; then
+      # Work around Git's ce_to_dtype() byte-swap bug without fabricating index flags.
+      mkdir module
+    fi
     if git read-tree -mu "$tree_id" >../stdout 2>../stderr; then
       status=0
     else
@@ -136,6 +143,9 @@ record() {
     fi
     cp .git/index ../index.after
     git ls-files -t -z >../baseline
+    if [[ "$current" == "$root/non_cone_directory_patterns_include_gitlinks" ]]; then
+      rmdir module
+    fi
     if [[ "$current" == "$root/empty_non_cone_patterns_exclude_everything" ]]; then
       git ls-files -z | while IFS= read -r -d '' path; do
         printf 'S %s\0' "$path"
@@ -344,8 +354,8 @@ record <<'EOF'
 /selected/nested/keep
 EOF
 
-scenario non_cone_directory_patterns_exclude_absent_gitlinks false false \
-  'directory-only patterns exclude absent gitlinks, symlinks, and root files during initial checkout; only directory ancestors of nested files match' <<'EOF'
+scenario non_cone_directory_patterns_include_gitlinks false false \
+  'directory-only patterns include gitlinks and ancestors of nested files, but exclude symlinks and root files; an empty module directory works around Git ce_to_dtype() before recording its intended classification' <<'EOF'
 COMMIT module
 SYMLINK link
 FILE file

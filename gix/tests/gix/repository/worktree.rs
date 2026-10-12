@@ -609,7 +609,7 @@ mod add {
     }
 
     #[test]
-    fn sparse_checkout_directory_patterns_exclude_absent_gitlinks_like_git() -> gix_testtools::TestResult {
+    fn sparse_checkout_directory_patterns_include_gitlinks_on_every_host() -> gix_testtools::TestResult {
         let fixture = gix_testtools::scripted_fixture_writable_with_args(
             "make_worktree_add_repos.sh",
             ["sparse-gitlink"],
@@ -790,7 +790,12 @@ mod add {
                 expected.join(&relative_path).exists(),
                 "Git and gix materialize the same paths at {path}"
             );
-            if !skip {
+            if !skip && entry.mode.is_submodule() {
+                assert!(
+                    work_dir.join(&relative_path).is_dir(),
+                    "included gitlinks materialize as directories at {path}"
+                );
+            } else if !skip {
                 assert_eq!(
                     std::fs::read(work_dir.join(&relative_path))?,
                     std::fs::read(expected.join(&relative_path))?,

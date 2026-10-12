@@ -5,8 +5,9 @@ set -eu -o pipefail
 # configuration and assertions remain in Rust.
 case "$1" in
   sparse-gitlink)
-    # A gitlink references a real commit but has no module/ directory. Initial
-    # sparse matching must not mistake its index mode for an on-disk directory.
+    # A gitlink references a real commit and should match directory-only patterns.
+    # Pre-create its directory only for Git to work around ce_to_dtype()'s byte-swap
+    # bug; gix must classify it from the index when its destination is empty.
     mkdir main
     cd main
     git init
@@ -17,10 +18,14 @@ case "$1" in
     git commit -m gitlink
     git sparse-checkout init --no-cone
     printf '/*/\n' >.git/info/sparse-checkout
-    git worktree add --detach ../git-created HEAD
+    git worktree add --detach --no-checkout ../git-created HEAD
+    mkdir ../git-created/module
+    git -C ../git-created read-tree -mu HEAD
     git -C ../git-created ls-files -t >../git-created.ls-files.baseline
-    test ! -e ../git-created/module
-    printf 'S file\nS module\n' >../expected-listing
+    test -d ../git-created/module
+    printf 'S file
+H module
+' >../expected-listing
     cmp ../expected-listing ../git-created.ls-files.baseline
     ;;
   sparse)
