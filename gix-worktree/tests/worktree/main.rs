@@ -2,6 +2,7 @@ use gix_hash::ObjectId;
 
 #[cfg(feature = "add")]
 mod add;
+mod lock;
 #[cfg(feature = "remove")]
 mod remove;
 mod sparse;

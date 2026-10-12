@@ -2,6 +2,104 @@ use gix_ref::bstr;
 use gix_testtools::{Result, TestResult};
 
 #[cfg(feature = "worktree-mutation")]
+mod lock {
+    use gix::bstr::ByteSlice;
+
+    #[test]
+    fn set_lock_through_worktree_and_proxy_interoperates_with_git() -> gix_testtools::TestResult {
+        let (repo, _fixture) = crate::basic_rw_repo()?;
+        let destinations = gix_testtools::tempfile::TempDir::new()?;
+        let linked = repo
+            .prepare_add_worktree(
+                destinations.path().join("linked"),
+                gix::worktree::add::Head::Detached(repo.head_id()?.detach()),
+                &std::sync::atomic::AtomicBool::default(),
+            )?
+            .persist()?;
+        let worktree = linked.worktree().expect("linked worktree");
+        let proxy = repo.worktree_proxy_by_id("linked")?.expect("persisted registration");
+        let main = repo.workdir().expect("main checkout");
+
+        worktree.set_lock(Some("external storage".into()))?;
+        assert!(proxy.is_locked(), "the proxy sees the worktree's lock");
+        assert_eq!(
+            proxy.lock_reason(),
+            Some("external storage".into()),
+            "proxy reads the reason"
+        );
+        assert!(
+            gix_testtools::git(main, "worktree list --porcelain")?.contains("locked external storage"),
+            "Git reads the reason written through the worktree API"
+        );
+        gix_testtools::git(main, "worktree unlock linked")?;
+        assert!(!worktree.is_locked(), "the worktree observes Git unlocking it");
+
+        gix_testtools::git(main, "worktree lock --reason git-reason linked")?;
+        let git_contents = std::fs::read(proxy.git_dir().join("locked"))?;
+        assert_eq!(
+            worktree.lock_reason(),
+            Some("git-reason".into()),
+            "worktree reads Git's reason"
+        );
+        proxy.set_lock(Some("git-reason".into()))?;
+        assert_eq!(
+            std::fs::read(proxy.git_dir().join("locked"))?,
+            git_contents,
+            "the setter uses Git's on-disk encoding"
+        );
+        proxy.set_lock(Some(b"".as_bstr()))?;
+        assert!(worktree.is_locked(), "an empty reason still locks the worktree");
+        assert_eq!(worktree.lock_reason(), Some("".into()), "the empty reason is retained");
+        proxy.set_lock(None)?;
+        worktree.set_lock(None)?;
+        assert!(!proxy.is_locked(), "unlocking is idempotent across handles");
+
+        std::fs::remove_dir_all(proxy.base()?)?;
+        proxy.set_lock(Some("offline".into()))?;
+        assert!(
+            !proxy.is_prunable(),
+            "an offline worktree can be protected from pruning"
+        );
+        proxy.set_lock(None)?;
+        assert!(proxy.is_prunable(), "unlocking an offline worktree permits pruning");
+        Ok(())
+    }
+
+    #[test]
+    fn set_lock_rejects_the_main_worktree_without_changing_files() -> gix_testtools::TestResult {
+        let (repo, _fixture) = crate::basic_rw_repo()?;
+        let worktree = repo.worktree().expect("main worktree");
+        let lock_path = repo.git_dir().join("locked");
+        for reason in [Some("keep".into()), None] {
+            let err = worktree
+                .set_lock(reason)
+                .expect_err("the main worktree cannot be locked");
+            assert!(err.is_validation(), "main-worktree locking is invalid input");
+            assert!(!lock_path.exists(), "rejected operations create no lock file");
+        }
+        std::fs::write(&lock_path, b"unrelated contents")?;
+        assert!(
+            !worktree.is_locked(),
+            "an unrelated locked file does not lock the main worktree"
+        );
+        assert_eq!(
+            worktree.lock_reason(),
+            None,
+            "the main worktree has no lock reason, regardless of unrelated files"
+        );
+        worktree
+            .set_lock(None)
+            .expect_err("the main worktree cannot be unlocked");
+        assert_eq!(
+            std::fs::read(lock_path)?,
+            b"unrelated contents",
+            "rejection preserves files"
+        );
+        Ok(())
+    }
+}
+
+#[cfg(feature = "worktree-mutation")]
 mod add {
     #[test]
     fn returned_repositories_and_preparation_have_absolute_paths() -> gix_testtools::TestResult {
@@ -2138,7 +2236,13 @@ mod remove {
                 if path == &locked_path && reason == "on external storage"),
             "the lock and its reason are reported"
         );
+        std::fs::write(locked_path.join("untracked"), b"changes")?;
         repo.remove_worktree(&locked_path, Force::OverrideLock, gix::progress::Discard)?;
+        assert!(
+            !locked_path.exists(),
+            "overriding a lock still permits discarding changes"
+        );
+        assert!(!private_git_dir.exists(), "forced removal unregisters the worktree");
         Ok(())
     }
 
@@ -2208,7 +2312,8 @@ mod remove {
             gix::progress::Discard,
             &AtomicBool::default(),
         )?;
-        std::fs::create_dir(linked.git_dir().join("modules"))?;
+        let private_git_dir = linked.git_dir().to_owned();
+        std::fs::create_dir(private_git_dir.join("modules"))?;
         drop(linked);
 
         let err = repo
@@ -2219,6 +2324,7 @@ mod remove {
             err.downcast_any_ref::<gix::worktree::remove::Error>(),
             Some(gix::worktree::remove::Error::ContainsSubmodule { .. })
         ));
+
         repo.remove_worktree(&destination, Force::DiscardChanges, gix::progress::Discard)?;
         Ok(())
     }
