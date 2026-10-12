@@ -1047,6 +1047,8 @@ fn add_only() -> TestResult {
 
 #[test]
 fn many_additions_without_sources() -> TestResult {
+    use std::fmt::Write;
+
     // Destinations should only be compared to possible sources, not to all other destinations, which would take
     // quadratic time.
     let rewrites = Rewrites {
@@ -1059,11 +1061,14 @@ fn many_additions_without_sources() -> TestResult {
         track_empty: false,
     };
     let mut track = util::new_tracker(rewrites);
-    let num_additions = 100_000;
+    let num_additions: usize = 100_000;
+    let mut location = String::with_capacity(5);
     for idx in 0..num_additions {
+        location.clear();
+        write!(&mut location, "{idx}")?;
         assert!(
             track
-                .try_push_change(Change::addition(), format!("{idx}").as_str().into())
+                .try_push_change(Change::addition(), location.as_str().into())
                 .is_none(),
             "recorded for later matching"
         );

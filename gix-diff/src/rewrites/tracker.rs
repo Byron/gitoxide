@@ -81,7 +81,7 @@ impl<T: Change> Item<T> {
         )
     }
 
-    fn is_source_of_kind(&self, kind: visit::SourceKind) -> bool {
+    fn is_source_candidate(&self, kind: visit::SourceKind) -> bool {
         match kind {
             visit::SourceKind::Rename => !self.emitted && matches!(self.change.kind(), ChangeKind::Deletion),
             visit::SourceKind::Copy => matches!(self.change.kind(), ChangeKind::Modification),
@@ -89,7 +89,7 @@ impl<T: Change> Item<T> {
     }
 
     fn is_source_for_destination_of(&self, kind: visit::SourceKind, dest_item_mode: EntryMode) -> bool {
-        self.entry_mode_compatible(dest_item_mode) && self.is_source_of_kind(kind)
+        self.entry_mode_compatible(dest_item_mode) && self.is_source_candidate(kind)
     }
 }
 
@@ -431,7 +431,7 @@ impl<T: Change> Tracker<T> {
             .items
             .iter()
             .enumerate()
-            .filter_map(|(idx, item)| item.is_source_of_kind(kind).then_some(idx))
+            .filter_map(|(idx, item)| item.is_source_candidate(kind).then_some(idx))
             .collect();
         if source_candidates.is_empty() {
             return Ok(std::ops::ControlFlow::Continue(()));
