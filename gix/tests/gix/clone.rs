@@ -719,6 +719,87 @@ mod blocking_io {
     }
 
     #[test]
+    fn interrupted_checkout_returns_a_partial_outcome_and_keeps_the_repository() -> TestResult {
+        if gix_testtools::run_in_isolated_process()? {
+            return Ok(());
+        }
+        use crate::util::InterruptCheckout;
+        use std::sync::{Arc, atomic::Ordering};
+
+        for initially_interrupted in [false, true] {
+            let tmp = gix_testtools::tempfile::TempDir::new()?;
+            let destination = tmp.path().join("clone");
+            let mut prepare = gix::clone::PrepareFetch::new(
+                remote::repo("base").path(),
+                &destination,
+                gix::create::Kind::WithWorktree,
+                Default::default(),
+                restricted(),
+            )?;
+            let (mut checkout, _) = prepare.fetch_then_checkout(gix::progress::Discard, &AtomicBool::default())?;
+            let commit_id = checkout.repo().head_id()?.detach();
+            let should_interrupt = Arc::new(AtomicBool::new(initially_interrupted));
+            let result = if initially_interrupted {
+                checkout.main_worktree(gix::progress::Discard, &should_interrupt)
+            } else {
+                checkout.main_worktree(InterruptCheckout(should_interrupt.clone()), &should_interrupt)
+            };
+            let (repo, outcome) = result?;
+            assert!(
+                should_interrupt.load(Ordering::Relaxed),
+                "callers must inspect the flag to recognize an interrupted checkout"
+            );
+            assert_eq!(outcome.files_updated, 0, "interruption skips checkout entries");
+            assert!(outcome.errors.is_empty(), "interruption is not a checkout error");
+            assert!(
+                repo.index_path().is_file(),
+                "the index is persisted even for an interrupted checkout"
+            );
+            assert_eq!(repo.index()?.entries().len(), 1, "the index contains the HEAD tree");
+            assert!(!destination.join("file").exists(), "the worktree remains incomplete");
+            drop(repo);
+            drop(checkout);
+            assert!(
+                destination.join(".git").is_dir(),
+                "interruption retains the fetched repository instead of repeating the clone"
+            );
+            let repo = gix::open_opts(&destination, restricted())?;
+            assert_eq!(repo.head_id()?, commit_id, "the fetched HEAD is retained");
+            repo.find_commit(commit_id)?;
+            assert!(repo.index_path().is_file(), "dropping retains the index");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn failed_checkout_still_cleans_up_an_initially_empty_destination() -> TestResult {
+        if gix_testtools::run_in_isolated_process()? {
+            return Ok(());
+        }
+        let tmp = gix_testtools::tempfile::TempDir::new()?;
+        let destination = tmp.path().join("clone");
+        let mut prepare = gix::clone::PrepareFetch::new(
+            remote::repo("base").path(),
+            &destination,
+            gix::create::Kind::WithWorktree,
+            Default::default(),
+            restricted(),
+        )?;
+        let (mut checkout, _) = prepare.fetch_then_checkout(gix::progress::Discard, &AtomicBool::default())?;
+        std::fs::create_dir(checkout.repo().index_path())?;
+        let err = checkout
+            .main_worktree(gix::progress::Discard, &AtomicBool::default())
+            .expect_err("an index directory prevents writing the checkout index");
+        assert!(!err.is_cancelled(), "an index-write error is not cancellation");
+        drop(checkout);
+        assert!(
+            !destination.exists(),
+            "ordinary checkout failures still clean up an initially empty destination"
+        );
+        Ok(())
+    }
+
+    #[test]
     #[cfg(unix)]
     fn fetch_and_checkout_does_not_follow_delayed_symlink_prefixes() -> TestResult {
         if gix_testtools::run_in_isolated_process()? {
