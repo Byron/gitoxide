@@ -82,6 +82,19 @@ impl Proxy<'_> {
             .map(|contents| contents.trim().into())
     }
 
+    /// Set or clear this linked worktree's lock, even when its checkout is inaccessible.
+    ///
+    /// `Some(reason)` creates or replaces the reason, including an empty reason. `None` unlocks,
+    /// succeeding even if already unlocked. Reasons use Git's newline-terminated encoding and are
+    /// trimmed when read through [`Self::lock_reason()`]. The private Git directory must already exist
+    /// when locking. Callers must serialize concurrent changes to the lock and its reason.
+    /// See [`gix_worktree::set_lock()`] for filesystem details.
+    #[cfg(feature = "worktree-mutation")]
+    pub fn set_lock(&self, reason: Option<&BStr>) -> Result<()> {
+        gix_worktree::set_lock(&self.git_dir, reason)
+            .or_raise(|| crate::error::message!("Could not update the worktree lock in \"{}\"", self.git_dir.display()))
+    }
+
     /// Transform this proxy into a [`Repository`] while ignoring issues reading `base()` and ignoring that it might not exist.
     ///
     /// Most importantly, the `Repository` might be initialized with a non-existing work tree directory as the checkout

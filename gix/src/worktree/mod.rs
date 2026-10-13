@@ -87,14 +87,19 @@ impl<'repo> crate::Worktree<'repo> {
     ///
     /// Always false for the main worktree.
     pub fn is_locked(&self) -> bool {
-        Proxy::new(self.parent, self.parent.git_dir()).is_locked()
+        !self.is_main() && Proxy::new(self.parent, self.parent.git_dir()).is_locked()
     }
 
     /// Provide a reason for the locking of this worktree, if it is locked at all.
     ///
+    /// Always `None` for the main worktree.
+    ///
     /// Note that we squelch errors in case the file cannot be read in which case the
     /// reason is an empty string.
     pub fn lock_reason(&self) -> Option<BString> {
+        if self.is_main() {
+            return None;
+        }
         Proxy::new(self.parent, self.parent.git_dir()).lock_reason()
     }
 
@@ -120,6 +125,24 @@ fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&OsStr> {
     }
     let candidate = git_dir.file_name().expect("at least one directory level");
     (git_dir.parent()?.file_name()? == "worktrees").then_some(candidate)
+}
+
+/// Mutation
+#[cfg(feature = "worktree-mutation")]
+impl crate::Worktree<'_> {
+    /// Set or clear this linked worktree's lock, preventing pruning, moving, and removal while locked.
+    ///
+    /// `Some(reason)` creates or replaces the lock reason; an empty reason locks without an explanation.
+    /// `None` unlocks, succeeding even if already unlocked. The main worktree cannot be locked or unlocked.
+    /// See [`Proxy::set_lock()`] for storage and concurrency details.
+    pub fn set_lock(&self, reason: Option<&BStr>) -> Result<()> {
+        use crate::error::{bail, validation};
+
+        if self.is_main() {
+            bail!(validation("The main worktree cannot be locked or unlocked"));
+        }
+        Proxy::new(self.parent, self.parent.git_dir()).set_lock(reason)
+    }
 }
 
 ///

@@ -11,19 +11,13 @@ pub use gix_worktree::remove::Options;
 /// The amount of validation to bypass when removing a linked worktree.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Force {
-    /// Refuse to remove a dirty worktree or one containing initialized submodules.
+    /// Refuse to remove a locked or dirty worktree or one containing initialized submodules.
     #[default]
     Never,
     /// Discard changes and initialized submodules, but retain locked worktrees.
     DiscardChanges,
-    /// Also override a worktree lock.
+    /// Discard changes and initialized submodules, overriding any worktree lock.
     OverrideLock,
-}
-
-impl Force {
-    fn discards_changes(self) -> bool {
-        !matches!(self, Force::Never)
-    }
 }
 
 /// A resolved linked worktree ready for inspection or removal.
@@ -64,9 +58,9 @@ impl Target<'_> {
 impl Target<'_> {
     /// Validate and remove this linked worktree.
     ///
-    /// The main worktree cannot be prepared for removal or removed. With [`Force::Never`], modified or untracked
-    /// files and initialized submodules prevent removal. [`Force::DiscardChanges`] permits their deletion, while
-    /// a locked worktree additionally requires [`Force::OverrideLock`].
+    /// The main worktree cannot be prepared for removal or removed. With [`Force::Never`], modified or
+    /// untracked files and initialized submodules prevent removal. [`Force::DiscardChanges`] permits their
+    /// deletion. Locked worktrees require [`Force::OverrideLock`], which also permits discarding changes.
     ///
     /// The worktree's attached branch, if any, is retained.
     ///
@@ -124,7 +118,7 @@ impl Target<'_> {
         let git_dir = proxy.parent.current_dir().join(proxy.git_dir());
         let ignore_case = proxy.parent.config.ignore_case;
 
-        if force != Force::OverrideLock && proxy.is_locked() {
+        if matches!(force, Force::Never | Force::DiscardChanges) && proxy.is_locked() {
             bail!(Error::Locked {
                 path: work_dir,
                 reason: proxy.lock_reason(),
@@ -138,7 +132,7 @@ impl Target<'_> {
             }
             Ok(_) => {
                 validate_backlink(&work_dir, &git_dir, ignore_case)?;
-                if !force.discards_changes() {
+                if force == Force::Never {
                     let linked_repo = proxy
                         .into_repo_with_possibly_inaccessible_worktree()
                         .or_raise(|| message("Could not open the linked worktree repository"))?;
@@ -453,7 +447,7 @@ fn path_ends_with(path: &Path, suffix: &Path, ignore_case: bool) -> bool {
     })
 }
 
-/// Return whether `repo` has submodule state that blocks removal with [`Force::Never`].
+/// Return whether `repo` has submodule state that blocks removal when retaining local changes.
 ///
 /// A `modules` directory in the private Git directory is conservatively considered sufficient, even if empty.
 /// Otherwise, check index gitlinks for an existing `.git` entry in their checkout. Unpopulated gitlinks alone

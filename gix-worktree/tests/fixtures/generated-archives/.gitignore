@@ -20,3 +20,4 @@ symlink_stack.tar
 # Keep both argument variants ignored, including their SHA-256 archives.
 /make_symlinked_ignore_repo_indexed*.tar*
 /make_symlinked_ignore_repo_symlink*.tar*
+/make_worktree_lock_symlinks*.tar*
