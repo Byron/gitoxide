@@ -64,16 +64,56 @@ pub fn remove(path: &Path) -> io::Result<()> {
 /// Note that if a symlink target (the `original`) isn't present on disk, it's assumed to be a
 /// file, creating a dangling file symlink. This is similar to a dangling symlink on Unix,
 /// which doesn't have to care about the target type though.
+/// Targets starting with `/` or `\` are also treated as files without probing them, as Windows
+/// can interpret these as network shares and probing them could disclose credentials.
 #[cfg(windows)]
 pub fn create(original: &Path, link: &Path) -> io::Result<()> {
-    use std::os::windows::fs::{symlink_dir, symlink_file};
-    // TODO: figure out if links to links count as files or whatever they point at
-    let orig_abs = link.parent().expect("dir for link").join(original);
-    if orig_abs.is_dir() {
-        symlink_dir(original, link)
-    } else {
-        symlink_file(original, link)
+    create_inner(original, link, false).map(|_| ())
+}
+
+/// Create a new symlink at `link` pointing to `original`, returning whether it was created.
+///
+/// On Windows, return `false` without creating a link if the target's type cannot be determined.
+/// Callers can retry after creating other links, then use [`create()`] for any unresolved targets
+/// once no more progress is possible. Targets starting with `/` or `\` are never probed and are
+/// immediately created as file links, just like in [`create()`].
+/// On other platforms, this is equivalent to [`create()`] and always returns `true` on success.
+pub fn create_or_delay(original: &Path, link: &Path) -> io::Result<bool> {
+    #[cfg(windows)]
+    {
+        create_inner(original, link, true)
     }
+    #[cfg(not(windows))]
+    {
+        create(original, link).map(|()| true)
+    }
+}
+
+#[cfg(windows)]
+fn create_inner(original: &Path, link: &Path, delay_if_unknown: bool) -> io::Result<bool> {
+    use std::os::windows::fs::{symlink_dir, symlink_file};
+
+    // Match Git's `process_phantom_symlink()`: a leading separator can introduce a UNC
+    // share or an NT namespace path. Check the original spelling before any target probe.
+    let starts_with_slash = matches!(original.as_os_str().as_encoded_bytes().first(), Some(b'/' | b'\\'));
+    let is_dir = if starts_with_slash {
+        false
+    } else {
+        let parent = link
+            .parent()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "symlink path has no parent directory"))?;
+        match parent.join(original).metadata() {
+            Ok(meta) => meta.is_dir(),
+            Err(_) if delay_if_unknown => return Ok(false),
+            Err(_) => false,
+        }
+    };
+    if is_dir {
+        symlink_dir(original, link)?;
+    } else {
+        symlink_file(original, link)?;
+    }
+    Ok(true)
 }
 
 /// Return true if `err` indicates that a file collision happened, i.e. a symlink couldn't be created as the `link`

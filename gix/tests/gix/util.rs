@@ -278,3 +278,44 @@ pub fn basic_repo() -> Result<Repository> {
 pub fn basic_rw_repo() -> Result<(Repository, tempfile::TempDir)> {
     repo_rw("make_basic_repo.sh")
 }
+
+/// Request interruption when the checkout engine obtains progress counters, after entry-point checks.
+#[cfg(feature = "worktree-mutation")]
+pub struct InterruptCheckout(pub std::sync::Arc<std::sync::atomic::AtomicBool>);
+
+#[cfg(feature = "worktree-mutation")]
+impl gix::progress::Count for InterruptCheckout {
+    fn set(&self, _: usize) {}
+    fn step(&self) -> usize {
+        0
+    }
+    fn inc_by(&self, _: usize) {}
+    fn counter(&self) -> gix::progress::StepShared {
+        self.0.store(true, std::sync::atomic::Ordering::Relaxed);
+        gix::progress::Discard.counter()
+    }
+}
+
+#[cfg(feature = "worktree-mutation")]
+impl gix::progress::Progress for InterruptCheckout {
+    fn init(&mut self, _: Option<usize>, _: Option<gix::progress::Unit>) {}
+    fn set_name(&mut self, _: String) {}
+    fn name(&self) -> Option<String> {
+        None
+    }
+    fn id(&self) -> gix::progress::Id {
+        gix::progress::UNKNOWN
+    }
+    fn message(&self, _: gix::progress::MessageLevel, _: String) {}
+}
+
+#[cfg(feature = "worktree-mutation")]
+impl gix::progress::NestedProgress for InterruptCheckout {
+    type SubProgress = Self;
+    fn add_child(&mut self, _: impl Into<String>) -> Self {
+        Self(self.0.clone())
+    }
+    fn add_child_with_id(&mut self, name: impl Into<String>, _: gix::progress::Id) -> Self {
+        self.add_child(name)
+    }
+}

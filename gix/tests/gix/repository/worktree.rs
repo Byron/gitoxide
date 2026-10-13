@@ -273,41 +273,8 @@ mod add {
 
     #[test]
     fn interruption_during_checkout_never_writes_an_index() -> gix_testtools::TestResult {
-        use std::sync::{Arc, atomic::Ordering};
-
-        struct InterruptCheckout(Arc<AtomicBool>);
-        impl gix::progress::Count for InterruptCheckout {
-            fn set(&self, _: usize) {}
-            fn step(&self) -> usize {
-                0
-            }
-            fn inc_by(&self, _: usize) {}
-            fn counter(&self) -> gix::progress::StepShared {
-                // The checkout engine requests counters after the entry-point interruption checks.
-                self.0.store(true, Ordering::Relaxed);
-                gix::progress::Discard.counter()
-            }
-        }
-        impl gix::progress::Progress for InterruptCheckout {
-            fn init(&mut self, _: Option<usize>, _: Option<gix::progress::Unit>) {}
-            fn set_name(&mut self, _: String) {}
-            fn name(&self) -> Option<String> {
-                None
-            }
-            fn id(&self) -> gix::progress::Id {
-                gix::progress::UNKNOWN
-            }
-            fn message(&self, _: gix::progress::MessageLevel, _: String) {}
-        }
-        impl gix::progress::NestedProgress for InterruptCheckout {
-            type SubProgress = Self;
-            fn add_child(&mut self, _: impl Into<String>) -> Self {
-                Self(self.0.clone())
-            }
-            fn add_child_with_id(&mut self, name: impl Into<String>, _: gix::progress::Id) -> Self {
-                self.add_child(name)
-            }
-        }
+        use crate::util::InterruptCheckout;
+        use std::sync::Arc;
 
         for persisted in [false, true] {
             let (repo, _fixture) = crate::basic_rw_repo()?;

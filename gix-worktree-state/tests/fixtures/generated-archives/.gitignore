@@ -31,3 +31,6 @@ make_dangerous_symlink_sha256.tar
 # (default macOS, Windows), so the fixture must be (re)generated locally.
 make_ignorecase_collisions.tar
 make_ignorecase_collisions_sha256.tar
+# Records native symlink chains and cycles created by the host's Git.
+make_symlink_chains.tar
+make_symlink_chains_sha256.tar

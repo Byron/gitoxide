@@ -36,11 +36,20 @@ pub mod main_worktree {
         /// Note that this is a no-op if the remote was empty, leaving this repository empty as well. This can be validated by checking
         /// if the `head()` of the returned repository is *not* unborn.
         ///
+        /// # Interruption
+        ///
+        /// Like [`gix_worktree_state::checkout()`], interruption alone does not return an error: this method writes the
+        /// index and returns `Ok((repository, outcome))` even if only part of the worktree was checked out.
+        /// Callers must inspect `should_interrupt` after this method returns to distinguish interruption from completion;
+        /// `Ok` and an outcome without errors do not guarantee a complete checkout.
+        ///
+        /// The returned repository and any partially checked-out files are retained when this preparation is dropped,
+        /// so the fetch does not need to be repeated. Finish checkout with
+        /// `git -C <destination> restore --source=HEAD --staged --worktree :/`, which overwrites tracked files.
+        ///
         /// # Panics
         ///
-        /// If called after it was successful. The reason here is that it auto-deletes the contained repository,
-        /// and keeps track of this by means of keeping just one repository instance, which is passed to the user
-        /// after success.
+        /// If called after it returned `Ok`, including after interruption, as the repository has already been passed to the caller.
         pub fn main_worktree<P>(
             &mut self,
             mut progress: P,
@@ -128,11 +137,11 @@ pub mod main_worktree {
 
 /// Access
 impl PrepareCheckout {
-    /// Get access to the repository while the checkout isn't yet completed.
+    /// Get access to the repository before checkout returns it to the caller.
     ///
     /// # Panics
     ///
-    /// If the checkout is completed and the [`Repository`] was already passed on to the caller.
+    /// If [`Self::main_worktree()`] returned `Ok`, including after interruption, and passed the [`Repository`] to the caller.
     pub fn repo(&self) -> &Repository {
         self.repo
             .as_ref()

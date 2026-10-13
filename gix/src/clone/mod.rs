@@ -175,13 +175,16 @@ impl PrepareFetch {
     }
 }
 
-/// A utility to collect configuration on how to perform a checkout into a working tree,
-/// and when dropped without checking out successfully the fetched repository will be deleted from disk.
+/// A utility to collect configuration on how to perform a checkout into a working tree.
+/// Dropping it before [`Self::main_worktree()`] returns `Ok` deletes an initially empty clone destination.
+/// Interruption alone returns `Ok` with the fetched repository and a partial checkout outcome; callers must check
+/// the interrupt flag to determine whether checkout completed. The repository and partial worktree are retained
+/// so checkout can be completed without fetching again. Destinations with pre-existing files are always retained.
 #[must_use]
 #[cfg(feature = "worktree-mutation")]
 #[derive(Debug)]
 pub struct PrepareCheckout {
-    /// A freshly initialized repository which is owned by us, or `None` if it was successfully checked out.
+    /// A freshly initialized repository owned by us, or `None` once returned to the caller, including after interruption.
     pub(self) repo: Option<crate::Repository>,
     /// The name of the reference to check out. If `None`, the reference pointed to by `HEAD` will be checked out.
     pub(self) ref_name: Option<gix_ref::PartialName>,

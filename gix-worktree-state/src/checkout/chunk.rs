@@ -86,6 +86,8 @@ pub struct Options {
     pub overwrite_existing: bool,
     pub keep_going: bool,
     pub filter_process_delay: gix_filter::driver::apply::Delay,
+    /// Retry symlinks whose target type cannot yet be determined on Windows.
+    pub delay_symlinks: bool,
 }
 
 impl From<&checkout::Options> for Options {
@@ -96,6 +98,7 @@ impl From<&checkout::Options> for Options {
             overwrite_existing: opts.overwrite_existing,
             keep_going: opts.keep_going,
             filter_process_delay: opts.filter_process_delay,
+            delay_symlinks: true,
         }
     }
 }
@@ -124,9 +127,8 @@ where
             continue;
         }
 
-        // Symlinks always have to be delayed on windows as they have to point to something that exists on creation.
-        // And even if not, there is a distinction between file and directory symlinks, hence we have to check what the target is
-        // before creating it.
+        // Windows distinguishes file and directory symlinks. Delay them until regular files are
+        // present, then retry unresolved targets as other symlinks are created.
         // And to keep things sane, we just do the same on non-windows as well which is similar to what git does and adds some safety
         // around writing through symlinks (even though we handle this).
         // This also means that we prefer content in files over symlinks in case of collisions, which probably is for the better, too.
@@ -141,6 +143,7 @@ where
                 files_in_chunk += 1;
             }
             entry::Outcome::Delayed(delayed) => delayed_filter_results.push(delayed),
+            entry::Outcome::DelayedSymlink { .. } => unreachable!("symlinks are collected before checkout"),
         }
     }
 
