@@ -47,6 +47,16 @@ request_header() {
   printf '0000'
 } >.git/transport-baseline/fetch.request
 
+# Produce a request for what Git calls v0 of the protocol. `gix-transport`
+# calls this version V1.
+{
+  packet "want $commit_id side-band-64k ofs-delta object-format=$hash"
+  printf '0000'
+  packet done
+} >.git/transport-baseline/v1-fetch.request
+git upload-pack --stateless-rpc --advertise-refs . >.git/transport-baseline/v1.response
+git upload-pack --stateless-rpc . <.git/transport-baseline/v1-fetch.request >>.git/transport-baseline/v1.response
+
 GIT_PROTOCOL=version=2 git upload-pack --stateless-rpc --advertise-refs . >.git/transport-baseline/v2.response
 GIT_PROTOCOL=version=2 git upload-pack --stateless-rpc . <.git/transport-baseline/ls-refs.request >>.git/transport-baseline/v2.response
 GIT_PROTOCOL=version=2 git upload-pack --stateless-rpc . <.git/transport-baseline/fetch.request >>.git/transport-baseline/v2.response
