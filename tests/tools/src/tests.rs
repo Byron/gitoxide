@@ -317,6 +317,32 @@ fn invoke_bash_runs_in_given_working_directory() -> TestResult {
 }
 
 #[test]
+fn fixture_diagnostics_report_silent_failures_without_changing_stderr_baselines() -> TestResult {
+    let dir = tempfile::tempdir()?;
+    let mut cmd = command_with_environment_snapshot(bash_program());
+    let output = configure_git_environment(&mut cmd, dir.path())
+        .current_dir(dir.path())
+        .arg("-c")
+        .arg(format!(
+            "{BASH_FIXTURE_PRELUDE}\nset -e\n(printf 'baseline\\n' >&2) 2>baseline\ncommand -v __gix_testtools_missing_command__"
+        ))
+        .output()?;
+
+    assert_eq!(output.status.code(), Some(1), "the silent lookup failure is preserved");
+    let diagnostic = output.stderr.as_bstr();
+    assert!(
+        diagnostic.contains_str("command -v __gix_testtools_missing_command__"),
+        "diagnostics identify the failed command: {diagnostic}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(dir.path().join("baseline"))?,
+        "baseline\n",
+        "diagnostics stay outside redirected fixture stderr"
+    );
+    Ok(())
+}
+
+#[test]
 fn invoke_bash_disables_auto_maintenance_for_git_commands() -> TestResult {
     let dir = tempfile::TempDir::new()?;
     invoke_bash(
