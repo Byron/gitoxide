@@ -318,7 +318,10 @@ async fn handshake_v1_and_request() -> TestResult {
     );
 
     let sidebands = Arc::try_unwrap(messages).expect("no other handle").into_inner();
-    assert!(!sidebands.is_empty(), "Git sends progress alongside the pack");
+    assert!(
+        !sidebands.is_empty(),
+        "Git sends progress alongside the pack (but it's not determinisic enough)"
+    );
 
     let mut expected = b"002egit-upload-pack /foo.git\x00host=example.org\x00".to_vec();
     expected.extend(&want_packet);
