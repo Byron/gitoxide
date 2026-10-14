@@ -382,8 +382,8 @@ impl<T: Change> Tracker<T> {
             } else {
                 let (num_src, num_dst) =
                     estimate_involved_items(self.items.iter().map(|item| (item.emitted, item.change.kind())), kind);
-                let permutations = num_src * num_dst;
-                if permutations > self.rewrites.limit {
+                let permutations = num_src.saturating_mul(num_dst);
+                if permutations > self.rewrites.limit.saturating_mul(self.rewrites.limit) {
                     match kind {
                         visit::SourceKind::Rename => {
                             out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit = permutations;

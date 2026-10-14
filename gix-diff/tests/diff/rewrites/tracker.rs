@@ -528,6 +528,87 @@ fn rename_by_similarity_reports_limit_if_encountered() -> TestResult {
 }
 
 #[test]
+fn rename_by_similarity_limit_applies_per_side() -> TestResult {
+    let rewrites = Rewrites {
+        copies: None,
+        percentage: Some(0.5),
+        limit: 2,
+        track_empty: false,
+    };
+    let mut track = util::new_tracker(rewrites);
+    let odb = util::add_retained_blobs(
+        &mut track,
+        [
+            (Change::deletion(), "a", "a1\na2\na3\n"),
+            (Change::deletion(), "b", "b1\nb2\nb3\n"),
+            (Change::addition(), "c", "a1\na2\nA3\n"),
+            (Change::addition(), "d", "b1\nb2\nB3\n"),
+        ],
+    )?;
+
+    let mut pairs = Vec::new();
+    let out = util::assert_emit_with_objects(
+        &mut track,
+        |dst, src| {
+            pairs.push((src.map(|src| src.location.to_string()), dst.location.to_string()));
+            std::ops::ControlFlow::Continue(())
+        },
+        odb,
+    );
+    pairs.sort();
+    assert_eq!(
+        pairs,
+        [
+            (Some("a".to_string()), "c".to_string()),
+            (Some("b".to_string()), "d".to_string()),
+        ],
+        "2 sources x 2 destinations fit into a limit of 2, as it allows 2*2 combinations"
+    );
+    assert_eq!(out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit, 0);
+    Ok(())
+}
+
+#[test]
+fn rename_by_similarity_is_skipped_above_squared_limit() -> TestResult {
+    let rewrites = Rewrites {
+        copies: None,
+        percentage: Some(0.5),
+        limit: 2,
+        track_empty: false,
+    };
+    let mut track = util::new_tracker(rewrites);
+    let odb = util::add_retained_blobs(
+        &mut track,
+        [
+            (Change::deletion(), "a", "a1\na2\na3\n"),
+            (Change::deletion(), "b", "b1\nb2\nb3\n"),
+            (Change::deletion(), "e", "e1\ne2\ne3\n"),
+            (Change::addition(), "c", "a1\na2\nA3\n"),
+            (Change::addition(), "d", "b1\nb2\nB3\n"),
+        ],
+    )?;
+
+    let out = util::assert_emit_with_objects(
+        &mut track,
+        |_dst, src| {
+            assert!(src.is_none(), "no pairing is attempted above the limit");
+            std::ops::ControlFlow::Continue(())
+        },
+        odb,
+    );
+    assert_eq!(
+        out,
+        rewrites::Outcome {
+            options: rewrites,
+            num_similarity_checks_skipped_for_rename_tracking_due_to_limit: 6,
+            ..Default::default()
+        },
+        "3 sources x 2 destinations exceed the 2*2 combinations a limit of 2 allows"
+    );
+    Ok(())
+}
+
+#[test]
 fn rename_by_50_percent_similarity() -> TestResult {
     let rewrites = Rewrites {
         copies: None,
