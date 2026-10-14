@@ -13,6 +13,8 @@
 //! Fixture scripts and [`git()`] use `GIT_CONFIG_PARAMETERS` to disable signing and automatic maintenance
 //! and set `init.defaultBranch=main`. A script's own `GIT_CONFIG_COUNT` entries coexist with this configuration,
 //! with isolation taking precedence for shared keys. Explicit `git -c` options can override isolation.
+//! Bash fixtures trace commands to a separate descriptor so redirected stderr baselines remain unchanged.
+//! Bash older than 4.1 reports failed commands instead. Captured diagnostics are printed only on failure.
 //!
 
 //! ## Feature Flags
@@ -1830,7 +1832,7 @@ where
                 if !output.status.success() {
                     eprintln!("stdout: {}", output.stdout.as_bstr());
                     eprintln!("stderr: {}", output.stderr.as_bstr());
-                    return Err(format!("fixture script of {cmd:?} failed").into());
+                    return Err(format!("fixture script of {cmd:?} failed with {}", output.status).into());
                 }
             }
             if let Some(mut f) = post_process_closure {

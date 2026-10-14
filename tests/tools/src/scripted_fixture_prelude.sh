@@ -1,6 +1,17 @@
 # Sourced into the Bash instance executing a fixture, not installed in its environment.
 __gix_testtools_fixture_root=$PWD
 
+# Keep diagnostics out of stderr redirected into fixture baselines.
+exec 9>&2
+if (( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 1) )); then
+  BASH_XTRACEFD=9
+  set -x
+else
+  # Bash 3.2 cannot redirect xtrace independently of stderr.
+  set -E
+  trap 'printf "fixture command failed (%s): %s:%s: %s\n" "$?" "$0" "$LINENO" "$BASH_COMMAND" >&9' ERR
+fi
+
 gix_testtools_require_symlinks() {
   local probe status
   probe=$(mktemp -d "$__gix_testtools_fixture_root/.gix-symlink-preflight.XXXXXX") || return

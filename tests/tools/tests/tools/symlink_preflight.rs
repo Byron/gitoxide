@@ -53,9 +53,11 @@ fn copied_links_and_later_failures_are_not_skips() -> TestResult {
         "ln succeeding without creating a real symlink is a fixture error"
     );
     for scenario in ["crash", "unexpected"] {
+        let err = fixture(scenario).expect_err("unexpected ln exits must remain fixture errors");
         assert!(
-            fixture(scenario).is_err(),
-            "unexpected ln exits must remain fixture errors: {scenario}"
+            err.to_string().contains("failed with exit code: 1")
+                || err.to_string().contains("failed with exit status: 1"),
+            "the failure includes the script's exit status: {err}"
         );
     }
     let dir = fixture("supported")?;

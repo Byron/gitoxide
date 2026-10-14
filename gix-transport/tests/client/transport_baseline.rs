@@ -1,5 +1,12 @@
 use gix_testtools::TestResult;
 
+pub struct V1 {
+    pub response: Vec<u8>,
+    pub commit_id_hex: String,
+    pub object_count: usize,
+    pub hash: gix_hash::Kind,
+}
+
 pub struct V2 {
     pub response: Vec<u8>,
     pub commit_id_hex: String,
@@ -9,7 +16,7 @@ pub struct V2 {
     pub fetch_request: Vec<u8>,
 }
 
-fn packet(out: &mut Vec<u8>, line: &str) {
+pub(super) fn packet(out: &mut Vec<u8>, line: &str) {
     out.extend_from_slice(format!("{:04x}{line}\n", line.len() + 5).as_bytes());
 }
 
@@ -24,6 +31,19 @@ fn request(command: &str, hash: &str, arguments: &[&str]) -> Vec<u8> {
     }
     out.extend_from_slice(b"0000");
     out
+}
+
+/// Load Git-generated protocol v0 response (called `V1` by `gix-transport`) and repository
+/// metadata for the currently selected fixture hash
+pub fn v1() -> TestResult<V1> {
+    let dir =
+        gix_testtools::scripted_fixture_read_only("make_transport_baseline.sh")?.join("repo/.git/transport-baseline");
+    Ok(V1 {
+        response: std::fs::read(dir.join("v1.response"))?,
+        commit_id_hex: std::fs::read_to_string(dir.join("commit-id"))?.trim().to_owned(),
+        object_count: std::fs::read_to_string(dir.join("object-count"))?.trim().parse()?,
+        hash: gix_testtools::object_hash(),
+    })
 }
 
 /// Load Git-generated protocol v2 responses and repository metadata for the currently selected fixture hash.
