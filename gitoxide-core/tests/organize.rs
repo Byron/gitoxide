@@ -13,7 +13,7 @@ fn url_components_cannot_move_repositories_outside_the_destination() -> TestResu
     ] {
         for mode in [Mode::Execute, Mode::Simulate] {
             let fixture = gix_testtools::scripted_fixture_writable("organize.sh")?;
-            let source = fixture.path().join("source");
+            let source = fixture.path().join("source").canonicalize()?;
             let destination = fixture.path().join("destination");
             gix_testtools::git(&source, &format!("config remote.origin.url {url}"))?;
 
@@ -32,11 +32,12 @@ fn url_components_cannot_move_repositories_outside_the_destination() -> TestResu
                     diagnostic,
                     "execute and simulate preserve the confinement cause and resolved destination for every URL",
                     @r#"
-                    Failed to handle 1 repository
+                Failed to handle 1 repository
 
-                    Caused by:
-                        0: the origin URL resolves outside the repository destination, destination="<fixture>/escaped", destination_root="<fixture>/destination"
-                    "#
+                Caused by:
+                    0: Failed to handle repository, repository="<fixture>/source"
+                    1: the origin URL resolves outside the repository destination, destination="<fixture>/escaped", destination_root="<fixture>/destination"
+                "#
                 );
             }
             assert_eq!(
@@ -61,7 +62,7 @@ fn url_components_cannot_move_repositories_outside_the_destination() -> TestResu
 #[test]
 fn ordinary_urls_still_move_repositories_below_the_destination() -> TestResult {
     let fixture = gix_testtools::scripted_fixture_writable("organize.sh")?;
-    let source = fixture.path().join("source");
+    let source = fixture.path().join("source").canonicalize()?;
     let destination = fixture.path().join("destination");
     run(Mode::Execute, &source, &destination, gix::progress::Discard, Some(1))?;
 
@@ -84,7 +85,7 @@ fn ordinary_urls_still_move_repositories_below_the_destination() -> TestResult {
 fn an_existing_symlink_cannot_redirect_the_destination() -> TestResult {
     for mode in [Mode::Execute, Mode::Simulate] {
         let fixture = gix_testtools::scripted_fixture_writable("organize.sh")?;
-        let source = fixture.path().join("source");
+        let source = fixture.path().join("source").canonicalize()?;
         let destination = fixture.path().join("destination");
         let outside = fixture.path().join("outside");
         gix_testtools::git(&source, "config remote.origin.url https://example.com/repository.git")?;
@@ -104,16 +105,17 @@ fn an_existing_symlink_cannot_redirect_the_destination() -> TestResult {
                 diagnostic,
                 "execute and simulate report the symlink target outside the allowed destination root",
                 @r#"
-                Failed to handle 1 repository
+            Failed to handle 1 repository
 
-                Caused by:
-                    0: the origin URL resolves outside the repository destination, destination="<fixture>/outside/repository", destination_root="<fixture>/destination"
-                "#
+            Caused by:
+                0: Failed to handle repository, repository="<fixture>/source"
+                1: the origin URL resolves outside the repository destination, destination="<fixture>/outside/repository", destination_root="<fixture>/destination"
+            "#
             );
         }
         let metadata = err
             .metadata()
-            .next()
+            .find(|metadata| metadata.contains_key("destination"))
             .expect("confinement errors include path metadata through the public API");
         assert_eq!(
             metadata["destination"],
