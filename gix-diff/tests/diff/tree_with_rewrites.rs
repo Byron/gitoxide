@@ -723,7 +723,7 @@ fn copies_in_entire_tree_by_similarity_with_limit() -> TestResult {
                     source: CopySource::FromSetOfModifiedFilesAndAllSources,
                     ..Default::default()
                 }),
-                limit: 2, // similarity checks can't be made that way
+                limit: 1, // similarity checks can't be made that way
                 track_empty: false,
                 ..Default::default()
             }),

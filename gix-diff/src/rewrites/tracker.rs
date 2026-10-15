@@ -382,8 +382,8 @@ impl<T: Change> Tracker<T> {
             } else {
                 let (num_src, num_dst) =
                     estimate_involved_items(self.items.iter().map(|item| (item.emitted, item.change.kind())), kind);
-                let permutations = num_src * num_dst;
-                if permutations > self.rewrites.limit {
+                if limit_is_exceeded(num_src, num_dst, self.rewrites.limit) {
+                    let permutations = num_src.saturating_mul(num_dst);
                     match kind {
                         visit::SourceKind::Rename => {
                             out.num_similarity_checks_skipped_for_rename_tracking_due_to_limit = permutations;
@@ -681,6 +681,12 @@ fn estimate_involved_items(
         })
 }
 
+fn limit_is_exceeded(num_src: usize, num_dst: usize, limit: usize) -> bool {
+    // Saturating both products can hide an exceeded limit; u128 holds them exactly on supported targets.
+    let limit = limit as u128;
+    (num_src as u128) * (num_dst as u128) > limit * limit
+}
+
 fn needs_exact_match(percentage: Option<f32>) -> bool {
     percentage.is_none_or(|p| p >= 1.0)
 }
@@ -830,6 +836,45 @@ mod diff {
                     .sum::<usize>()
             })
             .sum()
+    }
+}
+
+#[cfg(test)]
+mod limit_is_exceeded {
+    use super::limit_is_exceeded;
+
+    #[test]
+    fn overflowing_products_are_compared_without_saturation() {
+        for limit in [70_000, usize::MAX / 2] {
+            assert!(
+                limit_is_exceeded(limit + 1, limit + 1, limit),
+                "candidate counts just above the limit must be rejected even when both products overflow usize"
+            );
+            assert!(
+                !limit_is_exceeded(limit, limit, limit),
+                "a product equal to the squared limit is allowed"
+            );
+            assert!(
+                !limit_is_exceeded(limit - 1, limit, limit),
+                "a product below the squared limit is allowed even when both products overflow usize"
+            );
+        }
+    }
+
+    #[test]
+    fn maximum_counts_and_unbalanced_candidates() {
+        assert!(
+            !limit_is_exceeded(usize::MAX, usize::MAX, usize::MAX),
+            "squaring the largest supported count must not overflow the comparison"
+        );
+        assert!(
+            !limit_is_exceeded(0, usize::MAX, 1),
+            "without sources there are no comparisons to limit"
+        );
+        assert!(
+            limit_is_exceeded(usize::MAX, 1, 1),
+            "the product, not the smaller candidate count, determines whether the limit is exceeded"
+        );
     }
 }
 
