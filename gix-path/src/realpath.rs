@@ -2,12 +2,19 @@
 pub const MAX_SYMLINKS: u8 = 32;
 
 pub(crate) mod function {
+    #[cfg(windows)]
+    use bstr::ByteSlice;
     use gix_error::{Result, ResultExt, bail, validation};
     #[cfg(windows)]
     use std::path::Prefix as PathPrefix;
     use std::path::{
         Component::{CurDir, Normal, ParentDir, Prefix, RootDir},
         Path, PathBuf,
+    };
+    #[cfg(windows)]
+    use std::{
+        ffi::OsString,
+        os::windows::ffi::{OsStrExt, OsStringExt},
     };
 
     use crate::realpath::MAX_SYMLINKS;
@@ -35,6 +42,7 @@ pub(crate) mod function {
     /// `cwd` supplies the base for relative paths and should be absolute. On Windows, a drive-relative path uses
     /// `cwd` if its drive matches; otherwise Windows supplies that drive's current directory which queries
     /// the CWD from the operating system independently.
+    /// Virtual drive prefixes created with `subst`, such as `1:` or `ä:`, are recognized too.
     pub fn realpath_opts(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf> {
         if path.as_os_str().is_empty() {
             bail!(validation("Empty is not a valid path"));
@@ -48,6 +56,32 @@ pub(crate) mod function {
         let mut num_symlinks = 0;
         let mut path_backing: PathBuf;
         let mut components = path.components();
+        #[cfg(windows)]
+        let virtual_drive_root = {
+            let path_bytes = path.as_os_str().as_encoded_bytes().as_bstr();
+            if let Some(prefix) = crate::windows_drive_prefix(path_bytes)
+                .filter(|_| !matches!(components.clone().next(), Some(Prefix(_))))
+            {
+                // Rust only recognizes ASCII letters as drives, whereas Git also accepts virtual drives.
+                let mut root = crate::from_bstr(prefix)?.into_owned();
+                root.as_mut_os_string().push("\\");
+                real_path = if path_bytes.get(prefix.len()).is_some_and(|b| matches!(b, b'/' | b'\\')) {
+                    root.clone()
+                } else {
+                    std::path::absolute(crate::from_bstr(prefix)?.as_ref()).or_error()?
+                };
+                if let Some(Normal(first)) = components.next() {
+                    let prefix_len = crate::from_bstr(prefix)?.as_os_str().encode_wide().count();
+                    let suffix: Vec<_> = first.encode_wide().skip(prefix_len).collect();
+                    path_backing = PathBuf::from(OsString::from_wide(&suffix));
+                    path_backing.extend(components);
+                    components = path_backing.components();
+                }
+                Some(root)
+            } else {
+                None
+            }
+        };
         const MAX_SYMLINK_CHECKS: usize = 2048;
         let mut symlink_checks = 0;
         while let Some(component) = components.next() {
@@ -70,7 +104,11 @@ pub(crate) mod function {
                 part @ (RootDir | Prefix(_)) => real_path.push(part),
                 CurDir => {}
                 ParentDir => {
-                    if !real_path.pop() {
+                    #[cfg(windows)]
+                    let at_virtual_root = virtual_drive_root.as_ref() == Some(&real_path);
+                    #[cfg(not(windows))]
+                    let at_virtual_root = false;
+                    if at_virtual_root || !real_path.pop() {
                         bail!(validation(
                             "Ran out of path components while following parent component '..'",
                         ));

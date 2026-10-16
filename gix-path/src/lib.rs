@@ -35,7 +35,7 @@ mod convert;
 pub use convert::*;
 
 mod util;
-pub use util::is_absolute;
+pub use util::{is_absolute, windows_drive_prefix};
 
 ///
 pub mod realpath;
