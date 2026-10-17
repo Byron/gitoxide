@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use gix_error::{ClassificationMarker, ErrorExt, Message, Result, ResultExt, bail, message, not_found};
 
 use crate::{
@@ -56,13 +58,14 @@ impl Transaction<'_, '_> {
             .check_windows_device_name(change.update.name.as_ref())
             .or_raise(|| message("Invalid reference filename"))?;
 
+        let (reference_path, lock_boundary) = reference_path_and_lock_boundary(store, change.update.name.as_ref())?;
+
         let lock = match &mut change.update.change {
             Change::Delete { expected, .. } => {
-                let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref())?;
                 let lock = gix_lock::Marker::acquire_to_hold_resource(
-                    base.join(relative_path.as_ref()),
+                    &reference_path,
                     lock_fail_mode,
-                    Some(base.clone().into_owned()),
+                    Some(lock_boundary.clone()),
                     0,
                 )?;
 
@@ -101,12 +104,11 @@ impl Transaction<'_, '_> {
                 Some(lock)
             }
             Change::Update { expected, new, .. } => {
-                let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref())?;
                 let obtain_lock = || {
                     gix_lock::File::acquire_to_update_resource(
-                        base.join(relative_path.as_ref()),
+                        &reference_path,
                         lock_fail_mode,
-                        Some(base.clone().into_owned()),
+                        Some(lock_boundary.clone()),
                         0,
                     )
                 };
@@ -396,6 +398,38 @@ impl Transaction<'_, '_> {
             .map(|updates| updates.into_iter().map(|u| u.update).collect())
             .unwrap_or_default()
     }
+}
+
+/// Resolve the reference path and the directory that empty-parent lock cleanup must preserve.
+/// Keep the physical `refs` root for discovery; pseudorefs retain their containing directory.
+///
+/// For a resolved base of `/repo/.git`, relative paths produce these cleanup boundaries:
+///
+/// * `refs/heads/topic` -> `/repo/.git/refs`
+/// * `refs/namespaces/team/refs/heads/topic` -> `/repo/.git/refs`
+/// * `HEAD` -> `/repo/.git`
+/// * `worktrees/other/HEAD` -> `/repo/.git/worktrees/other`
+/// * `worktrees/other/refs/bisect/bad` -> `/repo/.git/worktrees/other/refs`
+/// * `worktrees/refs/refs/bisect/bad` -> `/repo/.git/worktrees/refs/refs`
+///
+/// The store resolves namespaces and worktree aliases before selecting the boundary.
+fn reference_path_and_lock_boundary(store: &file::Store, name: &FullNameRef) -> Result<(PathBuf, PathBuf)> {
+    let (base, relative_path) = store.reference_path_with_base(name)?;
+    let reference_path = base.join(relative_path.as_ref());
+    let mut lock_boundary = base.into_owned();
+    let worktree_prefix = relative_path.starts_with("worktrees");
+    for (index, component) in relative_path
+        .parent()
+        .expect("reference paths have a parent")
+        .components()
+        .enumerate()
+    {
+        lock_boundary.push(component);
+        if component.as_os_str() == "refs" && (!worktree_prefix || index >= 2) {
+            break;
+        }
+    }
+    Ok((reference_path, lock_boundary))
 }
 
 fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {

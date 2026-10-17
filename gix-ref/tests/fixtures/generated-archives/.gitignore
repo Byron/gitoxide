@@ -14,3 +14,5 @@ make_worktree_repo_packed_sha256.tar
 # whose target paths are validated by the host git; regenerating per run keeps
 # the format aligned with the git binary doing the comparison.
 make_multi_hop_ref*.tar
+# Generate this small directory-cleanup fixture and its host-Git baselines.
+keep_refs_directory*.tar

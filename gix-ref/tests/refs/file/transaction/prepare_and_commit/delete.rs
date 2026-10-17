@@ -15,6 +15,40 @@ use gix_ref::{
 use gix_testtools::TestResult;
 
 #[test]
+fn deleting_the_last_loose_reference_preserves_refs_directory_like_git() -> TestResult {
+    for (case, name) in [("flat", "refs/topic"), ("nested", "refs/heads/a/b/topic")] {
+        let fixture = crate::scripted_fixture_writable("keep_refs_directory.sh")?;
+        let git_dir = fixture.path().join(format!("delete-{case}/.git"));
+        let expected_git_dir = fixture.path().join(format!("git-delete-{case}/.git"));
+        assert!(
+            expected_git_dir.join("refs").is_dir(),
+            "{case}: Git preserves the refs root"
+        );
+        let store = gix_ref::file::Store::at(git_dir.clone(), crate::fixture_hash_kind());
+        store
+            .transaction()
+            .prepare(
+                [RefEdit::delete(name.try_into()?, PreviousValue::MustExist)],
+                Fail::Immediately,
+                Fail::Immediately,
+            )?
+            .commit(None)?;
+        assert!(store.try_find(name)?.is_none(), "{case}: the reference was deleted");
+        assert!(
+            git_dir.join("refs").is_dir(),
+            "{case}: deletion must preserve the refs root"
+        );
+        assert_eq!(
+            std::fs::read_dir(git_dir.join("refs"))?.count(),
+            0,
+            "{case}: no reference, lock, or empty descendant directories remain"
+        );
+        gix_discover::is_git(&git_dir)?;
+    }
+    Ok(())
+}
+
+#[test]
 fn delete_a_ref_which_is_gone_succeeds() -> TestResult {
     let (_keep, store) = empty_store()?;
     let edits = store
