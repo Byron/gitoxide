@@ -123,6 +123,116 @@ pub fn append_config_to_repo_config(repo: &mut Repository, config: gix_config::F
         .map(|_| ())
 }
 
+/// Select the mapping for the remote's `HEAD` using Git clone's branch-selection order:
+///
+/// 1. If `HEAD` is symbolic, return the first mapping for its target, without falling back to other branches.
+/// 2. If `HEAD` is direct, consider only mapped branches pointing to the same object ID. Prefer
+///    `refs/heads/<init.defaultBranch>` (defaulting to `master`), then `refs/heads/master`.
+/// 3. Otherwise, select the lexicographically first matching branch under `refs/heads/`.
+///
+/// Return `None` if `HEAD` is absent, unborn, or neither symbolic nor direct, or no eligible mapping exists.
+/// If multiple mappings refer to the selected remote branch, return the first so its local peer is preserved.
+pub(super) fn guess_remote_head<'a>(
+    repo: &Repository,
+    ref_map: &'a crate::remote::fetch::RefMap,
+) -> Result<Option<&'a gix_protocol::fetch::refmap::Mapping>> {
+    let Some(head) = ref_map
+        .remote_refs
+        .iter()
+        .find(|reference| reference.unpack().0 == "HEAD")
+    else {
+        return Ok(None);
+    };
+    let (target, commit_id) = match head {
+        gix_protocol::handshake::Ref::Symbolic { target, object, .. } => {
+            (Some(target.as_bstr()), Some(object.as_ref()))
+        }
+        gix_protocol::handshake::Ref::Direct { object, .. } => (None, Some(object.as_ref())),
+        _ => return Ok(None),
+    };
+    if let Some(target) = target {
+        return Ok(ref_map
+            .mappings
+            .iter()
+            .find(|mapping| mapping.remote.as_name() == Some(target)));
+    }
+    let branch_name = repo
+        .config_snapshot()
+        .string(crate::config::tree::Init::DEFAULT_BRANCH)
+        .unwrap_or_else(|| "master".into());
+    for name in [format!("refs/heads/{branch_name}"), "refs/heads/master".into()] {
+        if let Some(mapping) = ref_map.mappings.iter().find(|mapping| {
+            mapping.remote.as_name() == Some(name.as_bytes().as_bstr()) && mapping.remote.as_id() == commit_id
+        }) {
+            return Ok(Some(mapping));
+        }
+    }
+    Ok(ref_map
+        .mappings
+        .iter()
+        .filter(|mapping| {
+            mapping
+                .remote
+                .as_name()
+                .is_some_and(|name| name.starts_with(b"refs/heads/"))
+                && mapping.remote.as_id() == commit_id
+        })
+        .min_by_key(|mapping| mapping.remote.as_name()))
+}
+
+/// Record the selected branch's mapped peer before updating local HEAD, as Git clone does.
+pub(super) fn update_remote_head(
+    repo: &Repository,
+    ref_map: &crate::remote::fetch::RefMap,
+    reflog_message: &BStr,
+    remote_name: &BStr,
+) -> Result<()> {
+    if repo.is_bare() {
+        return Ok(());
+    }
+    let Some(mapping) = guess_remote_head(repo, ref_map)? else {
+        return Ok(());
+    };
+    let Some(tracking_branch) = mapping.local.as_ref() else {
+        return Ok(());
+    };
+    let head_name =
+        gix_ref::FullName::try_from(BString::from(format!("refs/remotes/{remote_name}/HEAD"))).or_error()?;
+    repo.edit_reference(gix_ref::transaction::RefEdit::update_with_log(
+        head_name.clone(),
+        gix_ref::FullName::try_from(tracking_branch.clone()).or_error()?,
+        gix_ref::transaction::PreviousValue::Any,
+        LogChange {
+            mode: RefLog::AndReference,
+            force_create_reflog: false,
+            message: reflog_message.to_owned(),
+        },
+    ))
+    .or_raise(|| message("Failed to record the remote default branch"))?;
+    if repo
+        .find_reference(head_name.as_ref())?
+        .log_iter()
+        .all()
+        .or_error()?
+        .is_none()
+        && let Some(commit_id) = mapping.remote.as_id()
+    {
+        // shortcut: symref reflogs lose the previous OID on HEAD-name collisions; fix in gix-ref when it supports symbolic logging.
+        repo.edit_reference(gix_ref::transaction::RefEdit::update_with_log(
+            head_name,
+            commit_id.to_owned(),
+            gix_ref::transaction::PreviousValue::Any,
+            LogChange {
+                mode: RefLog::Only,
+                force_create_reflog: false,
+                message: reflog_message.to_owned(),
+            },
+        ))
+        .or_raise(|| message("Failed to record the remote default branch's reflog"))?;
+    }
+    Ok(())
+}
+
 /// HEAD cannot be written by means of refspec by design, so we have to do it manually here. Also create the pointed-to ref
 /// if we have to, as it might not have been naturally included in the ref-specs.
 /// Lastly, use `ref_name` if it was provided instead, and let `HEAD` point to it.
@@ -147,30 +257,53 @@ pub fn update_head(
                 .id)
         })
         .transpose()?;
-    let head_info = match revision_head_id.as_ref() {
+    let detached_tag_id = ref_name
+        .map(|name| -> Result<Option<gix_hash::ObjectId>> {
+            let (target, full_name) = find_custom_refname(ref_map, name)?;
+            if full_name.starts_with(b"refs/heads/") {
+                return Ok(None);
+            }
+            Ok(Some(repo.find_object(target)?.peel_to_commit()?.id))
+        })
+        .transpose()?
+        .flatten();
+    let head_info = match revision_head_id.as_ref().or(detached_tag_id.as_ref()) {
         Some(id) => Some((Some(id.as_ref()), None)),
         None => match ref_name {
             Some(ref_name) => {
                 let (target, full_ref_name) = find_custom_refname(ref_map, ref_name)?;
-                Some((Some(target), Some(full_ref_name)))
+                Some((
+                    Some(target),
+                    full_ref_name.starts_with(b"refs/heads/").then_some(full_ref_name),
+                ))
             }
-            None => ref_map.remote_refs.iter().find_map(|r| {
-                Some(match r {
-                    gix_protocol::handshake::Ref::Symbolic {
-                        full_ref_name,
-                        target,
-                        tag: _,
-                        object,
-                    } if full_ref_name == "HEAD" => (Some(object.as_ref()), Some(target.as_bstr())),
-                    gix_protocol::handshake::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
-                        (Some(object.as_ref()), None)
-                    }
-                    gix_protocol::handshake::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
-                        (None, Some(target.as_bstr()))
-                    }
-                    _ => return None,
-                })
-            }),
+            None => {
+                if let Some(mapping) = guess_remote_head(repo, ref_map)? {
+                    Some((mapping.remote.as_id(), mapping.remote.as_name()))
+                } else {
+                    ref_map.remote_refs.iter().find_map(|r| {
+                        Some(match r {
+                            gix_protocol::handshake::Ref::Symbolic {
+                                full_ref_name,
+                                target: _,
+                                tag: _,
+                                object,
+                            } if full_ref_name == "HEAD" => (Some(object.as_ref()), None),
+                            gix_protocol::handshake::Ref::Direct { full_ref_name, object }
+                                if full_ref_name == "HEAD" =>
+                            {
+                                (Some(object.as_ref()), None)
+                            }
+                            gix_protocol::handshake::Ref::Unborn { full_ref_name, target }
+                                if full_ref_name == "HEAD" =>
+                            {
+                                (None, Some(target.as_bstr()))
+                            }
+                            _ => return None,
+                        })
+                    })
+                }
+            }
         },
     };
     let Some((head_peeled_id, head_ref)) = head_info else {
@@ -188,53 +321,39 @@ pub fn update_head(
             let referent: gix_ref::FullName = gix_ref::FullName::try_from(referent).or_raise(|| {
                 message!("The remote HEAD points to a reference named {referent:?} which is invalid.").validation()
             })?;
-            repo.refs
-                .transaction()
-                .packed_refs(gix_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
-                    Box::new(&repo.objects),
-                ))
-                .prepare(
-                    {
-                        let mut edits = vec![RefEdit::update_with_log(
-                            head.clone(),
-                            referent.clone(),
-                            PreviousValue::Any,
-                            reflog_message(),
-                        )];
-                        if let Some(head_peeled_id) = head_peeled_id {
-                            edits.push(RefEdit::update_with_log(
-                                referent.clone(),
-                                head_peeled_id.to_owned(),
-                                PreviousValue::Any,
-                                reflog_message(),
-                            ));
-                        }
-                        edits
-                    },
-                    gix_lock::acquire::Fail::Immediately,
-                    gix_lock::acquire::Fail::Immediately,
-                )
-                .or_raise(|| message("Failed to update HEAD with values from remote"))?
-                .commit(
-                    repo.committer()
-                        .transpose()
-                        .or_raise(|| message("Failed to update HEAD with values from remote"))?,
-                )
-                .or_raise(|| message("Failed to update HEAD with values from remote"))?;
-
-            if let Some(head_peeled_id) = head_peeled_id {
-                let mut log = reflog_message();
-                log.mode = RefLog::Only;
-                repo.edit_reference(RefEdit::update_with_log(
-                    head,
-                    head_peeled_id.to_owned(),
-                    PreviousValue::Any,
-                    log,
-                ))
-                .or_raise(|| message("Failed to update HEAD with values from remote"))?;
+            repo.edit_reference(RefEdit::update_with_log(
+                head.clone(),
+                referent.clone(),
+                PreviousValue::Any,
+                reflog_message(),
+            ))
+            .or_raise(|| message("Failed to update HEAD with values from remote"))?;
+            if !repo.is_bare() {
+                // Git logs the existing peer when linking HEAD, then the update through HEAD.
+                if let Some(mut reference) = repo.try_find_reference(referent.as_ref())? {
+                    let commit_id = reference.follow_to_object()?;
+                    let mut log = reflog_message();
+                    log.mode = RefLog::Only;
+                    repo.edit_reference(RefEdit::update_with_log(
+                        head.clone(),
+                        commit_id.detach(),
+                        PreviousValue::Any,
+                        log,
+                    ))?;
+                }
+                if let Some(head_peeled_id) = head_peeled_id {
+                    let mut edit = RefEdit::update_with_log(
+                        head.clone(),
+                        head_peeled_id.to_owned(),
+                        PreviousValue::Any,
+                        reflog_message(),
+                    );
+                    edit.deref = true;
+                    repo.edit_reference(edit)
+                        .or_raise(|| message("Failed to update HEAD with values from remote"))?;
+                }
+                setup_branch_config(repo, referent.as_ref(), head_peeled_id, remote_name)?;
             }
-
-            setup_branch_config(repo, referent.as_ref(), head_peeled_id, remote_name)?;
         }
         None => {
             repo.edit_reference(RefEdit::update_with_log(
@@ -353,9 +472,11 @@ pub(super) fn find_custom_refname<'a>(
     }
 }
 
-/// Set up the remote configuration for `branch` so that it points to itself, but on the remote, if and only if currently
-/// saved refspecs are able to match it.
-/// For that we reload the remote of `remote_name` and use its `ref_specs` for match.
+/// Configure `branch` in `repo` to track the same-named branch on `remote_name`, looking up that remote
+/// in `repo` and matching its saved fetch refspecs against `branch` and its target `branch_id`.
+/// If `branch_id` is `None`, the branch is unborn and upstream configuration is written even without a match.
+/// Otherwise, write it only if a refspec matches. Persist the configuration to disk and update `repo` in memory.
+/// Ignore branches outside `refs/heads/` or whose short names are not valid UTF-8.
 fn setup_branch_config(
     repo: &mut Repository,
     branch: &FullNameRef,
@@ -382,7 +503,7 @@ fn setup_branch_config(
         })
         .into_iter(),
     );
-    if !res.mappings.is_empty() {
+    if branch_id.is_none() || !res.mappings.is_empty() {
         let mut config = repo.config_snapshot_mut();
         let mut section = config
             .new_section("branch", short_name)

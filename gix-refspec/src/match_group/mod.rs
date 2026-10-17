@@ -119,6 +119,10 @@ impl<'spec> MatchGroup<'spec> {
     /// `items` are expected to be tracking references in the local clone, which will be matched and reverse-mapped to obtain their remote counterparts,
     /// i.e. *right side of refspecs is mapped to their left side*.
     ///
+    /// Matching and substitution are literal, apart from glob captures: destinations aren't expanded as partial
+    /// names or matched against object IDs, and sources retain their parsed spelling. Thus a mapping's `lhs`
+    /// can be an abbreviated name, `HEAD`, or a hexadecimal object ID, not necessarily a full reference name.
+    ///
     /// Even though this method starts by matching `items` against the right-hand side of positive refspecs,
     /// negative fetch refspecs still exclude refs by their left-hand/source side. For that reason, once a
     /// mapping has been reverse-mapped to its source ref, negative refspecs are applied to the mapping's `lhs`.
@@ -137,7 +141,7 @@ impl<'spec> MatchGroup<'spec> {
                 out.push(mapping);
             }
         };
-        let mut matchers: Vec<Matcher<'_>> = self.specs.iter().copied().map(Matcher::from).collect();
+        let mut matchers: Vec<Matcher<'_>> = self.specs.iter().copied().map(Matcher::for_reverse_mapping).collect();
 
         let mut has_negation = false;
         for (spec_index, (spec, matcher)) in self.specs.iter().zip(matchers.iter_mut()).enumerate() {

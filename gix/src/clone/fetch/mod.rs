@@ -1,12 +1,8 @@
-use crate::{Error, Result, bstr::BStr, clone::PrepareFetch};
+use crate::{Result, bstr::BStr, clone::PrepareFetch};
 use gix_error::ResultExt;
 use gix_ref::Category;
 
 use crate::config::tree::Key;
-
-fn mapping_validation(err: &Error) -> Option<&gix_refspec::match_group::validate::Error> {
-    err.downcast_any_ref()
-}
 
 /// Modification
 impl PrepareFetch {
@@ -65,13 +61,19 @@ impl PrepareFetch {
         };
 
         let mut remote = repo.remote_at(self.url.clone())?;
+        let branch_prefix = if repo.is_bare() {
+            "refs/heads/".to_owned()
+        } else {
+            format!("refs/remotes/{remote_name}/")
+        };
 
         // For shallow clones without custom configuration, we'll use a single-branch refspec
         // to match git's behavior (matching git's single-branch behavior for shallow clones).
         let use_single_branch_for_shallow = self.shallow != remote::fetch::Shallow::NoChange
             && remote.fetch_specs.is_empty()
             && self.fetch_options.extra_refspecs.is_empty()
-            && self.revision.is_none();
+            && self.revision.is_none()
+            && self.configure_remote.is_none();
 
         let target_ref: Option<gix_ref::FullName> = if use_single_branch_for_shallow {
             // Determine target branch from user-specified ref_name or default branch
@@ -101,7 +103,7 @@ impl PrepareFetch {
                 Some(gix_ref::FullName::try_from(full_ref_name).or_error()?)
             } else {
                 // For shallow clones without a specified ref, we need to determine the ref to clone.
-                // Just fetch HEAD for that.
+                // Advertise branches too so a detached HEAD can be matched to a branch.
                 let prev_tags = std::mem::replace(&mut remote.fetch_tags, remote::fetch::Tags::None);
                 let mut connection = remote.connect(remote::Direction::Fetch).await?;
                 if let Some(f) = self.configure_connection.as_mut() {
@@ -114,6 +116,12 @@ impl PrepareFetch {
                         &mut progress,
                         remote::ref_map::Options {
                             extra_refspecs: vec![
+                                gix_refspec::parse(
+                                    "refs/heads/*:refs/heads/*".into(),
+                                    gix_refspec::parse::Operation::Fetch,
+                                )
+                                .expect("valid")
+                                .to_owned(),
                                 gix_refspec::parse("HEAD".into(), gix_refspec::parse::Operation::Fetch)
                                     .expect("valid")
                                     .to_owned(),
@@ -123,35 +131,13 @@ impl PrepareFetch {
                     )
                     .await?;
 
-                // Find HEAD in the remote refs (works for both Protocol V1 and V2)
-                let target = refmap
-                    .remote_refs
-                    .iter()
-                    .find_map(|r| match r {
-                        gix_protocol::handshake::Ref::Symbolic {
-                            full_ref_name, target, ..
-                        }
-                        | gix_protocol::handshake::Ref::Unborn {
-                            full_ref_name, target, ..
-                        } if full_ref_name == "HEAD" => gix_ref::FullName::try_from(target)
-                            .or_raise(|| {
-                                gix_error::message!(
-                                    "The remote HEAD points to a reference named {target:?} which is invalid."
-                                )
-                                .validation()
-                            })
-                            .into(),
-                        _ => None,
-                    })
-                    .transpose()?;
-
-                let target = target.ok_or_else(|| {
-                    gix_error::message("The remote didn't have a ref that matched 'HEAD'").not_found_error()
-                })?;
-
+                let target = util::guess_remote_head(&repo, &refmap)?
+                    .and_then(|mapping| mapping.remote.as_name())
+                    .map(gix_ref::FullName::try_from)
+                    .transpose()
+                    .or_error()?;
                 remote.fetch_tags = prev_tags;
-
-                Some(target)
+                target
             }
         } else {
             None
@@ -164,7 +150,7 @@ impl PrepareFetch {
                 // Single-branch refspec for shallow clones
                 let destination = match target_ref.category_and_short_name() {
                     Some((Category::LocalBranch, short_name)) => {
-                        format!("refs/remotes/{remote_name}/{short_name}")
+                        format!("{branch_prefix}{short_name}")
                     }
                     _ => target_ref.to_string(),
                 };
@@ -174,29 +160,34 @@ impl PrepareFetch {
                         remote::Direction::Fetch,
                     )
                     .expect("valid refspec");
-            } else {
+            } else if !use_single_branch_for_shallow {
                 // Wildcard refspec for non-shallow clones or when target couldn't be determined
                 remote = remote
                     .with_refspecs(
-                        Some(format!("+refs/heads/*:refs/remotes/{remote_name}/*").as_str()),
+                        Some(format!("+refs/heads/*:{branch_prefix}*").as_str()),
                         remote::Direction::Fetch,
                     )
                     .expect("valid static spec");
             }
         }
 
+        // Bare clone defaults are used for the initial fetch, but are not remote configuration.
+        let bare_fetch_specs = repo.is_bare().then(|| std::mem::take(&mut remote.fetch_specs));
         let mut clone_fetch_tags = None;
         if let Some(f) = self.configure_remote.as_mut() {
             remote =
                 f(remote).or_raise(|| gix_error::message("Custom configuration of remote to clone from failed"))?;
         } else if self.revision.is_none() {
-            clone_fetch_tags = remote::fetch::Tags::All.into();
+            clone_fetch_tags = Some(if use_single_branch_for_shallow {
+                remote::fetch::Tags::Included
+            } else {
+                remote::fetch::Tags::All
+            });
         }
         if self.revision.is_some() {
             remote
                 .replace_refspecs(std::iter::empty::<&BStr>(), remote::Direction::Fetch)
                 .expect("an empty refspec list is always valid");
-            remote = remote.with_fetch_tags(remote::fetch::Tags::None);
         }
 
         // The remote section just written to `.git/config`, kept around so we can
@@ -210,19 +201,23 @@ impl PrepareFetch {
         let mut config = config;
 
         // Now we are free to apply remote configuration we don't want to be written to disk.
+        if remote.fetch_specs.is_empty()
+            && self.revision.is_none()
+            && let Some(specs) = bare_fetch_specs
+        {
+            remote.fetch_specs = specs;
+        }
+        if self.revision.is_some() {
+            remote = remote.with_fetch_tags(remote::fetch::Tags::None);
+        }
         if let Some(fetch_tags) = clone_fetch_tags {
             remote = remote.with_fetch_tags(fetch_tags);
         }
 
-        // Add HEAD after the remote was written to config, we need it to know what to check out later, and assure
-        // the ref that HEAD points to is present no matter what.
-        let head_local_tracking_branch = format!("refs/remotes/{remote_name}/HEAD");
-        let head_refspec = gix_refspec::parse(
-            format!("HEAD:{head_local_tracking_branch}").as_str().into(),
-            gix_refspec::parse::Operation::Fetch,
-        )
-        .expect("valid")
-        .to_owned();
+        // Fetch HEAD's object without writing a tracking ref; clone creates its symref from the selected peer.
+        let head_refspec = gix_refspec::parse("HEAD".into(), gix_refspec::parse::Operation::Fetch)
+            .expect("valid")
+            .to_owned();
         let pending_pack = {
             // For shallow clones, we already connected once, so we need to connect again
             let mut connection = remote.connect(remote::Direction::Fetch).await?;
@@ -231,16 +226,18 @@ impl PrepareFetch {
                     .or_raise(|| gix_error::message("Custom configuration of connection to use when cloning failed"))?;
             }
             let connection = connection.into_detached();
-            let mut fetch_opts = {
+            let fetch_opts = {
                 let mut opts = self.fetch_options.clone();
                 if let Some(revision) = &self.revision {
                     opts.extra_refspecs.clear();
                     opts.extra_refspecs.push(revision.clone());
                 } else {
-                    if !opts.extra_refspecs.contains(&head_refspec) {
+                    if !(opts.extra_refspecs.contains(&head_refspec)
+                        || use_single_branch_for_shallow && self.ref_name.is_some())
+                    {
                         opts.extra_refspecs.push(head_refspec.clone());
                     }
-                    if let Some(ref_name) = &self.ref_name {
+                    if let Some(ref_name) = self.ref_name.as_ref().filter(|_| !use_single_branch_for_shallow) {
                         opts.extra_refspecs.push(
                             gix_refspec::parse(ref_name.as_ref().as_bstr(), gix_refspec::parse::Operation::Fetch)
                                 .expect("partial names are valid refspecs")
@@ -250,37 +247,7 @@ impl PrepareFetch {
                 }
                 opts
             };
-            match connection.prepare_fetch(&repo, &mut progress, fetch_opts.clone()).await {
-                Ok(prepare) => prepare,
-                Err(err)
-                    if fetch_opts.extra_refspecs.contains(&head_refspec)
-                        && mapping_validation(&err).is_some_and(|err| {
-                            err.issues.len() == 1
-                                && matches!(
-                                    err.issues.first(),
-                                    Some(gix_refspec::match_group::validate::Issue::Conflict {
-                                        destination_full_ref_name,
-                                        ..
-                                    }) if destination_full_ref_name.as_slice() == head_local_tracking_branch.as_bytes()
-                                )
-                        }) =>
-                {
-                    let head_refspec_idx = fetch_opts
-                        .extra_refspecs
-                        .iter()
-                        .enumerate()
-                        .find_map(|(idx, spec)| (*spec == head_refspec).then_some(idx))
-                        .expect("it's contained");
-                    // On the very special occasion that we fail as there is a remote `refs/heads/HEAD` reference that clashes
-                    // with our implicit refspec, retry without it. Maybe this tells us that we shouldn't have that implicit
-                    // refspec, as git can do this without connecting twice.
-                    let connection = remote.connect(remote::Direction::Fetch).await?;
-                    let connection = connection.into_detached();
-                    fetch_opts.extra_refspecs.remove(head_refspec_idx);
-                    connection.prepare_fetch(&repo, &mut progress, fetch_opts).await?
-                }
-                Err(err) => return Err(err),
-            }
+            connection.prepare_fetch(&repo, &mut progress, fetch_opts).await?
         };
         drop(remote);
 
@@ -335,13 +302,16 @@ impl PrepareFetch {
             b.insert_str(0, "clone: from ");
             b
         };
+        // Git clone writes its initial packed refs without creating reflogs.
+        let mut receiving_repo = repo.clone();
+        receiving_repo.refs.write_reflog = gix_ref::store::WriteReflog::Disable;
         let outcome = pending_pack
             .with_write_packed_refs_only(true)
             .with_reflog_message(RefLogMessage::Override {
                 message: reflog_message.clone(),
             })
             .with_shallow(self.shallow.clone())
-            .receive(&repo, &mut progress, should_interrupt)
+            .receive(&receiving_repo, &mut progress, should_interrupt)
             .await?;
 
         // Before finalisation, the current repo handle still needs to
@@ -349,6 +319,7 @@ impl PrepareFetch {
         if let Some(config) = config {
             util::append_config_to_repo_config(&mut repo, config)?;
         }
+        util::update_remote_head(&repo, &outcome.ref_map, reflog_message.as_ref(), remote_name.as_ref())?;
         util::update_head(
             &mut repo,
             &outcome.ref_map,
@@ -377,7 +348,6 @@ impl PrepareFetch {
         Ok((
             crate::clone::PrepareCheckout {
                 repo: repo.into(),
-                ref_name: self.ref_name.clone(),
                 remove_worktree_on_drop: self.remove_worktree_on_drop,
             },
             fetch_outcome,

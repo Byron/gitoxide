@@ -2,6 +2,7 @@ mod util;
 use util::*;
 
 mod clone;
+mod clone_refs;
 mod commit;
 mod config;
 #[cfg(feature = "blob-diff")]

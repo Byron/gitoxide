@@ -82,8 +82,67 @@ fn intermediate_directories_are_removed_on_rollback() -> TestResult {
 
         assert!(!dir.path().join("refs/heads").exists());
         assert!(
-            !dir.path().join("refs").exists(),
-            "we go all in right now and also remove the refs directory. 'git' might not do that, but it's not a problem either"
+            dir.path().join("refs").is_dir(),
+            "rollback preserves the refs root required for repository discovery"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn rollback_preserves_resolved_reference_roots() -> TestResult {
+    for (name, namespace, root) in [
+        ("HEAD", None, ""),
+        ("refs/heads/a/b/ref", None, "refs"),
+        ("main-worktree/refs/bisect/bad", None, "refs"),
+        ("worktrees/other/refs/bisect/bad", None, "worktrees/other/refs"),
+        ("worktrees/other/HEAD", None, "worktrees/other"),
+        ("worktrees/refs/HEAD", None, "worktrees/refs"),
+        ("worktrees/refs/refs/bisect/bad", None, "worktrees/refs/refs"),
+        ("HEAD", Some("foo/bar"), "refs"),
+        ("refs/heads/a/b/ref", Some("foo/bar"), "refs"),
+    ] {
+        let (dir, mut store) = empty_store()?;
+        store.namespace = namespace.map(gix_ref::namespace::expand).transpose()?;
+        store
+            .transaction()
+            .prepare([create_at(name)], Fail::Immediately, Fail::Immediately)?
+            .rollback();
+        let root = dir.path().join(root);
+        assert!(
+            root.is_dir(),
+            "{name} in {namespace:?}: the resolved root survives rollback"
+        );
+        assert_eq!(
+            std::fs::read_dir(root)?.count(),
+            0,
+            "{name} in {namespace:?}: locks and empty descendants are removed"
+        );
+    }
+    for name in ["refs/heads/a/b/ref", "refs/bisect/bad"] {
+        let dir = gix_testtools::tempfile::TempDir::new()?;
+        let git_dir = dir.path().join("worktree");
+        let common_dir = dir.path().join("common");
+        let store =
+            gix_ref::file::Store::for_linked_worktree(git_dir.clone(), common_dir.clone(), crate::fixture_hash_kind());
+        store
+            .transaction()
+            .prepare([create_at(name)], Fail::Immediately, Fail::Immediately)?
+            .rollback();
+        let root = if name.starts_with("refs/heads/") {
+            common_dir
+        } else {
+            git_dir
+        }
+        .join("refs");
+        assert!(
+            root.is_dir(),
+            "{name}: linked-worktree routing preserves the correct refs root"
+        );
+        assert_eq!(
+            std::fs::read_dir(root)?.count(),
+            0,
+            "{name}: empty descendants are removed"
         );
     }
     Ok(())
@@ -941,6 +1000,58 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> TestResult {
 #[test]
 fn packed_refs_creation_with_tag_loop_are_not_handled_and_cannot_exist_due_to_object_hashes() {
     // Tag loops cannot exist as you cannot create them thanks to hashing.
+}
+
+#[test]
+fn packing_the_last_loose_reference_preserves_refs_directory_like_git() -> TestResult {
+    for (case, name) in [("flat", "refs/topic"), ("nested", "refs/heads/a/b/topic")] {
+        let fixture = crate::scripted_fixture_writable("keep_refs_directory.sh")?;
+        let git_dir = fixture.path().join(format!("pack-{case}/.git"));
+        let expected_git_dir = fixture.path().join(format!("git-pack-{case}/.git"));
+        assert!(
+            expected_git_dir.join("refs").is_dir(),
+            "{case}: Git preserves the refs root"
+        );
+        let mut store = gix_ref::file::Store::at(git_dir.clone(), crate::fixture_hash_kind());
+        store.write_reflog = WriteReflog::Disable;
+        let reference = store.find(name)?;
+        store
+            .transaction()
+            .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
+                Box::new(crate::file::odb_at(git_dir.join("objects"))?),
+            ))
+            .prepare(
+                [RefEdit::update(
+                    reference.name,
+                    reference.target,
+                    PreviousValue::MustExist,
+                    "",
+                )],
+                Fail::Immediately,
+                Fail::Immediately,
+            )?
+            .commit(None)?;
+        assert!(
+            store.try_find_loose(name)?.is_none(),
+            "{case}: the loose source was pruned"
+        );
+        assert_eq!(
+            std::fs::read(store.packed_refs_path())?,
+            std::fs::read(expected_git_dir.join("packed-refs"))?,
+            "{case}: packed references agree with Git"
+        );
+        assert!(
+            git_dir.join("refs").is_dir(),
+            "{case}: packing must preserve the refs root"
+        );
+        assert_eq!(
+            std::fs::read_dir(git_dir.join("refs"))?.count(),
+            0,
+            "{case}: no reference, lock, or empty descendant directories remain"
+        );
+        gix_discover::is_git(&git_dir)?;
+    }
+    Ok(())
 }
 
 #[test]

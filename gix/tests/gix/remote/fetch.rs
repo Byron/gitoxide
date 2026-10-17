@@ -218,12 +218,27 @@ mod blocking_and_async_io {
             let (local_repo, _) = gix::clone::PrepareFetch::new(
                 remote_repo.path(),
                 local_dir.path(),
-                gix::create::Kind::Bare,
+                gix::create::Kind::WithWorktree,
                 Default::default(),
                 gix::open::Options::isolated().object_store_slots(Slots::Given(max_packs)),
             )?
             .fetch_only(gix::progress::Discard, &IS_INTERRUPTED)?;
 
+            let remote_head_name = "refs/remotes/origin/HEAD";
+            let default_branch = remote_repo.head_name()?.expect("the remote has a branch");
+            assert_eq!(
+                local_repo.find_remote("origin")?.default_branch()?,
+                Some(default_branch),
+                "the clone records the default branch without contacting the remote again"
+            );
+            assert!(
+                local_repo
+                    .find_reference(remote_head_name)?
+                    .target()
+                    .try_name()
+                    .is_some(),
+                "remote HEAD tracks the default symbolically so it follows subsequent fetches"
+            );
             let remote = local_repo
                 .branch_remote(
                     local_repo.head_ref()?.expect("branch available").name().shorten(),
@@ -244,7 +259,14 @@ mod blocking_and_async_io {
                     .prepare_fetch(gix::progress::Discard, Default::default())?
                     .receive(gix::progress::Discard, &IS_INTERRUPTED)
                 {
-                    Ok(out) => check_fetch_output(&local_repo, out, expected_object_count)?,
+                    Ok(out) => {
+                        check_fetch_output(&local_repo, out, expected_object_count)?;
+                        assert_eq!(
+                            local_repo.find_reference(remote_head_name)?.peel_to_id()?,
+                            remote_repo.head_id()?,
+                            "remote HEAD follows the default tracking branch after fetching its new tip"
+                        );
+                    }
                     Err(err) => {
                         let context = err.metadata().next().expect("index capacity details");
                         assert_eq!(
@@ -477,7 +499,7 @@ mod blocking_and_async_io {
                     let client_repo = remote::repo("multi_round/client");
                     let daemon = spawn_git_daemon_if_async(client_repo.workdir().expect("non-bare"))?;
                     let tmp = TempDir::new()?;
-                    let repo = gix::prepare_clone_bare(
+                    let repo = gix::prepare_clone(
                         daemon.as_ref().map_or_else(
                             || client_repo.git_dir().to_owned(),
                             |d| std::path::PathBuf::from(format!("{}/", d.url)),
@@ -487,6 +509,20 @@ mod blocking_and_async_io {
                     .fetch_only(gix::progress::Discard, &std::sync::atomic::AtomicBool::default())
                     .await?
                     .0;
+                    let remote_head = repo.find_reference("refs/remotes/origin/HEAD")?;
+                    assert_eq!(
+                        remote_head.target().try_name().map(gix::refs::FullNameRef::as_bstr),
+                        Some(gix::bstr::BStr::new("refs/remotes/origin/b8")),
+                        "cloning records the advertised default as a symbolic tracking reference"
+                    );
+                    assert_eq!(
+                        repo.find_remote("origin")?
+                            .default_branch()?
+                            .as_ref()
+                            .map(gix::refs::FullName::as_bstr),
+                        Some(gix::bstr::BStr::new("refs/heads/b8")),
+                        "the default branch is available offline in blocking and async clones"
+                    );
                     (repo, tmp)
                 };
 
