@@ -1,5 +1,6 @@
+use gix_commitgraph::Parent;
 use gix_error::{Error, ErrorExt, Result, corruption, message};
-use gix_hash::{ObjectId, oid};
+use gix_hash::oid;
 use gix_revwalk::PriorityQueue;
 use smallvec::SmallVec;
 
@@ -78,13 +79,17 @@ where
             self.explore_to_depth(generation)?;
 
             let parents = self.collect_parents(&id)?;
-            for (id, gen_time) in parents {
-                self.indegrees.entry(id).and_modify(|e| *e += 1).or_insert(2);
+            for parent in parents {
+                self.indegrees
+                    .entry(parent.commit_id)
+                    .and_modify(|e| *e += 1)
+                    .or_insert(2);
 
-                let state = self.states.get_mut(&id).ok_or_else(missing_state)?;
+                let state = self.states.get_mut(&parent.commit_id).ok_or_else(missing_state)?;
                 if !state.contains(WalkFlags::InDegree) {
                     *state |= WalkFlags::InDegree;
-                    self.indegree_queue.insert(gen_time, id);
+                    self.indegree_queue
+                        .insert((parent.generation, parent.commit_time), parent.commit_id);
                 }
             }
         }
@@ -107,12 +112,13 @@ where
             let parents = self.collect_parents(&id)?;
             self.process_parents(&id, &parents)?;
 
-            for (id, gen_time) in parents {
-                let state = self.states.get_mut(&id).ok_or_else(missing_state)?;
+            for parent in parents {
+                let state = self.states.get_mut(&parent.commit_id).ok_or_else(missing_state)?;
 
                 if !state.contains(WalkFlags::Explored) {
                     *state |= WalkFlags::Explored;
-                    self.explore_queue.insert(gen_time, id);
+                    self.explore_queue
+                        .insert((parent.generation, parent.commit_time), parent.commit_id);
                 }
             }
         }
@@ -123,7 +129,12 @@ where
         let parents = self.collect_parents(id)?;
         self.process_parents(id, &parents)?;
 
-        for (pid, (parent_gen, parent_commit_time)) in parents {
+        for Parent {
+            commit_id: pid,
+            generation: parent_gen,
+            commit_time: parent_commit_time,
+        } in parents
+        {
             let parent_state = self.states.get(&pid).ok_or_else(missing_state)?;
             if parent_state.contains(WalkFlags::Uninteresting) {
                 continue;
@@ -140,7 +151,11 @@ where
                 continue;
             }
 
-            let parent_ids = self.collect_all_parents(&pid)?.into_iter().map(|e| e.0).collect();
+            let parent_ids = self
+                .collect_all_parents(&pid)?
+                .into_iter()
+                .map(|parent| parent.commit_id)
+                .collect();
             self.topo_queue.push(
                 parent_commit_time,
                 Info {
@@ -155,7 +170,7 @@ where
         Ok(())
     }
 
-    fn process_parents(&mut self, id: &oid, parents: &[(ObjectId, GenAndCommitTime)]) -> Result {
+    fn process_parents(&mut self, id: &oid, parents: &[Parent]) -> Result {
         let state = self.states.get_mut(id).ok_or_else(missing_state)?;
         if state.contains(WalkFlags::Added) {
             return Ok(());
@@ -167,12 +182,12 @@ where
         // parents, otherwise we set the Seen flag.
         let (pass, insert) = if state.contains(WalkFlags::Uninteresting) {
             let flags = WalkFlags::Uninteresting;
-            for (id, _) in parents {
-                let grand_parents = self.collect_all_parents(id)?;
+            for parent in parents {
+                let grand_parents = self.collect_all_parents(&parent.commit_id)?;
 
-                for (id, _) in &grand_parents {
+                for grand_parent in &grand_parents {
                     self.states
-                        .entry(*id)
+                        .entry(grand_parent.commit_id)
                         .and_modify(|s| *s |= WalkFlags::Uninteresting)
                         .or_insert(WalkFlags::Uninteresting | WalkFlags::Seen);
                 }
@@ -185,13 +200,16 @@ where
             (flags, WalkFlags::Seen)
         };
 
-        for (id, _) in parents {
-            self.states.entry(*id).and_modify(|s| *s |= pass).or_insert(insert);
+        for parent in parents {
+            self.states
+                .entry(parent.commit_id)
+                .and_modify(|s| *s |= pass)
+                .or_insert(insert);
         }
         Ok(())
     }
 
-    fn collect_parents(&mut self, id: &oid) -> Result<SmallVec<[(ObjectId, GenAndCommitTime); 1]>> {
+    fn collect_parents(&mut self, id: &oid) -> Result<SmallVec<[Parent; 1]>> {
         collect_parents(
             &mut self.commit_graph,
             &self.find,
@@ -202,7 +220,7 @@ where
     }
 
     // Same as collect_parents but disregards the first_parent flag
-    pub(super) fn collect_all_parents(&mut self, id: &oid) -> Result<SmallVec<[(ObjectId, GenAndCommitTime); 1]>> {
+    pub(super) fn collect_all_parents(&mut self, id: &oid) -> Result<SmallVec<[Parent; 1]>> {
         collect_parents(&mut self.commit_graph, &self.find, id, false, &mut self.buf)
     }
 
@@ -251,11 +269,11 @@ fn collect_parents<Find>(
     id: &oid,
     first_only: bool,
     buf: &mut Vec<u8>,
-) -> Result<SmallVec<[(ObjectId, GenAndCommitTime); 1]>>
+) -> Result<SmallVec<[Parent; 1]>>
 where
     Find: gix_object::Find,
 {
-    let mut parents = SmallVec::<[(ObjectId, GenAndCommitTime); 1]>::new();
+    let mut parents = SmallVec::<[Parent; 1]>::new();
     match find(cache.as_ref(), &f, id, buf)? {
         Either::CommitRefIter(c) => {
             for token in c {
@@ -263,7 +281,12 @@ where
                 match token {
                     Ok(T::Tree { .. }) => continue,
                     Ok(T::Parent { id }) => {
-                        parents.push((id, (0, 0))); // Dummy numbers to be filled in
+                        parents.push(Parent {
+                            commit_id: id,
+                            // Dummy numbers to be filled in after parsing the parent IDs.
+                            generation: 0,
+                            commit_time: 0,
+                        });
                         if first_only {
                             break;
                         }
@@ -276,9 +299,9 @@ where
             }
             // Need to check the cache again. That a commit is not in the cache
             // doesn't mean a parent is not.
-            for (id, gen_time) in parents.iter_mut() {
-                let commit = find(cache.as_ref(), &f, id, buf)?;
-                *gen_time = gen_and_commit_time(commit)?;
+            for parent in parents.iter_mut() {
+                let commit = find(cache.as_ref(), &f, &parent.commit_id, buf)?;
+                (parent.generation, parent.commit_time) = gen_and_commit_time(commit)?;
             }
         }
         Either::CachedCommit(c) => {
@@ -292,10 +315,11 @@ where
                     .as_ref()
                     .expect("cache exists if CachedCommit was returned")
                     .commit_at(pos);
-                parents.push((
-                    parent_commit.id().into(),
-                    (parent_commit.generation(), parent_commit.committer_timestamp() as i64),
-                ));
+                parents.push(Parent {
+                    commit_id: parent_commit.id().into(),
+                    generation: parent_commit.generation(),
+                    commit_time: parent_commit.committer_timestamp() as i64,
+                });
                 if first_only {
                     break;
                 }

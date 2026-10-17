@@ -58,7 +58,14 @@ fn run() -> TestResult {
             let debug = false;
             for use_cache in [false, true] {
                 let cache = use_cache
-                    .then(|| gix_commitgraph::at(store.store_ref().path().join("info")).ok())
+                    .then(|| {
+                        gix_commitgraph::at(
+                            store.store_ref().path().join("info"),
+                            store.store_ref().object_hash(),
+                            None,
+                        )
+                        .ok()
+                    })
                     .flatten();
                 let mut graph = gix_revwalk::Graph::new(&store, cache.as_ref());
                 let mut negotiator = algo.into_negotiator();

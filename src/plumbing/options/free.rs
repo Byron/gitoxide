@@ -35,6 +35,8 @@ pub mod commitgraph {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// Verify the integrity of a commit graph
+        ///
+        /// Use the top-level --object-hash option to select the expected object format without opening a repository.
         Verify {
             /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
             path: PathBuf,

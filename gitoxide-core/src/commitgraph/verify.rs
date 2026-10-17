@@ -30,6 +30,7 @@ pub(crate) mod function {
 
     pub fn verify<W1, W2>(
         path: impl AsRef<Path>,
+        object_hash: gix::hash::Kind,
         super::Context {
             err: _err,
             mut out,
@@ -40,7 +41,7 @@ pub(crate) mod function {
         W1: io::Write,
         W2: io::Write,
     {
-        let g = Graph::at(path.as_ref())?;
+        let g = Graph::at(path.as_ref(), object_hash, None)?;
 
         #[expect(clippy::unnecessary_wraps)]
         fn noop_processor(_commit: &gix::commitgraph::file::Commit<'_>) -> std::result::Result<(), std::fmt::Error> {

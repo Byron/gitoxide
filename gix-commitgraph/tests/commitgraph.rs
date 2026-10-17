@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use gix_commitgraph::{Graph, Position as GraphPosition};
+use gix_commitgraph::{Graph, Parent, Position as GraphPosition};
 use gix_error::{ErrorExt, Message, Result, ResultExt, TestResult};
 use gix_testtools::scripted_fixture_read_only;
 
@@ -14,7 +14,7 @@ mod access;
 #[test]
 fn missing_path_is_not_found() -> gix_testtools::TestResult {
     let dir = gix_testtools::tempfile::tempdir()?;
-    let err = gix_commitgraph::at(dir.path().join("missing"))
+    let err = gix_commitgraph::at(dir.path().join("missing"), gix_testtools::object_hash(), None)
         .err()
         .expect("a missing path cannot contain a commit-graph");
     insta::assert_debug_snapshot!(gix_testtools::redact_debug_snapshot(&(err), &[(&(dir.path()).to_string_lossy(), "<tmp>")]), "callers can distinguish a missing optional cache from other failures", @"
@@ -118,8 +118,11 @@ pub fn graph_and_expected_named(
         .expect("script succeeds all the time")
         .join(name);
     let expected = inspect_refs(&repo_dir, refs);
-    let cg =
-        Graph::from_info_dir(&repo_dir.join(".git").join("objects").join("info")).expect("graph present and valid");
+    let cg = Graph::from_info_dir(
+        &repo_dir.join(".git").join("objects").join("info"),
+        gix_testtools::object_hash(),
+    )
+    .expect("graph present and valid");
     let object_hash = cg.object_hash();
     let any_ref = expected.values().next().expect("at least one ref");
     assert_eq!(
@@ -220,7 +223,9 @@ fn malformed_file_data_is_corruption() -> TestResult {
     bad_signature[0] ^= 1;
     let mut bad_count = data.clone();
     let fan = chunk_range(&data, *b"OIDF")?;
-    bad_count[fan.end - 4..fan.end].copy_from_slice(&0u32.to_be_bytes());
+    bad_count[fan.clone()].fill(0);
+    let mut bad_fan = data.clone();
+    bad_fan[fan.start..fan.start + 4].copy_from_slice(&u32::MAX.to_be_bytes());
 
     for (data, diagnostic) in [
         (b"CGPH".to_vec(), "Commit-graph file too small even for an empty graph"),
@@ -229,6 +234,7 @@ fn malformed_file_data_is_corruption() -> TestResult {
             "Commit-graph file does not start with expected signature",
         ),
         (bad_count, "chunk contains 0 commits"),
+        (bad_fan, "fanout table is not monotonic"),
         (
             data[..data.len() - 1].to_vec(),
             "Expected commit-graph trailer to contain",
@@ -238,6 +244,293 @@ fn malformed_file_data_is_corruption() -> TestResult {
         assert!(err.is_corrupted(), "malformed stored data is corruption: {err}");
         assert!(err.to_string().contains(diagnostic), "the intended check failed: {err}");
     }
+    Ok(())
+}
+
+#[test]
+fn ordinary_parent_iteration_rejects_out_of_bounds_positions() -> TestResult {
+    for script in ["single_parent.sh", "two_parents.sh", "octopus_merges.sh"] {
+        let data = fixture_commit_graph_bytes(script)?;
+        let file = mapped_file(&data, "commit-graph")?;
+        let hash_len = file.object_hash().len_in_bytes();
+        let commit_data = chunk_range(&data, *b"CDAT")?.start;
+        let mut parent_offsets = Vec::new();
+        for index in 0..file.num_commits() as usize {
+            let first = commit_data + index * (hash_len + 16) + hash_len;
+            for offset in [first, first + 4] {
+                let raw = u32::from_be_bytes(data[offset..offset + 4].try_into()?);
+                if raw < 0x7000_0000 {
+                    parent_offsets.push(offset);
+                }
+            }
+        }
+        if script == "octopus_merges.sh" {
+            parent_offsets.extend(chunk_range(&data, *b"EDGE")?.step_by(4));
+        }
+        for offset in parent_offsets {
+            for position in [file.num_commits(), 0x7fff_ffff] {
+                let mut invalid = data.clone();
+                let marker = u32::from_be_bytes(data[offset..offset + 4].try_into()?) & 0x8000_0000;
+                invalid[offset..offset + 4].copy_from_slice(&(position | marker).to_be_bytes());
+                let graph = Graph::new(vec![mapped_file(&invalid, "commit-graph")?])?;
+                let mut found_error = false;
+                for commit in graph.iter_commits() {
+                    let mut parents = commit.iter_parents();
+                    while let Some(parent) = parents.next() {
+                        match parent {
+                            Ok(parent) => {
+                                graph.commit_at(parent);
+                            }
+                            Err(err) => {
+                                assert!(err.is_corrupted(), "invalid stored parents are corruption");
+                                assert!(parents.next().is_none(), "parent iteration fuses after an error");
+                                found_error = true;
+                            }
+                        }
+                    }
+                }
+                assert!(found_error, "ordinary traversal rejects the altered parent");
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn extra_edges_require_aligned_lengths() -> TestResult {
+    let data = fixture_commit_graph_bytes("octopus_merges.sh")?;
+    let edge = chunk_range(&data, *b"EDGE")?;
+    for removed in 1..4 {
+        let mut invalid = data.clone();
+        invalid.drain(edge.end - removed..edge.end);
+        let table_end = 8 + (usize::from(data[6]) + 1) * gix_chunk::file::Index::ENTRY_SIZE;
+        for entry in invalid[8..table_end]
+            .as_chunks_mut::<{ gix_chunk::file::Index::ENTRY_SIZE }>()
+            .0
+        {
+            let offset = u64::from_be_bytes(entry[4..].try_into()?);
+            if offset >= edge.end as u64 {
+                entry[4..].copy_from_slice(&(offset - removed as u64).to_be_bytes());
+            }
+        }
+        let err = mapped_file(&invalid, "commit-graph").expect_err("partial EDGE entries are malformed");
+        assert!(err.is_corrupted(), "misaligned EDGE chunks are corruption");
+        assert!(
+            err.to_string().contains("not a multiple of 4"),
+            "alignment is checked at load time"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn extra_edge_indices_cannot_overflow_or_run_past_the_chunk() -> TestResult {
+    let data = fixture_commit_graph_bytes("octopus_merges.sh")?;
+    let file = mapped_file(&data, "commit-graph")?;
+    let hash_len = file.object_hash().len_in_bytes();
+    let commit_data = chunk_range(&data, *b"CDAT")?.start;
+    let edge_len = chunk_range(&data, *b"EDGE")?.len();
+    let offset = (0..file.num_commits() as usize)
+        .map(|index| commit_data + index * (hash_len + 16) + hash_len + 4)
+        .find(|&offset| data[offset] & 0x80 != 0)
+        .expect("octopus merges have extra edges");
+    for index in [edge_len as u32 / 4, u32::MAX >> 1] {
+        let mut invalid = data.clone();
+        invalid[offset..offset + 4].copy_from_slice(&(index | 0x8000_0000).to_be_bytes());
+        let file = mapped_file(&invalid, "commit-graph")?;
+        let err = file
+            .iter_commits()
+            .flat_map(gix_commitgraph::file::Commit::iter_parents)
+            .collect::<Result<Vec<_>>>()
+            .expect_err("invalid edge indices fail without panicking or reserving memory for the index");
+        assert!(err.is_corrupted(), "invalid EDGE indices are corruption");
+    }
+    Ok(())
+}
+
+#[test]
+fn parent_buffer_allocations_respect_the_limit() -> TestResult {
+    let repo = gix_testtools::scripted_fixture_writable("octopus_merges.sh")?;
+    let info = repo.path().join(".git/objects/info");
+    let data = std::fs::read(info.join("commit-graph"))?;
+    let parent_bytes = (chunk_range(&data, *b"EDGE")?.len() / 4 + 1) * 2 * std::mem::size_of::<Result<Parent>>();
+    for path in [&info, &info.join("commit-graph")] {
+        let err = Graph::at(path, gix_testtools::object_hash(), Some(1))
+            .err()
+            .expect("a tiny limit rejects EDGE-derived parent buffers");
+        assert!(
+            err.classify().any(|classification| classification.class()
+                == gix_error::Class::ResourceExhaustion(gix_error::ResourceExhaustionKind::AllocationLimit)),
+            "excessive parent data is a resource limit failure"
+        );
+        assert!(
+            Graph::at(path, gix_testtools::object_hash(), Some(parent_bytes - 1)).is_err(),
+            "a capacity estimate just above the limit is rejected"
+        );
+        assert!(
+            gix_commitgraph::at(path, gix_testtools::object_hash(), Some(1)).is_err(),
+            "the crate-level constructor forwards the allocation limit"
+        );
+        for limit in [None, Some(parent_bytes)] {
+            let graph = Graph::at(path, gix_testtools::object_hash(), limit)?;
+            graph.verify_integrity(|_| Ok::<_, Message>(()))?;
+            gix_commitgraph::at(path, gix_testtools::object_hash(), limit)?
+                .verify_integrity(|_| Ok::<_, Message>(()))?;
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn split_parents_cannot_point_into_later_files() -> TestResult {
+    let data = fixture_commit_graph_bytes("single_commit.sh")?;
+    let file = mapped_file(&data, "commit-graph")?;
+    let parent_offset = chunk_range(&data, *b"CDAT")?.start + file.object_hash().len_in_bytes();
+    let mut invalid = data.clone();
+    invalid[parent_offset..parent_offset + 4].copy_from_slice(&1u32.to_be_bytes());
+    let graph = Graph::new(vec![mapped_file(&invalid, "commit-graph")?, file])?;
+    let mut parents = graph.commit_at(GraphPosition(0)).iter_parents();
+    assert_eq!(parents.size_hint().0, 1, "even an invalid parent yields one error item");
+    let err = parents
+        .next()
+        .expect("the parent is present")
+        .expect_err("parents cannot be in later files");
+    assert!(err.is_corrupted(), "forward references between files are corruption");
+    assert_eq!(
+        parents.size_hint(),
+        (0, Some(0)),
+        "iteration is exhausted after an error"
+    );
+    Ok(())
+}
+
+#[test]
+fn chain_entries_and_file_counts_are_bounded() -> TestResult {
+    let repo = gix_testtools::scripted_fixture_writable("single_commit.sh")?;
+    let data = std::fs::read(repo.path().join(".git/objects/info/commit-graph"))?;
+    let dir = gix_testtools::tempfile::tempdir()?;
+    let file = mapped_file(&data, "commit-graph")?;
+    let hash = file.checksum().to_string();
+    std::fs::write(dir.path().join(format!("graph-{hash}.graph")), &data)?;
+    for chain in [
+        vec![b'a'; 4096],
+        b"../invalid\n".to_vec(),
+        format!("{hash}\n").repeat(257).into_bytes(),
+    ] {
+        std::fs::write(dir.path().join("commit-graph-chain"), chain)?;
+        let err = Graph::from_commit_graphs_dir(dir.path(), file.object_hash())
+            .err()
+            .expect("the chain is malformed");
+        assert!(
+            err.is_corrupted(),
+            "malformed chain entries fail before growing unbounded buffers"
+        );
+    }
+    for ending in ["\n", "\r\n", ""] {
+        std::fs::write(dir.path().join("commit-graph-chain"), format!("{hash}{ending}"))?;
+        let graph = Graph::from_commit_graphs_dir(dir.path(), file.object_hash())?;
+        assert_eq!(graph.num_commits(), 1, "valid line endings remain supported");
+    }
+    Ok(())
+}
+
+#[test]
+fn mixed_chain_hash_kinds_are_corruption() -> TestResult {
+    let data = fixture_commit_graph_bytes("single_commit.sh")?;
+    let file = mapped_file(&data, "commit-graph")?;
+    let hash = file.checksum().to_string();
+    let other_kind = if file.object_hash() == gix_hash::Kind::Sha1 {
+        gix_hash::Kind::Sha256
+    } else {
+        gix_hash::Kind::Sha1
+    };
+    let other_hash = gix_hash::ObjectId::null(other_kind);
+    let dir = gix_testtools::tempfile::tempdir()?;
+    std::fs::write(dir.path().join(format!("graph-{hash}.graph")), &data)?;
+    std::fs::write(dir.path().join("commit-graph-chain"), format!("{hash}\n{other_hash}\n"))?;
+
+    let err = Graph::from_commit_graphs_dir(dir.path(), file.object_hash())
+        .err()
+        .expect("chain entries cannot mix hash algorithms");
+    assert!(err.is_corrupted(), "mixed chain hash kinds are stored-data corruption");
+    assert!(
+        !err.is_not_found(),
+        "the hash mismatch is rejected before opening the nonexistent second graph file"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn graph_constructors_require_the_desired_hash_kind() -> TestResult {
+    let data = fixture_commit_graph_bytes("single_commit.sh")?;
+    let file = mapped_file(&data, "commit-graph")?;
+    let object_hash = file.object_hash();
+    let other_kind = if object_hash == gix_hash::Kind::Sha1 {
+        gix_hash::Kind::Sha256
+    } else {
+        gix_hash::Kind::Sha1
+    };
+    let dir = gix_testtools::tempfile::tempdir()?;
+    let info = dir.path().join("info");
+    let graphs = info.join("commit-graphs");
+    std::fs::create_dir_all(&graphs)?;
+    let hash = file.checksum();
+    let graph_path = graphs.join(format!("graph-{hash}.graph"));
+    std::fs::write(info.join("commit-graph"), &data)?;
+    std::fs::write(&graph_path, &data)?;
+    std::fs::write(graphs.join("commit-graph-chain"), format!("{hash}\n"))?;
+
+    for path in [&info, &info.join("commit-graph"), &graphs, &graph_path] {
+        let graph = Graph::at(path, object_hash, None)?;
+        assert_eq!(graph.object_hash(), object_hash, "the requested hash kind is accepted");
+        for err in [
+            Graph::at(path, other_kind, None)
+                .err()
+                .expect("the hash kind does not match"),
+            gix_commitgraph::at(path, other_kind, None)
+                .err()
+                .expect("the crate-level constructor forwards the hash kind"),
+        ] {
+            assert!(
+                err.is_corrupted(),
+                "a stored graph with the wrong hash kind is corruption"
+            );
+            assert!(
+                !err.is_not_found(),
+                "a hash-kind mismatch cannot hide an existing graph"
+            );
+        }
+    }
+
+    for err in [
+        Graph::from_file(&info.join("commit-graph"), other_kind)
+            .err()
+            .expect("the file header has the wrong hash kind"),
+        Graph::from_info_dir(&info, other_kind)
+            .err()
+            .expect("directory loading requires the requested kind"),
+        Graph::from_commit_graphs_dir(&graphs, other_kind)
+            .err()
+            .expect("even the first chain entry must have the requested kind"),
+    ] {
+        assert!(
+            err.is_corrupted(),
+            "all path-based constructors enforce the requested hash kind"
+        );
+    }
+
+    let other_hash = gix_hash::ObjectId::null(other_kind);
+    std::fs::rename(&graph_path, graphs.join(format!("graph-{other_hash}.graph")))?;
+    std::fs::write(graphs.join("commit-graph-chain"), format!("{other_hash}\n"))?;
+    let err = Graph::from_commit_graphs_dir(&graphs, other_kind)
+        .err()
+        .expect("a matching chain entry cannot disguise a graph with the wrong header");
+    assert!(err.is_corrupted(), "chain files also validate each graph's header");
+    assert!(
+        err.to_string().contains("uses hash kind"),
+        "the diagnostic identifies the mismatched graph header"
+    );
     Ok(())
 }
 
@@ -312,8 +605,10 @@ fn initialization_io_errors_keep_their_sources() -> TestResult {
     let missing = dir.path().join("missing");
     for err in [
         gix_commitgraph::File::at(&missing).expect_err("the graph file does not exist"),
-        Graph::at(&missing).err().expect("the graph path does not exist"),
-        Graph::from_commit_graphs_dir(dir.path())
+        Graph::at(&missing, gix_testtools::object_hash(), None)
+            .err()
+            .expect("the graph path does not exist"),
+        Graph::from_commit_graphs_dir(dir.path(), gix_testtools::object_hash())
             .err()
             .expect("the chain file does not exist"),
     ] {
@@ -349,7 +644,7 @@ fn empty_graph_inputs_differ_from_empty_stored_chains() -> TestResult {
 
     let dir = gix_testtools::tempfile::tempdir()?;
     std::fs::write(dir.path().join("commit-graph-chain"), b"")?;
-    let err = Graph::from_commit_graphs_dir(dir.path())
+    let err = Graph::from_commit_graphs_dir(dir.path(), gix_testtools::object_hash())
         .err()
         .expect("an empty stored chain cannot describe a graph");
     assert!(err.is_corrupted(), "an empty stored chain is malformed data");

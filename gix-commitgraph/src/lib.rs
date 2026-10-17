@@ -23,16 +23,31 @@ use std::path::Path;
 /// All operations on a `File` are local to that graph file. Since a commit graph can span multiple
 /// files, all interesting graph operations belong on [`Graph`].
 pub struct File {
+    /// Number of base graph files this file depends on, as declared in its header.
     base_graph_count: u8,
+    /// Byte offset into `data` of the optional BASE chunk containing base graph checksums.
     base_graphs_list_offset: Option<usize>,
+    /// Byte offset into `data` of the CDAT chunk containing fixed-size commit records.
     commit_data_offset: usize,
+    /// Read-only memory mapping of the entire commit-graph file, including its checksum trailer.
     data: memmap2::Mmap,
+    /// Byte range within `data` of the optional EDGE chunk containing additional parent positions.
     extra_edges_list_range: Option<std::ops::Range<usize>>,
+    /// Decoded OIDF fanout table: entry `i` counts commit IDs whose first byte is at most `i`.
+    /// Entries are nondecreasing, and the last entry is the number of commits in this file.
     fan: [u32; file::FAN_LEN],
+    /// Byte offset into `data` of the OIDL chunk containing lexicographically sorted commit IDs.
     oid_lookup_offset: usize,
+    /// Path associated with the mapping, used for diagnostics and filename checksum verification.
     path: std::path::PathBuf,
+    /// Size in bytes of an object ID or checksum using `object_hash`.
     hash_len: usize,
+    /// Hash algorithm declared in the file header, used for object IDs and graph checksums.
     object_hash: gix_hash::Kind,
+    /// Exclusive upper bound for graph-wide parent positions accepted during iteration.
+    /// In a [`Graph`], this counts commits in this file and all preceding base files.
+    /// A standalone file uses its commit count if it has no bases, or [`MAX_COMMITS`] otherwise.
+    parent_position_limit: u32,
 }
 
 /// A complete commit graph.
@@ -44,9 +59,26 @@ pub struct Graph {
     files: nonempty::NonEmpty<File>,
 }
 
+/// Owned parent commit information collected during traversal.
+///
+/// Shared with traversal buffers so allocation-limit estimates use the same record layout.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Parent {
+    /// The object ID of the parent commit.
+    pub commit_id: gix_hash::ObjectId,
+    /// The parent's generation number, or [`GENERATION_NUMBER_INFINITY`] if unavailable.
+    pub generation: u32,
+    /// The parent's committer timestamp, in seconds since the Unix epoch.
+    pub commit_time: i64,
+}
+
 /// Instantiate a commit graph from an `.git/objects/info` directory, or one of the various commit-graph files.
-pub fn at(path: impl AsRef<Path>) -> Result<Graph> {
-    Graph::at(path.as_ref())
+///
+/// Chain entries and graph files must use `object_hash`, typically the repository's hash kind.
+/// `alloc_limit_bytes` limits parent-buffer capacity estimates as described in [`Graph::at()`].
+/// `None` disables the limit.
+pub fn at(path: impl AsRef<Path>, object_hash: gix_hash::Kind, alloc_limit_bytes: Option<usize>) -> Result<Graph> {
+    Graph::at(path.as_ref(), object_hash, alloc_limit_bytes)
 }
 
 mod access;

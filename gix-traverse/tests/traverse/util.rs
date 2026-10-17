@@ -266,7 +266,7 @@ pub fn named_fixture(script_name: &str, repo_name: &str) -> Result<(PathBuf, gix
 
 /// Load a commit graph if available for the given object store.
 pub fn commit_graph(store: &gix_odb::Store) -> Option<gix_commitgraph::Graph> {
-    gix_commitgraph::at(store.path().join("info")).ok()
+    gix_commitgraph::at(store.path().join("info"), store.object_hash(), None).ok()
 }
 
 /// Execute `git log --oneline --graph --decorate --all` in the given repository
