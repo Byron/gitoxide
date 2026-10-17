@@ -187,8 +187,9 @@ fn read_chain_files(
                 object_hash.len_in_hex()
             );
         }
-        let hash = gix_hash::ObjectId::from_hex(&line)
+        gix_hash::ObjectId::from_hex(&line)
             .or_raise(|| corruption("Commit-graph chain entry is not a valid object ID"))?;
+        let hash = std::str::from_utf8(&line).expect("validated hexadecimal object IDs contain only ASCII");
         if files.len() == 256 {
             bail!(corruption("Commit-graph chain contains more than 256 files"));
         }
