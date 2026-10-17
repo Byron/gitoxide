@@ -138,9 +138,23 @@ Follow "purposeful conventional commits" style:
 ### Test Best Practices
 
 - Tests must be isolated from the developer's checkout, other worktrees, shared
-  Git metadata, and user configuration. Use disposable repositories provided by
-  `gix-testtools`, such as `scripted_fixture_writable()`; never mutate a shared
-  read-only fixture or use the source checkout as a test repository.
+  Git metadata, and user configuration. Use fixtures provided by `gix-testtools`;
+  never use the source checkout as a test repository.
+- **Tests of read-only functionality must use read-only fixtures**, such as
+  `gix_testtools::scripted_fixture_read_only()` or the crate's read-only repository
+  helper. Use `scripted_fixture_writable()` only when exercising functionality
+  that writes. Prepare required repository states during fixture creation, not
+  by mutating a shared read-only fixture in the test.
+- For setup that is easier in Rust (such as binary corruption), use
+  `gix_testtools::scripted_fixture_read_only_with_post(script, version, |fixture| { ... })`.
+  The script creates the repository; the Rust closure prepares it before caching
+  and returns `(fixture_path, value)` through the helper. Only mutate inside
+  `if let gix_testtools::FixtureState::Uninitialized(path) = fixture { ... }`.
+  The closure also runs for `FixtureState::Fresh` (cached or archived fixtures),
+  where it must only read or compute return values. Increment `version` whenever
+  the post-processing behavior changes to invalidate the cache. See the API docs
+  in `tests/tools/src/lib.rs` and the commit-graph regression test in
+  `gix/tests/gix/repository/revision.rs` for an example.
 - Git invocations in test code must go through `gix_testtools::git()`,
   `git_command()`, or fixture scripts executed by `gix-testtools`. Do not spawn
   Git directly with `Command::new("git")` or ad hoc subprocess wrappers. If a test needs unsupported
