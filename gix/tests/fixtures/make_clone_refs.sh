@@ -40,9 +40,14 @@ git init -q --bare unborn
 git -C unborn symbolic-ref HEAD refs/heads/unborn
 
 mkdir cases
+# `clone --revision` arrived in Git 2.49; older hosts still cover the other clone modes.
+clone_supports_revision=false
+clone_help=$(git clone -h 2>&1 || :)
+case "$clone_help" in *'revision <rev>'*) clone_supports_revision=true ;; esac
 function baseline() {
   local name=$1 source=$2 branch=$3 depth=$4 default_branch=$5 remote=$6 revision=$7
   shift 7
+  if test "$revision" != '-' && ! "$clone_supports_revision"; then return; fi
   local mode case_dir
   for mode in normal no-checkout bare; do
     case_dir="cases/$name-$mode"
