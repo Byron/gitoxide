@@ -60,7 +60,8 @@ pub struct Item<'a> {
 pub enum SourceRef<'a> {
     /// A full reference name, which is expected to be valid.
     ///
-    /// Validity, however, is not enforced here.
+    /// Validity, however, is not enforced here. Reverse mappings preserve the parsed source spelling,
+    /// which may instead be an abbreviated name, `HEAD`, or a hexadecimal object ID.
     FullName(Cow<'a, BStr>),
     /// The name of an object that is expected to exist on the remote side.
     /// Note that it might not be advertised by the remote but part of the object graph,

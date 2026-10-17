@@ -5,3 +5,8 @@
 # share this constraint.
 /match_baseline.tar
 /match_baseline_sha256.tar
+
+# Reverse lookup baselines should also reflect the host Git's behavior, rather
+# than freezing it together with copies of every case repository and template.
+/reverse_baseline.tar
+/reverse_baseline_sha256.tar

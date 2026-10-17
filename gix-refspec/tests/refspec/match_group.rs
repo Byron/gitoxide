@@ -139,6 +139,59 @@ mod multiple {
     }
 
     #[test]
+    fn reverse_fetch_mapping_preserves_sources_for_negation_and_deduplication() -> gix_testtools::TestResult {
+        let target = gix_testtools::object_hash().null();
+        let item = Item {
+            full_ref_name: "refs/remotes/origin/main".into(),
+            target: &target,
+            object: None,
+        };
+        for (negative, expected) in [
+            ("^main", vec!["refs/heads/main"]),
+            ("^refs/heads/main", vec!["main"]),
+            ("^heads/main", vec!["main", "refs/heads/main"]),
+        ] {
+            let specs = [
+                "main:refs/remotes/origin/main",
+                "refs/heads/main:refs/remotes/origin/main",
+                "main:refs/remotes/origin/main",
+                negative,
+            ]
+            .into_iter()
+            .map(|spec| gix_refspec::parse(spec.into(), Operation::Fetch))
+            .collect::<gix_error::Result<Vec<_>>>()?;
+            let outcome = MatchGroup::from_fetch_specs(specs).match_rhs(std::iter::once(item));
+            let sources: Vec<_> = outcome.mappings.iter().map(|mapping| mapping.lhs.to_string()).collect();
+            assert_eq!(
+                sources, expected,
+                "{negative} excludes literal sources, and only identical mappings are deduplicated"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn glob_prefix_and_suffix_cannot_overlap_in_either_direction() -> gix_testtools::TestResult {
+        let target = gix_testtools::object_hash().null();
+        let item = Item {
+            full_ref_name: "refs/heads/main".into(),
+            target: &target,
+            object: None,
+        };
+        let spec = gix_refspec::parse("refs/heads/*heads/main:refs/heads/*heads/main".into(), Operation::Fetch)?;
+        let group = MatchGroup::from_fetch_specs([spec]);
+        assert!(
+            group.clone().match_lhs(std::iter::once(item)).mappings.is_empty(),
+            "a glob capture cannot have negative length when matching sources"
+        );
+        assert!(
+            group.match_rhs(std::iter::once(item)).mappings.is_empty(),
+            "a glob capture cannot have negative length when matching destinations"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn reverse_fetch_mapping_honors_negative_source_patterns() {
         let specs = ["refs/heads/*:refs/remotes/origin/*", "^refs/heads/*-deploy"]
             .into_iter()
