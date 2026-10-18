@@ -271,16 +271,19 @@ impl Diff {
         self.added.clear();
         self.removed.resize(before.len(), false);
         self.added.resize(after.len(), false);
-        let common_prefix = strip_common_prefix(&mut before, &mut after) as usize;
-        let common_postfix = strip_common_postfix(&mut before, &mut after);
-        let range = common_prefix..self.removed.len() - common_postfix as usize;
-        let removed = &mut self.removed[range];
-        let range = common_prefix..self.added.len() - common_postfix as usize;
-        let added = &mut self.added[range];
         match algorithm {
-            Algorithm::Histogram => histogram::diff(before, after, removed, added, num_tokens),
-            Algorithm::Myers => myers::diff(before, after, removed, added, false),
-            Algorithm::MyersMinimal => myers::diff(before, after, removed, added, true),
+            Algorithm::Histogram => {
+                let common_prefix = strip_common_prefix(&mut before, &mut after) as usize;
+                let common_postfix = strip_common_postfix(&mut before, &mut after);
+                let range = common_prefix..self.removed.len() - common_postfix as usize;
+                let removed = &mut self.removed[range];
+                let range = common_prefix..self.added.len() - common_postfix as usize;
+                let added = &mut self.added[range];
+                histogram::diff(before, after, removed, added, num_tokens);
+            }
+            // Myers trims the common ends itself, as it needs to count the tokens of the whole input first.
+            Algorithm::Myers => myers::diff(before, after, &mut self.removed, &mut self.added, false),
+            Algorithm::MyersMinimal => myers::diff(before, after, &mut self.removed, &mut self.added, true),
         }
     }
 

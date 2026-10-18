@@ -4,64 +4,83 @@
 use crate::intern::Token;
 use crate::myers::sqrt;
 
+/// How often each token occurs in the two complete inputs of a diff, and the limits at which a token
+/// is considered [common](Occurrences::Common).
+///
+/// These are taken from the inputs *before* their common prefix and postfix are trimmed, as git does:
+/// `xdl_classify_record()` counts every line of both files while preparing them, and
+/// `xdl_cleanup_records()` derives its limits from their full line counts, even though it only
+/// classifies the lines between the trimmed ends. Counting only the trimmed lines would see fewer
+/// occurrences of frequent lines like blank lines or braces and keep lines git prunes.
+pub struct TokenCounts {
+    /// How often each token occurs in the first file, indexed by token.
+    in_before: Vec<u32>,
+    /// How often each token occurs in the second file, indexed by token.
+    in_after: Vec<u32>,
+    /// The number of occurrences in the second file at which a token of the first file is common.
+    eqlimit_before: u32,
+    /// The number of occurrences in the first file at which a token of the second file is common.
+    eqlimit_after: u32,
+}
+
+impl TokenCounts {
+    /// Count the tokens of the complete `before` and `after` inputs.
+    ///
+    /// If `minimal` is set, no token is ever common, just like git's `XDF_NEED_MINIMAL` sets its
+    /// limits to infinity.
+    pub fn new(before: &[Token], after: &[Token], minimal: bool) -> TokenCounts {
+        const MAX_EQLIMIT: u32 = 1024;
+
+        let eqlimit = |len: usize| {
+            if minimal { u32::MAX } else { sqrt(len).min(MAX_EQLIMIT) }
+        };
+        TokenCounts {
+            in_before: count_tokens(before),
+            in_after: count_tokens(after),
+            eqlimit_before: eqlimit(before.len()),
+            eqlimit_after: eqlimit(after.len()),
+        }
+    }
+}
+
+fn count_tokens(file: &[Token]) -> Vec<u32> {
+    let mut occurrences = Vec::new();
+    for token in file {
+        let bucket = token.0 as usize;
+        if bucket >= occurrences.len() {
+            occurrences.resize(bucket + 1, 0u32);
+        }
+        occurrences[bucket] += 1;
+    }
+    occurrences
+}
+
 /// Preprocesses token sequences by removing tokens that don't appear in the other sequence.
 ///
 /// This optimization reduces the problem size for the Myers algorithm, improving performance
 /// for files with many unique tokens.
 pub fn preprocess<'a>(
+    counts: &TokenCounts,
     before: &[Token],
     after: &[Token],
     removed: &'a mut [bool],
     added: &'a mut [bool],
 ) -> (PreprocessedFile, PreprocessedFile) {
-    let (occurrences_before, occurrences_after) = token_occurrences(before, after);
+    let occurrences_before = token_occurrences(before, &counts.in_after, counts.eqlimit_before);
+    let occurrences_after = token_occurrences(after, &counts.in_before, counts.eqlimit_after);
     let file1 = PreprocessedFile::new(&occurrences_before, before, removed);
     let file2 = PreprocessedFile::new(&occurrences_after, after, added);
     (file1, file2)
 }
 
-fn token_occurrences(file1: &[Token], file2: &[Token]) -> (Vec<Occurrences>, Vec<Occurrences>) {
-    const MAX_EQLIMIT: u32 = 1024;
-
-    // compute the limit after which tokens are treated as `Occurrences::COMMON`
-    let eqlimit1 = sqrt(file1.len()).min(MAX_EQLIMIT);
-    let eqlimit2 = sqrt(file2.len()).min(MAX_EQLIMIT);
-
-    // first collect how often each token occurs in a file
-    let mut occurrences1 = Vec::new();
-    for token in file1 {
-        let bucket = token.0 as usize;
-        if bucket >= occurrences1.len() {
-            occurrences1.resize(bucket + 1, 0u32);
-        }
-        occurrences1[bucket] += 1;
-    }
-
-    // do the same thing for
-    let mut occurrences2 = Vec::new();
-    let token_occurrences2: Vec<_> = file2
-        .iter()
+/// Classify each token of `file` by how often it occurs in the other file, as given by `other_counts`.
+fn token_occurrences(file: &[Token], other_counts: &[u32], eqlimit: u32) -> Vec<Occurrences> {
+    file.iter()
         .map(|token| {
-            let bucket = token.0 as usize;
-            if bucket >= occurrences2.len() {
-                occurrences2.resize(bucket + 1, 0);
-            }
-            occurrences2[bucket] += 1;
-            let occurrences1 = *occurrences1.get(bucket).unwrap_or(&0);
-            Occurrences::from_occurrences(occurrences1, eqlimit2)
+            let occurrences = other_counts.get(token.0 as usize).copied().unwrap_or(0);
+            Occurrences::from_occurrences(occurrences, eqlimit)
         })
-        .collect();
-
-    let token_occurrences1: Vec<_> = file1
-        .iter()
-        .map(|token| {
-            let bucket = token.0 as usize;
-            let occurrences2 = *occurrences2.get(bucket).unwrap_or(&0);
-            Occurrences::from_occurrences(occurrences2, eqlimit1)
-        })
-        .collect();
-
-    (token_occurrences1, token_occurrences2)
+        .collect()
 }
 
 /// Categorizes how frequently a token appears in a file.

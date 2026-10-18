@@ -745,3 +745,45 @@ old end
         "the blank line between the unmatched runs should still be matched, just like `git diff --no-index --numstat`"
     );
 }
+
+/// Git counts how often each line occurs in the *whole* of both files before it trims their common
+/// prefix and postfix, and derives its frequency limit from their full lengths, too. Only the lines
+/// between the trimmed ends are then judged by those numbers.
+#[test]
+fn line_frequency_is_counted_across_the_common_prefix_and_postfix() {
+    // The shared paragraphs are all part of the common prefix, yet their eight blank lines make a
+    // blank line frequent for Git: the files have 26 lines, giving a limit of 8. The only blank line
+    // in the changed region sits between two runs of four unmatched lines and is thus pruned on both
+    // sides. Counting the changed region alone would see a single blank line and match it instead.
+    fn file(tag: &str) -> String {
+        let mut out = String::new();
+        for i in 1..=8 {
+            out.push_str(&format!("paragraph {i}\n\n"));
+        }
+        for i in 1..=4 {
+            out.push_str(&format!("{tag} {i}\n"));
+        }
+        out.push('\n');
+        for i in 5..=8 {
+            out.push_str(&format!("{tag} {i}\n"));
+        }
+        out.push_str("end\n");
+        out
+    }
+
+    let (before, after) = (file("old"), file("new"));
+    let input = InternedInput::new(before.as_str(), after.as_str());
+    let diff = Diff::compute(Algorithm::Myers, &input);
+    assert_eq!(
+        (diff.count_removals(), diff.count_additions()),
+        (9, 9),
+        "the frequent blank line between the unmatched runs is pruned, just like `git diff --no-index --numstat`"
+    );
+
+    let diff = Diff::compute(Algorithm::MyersMinimal, &input);
+    assert_eq!(
+        (diff.count_removals(), diff.count_additions()),
+        (8, 8),
+        "a minimal diff never prunes frequent lines and matches the blank line, just like `git diff --no-index --minimal --numstat`"
+    );
+}

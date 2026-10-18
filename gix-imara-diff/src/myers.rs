@@ -6,7 +6,7 @@ use std::ptr::NonNull;
 use crate::intern::Token;
 use crate::myers::middle_snake::{MiddleSnakeSearch, SearchResult};
 use crate::myers::slice::FileSlice;
-use crate::util::sqrt;
+use crate::util::{sqrt, strip_common_postfix, strip_common_prefix};
 
 mod middle_snake;
 mod preprocess;
@@ -21,10 +21,21 @@ mod slice;
 /// * `removed` - Output array marking removed tokens
 /// * `added` - Output array marking added tokens
 /// * `minimal` - If true, disables heuristics to guarantee a minimal diff
-pub fn diff(before: &[Token], after: &[Token], removed: &mut [bool], added: &mut [bool], minimal: bool) {
+pub fn diff(mut before: &[Token], mut after: &[Token], removed: &mut [bool], added: &mut [bool], minimal: bool) {
+    // Like git's `xdl_prepare_env()`, count every token of both inputs *before* their common ends are
+    // trimmed: `xdl_classify_record()` sees every line, and `xdl_cleanup_records()` judges the lines
+    // between the trimmed ends by those whole-input counts and limits.
+    let counts = preprocess::TokenCounts::new(before, after, minimal);
+    let common_prefix = strip_common_prefix(&mut before, &mut after) as usize;
+    let common_postfix = strip_common_postfix(&mut before, &mut after) as usize;
+    let removed_end = removed.len() - common_postfix;
+    let removed = &mut removed[common_prefix..removed_end];
+    let added_end = added.len() - common_postfix;
+    let added = &mut added[common_prefix..added_end];
+
     // Preprocess the files by removing parts of the file that are not contained in the other file at all.
     // This process remaps the token indices so we have to account for that during the rest of the diff
-    let (before, after) = preprocess::preprocess(before, after, removed, added);
+    let (before, after) = preprocess::preprocess(&counts, before, after, removed, added);
 
     // Perform the actual diff
     Myers::new(before.tokens.len(), after.tokens.len()).run(
