@@ -126,9 +126,13 @@ impl Myers {
         let mut backwards_search = unsafe { MiddleSnakeSearch::<true>::new(self.kbackward, file1, file2) };
         let is_odd = file2.len().wrapping_sub(file1.len()) & 1 != 0;
 
+        // Number the edit cost like git's `for (ec = 1;; ec++)` in `xdl_split()`: the heuristics below
+        // compare against it and scale their threshold with it, so starting at 0 would apply them one
+        // round late and with a smaller threshold.
         let mut ec = 0;
 
-        while ec <= self.max_cost {
+        loop {
+            ec += 1;
             let mut found_snake = false;
             forward_search.next_d();
             if is_odd {
@@ -177,7 +181,11 @@ impl Myers {
             };
 
             if need_min {
-                ec += 1;
+                // Unlike git, which searches on without a limit when `XDF_NEED_MINIMAL` is set, the cost
+                // stays bounded here so adversarial inputs can't make the search quadratic.
+                if ec >= self.max_cost {
+                    break;
+                }
                 continue;
             }
 
@@ -209,7 +217,11 @@ impl Myers {
                 }
             }
 
-            ec += 1;
+            // Enough is enough: like git, settle for the furthest reaching path once the cost reaches
+            // the limit.
+            if ec >= self.max_cost {
+                break;
+            }
         }
 
         let (distance_forward, token_idx1_forward) = forward_search.best_position(file1, file2);

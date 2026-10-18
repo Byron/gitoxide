@@ -787,3 +787,35 @@ fn line_frequency_is_counted_across_the_common_prefix_and_postfix() {
         "a minimal diff never prunes frequent lines and matches the blank line, just like `git diff --no-index --minimal --numstat`"
     );
 }
+
+/// Once the cost of a split reaches its limit, Git settles for the furthest reaching path.
+/// `xdl_split()` numbers the cost from 1 and gives up as soon as it reaches the limit, so a search
+/// that numbered it from 0 ran one round longer and picked a different split.
+#[test]
+fn an_expensive_split_gives_up_after_as_many_rounds_as_git() {
+    // The edit cost of these files exceeds the limit of 256 rounds. Their lines come from a linear
+    // congruential generator so they are the same everywhere: 600 values from 0 to 19, of which
+    // about 60% are replaced by another value in the second file.
+    let mut state: u64 = 1;
+    let mut next = move || {
+        state = state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+        state >> 33
+    };
+    let before: Vec<u64> = (0..600).map(|_| next() % 20).collect();
+    let after: Vec<u64> = before
+        .iter()
+        .map(|&value| if next() % 100 < 60 { next() % 20 } else { value })
+        .collect();
+    let render = |values: &[u64]| values.iter().map(|value| format!("{value}\n")).collect::<String>();
+    let (before, after) = (render(&before), render(&after));
+
+    let input = InternedInput::new(before.as_str(), after.as_str());
+    let diff = Diff::compute(Algorithm::Myers, &input);
+    assert_eq!(
+        (diff.count_removals(), diff.count_additions()),
+        (286, 286),
+        "the split is found after the same number of rounds, just like `git diff --no-index --numstat`"
+    );
+}
