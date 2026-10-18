@@ -172,11 +172,8 @@ fn preserves_permissions() -> TestResult {
         file.set_raw_value("a.local-override", "written")?;
         file.commit()?;
 
-        let mut permissions = std::fs::metadata(&target_path)?.permissions();
-        let is_readonly = permissions.readonly();
-        #[expect(clippy::permissions_set_readonly_false, reason = "this test only runs on Windows")]
-        permissions.set_readonly(false);
-        std::fs::set_permissions(&target_path, permissions)?;
+        let is_readonly = std::fs::metadata(&target_path)?.permissions().readonly();
+        gix_fs::clear_readonly_attribute(&target_path)?;
         assert!(is_readonly, "writing preserves read-only file permissions");
     }
     Ok(())

@@ -99,7 +99,7 @@ pub struct Capabilities {
 mod capabilities;
 
 mod file;
-pub use file::{FileOrSymlink, open_options_no_follow, open_read_only_no_follow};
+pub use file::{FileOrSymlink, clear_readonly_attribute, open_options_no_follow, open_read_only_no_follow};
 
 mod snapshot;
 pub use snapshot::{FileSnapshot, SharedFileSnapshot, SharedFileSnapshotMut};
