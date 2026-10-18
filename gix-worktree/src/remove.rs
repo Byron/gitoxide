@@ -355,9 +355,7 @@ fn remove_leaf(path: &Path, is_symlink: bool) -> io::Result<()> {
             .as_ref()
             .is_err_and(|err| err.kind() == io::ErrorKind::PermissionDenied)
     {
-        let mut permissions = fs::metadata(path)?.permissions();
-        permissions.set_readonly(false);
-        fs::set_permissions(path, permissions)?;
+        gix_fs::clear_readonly_attribute(path)?;
         return fs::remove_file(path);
     }
     result

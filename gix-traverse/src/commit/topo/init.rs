@@ -164,9 +164,9 @@ where
         // reason. See handle_commit()
         for id in &self.ends {
             let parents = w.collect_all_parents(id)?;
-            for (id, _) in parents {
+            for parent in parents {
                 w.states
-                    .entry(id)
+                    .entry(parent.commit_id)
                     .and_modify(|s| *s |= WalkFlags::Uninteresting)
                     .or_insert(WalkFlags::Uninteresting | WalkFlags::Seen);
             }
@@ -189,7 +189,11 @@ where
 
             let commit = find(w.commit_graph.as_ref(), &w.find, id, &mut w.buf)?;
             let (generation, time) = gen_and_commit_time(commit)?;
-            let parent_ids = w.collect_all_parents(id)?.into_iter().map(|e| e.0).collect();
+            let parent_ids = w
+                .collect_all_parents(id)?
+                .into_iter()
+                .map(|parent| parent.commit_id)
+                .collect();
 
             w.topo_queue.push(
                 time,

@@ -475,6 +475,46 @@ title "gix commit-graph"
 
 (with "gix free"
   snapshot="$snapshot/no-repo"
+  title "gix free commit-graph verify"
+  (when "verifying standalone commit-graphs"
+    for object_format in sha1 sha256; do
+      (sandbox
+        # Copy both graph layouts out of the repository so verification cannot infer its object format from it.
+        git init --object-format="$object_format" -q repo
+        (
+          cd repo
+          git -c commit.gpgsign=false commit --allow-empty -q -m "first"
+          git commit-graph write --reachable
+          cp -R .git/objects/info ../graph-info
+          rm .git/objects/info/commit-graph
+          git commit-graph write --reachable --split
+          git -c commit.gpgsign=false commit --allow-empty -q -m "second"
+          git commit-graph write --reachable --split=no-merge
+          cp -R .git/objects/info ../split-graph-info
+        )
+
+        if test "$object_format" = sha1; then
+          mismatched_format=sha256
+        else
+          mismatched_format=sha1
+        fi
+        for graph_path in graph-info graph-info/commit-graph split-graph-info split-graph-info/commit-graphs; do
+          it "verifies $object_format at $graph_path with an explicit object format" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" --no-verbose --object-hash "$object_format" free commit-graph verify "$graph_path"
+          }
+          it "rejects $object_format at $graph_path when $mismatched_format is requested" && {
+            expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose --object-hash "$mismatched_format" free commit-graph verify "$graph_path"
+          }
+        done
+
+        it "does not hide a corrupt $object_format monolithic graph behind a valid split graph" && {
+          printf 'invalid graph\n' >split-graph-info/commit-graph
+          expect_run $WITH_FAILURE "$exe_plumbing" --no-verbose --object-hash "$object_format" free commit-graph verify split-graph-info
+        }
+      )
+    done
+  )
+
   title "gix free pack"
   (when "running 'pack'"
     snapshot="$snapshot/pack"

@@ -700,6 +700,7 @@ pub fn main() -> Result<()> {
                         let output_statistics = if statistics { Some(format) } else { None };
                         core::commitgraph::verify(
                             path,
+                            object_hash,
                             core::commitgraph::verify::Context {
                                 err,
                                 out,

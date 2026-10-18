@@ -169,11 +169,8 @@ mod at_path {
 
         drop(handle.persist(&destination)?);
         assert_eq!(std::fs::read(&destination)?, b"new", "the destination was replaced");
-        let mut permissions = std::fs::metadata(&destination)?.permissions();
-        let is_readonly = permissions.readonly();
-        #[expect(clippy::permissions_set_readonly_false, reason = "this test only runs on Windows")]
-        permissions.set_readonly(false);
-        std::fs::set_permissions(&destination, permissions)?;
+        let is_readonly = std::fs::metadata(&destination)?.permissions().readonly();
+        gix_fs::clear_readonly_attribute(&destination)?;
         assert!(is_readonly, "the persisted tempfile retained its read-only permission");
         Ok(())
     }

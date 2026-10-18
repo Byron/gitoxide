@@ -80,6 +80,32 @@ pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error + Sen
 /// This is useful for computing values based on the fixture contents.
 pub type PostResult<T = ()> = Result<T>;
 
+/// Rename `from` to `to`, replacing an existing file even if it is read-only.
+///
+/// On Windows, retry a permission-denied rename after clearing the destination's read-only flag.
+/// On other platforms, this is equivalent to [`std::fs::rename()`], which can replace read-only files.
+/// The replacement retains the source's permissions. If the retry fails, the destination's read-only
+/// flag is not restored. Only use this on writable fixtures or during fixture initialization, and drop
+/// any memory mappings before replacing their backing file.
+pub fn rename(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Result<()> {
+    let (from, to) = (from.as_ref(), to.as_ref());
+    let result = std::fs::rename(from, to);
+    #[cfg(windows)]
+    if result
+        .as_ref()
+        .is_err_and(|err| err.kind() == std::io::ErrorKind::PermissionDenied)
+    {
+        let mut permissions = std::fs::metadata(to)?.permissions();
+        if permissions.readonly() {
+            #[expect(clippy::permissions_set_readonly_false, reason = "this block only runs on Windows")]
+            permissions.set_readonly(false);
+            std::fs::set_permissions(to, permissions)?;
+        }
+        return std::fs::rename(from, to);
+    }
+    result
+}
+
 /// Build `example` from `package` and copy the executable to this test process' temporary target directory.
 ///
 /// The returned executable path is stable for the lifetime of the test process and avoids races with other

@@ -56,8 +56,13 @@ fn validate() -> gix_testtools::TestResult {
     for baseline_path in baseline::expectation_paths(&root)? {
         count += 1;
         for use_commitgraph in [false, true] {
-            let cache = use_commitgraph
-                .then(|| gix_commitgraph::Graph::from_info_dir(&odb.store_ref().path().join("info")).unwrap());
+            let cache = use_commitgraph.then(|| {
+                gix_commitgraph::Graph::from_info_dir(
+                    &odb.store_ref().path().join("info"),
+                    odb.store_ref().object_hash(),
+                )
+                .unwrap()
+            });
             for expected in baseline::parse_expectations(&baseline_path)? {
                 let mut graph = gix_revision::Graph::new(&odb, cache.as_ref());
                 let actual = merge_base(expected.first, &expected.others, &mut graph)?;
@@ -98,7 +103,12 @@ fn exhausted_side_skips_unrelated_history() -> gix_testtools::TestResult {
     // provide another merge base, even though its queued commits are not stale.
     for use_commitgraph in [false, true] {
         let cache = use_commitgraph
-            .then(|| gix_commitgraph::Graph::from_info_dir(&odb.store_ref().path().join("info")))
+            .then(|| {
+                gix_commitgraph::Graph::from_info_dir(
+                    &odb.store_ref().path().join("info"),
+                    odb.store_ref().object_hash(),
+                )
+            })
             .transpose()?;
         for (first_commit_id, other_commit_id) in [(tip_commit_id, base_commit_id), (base_commit_id, tip_commit_id)] {
             let mut graph = gix_revision::Graph::new(&odb, cache.as_ref());

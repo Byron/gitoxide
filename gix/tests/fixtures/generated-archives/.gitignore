@@ -94,3 +94,6 @@
 # Git clone baselines should reflect the installed Git's behavior.
 /make_clone_refs.tar
 /make_clone_refs_sha256.tar
+# Generate this small commit-graph fixture and apply Rust post-processing locally.
+/make_corrupt_commit_graph.tar
+/make_corrupt_commit_graph_sha256.tar
