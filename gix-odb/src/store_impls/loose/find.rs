@@ -147,27 +147,20 @@ impl Store {
         // If the first inflate already reached the end of the stream, the fixed-size `header` buffer
         // contains the complete decompressed object, so we can skip a second streaming inflate pass.
         out.clear();
-        out.try_reserve(size_usize)
+        out.try_reserve(size_usize.saturating_add(header_size))
             .or_raise(|| message!("Cannot store loose object of {size} bytes in memory"))?;
         if status == gix_zlib::Status::StreamEnd {
             out.extend_from_slice(&header[header_size..consumed_out]);
         } else {
-            out.resize(size_usize, 0);
-            out[..decompressed_body_prefix_len].copy_from_slice(&header[header_size..consumed_out]);
-
-            let mut input = &map[consumed_in..];
-            let num_decompressed_bytes = gix_zlib::stream::inflate::read(
-                &mut input,
-                &mut inflate.state,
-                &mut out[decompressed_body_prefix_len..],
-            )
-            .or_error()?;
-
-            if num_decompressed_bytes as u64 + decompressed_body_prefix_len as u64 != size {
-                return Err(size_mismatch(
-                    num_decompressed_bytes as u64 + decompressed_body_prefix_len as u64,
-                    size,
-                ));
+            let n = inflate.rest(
+                &map[consumed_in..],
+                &header[..consumed_out],
+                header_size,
+                out,
+                size_usize,
+            )?;
+            if n as u64 != size {
+                return Err(size_mismatch(n as u64, size));
             }
         }
         Ok(Some(gix_object::Data {

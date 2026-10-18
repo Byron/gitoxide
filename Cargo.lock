@@ -5091,9 +5091,9 @@ checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
 
 [[package]]
 name = "sirocco"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "865f6c973d04a3ae9d2b9e784dc67084f26f66444527d53952c65d0962e6a763"
+checksum = "499ced3fc3dd59058047e304ca01b6ae973c05568f40318674853fb0cf6edec0"
 dependencies = [
  "adler32furious",
  "crc32fast",

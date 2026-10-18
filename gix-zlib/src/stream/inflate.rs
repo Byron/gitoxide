@@ -60,7 +60,7 @@ pub fn read(rd: &mut impl BufRead, state: &mut Decompress, mut dst: &mut [u8]) -
 #[derive(Default)]
 pub struct Measure {
     #[cfg(feature = "sirocco")]
-    state: Option<Box<sirocco::StreamMeasurer>>,
+    state: Option<Box<sirocco::inflate::Scanner>>,
     #[cfg(not(feature = "sirocco"))]
     state: Decompress,
 }
@@ -76,10 +76,10 @@ impl Measure {
         {
             let state = self
                 .state
-                .get_or_insert_with(|| Box::new(sirocco::StreamMeasurer::new(sirocco::Format::Zlib)));
-            let decompressed = state.measure_reader(rd).map_err(|err| {
+                .get_or_insert_with(|| Box::new(sirocco::inflate::Scanner::new(sirocco::Format::Zlib)));
+            let lengths = state.scan_reader(rd).map_err(|err| {
                 if err.kind() == io::ErrorKind::InvalidData
-                    && matches!(err.get_ref(), Some(inner) if inner.is::<sirocco::DecompressError>())
+                    && matches!(err.get_ref(), Some(inner) if inner.is::<sirocco::inflate::Error>())
                 {
                     let err = gix_error::message!("corrupt deflate stream: {err}").corrupted().raise();
                     io::Error::new(io::ErrorKind::InvalidInput, err)
@@ -87,7 +87,7 @@ impl Measure {
                     err
                 }
             })?;
-            Ok((decompressed, state.total_in()))
+            Ok((lengths.decompressed, lengths.compressed))
         }
         #[cfg(not(feature = "sirocco"))]
         {
