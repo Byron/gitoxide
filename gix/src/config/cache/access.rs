@@ -303,15 +303,24 @@ impl Cache {
         const ALWAYS_ON_FOR_SAFETY: bool = true;
         Ok(gix_validate::path::component::Options {
             protect_windows: config::tree::gitoxide::Core::PROTECT_WINDOWS
-                .enrich_error(self.resolved.boolean(config::tree::gitoxide::Core::PROTECT_WINDOWS))
+                .enrich_error(self.resolved.boolean_filter(
+                    config::tree::gitoxide::Core::PROTECT_WINDOWS,
+                    &mut self.filter_config_section.clone(),
+                ))
                 .with_lenient_default_value(self.lenient_config, Some(IS_WINDOWS))?
                 .unwrap_or(IS_WINDOWS),
             protect_hfs: config::tree::Core::PROTECT_HFS
-                .enrich_error(self.resolved.boolean(config::tree::Core::PROTECT_HFS))
+                .enrich_error(
+                    self.resolved
+                        .boolean_filter(config::tree::Core::PROTECT_HFS, &mut self.filter_config_section.clone()),
+                )
                 .with_lenient_default_value(self.lenient_config, Some(IS_MACOS))?
                 .unwrap_or(IS_MACOS),
             protect_ntfs: config::tree::Core::PROTECT_NTFS
-                .enrich_error(self.resolved.boolean(config::tree::Core::PROTECT_NTFS))
+                .enrich_error(self.resolved.boolean_filter(
+                    config::tree::Core::PROTECT_NTFS,
+                    &mut self.filter_config_section.clone(),
+                ))
                 .with_lenient_default_value(self.lenient_config, Some(ALWAYS_ON_FOR_SAFETY))?
                 .unwrap_or(ALWAYS_ON_FOR_SAFETY),
         })
