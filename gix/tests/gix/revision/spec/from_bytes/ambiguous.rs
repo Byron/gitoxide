@@ -370,10 +370,7 @@ fn malformed_commit_and_tag_candidates_retain_decode_errors() -> TestResult {
         let hex = malformed_object_id.to_string();
         let source = objects.join(&hex[..2]).join(&hex[2..]);
         let destination = objects.join(&candidate_id[..2]).join(&candidate_id[2..]);
-        if destination.exists() {
-            std::fs::remove_file(&destination)?;
-        }
-        std::fs::rename(source, destination)?;
+        gix_testtools::rename(source, destination)?;
     }
     let err = repo
         .rev_parse("0000000000")

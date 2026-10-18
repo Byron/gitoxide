@@ -29,17 +29,7 @@ fn corrupt_commit_graph_parents_retry_the_current_commit() -> TestResult {
                 // Replace Git's read-only file rather than changing a live mapping.
                 let replacement = graph_path.with_file_name("corrupt-commit-graph");
                 std::fs::write(&replacement, data)?;
-                #[cfg(windows)]
-                {
-                    // Git creates commit-graph files with mode 0444 and updates them by replacement.
-                    // On Windows this sets the read-only attribute, which also blocks rename-overwrite.
-                    // Unlike Unix, Windows requires clearing it even when replacing rather than editing the file.
-                    let mut permissions = std::fs::metadata(&graph_path)?.permissions();
-                    #[expect(clippy::permissions_set_readonly_false, reason = "this block only runs on Windows")]
-                    permissions.set_readonly(false);
-                    std::fs::set_permissions(&graph_path, permissions)?;
-                }
-                std::fs::rename(replacement, graph_path)?;
+                gix_testtools::rename(replacement, graph_path)?;
                 let git = gix_testtools::git_command(repo.path())
                     .args(["rev-list", "HEAD"])
                     .output()?;
