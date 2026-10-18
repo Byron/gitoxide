@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use crate::bstr::ByteSlice;
 use gix_error::{ClassificationMarker, ErrorExt, Message, Result, ResultExt, bail, message, not_found};
 
 use crate::{
@@ -8,7 +9,7 @@ use crate::{
     store_impl::{
         file,
         file::{
-            Transaction, loose,
+            ReferenceExt, Transaction, loose,
             transaction::{Edit, PackedRefs},
         },
     },
@@ -16,6 +17,114 @@ use crate::{
 };
 
 impl Transaction<'_, '_> {
+    fn add_head_reflog(&self, updates: &mut Vec<Edit>) -> Result {
+        let head: &FullNameRef = "HEAD".try_into().expect("valid static reference name");
+        let head_reference = match self.store.find_existing_inner(head, None) {
+            Ok(reference) => reference,
+            Err(err) if err.is_not_found() || err.downcast_any_ref::<file::find::ReferenceDecode>().is_some() => {
+                return Ok(());
+            }
+            Err(err) => return Err(err),
+        };
+        let Target::Symbolic(referent) = &head_reference.target else {
+            return Ok(());
+        };
+        let head_path = self.store.reference_path(head)?;
+        let referent_path = self.store.reference_path(referent.as_ref())?;
+        let paths = updates
+            .iter()
+            .map(|edit| self.store.reference_path(edit.update.name.as_ref()))
+            .collect::<Result<Vec<_>>>()?;
+        // An explicit HEAD edit owns its reflog, including when HEAD is being detached or retargeted.
+        if paths.contains(&head_path) {
+            return Ok(());
+        }
+        for (index, (edit, path)) in updates.iter().zip(&paths).enumerate() {
+            if *path != referent_path {
+                continue;
+            }
+            let (new, log) = match &edit.update.change {
+                Change::Update {
+                    new,
+                    log:
+                        log @ LogChange {
+                            mode: RefLog::AndReference,
+                            ..
+                        },
+                    ..
+                } => (
+                    match new {
+                        Target::Object(_) => new.clone(),
+                        Target::Symbolic(_) => self.store.object_hash.null().into(),
+                    },
+                    LogChange {
+                        mode: RefLog::Only,
+                        ..log.clone()
+                    },
+                ),
+                Change::Delete {
+                    log: RefLog::AndReference,
+                    ..
+                } => (
+                    self.store.object_hash.null().into(),
+                    LogChange {
+                        mode: RefLog::Only,
+                        message: self.reflog_message.clone(),
+                        ..Default::default()
+                    },
+                ),
+                _ => continue,
+            };
+            updates.push(Edit {
+                update: RefEdit::update_with_log(
+                    head.to_owned(),
+                    new,
+                    PreviousValue::MustExistAndMatch(head_reference.target),
+                    log,
+                ),
+                lock: None,
+                parent_index: Some(index),
+                leaf_referent_previous_oid: None,
+                symbolic_new_oid: None,
+                implicit_head: true,
+            });
+            break;
+        }
+        Ok(())
+    }
+
+    fn resolved_id(
+        store: &file::Store,
+        target: &Target,
+        packed: Option<&packed::Buffer>,
+    ) -> Result<Option<gix_hash::ObjectId>> {
+        match target {
+            Target::Object(object_id) => Ok(Some(*object_id)),
+            Target::Symbolic(name) => match store.find_existing_inner(name.as_ref(), packed) {
+                Ok(mut reference) => match reference.follow_to_object_packed(store, packed) {
+                    Ok(object_id) => Ok(Some(object_id)),
+                    Err(err) if err.is_not_found() => Ok(None),
+                    Err(err) => Err(err),
+                },
+                Err(err) if err.is_not_found() => Ok(None),
+                Err(err) => Err(err),
+            },
+        }
+    }
+
+    fn previous_id(
+        store: &file::Store,
+        target: &Target,
+        expected: &PreviousValue,
+        packed: Option<&packed::Buffer>,
+    ) -> Result<Option<gix_hash::ObjectId>> {
+        match Self::resolved_id(store, target, packed) {
+            // Unconstrained edits can repair symbolic refs whose referents cannot be resolved.
+            Err(_) if matches!(expected, PreviousValue::Any | PreviousValue::MustExist) => Ok(None),
+            result => result,
+        }
+    }
+
     /// Read the current value of a reference from loose storage, falling back to packed refs.
     ///
     /// Must be called while holding the lock for `name` so the subsequent CAS check
@@ -113,6 +222,7 @@ impl Transaction<'_, '_> {
 
                 // Keep the previous value for the caller and ourselves. Maybe they want to keep a log of sorts.
                 if let Some(existing) = existing_ref {
+                    change.leaf_referent_previous_oid = Self::previous_id(store, &existing.target, expected, packed)?;
                     *expected = PreviousValue::MustExistAndMatch(existing.target);
                 }
 
@@ -177,6 +287,14 @@ impl Transaction<'_, '_> {
                     }
                 }
 
+                if !change.implicit_head
+                    && let Some(existing) = &existing_ref
+                {
+                    change.leaf_referent_previous_oid = Self::previous_id(store, &existing.target, expected, packed)?;
+                }
+                if store.write_reflog != crate::store::WriteReflog::Disable && matches!(new, Target::Symbolic(_)) {
+                    change.symbolic_new_oid = Self::resolved_id(store, new, packed).ok().flatten();
+                }
                 let (is_effective, is_symbolic) = if let Some(existing) = existing_ref {
                     let (effective, is_symbolic) = new_would_change_existing(new, &existing.target);
                     *expected = PreviousValue::MustExistAndMatch(existing.target);
@@ -256,6 +374,8 @@ impl Transaction<'_, '_> {
                 lock: None,
                 parent_index: None,
                 leaf_referent_previous_oid: None,
+                symbolic_new_oid: None,
+                implicit_head: false,
             })
             .collect();
         updates
@@ -272,9 +392,20 @@ impl Transaction<'_, '_> {
                     lock: None,
                     parent_index: Some(idx),
                     leaf_referent_previous_oid: None,
+                    symbolic_new_oid: None,
+                    implicit_head: false,
                 },
             )
             .or_raise(|| message("Could not preprocess reference edits"))?;
+
+        if self.store.write_reflog != crate::store::WriteReflog::Disable
+            && !matches!(
+                self.packed_refs,
+                PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(_)
+            )
+        {
+            self.add_head_reflog(&mut updates)?;
+        }
 
         let mut maybe_updates_for_packed_refs = match self.packed_refs {
             PackedRefs::DeletionsAndNonSymbolicUpdates(_)
@@ -287,7 +418,15 @@ impl Transaction<'_, '_> {
             || self.store.packed_refs_lock_path().is_file()
         {
             let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
-            let mut needs_packed_refs_lookups = false;
+            let mut needs_packed_refs_lookups = updates.iter().any(|edit| {
+                matches!(
+                    edit.update.change,
+                    Change::Update {
+                        new: Target::Symbolic(_),
+                        ..
+                    }
+                )
+            });
             for edit in &updates {
                 let log_mode = match edit.update.change {
                     Change::Update {
@@ -370,11 +509,52 @@ impl Transaction<'_, '_> {
             }
         }
 
+        let mut updated_paths = Vec::new();
+        for edit in &updates {
+            if !matches!(
+                edit.update.change,
+                Change::Update {
+                    log: LogChange {
+                        mode: RefLog::AndReference,
+                        ..
+                    },
+                    ..
+                }
+            ) {
+                continue;
+            }
+            self.store
+                .check_windows_device_name(edit.update.name.as_ref())
+                .or_raise(|| message("Invalid reference filename"))
+                .or_raise(|| Message::new("Could not prepare reference edit").with("reference", edit.name()))?;
+            let path = self.store.reference_path(edit.update.name.as_ref())?;
+            updated_paths.push((path, edit.name()));
+        }
+        updated_paths.sort_by(|a, b| a.0.cmp(&b.0));
+        for pair in updated_paths.windows(2) {
+            if pair[0].0 != pair[1].0 && pair[1].0.starts_with(&pair[0].0) {
+                bail!(
+                    gix_error::validation("Reference updates have conflicting names")
+                        .with("reference", pair[1].1.as_bstr())
+                );
+            }
+        }
+        self.store.check_namespace_conflicts(
+            None,
+            &updated_paths,
+            self.packed_transaction.as_ref().and_then(packed::Transaction::buffer),
+        )?;
+
         for cid in 0..updates.len() {
             let change = &mut updates[cid];
             if let Err(err) = Self::lock_ref_and_apply_change(
                 self.store,
-                ref_files_lock_fail_mode,
+                if change.implicit_head {
+                    // HEAD transactions take the opposite order; never wait while holding their referent.
+                    gix_lock::acquire::Fail::Immediately
+                } else {
+                    ref_files_lock_fail_mode
+                },
                 self.packed_transaction.as_ref().and_then(packed::Transaction::buffer),
                 change,
                 matches!(
@@ -396,6 +576,12 @@ impl Transaction<'_, '_> {
                     context = context.with("referent", referent);
                 }
                 return Err(err.and_raise(context));
+            }
+
+            if change.implicit_head {
+                let parent_index = change.parent_index.expect("implicit HEAD has its referent as parent");
+                updates[cid].leaf_referent_previous_oid = updates[parent_index].leaf_referent_previous_oid;
+                continue;
             }
 
             // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
@@ -425,7 +611,13 @@ impl Transaction<'_, '_> {
     /// A rollback happens automatically as this instance is dropped as well.
     pub fn rollback(self) -> Vec<RefEdit> {
         self.updates
-            .map(|updates| updates.into_iter().map(|u| u.update).collect())
+            .map(|updates| {
+                updates
+                    .into_iter()
+                    .filter(|edit| !edit.implicit_head)
+                    .map(|u| u.update)
+                    .collect()
+            })
             .unwrap_or_default()
     }
 }

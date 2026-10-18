@@ -11,7 +11,7 @@ use gix_object::bstr::{BStr, BString, ByteSlice};
 
 use crate::{
     FullNameRef, Target,
-    file::{ReferenceExt, Store, Transaction},
+    file::{Store, Transaction},
     store::WriteReflog,
     transaction::{Change, PreviousValue, RefEdit},
 };
@@ -19,6 +19,7 @@ use crate::{
 impl Store {
     /// Rename a direct `source` reference to `destination`, replacing an existing destination without
     /// following symbolic refs. Both directions of directory/file conflicts and same-name renames work.
+    /// `destination_constraint` checks the observed destination; concurrent changes are rejected under its lock.
     /// The source's reflog history replaces the destination's, followed by a `source target -> source target`
     /// entry with whitespace-normalized `log_message`. Without source history, an orphan destination log is retained.
     /// `WriteReflog::Disable` preserves moved history but suppresses new entries.
@@ -34,10 +35,12 @@ impl Store {
     /// An overwritten destination and entries already appended to `HEAD`'s log are not restored.
     /// Recovery failures retain both errors, the `source_target`, and a `recovery_log` path when history remains.
     /// Crashes can leave the source unreferenced and its reflog at that temporary path.
+    #[expect(clippy::too_many_arguments)]
     pub fn rename(
         &self,
         source: &FullNameRef,
         destination: &FullNameRef,
+        destination_constraint: PreviousValue,
         committer: Option<gix_actor::SignatureRef<'_>>,
         log_message: &BStr,
         ref_files_lock_fail_mode: Fail,
@@ -46,6 +49,7 @@ impl Store {
         self.rename_inner(
             source,
             destination,
+            destination_constraint,
             committer,
             log_message,
             ref_files_lock_fail_mode,
@@ -58,10 +62,12 @@ impl Store {
         })
     }
 
+    #[expect(clippy::too_many_arguments)]
     fn rename_inner(
         &self,
         source: &FullNameRef,
         destination: &FullNameRef,
+        destination_constraint: PreviousValue,
         committer: Option<gix_actor::SignatureRef<'_>>,
         log_message: &BStr,
         ref_lock: Fail,
@@ -88,10 +94,44 @@ impl Store {
             }
             Err(err) => return Err(err),
         };
+        match (&destination_constraint, &destination_previous) {
+            (PreviousValue::Any, _)
+            | (PreviousValue::MustExist, Some(_))
+            | (PreviousValue::MustNotExist | PreviousValue::ExistingMustMatch(_), None) => {}
+            (PreviousValue::MustNotExist, Some(actual)) => {
+                return Err(super::transaction::prepare::MustNotExist {
+                    full_name: destination.as_bstr().to_owned(),
+                    actual: actual.clone(),
+                }
+                .and_raise(message("The rename destination must not exist")));
+            }
+            (PreviousValue::MustExist | PreviousValue::MustExistAndMatch(_), None) => {
+                bail!(
+                    gix_error::not_found("The rename destination must exist").with("reference", destination.as_bstr())
+                );
+            }
+            (PreviousValue::MustExistAndMatch(expected) | PreviousValue::ExistingMustMatch(expected), Some(actual)) => {
+                if actual != expected {
+                    return Err(super::transaction::prepare::ReferenceOutOfDate {
+                        full_name: destination.as_bstr().to_owned(),
+                        actual: actual.clone(),
+                    }
+                    .and_raise(message!("Expected rename destination content {expected}")));
+                }
+            }
+        }
+        let destination_must_exist = matches!(
+            destination_constraint,
+            PreviousValue::MustExist | PreviousValue::MustExistAndMatch(_)
+        );
         let source_path = self.reference_path(source)?;
         let destination_path = self.reference_path(destination)?;
         let packed = self.assure_packed_refs_uptodate()?;
-        self.check_rename_destination(Some(&source_path), &destination_path, packed.as_deref().map(|p| &**p))?;
+        self.check_namespace_conflicts(
+            Some(&source_path),
+            &[(destination_path.clone(), destination.as_bstr().to_owned())],
+            packed.as_deref().map(|p| &**p),
+        )?;
         drop(packed);
 
         // Ref transactions provide CAS checks, locks, packed deletion, and cleanup; rename owns the log semantics.
@@ -101,9 +141,11 @@ impl Store {
             source.to_owned(),
             PreviousValue::MustExistAndMatch(source_target.into()),
         );
-        let source_transaction = silent
-            .transaction()
-            .prepare([deletion.clone()], ref_lock, packed_lock)?;
+        let source_transaction = self.transaction().reflog_message(log_message.clone()).prepare(
+            [deletion.clone()],
+            ref_lock,
+            packed_lock,
+        )?;
         let source_log = self.reflog_path(source)?;
         let log_exists = match fs::symlink_metadata(&source_log) {
             Ok(metadata) => {
@@ -147,23 +189,23 @@ impl Store {
         };
         let mut source_deleted = false;
         let result = (|| -> Result<Vec<RefEdit>> {
-            self.log_head_deletion(source, committer, log_message.as_bstr())?;
-            source_transaction.commit(None)?;
+            source_transaction.commit(committer)?;
             source_deleted = true;
             if source_path != destination_path
                 && let Some(previous) = &destination_previous
-                && self.try_find(destination)?.is_some()
+                && (destination_must_exist || self.try_find(destination)?.is_some())
             {
-                let transaction = silent.transaction().prepare(
-                    [RefEdit::delete(
-                        destination.to_owned(),
-                        PreviousValue::MustExistAndMatch(previous.clone()),
-                    )],
+                let transaction = self.transaction().prepare(
+                    [RefEdit::delete(destination.to_owned(), PreviousValue::Any)],
                     ref_lock,
                     packed_lock,
                 )?;
-                self.log_head_deletion(destination, committer, BStr::new(b""))?;
-                transaction.commit(None)?;
+                // Compare raw targets under lock, allowing replacement of symrefs with broken referents.
+                let edit: &RefEdit = transaction.updates.as_ref().expect("prepared")[0].borrow();
+                if edit.change.previous_value() != Some(previous.to_ref()) {
+                    bail!(gix_error::validation("Destination changed concurrently"));
+                }
+                transaction.commit(committer)?;
             }
             let update = RefEdit::update(
                 destination.to_owned(),
@@ -179,9 +221,9 @@ impl Store {
                     bail!(gix_error::validation("Destination changed concurrently"));
                 }
             }
-            self.check_rename_destination(
+            self.check_namespace_conflicts(
                 None,
-                &destination_path,
+                &[(destination_path.clone(), destination.as_bstr().to_owned())],
                 transaction
                     .packed_transaction
                     .as_ref()
@@ -259,80 +301,93 @@ impl Store {
         }
     }
 
-    fn check_rename_destination(
+    pub(in crate::store_impl::file) fn check_namespace_conflicts(
         &self,
         source: Option<&Path>,
-        destination: &Path,
+        destinations: &[(PathBuf, BString)],
         packed: Option<&crate::packed::Buffer>,
     ) -> Result {
-        for reference in self.iter_packed(packed).or_error()? {
-            let name = match reference {
-                Ok(reference) => reference.name,
-                Err(err) => {
-                    let Some(decode) = err.downcast_any_ref::<super::find::ReferenceDecode>() else {
-                        return Err(err);
-                    };
-                    // Namespace conflicts depend on names, including names whose contents are malformed.
-                    let mut name = crate::FullName::try_from(
-                        gix_path::to_unix_separators_on_windows(gix_path::into_bstr(&decode.relative_path)?)
-                            .into_owned(),
+        for (destination_path, destination_name) in destinations {
+            let destination = <&FullNameRef>::try_from(destination_name.as_bstr()).or_error()?;
+            if matches!(
+                destination.category(),
+                Some(
+                    crate::Category::PseudoRef
+                        | crate::Category::MainPseudoRef
+                        | crate::Category::LinkedPseudoRef { .. }
+                )
+            ) {
+                continue;
+            }
+            let conflict = |name: &BStr| {
+                gix_error::validation("The reference name conflicts with another reference")
+                    .with("reference", name)
+                    .and_raise(
+                        Message::new("Could not prepare reference edit").with("reference", destination_name.as_bstr()),
                     )
-                    .or_error()?;
+            };
+            for (end, _) in destination_name.iter().enumerate().filter(|(_, byte)| **byte == b'/') {
+                let Ok(ancestor) = <&FullNameRef>::try_from(destination_name[..end].as_bstr()) else {
+                    continue;
+                };
+                let path = self.reference_path(ancestor)?;
+                if Some(path.as_path()) == source || !destination_path.starts_with(&path) {
+                    continue;
+                }
+                match self.find_existing_inner(ancestor, packed) {
+                    Ok(_) => return Err(conflict(ancestor.as_bstr())),
+                    Err(err) if err.downcast_any_ref::<super::find::ReferenceDecode>().is_some() => {
+                        return Err(conflict(ancestor.as_bstr()));
+                    }
+                    Err(err) if err.is_not_found() => {}
+                    Err(err) => return Err(err),
+                }
+            }
+
+            // Only visit descendant names; their contents are irrelevant to namespace conflicts.
+            let (base, _) = self.reference_path_with_base(destination)?;
+            for entry in super::loose::iter::SortedLoosePaths::at(
+                destination_path,
+                base.into_owned(),
+                None,
+                None,
+                self.precompose_unicode,
+            ) {
+                let (path, mut name) = entry.or_error()?;
+                if Some(path.as_path()) != source {
                     if let Some(namespace) = &self.namespace {
                         name.strip_namespace(namespace);
                     }
-                    name
+                    return Err(conflict(name.as_bstr()));
                 }
-            };
-            let path = self.reference_path(name.as_ref())?;
-            if Some(path.as_path()) != source
-                && path != destination
-                && (path.starts_with(destination) || destination.starts_with(&path))
-            {
-                bail!(
-                    gix_error::validation("The rename destination conflicts with another reference")
-                        .with("reference", name.as_bstr())
-                );
+            }
+            if let Some((packed, name)) = packed.zip(crate::packed::find::transform_full_name_for_lookup(destination)) {
+                let mut prefix = self
+                    .namespace
+                    .as_ref()
+                    .map_or_else(BString::default, |ns| ns.as_bstr().to_owned());
+                if self.precompose_unicode {
+                    prefix.extend_from_slice(&gix_path::into_bstr(gix_utils::str::precompose_path(
+                        gix_path::from_bstr(name.as_bstr())?,
+                    ))?);
+                } else {
+                    prefix.extend_from_slice(name.as_bstr());
+                }
+                prefix.push(b'/');
+                let prefix_len = prefix.len();
+                for reference in packed.iter_prefixed(prefix)? {
+                    let mut name = reference?.name.to_owned();
+                    let path = destination_path.join(gix_path::from_bstr(name.as_bstr()[prefix_len..].as_bstr())?);
+                    if Some(path.as_path()) != source {
+                        if let Some(namespace) = &self.namespace {
+                            name.strip_namespace(namespace);
+                        }
+                        return Err(conflict(name.as_bstr()));
+                    }
+                }
             }
         }
         Ok(())
-    }
-
-    fn log_head_deletion(
-        &self,
-        deleted: &FullNameRef,
-        committer: Option<gix_actor::SignatureRef<'_>>,
-        log_message: &BStr,
-    ) -> Result {
-        let head: &FullNameRef = "HEAD".try_into().expect("valid static reference name");
-        if self
-            .try_find(head)?
-            .is_none_or(|reference| reference.target != Target::Symbolic(deleted.to_owned()))
-        {
-            return Ok(());
-        }
-        // A dereferencing HEAD transaction locks HEAD first; do not wait on it while holding its referent.
-        let _lock = gix_lock::Marker::acquire_to_hold_resource(self.reference_path(head)?, Fail::Immediately, None, 0)?;
-        let Some(mut reference) = self.try_find(head)? else {
-            return Ok(());
-        };
-        if reference.target != Target::Symbolic(deleted.to_owned()) {
-            return Ok(());
-        }
-        let packed = self.cached_packed_buffer()?;
-        let previous = match reference.follow_to_object_packed(self, packed.as_deref().map(|buffer| &**buffer)) {
-            Ok(target) => target,
-            Err(err) if err.is_not_found() => self.object_hash.null(),
-            Err(err) => return Err(err),
-        };
-        self.reflog_create_or_append(
-            head,
-            Some(previous),
-            &self.object_hash.null(),
-            committer,
-            log_message,
-            false,
-        )
     }
 }
 
@@ -501,9 +556,9 @@ fn restore_source(
             Err(err) if err.kind() == io::ErrorKind::NotFound => {}
             Err(err) => return Err(err.and_raise(message("Could not inspect source during recovery"))),
         }
-        store.check_rename_destination(
+        store.check_namespace_conflicts(
             None,
-            &source_path,
+            &[(source_path, source.as_bstr().to_owned())],
             transaction
                 .packed_transaction
                 .as_ref()

@@ -6,11 +6,72 @@ use gix_ref::{
     Target,
     file::Store,
     log::Line,
-    transaction::{Change, RefEdit},
+    transaction::{Change, PreviousValue, RefEdit},
 };
 use gix_testtools::{Creation, TestResult, scripted_fixture_read_only_with_args, scripted_fixture_writable_with_args};
 
 const SCRIPT: &str = "make_ref_rename.sh";
+
+#[test]
+fn destination_constraints_are_checked_before_changing_the_source_or_logs() -> TestResult {
+    for storage in ["loose", "packed", "both"] {
+        for (state, constraint, succeeds) in [
+            ("plain", "missing", true),
+            ("destination", "missing", false),
+            ("destination-same-target", "missing", false),
+            ("symbolic-destination", "missing", false),
+            ("broken-destination", "missing", false),
+            ("destination", "matching", true),
+            ("destination", "mismatching", false),
+            ("plain", "optional-matching", true),
+            ("destination", "optional-matching", true),
+            ("plain", "existing", false),
+            ("destination", "existing", true),
+        ] {
+            let (_keep, store) = writable("topic", "renamed", storage, state, "detached")?;
+            let before = observe(&store, "refs/heads/topic", "refs/heads/renamed")?;
+            let destination_target = before.refs.get("refs/heads/renamed");
+            let expected = match constraint {
+                "missing" => PreviousValue::MustNotExist,
+                "existing" => PreviousValue::MustExist,
+                "matching" => PreviousValue::MustExistAndMatch(destination_target.expect("destination exists").clone()),
+                "mismatching" => PreviousValue::MustExistAndMatch(before.refs["refs/heads/topic"].clone()),
+                "optional-matching" => PreviousValue::ExistingMustMatch(
+                    destination_target.unwrap_or(&before.refs["refs/heads/topic"]).clone(),
+                ),
+                _ => unreachable!("test constraints are exhaustive"),
+            };
+            let result = store.rename(
+                "refs/heads/topic".try_into()?,
+                "refs/heads/renamed".try_into()?,
+                expected,
+                Some(committer()?),
+                BStr::new("rename"),
+                Fail::Immediately,
+                Fail::Immediately,
+            );
+            assert_eq!(result.is_ok(), succeeds, "{state}, {storage}, {constraint}: {result:?}");
+            if succeeds {
+                assert!(
+                    store.try_find("refs/heads/topic")?.is_none(),
+                    "the accepted rename removes its source"
+                );
+                assert_eq!(
+                    store.find("refs/heads/renamed")?.target,
+                    before.refs["refs/heads/topic"],
+                    "the accepted rename preserves the source target"
+                );
+            } else {
+                assert_eq!(
+                    observe(&store, "refs/heads/topic", "refs/heads/renamed")?,
+                    before,
+                    "{state}, {storage}, {constraint}: reject before altering refs or reflogs"
+                );
+            }
+        }
+    }
+    Ok(())
+}
 
 #[test]
 fn directory_file_conflicts_and_packed_sources_match_git() -> TestResult {
@@ -93,6 +154,7 @@ fn reflog_messages_normalize_ascii_whitespace_and_preserve_other_bytes() -> Test
         store.rename(
             "refs/heads/topic".try_into()?,
             "refs/heads/renamed".try_into()?,
+            PreviousValue::Any,
             Some(committer()?),
             BStr::new(message),
             Fail::Immediately,
@@ -117,6 +179,7 @@ fn invalid_log_inputs_are_rejected_before_changing_refs_or_history() -> TestResu
                 .rename(
                     "refs/heads/topic".try_into()?,
                     "refs/heads/renamed".try_into()?,
+                    PreviousValue::Any,
                     committer,
                     BStr::new(message),
                     Fail::Immediately,
@@ -135,6 +198,7 @@ fn invalid_log_inputs_are_rejected_before_changing_refs_or_history() -> TestResu
     store.rename(
         "refs/tags/topic".try_into()?,
         "refs/tags/renamed".try_into()?,
+        PreviousValue::Any,
         None,
         BStr::new("rename"),
         Fail::Immediately,
@@ -178,27 +242,42 @@ fn namespace_conflicts_and_invalid_sources_leave_the_store_unchanged() -> TestRe
 
 #[test]
 fn symbolic_destinations_are_replaced_without_dereferencing() -> TestResult {
-    for state in ["symbolic-destination", "broken-destination"] {
-        let (_keep, store) = writable("topic", "renamed", "loose", state, "detached")?;
-        let before = observe(&store, "refs/heads/topic", "refs/heads/renamed")?;
-        let mut expected = before.clone();
-        let source_target = expected.refs.remove("refs/heads/topic").expect("source exists");
-        expected.refs.insert("refs/heads/renamed".into(), source_target.clone());
-        let mut history = expected.logs.remove("refs/heads/topic").expect("source has history");
-        history.push(rename_line(
-            source_target.id().to_owned(),
-            "refs/heads/topic",
-            "refs/heads/renamed",
-        )?);
-        expected.logs.insert("refs/heads/renamed".into(), history);
-
-        let edits = rename(&store, "refs/heads/topic", "refs/heads/renamed")?;
-        assert_outcome(&edits, &before, "refs/heads/topic", "refs/heads/renamed");
-        assert_eq!(
-            observe(&store, "refs/heads/topic", "refs/heads/renamed")?,
-            expected,
-            "{state}: replace the destination itself and its log while preserving the symbolic target"
-        );
+    for storage in ["loose", "packed", "both"] {
+        for state in [
+            "symbolic-destination",
+            "broken-destination",
+            "cyclic-destination",
+            "malformed-target-destination",
+        ] {
+            let (_keep, store) = writable("topic", "renamed", storage, state, "detached")?;
+            let baseline =
+                scripted_fixture_read_only_with_args(SCRIPT, ["topic", "renamed", storage, state, "detached", "git"])?;
+            assert_eq!(
+                std::fs::read_to_string(baseline.join("status"))?.trim(),
+                "0",
+                "Git replaces the destination without following its target: {state}, {storage}"
+            );
+            let names = ["refs/heads/topic", "refs/heads/renamed", "refs/heads/other", "HEAD"];
+            let before = observe_names(&store, names)?;
+            let edits = rename(&store, "refs/heads/topic", "refs/heads/renamed")?;
+            assert_outcome(&edits, &before, "refs/heads/topic", "refs/heads/renamed");
+            let baseline = Store::at(baseline.join(".git"), crate::fixture_hash_kind());
+            assert_eq!(
+                observe_names(&store, names)?,
+                observe_names(&baseline, names)?,
+                "replace the destination and preserve source history exactly like Git: {state}, {storage}"
+            );
+            for name in ["broken", "cycle"] {
+                let path = format!("refs/heads/{name}");
+                if baseline.git_dir().join(&path).exists() {
+                    assert_eq!(
+                        std::fs::read(store.git_dir().join(&path))?,
+                        std::fs::read(baseline.git_dir().join(path))?,
+                        "preserve the unresolvable target's raw contents: {state}, {storage}"
+                    );
+                }
+            }
+        }
     }
     Ok(())
 }
@@ -869,6 +948,7 @@ fn rename(store: &Store, source: &str, destination: &str) -> TestResult<Vec<RefE
     Ok(store.rename(
         source.try_into()?,
         destination.try_into()?,
+        PreviousValue::Any,
         Some(committer()?),
         BStr::new(&message),
         Fail::Immediately,
@@ -898,14 +978,24 @@ struct State {
 }
 
 fn observe(store: &Store, source: &str, destination: &str) -> TestResult<State> {
-    let mut refs = store
+    let refs = store
         .iter()?
         .all()?
-        .map(|reference| reference.map(|reference| (reference.name.to_string(), reference.target)))
-        .collect::<Result<BTreeMap<_, _>, _>>()?;
-    refs.insert("HEAD".into(), store.find("HEAD")?.target);
+        .map(|reference| reference.map(|reference| reference.name.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
+    observe_names(
+        store,
+        refs.iter().map(String::as_str).chain([source, destination, "HEAD"]),
+    )
+}
+
+fn observe_names<'a>(store: &Store, names: impl IntoIterator<Item = &'a str>) -> TestResult<State> {
+    let mut refs = BTreeMap::new();
     let mut logs = BTreeMap::new();
-    for name in refs.keys().map(String::as_str).chain([source, destination]) {
+    for name in names {
+        if let Some(reference) = store.try_find(name)? {
+            refs.insert(name.to_owned(), reference.target);
+        }
         if let Some(history) = reflog(store, name)? {
             logs.insert(name.to_owned(), history);
         }

@@ -9,6 +9,8 @@ destination_branch=$2
 blocker=$3
 operation=$4
 order=$5
+storage=$6
+initial_logs=$7
 
 # Keep the source checked out to expose HEAD changes, and give its reflog history
 # to preserve. A blocker points to the older commit so accidental updates are visible.
@@ -18,6 +20,17 @@ git commit -q --allow-empty -m second
 if test "$blocker" != '-'; then
   git branch "$blocker" HEAD~1
 fi
+case "$storage" in
+  loose) ;;
+  packed) git pack-refs --all --prune ;;
+  both) git pack-refs --all --no-prune ;;
+  *) echo "unknown storage: $storage" >&2; exit 1 ;;
+esac
+case "$initial_logs" in
+  normal) ;;
+  missing) rm -rf .git/logs ;;
+  *) echo "unknown initial logs: $initial_logs" >&2; exit 1 ;;
+esac
 
 status=0
 case "$operation" in

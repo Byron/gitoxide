@@ -116,6 +116,7 @@ pub struct Transaction<'s, 'p> {
     packed_transaction: Option<crate::store_impl::packed::Transaction>,
     updates: Option<Vec<transaction::Edit>>,
     packed_refs: transaction::PackedRefs<'p>,
+    reflog_message: crate::bstr::BString,
 }
 
 ///

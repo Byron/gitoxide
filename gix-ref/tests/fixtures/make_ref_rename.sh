@@ -25,13 +25,14 @@ case "$state" in
   destination|no-source-log-destination)
     git branch "$destination_branch" "$initial_oid"
     ;;
+  destination-same-target) git branch "$destination_branch" "$source_oid" ;;
   malformed-packed-destination*|no-source-log-malformed-packed-destination*)
     case "$state" in
       *same-target) git branch "$destination_branch" "$source_oid" ;;
       *) git branch "$destination_branch" "$initial_oid" ;;
     esac
     ;;
-  symbolic-destination)
+  symbolic-destination|cyclic-destination|malformed-target-destination)
     git symbolic-ref -m destination "$destination_ref" refs/heads/other
     ;;
   broken-destination)
@@ -141,6 +142,16 @@ case "$storage" in
 esac
 
 case "$state" in
+  cyclic-destination|malformed-target-destination)
+    # The destination itself is a valid symref even if following it fails.
+    git symbolic-ref "$destination_ref" refs/heads/broken
+    if test "$state" = cyclic-destination; then
+      git symbolic-ref refs/heads/broken refs/heads/cycle
+      git symbolic-ref refs/heads/cycle refs/heads/broken
+    else
+      printf 'broken\n' >.git/refs/heads/broken
+    fi
+    ;;
   malformed-packed-destination*|no-source-log-malformed-packed-destination*)
     # Hide the valid packed destination with a malformed loose reference; Git
     # replaces only that loose file and retains the packed target underneath.

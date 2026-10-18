@@ -55,15 +55,17 @@ impl Transaction<'_, '_> {
                     if update_reflog {
                         let log_update = match new {
                             Target::Symbolic(_) => {
-                                // Special HACK: no reflog for symref changes as there is no OID involved which the reflog needs.
-                                // Unless, the ref is new and we can obtain a peeled id
-                                // identified by the expectation of what could be there, as is the case when cloning.
-                                match expected {
-                                    PreviousValue::ExistingMustMatch(Target::Object(oid)) => {
-                                        Some((Some(gix_hash::ObjectId::null(oid.kind())), oid))
-                                    }
-                                    _ => None,
-                                }
+                                change
+                                    .symbolic_new_oid
+                                    .as_ref()
+                                    .map(|new_oid| (change.leaf_referent_previous_oid, new_oid))
+                                    .or_else(|| match expected {
+                                        // Clone may provide an object id before the referent exists.
+                                        PreviousValue::ExistingMustMatch(Target::Object(oid)) => {
+                                            Some((Some(gix_hash::ObjectId::null(oid.kind())), oid))
+                                        }
+                                        _ => None,
+                                    })
                             }
                             Target::Object(new_oid) => {
                                 let previous = match expected {
@@ -77,7 +79,10 @@ impl Transaction<'_, '_> {
                             }
                         };
                         if let Some((previous, new_oid)) = log_update {
-                            let do_update = previous.as_ref() != Some(new_oid);
+                            let do_update = change.implicit_head
+                                || matches!(new, Target::Symbolic(_))
+                                || matches!(expected, PreviousValue::MustExistAndMatch(Target::Symbolic(_)))
+                                || previous.as_ref() != Some(new_oid);
                             if do_update {
                                 self.store
                                     .reflog_create_or_append(
@@ -166,7 +171,11 @@ impl Transaction<'_, '_> {
                 drop(lock);
             }
         }
-        Ok(updates.into_iter().map(|edit| edit.update).collect())
+        Ok(updates
+            .into_iter()
+            .filter(|edit| !edit.implicit_head)
+            .map(|edit| edit.update)
+            .collect())
     }
 }
 
