@@ -140,4 +140,5 @@ pub mod transaction;
 pub mod packed;
 
 mod raw_ext;
+mod rename;
 pub use raw_ext::ReferenceExt;

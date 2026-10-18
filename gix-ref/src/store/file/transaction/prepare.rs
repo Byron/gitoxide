@@ -29,11 +29,26 @@ impl Transaction<'_, '_> {
             .ref_contents(name)
             .or_raise(|| message("Could not read existing reference"))?
             // Git permits replacing malformed loose references, but I/O errors must propagate.
-            .and_then(|buf| loose::Reference::try_from_path(name.to_owned(), &buf, store.object_hash).ok())
-            .map(Reference::from);
+            .map(|buf| {
+                loose::Reference::try_from_path(name.to_owned(), &buf, store.object_hash)
+                    .ok()
+                    .map(Reference::from)
+            });
         match (loose, packed) {
-            (None, Some(packed)) => packed.try_find(name).map(|reference| reference.map(Into::into)),
-            (reference, _) => Ok(reference),
+            (None, Some(packed)) => {
+                let Some(name) = packed::find::transform_full_name_for_lookup(name) else {
+                    return Ok(None);
+                };
+                let namespaced = store
+                    .namespace
+                    .as_ref()
+                    .map(|namespace| namespace.clone().into_namespaced_name(name));
+                packed
+                    .try_find(namespaced.as_ref().map_or(name, AsRef::as_ref))
+                    .map(|reference| reference.map(Into::into))
+            }
+            // Even malformed loose contents shadow an older packed value.
+            (reference, _) => Ok(reference.flatten()),
         }
     }
 
@@ -210,7 +225,18 @@ impl Transaction<'_, '_> {
             &mut edits.into_iter(),
             ref_files_lock_fail_mode,
             packed_refs_lock_fail_mode,
+            false,
         )
+    }
+
+    /// Rename must keep even an absent packed-refs file locked while checking namespace conflicts.
+    pub(in crate::store_impl::file) fn prepare_for_rename(
+        self,
+        edit: RefEdit,
+        ref_lock: gix_lock::acquire::Fail,
+        packed_lock: gix_lock::acquire::Fail,
+    ) -> Result<Self> {
+        self.prepare_inner(&mut std::iter::once(edit), ref_lock, packed_lock, true)
     }
 
     /// Failed edits include [metadata](gix_error::Error::metadata()) `reference` (requested name bytes) and `referent`
@@ -220,6 +246,7 @@ impl Transaction<'_, '_> {
         edits: &mut dyn Iterator<Item = RefEdit>,
         ref_files_lock_fail_mode: gix_lock::acquire::Fail,
         packed_refs_lock_fail_mode: gix_lock::acquire::Fail,
+        force_packed_lock: bool,
     ) -> Result<Self> {
         assert!(self.updates.is_none(), "BUG: Must not call prepare(…) multiple times");
         let store = self.store;
@@ -254,7 +281,8 @@ impl Transaction<'_, '_> {
             | PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(_) => Some(0_usize),
             PackedRefs::DeletionsOnly => None,
         };
-        if maybe_updates_for_packed_refs.is_some()
+        if force_packed_lock
+            || maybe_updates_for_packed_refs.is_some()
             || self.store.packed_refs_path().is_file()
             || self.store.packed_refs_lock_path().is_file()
         {
@@ -308,25 +336,27 @@ impl Transaction<'_, '_> {
                 // What follows means that we will only create a transaction if we have to access packed refs for looking
                 // up current ref values, or that we definitely have a transaction if we need to make updates. Otherwise
                 // we may have no transaction at all which isn't required if we had none and would only try making deletions.
-                let packed_transaction: Option<_> =
-                    if maybe_updates_for_packed_refs.unwrap_or(0) > 0 || self.store.packed_refs_lock_path().is_file() {
-                        // We have to create a packed-ref even if it doesn't exist
-                        self.store.packed_transaction(packed_refs_lock_fail_mode)?.into()
-                    } else {
-                        // A packed transaction is optional - we only have deletions that can't be made if
-                        // no packed-ref file exists anyway
-                        self.store
-                            .assure_packed_refs_uptodate()?
-                            .map(|p| {
-                                buffer_into_transaction(
-                                    p,
-                                    packed_refs_lock_fail_mode,
-                                    self.store.precompose_unicode,
-                                    self.store.namespace.clone(),
-                                )
-                            })
-                            .transpose()?
-                    };
+                let packed_transaction: Option<_> = if force_packed_lock
+                    || maybe_updates_for_packed_refs.unwrap_or(0) > 0
+                    || self.store.packed_refs_lock_path().is_file()
+                {
+                    // We have to create a packed-ref even if it doesn't exist
+                    self.store.packed_transaction(packed_refs_lock_fail_mode)?.into()
+                } else {
+                    // A packed transaction is optional - we only have deletions that can't be made if
+                    // no packed-ref file exists anyway
+                    self.store
+                        .assure_packed_refs_uptodate()?
+                        .map(|p| {
+                            buffer_into_transaction(
+                                p,
+                                packed_refs_lock_fail_mode,
+                                self.store.precompose_unicode,
+                                self.store.namespace.clone(),
+                            )
+                        })
+                        .transpose()?
+                };
                 if let Some(transaction) = packed_transaction {
                     self.packed_transaction = Some(match &mut self.packed_refs {
                         PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(f)
