@@ -26,6 +26,34 @@ use crate::{
 mod collisions;
 
 #[test]
+fn symbolic_targets_preserve_non_utf8_bytes() -> TestResult {
+    let (_keep, mut store) = empty_store()?;
+    store.write_reflog = WriteReflog::Disable;
+    for target in [b"refs/heads/topic-\xff".as_slice(), b"refs/heads/renamed-\xfe"] {
+        let target = Target::Symbolic(target.as_bstr().try_into()?);
+        store
+            .transaction()
+            .prepare(
+                [RefEdit::update(
+                    "HEAD".try_into()?,
+                    target.clone(),
+                    PreviousValue::Any,
+                    "",
+                )],
+                Fail::Immediately,
+                Fail::Immediately,
+            )?
+            .commit(None)?;
+        assert_eq!(
+            store.find("HEAD")?.target,
+            target,
+            "symbolic targets retain their exact bytes"
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn reflog_messages_preserve_bytes() -> Result {
     let (_keep, store) = empty_store()?;
     for (index, message) in [b"".as_slice(), b"plain text", b"raw \xff\xfe bytes"]
