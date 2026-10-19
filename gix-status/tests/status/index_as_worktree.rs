@@ -1360,3 +1360,72 @@ fn racy_git() -> gix_testtools::TestResult {
 fn default_pathspec() -> gix_pathspec::Search {
     gix_pathspec::Search::from_specs(to_pathspecs(&[]), None, std::path::Path::new("")).expect("empty is always valid")
 }
+
+#[cfg(windows)]
+#[test]
+fn fscache_preserves_live_status_on_misses() -> gix_testtools::TestResult {
+    let worktree = gix_testtools::scripted_fixture_read_only("fscache.sh")?;
+    let mut index = gix_index::State::new(gix_testtools::object_hash());
+    for name in [
+        "File",
+        "directory",
+        "directory/file",
+        "file",
+        "missing",
+        "missing-parent/file",
+    ] {
+        index.dangerously_push_entry(
+            Default::default(),
+            gix_testtools::object_hash().null(),
+            Flags::INTENT_TO_ADD,
+            Mode::FILE,
+            BStr::new(name),
+        );
+    }
+    let ctx = Context {
+        pathspec: default_pathspec(),
+        stack: gix_worktree::Stack::from_state_and_ignore_case(
+            &worktree,
+            false,
+            gix_worktree::stack::State::AttributesStack(Default::default()),
+            &index,
+            index.path_backing(),
+        ),
+        filter: gix_filter::Pipeline::new(Default::default(), gix_testtools::object_hash(), Default::default()),
+        should_interrupt: &AtomicBool::default(),
+    };
+    let mut results = Vec::new();
+    for fscache in [false, true] {
+        let mut recorder = Recorder::default();
+        let outcome = index_as_worktree(
+            &index,
+            &worktree,
+            &mut recorder,
+            FastEq,
+            SubmoduleStatusMock { dirty: false },
+            gix_object::find::Never,
+            &mut gix_utils::progress::Discard,
+            ctx.clone(),
+            Options {
+                fscache,
+                thread_limit: Some(1),
+                ..Default::default()
+            },
+        )?;
+        recorder.records.sort_unstable_by_key(|record| record.relative_path);
+        results.push((records_to_tuple(recorder.records), outcome));
+    }
+    assert_eq!(
+        results[0].0, results[1].0,
+        "cached and live status agree for hits, different casing and missing entries"
+    );
+    assert_eq!(
+        results[0].1.symlink_metadata_calls, 6,
+        "uncached status queries every path"
+    );
+    assert_eq!(
+        results[1].1.symlink_metadata_calls, 3,
+        "different casing, an absent entry and failed parent enumeration use live metadata"
+    );
+    Ok(())
+}

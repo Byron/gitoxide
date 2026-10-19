@@ -5,10 +5,15 @@
 //! and where the dirwalk returns basic stat information, so only on Windows.
 //!
 //! [`FsCache`] lazily enumerates parent directories with
-//! `GetFileInformationByHandleEx` and keeps the results in the status worker
+//! `std::fs::read_dir()` and keeps the results in the status worker
 //! that asked for them. It is not a long-lived cache: it is built during one
 //! status call and discarded with the worker state. Lookups are transparent:
 //! misses fall through to a live syscall, so cache misses affect speed only.
+//!
+//! On Windows, `std::fs::DirEntry::metadata()` reuses enumeration data without
+//! an additional per-entry metadata call. Enumeration throughput may differ
+//! from the previous custom 64-KiB batching; equivalent performance is not
+//! assumed. This cache has no invalidation and is intended only for status.
 
 use std::path::{Path, PathBuf};
 
@@ -26,7 +31,7 @@ use bstr::{BStr, BString, ByteSlice};
 /// those `Stat` fields against matching zeros from
 /// [`gix_index::entry::Stat::from_fs`]'s Windows branch, and git on Windows
 /// defaults to `core.filemode=false`, so all five are simply omitted here.
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 pub struct Stat {
     /// Whether this is a directory, with the same semantics as
     /// `std::fs::symlink_metadata`: `false` for directory symlinks and junctions
@@ -56,13 +61,29 @@ pub struct Stat {
 }
 
 impl Stat {
+    /// Use the same time conversion as the live Windows index-stat path.
+    /// Unavailable or unrepresentable times must use the live fallback instead.
+    fn from_metadata(metadata: &std::fs::Metadata) -> Option<Self> {
+        let mtime = gix_index::entry::stat::Time::try_from(metadata.modified().ok()?).ok()?;
+        let ctime = gix_index::entry::stat::Time::try_from(metadata.created().ok()?).ok()?;
+        Some(Stat {
+            is_dir: metadata.is_dir(),
+            is_symlink: metadata.is_symlink(),
+            size: metadata.len(),
+            mtime_secs: mtime.secs,
+            mtime_nsecs: mtime.nsecs,
+            ctime_secs: ctime.secs,
+            ctime_nsecs: ctime.nsecs,
+        })
+    }
+
     /// Convert to gitoxide's [`Stat`](gix_index::entry::Stat) struct for index comparison.
     ///
     /// Truncates `size` from 64 to 32 bits — matching what
-    /// [`gix_index::entry::stat::Stat::from_fs`] does on Unix, so both code
+    /// [`gix_index::entry::Stat::from_fs`] does, so both code
     /// paths compare the same quantities. `dev`/`ino`/`uid`/`gid` are zeroed
     /// here to match what `from_fs` produces on Windows.
-    pub(crate) fn to_stat(&self) -> gix_index::entry::Stat {
+    pub(crate) fn to_stat(self) -> gix_index::entry::Stat {
         gix_index::entry::Stat {
             mtime: gix_index::entry::stat::Time {
                 secs: self.mtime_secs,
@@ -205,325 +226,230 @@ impl FsCache {
             return entries.as_ref().and_then(|entries| entries.get(filename)).copied();
         }
 
-        let entries = windows::directory_entries(&self.worktree, dir.into());
+        let entries = directory_entries(&self.worktree, dir);
         let stat = entries.as_ref().and_then(|entries| entries.get(filename)).copied();
         self.directories.insert(dir.into(), entries);
         stat
     }
 }
 
-mod windows {
-    use super::*;
-    use std::ffi::c_void;
-    use std::os::windows::ffi::OsStrExt;
-
-    use windows_sys::Win32::Foundation::{CloseHandle, INVALID_HANDLE_VALUE};
-    use windows_sys::Win32::Storage::FileSystem::{
-        CreateFileW, FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_REPARSE_POINT, FILE_FLAG_BACKUP_SEMANTICS,
-        FILE_ID_BOTH_DIR_INFO, FILE_LIST_DIRECTORY, FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE,
-        FileIdBothDirectoryInfo, GetFileInformationByHandleEx, OPEN_EXISTING, SYNCHRONIZE,
+/// Read direct entries, retaining usable results even if individual entries fail.
+/// Missing names always fall through to live metadata in the status worker.
+fn directory_entries(worktree: &Path, rel_dir: &BStr) -> Option<DirectoryEntries> {
+    let dir = if rel_dir.is_empty() {
+        worktree.to_owned()
+    } else {
+        worktree.join(gix_path::from_bstr(rel_dir).ok()?)
     };
-
-    /// Convert FILE_ID_BOTH_DIR_INFO to a [`Stat`].
-    ///
-    /// File-type flags must mirror what the live fallback
-    /// (`gix_index::fs::Metadata`, i.e. `std::fs::symlink_metadata`) reports for
-    /// the same path, or cache hits and misses would disagree on the type and
-    /// misreport unchanged entries as type-changed or removed. std only calls a
-    /// reparse point a symlink if its tag is a *name surrogate* (symlinks and
-    /// junctions), and reports `is_dir=false` for those; non-surrogate reparse
-    /// points (OneDrive cloud placeholders, ProjFS, app-exec links, WOF) are
-    /// plain files/directories to std. Directory enumeration stores the reparse
-    /// tag in `EaSize` when `FILE_ATTRIBUTE_REPARSE_POINT` is set (MS-FSCC
-    /// 2.4.17, same convention as `WIN32_FIND_DATA::dwReserved0`), so we can
-    /// replicate that logic without extra syscalls.
-    fn stat_from_info(info: &FILE_ID_BOTH_DIR_INFO) -> Stat {
-        let size = info.EndOfFile as u64;
-
-        // FILETIME values are LARGE_INTEGER holding 100ns intervals since 1601-01-01 UTC.
-        // `ctime` must come from `CreationTime`: `gix_index::entry::stat::from_fs`
-        // on Windows populates ctime from `Metadata::created()`, which is CreationTime.
-        let (mtime_secs, mtime_nsecs) = filetime_to_unix(info.LastWriteTime as u64);
-        let (ctime_secs, ctime_nsecs) = filetime_to_unix(info.CreationTime as u64);
-
-        let (is_dir, is_symlink) = type_flags_from_attributes(info.FileAttributes, info.EaSize);
-        Stat {
-            is_dir,
-            is_symlink,
-            size,
-            mtime_secs,
-            mtime_nsecs,
-            ctime_secs,
-            ctime_nsecs,
-        }
-    }
-
-    /// Derive `(is_dir, is_symlink)` exactly like `std::fs::FileType` does for
-    /// `symlink_metadata`, given raw directory-enumeration data. `reparse_tag`
-    /// is `EaSize` reinterpreted, only meaningful when the reparse attribute is set.
-    pub(super) fn type_flags_from_attributes(attributes: u32, reparse_tag: u32) -> (bool, bool) {
-        /// `IsReparseTagNameSurrogate`: the tag names another filesystem object
-        /// (symlink, junction/mount point), as opposed to tags that overlay data
-        /// onto the file itself (cloud placeholders, WOF, ProjFS, ...).
-        const NAME_SURROGATE_BIT: u32 = 0x2000_0000;
-        let is_reparse = attributes & FILE_ATTRIBUTE_REPARSE_POINT != 0;
-        let is_symlink = is_reparse && (reparse_tag & NAME_SURROGATE_BIT) != 0;
-        let is_dir = !is_symlink && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-        (is_dir, is_symlink)
-    }
-
-    /// Read a record's UTF-16 `FileName` without assuming the record is aligned.
-    ///
-    /// `FILE_ID_BOTH_DIR_INFO` records can be returned at unaligned offsets by some
-    /// filesystem drivers (see the call site and rust-lang/rust#104530), so forming a
-    /// `&[u16]` over the buffer would be UB. Borrow in place in the common aligned case;
-    /// copy element-by-element with unaligned reads otherwise. Mirrors std's
-    /// `from_maybe_unaligned` helper.
-    ///
-    /// # Safety
-    ///
-    /// `p` must point at `len` `u16`s of an in-bounds, initialized directory record.
-    #[expect(unsafe_code)]
-    unsafe fn name_from_maybe_unaligned<'a>(p: *const u16, len: usize) -> std::borrow::Cow<'a, [u16]> {
-        if p.is_aligned() {
-            std::borrow::Cow::Borrowed(unsafe { std::slice::from_raw_parts(p, len) })
-        } else {
-            std::borrow::Cow::Owned((0..len).map(|i| unsafe { p.add(i).read_unaligned() }).collect())
-        }
-    }
-
-    /// Convert a Windows FILETIME (100ns intervals since 1601-01-01 UTC) to Unix (secs, nsecs).
-    fn filetime_to_unix(ft: u64) -> (u32, u32) {
-        const EPOCH_DIFF: u64 = 116_444_736_000_000_000;
-        let unix_100ns = ft.saturating_sub(EPOCH_DIFF);
-        let secs = (unix_100ns / 10_000_000) as u32;
-        let nsecs = ((unix_100ns % 10_000_000) * 100) as u32;
-        (secs, nsecs)
-    }
-
-    /// Convert a filesystem path into a null-terminated UTF-16 buffer suitable for `CreateFileW`.
-    fn utf16_null_terminated(path: &Path) -> Vec<u16> {
-        let mut v: Vec<u16> = path.as_os_str().encode_wide().collect();
-        v.push(0);
-        v
-    }
-
-    /// Read the direct entries in `rel_dir`, keyed by filename.
-    ///
-    /// Returns `None` if the directory can't be read. Status callers treat that
-    /// as a cache miss and use the live syscall path for the requested entry.
-    pub(super) fn directory_entries(worktree: &Path, rel_dir: &BStr) -> Option<DirectoryEntries> {
-        let dir = if rel_dir.is_empty() {
-            worktree.to_owned()
-        } else {
-            worktree.join(gix_path::from_bstr(rel_dir).ok()?)
+    let mut entries = DirectoryEntries::default();
+    for entry in std::fs::read_dir(dir).ok()? {
+        let Ok(entry) = entry else { continue };
+        let filename = entry.file_name();
+        let Some(filename) = filename.to_str() else { continue };
+        // On Windows this reuses the directory-enumeration result, without a
+        // per-entry metadata syscall, and does not follow symlinks or junctions.
+        let Some(stat) = entry
+            .metadata()
+            .ok()
+            .and_then(|metadata| Stat::from_metadata(&metadata))
+        else {
+            continue;
         };
-        let dir_path = utf16_null_terminated(&dir);
-        #[expect(unsafe_code)]
-        let handle = unsafe {
-            CreateFileW(
-                dir_path.as_ptr(),
-                FILE_LIST_DIRECTORY | SYNCHRONIZE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                std::ptr::null(),
-                OPEN_EXISTING,
-                FILE_FLAG_BACKUP_SEMANTICS,
-                std::ptr::null_mut(),
-            )
-        };
-
-        if handle == INVALID_HANDLE_VALUE {
-            return None;
-        }
-
-        let mut entries = DirectoryEntries::default();
-        // 64 KiB, u64-aligned: `FILE_ID_BOTH_DIR_INFO` contains LARGE_INTEGER
-        // fields that require 8-byte alignment, and `Vec<u64>` guarantees it.
-        const DIRECTORY_BUFFER_U64_WORDS: usize = 8 * 1024;
-        let mut buffer = vec![0u64; DIRECTORY_BUFFER_U64_WORDS];
-        let buffer_bytes = (buffer.len() * 8) as u32;
-
-        loop {
-            #[expect(unsafe_code)]
-            let success = unsafe {
-                GetFileInformationByHandleEx(
-                    handle,
-                    FileIdBothDirectoryInfo,
-                    buffer.as_mut_ptr().cast::<c_void>(),
-                    buffer_bytes,
-                )
-            };
-            if success == 0 {
-                // End of enumeration (ERROR_NO_MORE_FILES) or access denied / similar.
-                // Either way, stop: the preprocess is best-effort and correctness falls back
-                // to per-file syscalls in `index_as_worktree`.
-                break;
-            }
-
-            let mut offset = 0usize;
-            loop {
-                #[expect(
-                    clippy::cast_ptr_alignment,
-                    reason = "the caller guarantees the pointer alignment required by this cast"
-                )]
-                #[expect(unsafe_code)]
-                let info_ptr = unsafe { buffer.as_ptr().cast::<u8>().add(offset).cast::<FILE_ID_BOTH_DIR_INFO>() };
-                #[expect(unsafe_code)]
-                let info = unsafe { info_ptr.read_unaligned() };
-                let info = &info;
-
-                let name_len = (info.FileNameLength / 2) as usize;
-                #[expect(unsafe_code)]
-                let name_ptr = unsafe { (&raw const (*info_ptr).FileName).cast::<u16>() };
-                #[expect(unsafe_code)]
-                let name = unsafe { name_from_maybe_unaligned(name_ptr, name_len) };
-                let name_slice: &[u16] = &name;
-
-                let is_dot = name_len == 1 && name_slice[0] == b'.' as u16;
-                let is_dotdot = name_len == 2 && name_slice[0] == b'.' as u16 && name_slice[1] == b'.' as u16;
-                if !is_dot && !is_dotdot {
-                    let mut filename = String::with_capacity(name_len);
-                    let mut valid = true;
-                    for ch in char::decode_utf16(name_slice.iter().copied()) {
-                        match ch {
-                            Ok(ch) => filename.push(ch),
-                            Err(_) => {
-                                valid = false;
-                                break;
-                            }
-                        }
-                    }
-                    if valid {
-                        entries.insert(filename.into_bytes().into(), stat_from_info(info));
-                    }
-                }
-
-                if info.NextEntryOffset == 0 {
-                    break;
-                }
-                offset += info.NextEntryOffset as usize;
-            }
-        }
-
-        #[expect(unsafe_code)]
-        unsafe {
-            CloseHandle(handle)
-        };
-        Some(entries)
+        entries.insert(filename.as_bytes().into(), stat);
     }
+    Some(entries)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gix_testtools::TestResult;
+    use std::os::windows::{
+        ffi::OsStringExt,
+        fs::{symlink_dir, symlink_file},
+    };
 
-    #[test]
-    fn cache_stat_to_index_stat() {
-        let stat = Stat {
-            is_dir: false,
-            is_symlink: false,
-            size: 1234,
-            mtime_secs: 1700000000,
-            mtime_nsecs: 500_000_000,
-            ctime_secs: 1699999999,
-            ctime_nsecs: 100_000_000,
-        };
-        let s = stat.to_stat();
-        assert_eq!(s.size, 1234);
-        assert_eq!(s.mtime.secs, 1700000000);
-        assert_eq!(s.mtime.nsecs, 500_000_000);
-        assert_eq!(s.ctime.secs, 1699999999);
-        assert_eq!(s.ctime.nsecs, 100_000_000);
-        // dev/ino/uid/gid are always zero on Windows — `Stat::from_fs` zeros them too.
-        assert_eq!(s.dev, 0);
-        assert_eq!(s.ino, 0);
-        assert_eq!(s.uid, 0);
-        assert_eq!(s.gid, 0);
+    fn fixture() -> TestResult<PathBuf> {
+        let (path, ()) = gix_testtools::scripted_fixture_read_only_with_post("fscache.sh", 1, |fixture| {
+            if let gix_testtools::FixtureState::Uninitialized(path) = fixture {
+                // Ensure mtime differs from creation time, including a subsecond component.
+                filetime::set_file_mtime(
+                    path.join("file"),
+                    filetime::FileTime::from_unix_time(1_700_000_000, 123_456_700),
+                )?;
+                std::fs::write(path.join("before-epoch"), b"old")?;
+                filetime::set_file_mtime(path.join("before-epoch"), filetime::FileTime::from_unix_time(-1, 0))?;
+                std::fs::write(
+                    path.join(std::ffi::OsString::from_wide(&[0xd800])),
+                    b"unpaired surrogate",
+                )?;
+                for result in [
+                    symlink_file("file", path.join("file-link")),
+                    symlink_dir("directory", path.join("directory-link")),
+                ] {
+                    match result {
+                        Ok(()) => {}
+                        Err(err) if err.raw_os_error() == Some(1314) => {
+                            eprintln!("Skipping symlink comparison: symlink creation requires a privilege");
+                        }
+                        Err(err) => return Err(err.into()),
+                    }
+                }
+                let output = std::process::Command::new("cmd.exe")
+                    .args(["/D", "/C", "mklink", "/J", "junction", "directory"])
+                    .current_dir(path)
+                    .output()?;
+                assert!(output.status.success(), "junction creation failed: {output:?}");
+            }
+            Ok(())
+        })?;
+        Ok(path)
+    }
+
+    fn assert_matches_live(cache: &mut FsCache, name: &str) -> TestResult {
+        let cached = Metadata::Cached(cache.get(name.as_bytes().as_bstr()).expect("fixture entry is cached"));
+        let live = Metadata::Live(gix_index::fs::Metadata::from_path_no_follow(
+            &cache.worktree.join(name),
+        )?);
+        assert_eq!(cached.is_dir(), live.is_dir(), "directory classification for {name}");
+        assert_eq!(
+            cached.is_symlink(),
+            live.is_symlink(),
+            "symlink classification for {name}"
+        );
+        assert_eq!(cached.len(), live.len(), "full file size for {name}");
+        assert_eq!(
+            cached.to_stat()?,
+            live.to_stat()?,
+            "index size, mtime and creation time for {name}"
+        );
+        for mode in [
+            gix_index::entry::Mode::FILE,
+            gix_index::entry::Mode::DIR,
+            gix_index::entry::Mode::SYMLINK,
+        ] {
+            for has_symlinks in [false, true] {
+                assert_eq!(
+                    cached.mode_change(mode, has_symlinks, false),
+                    live.mode_change(mode, has_symlinks, false),
+                    "mode changes for {name} with {mode:?}"
+                );
+            }
+        }
+        Ok(())
     }
 
     #[test]
-    fn type_flags_match_std_symlink_metadata_semantics() {
-        use windows_sys::Win32::Storage::FileSystem::{FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_REPARSE_POINT};
-
-        let flags = super::windows::type_flags_from_attributes;
-        const FILE_ATTRIBUTE_NORMAL: u32 = 0x80;
-        const IO_REPARSE_TAG_SYMLINK: u32 = 0xA000_000C;
-        const IO_REPARSE_TAG_MOUNT_POINT: u32 = 0xA000_0003;
-        const IO_REPARSE_TAG_CLOUD: u32 = 0x9000_001A;
-        const IO_REPARSE_TAG_WOF: u32 = 0x8000_0017;
-
-        assert_eq!(flags(FILE_ATTRIBUTE_NORMAL, 0), (false, false), "plain file");
-        assert_eq!(flags(FILE_ATTRIBUTE_DIRECTORY, 0), (true, false), "plain directory");
-        assert_eq!(
-            flags(FILE_ATTRIBUTE_REPARSE_POINT, IO_REPARSE_TAG_SYMLINK),
-            (false, true),
-            "file symlinks are symlinks, never directories, like std"
+    fn cached_metadata_matches_live() -> TestResult {
+        let worktree = fixture()?;
+        let mut cache = FsCache::new(&worktree);
+        assert!(cache.directories.is_empty(), "construction does not enumerate");
+        for name in ["file", "directory", "directory/file", "junction"] {
+            assert_matches_live(&mut cache, name)?;
+        }
+        for name in ["file-link", "directory-link"] {
+            if worktree.join(name).symlink_metadata().is_ok() {
+                assert_matches_live(&mut cache, name)?;
+                let stat = cache.get(name.as_bytes().as_bstr()).expect("link is cached");
+                assert!(stat.is_symlink && !stat.is_dir, "links are never directories");
+            }
+        }
+        let stat = cache.get(b"file".as_bstr()).expect("file is cached").to_stat();
+        assert_ne!(
+            stat.ctime, stat.mtime,
+            "ctime uses creation time, not modification time"
         );
-        assert_eq!(
-            flags(
-                FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT,
-                IO_REPARSE_TAG_SYMLINK
-            ),
-            (false, true),
-            "directory symlinks are symlinks, never directories, like std"
+        assert_eq!(stat.mtime.nsecs, 123_456_700, "subsecond precision is preserved");
+        assert_eq!(cache.directories.len(), 2, "only requested parents are enumerated");
+        let junction = cache.get(b"junction".as_bstr()).expect("junction is cached");
+        assert!(
+            junction.is_symlink && !junction.is_dir,
+            "junctions are symlinks, never directories"
         );
-        assert_eq!(
-            flags(
-                FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT,
-                IO_REPARSE_TAG_MOUNT_POINT
-            ),
-            (false, true),
-            "junctions are treated as symlinks by std"
-        );
-        assert_eq!(
-            flags(FILE_ATTRIBUTE_REPARSE_POINT, IO_REPARSE_TAG_CLOUD),
-            (false, false),
-            "non-surrogate reparse-point files are regular files"
-        );
-        assert_eq!(
-            flags(
-                FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT,
-                IO_REPARSE_TAG_CLOUD
-            ),
-            (true, false),
-            "non-surrogate reparse-point directories are regular directories"
-        );
-        assert_eq!(
-            flags(FILE_ATTRIBUTE_REPARSE_POINT, IO_REPARSE_TAG_WOF),
-            (false, false),
-            "WOF reparse points are regular files"
-        );
+        Ok(())
     }
 
     #[test]
-    fn lazy_cache_populates_parent_directories_on_demand() {
-        let temp_dir = unique_temp_dir();
-        let worktree = temp_dir.path();
-
-        std::fs::write(worktree.join("test.txt"), b"hello").expect("root file can be written");
-        std::fs::create_dir(worktree.join("subdir")).expect("subdirectory can be created");
-        std::fs::write(worktree.join("subdir").join("nested.txt"), b"world").expect("nested file can be written");
-
-        let mut cache = FsCache::new(worktree);
+    fn unrepresentable_metadata_and_names_are_skipped() -> TestResult {
+        let mut cache = FsCache::new(&fixture()?);
         assert!(
-            cache.get(b"test.txt".as_slice().into()).is_some(),
-            "root files are found by lazily enumerating the worktree root"
+            cache.get(b"before-epoch".as_bstr()).is_none(),
+            "pre-epoch timestamps must fall back, not saturate to zero"
+        );
+        let live = gix_index::fs::Metadata::from_path_no_follow(&cache.worktree.join("before-epoch"))?;
+        assert!(
+            gix_index::entry::Stat::from_fs(&live).is_err(),
+            "the live path preserves the time conversion error"
         );
         assert!(
-            cache.get(b"subdir/nested.txt".as_slice().into()).is_some(),
-            "nested files are found by lazily enumerating their parent directory"
+            cache.get("\u{fffd}".as_bytes().as_bstr()).is_none(),
+            "unpaired surrogates must not become replacement-character keys"
         );
-        assert!(
-            cache.get(b"Test.txt".as_slice().into()).is_none(),
-            "mixed-case lookups miss rather than silently aliasing onto a different path"
-        );
-        assert!(
-            cache.get(b"does-not-exist".as_slice().into()).is_none(),
-            "missing files are not a problem (and cause a fall-through to the live path)"
-        );
+        assert_matches_live(&mut cache, "file")?;
+        Ok(())
     }
 
-    fn unique_temp_dir() -> gix_testtools::tempfile::TempDir {
-        gix_testtools::tempfile::TempDir::new().expect("temporary directory can be created")
+    #[test]
+    fn missing_entries_and_failed_enumerations_still_allow_live_metadata() -> TestResult {
+        // This exercises writes after enumeration, so it needs a private writable fixture.
+        let dir = gix_testtools::tempfile::tempdir()?;
+        let mut cache = FsCache::new(dir.path());
+        assert!(
+            cache.get(b"file".as_bstr()).is_none(),
+            "an absent entry misses the cache"
+        );
+        std::fs::write(dir.path().join("file"), b"new")?;
+        assert!(
+            cache.get(b"file".as_bstr()).is_none(),
+            "a cached listing is not refreshed"
+        );
+        assert_eq!(
+            gix_index::fs::Metadata::from_path_no_follow(&dir.path().join("file"))?.len(),
+            3,
+            "a cache miss must allow the live path to find a newly created entry"
+        );
+
+        assert!(
+            cache.get(b"missing/file".as_bstr()).is_none(),
+            "a missing parent cannot be enumerated"
+        );
+        assert!(
+            cache
+                .directories
+                .get(b"missing".as_bstr())
+                .expect("failed enumeration is cached")
+                .is_none(),
+            "failed enumeration remains cached separately from an empty listing"
+        );
+        std::fs::create_dir(dir.path().join("missing"))?;
+        std::fs::write(dir.path().join("missing/file"), b"later")?;
+        assert!(
+            cache.get(b"missing/file".as_bstr()).is_none(),
+            "failed enumeration is not retried"
+        );
+        assert_eq!(
+            gix_index::fs::Metadata::from_path_no_follow(&dir.path().join("missing/file"))?.len(),
+            5,
+            "failed enumeration must still allow successful live metadata"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn differently_cased_names_miss_the_cache() -> TestResult {
+        let worktree = fixture()?;
+        let mut cache = FsCache::new(&worktree);
+        assert!(cache.get(b"File".as_bstr()).is_none(), "cache keys match exact names");
+        let live = gix_index::fs::Metadata::from_path_no_follow(&worktree.join("File"));
+        match live {
+            Ok(live) => assert_eq!(live.len(), 5, "case-insensitive filesystems resolve the live fallback"),
+            Err(err) => assert_eq!(
+                err.kind(),
+                std::io::ErrorKind::NotFound,
+                "case-sensitive filesystems retain their native result"
+            ),
+        }
+        assert_matches_live(&mut cache, "file")?;
+        Ok(())
     }
 }

@@ -49,13 +49,6 @@ portable-atomic = "1"
 
 [target.'cfg(windows)'.dependencies]
 hashbrown = "0.16.0"
-windows-sys = { version = "0.61.1", features = [
-    "Win32_Foundation",
-    "Win32_Storage_FileSystem",
-    # Needed for `SECURITY_ATTRIBUTES` in the signature of `CreateFileW`,
-    # which is gated behind this windows-sys feature even when the call passes null.
-    "Win32_Security",
-] }
 
 [dev-dependencies]
 insta = "1.46.3"
