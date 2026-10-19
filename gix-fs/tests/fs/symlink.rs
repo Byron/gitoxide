@@ -90,6 +90,40 @@ fn relative_and_drive_qualified_directory_targets_are_detected() -> gix_testtool
 }
 
 #[test]
+fn indirect_slash_prefixed_targets_are_not_probed() -> gix_testtools::TestResult {
+    // A local directory stands in for a network share: following it would wrongly
+    // produce a directory link. This regression never accesses a network path.
+    let dir = gix_testtools::tempfile::tempdir_in(std::env::current_dir()?)?;
+    let target = dir.path().join("target");
+    std::fs::create_dir_all(target.join("nested"))?;
+    let rooted: PathBuf = target.components().skip(1).collect();
+    std::os::windows::fs::symlink_dir(&rooted, dir.path().join("alias"))?;
+    std::os::windows::fs::symlink_dir("alias", dir.path().join("chain"))?;
+
+    for (index, original) in ["alias", "chain", "alias/nested", "chain\\nested"]
+        .into_iter()
+        .enumerate()
+    {
+        for delayed in [false, true] {
+            let link = dir.path().join(format!("link-{index}-{delayed}"));
+            if delayed {
+                assert!(
+                    gix_fs::symlink::create_or_delay(Path::new(original), &link)?,
+                    "unsafe indirect targets use the file fallback without retries"
+                );
+            } else {
+                gix_fs::symlink::create(Path::new(original), &link)?;
+            }
+            assert!(
+                link.symlink_metadata()?.file_type().is_symlink_file(),
+                "a separator-prefixed target anywhere in a chain must prevent directory probing: {original}"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn unresolved_targets_can_be_retried_before_creating_a_link() -> gix_testtools::TestResult {
     let dir = gix_testtools::tempfile::tempdir()?;
     let original = std::path::Path::new("target");
