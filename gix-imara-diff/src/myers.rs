@@ -181,11 +181,6 @@ impl Myers {
             };
 
             if need_min {
-                // Unlike git, which searches on without a limit when `XDF_NEED_MINIMAL` is set, the cost
-                // stays bounded here so adversarial inputs can't make the search quadratic.
-                if ec >= self.max_cost {
-                    break;
-                }
                 continue;
             }
 
@@ -217,7 +212,7 @@ impl Myers {
                 }
             }
 
-            // Enough is enough: like git, settle for the furthest reaching path once the cost reaches
+            // like git, settle for the furthest reaching path once the cost reaches
             // the limit.
             if ec >= self.max_cost {
                 break;

@@ -33,9 +33,14 @@ mod fuzzed {
             after_str,
         }: ComprehensiveDiffInput<'_>,
     ) {
-        let input = InternedInput::new(before, after);
+        let mut input = InternedInput::new(before, after);
 
         for algorithm in [Algorithm::Histogram, Algorithm::Myers, Algorithm::MyersMinimal] {
+            // Keep quadratic minimal diffs within the fuzz timeout.
+            if algorithm == Algorithm::MyersMinimal {
+                input.before.truncate(512);
+                input.after.truncate(512);
+            }
             let mut diff = Diff::compute(algorithm, &input);
 
             let _ = diff.count_additions();
@@ -750,72 +755,51 @@ old end
 /// prefix and postfix, and derives its frequency limit from their full lengths, too. Only the lines
 /// between the trimmed ends are then judged by those numbers.
 #[test]
-fn line_frequency_is_counted_across_the_common_prefix_and_postfix() {
-    // The shared paragraphs are all part of the common prefix, yet their eight blank lines make a
-    // blank line frequent for Git: the files have 26 lines, giving a limit of 8. The only blank line
-    // in the changed region sits between two runs of four unmatched lines and is thus pruned on both
-    // sides. Counting the changed region alone would see a single blank line and match it instead.
-    fn file(tag: &str) -> String {
-        let mut out = String::new();
-        for i in 1..=8 {
-            out.push_str(&format!("paragraph {i}\n\n"));
-        }
-        for i in 1..=4 {
-            out.push_str(&format!("{tag} {i}\n"));
-        }
-        out.push('\n');
-        for i in 5..=8 {
-            out.push_str(&format!("{tag} {i}\n"));
-        }
-        out.push_str("end\n");
-        out
-    }
-
-    let (before, after) = (file("old"), file("new"));
-    let input = InternedInput::new(before.as_str(), after.as_str());
-    let diff = Diff::compute(Algorithm::Myers, &input);
-    assert_eq!(
-        (diff.count_removals(), diff.count_additions()),
-        (9, 9),
-        "the frequent blank line between the unmatched runs is pruned, just like `git diff --no-index --numstat`"
-    );
-
-    let diff = Diff::compute(Algorithm::MyersMinimal, &input);
-    assert_eq!(
-        (diff.count_removals(), diff.count_additions()),
-        (8, 8),
-        "a minimal diff never prunes frequent lines and matches the blank line, just like `git diff --no-index --minimal --numstat`"
-    );
+fn line_frequency_is_counted_across_the_common_prefix_and_postfix() -> gix_testtools::TestResult {
+    assert_myers_matches_git("whole-file-frequency", Algorithm::Myers, (9, 9))?;
+    assert_myers_matches_git("whole-file-frequency", Algorithm::MyersMinimal, (8, 8))
 }
 
 /// Once the cost of a split reaches its limit, Git settles for the furthest reaching path.
 /// `xdl_split()` numbers the cost from 1 and gives up as soon as it reaches the limit, so a search
 /// that numbered it from 0 ran one round longer and picked a different split.
 #[test]
-fn an_expensive_split_gives_up_after_as_many_rounds_as_git() {
-    // The edit cost of these files exceeds the limit of 256 rounds. Their lines come from a linear
-    // congruential generator so they are the same everywhere: 600 values from 0 to 19, of which
-    // about 60% are replaced by another value in the second file.
-    let mut state: u64 = 1;
-    let mut next = move || {
-        state = state
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(1442695040888963407);
-        state >> 33
+fn an_expensive_split_gives_up_after_as_many_rounds_as_git() -> gix_testtools::TestResult {
+    assert_myers_matches_git("expensive-split", Algorithm::Myers, (286, 286))
+}
+
+#[test]
+fn an_expensive_minimal_split_keeps_searching_until_the_optimum_is_found() -> gix_testtools::TestResult {
+    assert_myers_matches_git("expensive-minimal-split", Algorithm::MyersMinimal, (271, 271))
+}
+
+fn assert_myers_matches_git(case: &str, algorithm: Algorithm, expected: (u32, u32)) -> gix_testtools::TestResult {
+    // Git 2.50 disabled frequency pruning for `--minimal`.
+    let Some(root) = gix_testtools::scripted_fixture_read_only_with_git_version("make_myers_baseline.sh", |version| {
+        version >= (2, 50, 0)
+    })?
+    else {
+        return Ok(());
     };
-    let before: Vec<u64> = (0..600).map(|_| next() % 20).collect();
-    let after: Vec<u64> = before
-        .iter()
-        .map(|&value| if next() % 100 < 60 { next() % 20 } else { value })
-        .collect();
-    let render = |values: &[u64]| values.iter().map(|value| format!("{value}\n")).collect::<String>();
-    let (before, after) = (render(&before), render(&after));
+    let root = root.join(case);
+    let before = std::fs::read_to_string(root.join("old"))?;
+    let after = std::fs::read_to_string(root.join("new"))?;
+    let baseline = std::fs::read_to_string(root.join(format!("{algorithm:?}.numstat")))?;
+    let mut fields = baseline.split('\t');
+    let additions: u32 = fields.next().expect("Git numstat contains additions").parse()?;
+    let removals: u32 = fields.next().expect("Git numstat contains removals").parse()?;
+    let git_counts = (removals, additions);
+    assert_eq!(
+        git_counts, expected,
+        "{case}: Git's {algorithm:?} baseline must retain the regression's expected edit counts"
+    );
 
     let input = InternedInput::new(before.as_str(), after.as_str());
-    let diff = Diff::compute(Algorithm::Myers, &input);
+    let diff = Diff::compute(algorithm, &input);
     assert_eq!(
         (diff.count_removals(), diff.count_additions()),
-        (286, 286),
-        "the split is found after the same number of rounds, just like `git diff --no-index --numstat`"
+        git_counts,
+        "{case}: {algorithm:?} must match Git's removal and addition counts"
     );
+    Ok(())
 }

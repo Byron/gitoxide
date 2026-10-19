@@ -2018,6 +2018,7 @@ dependencies = [
  "gix-hash",
  "gix-imara-diff",
  "gix-object",
+ "gix-testtools",
  "hashbrown 0.16.1",
 ]
 
