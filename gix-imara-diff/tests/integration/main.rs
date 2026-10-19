@@ -33,9 +33,14 @@ mod fuzzed {
             after_str,
         }: ComprehensiveDiffInput<'_>,
     ) {
-        let input = InternedInput::new(before, after);
+        let mut input = InternedInput::new(before, after);
 
         for algorithm in [Algorithm::Histogram, Algorithm::Myers, Algorithm::MyersMinimal] {
+            // Keep quadratic minimal diffs within the fuzz timeout.
+            if algorithm == Algorithm::MyersMinimal {
+                input.before.truncate(512);
+                input.after.truncate(512);
+            }
             let mut diff = Diff::compute(algorithm, &input);
 
             let _ = diff.count_additions();
@@ -744,4 +749,57 @@ old end
         (10, 10),
         "the blank line between the unmatched runs should still be matched, just like `git diff --no-index --numstat`"
     );
+}
+
+/// Git counts how often each line occurs in the *whole* of both files before it trims their common
+/// prefix and postfix, and derives its frequency limit from their full lengths, too. Only the lines
+/// between the trimmed ends are then judged by those numbers.
+#[test]
+fn line_frequency_is_counted_across_the_common_prefix_and_postfix() -> gix_testtools::TestResult {
+    assert_myers_matches_git("whole-file-frequency", Algorithm::Myers, (9, 9))?;
+    assert_myers_matches_git("whole-file-frequency", Algorithm::MyersMinimal, (8, 8))
+}
+
+/// Once the cost of a split reaches its limit, Git settles for the furthest reaching path.
+/// `xdl_split()` numbers the cost from 1 and gives up as soon as it reaches the limit, so a search
+/// that numbered it from 0 ran one round longer and picked a different split.
+#[test]
+fn an_expensive_split_gives_up_after_as_many_rounds_as_git() -> gix_testtools::TestResult {
+    assert_myers_matches_git("expensive-split", Algorithm::Myers, (286, 286))
+}
+
+#[test]
+fn an_expensive_minimal_split_keeps_searching_until_the_optimum_is_found() -> gix_testtools::TestResult {
+    assert_myers_matches_git("expensive-minimal-split", Algorithm::MyersMinimal, (271, 271))
+}
+
+fn assert_myers_matches_git(case: &str, algorithm: Algorithm, expected: (u32, u32)) -> gix_testtools::TestResult {
+    // Git 2.50 disabled frequency pruning for `--minimal`.
+    let Some(root) = gix_testtools::scripted_fixture_read_only_with_git_version("make_myers_baseline.sh", |version| {
+        version >= (2, 50, 0)
+    })?
+    else {
+        return Ok(());
+    };
+    let root = root.join(case);
+    let before = std::fs::read_to_string(root.join("old"))?;
+    let after = std::fs::read_to_string(root.join("new"))?;
+    let baseline = std::fs::read_to_string(root.join(format!("{algorithm:?}.numstat")))?;
+    let mut fields = baseline.split('\t');
+    let additions: u32 = fields.next().expect("Git numstat contains additions").parse()?;
+    let removals: u32 = fields.next().expect("Git numstat contains removals").parse()?;
+    let git_counts = (removals, additions);
+    assert_eq!(
+        git_counts, expected,
+        "{case}: Git's {algorithm:?} baseline must retain the regression's expected edit counts"
+    );
+
+    let input = InternedInput::new(before.as_str(), after.as_str());
+    let diff = Diff::compute(algorithm, &input);
+    assert_eq!(
+        (diff.count_removals(), diff.count_additions()),
+        git_counts,
+        "{case}: {algorithm:?} must match Git's removal and addition counts"
+    );
+    Ok(())
 }

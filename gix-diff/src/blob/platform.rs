@@ -115,6 +115,7 @@ pub mod resource {
     impl<'a> Iterator for ByteLinesWithoutTerminator<'a> {
         type Item = &'a [u8];
 
+        #[inline(always)]
         fn next(&mut self) -> Option<Self::Item> {
             let mut l = match self.0.find_byte(b'\n') {
                 None if self.0.is_empty() => None,

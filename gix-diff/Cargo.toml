@@ -46,6 +46,12 @@ required-features = ["blob"]
 path = "./benches/line_count.rs"
 
 [[bench]]
+name = "blob"
+harness = false
+required-features = ["blob"]
+path = "./benches/blob.rs"
+
+[[bench]]
 name = "rewrite-tracker"
 harness = false
 required-features = ["blob"]

@@ -14,6 +14,32 @@ use crate::{
 };
 
 #[test]
+fn byte_lines_without_terminator() -> TestResult {
+    let cases: &[(&[u8], &[&[u8]])] = &[
+        (b"", &[]),
+        (b"\n", &[b""]),
+        (b"\n\n", &[b"", b""]),
+        (b"a", &[b"a"]),
+        (b"a\n", &[b"a"]),
+        (b"a\r\nb\nc\r", &[b"a", b"b", b"c\r"]),
+        (b"\r\n", &[b""]),
+        (b"\r\r\n", &[b"\r"]),
+        (b"\xff\0\n\x80", &[b"\xff\0", b"\x80"]),
+    ];
+    for &(input, expected) in cases {
+        let mut lines = platform::resource::ByteLinesWithoutTerminator::new(input);
+        assert_eq!(
+            lines.by_ref().collect::<Vec<_>>(),
+            expected,
+            "only LF and its immediately preceding CR are stripped from {input:?}"
+        );
+        assert_eq!(lines.next(), None, "the iterator remains exhausted");
+        assert_eq!(lines.next(), None, "repeated calls remain exhausted");
+    }
+    Ok(())
+}
+
+#[test]
 fn resources_of_worktree_and_odb_and_check_link() -> TestResult {
     let mut platform = new_platform(
         Some(gix_diff::blob::Driver {

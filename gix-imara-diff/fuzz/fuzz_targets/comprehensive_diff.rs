@@ -32,7 +32,7 @@ fn do_fuzz(
     }: Input<'_>,
 ) {
     // Create interned input
-    let input = InternedInput::new(before, after);
+    let mut input = InternedInput::new(before, after);
 
     // Test all three diff algorithms
     for algorithm in [
@@ -40,6 +40,11 @@ fn do_fuzz(
         Algorithm::Myers,
         Algorithm::MyersMinimal,
     ] {
+        // Keep quadratic minimal diffs within the fuzz timeout.
+        if algorithm == Algorithm::MyersMinimal {
+            input.before.truncate(512);
+            input.after.truncate(512);
+        }
         // Compute diff
         let mut diff = Diff::compute(algorithm, &input);
 

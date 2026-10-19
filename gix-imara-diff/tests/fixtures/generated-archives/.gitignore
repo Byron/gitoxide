@@ -1,0 +1,3 @@
+# Generate baselines with the installed Git so changes in its behavior remain visible.
+*.tar
+*.tar.xz
