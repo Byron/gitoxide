@@ -14,6 +14,19 @@ pub struct Metadata(rustix::fs::Stat);
 /// A structure to partially mirror [`std::fs::Metadata`].
 pub struct Metadata(std::fs::Metadata);
 
+#[cfg(windows)]
+impl From<std::fs::Metadata> for Metadata {
+    /// Wrap existing Windows metadata without accessing the filesystem.
+    ///
+    /// Callers requiring no-follow semantics must obtain the metadata accordingly,
+    /// for example with [`std::fs::symlink_metadata`] or [`std::fs::DirEntry::metadata`].
+    /// This conversion is Windows-only: on Unix, this wrapper uses inode change time
+    /// instead of the creation time exposed by [`std::fs::Metadata`].
+    fn from(metadata: std::fs::Metadata) -> Self {
+        Metadata(metadata)
+    }
+}
+
 /// Lifecycle
 impl Metadata {
     /// Obtain the metadata at `path` without following symlinks.
@@ -79,7 +92,7 @@ impl Metadata {
 
     /// Return the time at which the underlying file was created.
     ///
-    /// Note that this differs from [`std::fs::Metadata::created()`] which would return
+    /// On Unix, this differs from [`std::fs::Metadata::created()`] which would return
     /// the inode birth time, which is notably different to what `git` does.
     pub fn created(&self) -> Option<SystemTime> {
         #[cfg(unix)]

@@ -2523,7 +2523,6 @@ dependencies = [
  "insta",
  "portable-atomic",
  "pretty_assertions",
- "windows-sys 0.61.2",
 ]
 
 [[package]]
