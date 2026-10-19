@@ -1040,6 +1040,95 @@ fn unchanged_despite_filter() {
 }
 
 #[test]
+fn clean_filter_receives_worktree_relative_path() -> gix_testtools::TestResult {
+    // Use an absolute worktree path, as `gix` does.
+    let worktree = gix_path::realpath(fixture_path("status_filter_path"))?;
+    let git_dir = worktree.join(".git");
+    let object_hash = gix_testtools::object_hash();
+    let mut index = gix_index::File::at(git_dir.join("index"), object_hash, false, Default::default())?;
+    let entry = index
+        .entry_mut_by_path_and_stage("a.txt".into(), gix_index::entry::Stage::Unconflicted)
+        .expect("the fixture tracks `a.txt`");
+    // A stale `mtime` makes the stat check fail, so the worktree file is cleaned and hashed.
+    entry.stat.mtime = Default::default();
+
+    /// Record the output of the clean filter for each compared entry.
+    #[derive(Clone, Default)]
+    struct RecordCleaned(Arc<std::sync::Mutex<Vec<bstr::BString>>>);
+    impl CompareBlobs for RecordCleaned {
+        type Output = ();
+
+        fn compare_blobs<'a, 'b>(
+            &mut self,
+            _entry: &Entry,
+            _worktree_file_size: u64,
+            data: impl ReadData<'a>,
+            buf: &mut Vec<u8>,
+        ) -> Result<Option<Self::Output>> {
+            use std::io::Read;
+            buf.clear();
+            data.stream_worktree_file()?
+                .read_to_end(buf)
+                .map_err(gix_hash::io::from_std_io)?;
+            self.0.lock().expect("not poisoned").push(buf.as_slice().into());
+            Ok(None)
+        }
+    }
+
+    let stack = gix_worktree::Stack::from_state_and_ignore_case(
+        worktree.clone(),
+        false,
+        gix_worktree::stack::State::AttributesStack(Default::default()),
+        &index,
+        index.path_backing(),
+    );
+    let ctx = Context {
+        pathspec: gix_pathspec::Search::from_specs(to_pathspecs(&["a.txt"]), None, std::path::Path::new(""))?,
+        stack,
+        filter: gix_filter::Pipeline::new(
+            Default::default(),
+            object_hash,
+            gix_filter::pipeline::Options {
+                drivers: vec![gix_filter::Driver {
+                    name: "path".into(),
+                    // Output the path that `%f` is substituted with instead of the file content.
+                    clean: Some("cat >/dev/null && printf %s %f".into()),
+                    smudge: None,
+                    process: None,
+                    // Fail instead of falling back to the unfiltered content, which is `a.txt` too.
+                    required: true,
+                }],
+                ..Default::default()
+            },
+        ),
+        should_interrupt: &AtomicBool::default(),
+    };
+    let cleaned = RecordCleaned::default();
+    index_as_worktree(
+        &index,
+        &worktree,
+        &mut Recorder::default(),
+        cleaned.clone(),
+        SubmoduleStatusMock { dirty: false },
+        odb_at(&git_dir, object_hash),
+        &mut gix_utils::progress::Discard,
+        ctx,
+        Options {
+            fs: gix_fs::Capabilities::probe(&git_dir),
+            stat: TEST_OPTIONS,
+            ..Options::default()
+        },
+    )?;
+
+    assert_eq!(
+        *cleaned.0.lock().expect("not poisoned"),
+        [bstr::BString::from("a.txt")],
+        "like Git, the clean filter receives the path relative to the worktree as `%f`"
+    );
+    Ok(())
+}
+
+#[test]
 fn refresh() {
     let expected_outcome = Outcome {
         entries_to_process: 5,

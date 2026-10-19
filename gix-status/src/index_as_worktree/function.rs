@@ -619,7 +619,7 @@ where
                 .filter
                 .convert_to_git(
                     file,
-                    self.path,
+                    gix_path::from_bstr(self.rela_path)?.as_ref(),
                     &mut |_path, attrs| {
                         platform.matching_attributes(attrs);
                     },
