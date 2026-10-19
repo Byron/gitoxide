@@ -79,7 +79,8 @@ pub(crate) fn find_scheme(input: &BStr) -> InputScheme {
         // allow user to select files containing a `:` by passing them as absolute or relative path
         // this is behavior explicitly mentioned by the scp and git manuals
         let explicitly_local = &input[..colon].contains(&b'/');
-        let has_drive = cfg!(windows) && gix_path::windows_drive_prefix(input).is_some();
+        let has_drive =
+            cfg!(windows) && gix_path::windows_drive_prefix(input).is_some_and(|prefix| prefix.len() == colon + 1);
 
         if !explicitly_local && !has_drive {
             return InputScheme::Scp { colon };
