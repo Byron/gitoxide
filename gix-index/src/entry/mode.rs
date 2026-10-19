@@ -64,8 +64,7 @@ impl Mode {
     }
 
     /// Like [`change_to_match_fs`](Self::change_to_match_fs) but accepts pre-extracted
-    /// file-type and permission bits, for callers that already have them (e.g. cached
-    /// metadata from a batched directory enumeration).
+    /// file-type and permission bits, for callers that already have them.
     ///
     /// Note that some parameters are mutually exclusive, but inconsistency won't be a problem
     /// if the source of the data is consistent.

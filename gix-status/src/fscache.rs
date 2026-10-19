@@ -9,6 +9,8 @@
 //! that asked for them. It is not a long-lived cache: it is built during one
 //! status call and discarded with the worker state. Lookups are transparent:
 //! misses fall through to a live syscall, so cache misses affect speed only.
+//! Cached metadata uses [`gix_index::fs::Metadata`] so classification, mode
+//! changes and index-stat normalization share the live path's interpretation.
 //!
 //! On Windows, `std::fs::DirEntry::metadata()` reuses enumeration data without
 //! an additional per-entry metadata call. Enumeration throughput may differ
@@ -19,152 +21,8 @@ use std::path::{Path, PathBuf};
 
 use bstr::{BStr, BString, ByteSlice};
 
-/// File metadata produced by the lazy cache for one worktree entry.
-///
-/// Carries enough information to determine file type, detect mode changes,
-/// build a [`gix_index::entry::Stat`] for comparison, and short-circuit content
-/// reads via file size.
-///
-/// Windows-only fields: this module is `#[cfg(windows)]`, and Windows batch
-/// directory enumeration doesn't expose `dev`/`ino`/`uid`/`gid` or the
-/// executable bit. The status pipeline's stat comparison on Windows compares
-/// those `Stat` fields against matching zeros from
-/// [`gix_index::entry::Stat::from_fs`]'s Windows branch, and git on Windows
-/// defaults to `core.filemode=false`, so all five are simply omitted here.
-#[derive(Debug, Clone, Copy)]
-pub struct Stat {
-    /// Whether this is a directory, with the same semantics as
-    /// `std::fs::symlink_metadata`: `false` for directory symlinks and junctions
-    /// even though the filesystem also marks those with the directory attribute.
-    pub is_dir: bool,
-    /// Whether this is a symlink, with the same semantics as
-    /// `std::fs::symlink_metadata`: `true` only for name-surrogate reparse points
-    /// (symlinks and junctions/mount points). Other reparse points — OneDrive
-    /// cloud placeholders, ProjFS, app-exec links — are regular files/dirs, as
-    /// the live `lstat` fallback would report them.
-    pub is_symlink: bool,
-    /// File size in bytes.
-    pub size: u64,
-    /// Modification time — seconds since Unix epoch.
-    pub mtime_secs: u32,
-    /// Modification time — nanoseconds component.
-    pub mtime_nsecs: u32,
-    /// Status/creation time — seconds since Unix epoch.
-    ///
-    /// On Windows this must be populated from the real `CreationTime`, not `mtime`:
-    /// the stat comparison in the status pipeline compares `ctime.secs` by default
-    /// (`trust_ctime=true`), and faking `ctime=mtime` causes spurious mismatches
-    /// for any file whose creation-time and modification-time differ.
-    pub ctime_secs: u32,
-    /// Status/creation time — nanoseconds component.
-    pub ctime_nsecs: u32,
-}
-
-impl Stat {
-    /// Use the same time conversion as the live Windows index-stat path.
-    /// Unavailable or unrepresentable times must use the live fallback instead.
-    fn from_metadata(metadata: &std::fs::Metadata) -> Option<Self> {
-        let mtime = gix_index::entry::stat::Time::try_from(metadata.modified().ok()?).ok()?;
-        let ctime = gix_index::entry::stat::Time::try_from(metadata.created().ok()?).ok()?;
-        Some(Stat {
-            is_dir: metadata.is_dir(),
-            is_symlink: metadata.is_symlink(),
-            size: metadata.len(),
-            mtime_secs: mtime.secs,
-            mtime_nsecs: mtime.nsecs,
-            ctime_secs: ctime.secs,
-            ctime_nsecs: ctime.nsecs,
-        })
-    }
-
-    /// Convert to gitoxide's [`Stat`](gix_index::entry::Stat) struct for index comparison.
-    ///
-    /// Truncates `size` from 64 to 32 bits — matching what
-    /// [`gix_index::entry::Stat::from_fs`] does, so both code
-    /// paths compare the same quantities. `dev`/`ino`/`uid`/`gid` are zeroed
-    /// here to match what `from_fs` produces on Windows.
-    pub(crate) fn to_stat(self) -> gix_index::entry::Stat {
-        gix_index::entry::Stat {
-            mtime: gix_index::entry::stat::Time {
-                secs: self.mtime_secs,
-                nsecs: self.mtime_nsecs,
-            },
-            ctime: gix_index::entry::stat::Time {
-                secs: self.ctime_secs,
-                nsecs: self.ctime_nsecs,
-            },
-            dev: 0,
-            ino: 0,
-            uid: 0,
-            gid: 0,
-            size: self.size as u32,
-        }
-    }
-}
-
 /// Metadata for one enumerated directory, keyed by direct filename.
-type DirectoryEntries = hashbrown::HashMap<BString, Stat>;
-
-/// Either a live `lstat` result or a precomputed [`Stat`] from the lazy
-/// cache. Lets [`crate::index_as_worktree`] treat both shapes uniformly without
-/// branching at every per-entry use site.
-pub(crate) enum Metadata {
-    Live(gix_index::fs::Metadata),
-    Cached(Stat),
-}
-
-impl Metadata {
-    pub(crate) fn is_dir(&self) -> bool {
-        match self {
-            Self::Live(m) => m.is_dir(),
-            Self::Cached(c) => c.is_dir,
-        }
-    }
-
-    pub(crate) fn is_symlink(&self) -> bool {
-        match self {
-            Self::Live(m) => m.is_symlink(),
-            Self::Cached(c) => c.is_symlink,
-        }
-    }
-
-    pub(crate) fn len(&self) -> u64 {
-        match self {
-            Self::Live(m) => m.len(),
-            Self::Cached(c) => c.size,
-        }
-    }
-
-    pub(crate) fn to_stat(&self) -> Result<gix_index::entry::Stat, std::time::SystemTimeError> {
-        match self {
-            Self::Live(m) => gix_index::entry::Stat::from_fs(m),
-            Self::Cached(c) => Ok(c.to_stat()),
-        }
-    }
-
-    pub(crate) fn mode_change(
-        &self,
-        entry_mode: gix_index::entry::Mode,
-        has_symlinks: bool,
-        executable_bit: bool,
-    ) -> Option<gix_index::entry::mode::Change> {
-        match self {
-            Self::Live(m) => entry_mode.change_to_match_fs(m, has_symlinks, executable_bit),
-            // Windows batch enumeration doesn't expose the executable bit; pass `false`.
-            // Git on Windows defaults to `core.filemode=false` so this is unused anyway.
-            // TODO(correctness): it seems we'd have to try to support this at some point,
-            //                    depending on Git for Windows' implementation.
-            Self::Cached(c) => entry_mode.change_to_match_fs_with_values(
-                !c.is_dir && !c.is_symlink, // is_file: regular file (not dir, not symlink)
-                c.is_dir,
-                c.is_symlink,
-                false,
-                has_symlinks,
-                executable_bit,
-            ),
-        }
-    }
-}
+type DirectoryEntries = hashbrown::HashMap<BString, gix_index::fs::Metadata>;
 
 /// Thread-local, lazily populated worktree metadata cache.
 ///
@@ -213,7 +71,7 @@ impl FsCache {
     /// Return cached metadata for `rela_path`, populating its parent directory
     /// on first use. `None` means the cache couldn't help and callers should
     /// fall back to a live `lstat`.
-    pub(crate) fn get(&mut self, rela_path: &BStr) -> Option<Stat> {
+    pub(crate) fn get(&mut self, rela_path: &BStr) -> Option<&gix_index::fs::Metadata> {
         let (dir, filename) = match rela_path.rfind_byte(b'/') {
             Some(pos) => (&rela_path[..pos], &rela_path[pos + 1..]),
             None => (BStr::new(b""), rela_path),
@@ -222,14 +80,11 @@ impl FsCache {
             return None;
         }
 
-        if let Some(entries) = self.directories.get(dir) {
-            return entries.as_ref().and_then(|entries| entries.get(filename)).copied();
-        }
-
-        let entries = directory_entries(&self.worktree, dir);
-        let stat = entries.as_ref().and_then(|entries| entries.get(filename)).copied();
-        self.directories.insert(dir.into(), entries);
-        stat
+        self.directories
+            .entry_ref(dir)
+            .or_insert_with(|| directory_entries(&self.worktree, dir))
+            .as_ref()?
+            .get(filename)
     }
 }
 
@@ -248,14 +103,15 @@ fn directory_entries(worktree: &Path, rel_dir: &BStr) -> Option<DirectoryEntries
         let Some(filename) = filename.to_str() else { continue };
         // On Windows this reuses the directory-enumeration result, without a
         // per-entry metadata syscall, and does not follow symlinks or junctions.
-        let Some(stat) = entry
-            .metadata()
-            .ok()
-            .and_then(|metadata| Stat::from_metadata(&metadata))
-        else {
+        let Ok(metadata) = entry.metadata() else { continue };
+        let metadata = gix_index::fs::Metadata::from(metadata);
+        // Use shared index normalization to reject unusable timestamps and retain
+        // the live fallback for them. Unavailable timestamps use the epoch, just
+        // like live metadata; pre-epoch timestamps remain errors on Windows.
+        if gix_index::entry::Stat::from_fs(&metadata).is_err() {
             continue;
-        };
-        entries.insert(filename.as_bytes().into(), stat);
+        }
+        entries.insert(filename.as_bytes().into(), metadata);
     }
     Some(entries)
 }
@@ -263,22 +119,45 @@ fn directory_entries(worktree: &Path, rel_dir: &BStr) -> Option<DirectoryEntries
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gix_testtools::TestResult;
+    use gix_error::TestResult;
     use std::os::windows::{
         ffi::OsStringExt,
-        fs::{symlink_dir, symlink_file},
+        fs::{FileTimesExt, symlink_dir, symlink_file},
     };
 
     fn fixture() -> TestResult<PathBuf> {
-        let (path, ()) = gix_testtools::scripted_fixture_read_only_with_post("fscache.sh", 1, |fixture| {
+        let (path, ()) = gix_testtools::scripted_fixture_read_only_with_post("fscache.sh", 2, |fixture| {
             if let gix_testtools::FixtureState::Uninitialized(path) = fixture {
                 // Ensure mtime differs from creation time, including a subsecond component.
+                std::fs::File::options()
+                    .write(true)
+                    .open(path.join("file"))?
+                    .set_times(
+                        std::fs::FileTimes::new()
+                            .set_created(std::time::UNIX_EPOCH + std::time::Duration::new(1_600_000_000, 765_432_100)),
+                    )?;
                 filetime::set_file_mtime(
                     path.join("file"),
                     filetime::FileTime::from_unix_time(1_700_000_000, 123_456_700),
                 )?;
                 std::fs::write(path.join("before-epoch"), b"old")?;
                 filetime::set_file_mtime(path.join("before-epoch"), filetime::FileTime::from_unix_time(-1, 0))?;
+                std::fs::File::create(path.join("before-epoch-created"))?.set_times(
+                    std::fs::FileTimes::new().set_created(std::time::UNIX_EPOCH - std::time::Duration::from_secs(1)),
+                )?;
+                // Mark the empty file sparse before extending it, avoiding a 4-GiB allocation.
+                // Windows fixture generation never creates archives of this logical size.
+                let sparse_path = path.join("sparse");
+                let sparse = std::fs::File::create(&sparse_path)?;
+                let output = std::process::Command::new("fsutil.exe")
+                    .args(["sparse", "setflag"])
+                    .arg(&sparse_path)
+                    .output()?;
+                if output.status.success() {
+                    sparse.set_len((1_u64 << 32) + 123)?;
+                } else {
+                    eprintln!("Skipping large-file comparison: sparse files unavailable: {output:?}");
+                }
                 std::fs::write(
                     path.join(std::ffi::OsString::from_wide(&[0xd800])),
                     b"unpaired surrogate",
@@ -307,10 +186,13 @@ mod tests {
     }
 
     fn assert_matches_live(cache: &mut FsCache, name: &str) -> TestResult {
-        let cached = Metadata::Cached(cache.get(name.as_bytes().as_bstr()).expect("fixture entry is cached"));
-        let live = Metadata::Live(gix_index::fs::Metadata::from_path_no_follow(
-            &cache.worktree.join(name),
-        )?);
+        let live = gix_index::fs::Metadata::from_path_no_follow(&cache.worktree.join(name))?;
+        let cached = cache.get(name.as_bytes().as_bstr()).expect("fixture entry is cached");
+        assert_eq!(
+            cached.is_file(),
+            live.is_file(),
+            "regular file classification for {name}"
+        );
         assert_eq!(cached.is_dir(), live.is_dir(), "directory classification for {name}");
         assert_eq!(
             cached.is_symlink(),
@@ -319,21 +201,25 @@ mod tests {
         );
         assert_eq!(cached.len(), live.len(), "full file size for {name}");
         assert_eq!(
-            cached.to_stat()?,
-            live.to_stat()?,
+            gix_index::entry::Stat::from_fs(cached)?,
+            gix_index::entry::Stat::from_fs(&live)?,
             "index size, mtime and creation time for {name}"
         );
         for mode in [
             gix_index::entry::Mode::FILE,
+            gix_index::entry::Mode::FILE_EXECUTABLE,
             gix_index::entry::Mode::DIR,
+            gix_index::entry::Mode::COMMIT,
             gix_index::entry::Mode::SYMLINK,
         ] {
             for has_symlinks in [false, true] {
-                assert_eq!(
-                    cached.mode_change(mode, has_symlinks, false),
-                    live.mode_change(mode, has_symlinks, false),
-                    "mode changes for {name} with {mode:?}"
-                );
+                for executable_bit in [false, true] {
+                    assert_eq!(
+                        mode.change_to_match_fs(cached, has_symlinks, executable_bit),
+                        mode.change_to_match_fs(&live, has_symlinks, executable_bit),
+                        "mode changes for {name} with {mode:?}, symlinks={has_symlinks}, executable_bit={executable_bit}"
+                    );
+                }
             }
         }
         Ok(())
@@ -351,19 +237,25 @@ mod tests {
             if worktree.join(name).symlink_metadata().is_ok() {
                 assert_matches_live(&mut cache, name)?;
                 let stat = cache.get(name.as_bytes().as_bstr()).expect("link is cached");
-                assert!(stat.is_symlink && !stat.is_dir, "links are never directories");
+                assert!(stat.is_symlink() && !stat.is_dir(), "links are never directories");
+            } else {
+                eprintln!("Skipping {name} comparison: fixture could not create symlink (privilege required)");
             }
         }
-        let stat = cache.get(b"file".as_bstr()).expect("file is cached").to_stat();
+        let stat = gix_index::entry::Stat::from_fs(cache.get(b"file".as_bstr()).expect("file is cached"))?;
         assert_ne!(
             stat.ctime, stat.mtime,
             "ctime uses creation time, not modification time"
         );
         assert_eq!(stat.mtime.nsecs, 123_456_700, "subsecond precision is preserved");
+        assert_eq!(
+            stat.ctime.nsecs, 765_432_100,
+            "creation-time subsecond precision is preserved"
+        );
         assert_eq!(cache.directories.len(), 2, "only requested parents are enumerated");
         let junction = cache.get(b"junction".as_bstr()).expect("junction is cached");
         assert!(
-            junction.is_symlink && !junction.is_dir,
+            junction.is_symlink() && !junction.is_dir(),
             "junctions are symlinks, never directories"
         );
         Ok(())
@@ -372,21 +264,46 @@ mod tests {
     #[test]
     fn unrepresentable_metadata_and_names_are_skipped() -> TestResult {
         let mut cache = FsCache::new(&fixture()?);
-        assert!(
-            cache.get(b"before-epoch".as_bstr()).is_none(),
-            "pre-epoch timestamps must fall back, not saturate to zero"
-        );
-        let live = gix_index::fs::Metadata::from_path_no_follow(&cache.worktree.join("before-epoch"))?;
-        assert!(
-            gix_index::entry::Stat::from_fs(&live).is_err(),
-            "the live path preserves the time conversion error"
-        );
+        for name in ["before-epoch", "before-epoch-created"] {
+            assert!(
+                cache.get(name.as_bytes().as_bstr()).is_none(),
+                "pre-epoch timestamps must fall back, not saturate to zero: {name}"
+            );
+            let live = gix_index::fs::Metadata::from_path_no_follow(&cache.worktree.join(name))?;
+            let err = gix_index::entry::Stat::from_fs(&live).expect_err("pre-epoch timestamps remain errors");
+            assert_eq!(
+                err.duration(),
+                std::time::Duration::from_secs(1),
+                "the original timestamp error survives"
+            );
+        }
         assert!(
             cache.get("\u{fffd}".as_bytes().as_bstr()).is_none(),
             "unpaired surrogates must not become replacement-character keys"
         );
         assert_matches_live(&mut cache, "file")?;
         Ok(())
+    }
+
+    #[test]
+    fn full_size_is_preserved_beyond_the_index_limit() -> TestResult {
+        let mut cache = FsCache::new(&fixture()?);
+        let metadata = cache.get(b"sparse".as_bstr()).expect("sparse file is cached");
+        if metadata.len() == 0 {
+            eprintln!("Skipping large-file comparison: fixture filesystem could not mark the file sparse");
+            return Ok(());
+        }
+        assert_eq!(
+            metadata.len(),
+            (1_u64 << 32) + 123,
+            "full file size is available to content comparison"
+        );
+        assert_eq!(
+            gix_index::entry::Stat::from_fs(metadata)?.size,
+            123,
+            "only the index size is truncated"
+        );
+        assert_matches_live(&mut cache, "sparse")
     }
 
     #[test]

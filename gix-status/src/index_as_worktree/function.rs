@@ -13,7 +13,7 @@ use gix_object::FindExt;
 use gix_parallel::{Reduce, in_parallel_if};
 
 #[cfg(windows)]
-use crate::fscache::{FsCache, Metadata as FsCacheMetadata};
+use crate::fscache::FsCache;
 use crate::index_as_worktree::types::ConflictIndexEntry;
 use crate::{
     AtomicU64, SymlinkCheck,
@@ -391,26 +391,23 @@ impl<'index> State<'_, 'index> {
             }
         };
 
-        // Acquire metadata. On Windows we consult the precomputed stats first and
+        // Acquire metadata. On Windows we consult the cached metadata first and
         // only fall back to a syscall on miss; on other platforms per-file
         // `lstat` is already fast, so we just do the syscall directly.
         #[cfg(windows)]
-        let metadata = if let Some(cached) = self.fscache.as_mut().and_then(|c| c.get(rela_path)) {
-            FsCacheMetadata::Cached(cached)
+        let cached = self.fscache.as_mut().and_then(|c| c.get(rela_path));
+        #[cfg(not(windows))]
+        let cached: Option<&gix_index::fs::Metadata> = None;
+        let live;
+        let metadata = if let Some(cached) = cached {
+            cached
         } else {
             self.symlink_metadata_calls.fetch_add(1, Ordering::Relaxed);
-            match live_metadata(worktree_path)? {
-                Some(md) => FsCacheMetadata::Live(md),
-                None => return Ok(Some(Change::Removed.into())),
-            }
-        };
-        #[cfg(not(windows))]
-        let metadata = {
-            self.symlink_metadata_calls.fetch_add(1, Ordering::Relaxed);
-            match live_metadata(worktree_path)? {
+            live = match live_metadata(worktree_path)? {
                 Some(md) => md,
                 None => return Ok(Some(Change::Removed.into())),
-            }
+            };
+            &live
         };
 
         // Handle directory: index entries are normally only for files/symlinks.
@@ -431,21 +428,13 @@ impl<'index> State<'_, 'index> {
             return Ok(Some(EntryStatus::IntentToAdd));
         }
 
-        #[cfg(windows)]
-        let new_stat = metadata
-            .to_stat()
-            .or_raise(|| message("The clock was off when reading file metadata"))?;
-        #[cfg(not(windows))]
-        let new_stat = gix_index::entry::Stat::from_fs(&metadata)
+        let new_stat = gix_index::entry::Stat::from_fs(metadata)
             .or_raise(|| message("The clock was off when reading file metadata"))?;
 
-        #[cfg(windows)]
-        let mode_change = metadata.mode_change(entry.mode, self.options.fs.symlink, self.options.fs.executable_bit);
-        #[cfg(not(windows))]
         let mode_change =
             entry
                 .mode
-                .change_to_match_fs(&metadata, self.options.fs.symlink, self.options.fs.executable_bit);
+                .change_to_match_fs(metadata, self.options.fs.symlink, self.options.fs.executable_bit);
         let executable_bit_changed = match mode_change {
             Some(gix_index::entry::mode::Change::Type { new_mode }) => {
                 return Ok(Some(
