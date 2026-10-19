@@ -38,6 +38,16 @@ type Change = WorktreeChange<(), ()>;
 type EntryStatus = WorktreeEntryStatus<(), ()>;
 type Expectation<'a> = (&'a BStr, usize, EntryStatus);
 
+fn attributes_stack(worktree: &std::path::Path, index: &gix_index::State) -> gix_worktree::Stack {
+    gix_worktree::Stack::from_state_and_ignore_case(
+        worktree,
+        false,
+        gix_worktree::stack::State::AttributesStack(Default::default()),
+        index,
+        index.path_backing(),
+    )
+}
+
 fn fixture(name: &str, expected_status: &[Expectation<'_>]) -> Outcome {
     fixture_filtered(name, &[], expected_status)
 }
@@ -168,16 +178,9 @@ fn fixture_filtered_detailed(
     let mut recorder = Recorder::default();
     let search = gix_pathspec::Search::from_specs(to_pathspecs(pathspecs), None, std::path::Path::new(""))
         .expect("valid specs can be normalized");
-    let stack = gix_worktree::Stack::from_state_and_ignore_case(
-        worktree.clone(),
-        false,
-        gix_worktree::stack::State::AttributesStack(Default::default()),
-        &index,
-        index.path_backing(),
-    );
     let ctx = Context {
         pathspec: search,
-        stack,
+        stack: attributes_stack(&worktree, &index),
         filter: gix_filter::Pipeline::new(
             Default::default(),
             gix_testtools::object_hash(),
@@ -1040,6 +1043,94 @@ fn unchanged_despite_filter() {
 }
 
 #[test]
+fn clean_filter_receives_worktree_relative_path_from_worktree_root() -> gix_testtools::TestResult {
+    // Use an absolute worktree path, as `gix` does.
+    let worktree = gix_path::realpath(fixture_path("status_filter_path"))?;
+    assert_ne!(
+        std::env::current_dir()?,
+        worktree,
+        "the caller runs outside the worktree"
+    );
+    let git_dir = worktree.join(".git");
+    let object_hash = gix_testtools::object_hash();
+    let mut index = gix_index::File::at(git_dir.join("index"), object_hash, false, Default::default())?;
+    let entry = index
+        .entry_mut_by_path_and_stage("a.txt".into(), gix_index::entry::Stage::Unconflicted)
+        .expect("the fixture tracks `a.txt`");
+    // A stale `mtime` makes the stat check fail, so the worktree file is cleaned and hashed.
+    entry.stat.mtime = Default::default();
+
+    /// Record the output of the clean filter for each compared entry.
+    #[derive(Clone, Default)]
+    struct RecordCleaned(Arc<std::sync::Mutex<Vec<bstr::BString>>>);
+    impl CompareBlobs for RecordCleaned {
+        type Output = ();
+
+        fn compare_blobs<'a, 'b>(
+            &mut self,
+            _entry: &Entry,
+            _worktree_file_size: u64,
+            data: impl ReadData<'a>,
+            buf: &mut Vec<u8>,
+        ) -> Result<Option<Self::Output>> {
+            use std::io::Read;
+            buf.clear();
+            data.stream_worktree_file()?
+                .read_to_end(buf)
+                .map_err(gix_hash::io::from_std_io)?;
+            self.0.lock().expect("not poisoned").push(buf.as_slice().into());
+            Ok(None)
+        }
+    }
+
+    let mut ctx = Context {
+        pathspec: gix_pathspec::Search::from_specs(to_pathspecs(&["a.txt"]), None, std::path::Path::new(""))?,
+        stack: attributes_stack(&worktree, &index),
+        filter: gix_filter::Pipeline::new(
+            Default::default(),
+            object_hash,
+            gix_filter::pipeline::Options {
+                drivers: vec![gix_filter::Driver {
+                    name: "path".into(),
+                    // Both the relative path and its sibling configuration must resolve as they do in Git.
+                    clean: Some(r#"cat >/dev/null && printf %s %f && cat "$(dirname %f)/.clean-map""#.into()),
+                    smudge: None,
+                    process: None,
+                    // Fail instead of falling back to the unfiltered content, which also matches the index.
+                    required: true,
+                }],
+                ..Default::default()
+            },
+        ),
+        should_interrupt: &AtomicBool::default(),
+    };
+    ctx.filter.driver_state_mut().context.worktree_dir = Some(worktree.clone());
+    let cleaned = RecordCleaned::default();
+    index_as_worktree(
+        &index,
+        &worktree,
+        &mut Recorder::default(),
+        cleaned.clone(),
+        SubmoduleStatusMock { dirty: false },
+        odb_at(&git_dir, object_hash),
+        &mut gix_utils::progress::Discard,
+        ctx,
+        Options {
+            fs: gix_fs::Capabilities::probe(&git_dir),
+            stat: TEST_OPTIONS,
+            ..Options::default()
+        },
+    )?;
+
+    assert_eq!(
+        *cleaned.0.lock().expect("not poisoned"),
+        [bstr::BString::from("a.txt mapped")],
+        "like Git, the clean filter receives a worktree-relative `%f` and resolves sibling files from the worktree root"
+    );
+    Ok(())
+}
+
+#[test]
 fn refresh() {
     let expected_outcome = Outcome {
         entries_to_process: 5,
@@ -1259,16 +1350,9 @@ fn racy_git() -> gix_testtools::TestResult {
 
     let count = Arc::new(AtomicUsize::new(0));
     let counter = CountCalls(count.clone(), FastEq);
-    let stack = gix_worktree::Stack::from_state_and_ignore_case(
-        worktree,
-        false,
-        gix_worktree::stack::State::AttributesStack(Default::default()),
-        &index,
-        index.path_backing(),
-    );
     let ctx = Context {
         pathspec: default_pathspec(),
-        stack,
+        stack: attributes_stack(worktree, &index),
         filter: gix_filter::Pipeline::new(Default::default(), gix_testtools::object_hash(), Default::default()),
         should_interrupt: &AtomicBool::default(),
     };
@@ -1419,13 +1503,7 @@ mod windows {
     ) -> Result<(Vec<Expectation<'a>>, Outcome)> {
         let ctx = Context {
             pathspec: default_pathspec(),
-            stack: gix_worktree::Stack::from_state_and_ignore_case(
-                worktree,
-                false,
-                gix_worktree::stack::State::AttributesStack(Default::default()),
-                index,
-                index.path_backing(),
-            ),
+            stack: attributes_stack(worktree, index),
             filter: gix_filter::Pipeline::new(Default::default(), gix_testtools::object_hash(), Default::default()),
             should_interrupt: &AtomicBool::default(),
         };

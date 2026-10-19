@@ -253,7 +253,8 @@ impl crate::Repository {
     }
 
     /// Return the context to be passed to any spawned program that is supposed to interact with the repository, like
-    /// hooks or filters.
+    /// hooks or filters. Repository paths are made absolute using the captured
+    /// [current directory][Self::current_dir], so they remain valid if the process changes its working directory.
     #[cfg(feature = "command")]
     pub fn command_context(&self) -> Result<gix_command::Context> {
         use crate::config::{cache::util::ApplyLeniency, tree::gitoxide};
@@ -271,8 +272,8 @@ impl crate::Repository {
                     .unwrap_or(true)
                     .into()
             },
-            git_dir: self.git_dir().to_owned().into(),
-            worktree_dir: self.workdir().map(ToOwned::to_owned),
+            git_dir: self.current_dir().join(self.git_dir()).into(),
+            worktree_dir: self.workdir().map(|path| self.current_dir().join(path)),
             no_replace_objects: config::shared::is_replace_refs_enabled(
                 &self.config.resolved,
                 self.config.lenient_config,

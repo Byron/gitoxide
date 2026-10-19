@@ -69,7 +69,7 @@ pub struct State {
     /// These processes are expected to shut down once their stdin/stdout are dropped.
     running: ProcessMap,
 
-    /// The context to pass to spawned filter programs.
+    /// The context to pass to spawned filter programs, with `worktree_dir` as their working directory if set.
     pub context: gix_command::Context,
 }
 

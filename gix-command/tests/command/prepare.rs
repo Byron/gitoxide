@@ -166,11 +166,12 @@ fn multiple_arguments_in_one_line_with_auto_split() -> TestResult {
 
 #[test]
 fn shell_assignments_are_applied_during_manual_splitting() -> TestResult {
+    let dir = gix_testtools::tempfile::TempDir::new()?;
     let cmd = std::process::Command::try_from(
         gix_command::prepare(r#"  FOO=bar BAR="two words" GIT_DIR=inline command.exe arg"#)
             .env("FOO", "overridden")
             .with_context(gix_command::Context {
-                git_dir: Some("context".into()),
+                git_dir: Some(gix_path::realpath(dir.path())?),
                 ..Default::default()
             })
             .command_may_be_shell_script_allow_manual_argument_splitting(),

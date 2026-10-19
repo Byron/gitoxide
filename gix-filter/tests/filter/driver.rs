@@ -308,6 +308,48 @@ pub(crate) mod apply {
     }
 
     #[test]
+    fn absolute_repository_context_survives_worktree_cwd() -> TestResult {
+        if gix_testtools::run_in_isolated_process()? {
+            return Ok(());
+        }
+        let fixture = gix_testtools::scripted_fixture_read_only_with_args_single_archive(
+            "baseline.sh",
+            [driver_path().to_string()],
+        )?;
+        let worktree = gix_path::realpath(fixture.join("no-process"))?;
+        let elsewhere = gix_testtools::tempfile::TempDir::new()?;
+        let _cwd = gix_testtools::set_current_dir(elsewhere.path())?;
+        let mut state = driver::State::new(gix_command::Context {
+            git_dir: Some(worktree.join(".git")),
+            worktree_dir: Some(worktree),
+            ..Default::default()
+        });
+        let filter = Driver {
+            name: "context".into(),
+            clean: Some("cat >/dev/null && git rev-parse --is-inside-work-tree".into()),
+            smudge: None,
+            process: None,
+            required: true,
+        };
+        let mut output = String::new();
+        state
+            .apply(
+                &filter,
+                &mut std::io::empty(),
+                Operation::Clean,
+                context_from_path("file"),
+            )?
+            .expect("a clean filter is configured")
+            .read_to_string(&mut output)?;
+        assert_eq!(
+            output.trim(),
+            "true",
+            "Git must find the repository after the filter changes cwd"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn missing_driver_means_no_filter_is_applied() -> TestResult {
         let mut state = gix_filter::driver::State::default();
         let mut driver = driver_no_process();
