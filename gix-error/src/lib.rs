@@ -621,6 +621,9 @@ pub use exn::{
 /// With `auto-chain-error`, [`Debug`](std::fmt::Debug) reports the complete diagnostic chain,
 /// so returning [`Result`] from `main()` retains the underlying causes. Caller locations are printed only with the
 /// `error-print-location` feature, including for errors returned from `main()`. Alternate Debug (`{error:#?}`) omits them.
+/// Reports use `Caused by:` for both flattened siblings and genuine causal chains, so enabling auto-chaining makes
+/// them visually indistinguishable.
+/// See [`Exn`]'s visualization examples for the tree, flattened, and genuine-chain layouts.
 /// Normal [`Display`](std::fmt::Display) shows the root diagnostic; alternate Display (`{error:#}`) joins the
 /// complete chain with `: ` and omits locations, suitable for single-line error messages.
 ///

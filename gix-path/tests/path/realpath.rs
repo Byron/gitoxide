@@ -114,6 +114,43 @@ fn drive_relative_paths_use_the_supplied_directory_on_the_same_drive() -> gix_te
 
 #[test]
 #[cfg(windows)]
+fn virtual_drive_paths_remain_absolute() -> gix_testtools::TestResult {
+    let cwd = Path::new(r"C:\gix-realpath-test-base");
+    for drive in ["1", "ä", "֍", "😀"] {
+        for separator in ["/", r"\"] {
+            let input = format!("{drive}:{separator}gix-realpath-test-missing{separator}..{separator}other");
+            assert_eq!(
+                realpath_opts(Path::new(&input), cwd, 0)?,
+                Path::new(&format!(r"{drive}:\other")),
+                "virtual drives must not be resolved against the supplied directory"
+            );
+            let input = format!("{drive}:{separator}..");
+            assert!(
+                realpath_opts(Path::new(&input), cwd, 0).is_err(),
+                "parent traversal must not remove the virtual drive root"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+#[cfg(windows)]
+fn virtual_drive_paths_preserve_unpaired_surrogates() -> gix_testtools::TestResult {
+    use std::{ffi::OsString, os::windows::ffi::OsStringExt};
+
+    let input = PathBuf::from(OsString::from_wide(&[b'1' as u16, b':' as u16, b'/' as u16, 0xd800]));
+    let expected = PathBuf::from(OsString::from_wide(&[b'1' as u16, b':' as u16, b'\\' as u16, 0xd800]));
+    assert_eq!(
+        realpath_opts(&input, Path::new(r"C:\gix-realpath-test-base"), 0)?,
+        expected,
+        "native path normalization does not require the suffix to be valid Unicode"
+    );
+    Ok(())
+}
+
+#[test]
+#[cfg(windows)]
 fn drive_relative_paths_use_windows_drive_directories_when_needed() -> gix_testtools::TestResult {
     for input in ["C:", "C:gix-realpath-test-missing", "D:gix-realpath-test-missing"] {
         let input = Path::new(input);

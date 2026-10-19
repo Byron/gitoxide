@@ -63,6 +63,9 @@
 # Generate this small uninitialized-submodule fixture instead of storing its archives.
 /make_uninitialized_submodule.tar
 /make_uninitialized_submodule_sha256.tar
+# URL baselines embed host-absolute local paths and depend on platform/Git version.
+/make_submodule_urls.tar
+/make_submodule_urls_sha256.tar
 # Generate this small submodule-config fixture instead of storing its archives.
 /make_submodule_config_overrides.tar
 /make_submodule_config_overrides_sha256.tar
@@ -97,3 +100,6 @@
 # Generate this small commit-graph fixture and apply Rust post-processing locally.
 /make_corrupt_commit_graph.tar
 /make_corrupt_commit_graph_sha256.tar
+# Generate these small status fixtures with host-local symlink preflight and index timestamps.
+/make_status_attribute_and_ignore_repos.tar
+/make_status_attribute_and_ignore_repos_sha256.tar

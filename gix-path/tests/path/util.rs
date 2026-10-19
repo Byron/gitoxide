@@ -1,3 +1,27 @@
+#[test]
+fn windows_drive_prefix() {
+    use bstr::ByteSlice;
+
+    for drive in ["C", "1", "ä", "֍", "😀"] {
+        let prefix = format!("{drive}:");
+        for suffix in ["", "/repos/sub", r"\repos\sub", "repos/sub"] {
+            let input = format!("{prefix}{suffix}");
+            assert_eq!(
+                gix_path::windows_drive_prefix(input.as_bytes().as_bstr()),
+                Some(prefix.as_bytes().as_bstr()),
+                "drive prefixes include a single character and the colon"
+            );
+        }
+    }
+    for input in ["", "C", "ä", "😀", "host:repo", "äö:repo", "./a:repo", "../repo"] {
+        assert_eq!(
+            gix_path::windows_drive_prefix(input.as_bytes().as_bstr()),
+            None,
+            "{input:?} does not start with a drive prefix"
+        );
+    }
+}
+
 mod is_absolute {
     #[test]
     fn absolute_linux_path_is_true() {

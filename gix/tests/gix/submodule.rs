@@ -8,6 +8,265 @@ pub fn repo(name: &str) -> Result<gix::Repository> {
     )?)
 }
 
+mod url {
+    use std::path::{Path, PathBuf};
+
+    use gix::bstr::{BString, ByteSlice};
+    use gix_testtools::TestResult;
+
+    #[test]
+    fn resolved_urls_match_git_submodule_init() -> TestResult {
+        let fixture = fixture()?;
+        let cases = Case::load_all(&fixture)?;
+        assert_eq!(cases.len(), 26, "all URL input pairs are covered by the fixture");
+        for case in cases {
+            let remote_url = &case.remote_url;
+            let module_url = &case.module_url;
+            let repo = case.open("worktree")?;
+            let sm = submodule(&repo)?;
+            assert_eq!(
+                sm.url()?.to_bstring(),
+                module_url.as_bstr(),
+                "url() preserves the raw configuration"
+            );
+            let resolved = sm.resolved_url();
+            if !case.init_succeeded {
+                assert!(resolved.is_err(), "both reject {remote_url:?} + {module_url:?}");
+                continue;
+            }
+            let expected = case.expected_url("worktree")?;
+            assert_eq!(
+                resolved?, expected,
+                "resolution matches Git for {remote_url:?} + {module_url:?}"
+            );
+            let initialized = case.open("initialized")?;
+            assert_eq!(
+                submodule(&initialized)?.resolved_url()?,
+                case.expected_url("initialized")?,
+                "initialized URLs remain suitable for cloning"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn remote_selection_and_overrides_match_git() -> TestResult {
+        let fixture = fixture()?;
+        for name in [
+            "upstream-branch",
+            "upstream-detached",
+            "missing",
+            "own-upstream",
+            "upstream-only",
+            "multiple",
+        ] {
+            let case = fixture.join("remote-selection").join(name);
+            let repo = gix::open_opts(case.join("worktree"), gix::open::Options::isolated())?;
+            let resolved = submodule(&repo)?.resolved_url()?;
+            if name.starts_with("upstream-") {
+                assert_eq!(
+                    resolved.to_bstring(),
+                    "ssh://host/org/module1",
+                    "the only remote is the fallback even with a detached HEAD"
+                );
+            }
+            // The fixture records whether its Git supports the only-remote fallback.
+            if std::fs::read_to_string(case.join("compare-git"))?.trim() == "true" {
+                assert_same_url(
+                    resolved,
+                    expected_url(&case, "worktree")?,
+                    &format!("default remote selection matches Git: {name}"),
+                )?;
+            }
+        }
+        let repo = gix::open_opts(fixture.join("override-absolute"), gix::open::Options::isolated())?;
+        let sm = submodule(&repo)?;
+        assert_eq!(
+            sm.resolved_url()?.to_bstring(),
+            "ssh://other/override.git",
+            "local configuration overrides .gitmodules"
+        );
+        assert_eq!(
+            sm.url()?.to_bstring(),
+            "ssh://other/override.git",
+            "the raw accessor also honors overrides"
+        );
+        let worktree = fixture.join("override-relative");
+        let repo = gix::open_opts(&worktree, gix::open::Options::isolated())?;
+        let sm = submodule(&repo)?;
+        let mut expected = gix::url::parse("../override")?;
+        expected.canonicalize(&worktree)?;
+        assert_eq!(
+            sm.resolved_url()?,
+            expected,
+            "relative configuration overrides are local paths, not remote-relative URLs"
+        );
+        let repo = gix::open_opts(
+            &worktree,
+            gix::open::Options::isolated()
+                .with(gix::sec::Trust::Reduced)
+                .config_overrides(["submodule.m1.url=ssh://trusted/override.git"]),
+        )?;
+        let sm = submodule(&repo)?;
+        assert_eq!(
+            sm.resolved_url()?.to_bstring(),
+            "ssh://trusted/override.git",
+            "trusted API overrides remain usable with reduced repository trust"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn unborn_and_bare_superprojects_resolve_urls() -> TestResult {
+        let fixture = fixture()?;
+        let repo = gix::open_opts(fixture.join("unborn-upstream"), gix::open::Options::isolated())?;
+        let sm = submodule(&repo)?;
+        assert_eq!(
+            sm.resolved_url()?.to_bstring(),
+            "ssh://host/org/sub",
+            "unborn branches can have a configured upstream"
+        );
+        let worktree = fixture.join("unborn-missing");
+        let repo = gix::open_opts(&worktree, gix::open::Options::isolated())?;
+        let sm = submodule(&repo)?;
+        let mut expected = gix::url::parse("../sub")?;
+        expected.canonicalize(&worktree)?;
+        assert_same_url(
+            sm.resolved_url()?,
+            expected,
+            "a missing upstream uses the unborn superproject itself",
+        )?;
+
+        let repo = gix::open_opts(fixture.join("bare.git"), gix::open::Options::isolated())?;
+        let sm = submodule(&repo)?;
+        let expected = gix::url::parse(gix::path::into_bstr(fixture.join("sub"))?)?;
+        assert_same_url(
+            sm.resolved_url()?,
+            expected,
+            "bare repositories resolve .gitmodules against their local origin",
+        )?;
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn own_upstream_accepts_verbatim_repository_paths() -> TestResult {
+        let fixture = fixture()?;
+        let worktree = fixture.join("unborn-local");
+        let repo = gix::open_opts(std::fs::canonicalize(&worktree)?, gix::open::Options::isolated())?;
+        let sm = submodule(&repo)?;
+        let resolved = sm.resolved_url()?;
+        assert_eq!(resolved.scheme, gix::url::Scheme::File, "the fallback remains local");
+        assert_eq!(
+            std::fs::canonicalize(gix::path::from_bstr(resolved.path.as_bstr())?)?,
+            std::fs::canonicalize(fixture.join("sub"))?,
+            "verbatim and short paths identify the same local destination"
+        );
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn native_relative_urls_match_git() -> TestResult {
+        let case = fixture()?.join("native-relative");
+        let repo = gix::open_opts(case.join("worktree"), gix::open::Options::isolated())?;
+        let resolved = submodule(&repo)?.resolved_url()?;
+        let expected = expected_url(&case, "worktree")?;
+        assert_eq!(resolved, expected, "native separators resolve like Git on Windows");
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn local_urls_preserve_non_utf8_paths() -> TestResult {
+        let repo = gix::open_opts(fixture()?.join("non-utf8"), gix::open::Options::isolated())?;
+        let sm = submodule(&repo)?;
+        let resolved = sm.resolved_url()?;
+        assert!(
+            resolved.path.ends_with(b"/source-\xff"),
+            "resolution preserves arbitrary local path bytes"
+        );
+        assert!(
+            gix::path::from_bstr(resolved.path.as_bstr())?.is_absolute(),
+            "local URLs are independent of CWD"
+        );
+        Ok(())
+    }
+
+    struct Case {
+        path: PathBuf,
+        remote_url: BString,
+        module_url: BString,
+        init_succeeded: bool,
+    }
+
+    impl Case {
+        fn load_all(fixture: &Path) -> TestResult<Vec<Self>> {
+            std::fs::read_dir(fixture.join("resolution"))?
+                .map(|entry| {
+                    let path = entry?.path();
+                    let remote_url = std::fs::read(path.join("remote-url"))?.trim_end().into();
+                    let module_url = std::fs::read(path.join("module-url"))?.trim_end().into();
+                    let init_succeeded = std::fs::read_to_string(path.join("init-status"))?
+                        .trim()
+                        .parse::<i32>()?
+                        == 0;
+                    Ok(Case {
+                        path,
+                        remote_url,
+                        module_url,
+                        init_succeeded,
+                    })
+                })
+                .collect()
+        }
+
+        fn open(&self, state: &str) -> TestResult<gix::Repository> {
+            Ok(gix::open_opts(self.path.join(state), gix::open::Options::isolated())?)
+        }
+
+        fn expected_url(&self, state: &str) -> TestResult<gix::url::Url> {
+            expected_url(&self.path, state)
+        }
+    }
+
+    fn fixture() -> TestResult<PathBuf> {
+        Ok(gix::path::realpath(gix_testtools::scripted_fixture_read_only(
+            "make_submodule_urls.sh",
+        )?)?)
+    }
+
+    fn submodule(repo: &gix::Repository) -> TestResult<gix::Submodule<'_>> {
+        Ok(repo
+            .submodules()?
+            .expect("fixture has submodules")
+            .next()
+            .expect("fixture has one submodule"))
+    }
+
+    fn expected_url(case: &Path, state: &str) -> TestResult<gix::url::Url> {
+        let expected = std::fs::read(case.join("expected-url"))?;
+        let mut expected = gix::url::parse(expected.trim())?;
+        expected.canonicalize(&case.join(state))?;
+        Ok(expected)
+    }
+
+    fn assert_same_url(mut actual: gix::url::Url, mut expected: gix::url::Url, context: &str) -> TestResult {
+        for url in [&mut actual, &mut expected] {
+            if url.scheme == gix::url::Scheme::File {
+                let path = gix::path::from_bstr(url.path.as_bstr())?;
+                // Git and Rust can use different Windows short names; the destination need not exist yet.
+                let parent = std::fs::canonicalize(path.parent().expect("local test URLs have a parent"))?;
+                url.path =
+                    gix::path::into_bstr(parent.join(path.file_name().expect("local test URLs name a destination")))?
+                        .into_owned();
+            }
+        }
+        assert_eq!(actual, expected, "{context}");
+        Ok(())
+    }
+}
+
 mod open {
     use gix_testtools::TestResult;
     use std::io::Write;

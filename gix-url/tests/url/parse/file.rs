@@ -135,11 +135,48 @@ fn url_from_relative_path_with_colon_in_name() -> gix_testtools::TestResult {
     )?)
 }
 
+#[test]
+fn virtual_drive_paths() -> gix_testtools::TestResult {
+    for drive in ["1", "ä", "֍", "😀"] {
+        for path in ["/repos/sub", r"\repos\sub", "repos/sub"] {
+            let input = format!("{drive}:{path}");
+            let expected = if cfg!(windows) {
+                url_alternate(Scheme::File, None, None, None, input.as_bytes())
+            } else {
+                url_alternate(Scheme::Ssh, None, drive, None, path.as_bytes())
+            };
+            assert_url_roundtrip(&input, expected)?;
+        }
+    }
+    Ok(())
+}
+
 #[cfg(windows)]
 mod windows {
     use gix_url::Scheme;
 
     use crate::parse::{assert_url, assert_url_roundtrip, url, url_alternate};
+
+    #[test]
+    fn virtual_drives_with_protocol() -> gix_testtools::TestResult {
+        for drive in ["1", "ä", "֍", "😀"] {
+            let path = format!("{drive}:/repos/sub");
+            assert_url_roundtrip(
+                &format!("file://{path}"),
+                url(Scheme::File, None, None, None, path.as_bytes()),
+            )?;
+            let actual = assert_url(
+                &format!("file:///{path}"),
+                url(Scheme::File, None, None, None, path.as_bytes()),
+            )?;
+            assert_eq!(
+                actual.to_bstring(),
+                format!("file://{path}"),
+                "the extra slash is removed"
+            );
+        }
+        Ok(())
+    }
 
     #[test]
     fn reproduce_1063() -> gix_testtools::TestResult {
