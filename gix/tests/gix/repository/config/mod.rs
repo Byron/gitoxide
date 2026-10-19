@@ -3,6 +3,8 @@ pub(crate) mod config_snapshot;
 #[cfg(feature = "command")]
 mod editor;
 mod identity;
+#[cfg(feature = "worktree-mutation")]
+mod path_protection;
 mod remote;
 
 #[test]

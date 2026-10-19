@@ -32,6 +32,7 @@ impl StageOne {
         git_dir_trust: gix_sec::Trust,
         lossy: bool,
         lenient: bool,
+        mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
     ) -> Result<Self> {
         let mut buf = Vec::with_capacity(512);
         let mut config = load_config(
@@ -91,7 +92,7 @@ impl StageOne {
 
         const IS_WINDOWS: bool = cfg!(windows);
         let protect_windows = gitoxide::Core::PROTECT_WINDOWS
-            .enrich_error(config.boolean(gitoxide::Core::PROTECT_WINDOWS))
+            .enrich_error(config.boolean_filter(gitoxide::Core::PROTECT_WINDOWS, &mut filter_config_section))
             .with_lenient_default_value(lenient, Some(IS_WINDOWS))?
             .unwrap_or(IS_WINDOWS);
 
