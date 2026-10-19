@@ -38,6 +38,16 @@ type Change = WorktreeChange<(), ()>;
 type EntryStatus = WorktreeEntryStatus<(), ()>;
 type Expectation<'a> = (&'a BStr, usize, EntryStatus);
 
+fn attributes_stack(worktree: &std::path::Path, index: &gix_index::State) -> gix_worktree::Stack {
+    gix_worktree::Stack::from_state_and_ignore_case(
+        worktree,
+        false,
+        gix_worktree::stack::State::AttributesStack(Default::default()),
+        index,
+        index.path_backing(),
+    )
+}
+
 fn fixture(name: &str, expected_status: &[Expectation<'_>]) -> Outcome {
     fixture_filtered(name, &[], expected_status)
 }
@@ -168,16 +178,9 @@ fn fixture_filtered_detailed(
     let mut recorder = Recorder::default();
     let search = gix_pathspec::Search::from_specs(to_pathspecs(pathspecs), None, std::path::Path::new(""))
         .expect("valid specs can be normalized");
-    let stack = gix_worktree::Stack::from_state_and_ignore_case(
-        worktree.clone(),
-        false,
-        gix_worktree::stack::State::AttributesStack(Default::default()),
-        &index,
-        index.path_backing(),
-    );
     let ctx = Context {
         pathspec: search,
-        stack,
+        stack: attributes_stack(&worktree, &index),
         filter: gix_filter::Pipeline::new(
             Default::default(),
             gix_testtools::object_hash(),
@@ -1075,16 +1078,9 @@ fn clean_filter_receives_worktree_relative_path() -> gix_testtools::TestResult {
         }
     }
 
-    let stack = gix_worktree::Stack::from_state_and_ignore_case(
-        worktree.clone(),
-        false,
-        gix_worktree::stack::State::AttributesStack(Default::default()),
-        &index,
-        index.path_backing(),
-    );
     let ctx = Context {
         pathspec: gix_pathspec::Search::from_specs(to_pathspecs(&["a.txt"]), None, std::path::Path::new(""))?,
-        stack,
+        stack: attributes_stack(&worktree, &index),
         filter: gix_filter::Pipeline::new(
             Default::default(),
             object_hash,
@@ -1348,16 +1344,9 @@ fn racy_git() -> gix_testtools::TestResult {
 
     let count = Arc::new(AtomicUsize::new(0));
     let counter = CountCalls(count.clone(), FastEq);
-    let stack = gix_worktree::Stack::from_state_and_ignore_case(
-        worktree,
-        false,
-        gix_worktree::stack::State::AttributesStack(Default::default()),
-        &index,
-        index.path_backing(),
-    );
     let ctx = Context {
         pathspec: default_pathspec(),
-        stack,
+        stack: attributes_stack(worktree, &index),
         filter: gix_filter::Pipeline::new(Default::default(), gix_testtools::object_hash(), Default::default()),
         should_interrupt: &AtomicBool::default(),
     };
@@ -1508,13 +1497,7 @@ mod windows {
     ) -> Result<(Vec<Expectation<'a>>, Outcome)> {
         let ctx = Context {
             pathspec: default_pathspec(),
-            stack: gix_worktree::Stack::from_state_and_ignore_case(
-                worktree,
-                false,
-                gix_worktree::stack::State::AttributesStack(Default::default()),
-                index,
-                index.path_backing(),
-            ),
+            stack: attributes_stack(worktree, index),
             filter: gix_filter::Pipeline::new(Default::default(), gix_testtools::object_hash(), Default::default()),
             should_interrupt: &AtomicBool::default(),
         };
