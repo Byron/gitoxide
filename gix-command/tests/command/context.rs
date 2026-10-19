@@ -6,24 +6,38 @@ fn winfix(expected: impl Into<String>) -> String {
 }
 
 #[test]
-fn git_dir_sets_git_dir_env_and_cwd() -> gix_testtools::TestResult {
+fn git_dir_sets_env_only() -> gix_testtools::TestResult {
+    let dir = gix_testtools::tempfile::TempDir::new()?;
+    let path = gix_path::realpath(dir.path())?;
     let ctx = Context {
-        git_dir: Some(".".into()),
+        git_dir: Some(path.clone()),
         ..Default::default()
     };
     let cmd = std::process::Command::try_from(gix_command::prepare("").with_context(ctx))?;
-    assert_eq!(format!("{cmd:?}"), winfix(r#"GIT_DIR="." """#));
+    assert_eq!(
+        cmd.get_envs().collect::<Vec<_>>(),
+        [(std::ffi::OsStr::new("GIT_DIR"), Some(path.as_os_str()))],
+        "the absolute Git directory is passed through unchanged"
+    );
+    assert_eq!(cmd.get_current_dir(), None, "context only sets the environment");
     Ok(())
 }
 
 #[test]
 fn worktree_dir_sets_env_only() -> gix_testtools::TestResult {
+    let dir = gix_testtools::tempfile::TempDir::new()?;
+    let path = gix_path::realpath(dir.path())?;
     let ctx = Context {
-        worktree_dir: Some(".".into()),
+        worktree_dir: Some(path.clone()),
         ..Default::default()
     };
     let cmd = std::process::Command::try_from(gix_command::prepare("").with_context(ctx))?;
-    assert_eq!(format!("{cmd:?}"), winfix(r#"GIT_WORK_TREE="." """#));
+    assert_eq!(
+        cmd.get_envs().collect::<Vec<_>>(),
+        [(std::ffi::OsStr::new("GIT_WORK_TREE"), Some(path.as_os_str()))],
+        "the absolute worktree directory is passed through unchanged"
+    );
+    assert_eq!(cmd.get_current_dir(), None, "context only sets the environment");
     Ok(())
 }
 

@@ -1043,9 +1043,14 @@ fn unchanged_despite_filter() {
 }
 
 #[test]
-fn clean_filter_receives_worktree_relative_path() -> gix_testtools::TestResult {
+fn clean_filter_receives_worktree_relative_path_from_worktree_root() -> gix_testtools::TestResult {
     // Use an absolute worktree path, as `gix` does.
     let worktree = gix_path::realpath(fixture_path("status_filter_path"))?;
+    assert_ne!(
+        std::env::current_dir()?,
+        worktree,
+        "the caller runs outside the worktree"
+    );
     let git_dir = worktree.join(".git");
     let object_hash = gix_testtools::object_hash();
     let mut index = gix_index::File::at(git_dir.join("index"), object_hash, false, Default::default())?;
@@ -1078,7 +1083,7 @@ fn clean_filter_receives_worktree_relative_path() -> gix_testtools::TestResult {
         }
     }
 
-    let ctx = Context {
+    let mut ctx = Context {
         pathspec: gix_pathspec::Search::from_specs(to_pathspecs(&["a.txt"]), None, std::path::Path::new(""))?,
         stack: attributes_stack(&worktree, &index),
         filter: gix_filter::Pipeline::new(
@@ -1087,11 +1092,11 @@ fn clean_filter_receives_worktree_relative_path() -> gix_testtools::TestResult {
             gix_filter::pipeline::Options {
                 drivers: vec![gix_filter::Driver {
                     name: "path".into(),
-                    // Output the path that `%f` is substituted with instead of the file content.
-                    clean: Some("cat >/dev/null && printf %s %f".into()),
+                    // Both the relative path and its sibling configuration must resolve as they do in Git.
+                    clean: Some(r#"cat >/dev/null && printf %s %f && cat "$(dirname %f)/.clean-map""#.into()),
                     smudge: None,
                     process: None,
-                    // Fail instead of falling back to the unfiltered content, which is `a.txt` too.
+                    // Fail instead of falling back to the unfiltered content, which also matches the index.
                     required: true,
                 }],
                 ..Default::default()
@@ -1099,6 +1104,7 @@ fn clean_filter_receives_worktree_relative_path() -> gix_testtools::TestResult {
         ),
         should_interrupt: &AtomicBool::default(),
     };
+    ctx.filter.driver_state_mut().context.worktree_dir = Some(worktree.clone());
     let cleaned = RecordCleaned::default();
     index_as_worktree(
         &index,
@@ -1118,8 +1124,8 @@ fn clean_filter_receives_worktree_relative_path() -> gix_testtools::TestResult {
 
     assert_eq!(
         *cleaned.0.lock().expect("not poisoned"),
-        [bstr::BString::from("a.txt")],
-        "like Git, the clean filter receives the path relative to the worktree as `%f`"
+        [bstr::BString::from("a.txt mapped")],
+        "like Git, the clean filter receives a worktree-relative `%f` and resolves sibling files from the worktree root"
     );
     Ok(())
 }

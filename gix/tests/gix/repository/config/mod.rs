@@ -36,6 +36,36 @@ fn config_path_for_repository_sources_matches_git() -> TestResult {
     Ok(())
 }
 
+#[cfg(feature = "command")]
+#[test]
+fn command_context_paths_use_the_captured_current_directory() -> TestResult {
+    if gix_testtools::run_in_isolated_process()? {
+        return Ok(());
+    }
+    let fixture = gix_testtools::scripted_fixture_read_only("make_basic_repo.sh")?;
+    let elsewhere = gix_testtools::tempfile::TempDir::new()?;
+    let _cwd = gix_testtools::set_current_dir(&fixture)?;
+    let repo = gix::open_opts(".", gix::open::Options::isolated())?;
+    let bare = gix::open_opts("bare.git", gix::open::Options::isolated())?;
+    assert!(repo.git_dir().is_relative(), "exercise a relative repository path");
+    let _moved_cwd = gix_testtools::set_current_dir(elsewhere.path())?;
+
+    for repo in [&repo, &bare] {
+        let context = repo.command_context()?;
+        assert_eq!(
+            context.git_dir,
+            Some(repo.current_dir().join(repo.git_dir())),
+            "GIT_DIR stays anchored to the repository's captured CWD"
+        );
+        assert_eq!(
+            context.worktree_dir,
+            repo.workdir().map(|path| repo.current_dir().join(path)),
+            "GIT_WORK_TREE stays anchored to the captured CWD and remains unset for bare repositories"
+        );
+    }
+    Ok(())
+}
+
 #[test]
 fn big_file_threshold() -> TestResult {
     let repo = repo("with-hasconfig");

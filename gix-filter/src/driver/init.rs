@@ -80,6 +80,9 @@ fn spawn_driver(cmd: BString, context: &gix_command::Context) -> Result<(std::pr
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .try_into()?;
+    if let Some(worktree_dir) = &context.worktree_dir {
+        cmd.current_dir(worktree_dir);
+    }
     gix_trace::debug!(cmd = ?cmd, "launching filter driver");
     use gix_error::ResultExt;
     let child = cmd
