@@ -9,6 +9,107 @@ use crate::fetch::{_impl::FetchConnection, CloneDelegate, LsRemoteDelegate, help
 #[crate::bisync::bisync]
 #[cfg_attr(feature = "blocking-client", test)]
 #[cfg_attr(all(feature = "async-client", not(feature = "blocking-client")), async_std::test)]
+async fn fetch_receives_pack_after_ready_with_no_done() -> TestResult {
+    use gix_error::{Result, ResultExt};
+    use gix_protocol::fetch::{self, negotiate};
+
+    struct Negotiation;
+    impl fetch::Negotiate for Negotiation {
+        fn mark_complete_and_common_ref(&mut self) -> Result<negotiate::Action> {
+            Ok(negotiate::Action::MustNegotiate {
+                remote_ref_target_known: vec![false],
+            })
+        }
+
+        fn add_wants(&mut self, arguments: &mut fetch::Arguments, _known: &[bool]) -> bool {
+            arguments.want(oid("6504930888c9c5337e7e065c964f87b60d16a7d7"));
+            true
+        }
+
+        fn one_round(
+            &mut self,
+            _state: &mut negotiate::one_round::State,
+            arguments: &mut fetch::Arguments,
+            previous_response: Option<&fetch::Response>,
+        ) -> Result<(negotiate::Round, bool)> {
+            let is_done = previous_response.is_some();
+            if !is_done {
+                arguments.have(oid("f22743895a3024bb0c958335981439f1fa747d57"));
+            }
+            Ok((
+                negotiate::Round {
+                    haves_sent: usize::from(!is_done),
+                    in_vain: 0,
+                    haves_to_send: 16,
+                    previous_response_had_at_least_one_in_common: is_done,
+                },
+                is_done,
+            ))
+        }
+    }
+
+    let temp = gix_testtools::tempfile::tempdir()?;
+    for no_done in [false, true] {
+        let capabilities = format!(
+            "{} HEAD\0multi_ack_detailed side-band-64k{}",
+            "6504930888c9c5337e7e065c964f87b60d16a7d7",
+            if no_done { " no-done" } else { "" }
+        );
+        let mut handshake = gix_protocol::Handshake {
+            server_protocol_version: Protocol::V1,
+            capabilities: gix_transport::client::Capabilities::from_bytes(capabilities.as_bytes())?.0,
+            refs: None,
+            v1_shallow_updates: None,
+        };
+        // Git's response contains ready, NAK, a final ACK, and the sideband pack.
+        let mut transport = transport(
+            Vec::new(),
+            "v1/fetch.response",
+            Protocol::V1,
+            gix_transport::client::git::ConnectMode::Process,
+        );
+        let mut pack = Vec::new();
+        let outcome = gix_protocol::fetch(
+            &mut Negotiation,
+            |reader, _, _| {
+                reader.read_to_end(&mut pack).or_error()?;
+                Ok(true)
+            },
+            progress::Discard,
+            &std::sync::atomic::AtomicBool::new(false),
+            fetch::Context {
+                handshake: &mut handshake,
+                transport: &mut transport,
+                user_agent: ("agent", Some("test".into())),
+                trace_packetlines: false,
+            },
+            fetch::Options {
+                shallow_file: temp.path().join("shallow"),
+                shallow: &fetch::Shallow::NoChange,
+                tags: fetch::Tags::None,
+                reject_shallow_remote: false,
+            },
+        )
+        .await?
+        .expect("negotiation receives a pack");
+        assert!(pack.starts_with(b"PACK"), "the final ACK is consumed before the pack");
+        assert_eq!(
+            outcome.negotiate.rounds.len(),
+            if no_done { 1 } else { 2 },
+            "only no-done allows receiving a pack before the client is done"
+        );
+        assert_eq!(
+            transport.into_inner().1.contains_str("done\n"),
+            !no_done,
+            "without no-done, ready still requires sending done"
+        );
+    }
+    Ok(())
+}
+
+#[crate::bisync::bisync]
+#[cfg_attr(feature = "blocking-client", test)]
+#[cfg_attr(all(feature = "async-client", not(feature = "blocking-client")), async_std::test)]
 async fn clone() -> TestResult {
     for with_keepalive in [false, true] {
         let out = Vec::new();

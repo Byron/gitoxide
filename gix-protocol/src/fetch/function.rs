@@ -73,6 +73,7 @@ where
 
     crate::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
     let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
+    let no_done = fetch_features.iter().any(|(n, _)| *n == "no-done");
     let mut arguments = Arguments::new(protocol_version, fetch_features, trace_packetlines);
     if matches!(tags, Tags::Included) {
         if !arguments.can_use_include_tag() {
@@ -126,10 +127,14 @@ where
                 if sideband_all {
                     setup_remote_progress(&mut progress, &mut reader, should_interrupt);
                 }
-                let response =
-                    crate::fetch::Response::from_line_reader(protocol_version, &mut reader, is_done, !is_done)
-                        .await
-                        .or_raise(|| message("Could not decode server reply"))?;
+                let response = crate::fetch::Response::from_line_reader(
+                    protocol_version,
+                    &mut reader,
+                    is_done || no_done,
+                    !is_done,
+                )
+                .await
+                .or_raise(|| message("Could not decode server reply"))?;
                 let has_pack = response.has_pack();
                 previous_response = Some(response);
                 if has_pack {

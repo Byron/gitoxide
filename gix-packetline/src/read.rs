@@ -54,6 +54,18 @@ pub struct StreamingPeekableIterState<T> {
 }
 
 impl<T> StreamingPeekableIterState<T> {
+    /// Return the underlying reader, bypassing any buffered packet line.
+    ///
+    /// This is useful for checking transport-level EOF after packet-line iteration has stopped at a delimiter.
+    /// For example, an HTTP transport can use [`std::io::BufRead::fill_buf()`] to check that the previous response
+    /// body is exhausted before starting another request, without decoding another packet line.
+    ///
+    /// Any packet line already buffered by this iterator remains buffered and is not visible through this reader.
+    /// Reading from it directly advances the underlying stream without updating the iterator's state.
+    pub fn inner_mut(&mut self) -> &mut T {
+        &mut self.read
+    }
+
     /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
     /// If `trace` is `true`, all packetlines received or sent will be passed to the facilities of the `gix-trace` crate.
     #[cfg(any(feature = "blocking-io", feature = "async-io"))]

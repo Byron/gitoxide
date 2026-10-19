@@ -38,8 +38,8 @@ async fn parse_v2_section<'a, T>(
 impl Response {
     /// Parse a response of the given `version` of the protocol from `reader`.
     ///
-    /// `client_expects_pack` is only relevant for V1 stateful connections, and if `false`, causes us to stop parsing when seeing `NAK`,
-    /// and if `true` we will keep parsing until we get a pack as the client already signalled to the server that it's done.
+    /// `client_expects_pack` is only relevant for V1 connections. Set it when the client sent `done` or negotiated `no-done`,
+    /// so that `ready` followed by `NAK` allows us to keep parsing until the pack. Otherwise `NAK` ends the round.
     /// This way of doing things allows us to exploit knowledge about more recent versions of the protocol, which keeps code easier
     /// and more localized without having to support all the cruft that there is.
     ///
@@ -99,7 +99,7 @@ impl Response {
                         0,
                         "consuming a peeked line works"
                     );
-                    // When the server sends ready, we know there is going to be a pack so no need to stop early.
+                    // With no-done negotiated, ready promises a pack even before the client sends done.
                     saw_ready |= matches!(acks.last(), Some(Acknowledgement::Ready));
                     if let Some(Acknowledgement::Nak) = acks.last().filter(|_| !client_expects_pack || !saw_ready) {
                         if !wants_to_negotiate {
