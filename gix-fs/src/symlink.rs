@@ -66,6 +66,9 @@ pub fn remove(path: &Path) -> io::Result<()> {
 /// which doesn't have to care about the target type though.
 /// Targets starting with `/` or `\` are also treated as files without probing them, as Windows
 /// can interpret these as network shares and probing them could disclose credentials.
+/// This applies to every link in a target's chain, including links in parent components.
+/// Local chains are resolved without following symlinks during metadata queries.
+/// As with checkout path validation, this assumes no concurrent replacement of checked directories.
 #[cfg(windows)]
 pub fn create(original: &Path, link: &Path) -> io::Result<()> {
     create_inner(original, link, false).map(|_| ())
@@ -77,6 +80,7 @@ pub fn create(original: &Path, link: &Path) -> io::Result<()> {
 /// Callers can retry after creating other links, then use [`create()`] for any unresolved targets
 /// once no more progress is possible. Targets starting with `/` or `\` are never probed and are
 /// immediately created as file links, just like in [`create()`].
+/// The same restriction applies to indirect targets reached through other links.
 /// On other platforms, this is equivalent to [`create()`] and always returns `true` on success.
 pub fn create_or_delay(original: &Path, link: &Path) -> io::Result<bool> {
     #[cfg(windows)]
@@ -90,20 +94,24 @@ pub fn create_or_delay(original: &Path, link: &Path) -> io::Result<bool> {
 }
 
 #[cfg(windows)]
+fn starts_with_separator(path: &Path) -> bool {
+    matches!(path.as_os_str().as_encoded_bytes().first(), Some(b'/' | b'\\'))
+}
+
+#[cfg(windows)]
 fn create_inner(original: &Path, link: &Path, delay_if_unknown: bool) -> io::Result<bool> {
     use std::os::windows::fs::{symlink_dir, symlink_file};
 
     // Match Git's `process_phantom_symlink()`: a leading separator can introduce a UNC
     // share or an NT namespace path. Check the original spelling before any target probe.
-    let starts_with_slash = matches!(original.as_os_str().as_encoded_bytes().first(), Some(b'/' | b'\\'));
-    let is_dir = if starts_with_slash {
+    let is_dir = if starts_with_separator(original) {
         false
     } else {
         let parent = link
             .parent()
             .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "symlink path has no parent directory"))?;
-        match parent.join(original).metadata() {
-            Ok(meta) => meta.is_dir(),
+        match target_is_dir(&parent.join(original)) {
+            Ok(is_dir) => is_dir,
             Err(_) if delay_if_unknown => return Ok(false),
             Err(_) => false,
         }
@@ -114,6 +122,46 @@ fn create_inner(original: &Path, link: &Path, delay_if_unknown: bool) -> io::Res
         symlink_file(original, link)?;
     }
     Ok(true)
+}
+
+#[cfg(windows)]
+fn target_is_dir(path: &Path) -> io::Result<bool> {
+    use std::path::{Component, PathBuf, Prefix};
+
+    let mut path = path.to_owned();
+    // Bound resolution for cycles and excessive chains. Unknown types retain the
+    // caller's existing retry/dangling-file behavior.
+    'resolve: for _ in 0..40 {
+        let mut current = PathBuf::new();
+        let mut components = path.components();
+        while let Some(component) = components.next() {
+            current.push(component);
+            if let Component::Prefix(prefix) = component {
+                if !matches!(prefix.kind(), Prefix::Disk(_) | Prefix::VerbatimDisk(_)) {
+                    return Ok(false);
+                }
+                continue;
+            }
+            // Check every parent before appending its child: no-follow metadata
+            // alone only protects the final component of the queried path.
+            let meta = current.symlink_metadata()?;
+            // Use the same classification as the worktree stack, including Windows junctions
+            // and mount points, but not unrelated reparse points.
+            if meta.file_type().is_symlink() {
+                let target = std::fs::read_link(&current)?;
+                if starts_with_separator(&target) {
+                    return Ok(false);
+                }
+                current.pop();
+                path = current.join(target).join(components.as_path());
+                continue 'resolve;
+            }
+            if components.as_path().as_os_str().is_empty() {
+                return Ok(meta.is_dir());
+            }
+        }
+    }
+    Err(io::Error::other("symlink target exceeds the resolution limit"))
 }
 
 /// Return true if `err` indicates that a file collision happened, i.e. a symlink couldn't be created as the `link`
