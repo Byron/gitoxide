@@ -274,14 +274,18 @@ where
     pub(crate) fn clear_cache(&self) {
         self.packed_object_count.borrow_mut().take();
     }
-}
 
-impl<S> gix_pack::Find for super::Handle<S>
-where
-    S: Deref<Target = super::Store> + Clone,
-{
-    // TODO: make this method fallible to propagate index loading failures.
-    fn contains(&self, id: &gix_hash::oid) -> bool {
+    /// Like [`exists()`](gix_object::Exists::exists), but never look for packs that were added since the last refresh,
+    /// whatever this handle's [refresh mode](super::RefreshMode) is. The indices that the store already knows are still loaded.
+    ///
+    /// Use it to avoid writing objects that already exist. A new object always misses, and in the default refresh
+    /// mode each miss lists the pack directory again, which is slow with many packs. Here a miss costs at most a
+    /// redundant write.
+    pub fn exists_without_refresh(&self, id: &gix_hash::oid) -> bool {
+        self.contains_with_refresh_mode(id, super::RefreshMode::Never)
+    }
+
+    fn contains_with_refresh_mode(&self, id: &gix_hash::oid, refresh_mode: super::RefreshMode) -> bool {
         let mut snapshot = self.snapshot.borrow_mut();
         loop {
             for (idx, index) in snapshot.indices.iter().enumerate() {
@@ -299,7 +303,10 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.index_ctx(snapshot.marker)) {
+            match self.store.load_one_index(super::IndexCtx {
+                refresh_mode,
+                ..self.index_ctx(snapshot.marker)
+            }) {
                 Ok(Some(new_snapshot)) => {
                     *snapshot = new_snapshot;
                     self.clear_cache();
@@ -308,6 +315,16 @@ where
                 Err(_) => return false, // something went wrong, nothing we can communicate here with this trait. TODO: Maybe that should change?
             }
         }
+    }
+}
+
+impl<S> gix_pack::Find for super::Handle<S>
+where
+    S: Deref<Target = super::Store> + Clone,
+{
+    // TODO: make this method fallible to propagate index loading failures.
+    fn contains(&self, id: &gix_hash::oid) -> bool {
+        self.contains_with_refresh_mode(id, self.refresh)
     }
 
     fn try_find_cached<'a>(

@@ -647,6 +647,34 @@ fn lookup() {
     );
 }
 
+#[test]
+fn exists_without_refresh() {
+    let handle = db();
+    assert!(
+        handle.exists_without_refresh(&hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5")),
+        "the store still reads the object directory once and loads the indices it finds"
+    );
+    assert!(
+        handle.exists_without_refresh(&hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980")),
+        "loose objects are found too"
+    );
+
+    let num_refreshes = handle.store_ref().metrics().num_refreshes;
+    assert!(!handle.exists_without_refresh(&missing_id(&handle)));
+    assert_eq!(
+        handle.store_ref().metrics().num_refreshes,
+        num_refreshes,
+        "a miss doesn't look for new packs…"
+    );
+
+    assert!(!handle.exists(&missing_id(&handle)));
+    assert_eq!(
+        handle.store_ref().metrics().num_refreshes,
+        num_refreshes + 1,
+        "…while `exists()` does, as the handle's refresh mode allows it"
+    );
+}
+
 fn assert_all_indices_loaded(handle: &gix_odb::Handle, num_refreshes: usize, open_reachable_indices: usize) {
     assert_eq!(
         handle.store_ref().metrics(),
