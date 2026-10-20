@@ -238,7 +238,7 @@ impl crate::Repository {
 
     fn write_object_inner(&self, buf: &[u8], kind: gix_object::Kind) -> Result<Id<'_>> {
         let oid = gix_object::compute_hash(self.object_hash(), kind, buf)?;
-        if self.objects.exists(&oid) {
+        if self.objects.exists_without_refresh(&oid) {
             return Ok(oid.attach(self));
         }
 
@@ -267,7 +267,7 @@ impl crate::Repository {
     pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>> {
         let bytes = bytes.as_ref();
         let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, bytes)?;
-        if self.objects.exists(&oid) {
+        if self.objects.exists_without_refresh(&oid) {
             return Ok(oid.attach(self));
         }
         self.objects
@@ -290,7 +290,7 @@ impl crate::Repository {
 
     fn write_blob_stream_inner(&self, buf: &[u8]) -> Result<Id<'_>> {
         let oid = gix_object::compute_hash(self.object_hash(), gix_object::Kind::Blob, buf)?;
-        if self.objects.exists(&oid) {
+        if self.objects.exists_without_refresh(&oid) {
             return Ok(oid.attach(self));
         }
 

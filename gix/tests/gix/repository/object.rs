@@ -470,6 +470,29 @@ fn writes_avoid_io_using_duplicate_check() -> TestResult {
     Ok(())
 }
 
+#[test]
+fn writes_of_new_objects_do_not_refresh_the_object_database() -> TestResult {
+    use gix_object::{Kind::Blob, Write};
+
+    let (repo, _tmp) = crate::repo_rw("make_packed_and_loose.sh")?;
+    let num_refreshes = || repo.objects.store_ref().metrics().num_refreshes;
+    repo.write_blob(b"the first write reads the object directory")?;
+    let num_refreshes_after_first_write = num_refreshes();
+
+    repo.write_blob(b"from slice")?;
+    repo.write_blob_stream(&b"from stream"[..])?;
+    repo.write_object(gix::objs::BlobRef { data: b"from object" })?;
+    repo.write_buf(Blob, b"from buffer")?;
+    let data = b"from buffer with known id";
+    repo.write_buf_with_known_id(Blob, data, gix_object::compute_hash(repo.object_hash(), Blob, data)?)?;
+    assert_eq!(
+        num_refreshes(),
+        num_refreshes_after_first_write,
+        "a new object can't be found, but it's not worth looking for new packs before writing it"
+    );
+    Ok(())
+}
+
 mod find {
     use gix_pack::Find;
     use gix_testtools::TestResult;
