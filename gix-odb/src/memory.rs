@@ -72,6 +72,17 @@ impl Proxy<Cache<crate::store::Handle<Rc<crate::Store>>>> {
     }
 }
 
+impl<S> Proxy<Cache<crate::store::Handle<S>>>
+where
+    S: Deref<Target = crate::Store> + Clone,
+{
+    /// Like [`exists()`](gix_object::Exists::exists), but never look for packs that were added since the last refresh.
+    /// See [`Handle::exists_without_refresh()`](crate::store::Handle::exists_without_refresh()).
+    pub fn exists_without_refresh(&self, id: &gix_hash::oid) -> bool {
+        self.memory.as_ref().is_some_and(|map| map.borrow().contains_key(id)) || self.inner.exists_without_refresh(id)
+    }
+}
+
 impl From<crate::Handle> for Proxy<crate::Handle> {
     fn from(odb: crate::Handle) -> Self {
         let object_hash = odb.store.object_hash;
