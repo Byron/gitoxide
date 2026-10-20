@@ -22,16 +22,31 @@ mod slice;
 /// * `added` - Output array marking added tokens
 /// * `minimal` - If true, disables heuristics to guarantee a minimal diff
 pub fn diff(mut before: &[Token], mut after: &[Token], removed: &mut [bool], added: &mut [bool], minimal: bool) {
-    // Like git's `xdl_prepare_env()`, count every token of both inputs *before* their common ends are
-    // trimmed: `xdl_classify_record()` sees every line, and `xdl_cleanup_records()` judges the lines
-    // between the trimmed ends by those whole-input counts and limits.
-    let counts = preprocess::TokenCounts::new(before, after, minimal);
+    // Preserve the complete inputs for occurrence statistics, but defer counting until we know the
+    // trimmed region needs a search.
+    let full_before = before;
+    let full_after = after;
     let common_prefix = strip_common_prefix(&mut before, &mut after) as usize;
     let common_postfix = strip_common_postfix(&mut before, &mut after) as usize;
     let removed_end = removed.len() - common_postfix;
     let removed = &mut removed[common_prefix..removed_end];
     let added_end = added.len() - common_postfix;
     let added = &mut added[common_prefix..added_end];
+
+    // If either trimmed input is empty, the other contains only additions or removals. No search
+    // or occurrence counting is needed, and we can return early.
+    if before.is_empty() {
+        added.fill(true);
+        return;
+    }
+    if after.is_empty() {
+        removed.fill(true);
+        return;
+    }
+
+    // Like Git's `xdl_prepare_env()`, count every token of both complete inputs. Trimming only
+    // limits the search and pruning windows, not the occurrence counts or frequency limits.
+    let counts = preprocess::TokenCounts::new(full_before, full_after, minimal);
 
     // Preprocess the files by removing parts of the file that are not contained in the other file at all.
     // This process remaps the token indices so we have to account for that during the rest of the diff
