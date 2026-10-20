@@ -8,8 +8,8 @@ use bstr::ByteSlice;
 use gix_zlib::stream::deflate::{self, Compress, FlushCompress};
 use gix_zlib::{Compression, Decompress};
 
-pub(crate) fn compressed(data: &[u8]) -> Vec<u8> {
-    let mut writer = deflate::Write::new(Vec::new(), Compression::BEST_SPEED);
+pub(crate) fn compressed(data: &[u8], level: Compression) -> Vec<u8> {
+    let mut writer = deflate::Write::new(Vec::new(), level);
     writer.write_all(data).expect("in-memory writes never fail");
     writer.flush().expect("in-memory flushes never fail");
     writer.into_inner()

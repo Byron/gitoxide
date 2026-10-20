@@ -82,11 +82,26 @@ pub enum FlushDecompress {
     Finish = 4,
 }
 
-/// Decompress a few bytes of a zlib stream without allocation
-#[derive(Default)]
+/// Decompress a zlib stream held in memory.
+///
+/// Uses `sirocco` when that feature is enabled, or `zlib-rs` otherwise, storing only the selected backend.
+/// For direct access to a resumable `zlib-rs` decoder, use [`Decompress`] instead.
+/// Construction allocates decoder state; reuse this instance with [`reset()`](Self::reset) across streams.
+#[cfg_attr(not(feature = "sirocco"), derive(Default))]
 pub struct Inflate {
-    /// The actual decompressor doing all the work.
-    pub state: Decompress,
+    /// The resumable decompressor used when the `sirocco` feature is disabled.
+    /// Its large decoder state is already heap-allocated by `zlib-rs`; boxing this descriptor would add
+    /// another allocation and indirection rather than move that state off the stack.
+    #[cfg(not(feature = "sirocco"))]
+    state: Decompress,
+    /// Unlike `Decompress`, this decoder holds about 14 KiB inline. Boxing keeps stack usage and the size
+    /// of containing handles small, even when the decoder is only accessed by reference.
+    /// Allocated at construction and reused across streams.
+    #[cfg(feature = "sirocco")]
+    state: Box<sirocco::inflate::Decoder>,
+    /// Sirocco starts a new stream on the next decode after completion; `rest()` must not.
+    #[cfg(feature = "sirocco")]
+    sirocco_done: bool,
 }
 
 /// Streaming compression and decompression utilities built on [`std::io`] traits.

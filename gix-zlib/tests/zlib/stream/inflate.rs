@@ -36,6 +36,73 @@ fn errors_keep_the_underlying_cause() {
     ");
 }
 
+#[test]
+fn measure_reports_sizes_and_leaves_what_follows_unread() -> io::Result<()> {
+    let mut input = deflated(b"first stream, which is a bit longer");
+    let first_len = input.len();
+    input.extend(deflated(b"second"));
+    input.extend_from_slice(b"trailer");
+
+    let mut measure = inflate::Measure::default();
+    let mut rd = input.as_slice();
+    assert_eq!(measure.read(&mut rd)?, (35, first_len as u64));
+    assert_eq!(measure.read(&mut rd)?, (6, (input.len() - first_len - 7) as u64));
+    assert_eq!(rd, b"trailer");
+    Ok(())
+}
+
+#[test]
+fn measure_handles_every_truncation_boundary() -> gix_error::TestResult {
+    let data = b"truncation can interrupt the header, body, or checksum";
+    let input = crate::stream::deflate::compressed(data, gix_zlib::Compression::NONE);
+    // A single stored block makes partial output sizes predictable: two zlib header bytes,
+    // five stored-block header bytes, the literal body, and four Adler-32 bytes.
+    assert_eq!(
+        input.len(),
+        data.len() + 11,
+        "the fixture contains exactly one stored block"
+    );
+    assert_eq!(
+        &input[7..input.len() - 4],
+        data,
+        "the stored block contains the literal body"
+    );
+
+    for capacity in [1, input.len()] {
+        let mut measure = inflate::Measure::default();
+        for end in 0..=input.len() {
+            let mut rd = io::BufReader::with_capacity(capacity, &input[..end]);
+            let result = measure.read(&mut rd);
+            #[cfg(feature = "sirocco")]
+            if end < input.len() {
+                let err = result.expect_err("every incomplete stream must be rejected by the scanner");
+                assert_eq!(
+                    err.kind(),
+                    io::ErrorKind::UnexpectedEof,
+                    "truncation at byte {end} with reader capacity {capacity} must report UnexpectedEof"
+                );
+                continue;
+            }
+            assert_eq!(
+                result?,
+                (end.saturating_sub(7).min(data.len()) as u64, end as u64),
+                "measurement reports decoded body bytes and consumed input at byte {end}, reader capacity {capacity}"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn measure_rejects_corrupt_streams() {
+    let mut corrupt_header = deflated(b"the header check protects this data");
+    corrupt_header[0] = 0xff;
+    let err = inflate::Measure::default()
+        .read(&mut corrupt_header.as_slice())
+        .expect_err("a corrupt stream must fail");
+    assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
+}
+
 fn deflated(data: &[u8]) -> Vec<u8> {
     let mut out = deflate::Write::new(Vec::new(), gix_zlib::Compression::BEST_SPEED);
     out.write_all(data).expect("in-memory writes never fail");
