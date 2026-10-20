@@ -276,7 +276,7 @@ where
     }
 
     /// Like [`exists()`](gix_object::Exists::exists), but never look for packs that were added since the last refresh,
-    /// whatever this handle's [refresh mode](super::RefreshMode) is. Indices the store already knows are still loaded.
+    /// whatever this handle's [refresh mode](super::RefreshMode) is. The indices that the store already knows are still loaded.
     ///
     /// Use it to avoid writing objects that already exist. A new object always misses, and in the default refresh
     /// mode each miss lists the pack directory again, which is slow with many packs. Here a miss costs at most a
