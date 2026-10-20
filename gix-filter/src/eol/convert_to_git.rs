@@ -76,8 +76,12 @@ pub(crate) mod function {
                 return Ok(false);
             }
 
-            if let Some(()) =
-                index_object(buf).or_raise(|| message("Could not obtain index object to check line endings for"))?
+            // A CRLF in the index can only prevent a conversion, so don't read the object
+            // if there is nothing to convert. Git reads it anyway, but it rarely gets here
+            // for unchanged files as its status refreshes the index.
+            if convert_crlf_to_lf
+                && let Some(()) =
+                    index_object(buf).or_raise(|| message("Could not obtain index object to check line endings for"))?
             {
                 let has_crlf_in_index = buf
                     .find_byte(b'\r')

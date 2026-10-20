@@ -34,10 +34,13 @@ fn no_crlf_means_no_work() -> TestResult {
         b"hi",
         AttributesDigest::TextAutoCrlf,
         &mut buf,
-        &mut no_object_in_index,
+        &mut no_call,
         Default::default(),
     )?;
-    assert!(!changed, "in auto-mode, the object is queried in the index as well.");
+    assert!(
+        !changed,
+        "in auto-mode, the index is only queried if there is a CRLF it could prevent from being converted"
+    );
     Ok(())
 }
 
@@ -121,7 +124,7 @@ fn crlf_in_index_prevents_conversion_to_lf() -> TestResult {
     let mut buf = Vec::new();
     let mut called = false;
     let changed = eol::convert_to_git(
-        b"eligible\n",
+        b"eligible\r\n",
         AttributesDigest::TextAutoInput,
         &mut buf,
         &mut |buf| {
