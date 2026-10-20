@@ -178,7 +178,7 @@ where
             .or_raise(|| message("Failed to decompress pack entry"))
     }
 
-    /// Return the pack data from `data_offset` to the end, where the compressed entry data starts.
+    /// Return the pack data from `data_offset`, where the compressed entry data starts, to the pack end
     fn entry_data(&self, data_offset: data::Offset) -> Result<&[u8]> {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         if offset >= self.data.len() {

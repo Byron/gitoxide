@@ -5,6 +5,16 @@ use gix_error::{ResultExt, message};
 use crate::FlushDecompress;
 use crate::{Inflate, Status};
 
+#[cfg(feature = "sirocco")]
+impl Default for Inflate {
+    fn default() -> Self {
+        Self {
+            state: Box::new(sirocco::inflate::Decoder::new(sirocco::Format::Zlib)),
+            sirocco_done: false,
+        }
+    }
+}
+
 impl Inflate {
     /// Decompress the zlib stream at the start of `input` into `out`, returning `(status, consumed_in, written_out)`.
     ///
@@ -18,16 +28,17 @@ impl Inflate {
     /// Decompress as much of the zlib stream at the start of `input` as fits into `out` in a single step,
     /// returning `(status, consumed_in, written_out)`.
     ///
+    /// Requires a fresh instance or a call to [`Self::reset()`] before starting another stream.
     /// The decompression can be continued with [`Self::rest()`].
     pub fn prefix(&mut self, input: &[u8], out: &mut [u8]) -> Result<(Status, usize, usize)> {
         #[cfg(feature = "sirocco")]
         {
-            let decoder = self.decoder();
-            decoder.reset();
-            let p = decoder
+            let p = self
+                .state
                 .decompress(input, out, true)
                 .map_err(sirocco_error)
                 .or_raise(|| message("Could not decode zip stream"))?;
+            self.sirocco_done = p.done;
             let status = if p.done { Status::StreamEnd } else { Status::Ok };
             Ok((status, p.consumed, p.output.len()))
         }
@@ -52,21 +63,27 @@ impl Inflate {
     ///
     /// `prefix` is what `prefix()` wrote. `out` receives the output after its first `skip` bytes, which includes
     /// `prefix[skip..]`, and is cleared first. Returns how many bytes were written to `out`.
+    /// `skip` must not exceed `prefix.len()`, and `len` must fit at least `prefix[skip..]`.
+    /// To decode the entire stream, `len` must fit all decompressed bytes after `skip`, including that prefix tail.
+    /// If `prefix()` already finished the stream, only the prefix tail is returned and `input` is left unused.
     pub fn rest(&mut self, input: &[u8], prefix: &[u8], skip: usize, out: &mut Vec<u8>, len: usize) -> Result<usize> {
         out.clear();
         #[cfg(feature = "sirocco")]
         {
+            if self.sirocco_done {
+                out.extend_from_slice(&prefix[skip..]);
+                return Ok(out.len());
+            }
             // The decoder needs the output so far in front of where it writes.
             out.resize(skip + len, 0);
             out[..prefix.len()].copy_from_slice(prefix);
-            let decoder = self.decoder();
-            let written = decoder
+            let p = self
+                .state
                 .decompress(input, out, true)
                 .map_err(sirocco_error)
-                .or_raise(|| message("Could not decode zip stream"))?
-                .output
-                .len();
-            let n = prefix.len() + written - skip;
+                .or_raise(|| message("Could not decode zip stream"))?;
+            self.sirocco_done = p.done;
+            let n = prefix.len() + p.output.len() - skip;
             out.drain(..skip);
             out.truncate(n);
             Ok(n)
@@ -88,32 +105,23 @@ impl Inflate {
     pub fn reset(&mut self) {
         self.state.reset();
         #[cfg(feature = "sirocco")]
-        if let Some(decoder) = &mut self.sirocco {
-            decoder.reset();
+        {
+            self.sirocco_done = false;
         }
-    }
-
-    #[cfg(feature = "sirocco")]
-    fn decoder(&mut self) -> &mut sirocco::inflate::Decoder {
-        self.sirocco
-            .get_or_insert_with(|| Box::new(sirocco::inflate::Decoder::new(sirocco::Format::Zlib)))
     }
 }
 
 /// The error `zlib-rs` would report for a `sirocco` one.
 #[cfg(feature = "sirocco")]
 fn sirocco_error(err: sirocco::inflate::Error) -> gix_error::Error {
-    use gix_error::ErrorExt;
     match err {
         sirocco::inflate::Error::PresetDictionary => {
-            gix_error::validation("Decompressing this input requires a dictionary")
-                .raise_erased()
-                .into()
+            message("Decompressing this input requires a dictionary").validation_error()
         }
         sirocco::inflate::Error::BadData | sirocco::inflate::Error::ChecksumMismatch => {
-            gix_error::corruption("Invalid input data").raise_erased().into()
+            message("Invalid input data").corrupted_error()
         }
-        sirocco::inflate::Error::Truncated => gix_error::corruption("Truncated input data").raise_erased().into(),
-        _ => message("stream error").raise_erased().into(),
+        sirocco::inflate::Error::Truncated => message("Truncated input data").corrupted_error(),
+        _ => message("stream error").into(),
     }
 }

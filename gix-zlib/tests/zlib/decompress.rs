@@ -1,11 +1,11 @@
-use gix_zlib::{Decompress, FlushDecompress, Status};
+use gix_zlib::{Compression, Decompress, FlushDecompress, Status};
 
 use crate::stream::deflate::compressed;
 
 #[test]
 fn lifecycle_counters_and_flush_modes() -> gix_error::TestResult {
     let expected = b"hello decompressor";
-    let input = compressed(expected);
+    let input = compressed(expected, Compression::BEST_SPEED);
     let mut state = Decompress::default();
     assert_eq!(state.total_in(), 0);
     assert_eq!(state.total_out(), 0);

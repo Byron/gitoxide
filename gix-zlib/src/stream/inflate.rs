@@ -57,12 +57,21 @@ pub fn read(rd: &mut impl BufRead, state: &mut Decompress, mut dst: &mut [u8]) -
 /// With the `sirocco` feature, the decompressed bytes aren't produced at all. Every symbol is still decoded,
 /// so corrupt streams are rejected, but the Adler-32 checksum covers the decompressed bytes and isn't checked.
 /// Without it, `zlib-rs` decompresses into a scratch buffer and checks the checksum.
-#[derive(Default)]
+#[cfg_attr(not(feature = "sirocco"), derive(Default))]
 pub struct Measure {
     #[cfg(feature = "sirocco")]
-    state: Option<Box<sirocco::inflate::Scanner>>,
+    state: Box<sirocco::inflate::Scanner>,
     #[cfg(not(feature = "sirocco"))]
     state: Decompress,
+}
+
+#[cfg(feature = "sirocco")]
+impl Default for Measure {
+    fn default() -> Self {
+        Self {
+            state: Box::new(sirocco::inflate::Scanner::new(sirocco::Format::Zlib)),
+        }
+    }
 }
 
 impl Measure {
@@ -74,14 +83,11 @@ impl Measure {
     pub fn read(&mut self, rd: &mut impl BufRead) -> io::Result<(u64, u64)> {
         #[cfg(feature = "sirocco")]
         {
-            let state = self
-                .state
-                .get_or_insert_with(|| Box::new(sirocco::inflate::Scanner::new(sirocco::Format::Zlib)));
-            let lengths = state.scan_reader(rd).map_err(|err| {
+            let lengths = self.state.scan_reader(rd).map_err(|err| {
                 if err.kind() == io::ErrorKind::InvalidData
                     && matches!(err.get_ref(), Some(inner) if inner.is::<sirocco::inflate::Error>())
                 {
-                    let err = gix_error::message!("corrupt deflate stream: {err}").corrupted().raise();
+                    let err = err.and_raise(gix_error::message("corrupt deflate stream").corrupted());
                     io::Error::new(io::ErrorKind::InvalidInput, err)
                 } else {
                     err

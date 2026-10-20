@@ -52,6 +52,48 @@ fn measure_reports_sizes_and_leaves_what_follows_unread() -> io::Result<()> {
 }
 
 #[test]
+fn measure_handles_every_truncation_boundary() -> gix_error::TestResult {
+    let data = b"truncation can interrupt the header, body, or checksum";
+    let input = crate::stream::deflate::compressed(data, gix_zlib::Compression::NONE);
+    // A single stored block makes partial output sizes predictable: two zlib header bytes,
+    // five stored-block header bytes, the literal body, and four Adler-32 bytes.
+    assert_eq!(
+        input.len(),
+        data.len() + 11,
+        "the fixture contains exactly one stored block"
+    );
+    assert_eq!(
+        &input[7..input.len() - 4],
+        data,
+        "the stored block contains the literal body"
+    );
+
+    for capacity in [1, input.len()] {
+        let mut measure = inflate::Measure::default();
+        for end in 0..=input.len() {
+            let mut rd = io::BufReader::with_capacity(capacity, &input[..end]);
+            let result = measure.read(&mut rd);
+            #[cfg(feature = "sirocco")]
+            if end < input.len() {
+                let err = result.expect_err("every incomplete stream must be rejected by the scanner");
+                assert_eq!(
+                    err.kind(),
+                    io::ErrorKind::UnexpectedEof,
+                    "truncation at byte {end} with reader capacity {capacity} must report UnexpectedEof"
+                );
+                continue;
+            }
+            assert_eq!(
+                result?,
+                (end.saturating_sub(7).min(data.len()) as u64, end as u64),
+                "measurement reports decoded body bytes and consumed input at byte {end}, reader capacity {capacity}"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn measure_rejects_corrupt_streams() {
     let mut corrupt_header = deflated(b"the header check protects this data");
     corrupt_header[0] = 0xff;

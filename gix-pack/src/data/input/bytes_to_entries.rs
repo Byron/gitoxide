@@ -3,7 +3,7 @@ use std::{fs, io};
 
 use gix_error::{ErrorExt, ResultExt, bail, message};
 use gix_hash::{Hasher, ObjectId};
-use gix_zlib::stream::inflate::Measure;
+use gix_zlib::stream::inflate;
 
 use crate::data::input;
 
@@ -12,7 +12,7 @@ use crate::data::input;
 /// The iterator used as part of [`Bundle::write_to_directory(…)`][crate::Bundle::write_to_directory()].
 pub struct BytesToEntriesIter<BR> {
     read: BR,
-    measure: Measure,
+    measure: inflate::Measure,
     offset: u64,
     had_error: bool,
     version: crate::data::Version,
@@ -59,7 +59,7 @@ where
         let (version, num_objects) = crate::data::header::decode(&header_data)?;
         Ok(BytesToEntriesIter {
             read,
-            measure: Measure::default(),
+            measure: inflate::Measure::default(),
             compressed,
             offset: crate::data::header::SIZE as u64,
             had_error: false,

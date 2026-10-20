@@ -18,7 +18,7 @@ test = false
 [features]
 serde = ["dep:serde"]
 ## Decompress zlib streams held in memory and find where streamed ones end with [`sirocco`](https://docs.rs/sirocco),
-## which is faster than `zlib-rs` at it. `zlib-rs` still handles streams continued with `Inflate::state` and all compression.
+## which is faster than `zlib-rs` at it. `zlib-rs` still handles the standalone `Decompress` API and all compression.
 ## This requires Rust 1.89 or newer.
 sirocco = ["dep:sirocco"]
 

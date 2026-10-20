@@ -57,6 +57,9 @@ doc $RUSTDOCFLAGS='-D warnings':
 unit-tests:
     cargo nextest run --no-fail-fast
     cargo nextest run -p gix-attributes --features serde --no-fail-fast
+    # Exercise both zlib backends independently of workspace feature unification.
+    cargo nextest run -p gix-zlib --no-fail-fast
+    cargo nextest run -p gix-zlib --features sirocco --no-fail-fast
     # Keep serial plumbing coverage independent of workspace feature unification.
     cargo nextest run -p gix-pathspec -p gix-ref -p gix-index -p gix-worktree -p gix-worktree-state --no-fail-fast
     # Test repository snapshots with the default pure-gix backend and the Git CLI backend.
