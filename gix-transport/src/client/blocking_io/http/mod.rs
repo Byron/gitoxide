@@ -465,6 +465,14 @@ impl<H: Http> blocking_io::Transport for Transport<H> {
         trace: bool,
     ) -> std::result::Result<RequestWriter<'_>, client::Error> {
         let service = self.service.ok_or(client::Error::MissingHandshake)?;
+        // A worker cannot accept another request while blocked sending the previous response.
+        if let Some(previous_response) = self.line_provider.as_mut()
+            && !previous_response.inner_mut().fill_buf()?.is_empty()
+        {
+            return Err(client::Error::Http(
+                message("previous HTTP response body was not fully consumed").raise(),
+            ));
+        }
         let url = append_url(&self.url, service.as_str());
         let static_headers = &[
             Cow::Borrowed(self.user_agent_header),

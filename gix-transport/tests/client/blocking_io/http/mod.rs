@@ -30,6 +30,74 @@ type Remote = http::curl::Curl;
 #[cfg(all(feature = "http-client-reqwest", not(feature = "http-client-curl")))]
 type Remote = http::reqwest::Remote;
 
+#[test]
+fn next_request_rejects_an_unread_response_body() -> gix_testtools::TestResult {
+    use gix_transport::client::{MessageKind, WriteMode};
+
+    let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+    let url = format!("http://{}/repo", listener.local_addr()?);
+    let server = std::thread::spawn(move || -> std::io::Result<()> {
+        let mut response = b"0008NAK\n".to_vec();
+        // More than one copy buffer keeps the worker blocked after the protocol stops at NAK.
+        response.resize(32 * 1024, b'x');
+        for (content_type, body) in [
+            ("advertisement", b"000eversion 2\n000cls-refs\n000afetch\n0000".to_vec()),
+            ("result", response),
+        ] {
+            let (stream, _) = listener.accept()?;
+            stream.set_read_timeout(Some(std::time::Duration::from_secs(5)))?;
+            let mut reader = std::io::BufReader::new(stream);
+            read_request_lines(&mut reader);
+            if content_type == "result" {
+                let mut request = [0; 4];
+                reader.read_exact(&mut request)?;
+                assert_eq!(&request, b"0000", "the request contains only a flush packet");
+            }
+            write!(
+                reader.get_mut(),
+                "HTTP/1.1 200 OK\r\n\
+                 Content-Type: application/x-git-upload-pack-{content_type}\r\n\
+                 Content-Length: {}\r\n\
+                 Connection: close\r\n\
+                 \r\n",
+                body.len()
+            )?;
+            reader.get_mut().write_all(&body)?;
+        }
+        Ok(())
+    });
+
+    let mut client = http::connect::<Remote>(url.as_str().try_into()?, Protocol::V2, false);
+    client.handshake(Service::UploadPack, &[])?;
+    let mut response = client
+        .request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush, false)?
+        .into_read()?;
+    let mut line = String::new();
+    response.read_line(&mut line)?;
+    assert_eq!(line, "NAK\n", "the protocol stops before the remaining response body");
+    drop(response);
+    server.join().expect("HTTP server thread completed")?;
+
+    let (send, receive) = std::sync::mpsc::channel();
+    let request = std::thread::spawn(move || {
+        let result = client
+            .request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush, false)
+            .map(|_| ())
+            .map_err(|err| format!("{err:?}"));
+        send.send(result).expect("the test is waiting for the request result");
+    });
+    let error = receive
+        .recv_timeout(std::time::Duration::from_secs(5))
+        .expect("an unread response must cause an error instead of a deadlock")
+        .expect_err("the next request must reject the unread response");
+    request.join().expect("request thread completed");
+    assert!(
+        error.contains("previous HTTP response body was not fully consumed"),
+        "the error explains why the next request cannot start: {error}"
+    );
+    Ok(())
+}
+
 fn assert_error_status(
     status: usize,
     kind: std::io::ErrorKind,
@@ -285,7 +353,8 @@ fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted()
         password: "password".into(),
         oauth_refresh_token: None,
     })?;
-    client.handshake(Service::UploadPack, &[])?;
+    let SetServiceResponse { refs, .. } = client.handshake(Service::UploadPack, &[])?;
+    io::copy(&mut refs.expect("refs in protocol V1"), &mut io::sink())?;
 
     assert_eq!(
         server
@@ -556,7 +625,8 @@ fn redirected_post_does_not_forward_basic_auth_to_the_new_host() -> TestResult {
         oauth_refresh_token: None,
     })?;
 
-    client.handshake(Service::UploadPack, &[]).map(drop)?;
+    let SetServiceResponse { refs, .. } = client.handshake(Service::UploadPack, &[])?;
+    io::copy(&mut refs.expect("refs in protocol V1"), &mut io::sink())?;
     let url_after_handshake = client.to_url().as_ref().to_owned();
     let mut request = client.request(client::WriteMode::Binary, client::MessageKind::Flush, false)?;
     request.write_all(b"0000")?;

@@ -9,10 +9,20 @@ pub(crate) fn response_with_connection_close(response: &[u8]) -> Vec<u8> {
     let (headers, body) = response.split_at(split);
     let body = &body[2..];
     let headers = std::str::from_utf8(headers).expect("fixture headers are UTF-8");
+    // Text fixtures end with a newline which is not part of the final flush packet.
+    let body = if body.ends_with(b"0000\n") {
+        &body[..body.len() - 1]
+    } else {
+        body
+    };
 
     let mut out = Vec::with_capacity(response.len() + 64);
     for line in headers.lines() {
-        out.extend_from_slice(line.as_bytes());
+        if line.to_ascii_lowercase().starts_with("content-length:") {
+            out.extend_from_slice(format!("Content-Length: {}", body.len()).as_bytes());
+        } else {
+            out.extend_from_slice(line.as_bytes());
+        }
         out.extend_from_slice(b"\r\n");
     }
     out.extend_from_slice(b"Connection: close\r\n\r\n");
