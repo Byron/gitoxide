@@ -156,13 +156,13 @@ unit-tests:
     env GIX_TEST_FIXTURE_HASH=sha256 cargo nextest run -p gix-revision --features sha256 --no-fail-fast
     env GIX_TEST_FIXTURE_HASH=sha1 cargo nextest run -p gix-worktree-stream --no-fail-fast
     env GIX_TEST_FIXTURE_HASH=sha256 cargo nextest run -p gix-worktree-stream --features sha256 --no-fail-fast
-    cargo nextest run -p gix --no-default-features --features basic,comfort,max-performance --no-fail-fast
-    cargo nextest run -p gix --no-default-features --features basic,extras,comfort --no-fail-fast
-    cargo nextest run -p gix --features async-network-client --no-fail-fast
-    env GIX_TEST_FIXTURE_HASH=sha256 cargo nextest run -p gix --features async-network-client --no-fail-fast
-    cargo nextest run -p gix --features blocking-network-client --no-fail-fast
-    env GIX_TEST_FIXTURE_HASH=sha256 cargo nextest run -p gix --features blocking-network-client --no-fail-fast
-    env GIX_TEST_FIXTURE_HASH=sha256 cargo nextest run -p gix --no-fail-fast
+    cargo nextest run -p gix --no-default-features --features basic,comfort,max-performance,sha1,sha256 --no-fail-fast
+    cargo nextest run -p gix --no-default-features --features basic,extras,comfort,sha1,sha256 --no-fail-fast
+    cargo nextest run -p gix --features async-network-client,sha256 --no-fail-fast
+    env GIX_TEST_FIXTURE_HASH=sha256 cargo nextest run -p gix --features async-network-client,sha256 --no-fail-fast
+    cargo nextest run -p gix --features blocking-network-client,sha256 --no-fail-fast
+    env GIX_TEST_FIXTURE_HASH=sha256 cargo nextest run -p gix --features blocking-network-client,sha256 --no-fail-fast
+    env GIX_TEST_FIXTURE_HASH=sha256 cargo nextest run -p gix --features sha256 --no-fail-fast
     cargo nextest run -p gix --no-default-features --features sha256 --lib --no-fail-fast
     cargo nextest run -p gitoxide-core --no-fail-fast
 
@@ -174,13 +174,13 @@ doc-tests:
     cargo test -p gix-packetline --doc --features blocking-io --no-fail-fast
     cargo test -p gix-trace --doc --no-default-features --features forest --no-fail-fast
     cargo test -p gix-trace --doc --no-default-features --features forest-ansi,tracing-detail --no-fail-fast
-    cargo test -p gix --doc --no-default-features --no-fail-fast
-    cargo test -p gix --doc --no-default-features --features revision --no-fail-fast
+    cargo test -p gix --doc --no-default-features --features sha1,sha256 --no-fail-fast
+    cargo test -p gix --doc --no-default-features --features revision,sha1,sha256 --no-fail-fast
 
 # Run optional flaky async tests
 [group('Tests')]
 unit-tests-flaky:
-    cargo test -p gix --features async-network-client-async-std
+    cargo test -p gix --features async-network-client-async-std,sha256
 
 # Extract cargo metadata, excluding dependencies, and query it
 [private]
