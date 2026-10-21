@@ -28,9 +28,9 @@ mod bare {
     fn init_into_empty_directory_uses_it_directly() -> TestResult {
         let _environment = gix_testtools::isolate_git_environment()?;
         #[cfg(feature = "sha1")]
-        let expected = gix_hash::Kind::Sha1;
+        let (expected, version, object_format) = (gix_hash::Kind::Sha1, 0, None);
         #[cfg(not(feature = "sha1"))]
-        let expected = gix_hash::Kind::Sha256;
+        let (expected, version, object_format) = (gix_hash::Kind::Sha256, 1, Some("sha256"));
         for options in [
             gix::create::Options::default(),
             gix::create::Options {
@@ -60,6 +60,12 @@ mod bare {
                 repo.object_hash(),
                 expected,
                 "initialization uses a supported object hash"
+            );
+            super::object_format::assert_on_disk_format(&repo, version, object_format)?;
+            assert_eq!(
+                gix_testtools::git(repo.git_dir(), "rev-parse --show-object-format")?.trim(),
+                expected.to_string(),
+                "git agrees on the object format"
             );
             assert_eq!(gix::open_opts(repo.git_dir(), crate::restricted())?, repo);
         }
@@ -244,6 +250,91 @@ mod non_bare {
         )
         .unwrap_err();
         insta::assert_debug_snapshot!(gix_testtools::redact_debug_snapshot(&(err), &[(&(tmp.path()).to_string_lossy(), "<destination>")]), "init into non empty directory is not allowed if option is true", @r#"Refusing to initialize the non-empty directory as, input="<destination>""#);
+        Ok(())
+    }
+}
+
+mod object_format {
+    use gix_testtools::{TestResult, tempfile};
+
+    fn init(
+        kind: gix::create::Kind,
+        object_hash: Option<gix_hash::Kind>,
+    ) -> TestResult<(tempfile::TempDir, gix::Repository)> {
+        let tmp = tempfile::tempdir()?;
+        let repo: gix::Repository = gix::ThreadSafeRepository::init_opts(
+            tmp.path(),
+            kind,
+            gix::create::Options {
+                object_hash,
+                ..Default::default()
+            },
+            crate::restricted(),
+        )?
+        .into();
+        Ok((tmp, repo))
+    }
+
+    pub(super) fn assert_on_disk_format(
+        repo: &gix::Repository,
+        version: i64,
+        object_format: Option<&str>,
+    ) -> TestResult {
+        let config =
+            gix::config::File::from_path_no_includes(repo.git_dir().join("config"), gix::config::Source::Local)?;
+        assert_eq!(
+            config.integer("core.repositoryFormatVersion")?,
+            Some(version),
+            "the repository format version matches what git writes for this object format"
+        );
+        assert_eq!(
+            config.string("extensions.objectFormat"),
+            object_format.map(Into::into),
+            "only non-SHA-1 object formats are written as extension"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "sha256")]
+    fn sha256_is_written_as_version_1_extension_and_understood_by_git() -> TestResult {
+        for kind in [gix::create::Kind::WithWorktree, gix::create::Kind::Bare] {
+            let (_tmp, repo) = init(kind, Some(gix_hash::Kind::Sha256))?;
+            assert_eq!(
+                repo.object_hash(),
+                gix_hash::Kind::Sha256,
+                "the requested object format is used"
+            );
+            assert_on_disk_format(&repo, 1, Some("sha256"))?;
+            assert_eq!(
+                gix::open_opts(repo.git_dir(), crate::restricted())?.object_hash(),
+                gix_hash::Kind::Sha256,
+                "the format survives reopening"
+            );
+            assert_eq!(
+                gix_testtools::git(repo.git_dir(), "rev-parse --show-object-format")?.trim(),
+                "sha256",
+                "git agrees on the object format"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "sha1")]
+    fn sha1_is_written_like_git_without_extension() -> TestResult {
+        let (_tmp, repo) = init(gix::create::Kind::Bare, Some(gix_hash::Kind::Sha1))?;
+        assert_eq!(
+            repo.object_hash(),
+            gix_hash::Kind::Sha1,
+            "the requested object format is used"
+        );
+        assert_on_disk_format(&repo, 0, None)?;
+        assert_eq!(
+            gix_testtools::git(repo.git_dir(), "rev-parse --show-object-format")?.trim(),
+            "sha1",
+            "git agrees on the object format"
+        );
         Ok(())
     }
 }
