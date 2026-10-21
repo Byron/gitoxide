@@ -50,6 +50,7 @@ impl Outcome {
                 username,
                 password,
                 oauth_refresh_token: self.oauth_refresh_token.take(),
+                authtype: None,
             })
     }
 }

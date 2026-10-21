@@ -334,6 +334,7 @@ mod invoke {
             username: user.into(),
             password: pass.into(),
             oauth_refresh_token: None,
+            authtype: None,
         }
     }
 
