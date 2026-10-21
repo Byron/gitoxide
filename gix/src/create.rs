@@ -112,6 +112,9 @@ pub struct Options {
     /// Otherwise, create a repository without an explicit object-format extension,
     /// which is interpreted as legacy SHA-1.
     /// In builds without SHA-1 support, `None` means SHA-256.
+    ///
+    /// If `None`, [`ThreadSafeRepository::init_opts()`][crate::ThreadSafeRepository::init_opts()]
+    /// will apply `init.defaultObjectFormat` or `GIT_DEFAULT_HASH` if set.
     pub object_hash: Option<gix_hash::Kind>,
 }
 

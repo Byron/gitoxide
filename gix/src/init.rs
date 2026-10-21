@@ -43,10 +43,24 @@ impl ThreadSafeRepository {
     pub fn init_opts(
         directory: impl AsRef<Path>,
         kind: crate::create::Kind,
+        mut create_options: crate::create::Options,
+        open_options: crate::open::Options,
+    ) -> Result<Self> {
+        let directory = directory.as_ref();
+        if create_options.object_hash.is_none() {
+            create_options.object_hash = default_object_format(directory, kind, &open_options)?;
+        }
+        Self::create_and_open(directory, kind, create_options, open_options)
+    }
+
+    /// Like [`init_opts()`][Self::init_opts()], but without applying `init.defaultObjectFormat`.
+    pub(crate) fn create_and_open(
+        directory: &Path,
+        kind: crate::create::Kind,
         create_options: crate::create::Options,
         mut open_options: crate::open::Options,
     ) -> Result<Self> {
-        let (path, capabilities) = crate::create::into_with_capabilities(directory.as_ref(), kind, create_options)?;
+        let (path, capabilities) = crate::create::into_with_capabilities(directory, kind, create_options)?;
         if !capabilities.symlink {
             open_options.api_config_overrides.push("core.symlinks=false".into());
         }
@@ -85,4 +99,22 @@ impl ThreadSafeRepository {
 
         Ok(repo)
     }
+}
+
+/// Read `init.defaultObjectFormat` from the configuration that a new repository in `directory` would see.
+fn default_object_format(
+    directory: &Path,
+    kind: crate::create::Kind,
+    options: &crate::open::Options,
+) -> Result<Option<gix_hash::Kind>> {
+    let git_dir = match kind {
+        crate::create::Kind::Bare => directory.to_owned(),
+        crate::create::Kind::WithWorktree => directory.join(gix_discover::DOT_GIT_DIR),
+    };
+    let config = crate::config(Some(&git_dir), options)?;
+    let key = &Init::DEFAULT_OBJECT_FORMAT;
+    config
+        .string(key)
+        .map(|value| key.try_into_object_format(value.as_bstr()))
+        .transpose()
 }

@@ -1601,6 +1601,25 @@ fn clone_and_early_persist_without_receive() -> TestResult {
 }
 
 #[test]
+fn clone_ignores_default_object_format() -> TestResult {
+    let tmp = gix_testtools::tempfile::TempDir::new()?;
+    let repo = gix::clone::PrepareFetch::new(
+        remote::repo("base").path(),
+        tmp.path(),
+        gix::create::Kind::Bare,
+        Default::default(),
+        restricted().config_overrides(["init.defaultObjectFormat=sha256"]),
+    )?
+    .persist();
+    assert_eq!(
+        repo.object_hash(),
+        gix::create::Options::default().object_hash.unwrap_or_default(),
+        "clones adopt the remote's object format later, so the default for new repositories doesn't apply"
+    );
+    Ok(())
+}
+
+#[test]
 fn clone_and_destination_must_be_empty() -> TestResult {
     let mut error_snapshots = Vec::new();
     let tmp = gix_testtools::tempfile::TempDir::new()?;
