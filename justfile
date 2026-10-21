@@ -176,6 +176,7 @@ doc-tests:
     cargo test -p gix-trace --doc --no-default-features --features forest-ansi,tracing-detail --no-fail-fast
     cargo test -p gix --doc --no-default-features --features sha1,sha256 --no-fail-fast
     cargo test -p gix --doc --no-default-features --features revision,sha1,sha256 --no-fail-fast
+    env GIX_TEST_FIXTURE_HASH=sha256 cargo test -p gix --doc --features sha256 --no-fail-fast
 
 # Run optional flaky async tests
 [group('Tests')]
