@@ -773,6 +773,45 @@ fn an_expensive_minimal_split_keeps_searching_until_the_optimum_is_found() -> gi
     assert_myers_matches_git("expensive-minimal-split", Algorithm::MyersMinimal, (271, 271))
 }
 
+#[test]
+fn trivial_myers_changes_match_git() -> gix_testtools::TestResult {
+    for (case, additions) in [
+        ("trivial-empty", 0),
+        ("trivial-identical", 0),
+        ("trivial-empty-file", 2),
+        ("trivial-prepend", 1),
+        ("trivial-append", 1),
+        ("trivial-middle", 2),
+        ("trivial-repeated", 1),
+        ("trivial-frequent", 9),
+        ("trivial-no-final-newline", 1),
+    ] {
+        for algorithm in [Algorithm::Myers, Algorithm::MyersMinimal] {
+            assert_myers_matches_git(case, algorithm, (0, additions))?;
+            assert_myers_matches_git(&format!("{case}-reversed"), algorithm, (additions, 0))?;
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn near_trivial_myers_changes_still_need_preprocessing() -> gix_testtools::TestResult {
+    for algorithm in [Algorithm::Myers, Algorithm::MyersMinimal] {
+        for (case, expected) in [
+            ("near-miss-newline", (1, 2)),
+            ("near-miss-kept-anchor", (0, 6)),
+            (
+                "near-miss-pruned-anchor",
+                if algorithm == Algorithm::Myers { (1, 8) } else { (0, 7) },
+            ),
+        ] {
+            assert_myers_matches_git(case, algorithm, expected)?;
+            assert_myers_matches_git(&format!("{case}-reversed"), algorithm, (expected.1, expected.0))?;
+        }
+    }
+    Ok(())
+}
+
 fn assert_myers_matches_git(case: &str, algorithm: Algorithm, expected: (u32, u32)) -> gix_testtools::TestResult {
     // Git 2.50 disabled frequency pruning for `--minimal`.
     let Some(root) = gix_testtools::scripted_fixture_read_only_with_git_version("make_myers_baseline.sh", |version| {
@@ -785,21 +824,57 @@ fn assert_myers_matches_git(case: &str, algorithm: Algorithm, expected: (u32, u3
     let before = std::fs::read_to_string(root.join("old"))?;
     let after = std::fs::read_to_string(root.join("new"))?;
     let baseline = std::fs::read_to_string(root.join(format!("{algorithm:?}.numstat")))?;
-    let mut fields = baseline.split('\t');
-    let additions: u32 = fields.next().expect("Git numstat contains additions").parse()?;
-    let removals: u32 = fields.next().expect("Git numstat contains removals").parse()?;
-    let git_counts = (removals, additions);
+    let git_counts = if baseline.is_empty() {
+        (0, 0)
+    } else {
+        let mut fields = baseline.split('\t');
+        let additions: u32 = fields.next().expect("Git numstat contains additions").parse()?;
+        let removals: u32 = fields.next().expect("Git numstat contains removals").parse()?;
+        (removals, additions)
+    };
     assert_eq!(
         git_counts, expected,
         "{case}: Git's {algorithm:?} baseline must retain the regression's expected edit counts"
     );
 
+    let git_hunks = std::fs::read_to_string(root.join(format!("{algorithm:?}.hunks")))?
+        .lines()
+        .map(|line| {
+            let (before, after) = line.split_once(' ').expect("Git hunk header contains both ranges");
+            Ok(gix_imara_diff::Hunk {
+                before: git_hunk_range(before)?,
+                after: git_hunk_range(after)?,
+            })
+        })
+        .collect::<gix_testtools::TestResult<Vec<_>>>()?;
+
     let input = InternedInput::new(before.as_str(), after.as_str());
-    let diff = Diff::compute(algorithm, &input);
-    assert_eq!(
-        (diff.count_removals(), diff.count_additions()),
-        git_counts,
-        "{case}: {algorithm:?} must match Git's removal and addition counts"
-    );
+    // Seed both change arrays so an early return must clear stale flags, including for identical inputs.
+    let mut reused = Diff::compute(algorithm, &InternedInput::new("old\nold\n", "new\nnew\n"));
+    reused.compute_with(algorithm, &input.before, &input.after, input.interner.num_tokens());
+    for (storage, mut diff) in [("fresh", Diff::compute(algorithm, &input)), ("reused", reused)] {
+        assert_eq!(
+            (diff.count_removals(), diff.count_additions()),
+            git_counts,
+            "{case}: {algorithm:?} with {storage} storage must match Git's removal and addition counts"
+        );
+        // Even --no-indent-heuristic compacts changes; compare equivalent postprocessing.
+        diff.postprocess_no_heuristic(&input);
+        assert_eq!(
+            diff.hunks().collect::<Vec<_>>(),
+            git_hunks,
+            "{case}: {algorithm:?} with {storage} storage must match Git's exact hunk placement"
+        );
+    }
     Ok(())
+}
+
+fn git_hunk_range(range: &str) -> gix_testtools::TestResult<std::ops::Range<u32>> {
+    let range = &range[1..]; // Strip the '-' or '+' sign.
+    let (start, len) = range.split_once(',').unwrap_or((range, "1"));
+    let start: u32 = start.parse()?;
+    let len: u32 = len.parse()?;
+    // Empty Git ranges name the preceding line; nonempty ranges use one-based line numbers.
+    let start = start - u32::from(len != 0);
+    Ok(start..start + len)
 }
