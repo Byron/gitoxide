@@ -22,16 +22,31 @@ mod slice;
 /// * `added` - Output array marking added tokens
 /// * `minimal` - If true, disables heuristics to guarantee a minimal diff
 pub fn diff(mut before: &[Token], mut after: &[Token], removed: &mut [bool], added: &mut [bool], minimal: bool) {
-    // Like git's `xdl_prepare_env()`, count every token of both inputs *before* their common ends are
-    // trimmed: `xdl_classify_record()` sees every line, and `xdl_cleanup_records()` judges the lines
-    // between the trimmed ends by those whole-input counts and limits.
-    let counts = preprocess::TokenCounts::new(before, after, minimal);
+    // Preserve the complete inputs for occurrence statistics, but defer counting until we know the
+    // trimmed region needs a search.
+    let full_before = before;
+    let full_after = after;
     let common_prefix = strip_common_prefix(&mut before, &mut after) as usize;
     let common_postfix = strip_common_postfix(&mut before, &mut after) as usize;
     let removed_end = removed.len() - common_postfix;
     let removed = &mut removed[common_prefix..removed_end];
     let added_end = added.len() - common_postfix;
     let added = &mut added[common_prefix..added_end];
+
+    // If either trimmed input is empty, the other contains only additions or removals. No search
+    // or occurrence counting is needed, and we can return early.
+    if before.is_empty() {
+        added.fill(true);
+        return;
+    }
+    if after.is_empty() {
+        removed.fill(true);
+        return;
+    }
+
+    // Like Git's `xdl_prepare_env()`, count every token of both complete inputs. Trimming only
+    // limits the search and pruning windows, not the occurrence counts or frequency limits.
+    let counts = preprocess::TokenCounts::new(full_before, full_after, minimal);
 
     // Preprocess the files by removing parts of the file that are not contained in the other file at all.
     // This process remaps the token indices so we have to account for that during the rest of the diff
@@ -253,61 +268,3 @@ struct Split {
     /// Whether the upper subproblem was minimized.
     minimized_hi: bool,
 }
-
-// /// the mapping performed during preprocessing makes it impossible to directly call
-// /// the `sink` during the diff itself. Instead, `file.changed` is set to true for all
-// /// tokens that are changed
-// /// below these arrays are used to call the sink function
-// fn process_changes_with_sink(
-//     before: &PreprocessedFile,
-//     after: &PreprocessedFile,
-//     sink: &mut impl Sink,
-// ) {
-//     let before_end = before.changed.len() as u32 + before.offset;
-//     let after_end = after.changed.len() as u32 + after.offset;
-
-//     let mut before = before
-//         .changed
-//         .iter()
-//         .enumerate()
-//         .map(|(i, removed)| (i as u32 + before.offset, *removed));
-
-//     let mut after = after
-//         .changed
-//         .iter()
-//         .enumerate()
-//         .map(|(i, inserted)| (i as u32 + after.offset, *inserted));
-
-//     let mut next1 = before.next();
-//     let mut next2 = after.next();
-
-//     while let (Some((before_pos, removed)), Some((after_pos, inserted))) = (next1, next2) {
-//         if !(removed | inserted) {
-//             next1 = before.next();
-//             next2 = after.next();
-//             continue;
-//         }
-
-//         let mut hunk_before = before_pos..before_pos;
-//         let mut hunk_after = after_pos..after_pos;
-//         if removed {
-//             let end = before.find(|(_, changed)| !changed);
-//             next1 = end.map(|(end, _)| (end, false));
-//             hunk_before.end = end.map_or(before_end, |(end, _)| end);
-//         };
-
-//         if inserted {
-//             let end = after.find(|(_, changed)| !changed);
-//             next2 = end.map(|(end, _)| (end, false));
-//             hunk_after.end = end.map_or(after_end, |(end, _)| end);
-//         }
-
-//         sink.process_change(hunk_before, hunk_after);
-//     }
-
-//     if let Some((before_pos, _)) = next1 {
-//         sink.process_change(before_pos..before_end, after_end..after_end);
-//     } else if let Some((after_pos, _)) = next2 {
-//         sink.process_change(before_end..before_end, after_pos..after_end);
-//     }
-// }

@@ -2,11 +2,15 @@
 //! Filter, for example, with `-- myers-minimal` or `-- slider-only`.
 //!
 //! Sizes name the old file's line count; throughput counts both input files' bytes.
-//! Each size has 16 replacements and 16 insertions, keeping Myers' edit distance bounded.
+//! Nontrivial fixtures have 16 replacements and 16 insertions, keeping Myers' edit distance bounded.
 //! Two sizes keep the matrix bounded while retaining all three algorithms.
 //! Fixture generation and correctness checks are untimed. Each stage is measured in isolation.
 //! Interning and diff computation reuse their storage; private algorithm scratch space can still
 //! allocate. Postprocessing gets a freshly computed diff as untimed setup. Interning hashes every line.
+//!
+//! `-- myers-trivial` isolates identical inputs and single insertions/deletions with common ends.
+//! Compare with `-- myers-trivial --save-baseline upstream`, then `-- myers-trivial --baseline upstream`
+//! using the same target directory and benchmark code on both revisions.
 
 use std::{fmt::Write, hint::black_box};
 
@@ -103,6 +107,56 @@ fn blob(c: &mut Criterion) {
     }
 }
 
+fn myers_trivial(c: &mut Criterion) {
+    let mut group = c.benchmark_group("blob/myers-trivial");
+    for &functions in FUNCTION_COUNTS {
+        let mut before = String::new();
+        let mut after = String::new();
+        for idx in 0..functions {
+            if idx == functions / 2 {
+                // A unique inserted line leaves both a common prefix and a common suffix.
+                after.push_str("// inserted line\n");
+            }
+            push_function(&mut before, idx, false);
+            push_function(&mut after, idx, false);
+        }
+        for (name, before, after, expected) in [
+            ("identical", before.as_bytes(), before.as_bytes(), (0, 0)),
+            ("insertion", before.as_bytes(), after.as_bytes(), (0, 1)),
+            ("deletion", after.as_bytes(), before.as_bytes(), (1, 0)),
+        ] {
+            group.throughput(Throughput::Bytes((before.len() + after.len()) as u64));
+            let input = InternedInput::new(
+                ByteLinesWithoutTerminator::new(before),
+                ByteLinesWithoutTerminator::new(after),
+            );
+            let mut diff = Diff::compute(Algorithm::Myers, &input);
+            let check = |diff: &Diff| {
+                assert_eq!(
+                    (diff.count_removals(), diff.count_additions()),
+                    expected,
+                    "{name}: only the single inserted/deleted line may be changed"
+                );
+                check_reconstruction(diff, &input);
+            };
+            check(&diff);
+            group.bench_function(BenchmarkId::new(format!("{name}/reuse"), input.before.len()), |b| {
+                b.iter(|| {
+                    diff.compute_with(
+                        Algorithm::Myers,
+                        black_box(&input.before),
+                        black_box(&input.after),
+                        input.interner.num_tokens(),
+                    );
+                    black_box(&diff);
+                });
+            });
+            check(&diff);
+        }
+    }
+    group.finish();
+}
+
 fn check_diff(diff: &Diff, input: &InternedInput<&[u8]>) {
     assert_eq!(
         diff.count_removals() as usize,
@@ -114,6 +168,10 @@ fn check_diff(diff: &Diff, input: &InternedInput<&[u8]>) {
         EDITED_FUNCTIONS * 2,
         "each edit replaces and inserts a line"
     );
+    check_reconstruction(diff, input);
+}
+
+fn check_reconstruction(diff: &Diff, input: &InternedInput<&[u8]>) {
     let mut reconstructed = Vec::new();
     let mut end = 0;
     for hunk in diff.hunks() {
@@ -151,5 +209,5 @@ fn push_function(out: &mut String, idx: usize, edited: bool) {
     out.push_str("    }\n}\n\n");
 }
 
-criterion_group!(benches, interning, blob);
+criterion_group!(benches, interning, blob, myers_trivial);
 criterion_main!(benches);
