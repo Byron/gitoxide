@@ -1185,6 +1185,23 @@ mod extensions {
     }
 }
 
+mod init {
+    use gix::config::tree::Init;
+
+    /// Values are parsed like `extensions.objectFormat`, whose test covers the accepted names.
+    #[test]
+    fn default_object_format() {
+        crate::config::key::assert_config_error(
+            &Init::DEFAULT_OBJECT_FORMAT
+                .try_into_object_format("invalid")
+                .expect_err("invalid configuration"),
+            "init.defaultObjectFormat",
+            Some("invalid".as_bytes().into()),
+            Some("GIT_DEFAULT_HASH"),
+        );
+    }
+}
+
 mod checkout {
     use gix::config::tree::{Checkout, Key};
     use gix_testtools::TestResult;
