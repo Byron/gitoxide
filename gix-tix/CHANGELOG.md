@@ -1,6 +1,29 @@
 
 
-## Unreleased
+## 0.6.0 (2026-10-22)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 14 calendar days.
+ - 14 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #3037 from ameyypawar/gix-remote-default-branch ([`ad0202e`](https://github.com/GitoxideLabs/gitoxide/commit/ad0202e3ab396d752a56664001c134f48d834177))
+    - Merge pull request #3052 from GitoxideLabs/various-improvements ([`2711f6a`](https://github.com/GitoxideLabs/gitoxide/commit/2711f6a36ad1fb93da171cb5efd51c39f745e6a2))
+    - Merge pull request #3048 from GitoxideLabs/new-release ([`5fccccf`](https://github.com/GitoxideLabs/gitoxide/commit/5fccccfdedd17f7d4b0cc57039d118a3496aa8aa))
+</details>
+
+## 0.5.0 (2026-10-08)
 
 ### New Features
 
@@ -1340,7 +1363,7 @@
 
 <csr-read-only-do-not-edit/>
 
- - 139 commits contributed to the release over the course of 12 calendar days.
+ - 141 commits contributed to the release over the course of 13 calendar days.
  - 13 days passed between releases.
  - 120 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -1352,6 +1375,8 @@
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-error v0.5.0, gix-date v0.18.0, gix-actor v0.44.0, gix-trace v0.3.0, gix-validate v0.13.0, gix-path v0.14.0, gix-utils v0.5.0, gix-quote v0.10.0, gix-command v0.12.0, gix-hash v0.28.0, gix-hashtable v0.18.0, gix-parallel v0.50.0, gix-fs v0.24.0, gix-tempfile v26.0.0, gix-object v0.66.0, gix-glob v0.29.0, gix-attributes v0.37.0, gix-packetline v0.24.0, gix-filter v0.36.0, gix-chunk v0.10.0, gix-commitgraph v0.41.0, gix-revwalk v0.37.0, gix-traverse v0.63.0, gix-worktree-stream v0.38.0, gix-archive v0.38.0, gix-bitmap v0.6.0, gix-lock v26.0.0, gix-index v0.57.0, gix-config-value v0.21.0, gix-pathspec v0.22.0, gix-ignore v0.24.0, gix-worktree v0.58.0, gix-imara-diff v0.3.1, gix-diff v0.69.0, gix-blame v0.19.0, gix-ref v0.69.0, gix-sec v0.16.0, gix-config v0.62.0, gix-prompt v0.19.0, gix-url v0.40.0, gix-credentials v0.42.0, gix-discover v0.57.0, gix-dir v0.31.0, gix-mailmap v0.36.0, gix-revision v0.51.0, gix-merge v0.22.0, gix-negotiate v0.37.0, gix-note v0.3.0, gix-zlib v0.3.0, gix-pack v0.76.0, gix-odb v0.86.0, gix-refspec v0.47.0, gix-shallow v0.15.0, gix-transport v0.61.0, gix-protocol v0.67.0, gix-status v0.36.0, gix-submodule v0.36.0, gix-worktree-state v0.36.0, gix v0.89.0, gix-fsck v0.27.0, gitoxide-core v0.63.0, gix-tix v0.5.0, gitoxide v0.60.0, safety bump 62 crates ([`0115e90`](https://github.com/GitoxideLabs/gitoxide/commit/0115e902fd0334b8f370766993eb17babed3157f))
+    - Prepare changelogs prior to release ([`794eeef`](https://github.com/GitoxideLabs/gitoxide/commit/794eeef835f8dde0fc8f4fd1d215f304d28d7f77))
     - Merge pull request #3032 from GitoxideLabs/sec-audit ([`1d7bac7`](https://github.com/GitoxideLabs/gitoxide/commit/1d7bac742f70b72ddda0c7294f4a97566b8db596))
     - Retain caller locations in standalone diagnostics ([`2ac7bd8`](https://github.com/GitoxideLabs/gitoxide/commit/2ac7bd84b572c1b7f32548792ebb2985c4dea58b))
     - Use `bstr` helpers for byte substring searches ([`21b210a`](https://github.com/GitoxideLabs/gitoxide/commit/21b210aab99b30c660d0de497bf2045aefa2fa09))

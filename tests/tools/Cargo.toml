@@ -62,18 +62,18 @@ xz = ["dep:xz2"]
 sbom = ["dep:serde_json"]
 
 [dependencies]
-gix-error = { version = "^0.5.1", path = "../../gix-error", features = ["error-print-location"] }
-gix-hash = { version = "^0.28.0", path = "../../gix-hash" }
+gix-error = { version = "^0.5.2", path = "../../gix-error", features = ["error-print-location"] }
+gix-hash = { version = "^0.28.1", path = "../../gix-hash" }
 gix-lock = { version = "^26.0.0", path = "../../gix-lock" }
-gix-path = { version = "^0.14.0", path = "../../gix-path" }
-gix-config = { version = "^0.62.0", path = "../../gix-config", optional = true, default-features = false }
-gix-discover = { version = "^0.57.0", path = "../../gix-discover", optional = true }
-gix-index = { version = "^0.57.0", path = "../../gix-index", optional = true, default-features = false }
-gix-object = { version = "^0.66.0", path = "../../gix-object", optional = true, default-features = false }
-gix-odb = { version = "^0.86.0", path = "../../gix-odb", optional = true, default-features = false }
-gix-ref = { version = "^0.69.0", path = "../../gix-ref", optional = true, default-features = false }
-gix-shallow = { version = "^0.15.0", path = "../../gix-shallow", optional = true }
-gix-worktree = { version = "^0.58.0", path = "../../gix-worktree", optional = true }
+gix-path = { version = "^0.14.1", path = "../../gix-path" }
+gix-config = { version = "^0.62.1", path = "../../gix-config", optional = true, default-features = false }
+gix-discover = { version = "^0.57.1", path = "../../gix-discover", optional = true }
+gix-index = { version = "^0.58.0", path = "../../gix-index", optional = true, default-features = false }
+gix-object = { version = "^0.66.1", path = "../../gix-object", optional = true, default-features = false }
+gix-odb = { version = "^0.87.0", path = "../../gix-odb", optional = true, default-features = false }
+gix-ref = { version = "^0.69.1", path = "../../gix-ref", optional = true, default-features = false }
+gix-shallow = { version = "^0.15.1", path = "../../gix-shallow", optional = true }
+gix-worktree = { version = "^0.59.0", path = "../../gix-worktree", optional = true }
 gix-parallel = { version = "^0.50.0", path = "../../gix-parallel", optional = true }
 gix-tempfile = { version = "^26.0.0", path = "../../gix-tempfile", default-features = false, features = ["signals"] }
 
