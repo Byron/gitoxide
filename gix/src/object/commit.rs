@@ -38,12 +38,7 @@ impl<'repo> Commit<'repo> {
     /// let short_id = commit.short_id()?;
     ///
     /// assert_eq!(short_id.cmp_oid(&commit.id), Ordering::Equal);
-    /// let expected = match repo.object_hash() {
-    ///     gix::hash::Kind::Sha1 => "3189cd3",
-    ///     gix::hash::Kind::Sha256 => "735ec3e",
-    /// #   _ => unreachable!("the fixture only exists for SHA-1 and SHA-256"),
-    /// };
-    /// assert_eq!(short_id.to_string(), expected);
+    /// assert_eq!(short_id.to_string(), &commit.id.to_string()[..7]);
     /// # Ok(()) }
     /// ```
     pub fn short_id(&self) -> Result<gix_hash::Prefix> {
