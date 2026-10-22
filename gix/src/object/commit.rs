@@ -38,7 +38,7 @@ impl<'repo> Commit<'repo> {
     /// let short_id = commit.short_id()?;
     ///
     /// assert_eq!(short_id.cmp_oid(&commit.id), Ordering::Equal);
-    /// assert_eq!(short_id.to_string(), "3189cd3");
+    /// assert_eq!(short_id.to_string(), &commit.id.to_string()[..7]);
     /// # Ok(()) }
     /// ```
     pub fn short_id(&self) -> Result<gix_hash::Prefix> {

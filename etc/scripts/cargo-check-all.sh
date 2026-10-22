@@ -113,20 +113,20 @@ cargo check -p gix --no-default-features --features sha1,async-network-client-as
 cargo check -p gix --no-default-features --features sha1,blocking-network-client
 cargo check -p gix --no-default-features --features sha1,blocking-http-transport-curl
 cargo check -p gix --no-default-features --features sha1,blocking-http-transport-reqwest
-cargo check -p gix --no-default-features --features max-performance --tests
-cargo check -p gix --no-default-features --features max-performance --tests
-cargo check -p gix --no-default-features --features progress-tree --tests
-cargo check -p gix --no-default-features --features blob-diff --tests
-cargo check -p gix --no-default-features --features revision --tests
-cargo check -p gix --no-default-features --features revparse-regex --tests
-cargo check -p gix --no-default-features --features mailmap --tests
-cargo check -p gix --no-default-features --features excludes --tests
-cargo check -p gix --no-default-features --features attributes --tests
-cargo check -p gix --no-default-features --features worktree-mutation --tests
-cargo check -p gix --no-default-features --features credentials --tests
-cargo check -p gix --no-default-features --features index --tests
-cargo check -p gix --no-default-features --features interrupt --tests
-cargo check -p gix --no-default-features --features blame --tests
+cargo check -p gix --no-default-features --features max-performance,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features max-performance,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features progress-tree,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features blob-diff,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features revision,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features revparse-regex,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features mailmap,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features excludes,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features attributes,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features worktree-mutation,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features credentials,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features index,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features interrupt,sha1,sha256 --tests
+cargo check -p gix --no-default-features --features blame,sha1,sha256 --tests
 cargo check -p gix --no-default-features --features sha1
 cargo check -p gix --no-default-features --features sha1,sha256
 cargo check -p gix --no-default-features --features sha256

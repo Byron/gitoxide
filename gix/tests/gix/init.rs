@@ -27,19 +27,42 @@ mod bare {
     #[serial_test::serial]
     fn init_into_empty_directory_uses_it_directly() -> TestResult {
         let _environment = gix_testtools::isolate_git_environment()?;
-        let tmp = tempfile::tempdir()?;
-        let repo = gix::init_bare(tmp.path())?;
-        assert_eq!(repo.kind(), gix::repository::Kind::Common);
-        assert!(
-            repo.workdir().is_none(),
-            "a worktree isn't present in bare repositories"
-        );
-        assert_eq!(
-            repo.git_dir(),
-            tmp.path(),
-            "the repository is placed into the directory itself"
-        );
-        assert_eq!(gix::open_opts(repo.git_dir(), crate::restricted())?, repo);
+        #[cfg(feature = "sha1")]
+        let expected = gix_hash::Kind::Sha1;
+        #[cfg(not(feature = "sha1"))]
+        let expected = gix_hash::Kind::Sha256;
+        for options in [
+            gix::create::Options::default(),
+            gix::create::Options {
+                object_hash: None,
+                ..Default::default()
+            },
+        ] {
+            let tmp = tempfile::tempdir()?;
+            let repo = gix::ThreadSafeRepository::init_opts(
+                tmp.path(),
+                gix::create::Kind::Bare,
+                options,
+                gix::open::Options::isolated(),
+            )?
+            .to_thread_local();
+            assert_eq!(repo.kind(), gix::repository::Kind::Common);
+            assert!(
+                repo.workdir().is_none(),
+                "a worktree isn't present in bare repositories"
+            );
+            assert_eq!(
+                repo.git_dir(),
+                tmp.path(),
+                "the repository is placed into the directory itself"
+            );
+            assert_eq!(
+                repo.object_hash(),
+                expected,
+                "initialization uses a supported object hash"
+            );
+            assert_eq!(gix::open_opts(repo.git_dir(), crate::restricted())?, repo);
+        }
         Ok(())
     }
 

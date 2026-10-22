@@ -111,6 +111,7 @@ pub struct Options {
     /// If set to `Some(Sha256)`, write `extensions.objectFormat=sha256`.
     /// Otherwise, create a repository without an explicit object-format extension,
     /// which is interpreted as legacy SHA-1.
+    /// In builds without SHA-1 support, `None` means SHA-256.
     pub object_hash: Option<gix_hash::Kind>,
 }
 
@@ -162,6 +163,7 @@ pub(crate) fn into_with_capabilities(
 ) -> Result<(gix_discover::repository::Path, gix_fs::Capabilities)> {
     let mut dot_git = directory.into();
     let bare = matches!(kind, Kind::Bare);
+    let object_hash = object_hash.or_else(default_object_hash);
 
     if bare || destination_must_be_empty.unwrap_or(false) {
         let num_entries_in_dot_git = fs::read_dir(&dot_git)

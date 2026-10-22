@@ -428,7 +428,7 @@ document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
 gix = { path = ".", default-features = false, features = [
-    "merge", "tree-error", "sha1", "sha256"
+    "merge", "tree-error"
 ] }
 gix-hash = { version = "^0.28.0", path = "../gix-hash" }
 gix-pack = { version = "^0.76.0", path = "../gix-pack", default-features = false, features = [

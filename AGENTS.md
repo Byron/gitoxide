@@ -137,6 +137,11 @@ Follow "purposeful conventional commits" style:
 
 ### Test Best Practices
 
+- Test public APIs in the crate's integration tests under `tests/`, using only
+  public interfaces. Reserve in-source unit tests (`#[cfg(test)]` modules) for
+  private or `pub(crate)` functionality that integration tests cannot access.
+  Extend an existing integration test with additional assertions when it already
+  exercises the relevant behavior.
 - Tests must be isolated from the developer's checkout, other worktrees, shared
   Git metadata, and user configuration. Use fixtures provided by `gix-testtools`;
   never use the source checkout as a test repository.
