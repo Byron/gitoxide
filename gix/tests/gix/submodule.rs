@@ -280,11 +280,11 @@ mod open {
     #[test]
     fn linked_superproject_submodule_repositories_are_private() -> TestResult {
         let fixture = gix_testtools::scripted_fixture_read_only("make_linked_superproject_submodules.sh")?;
-        let main = gix::open_opts(fixture.join("submodule-with-extra-worktree-host"), crate::restricted())?;
+        let main = gix::open_opts(fixture.join("superproject"), crate::restricted())?;
         for (name, repository_exists, worktree_checkout) in [
-            ("linked-superproject-uninitialized", false, false),
-            ("linked-superproject-initialized", true, true),
-            ("linked-superproject-deinitialized", true, false),
+            ("uninitialized", false, false),
+            ("initialized", true, true),
+            ("deinitialized", true, false),
         ] {
             let linked_path = fixture.join(name);
             let linked = gix::open_opts(&linked_path, crate::restricted())?;
