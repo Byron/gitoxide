@@ -607,6 +607,25 @@ impl TreeNodes {
         self.remove_change_inner(location, true);
     }
 
+    /// Check indexed changes in this subtree without visiting unrelated paths.
+    pub fn all_changes_at_or_below(&self, location: &BStr, mut predicate: impl FnMut(usize) -> bool) -> bool {
+        let mut cursor = &self.0[0];
+        for component in to_components(location) {
+            let Some(&idx) = cursor.children.get(component) else {
+                return true;
+            };
+            cursor = &self.0[idx];
+        }
+        let mut pending = vec![cursor];
+        while let Some(node) = pending.pop() {
+            if node.change_idx.is_some_and(|idx| !predicate(idx)) {
+                return false;
+            }
+            pending.extend(node.children.values().map(|&idx| &self.0[idx]));
+        }
+        true
+    }
+
     pub fn remove_change(&mut self, location: &BStr) {
         self.remove_change_inner(location, false);
     }
@@ -742,6 +761,33 @@ impl Conflict {
 mod tree_nodes_tests {
     use super::*;
     use gix_error::Result;
+
+    #[test]
+    fn subtree_queries_only_visit_the_requested_prefix() {
+        let mut tree = TreeNodes::new();
+        for (idx, location) in ["d/a", "d/b", "d-prefix/c", "elsewhere/c"].into_iter().enumerate() {
+            tree.track_change(
+                &Change::Deletion {
+                    location: location.into(),
+                    relation: None,
+                    entry_mode: EntryKind::Blob.into(),
+                    id: gix_hash::Kind::Sha1.null(),
+                },
+                idx,
+            );
+        }
+        let mut visited = Vec::new();
+        assert!(tree.all_changes_at_or_below("d".into(), |idx| {
+            visited.push(idx);
+            true
+        }));
+        visited.sort_unstable();
+        assert_eq!(visited, [0, 1], "only changes in the indexed subtree are examined");
+        assert!(
+            !tree.all_changes_at_or_below("d".into(), |idx| idx != 1),
+            "a rejected descendant stops the query"
+        );
+    }
 
     #[test]
     fn removing_an_absent_nested_change_does_not_remove_a_matching_root_suffix() {

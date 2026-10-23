@@ -630,6 +630,29 @@ for change in add enable disable; do
   )
 done
 
+for deleted in c f; do
+  git init "directory-replaced-partly-deleted-$deleted"
+  (
+    cd "directory-replaced-partly-deleted-$deleted"
+    mkdir d
+    echo c >d/c
+    echo f >d/f
+    git add d
+    git commit -m base
+    git branch A
+    git branch B
+    git checkout A
+    git rm -r d
+    echo x >d
+    git add d
+    git commit -m "replace directory with file"
+    git checkout B
+    # Shared deletions must not look like surviving descendants of the directory.
+    git rm "d/$deleted"
+    git commit -m "delete part of the directory"
+  )
+done
+
 git init deleted-file-added-dir-with-rename
 (cd deleted-file-added-dir-with-rename
   # Regression for a deletion that is processed but not applied:
@@ -2285,6 +2308,8 @@ baseline identical-renames-to-same-destination-with-mode-change A-B A B "gix res
 baseline same-content-different-modes-add A-B A B "gix resolves identical added content cleanly and prefers executable mode; Git retains an add/add mode conflict"
 baseline same-content-different-modes-enable A-B A B
 baseline same-content-different-modes-disable A-B A B
+baseline directory-replaced-partly-deleted-c A-B A B
+baseline directory-replaced-partly-deleted-f A-B A B
 baseline deleted-file-added-dir-with-rename A-B A B
 baseline deleted-file-replaced-by-renamed-dir A-B A B
 baseline renamed-file-replaced-by-renamed-dir A-B A B

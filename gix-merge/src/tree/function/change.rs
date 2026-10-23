@@ -159,18 +159,27 @@ pub(super) fn matching(
     our_tree: &TreeNodes,
     our_changes: &mut ChangeList,
 ) -> Option<PossibleConflict> {
-    let candidate = our_tree
-        .check_conflict(rewritten_location.map_or_else(|| theirs.source_location(), |(location, _)| location.as_bstr()))
-        .or_else(|| match theirs {
-            Change::Rewrite { location, .. } => our_tree.check_conflict(location.as_bstr()).filter(|candidate| {
-                candidate
-                    .change_idx()
-                    .is_some_and(|idx| matches!(our_changes[idx].inner, Change::Rewrite { .. }))
-            }),
-            _ => None,
-        });
+    let their_location =
+        rewritten_location.map_or_else(|| theirs.source_location(), |(location, _)| location.as_bstr());
+    let candidate = our_tree.check_conflict(their_location).or_else(|| match theirs {
+        Change::Rewrite { location, .. } => our_tree.check_conflict(location.as_bstr()).filter(|candidate| {
+            candidate
+                .change_idx()
+                .is_some_and(|idx| matches!(our_changes[idx].inner, Change::Rewrite { .. }))
+        }),
+        _ => None,
+    });
 
     candidate.filter(|ours| {
+        // Deletions alone leave no descendants that could collide with a replacement leaf.
+        if matches!(ours, PossibleConflict::TreeToNonTree { change_idx: None })
+            && our_tree.all_changes_at_or_below(their_location, |idx| {
+                let change = &our_changes[idx];
+                matches!(change.inner, Change::Deletion { .. }) && !change.was_processed_without_application()
+            })
+        {
+            return false;
+        }
         ours.change_idx()
             .zip(needs_tree_insertion.flatten())
             .is_none_or(|(ours_idx, ignore_idx)| ours_idx != ignore_idx)
