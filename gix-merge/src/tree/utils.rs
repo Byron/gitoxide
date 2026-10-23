@@ -68,7 +68,7 @@ pub fn rewrite_location_with_renamed_directory(their_location: &BStr, passed_cha
     }
 }
 
-/// Produce a side-qualified path for `file_path` like `a/b`, using `editor` and `tree` to assure uniqueness.
+/// Produce a side-qualified path for `file_path` like `a/b`, using `editor` and `trees` to assure uniqueness.
 ///
 /// This normally keeps the file in its directory, as in `a/b~side`. If a non-tree component blocks that directory,
 /// the blocker itself is qualified instead, as in `a~side/b`, because changing only the child name could never make
@@ -76,7 +76,7 @@ pub fn rewrite_location_with_renamed_directory(their_location: &BStr, passed_cha
 pub fn unique_path_in_tree(
     file_path: &BStr,
     editor: &tree::Editor<'_>,
-    tree: &TreeNodes,
+    trees: &[&TreeNodes],
     side_name: &BStr,
 ) -> Result<BString> {
     let mut qualifier = BString::from("~");
@@ -100,12 +100,16 @@ pub fn unique_path_in_tree(
             }
             buf.extend_from_slice(&file_path[component_end..]);
 
-            let conflict = tree.check_conflict(buf.as_bstr());
-            if !at_root && matches!(conflict, Some(PossibleConflict::NonTreeToTree { .. })) {
+            let mut conflicts = trees.iter().filter_map(|tree| tree.check_conflict(buf.as_bstr()));
+            if !at_root
+                && conflicts
+                    .clone()
+                    .any(|conflict| matches!(conflict, PossibleConflict::NonTreeToTree { .. }))
+            {
                 break;
             }
             if editor.get(to_components_bstring_ref(&buf)).is_none()
-                && conflict.is_none_or(|conflict| matches!(conflict, PossibleConflict::PassedRewrittenDirectory { .. }))
+                && conflicts.all(|conflict| matches!(conflict, PossibleConflict::PassedRewrittenDirectory { .. }))
             {
                 return Ok(buf);
             }
@@ -907,7 +911,7 @@ mod tree_nodes_tests {
         );
 
         assert_eq!(
-            unique_path_in_tree("dir/file".into(), &editor, &tree, "OURS".into())?,
+            unique_path_in_tree("dir/file".into(), &editor, &[&tree], "OURS".into())?,
             "dir~OURS/file",
             "the blocking path component itself must be moved aside"
         );

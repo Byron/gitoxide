@@ -630,6 +630,39 @@ for change in add enable disable; do
   )
 done
 
+for change in add modify; do
+  for types in blob-link blob-commit link-commit; do
+    git init "distinct-types-$change-$types"
+    (
+      cd "distinct-types-$change-$types"
+      git config core.symlinks false
+      if test "$change" = modify; then
+        echo 1 >a
+        git add a
+      fi
+      git commit --allow-empty -m base
+      commit_id=$(git rev-parse HEAD)
+      make_resolve_tree ancestor A B
+      make_resolve_tree ancestor B A
+      git branch A
+      git branch B
+      for side in A B; do
+        git checkout -f "$side"
+        if test "$side" = A; then type=${types%-*}; else type=${types#*-}; fi
+        case "$type" in
+          blob) mode=100644; object_id=$(echo 2 | git hash-object -w --stdin) ;;
+          link) mode=120000; object_id=$(printf target | git hash-object -w --stdin) ;;
+          commit) mode=160000; object_id=$commit_id ;;
+        esac
+        # Index-only setup also works without native symlink or submodule support.
+        git update-index --add --cacheinfo "$mode,$object_id,a"
+        git commit -m "$side uses $type"
+        if test "$side" = A; then make_resolve_tree ours A B; else make_resolve_tree ours B A; fi
+      done
+    )
+  done
+done
+
 for deleted in c f; do
   git init "directory-replaced-partly-deleted-$deleted"
   (
@@ -2310,6 +2343,11 @@ baseline same-content-different-modes-enable A-B A B
 baseline same-content-different-modes-disable A-B A B
 baseline directory-replaced-partly-deleted-c A-B A B
 baseline directory-replaced-partly-deleted-f A-B A B
+for change in add modify; do
+  for types in blob-link blob-commit link-commit; do
+    baseline "distinct-types-$change-$types" A-B A B
+  done
+done
 baseline deleted-file-added-dir-with-rename A-B A B
 baseline deleted-file-replaced-by-renamed-dir A-B A B
 baseline renamed-file-replaced-by-renamed-dir A-B A B
@@ -3553,3 +3591,40 @@ git init identical-additions-after-directory-rename
   git commit -m "add the same file at its original location"
 )
 baseline identical-additions-after-directory-rename A-B A B
+
+# A distinct-type conflict relocates the regular file. Its generated name must
+# avoid unrelated paths from either side and unchanged paths in the base tree.
+for occupancy in opposite unchanged; do
+  for regular_side in A B; do
+    repo="distinct-types-occupied-$occupancy-$regular_side"
+    git init "$repo"
+    (
+      cd "$repo"
+      git config core.symlinks false
+      echo base >a
+      if test "$occupancy" = unchanged; then
+        echo untouched >"a~$regular_side"
+      fi
+      git add .
+      git commit -m base
+      git branch A
+      git branch B
+      for side in A B; do
+        git checkout -f "$side"
+        if test "$side" = "$regular_side"; then
+          echo edited >a
+          git add a
+        else
+          blob_id=$(printf target | git hash-object -w --stdin)
+          git update-index --cacheinfo "120000,$blob_id,a"
+          if test "$occupancy" = opposite; then
+            echo unrelated >"a~$regular_side"
+            git add "a~$regular_side"
+          fi
+        fi
+        git commit -m "$side changes a"
+      done
+    )
+    baseline "$repo" A-B A B
+  done
+done
