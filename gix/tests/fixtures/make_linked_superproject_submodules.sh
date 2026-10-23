@@ -16,7 +16,6 @@ git init -q module1
 
 git init superproject
 git -C superproject submodule add ../module1 m1
-git -C superproject/m1 worktree add ../../worktree-of-submodule
 git -C superproject commit -m record-submodule
 
 # Each linked superproject owns its submodule repository, while the main
