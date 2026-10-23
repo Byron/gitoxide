@@ -5,7 +5,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 #[derive(Debug)]
@@ -27,6 +27,8 @@ struct Entry {
 /// Specifically, it checks that:
 /// - every file that would be included by `cargo package` has exactly one matching entry in
 ///   `UPSTREAM-PROVENANCE.tsv`
+/// - every file with an entry is packaged, except `.cargo_vcs_info.json`, which Cargo may omit
+/// - `.cargo_vcs_info.json` has an entry even if Cargo omits it
 /// - upstream-derived files record the expected upstream commit and retrieval command
 /// - upstream files marked `unchanged` still match the recorded upstream blob
 /// - upstream files marked `modified` no longer match upstream and carry an in-file notice that
@@ -35,18 +37,17 @@ struct Entry {
 #[test]
 #[cfg(unix)]
 fn packaged_files_have_matching_provenance_and_modified_files_have_notices() {
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let manifest_dir = manifest_dir();
     let workspace_root = manifest_dir
         .parent()
         .expect("workspace root is the parent of the crate manifest directory");
-    let provenance_path = manifest_dir.join("UPSTREAM-PROVENANCE.tsv");
-    let provenance = parse_provenance(&provenance_path);
+    let provenance = recorded_provenance();
     let packaged_files = cargo_package_list(workspace_root);
 
     let packaged_set: BTreeSet<_> = packaged_files.into_iter().collect();
-    let manifest_set: BTreeSet<_> = provenance.entries.keys().cloned().collect();
     assert_eq!(
-        manifest_set, packaged_set,
+        expected_package_surface(&provenance, &packaged_set),
+        packaged_set,
         "package surface and provenance manifest diverged"
     );
 
@@ -118,6 +119,82 @@ fn packaged_files_have_matching_provenance_and_modified_files_have_notices() {
             other => panic!("{path}: unknown origin {other}"),
         }
     }
+}
+
+/// Cargo's VCS metadata, which it omits when it finds no Git repository it can open, such as outside
+/// Git or in a SHA-256 repository (which Cargo 1.99 can't open), or when `HEAD` is unborn.
+const VCS_INFO: &str = ".cargo_vcs_info.json";
+
+/// Returns the files `UPSTREAM-PROVENANCE.tsv` expects in a package that contains `packaged`.
+///
+/// The entry for [`VCS_INFO`] is required even if Cargo omitted the file, so that the manifest
+/// stays complete for packages that include it.
+fn expected_package_surface(provenance: &Provenance, packaged: &BTreeSet<String>) -> BTreeSet<String> {
+    assert!(
+        provenance.entries.contains_key(VCS_INFO),
+        "{VCS_INFO}: needs a provenance entry even when Cargo omits it"
+    );
+    let mut expected: BTreeSet<_> = provenance.entries.keys().cloned().collect();
+    if !packaged.contains(VCS_INFO) {
+        expected.remove(VCS_INFO);
+    }
+    expected
+}
+
+fn manifest_dir() -> &'static Path {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+}
+
+fn recorded_provenance() -> Provenance {
+    parse_provenance(&manifest_dir().join("UPSTREAM-PROVENANCE.tsv"))
+}
+
+/// Checks [`expected_package_surface`] directly, without running `cargo package`: only the VCS
+/// metadata may be missing, and a package missing any other file still mismatches.
+#[test]
+fn only_vcs_metadata_may_be_missing_from_package() {
+    let provenance = recorded_provenance();
+    let mut packaged: BTreeSet<_> = provenance.entries.keys().cloned().collect();
+    assert_eq!(
+        expected_package_surface(&provenance, &packaged),
+        packaged,
+        "a package with VCS metadata must match every entry"
+    );
+    packaged.remove(VCS_INFO);
+    assert_eq!(
+        expected_package_surface(&provenance, &packaged),
+        packaged,
+        "a package without VCS metadata must match every other entry"
+    );
+
+    for path in ["LICENSE", "Cargo.lock"] {
+        let mut missing = packaged.clone();
+        let removed = missing.remove(path);
+        assert!(removed, "regression case must remove a packaged file");
+        assert_ne!(
+            expected_package_surface(&provenance, &missing),
+            missing,
+            "{path}: no other file may be missing from the package"
+        );
+    }
+    packaged.insert("src/unrecorded.rs".into());
+    assert_ne!(
+        expected_package_surface(&provenance, &packaged),
+        packaged,
+        "packaged files without an entry must be detected"
+    );
+}
+
+#[test]
+#[should_panic(expected = "needs a provenance entry even when Cargo omits it")]
+fn vcs_metadata_needs_an_entry_even_when_not_packaged() {
+    let mut provenance = recorded_provenance();
+    provenance
+        .entries
+        .remove(VCS_INFO)
+        .expect("manifest records VCS metadata");
+    let packaged: BTreeSet<_> = provenance.entries.keys().cloned().collect();
+    expected_package_surface(&provenance, &packaged);
 }
 
 fn parse_provenance(tsv_path: &Path) -> Provenance {
