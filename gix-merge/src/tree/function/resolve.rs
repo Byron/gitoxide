@@ -270,11 +270,11 @@ pub fn tree<'objects>(
                                 )?;
                                 match resolve_tree_conflicts {
                                     None => {
-                                        editor.upsert(toc(&renamed_location), mode.kind(), id.to_owned())?;
+                                        apply_change(&mut editor, theirs, Some(&renamed_location))?;
                                     }
                                     Some(ResolveWith::Ours) => {
                                         if outer_side.is_swapped() {
-                                            editor.upsert(to_components(location), mode.kind(), id.to_owned())?;
+                                            apply_change(&mut editor, theirs, None)?;
                                         }
                                     }
                                     Some(ResolveWith::Ancestor) => {

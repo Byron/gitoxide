@@ -132,8 +132,8 @@ pub(super) fn collect(
 /// rewrite on our side. For example, if our side renamed `a` to `b`, their change at `a/x`
 /// must be retried at `b/x`. The tuple contains that effective path and the index of the
 /// directory rewrite which produced it, so matching starts where the change will actually
-/// be applied. A rewrite is also checked at its destination, but only for a rewrite on our
-/// side, to expose rewrite/rewrite interactions which are not visible at the source path.
+/// be applied. A rewrite is also checked at its destination for rewrites or a directory
+/// with only descendant changes, exposing interactions not visible at the source path.
 ///
 /// `needs_tree_insertion` identifies a clone appended for a later retry. The resolver inserts
 /// such a deferred change into its own side's [`TreeNodes`] immediately before processing it,
@@ -159,14 +159,18 @@ pub(super) fn matching(
     our_tree: &TreeNodes,
     our_changes: &mut ChangeList,
 ) -> Option<PossibleConflict> {
-    let their_location =
+    let mut their_location =
         rewritten_location.map_or_else(|| theirs.source_location(), |(location, _)| location.as_bstr());
     let candidate = our_tree.check_conflict(their_location).or_else(|| match theirs {
-        Change::Rewrite { location, .. } => our_tree.check_conflict(location.as_bstr()).filter(|candidate| {
-            candidate
-                .change_idx()
-                .is_some_and(|idx| matches!(our_changes[idx].inner, Change::Rewrite { .. }))
-        }),
+        Change::Rewrite { location, .. } => {
+            their_location = location.as_bstr();
+            our_tree.check_conflict(their_location).filter(|candidate| {
+                matches!(candidate, PossibleConflict::TreeToNonTree { change_idx: None })
+                    || candidate
+                        .change_idx()
+                        .is_some_and(|idx| matches!(our_changes[idx].inner, Change::Rewrite { .. }))
+            })
+        }
         _ => None,
     });
 

@@ -3567,3 +3567,42 @@ for occupancy in opposite unchanged; do
     baseline "$repo" A-B A B
   done
 done
+
+# A keeps and modifies a directory, while B replaces it with a renamed file or
+# symlink. The rename must retain its contents beside the surviving directory.
+for kind in blob symlink; do
+  repo=renamed-$kind-vs-modified-directory
+  git init "$repo"
+  (cd "$repo"
+    mkdir d
+    write_lines 1 >d/f
+    if test "$kind" = symlink; then
+      ln -s payload a
+    else
+      write_lines payload >a
+    fi
+    git add .
+    git commit -m "base with a rename source and a directory"
+    git branch A
+    git branch B
+
+    git checkout A
+    write_lines 2 >d/f
+    git commit -am "modify the directory's file"
+
+    git checkout B
+    git rm -r d
+    git mv a d
+    git commit -m "replace the directory with the renamed source"
+  )
+  baseline "$repo" A-B A B
+  (cd "$repo"
+    git read-tree A^
+    make_resolve_tree ancestor A B
+    make_resolve_tree ancestor B A
+    git read-tree A
+    make_resolve_tree ours A B
+    git read-tree B
+    make_resolve_tree ours B A
+  )
+done
