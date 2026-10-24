@@ -92,14 +92,14 @@ Follow "purposeful conventional commits" style:
   - Use Markdown generously whenever markup helps readers understand or navigate the prose.
   - Use the body to share everything known about what motivated the change, not merely what changed.
 - Use conventional commit prefixes ONLY if message should appear in changelog
-- Breaking changes MUST use `!` before the colon: `change!:`, `remove!:`, `rename!:`, or _scoped_ forms like `feat(gix-odb)!:`
-- Features/fixes visible to users: `feat:`, `fix:`
-- For a changelog-worthy commit touching multiple crates, _scope_ it to the crate that should receive the changelog entry, like `feat!(gix-ref)`.
+- Every Conventional Commit title MUST include a _scope_ naming the crate that should receive the changelog entry, even when the commit touches only that crate. If it touches paths outside that crate or multiple crates, still scope it to the crate whose changelog should receive the entry.
+- Breaking changes MUST use `!` after the scope and before the colon: `change(gix)!:`, `remove(gix)!:`, `rename(gix)!:`, or `feat(gix-odb)!:`
+- Features/fixes visible to users: `feat(gix):`, `fix(gix):`
 - Refactors/chores: no prefix (don't affect users)
 - Examples:
-  - `feat: add Repository::foo() to do great things. (#234)`
-  - `fix: don't panic when calling foo() in a bare repository. (#456)`
-  - `change!: rename Foo to Bar. (#123)`
+  - `feat(gix): add Repository::foo() to do great things. (#234)`
+  - `fix(gix): don't panic when calling foo() in a bare repository. (#456)`
+  - `change(gix)!: rename Foo to Bar. (#123)`
   - `feat(gix-odb)!: add a new object lookup API`
   - `fix(gix-ref)!: reject invalid reference names`
 
@@ -232,7 +232,7 @@ Follow "purposeful conventional commits" style:
 - Every commit must be self-contained and pass CI independently
    - Feel free to run `etc/scripts/ci-check-local.sh --thorough` until it passes as proxy, as running every commit against CI isn't feasible.
 - Keep breaking changes and all adaptations required to build and test the workspace in the same commit
-- When such a commit touches multiple crates, _scope_ its conventional commit message to the crate whose changelog should receive the entry
+- Every Conventional Commit title must have a _scope_ naming the crate whose changelog should receive the entry, including when the commit touches multiple crates
 
 ## When Suggesting Changes
 
