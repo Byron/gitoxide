@@ -1,6 +1,6 @@
-# Copilot Instructions for Gitoxide
+# Repository Development Rules for Gitoxide
 
-This repository contains `gitoxide` - a pure Rust implementation of Git. This document provides guidance for GitHub Copilot when working with this codebase.
+This repository contains `gitoxide` - a pure Rust implementation of Git. These development rules apply to all contributors, both humans and agents, regardless of the tools they use.
 
 ## Project Overview
 

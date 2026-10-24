@@ -3,11 +3,18 @@
 We are happy to have you and help you get started. If you have questions, feel free to
 [start a discussion][discussions].
 
-Before beginning implementation, open a [discussion][discussions] for any code submission expected to
-add or modify more than ~500 source lines of code (SLOC).
+## Where to start
+
+- **Pull requests:** If you have a fix for a problem, open a PR directly. No prior issue is required.
+- **Issues:** Report bugs or shortcomings only when you haven't found a solution, or the problem is too
+  unclear to get started on a fix.
+- **Discussions:** Start a [discussion][discussions] before implementing any feature, or work likely to
+  lead to a large PR. This includes submissions expected to add or modify more than ~500 source lines of code (SLOC).
+
+## Preparing a pull request
 
 We recommend running `just test` during development to assure CI is green before pushing. See the
-[collaboration guide] for our workflow and the [development guide] for implementation practices.
+[development guide] for implementation practices.
 
 ## Prevent agent impersonation
 
@@ -20,6 +27,5 @@ person as the speaker, such as proofreading or wording polish, does not require 
 Attributing AI assistance in commit metadata, for example with an `Assisted-by:` or `Co-authored-by:` trailer,
 is welcome but not required.
 
-[collaboration guide]: https://github.com/GitoxideLabs/gitoxide/blob/main/COLLABORATING.md
 [development guide]: https://github.com/GitoxideLabs/gitoxide/blob/main/DEVELOPMENT.md
 [discussions]: https://github.com/GitoxideLabs/gitoxide/discussions
