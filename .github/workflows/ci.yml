@@ -398,7 +398,9 @@ jobs:
         include:
           - container-architecture: i386
             runner-architecture: amd64
-            runner-os: ubuntu-latest
+            # Hold back the move to ubuntu-26.04 (via ubuntu-latest) until a fix for
+            # https://github.com/actions/runner-images/issues/14790 is released.
+            runner-os: ubuntu-24.04
             host-triple: i686-unknown-linux-gnu
           - container-architecture: arm32v7
             runner-architecture: arm64
