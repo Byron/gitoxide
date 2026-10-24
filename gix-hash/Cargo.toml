@@ -27,7 +27,7 @@ serde = ["dep:serde", "faster-hex/serde"]
 bstr = ["dep:bstr"]
 
 [dependencies]
-gix-utils = { version = "^0.5.1", path = "../gix-utils", features = ["progress"] }
+gix-utils = { version = "^0.5.2", path = "../gix-utils", features = ["progress"] }
 gix-error = { version = "^0.5.2", path = "../gix-error" }
 
 bstr = { version = "1.12.0", optional = true, default-features = false, features = ["alloc"] }

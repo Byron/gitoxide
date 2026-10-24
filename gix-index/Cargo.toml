@@ -31,7 +31,7 @@ serde = ["dep:serde", "smallvec/serde", "gix-hash/serde"]
 
 [dependencies]
 gix-trace = { version = "^0.3.1", path = "../gix-trace" }
-gix-parallel = { version = "^0.50.0", path = "../gix-parallel" }
+gix-parallel = { version = "^0.50.1", path = "../gix-parallel" }
 gix-hash = { version = "^0.28.1", path = "../gix-hash" }
 gix-error = { version = "^0.5.2", path = "../gix-error" }
 gix-bitmap = { version = "^0.6.1", path = "../gix-bitmap" }
@@ -40,7 +40,7 @@ gix-validate = { version = "^0.13.1", path = "../gix-validate" }
 gix-traverse = { version = "^0.64.0", path = "../gix-traverse" }
 gix-lock = { version = "^26.0.0", path = "../gix-lock" }
 gix-fs = { version = "^0.24.1", path = "../gix-fs" }
-gix-utils = { version = "^0.5.1", path = "../gix-utils", features = ["progress"] }
+gix-utils = { version = "^0.5.2", path = "../gix-utils", features = ["progress"] }
 
 hashbrown = "0.17.1"
 fnv = "1.0.7"

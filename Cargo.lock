@@ -1728,7 +1728,7 @@ dependencies = [
 
 [[package]]
 name = "gix-config"
-version = "0.62.1"
+version = "0.62.2"
 dependencies = [
  "bstr",
  "bytesize",
@@ -1985,7 +1985,7 @@ dependencies = [
 
 [[package]]
 name = "gix-hashtable"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "gix-hash",
  "hashbrown 0.17.1",
@@ -1994,7 +1994,7 @@ dependencies = [
 
 [[package]]
 name = "gix-ignore"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "bstr",
  "document-features",
@@ -2009,7 +2009,7 @@ dependencies = [
 
 [[package]]
 name = "gix-imara-diff"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "arbitrary",
  "bstr",
@@ -2284,7 +2284,7 @@ dependencies = [
 
 [[package]]
 name = "gix-parallel"
-version = "0.50.0"
+version = "0.50.1"
 dependencies = [
  "crossbeam-channel",
  "document-features",
@@ -2468,7 +2468,7 @@ dependencies = [
 
 [[package]]
 name = "gix-sec"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "bitflags 2.13.0",
  "document-features",
@@ -2706,7 +2706,7 @@ dependencies = [
 
 [[package]]
 name = "gix-utils"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "bstr",
  "bytes",

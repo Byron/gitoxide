@@ -23,7 +23,7 @@ sha256 = ["gix-hash/sha256"]
 [dependencies]
 gix-error = { version = "^0.5.2", path = "../gix-error" }
 gix-hash = { version = "^0.28.1", path = "../gix-hash" }
-gix-hashtable = { version = "^0.18.0", path = "../gix-hashtable" }
+gix-hashtable = { version = "^0.18.1", path = "../gix-hashtable" }
 gix-object = { version = "^0.66.1", path = "../gix-object" }
 
 [dev-dependencies]
