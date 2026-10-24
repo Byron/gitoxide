@@ -1,12 +1,148 @@
 
 
+## 0.3.3 (2026-10-24)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 2 calendar days.
+ - 2 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Merge pull request #3094 from GitoxideLabs/uni-diff-printer-fuzz-fix ([`0b9572d`](https://github.com/GitoxideLabs/gitoxide/commit/0b9572d8c201629918c33037d3e7750d6cddee7b))
+    - Bound minimal Myers input in the unified diff fuzz target ([`ccd1541`](https://github.com/GitoxideLabs/gitoxide/commit/ccd1541cad54178e7b5ba523a8b908817e8df59d))
+    - Merge pull request #3088 from EliahKagan/claude/run-ci/optional-vcs-provenance ([`f984c56`](https://github.com/GitoxideLabs/gitoxide/commit/f984c56f031445fe6c17d63eb890865e4d142127))
+    - Make `.cargo_vcs_info.json` optional in `gix-imara-diff` provenance test ([`2afec0e`](https://github.com/GitoxideLabs/gitoxide/commit/2afec0e7650aa65f477fad15cca4462e633b4aa8))
+    - Merge pull request #3083 from GitoxideLabs/report-october ([`e87b6ee`](https://github.com/GitoxideLabs/gitoxide/commit/e87b6eefbcaa77156ddee85576c847e395ec0586))
+</details>
+
+## 0.3.2 (2026-10-22)
+
+### Bug Fixes
+
+ - <csr-id-b7b1aa767d44a5ce1a31319fab1c76a92be8327e/> compact removals before additions
+   <!-- agent -->
+   Text merges of short inputs with repeated lines can choose a different
+   alignment from `git merge-file`: issue #3076 case 1 falsely conflicts, and
+   case 5 silently drops a repeated line. Cases 2, 3, and 4 already agree
+   with Git after the recent Myers improvements.
+   
+   Run the removal-side post-processing pass before the addition-side pass.
+   Each pass aligns its movable groups with the other side's current groups,
+   so the order affects which equally valid diff alignment survives. Fix this
+   in the shared post-processor for merge, diff, blame, and word-diff callers.
+   
+   Add all five exact minimized inputs to the existing `gix-merge` baseline,
+   including their missing final newlines. Compare both merge directions
+   against Git's output and conflict status.
+   
+   Git reference: `git merge-file -p ours base theirs` with Git 2.54.0
+   (Apple Git-157). The reference checkout's `xdiff/xmerge.c` and
+   `xdiff/xdiffi.c` call `xdl_change_compact()` on `xdf1` before `xdf2`.
+   The reference checkout reports `2.55.0.782.g1630431f32.dirty`.
+ - <csr-id-abdfc45db13606f552ab49bec57764a1b2fc8c2a/> number the edit cost of a Myers split like `xdl_split()`
+   When the middle snake of a split is expensive to find, Git's `xdl_split()` first tries a
+   heuristic that accepts a good enough snake once the edit cost exceeds `heur_min`, and gives
+   up with the furthest reaching path once the cost reaches `mxcost`. It counts that cost from
+   1, in `for (ec = 1;; ec++)`, and checks the limit at the end of each round.
+   
+   `gix-imara-diff` counted from 0 and checked the limit before each round, so it searched one
+   round longer than Git, applied the heuristic one round later, and scaled its threshold
+   (`XDL_K_HEUR * ec`) with a cost that was one too small. Large diffs could then split
+   differently and come out with other line counts than `git diff`.
+   
+   The cost is now counted the way Git counts it. Unlike Git, `MyersMinimal` remains bounded by
+   the same limit, so adversarial inputs still can't make the search quadratic.
+   
+   Together with the previous commit, the line counts of every file compared with
+   `git diff-tree --numstat` over the last 4,000 non-merge commits of git.git and the last 1,500
+   of gitoxide now agree, as do those of 300 multi-commit `git diff` ranges across both. Of 216
+   pseudo-random file pairs of 30 to 5,000 lines, the released version disagreed with
+   `git diff --no-index --numstat` on 37, and this one on none.
+ - <csr-id-bf62edd59b3093d30b0d97b45e4efbbb991884eb/> count lines across the whole input like `xdl_cleanup_records()`
+   Before running Myers, Git prunes lines that can't be matched, and frequent lines that sit
+   inside runs of such lines. It judges every line by how often it occurs in the *whole* other
+   file, and derives its frequency limit from the *whole* file's line count:
+   `xdl_classify_record()` counts every line of both files while preparing them, and only then
+   does `xdl_trim_ends()` strip the common prefix and postfix before `xdl_cleanup_records()`
+   classifies the lines in between.
+   
+   `gix-imara-diff` stripped the common prefix and postfix first and took both the occurrence
+   counts and the limits from what remained. Frequent lines like blank lines or braces mostly
+   live in the unchanged parts of a file, so they were rarely considered frequent, and lines
+   Git prunes were kept and matched instead. Each one made the diff differ from `git diff` by
+   one removal and one insertion. The existing parity tests sidestepped this by making the
+   first and last lines differ so nothing could be stripped.
+   
+   Now `myers::diff()` counts the tokens of its whole input and trims the common ends itself.
+   That also makes the histogram fallback match `xdl_fall_back_diff()`, which prepares the
+   subrange it is given anew.
+   
+   `MyersMinimal` applied the frequency limit as well, while Git's `XDF_NEED_MINIMAL` sets it
+   to infinity so no line is ever pruned for being frequent.
+   
+   Comparing the line counts of every non-merge commit with `git diff-tree --numstat` over the
+   last 4,000 commits of git.git and the last 1,500 of gitoxide, the number of files whose
+   counts differed went from 75 to 26 and from 29 to 2 respectively.
+
+### Performance
+
+ - <csr-id-d6a45b2f1ac13317f612635d78d62c6faf60c4ac/> skip occurrence counting for trivial Myers diffs
+   After trimming common prefixes and suffixes, an empty side means the
+   remaining region contains only insertions or deletions, or both inputs
+   are identical.
+   
+   Return early in these cases, avoiding occurrence counting,
+   preprocessing, and Myers search. Nontrivial comparisons still use
+   occurrence counts and frequency limits from the complete inputs.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 14 calendar days.
+ - 14 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#3076](https://github.com/GitoxideLabs/gitoxide/issues/3076)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#3076](https://github.com/GitoxideLabs/gitoxide/issues/3076)**
+    - Compact removals before additions ([`b7b1aa7`](https://github.com/GitoxideLabs/gitoxide/commit/b7b1aa767d44a5ce1a31319fab1c76a92be8327e))
+ * **Uncategorized**
+    - Release gix-error v0.5.2, gix-date v0.18.1, gix-actor v0.44.1, gix-trace v0.3.1, gix-validate v0.13.1, gix-path v0.14.1, gix-quote v0.10.1, gix-command v0.12.1, gix-hash v0.28.1, gix-fs v0.24.1, gix-tempfile v26.0.1, gix-object v0.66.1, gix-glob v0.29.1, gix-attributes v0.37.1, gix-packetline v0.24.1, gix-filter v0.36.1, gix-chunk v0.10.1, gix-commitgraph v0.42.0, gix-revwalk v0.38.0, gix-traverse v0.64.0, gix-worktree-stream v0.39.0, gix-archive v0.39.0, gix-bitmap v0.6.1, gix-lock v26.0.1, gix-index v0.58.0, gix-config-value v0.21.1, gix-pathspec v0.22.1, gix-worktree v0.59.0, gix-imara-diff v0.3.2, gix-diff v0.70.0, gix-blame v0.20.0, gix-ref v0.69.1, gix-config v0.62.1, gix-prompt v0.19.1, gix-url v0.40.1, gix-credentials v0.42.1, gix-discover v0.57.1, gix-dir v0.32.0, gix-mailmap v0.36.1, gix-revision v0.52.0, gix-merge v0.23.0, gix-negotiate v0.38.0, gix-note v0.3.1, gix-zlib v0.4.0, gix-pack v0.77.0, gix-odb v0.87.0, gix-refspec v0.47.1, gix-shallow v0.15.1, gix-transport v0.62.0, gix-protocol v0.68.0, gix-status v0.37.0, gix-submodule v0.36.1, gix-worktree-state v0.37.0, gix v0.90.0, gix-fsck v0.27.1, gitoxide-core v0.64.0, gix-tix v0.6.0, gitoxide v0.61.0, safety bump 21 crates ([`dd39fb6`](https://github.com/GitoxideLabs/gitoxide/commit/dd39fb66e3b1551c9fe849043e39b357a9799ca1))
+    - Merge pull request #3080 from cruessler/add-shortcut-for-trivial-myers-changes ([`59ba38b`](https://github.com/GitoxideLabs/gitoxide/commit/59ba38b89a4dcaa829f21db437306facbddd7ae7))
+    - Review ([`b7927e6`](https://github.com/GitoxideLabs/gitoxide/commit/b7927e6c0160a8c01107cdb3934a595a47b2697e))
+    - Remove commented out section ([`28456e1`](https://github.com/GitoxideLabs/gitoxide/commit/28456e141ae41f76ba71cf8f3d28a79e2c02452c))
+    - Skip occurrence counting for trivial Myers diffs ([`d6a45b2`](https://github.com/GitoxideLabs/gitoxide/commit/d6a45b2f1ac13317f612635d78d62c6faf60c4ac))
+    - Merge pull request #3077 from GitoxideLabs/fix-merge-file ([`4439d41`](https://github.com/GitoxideLabs/gitoxide/commit/4439d41098e0b4a82f99f270fe92d0bd83965b3e))
+    - Merge pull request #3074 from GitoxideLabs/fix/imara-myers-whole-file-occurrences ([`ad129e1`](https://github.com/GitoxideLabs/gitoxide/commit/ad129e12f23101312b38f2320f3d336a737fe137))
+    - Review ([`82b51f8`](https://github.com/GitoxideLabs/gitoxide/commit/82b51f83f1385fe241f7a1b8b1dc5e084080e6dc))
+    - Number the edit cost of a Myers split like `xdl_split()` ([`abdfc45`](https://github.com/GitoxideLabs/gitoxide/commit/abdfc45db13606f552ab49bec57764a1b2fc8c2a))
+    - Count lines across the whole input like `xdl_cleanup_records()` ([`bf62edd`](https://github.com/GitoxideLabs/gitoxide/commit/bf62edd59b3093d30b0d97b45e4efbbb991884eb))
+    - Merge pull request #3048 from GitoxideLabs/new-release ([`5fccccf`](https://github.com/GitoxideLabs/gitoxide/commit/5fccccfdedd17f7d4b0cc57039d118a3496aa8aa))
+</details>
+
 ## 0.3.1 (2026-10-08)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 13 calendar days.
+ - 4 commits contributed to the release over the course of 13 calendar days.
  - 13 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -18,6 +154,7 @@
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gix-error v0.5.0, gix-date v0.18.0, gix-actor v0.44.0, gix-trace v0.3.0, gix-validate v0.13.0, gix-path v0.14.0, gix-utils v0.5.0, gix-quote v0.10.0, gix-command v0.12.0, gix-hash v0.28.0, gix-hashtable v0.18.0, gix-parallel v0.50.0, gix-fs v0.24.0, gix-tempfile v26.0.0, gix-object v0.66.0, gix-glob v0.29.0, gix-attributes v0.37.0, gix-packetline v0.24.0, gix-filter v0.36.0, gix-chunk v0.10.0, gix-commitgraph v0.41.0, gix-revwalk v0.37.0, gix-traverse v0.63.0, gix-worktree-stream v0.38.0, gix-archive v0.38.0, gix-bitmap v0.6.0, gix-lock v26.0.0, gix-index v0.57.0, gix-config-value v0.21.0, gix-pathspec v0.22.0, gix-ignore v0.24.0, gix-worktree v0.58.0, gix-imara-diff v0.3.1, gix-diff v0.69.0, gix-blame v0.19.0, gix-ref v0.69.0, gix-sec v0.16.0, gix-config v0.62.0, gix-prompt v0.19.0, gix-url v0.40.0, gix-credentials v0.42.0, gix-discover v0.57.0, gix-dir v0.31.0, gix-mailmap v0.36.0, gix-revision v0.51.0, gix-merge v0.22.0, gix-negotiate v0.37.0, gix-note v0.3.0, gix-zlib v0.3.0, gix-pack v0.76.0, gix-odb v0.86.0, gix-refspec v0.47.0, gix-shallow v0.15.0, gix-transport v0.61.0, gix-protocol v0.67.0, gix-status v0.36.0, gix-submodule v0.36.0, gix-worktree-state v0.36.0, gix v0.89.0, gix-fsck v0.27.0, gitoxide-core v0.63.0, gix-tix v0.5.0, gitoxide v0.60.0, safety bump 62 crates ([`0115e90`](https://github.com/GitoxideLabs/gitoxide/commit/0115e902fd0334b8f370766993eb17babed3157f))
     - Prepare changelogs prior to release ([`794eeef`](https://github.com/GitoxideLabs/gitoxide/commit/794eeef835f8dde0fc8f4fd1d215f304d28d7f77))
     - Merge pull request #3033 from GitoxideLabs/gix-cli-progress-cleanup ([`80f4b03`](https://github.com/GitoxideLabs/gitoxide/commit/80f4b03257da9a664468e7b75247023187565a34))
     - Merge pull request #3020 from GitoxideLabs/report-september ([`5fb3dcf`](https://github.com/GitoxideLabs/gitoxide/commit/5fb3dcf6a86ac0c403776c8820bf5d23f187f7e1))

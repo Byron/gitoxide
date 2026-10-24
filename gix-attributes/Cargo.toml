@@ -25,7 +25,7 @@ serde = ["dep:serde", "bstr/serde", "gix-glob/serde"]
 
 
 [dependencies]
-gix-parallel = { version = "^0.50.0", path = "../gix-parallel" }
+gix-parallel = { version = "^0.50.1", path = "../gix-parallel" }
 gix-error = { version = "^0.5.2", path = "../gix-error", features = ["bstr"] }
 gix-path = { version = "^0.14.1", path = "../gix-path" }
 gix-quote = { version = "^0.10.1", path = "../gix-quote" }

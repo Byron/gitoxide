@@ -337,7 +337,7 @@ clear-target:
 [group('Releases')]
 [positional-arguments]
 release *args:
-    cargo smart-release --publish-uses-docs-rs-metadata --allow-empty-release-message --allow-fully-generated-changelogs --auto-publish-of-stable-crates -e "$@"
+    cargo smart-release --publish-uses-docs-rs-metadata --allow-empty-release-message --allow-fully-generated-changelogs --auto-publish-of-stable-crates "$@"
 
 # Get the unique `v*` tag at `HEAD`, or fail with an error
 [group('Releases')]

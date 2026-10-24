@@ -2,7 +2,7 @@ lints.workspace = true
 
 [package]
 name = "gix-utils"
-version = "0.5.1"
+version = "0.5.2"
 repository = "https://github.com/GitoxideLabs/gitoxide"
 license = "MIT OR Apache-2.0"
 description = "Utilities shared by the gitoxide crates"

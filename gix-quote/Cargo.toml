@@ -15,7 +15,7 @@ include = ["/src/**/*", "/LICENSE-*"]
 doctest = true
 
 [dependencies]
-gix-utils = { version = "^0.5.1", path = "../gix-utils" }
+gix-utils = { version = "^0.5.2", path = "../gix-utils" }
 
 bstr = { version = "1.12.0", default-features = false, features = ["std"] }
 gix-error = { version = "^0.5.2", path = "../gix-error", features = ["bstr"] }

@@ -43,7 +43,7 @@ gix-revwalk = { version = "^0.38.0", path = "../gix-revwalk" }
 gix-diff = { version = "^0.70.0", path = "../gix-diff", default-features = false, features = ["blob"] }
 gix-index = { version = "^0.58.0", path = "../gix-index" }
 gix-error = { version = "^0.5.2", path = "../gix-error" }
-imara-diff = { package = "gix-imara-diff", version = "^0.3.2", path = "../gix-imara-diff" }
+imara-diff = { package = "gix-imara-diff", version = "^0.3.3", path = "../gix-imara-diff" }
 
 bstr = { version = "1.12.0", default-features = false }
 nonempty = "0.12.0"
