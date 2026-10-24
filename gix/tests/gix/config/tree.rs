@@ -1186,7 +1186,7 @@ mod extensions {
 }
 
 mod init {
-    use gix::config::tree::Init;
+    use gix::config::tree::{Init, Key};
 
     /// Values are parsed like `extensions.objectFormat`, whose test covers the accepted names.
     #[test]
@@ -1199,6 +1199,21 @@ mod init {
             Some("invalid".as_bytes().into()),
             Some("GIT_DEFAULT_HASH"),
         );
+        for err in [
+            Init::DEFAULT_OBJECT_FORMAT
+                .validate("invalid".into())
+                .expect_err("invalid configuration"),
+            Init::DEFAULT_OBJECT_FORMAT
+                .validated_assignment("invalid".into())
+                .expect_err("invalid assignment"),
+        ] {
+            crate::config::key::assert_config_error(
+                &err,
+                "init.defaultObjectFormat",
+                Some("invalid".as_bytes().into()),
+                Some("GIT_DEFAULT_HASH"),
+            );
+        }
     }
 }
 
