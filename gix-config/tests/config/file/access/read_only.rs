@@ -56,6 +56,182 @@ fn typed_lookup_errors_can_be_erased() -> TestResult {
 }
 
 #[test]
+fn string_implicit_distinguishes_missing_implicit_and_explicit_values() -> TestResult {
+    for lossy in [false, true] {
+        let config = File::from_bytes_no_includes(
+            br#"
+            [core]
+                implicit
+                empty =
+                quoted = ""
+                value = "hello world"
+            "#,
+            Metadata::api(),
+            init::Options {
+                lossy,
+                ..Default::default()
+            },
+        )?;
+        assert_eq!(config.string_implicit("core.missing"), None, "a missing key is absent");
+        assert_eq!(config.string_implicit("missing.value"), None,);
+        assert_eq!(config.string_implicit("core.missing.value"), None,);
+        assert_eq!(config.string_implicit("invalid"), None, "invalid keys are absent");
+        assert_eq!(
+            config.string_implicit("core.implicit"),
+            Some(None),
+            "an implicit value is present without value bytes"
+        );
+        for key in ["core.empty", "core.quoted"] {
+            assert_eq!(
+                config.string_implicit(key),
+                Some(Some(bstring(""))),
+                "explicit empty values are distinct from implicit values"
+            );
+        }
+        assert_eq!(
+            config.string_implicit("core.value"),
+            Some(Some(bstring("hello world"))),
+            "explicit values are normalized"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn string_implicit_respects_precedence_and_subsections() -> TestResult {
+    for (input, expected) in [
+        (
+            "
+            [core]
+                value = first
+                value
+            ",
+            None,
+        ),
+        (
+            "
+            [core]
+                value
+                value = last
+            ",
+            Some("last"),
+        ),
+        (
+            "
+            [core]
+                value = first
+            [core]
+                value
+            ",
+            None,
+        ),
+        (
+            "
+            [core]
+                value
+            [core]
+                value = last
+            ",
+            Some("last"),
+        ),
+        (
+            "
+            [core]
+                value
+            [core]
+                value =
+            ",
+            Some(""),
+        ),
+    ] {
+        let config = File::try_from(
+            format!(
+                r#"
+                {input}
+                [core]
+                    other = ignored
+                [CORE "named"]
+                    VALUE = subsection
+                "#
+            )
+            .as_str(),
+        )?;
+        assert_eq!(
+            config.string_implicit("CORE.VALUE"),
+            Some(expected.map(bstring)),
+            "the last occurrence wins, even if implicit; sections without the key and named subsections are skipped"
+        );
+        assert_eq!(
+            config.string_implicit_by(String::from("core"), None, String::from("value")),
+            Some(expected.map(bstring)),
+            "component lookups accept owned names and resolve only sections without a subsection"
+        );
+        assert_eq!(
+            config.string_implicit_by("core", "named", "value"),
+            Some(Some(bstring("subsection"))),
+            "named subsections are resolved independently"
+        );
+        assert_eq!(
+            config.string_implicit("core.Named.value"),
+            None,
+            "subsection names remain case-sensitive"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn string_implicit_filters_section_metadata() -> TestResult {
+    let mut config = File::try_from(
+        "
+        [core]
+            value = first
+        ",
+    )?;
+    config.append(File::from_bytes_no_includes(
+        b"
+        [core]
+            value
+        [core]
+            other = ignored
+        ",
+        Metadata::from(gix_config::Source::Local),
+        Default::default(),
+    )?)?;
+    assert_eq!(
+        config.string_implicit_filter("core.value", |_| true),
+        Some(None),
+        "an accepted implicit value overrides earlier explicit values"
+    );
+    assert_eq!(
+        config.string_implicit_filter("core.value", |meta| meta.source == gix_config::Source::Api),
+        Some(Some(bstring("first"))),
+        "a rejected implicit value does not hide an earlier accepted value"
+    );
+    assert_eq!(
+        config.string_implicit_filter_by("core", None, "value", |meta| meta.source == gix_config::Source::Api),
+        Some(Some(bstring("first"))),
+        "component lookups use the same metadata filter"
+    );
+    assert_eq!(
+        config.string_implicit_filter_by("core", None, "value", |meta| meta.source == gix_config::Source::Local),
+        Some(None),
+        "component lookups retain accepted implicit values"
+    );
+    assert_eq!(
+        config.string_implicit_filter("core.value", |_| false),
+        None,
+        "rejecting all sections makes the key absent"
+    );
+    assert_eq!(
+        config.string_implicit_filter("core.missing", |_| true),
+        None,
+        "accepted sections without the key do not produce a value"
+    );
+    Ok(())
+}
+
+#[test]
 fn integer_accessors_apply_suffixes() -> TestResult {
     let config = File::try_from("[core]\nvalue = -2k\nvalue = 0x10m\n")?;
     assert_eq!(

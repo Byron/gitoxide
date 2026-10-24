@@ -156,7 +156,9 @@ impl PrepareFetch {
             Err(_) => false,
         };
 
-        let mut repo = crate::ThreadSafeRepository::init_opts(path, kind, create_opts, open_opts)?.to_thread_local();
+        // Clones adopt the remote's object format, so `init.defaultObjectFormat` doesn't apply.
+        let mut repo =
+            crate::ThreadSafeRepository::create_and_open(path, kind, create_opts, open_opts)?.to_thread_local();
         url.canonicalize(repo.options.current_dir_or_empty()).or_raise(|| {
             gix_error::message!(
                 "Failed to turn the relative file url {:?} into an absolute one",

@@ -43,10 +43,24 @@ impl ThreadSafeRepository {
     pub fn init_opts(
         directory: impl AsRef<Path>,
         kind: crate::create::Kind,
+        mut create_options: crate::create::Options,
+        open_options: crate::open::Options,
+    ) -> Result<Self> {
+        let directory = directory.as_ref();
+        if create_options.object_hash.is_none() {
+            create_options.object_hash = default_object_format(&open_options)?;
+        }
+        Self::create_and_open(directory, kind, create_options, open_options)
+    }
+
+    /// Like [`init_opts()`][Self::init_opts()], but without applying `init.defaultObjectFormat`.
+    pub(crate) fn create_and_open(
+        directory: &Path,
+        kind: crate::create::Kind,
         create_options: crate::create::Options,
         mut open_options: crate::open::Options,
     ) -> Result<Self> {
-        let (path, capabilities) = crate::create::into_with_capabilities(directory.as_ref(), kind, create_options)?;
+        let (path, capabilities) = crate::create::into_with_capabilities(directory, kind, create_options)?;
         if !capabilities.symlink {
             open_options.api_config_overrides.push("core.symlinks=false".into());
         }
@@ -85,4 +99,21 @@ impl ThreadSafeRepository {
 
         Ok(repo)
     }
+}
+
+/// Read `init.defaultObjectFormat` without repository context, like Git's format selection.
+fn default_object_format(options: &crate::open::Options) -> Result<Option<gix_hash::Kind>> {
+    let config = crate::config(None, options)?;
+    let key = &Init::DEFAULT_OBJECT_FORMAT;
+    let filter = options
+        .filter_config_section
+        .unwrap_or(crate::config::section::is_trusted);
+    let value = config.string_implicit_filter(key, filter);
+    value
+        .map(|value| {
+            let value = value
+                .ok_or_else(|| crate::config::key::error(key, "Missing configuration value").validation_error())?;
+            key.try_into_object_format(value.as_bstr())
+        })
+        .transpose()
 }

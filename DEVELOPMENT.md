@@ -1,6 +1,7 @@
 # Development Guide
 
 See the [contribution guide] for requirements to meet before beginning implementation.
+Follow the [repository-wide development rules](AGENTS.md); this guide provides additional workflow, tooling, and design background.
 
 [contribution guide]: https://github.com/GitoxideLabs/gitoxide/blob/main/CONTRIBUTING.md
 
@@ -30,87 +31,22 @@ bash etc/scripts/remap-release-paths.sh check target/release/gix target/release/
 
 ## Practices
 
- * **test-first development**
-   * protect against regression and make implementing features easy.
-   * user containers to test more elaborate user interactions
-   * keep it practical, knowing the Rust compiler already has your back
-     for the mundane things, like unhappy code paths.
-   * *use git itself* as reference implementation, and use their test-cases and fixtures where
-     appropriate. At the very least, try to learn from them.
-      * Run the same test against git whenever feasible to assure git agrees with our implementation.
-        See `gix-glob` for examples.
-   * *use libgit2* test fixtures and cases where appropriate, or learn from them.
  * **fuzzing**
    * fuzz parsers, algorithms, and other code that processes untrusted input.
    * add a regression test for every issue found before fixing it.
  * **benchmarks**
    * benchmark performance-sensitive changes before and after implementation.
    * use representative inputs and compare against git when applicable.
- * **safety first**
-   * handle all errors, never `unwrap()`. If needed, `expect("why")`.
-   * provide an error chain and make it easy to understand what went wrong.
-   * We `thiserror` generally.
  * Adhere to the [stability guide](https://github.com/GitoxideLabs/gitoxide/blob/main/STABILITY.md)
-
-## Commit Messages
-
-We use a style I'd call 'purposeful [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)', and instead of classifying
-every commit using _conventional commit_ messaging, we do so only if the message should show up in the changelog.
-
-The _subject_ usually informs about the *what* and the body provides details and explains the *why*.
-
-Commit messages _must_ show up in the changelog in case of breaking changes. Examples for that are:
-
-- change!: rename `Foo` to `Bar`. (#123)
-
-  And this is why we do it in the body.
-- remove!: `Repository::obsolete()`.
-
-  Nobody used this method.
-
-Features or other changes that are visible and people should know about look like this:
-
-- feat: add `Repository::foo()` to do great things. (#234)
-
-  And here is how it's used and some more details.
-- fix: don't panic when calling `foo()` in a bare repository. (#456)
-
-A conventional commit _scope_ naming the crate that should receive the changelog entry is required whenever a changelog-worthy
-commit touches paths outside that crate. If in doubt, always add the scope, for example
-`feat(gix-odb)!: add a new object lookup API` or `fix(gix-ref)!: reject invalid reference names`.
-
-Everything else, particularly refactors or chores, don't use _conventional commits_ as these don't affect users of the API.
-Examples could be:
-
-- make test module structure similar to the modules they are testing for consistency
-- `make fmt`
-- thanks clippy
-
-Please refrain from using `chore:` or `refactor:` prefixes as for the most part, users of the API don't care about those. When a `refactor`
-changes the API in some way, prefer to use `feat`, `change`, `rename` or `remove` instead, and most of the time the ones that are not `feat`
-are breaking so would be seen with their _exclamation mark_ suffix, like `change!`.
-
-### Reasoning
-
-Commit messages are used for guiding `cargo smart-release` to do most of the release work for us. This includes changelog generation
-as well as picking the right version bump for each crate.
-
-## Commit self-containment
-
-Every commit must be self-contained and pass CI independently. Keep a breaking change and all adaptations required to build and test the
-workspace in the same commit. Do not split them merely to route changelog entries. If that commit touches multiple crates, use the
-conventional commit _scope_ to name the crate whose changelog should receive the entry, as described above.
 
 ## Commit History
 
-We generally follow a 'track everything' approach and there is a lot of freedom leading to more commits rather than less. There
-is no obligation to squash commits or to otherwise tune the history.
+We use feature branches and pull requests to take advantage of CI and GitHub review tools, and merge with merge commits
+to make individual efforts stand out. There is no requirement to squash commits or linearize history.
+However, commits may be squashed when the history is too messy to review, and commit titles may receive minor edits.
 
-We use feature branches and PRs most of the time to be able to take advantage of CI and GitHub review tools, and merge with merge commits
-to make individual efforts stand out. There is no need for linearizing history or tuning it in any other way. However, each commit
-_must_ follow the guidelines laid out in the `Commit Messages` paragraph.
-
-There is value in organizing commits by topic and [_Stacked Git_](https://stacked-git.github.io) is hereby endorsed to do that.
+Use Tix to organize topic-oriented commit stacks. See the [Tix workflow](.agents/skills/tix/SKILL.md) for history edits
+and preservation of review state.
 
 ## Configuration and overrides
 
@@ -174,23 +110,14 @@ including feature selection and matching inventories in both formats.
 
 * **async**
   * **library client-side**
-    * ~~Don't use it client side, as operations there are usually bound by the CPU and ultra-fast access to memory mapped files.
-      It's no problem to saturate either CPU or the IO system.~~
-      * Provide `async` clients as opt-in using feature toggles to help integrating into an existing async codebase.
+    * Provide `async` network clients as opt-in using feature toggles, and document supported transports and runtime requirements.
   * **User Interfaces**
     * User interfaces can greatly benefit from using async as it's much easier to maintain a responsive UI thread that way thanks
       to the wonderful future combinators.
-    * `blocking` can be used to make `Read` and `Iterator` async, or move any operation onto a thread which blends it into the
-      async world.
-       * Most operations are fast and 'interrupting' them is as easy as ignoring their result by cancelling their task.
-       * Long-running operations can be roughly interacted with using the `gix::interrupt::trigger()` function, and after a moment
-         of waiting the flag can be unset with the `gix::interrupt::reset()` function to allow new long-running operations to work.
-         Every long running operation supports this.
+    * Offload blocking work, including pack processing in async APIs, to an execution context that tolerates blocking rather than the UI thread.
+    * Ignoring a result does not stop background work or roll back filesystem changes. Inspect the operation's documented interruption outcome.
   * **server-side**
-    * ~~Building a pack is CPU and at some point, IO bound, and it makes no sense to use async to handle more connections - git
-      needs a lot of resources and threads will do just fine.~~
-      * Support async out of the box without locking it into particular traits using conditional complication. This will make integrating
-        into an async codebase easier, which we assume is given on the server side _these days_.
+    * Keep async integration independent of a particular runtime where feasible; account for CPU-intensive and blocking work.
   * **shared blocking and async code**
     * Use async-shaped source with the `keep`, `discard`, and `sync` attributes from `gix-macros`. Alias them in a local `bisync` module at each
       integration point so both variants can coexist while being generated from one implementation that cannot drift.
@@ -203,73 +130,28 @@ including feature selection and matching inventories in both formats.
        control of the name to the caller. However, call `.init(…)` to configure the iteration.
      * and when calling `add_child(…)` don't use the parent progress instance for anything else.
 * **interruption of long-running operations**
-  * Use `gix_utils::interrupt::*` for building support for interruptions of long-running operations only.
-    * It's up to the author to decide how to best integrate it, generally we use a poll-based mechanism to check whether
-      an interrupt flag is set.
-    * **this is a must if…**
-      * …temporary resources like files might otherwise be leaked.
-    * **this is optional but desirable if…**
-      * …there is no leakage otherwise to support user interfaces. They background long-running operations and need them to be cancellable.
+  * Use `gix_utils::interrupt::*` to implement cooperative interruption by polling the operation's interrupt flag.
+  * The process-global `gix::interrupt::trigger()` flag affects only operations that explicitly poll it. Reset it with
+    `gix::interrupt::reset()` only after the affected work has finished, not after an arbitrary delay.
+  * **this is a must if…**
+    * …temporary resources like files might otherwise be leaked.
+  * **this is optional but desirable if…**
+    * …there is no leakage otherwise to support user interfaces. They background long-running operations and need them to be cancellable.
 
-* **prepare for SHA256 support by using `gix_hash::ObjectId` and `gix_hash::oid`**
-  * eventually there will be the need to support both Sha1 and Sha256. We anticipate it by using the `Id` type instead
-    of slices or arrays of 20 bytes. This way, eventually we can support multiple hash digest sizes.
-  * Right now it's unclear how Sha256 is going to work in git, so we only support Sha1 for now. It might be an avenue to proactively
-    implement it ahead of time once there is a specification to follow.
-  * It looks like Git prepares to support it by using compile time, we can support it at runtime though with minimal cost. If needed,
-    we can later remove support using a cargo feature toggle.
-* **symbolic links do not exist** as far as we are concerned
-  * in older, probably linux only, git versions symbolic links were used for symbolic references for example. This required special handling
-    in some places. We don't implement that and assume more modern repositories.
 * **when to use interior mutability**
-  - in **plumbing**, do not use it at all but instead provide the mutable part (like caches, buffers) as arguments, pushing their handling entirely to the caller.
-  - Set on top an optional abstraction that manages the above for you using **interior mutability only if part of the mutable state has to be returned as borrow**
+  - Optional abstractions can manage caller-owned caches and buffers using **interior mutability only if part of the mutable state has to be returned as borrow**
     or if otherwise it wouldn't be possible to borrowcheck. Or in other words: start without interior mutability and try to do it the standard way, but switch when needed.
-  - When using primitives to support interior mutability, use the provided ones and utility functions in `gix_parallel::*` exclusively to allow switching between
-    thread-safe and none-threadsafe versions at compile time.
-      - The preferred way of using it is to start out as upgradable reader, and upgrading to write if needed, keeping contention to a minimum.
-  - If _shared ownership_ is involved, one always needs _interior mutability_, but may still decide to use an API that requires `&mut self` if locally stored caches are involved.
+  - The preferred way of using it is to start out as upgradable reader, and upgrading to write if needed, keeping contention to a minimum.
+  - Shared ownership alone does not require interior mutability; mutation through shared references does. Locally stored caches may still use an API requiring `&mut self`.
   - Types that are not thread-local must be `Sync`, but only if the `gix-parallel/parallel` is enabled due to the usage of `gix_parallel::…` primitives which won't
     be thread-safe without the feature.
 * **when to use shared ownership**
-  - Use `gix_parallel::OwnShared` particularly when shared resources supposed to be used by thread-local handles. Going through a wrapper for shared ownership is fast
-    and won't be the bottleneck, as it's only about 16% slower than going through a shared reference on a single core.
-* **Path encoding**
-  - For `git`, paths are just bytes no matter on which platform. We assume that on windows its path handling goes through some abstraction layer like `MSYS2`
-    which avoids it to seeing UTF-16 encoded paths (and writing them). Thus it should be safe to assume `git`s path encoding is byte oriented.
-  - Assuming UTF8-ish bytes in paths produced by `git` even on windows due to `MSYS2`, we use `os_str_bytes` to convert these back into `OsStr` and derivatives like `Path`
-    as needed even though it might not always be the case depending on the actual encoding used by `MSYS2` or other abstraction layers, or avoiding to use std types altogether
-    using our own instead.
+  - Use `gix_parallel::OwnShared` for resources shared by thread-local handles. It selects `Arc` or `Rc` according to the `parallel` feature.
+    Measure ownership and synchronization overhead in the relevant workload.
 
-## Sha256
+## Architecture background
 
-A bunch of notes collected to keep track of what's needed to eventually support it
-
-* read `hash-function-transition.txt`
-* [x] support `gpgsig-sha256` field - we won't break, but also don't do anything with it (e.g. `extra_headers`)
-* [ ] support index V3
-* [ ] Pack file PSRC field
-
-## `.unwrap()` vs `.expect(…)`
-
-* don't use unwrap, not even in tests. Instead use `quick_error!()` or `Box<dyn std::error::Error>`.
-* Use `expect(…)` as assertion on Options, providing context on *why* the expectations should hold. Or in other words,
-  answer "This should work _because_…<expect(…)>"
-
-## `Options` vs `Context`
-
-- Use `Options` whenever there is something to configure in terms of branching behaviour. It can be defaulted, and if it can't these fields should be parameters of the method
-  that takes these `Options`.
-- Use `Context` when data is required to perform an operation at all. See `gix_config::path::Context` as reference. It can't be defaulted and the fields could also be parameters.
-
-## Lifetimes
-
-In _plumbing_ crates, prefer to default to keeping references if this is feasible to avoid typically expensive clones.
-
-In _porcelain_ crates, like `gix`, we have `Platforms` which are typically cheap enough to create on demand as they configure one or more method calls. These
-should keep a reference to the `Repository` instance that created them as the user is expected to clone the `Repository` if there is the need.
-However, if these structures are more expensive, call them `Cache` or `<NotPlatform>` and prefer to clone the `Repository` into them or otherwise keep them free of lifetimes
-to allow the user to keep this structure around for repeated calls. References for this paragraph are [this PR](https://github.com/Canop/bacon/pull/98) and
+For background on repository-backed platforms and caches, see [this PR](https://github.com/Canop/bacon/pull/98) and
 [this discussion](https://github.com/GitoxideLabs/gitoxide/discussions/675).
 
 ## Examples, Porcelain CLI and Plumbing CLI - which does what?
@@ -280,7 +162,8 @@ Both terms are coming from the `git` implementation itself, even though it won't
 are porcelain.
 The term *plumbing* refers to lower-level, more rarely used commands that complement porcelain by being invoked by it or by hand for certain use
 cases.
-The term *porcelain* refers to those with a decent user experience, they are primarily intended for use by humans.
+The term *porcelain* refers to commands that prioritize an approachable user experience. They are primarily designed for humans,
+but may also be used by scripts and agents.
 
 In any case, both types of programs must self-document their capabilities using through the `--help` flag.
 
@@ -292,97 +175,54 @@ From there, we can derive a few rules to adhere to unless there are good reasons
 * if supported and logging is enabled, it will show timestamps in UTC
 * tracing is buffered independently of progress and written to stderr with terminal-aware colors after the command finishes
 * `corpus` uses the same trace display while persisting full per-run trees independently of the display level
-* it does not need a git repository, but instead takes all required information via the command-line
+* repository-independent operations accept explicit inputs; repository operations may discover or open a repository
 
 #### Porcelain
 
-* Provides output to stderr by default to provide progress information. There is no need to allow disabling it, but it shouldn't show up unless
-  the operation takes some time.
+* Provides progress information to stderr during long-running operations; allow it to be disabled with `--quiet`.
 * If timestamps are shown, they are in localtime.
 * Non-progress information goes to stdout.
 
 #### Summary
 
 Here is the hierarchy of programs - each level requires more polish and generally work to be done.
-_Experiments_ are the quickest ways to obtain some insights. _Examples_ are materialized ideas that others can learn from but that don't quite have
-the polish (or the potential) to move up to _plumbing_ or _porcelain_. _Plumbing_ is programs for use in scripts, whereas _porcelain_ is for use
-by humans.
+_Examples_ are materialized ideas that others can learn from but that don't quite have the polish (or the potential) to move up to
+_plumbing_ or _porcelain_. _Plumbing_ prioritizes composition, whereas _porcelain_ prioritizes an approachable user experience.
 
-* **Experiments** (out of tree due to `git2` builds sometimes failing CI)
-  * quick, potentially one-off programs to learn about an aspect of gitoxide potentially in comparison to other implementations like `libgit2`.
-  * No need for tests of any kind, but it must compile and be idiomatic Rust and `gitoxide`.
-  * Manual command-line parsing is OK
-  * no polish
-  * make it compile quickly, so no extras
 * **Examples**
   * An implementation of ideas for actual occasional use and the first step towards getting integrated into Porcelain or Plumbing CLIs.
   * Proper command-line parsing with Clap.
-  * No tests or progress.
+  * Examples must compile; add focused tests where behavior or correctness warrants them. Elaborate test suites are not required.
+  * No progress.
   * High quality Rust code along with idiomatic `gitoxide` usage so people can learn from it.
-* **Plumbing CLI**
-  * Use Clap AND Argh for command-line parsing via feature toggles to allow for tiny builds as plumbing is mostly for scripts.
-  * Journey tests
+* **Plumbing CLI (like `gix`)**
+  * Use Clap for command-line parsing, including small builds.
+  * Journey tests only if it's proven valuable
   * Progress can be turned on using the `--verbose` flag, quiet by default.
-  * Examples can be turned into plumbing by adding journey tests and `argh` command-line parsing, as well as progress.
-* **Porcelain CLI**
+  * Examples can be turned into plumbing by adding journey tests and optional progress.
+* **Porcelain CLI (like `ein`)**
   * Use Clap for command-line parsing for the best quality CLI experience - it's for the user.
-  * Journey tests.
+  * Journey tests
   * Support for `--quiet`; line progress is shown by default for long-running operations.
   * Verbose by default.
-  * Examples can be turned into plumbing by adding journey tests and progress.
+  * Examples can be turned into porcelain by adding journey tests and progress.
 
 # Maintenance Guide
 
-Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`. Run `make` to
-get an overview.
-
-## Reviewing PRs
-
-- Be sure to clone locally and run tests with `GIX_TEST_IGNORE_ARCHIVES=1` to assure new fixture scripts (if there are any) are validated
-  on _MacOS_ and _Windows_. Linux doesn't need to be tested locally that way, as CI on Linux includes it.
+Run `just --list --group 'Maintenance'` to browse maintenance tasks. The `Makefile` retains specific build and fixture-generation targets used by CI.
 
 ## Creating a release
 
-Run `make publish-all` to publish all crates in leaf-first order using `cargo release` based on the currently set version.
-For this to work, you have to run `cargo release minor|major` each time you break the API of a crate but abort it during package verification.
-That way, `cargo release` updates all the dependents for you with the new version, without actually publishing to crates.io.
+Use `just release` to publish crates with the repository's release defaults. Additional release-tool arguments can be passed to this recipe.
 
-## Which git-version to chase?
+`just roll-release <cargo-smart-release-args>` runs the release command and then triggers the GitHub binary workflow for the unique `v*` tag at `HEAD`.
+To trigger only that workflow, use `just run-release-workflow`. Workflow commands require an authenticated `gh` CLI.
 
-Generally, we take the git version installed on ubuntu-latest as the one we stay compatible with (_while maintaining backwards
-compatibility_). Certain tests only run on CI, designed to validate certain assumptions still hold against possibly changed
-git program versions.
+## Git compatibility checks
 
-This also means that CI may fail despite everything being alright locally, and the fix depends on the problem at hand.
+Git-version detection and fixture support live in [`gix-testtools`](tests/tools/src/lib.rs).
+`should_skip_as_git_version_is_smaller_than()` lets tests skip locally when the installed Git is too old, but deliberately
+never skips on CI. Check a failing test's required Git version when reproducing CI-only failures.
 
-## How to update fixtures
-
-### For object data
-
-Fixtures are created by using a line like this which produces a line we ignore via `tail +1` followed by the un-prettified object payload
-trailed by a newline.
-```sh
-echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 > fixture
-```
-
-Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, **removing the newline byte**.
-
-# Tips & Tricks
-
-## Git debug mode cranked up to 11
-
-```
-GIT_TRACE=true \
-GIT_TRACE_PACK_ACCESS=true \
-GIT_TRACE_PACKET=true \
-GIT_TRACE_PACKFILE=true \
-GIT_TRACE_PERFORMANCE=true \
-GIT_TRACE_SHALLOW=true \
-GIT_TRACE_SETUP=true \
-GIT_CURL_VERBOSE=true \
-GIT_SSH_COMMAND="ssh -VVV" \
-git <command>
-```
-
-Consider adding `GIT_TRACE2_PERF=1` (possibly add `GIT_TRACE2_PERF_BRIEF=1` for brevity) as well for statistics and variables
-(see [their source for more](https://github.com/git/git/blob/b50a608ba20348cb3dfc16a696816d51780e3f0f/trace2/tr2_sysenv.c#L50).
+For fixtures requiring a particular Git version, `scripted_fixture_read_only_with_git_version()` and its writable counterpart
+run the fixture script only with a compatible Git. Otherwise they use a matching archive, or return `None` if none is available.

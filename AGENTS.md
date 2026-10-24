@@ -1,6 +1,6 @@
-# Copilot Instructions for Gitoxide
+# Repository Development Rules for Gitoxide
 
-This repository contains `gitoxide` - a pure Rust implementation of Git. This document provides guidance for GitHub Copilot when working with this codebase.
+This repository contains `gitoxide` - a pure Rust implementation of Git. These development rules apply to all contributors, both humans and agents, regardless of the tools they use.
 
 ## Project Overview
 
@@ -21,7 +21,7 @@ This repository contains `gitoxide` - a pure Rust implementation of Git. This do
 
 - Protect against regression and make implementing features easy
 - Keep it practical - the Rust compiler handles mundane things
-- Use git itself as reference implementation; run same tests against git where feasible
+- Use git itself as reference implementation; run same tests against git where feasible. Consider Git's test cases and fixtures where appropriate.
 - Never use `.unwrap()` in production code, avoid it in tests in favor of `.expect()` or `?`. Use `gix_error::TestResult` for test functions and helpers.
 - Use `.expect("why")` with context explaining why expectations should hold, but only if it's relevant to the test.
 
@@ -92,14 +92,14 @@ Follow "purposeful conventional commits" style:
   - Use Markdown generously whenever markup helps readers understand or navigate the prose.
   - Use the body to share everything known about what motivated the change, not merely what changed.
 - Use conventional commit prefixes ONLY if message should appear in changelog
-- Breaking changes MUST use `!` before the colon: `change!:`, `remove!:`, `rename!:`, or _scoped_ forms like `feat(gix-odb)!:`
-- Features/fixes visible to users: `feat:`, `fix:`
-- For a changelog-worthy commit touching multiple crates, _scope_ it to the crate that should receive the changelog entry, like `feat!(gix-ref)`.
-- Refactors/chores: no prefix (don't affect users)
+- Every Conventional Commit title MUST include a _scope_ naming the crate that should receive the changelog entry, even when the commit touches only that crate. If it touches paths outside that crate or multiple crates, still scope it to the crate whose changelog should receive the entry.
+- Breaking changes MUST appear in the changelog and use `!` after the scope and before the colon: `change(gix)!:`, `remove(gix)!:`, `rename(gix)!:`, or `feat(gix-odb)!:`
+- Features/fixes visible to users: `feat(gix):`, `fix(gix):`
+- Refactors/chores: no prefix (don't affect users). If a refactor changes the API, use `feat`, `change`, `rename`, or `remove` with the appropriate scope and breaking-change marker instead.
 - Examples:
-  - `feat: add Repository::foo() to do great things. (#234)`
-  - `fix: don't panic when calling foo() in a bare repository. (#456)`
-  - `change!: rename Foo to Bar. (#123)`
+  - `feat(gix): add Repository::foo() to do great things. (#234)`
+  - `fix(gix): don't panic when calling foo() in a bare repository. (#456)`
+  - `change(gix)!: rename Foo to Bar. (#123)`
   - `feat(gix-odb)!: add a new object lookup API`
   - `fix(gix-ref)!: reject invalid reference names`
 
@@ -205,8 +205,8 @@ Follow "purposeful conventional commits" style:
 
 ### Options vs Context
 
-- Use `Options` for branching behavior configuration (can be defaulted)
-- Use `Context` for data required for operation (cannot be defaulted)
+- Use `Options` for branching behavior configuration (can be defaulted). Fields that cannot be defaulted should be method parameters instead.
+- Use `Context` for data required for operation (cannot be defaulted); its fields could also be parameters. See `gix_config::path::Context` for an example.
 
 ## Crate Organization
 
@@ -227,12 +227,11 @@ Follow "purposeful conventional commits" style:
 
 ## CI and Releases
 
-- Ubuntu-latest git version is the compatibility target
-- `cargo smart-release` for releases (driven by commit messages)
+- Ubuntu-latest git version is the compatibility target, while maintaining backwards compatibility
 - Every commit must be self-contained and pass CI independently
    - Feel free to run `etc/scripts/ci-check-local.sh --thorough` until it passes as proxy, as running every commit against CI isn't feasible.
-- Keep breaking changes and all adaptations required to build and test the workspace in the same commit
-- When such a commit touches multiple crates, _scope_ its conventional commit message to the crate whose changelog should receive the entry
+- Keep breaking changes and all adaptations required to build and test the workspace in the same commit. Do not split them merely to route changelog entries.
+- Every Conventional Commit title must have a _scope_ naming the crate whose changelog should receive the entry, including when the commit touches multiple crates
 
 ## When Suggesting Changes
 

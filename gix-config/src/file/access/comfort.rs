@@ -41,6 +41,60 @@ impl File {
             .ok()
     }
 
+    /// Like [`string()`](Self::string()), but includes implicit values without an `=` separator.
+    ///
+    /// Returns `None` if the key is absent or invalid, `Some(None)` if its last occurrence is implicit,
+    /// and `Some(Some(value))` if it has an explicit, normalized value, including an empty one.
+    /// The last occurrence wins across matching sections, even when it is implicit.
+    pub fn string_implicit(&self, key: impl AsKey) -> Option<Option<BString>> {
+        self.string_implicit_filter(key, |_| true)
+    }
+
+    /// Like [`string_implicit()`](Self::string_implicit()), but given individual key components.
+    ///
+    /// If `subsection_name` is `None`, only sections without a subsection match.
+    pub fn string_implicit_by(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: impl AsBStrOpt,
+        value_name: impl AsRef<str>,
+    ) -> Option<Option<BString>> {
+        self.string_implicit_filter_by(section_name, subsection_name, value_name, |_| true)
+    }
+
+    /// Like [`string_implicit()`](Self::string_implicit()), but the section containing the returned value must pass `filter`.
+    pub fn string_implicit_filter(
+        &self,
+        key: impl AsKey,
+        filter: impl FnMut(&Metadata) -> bool,
+    ) -> Option<Option<BString>> {
+        let key = key.try_as_key()?;
+        self.string_implicit_filter_by(key.section_name, key.subsection_name, key.value_name, filter)
+    }
+
+    /// Like [`string_implicit_by()`](Self::string_implicit_by()), but only sections passing `filter` participate in resolution.
+    pub fn string_implicit_filter_by(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: impl AsBStrOpt,
+        value_name: impl AsRef<str>,
+        mut filter: impl FnMut(&Metadata) -> bool,
+    ) -> Option<Option<BString>> {
+        let section_ids = self
+            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name.as_bstr_opt())
+            .ok()?;
+        for section_id in section_ids.rev() {
+            let section = self.sections.get(&section_id).expect("known section id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            if let Some(value) = section.body.value_implicit_in(&self.backing, value_name.as_ref()) {
+                return Some(value);
+            }
+        }
+        None
+    }
+
     /// Like [`path_by()`](File::path_by()), but suitable for statically known `key`s like `remote.origin.url`.
     pub fn path(&self, key: impl AsKey) -> Option<crate::Path> {
         self.path_filter(key, |_| true)
@@ -114,28 +168,13 @@ impl File {
         section_name: impl AsRef<str>,
         subsection_name: impl AsBStrOpt,
         value_name: impl AsRef<str>,
-        mut filter: impl FnMut(&Metadata) -> bool,
+        filter: impl FnMut(&Metadata) -> bool,
     ) -> Result<Option<bool>> {
-        let section_name = section_name.as_ref();
-        let section_ids = self
-            .section_ids_by_name_and_subname(section_name, subsection_name.as_bstr_opt())
-            .ok();
-        let Some(section_ids) = section_ids else {
-            return Ok(None);
-        };
-        let key = value_name.as_ref();
-        for section_id in section_ids.rev() {
-            let section = self.sections.get(&section_id).expect("known section id");
-            if !filter(section.meta()) {
-                continue;
-            }
-            match section.body.value_implicit_in(&self.backing, key) {
-                Some(Some(v)) => return crate::Boolean::try_from(v).map(|value| Some(value.into())),
-                Some(None) => return Ok(Some(true)),
-                None => continue,
-            }
+        match self.string_implicit_filter_by(section_name, subsection_name, value_name, filter) {
+            Some(Some(value)) => crate::Boolean::try_from(value).map(|value| Some(value.into())),
+            Some(None) => Ok(Some(true)),
+            None => Ok(None),
         }
-        Ok(None)
     }
 
     /// Like [`integer_by()`](File::integer_by()), but suitable for statically known `key`s like `remote.origin.url`.
