@@ -99,7 +99,7 @@ pub(crate) fn parse_object_caches(
     mut filter_config_section: fn(&gix_config::file::Metadata) -> bool,
 ) -> Result<ObjectCaches> {
     let static_pack_cache_limit = gitoxide::Core::DEFAULT_PACK_CACHE_MEMORY_LIMIT
-        .try_into_usize(config.integer_filter("gitoxide.core.deltaBaseCacheLimit", &mut filter_config_section))
+        .try_into_usize(config.integer_filter("gitoxide.core.defaultPackCacheMemoryLimit", &mut filter_config_section))
         .with_leniency(lenient)?;
     let pack_cache_bytes = Core::DELTA_BASE_CACHE_LIMIT
         .try_into_usize(config.integer_filter("core.deltaBaseCacheLimit", &mut filter_config_section))
@@ -183,5 +183,37 @@ impl<T, E> ApplyLeniencyDefaultValue<T> for std::result::Result<T, E> {
             Err(_) if is_lenient => Ok(default),
             Err(err) => Err(err),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_object_caches;
+
+    #[test]
+    fn parse_object_caches_reads_documented_pack_cache_keys() -> gix_testtools::Result {
+        let config = gix_config::File::try_from(
+            "[core]\n\tdeltaBaseCacheLimit = 2k\n[gitoxide \"core\"]\n\tdefaultPackCacheMemoryLimit = 1k\n",
+        )?;
+        let (static_pack_cache_limit, pack_cache_bytes, ..) = parse_object_caches(&config, false, |_| true)?;
+        assert_eq!(
+            static_pack_cache_limit,
+            Some(1024),
+            "`gitoxide.core.defaultPackCacheMemoryLimit` configures the static pack cache"
+        );
+        assert_eq!(
+            pack_cache_bytes,
+            Some(2048),
+            "`core.deltaBaseCacheLimit` configures the memory-capped pack cache"
+        );
+
+        let (static_pack_cache_limit, pack_cache_bytes, ..) =
+            parse_object_caches(&gix_config::File::default(), false, |_| true)?;
+        assert_eq!(
+            (static_pack_cache_limit, pack_cache_bytes),
+            (None, None),
+            "without configuration, the default pack cache is used"
+        );
+        Ok(())
     }
 }
