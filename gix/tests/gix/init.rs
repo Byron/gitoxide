@@ -27,49 +27,7 @@ mod bare {
     #[serial_test::serial]
     fn init_into_empty_directory_uses_it_directly() -> TestResult {
         let _environment = gix_testtools::isolate_git_environment()?;
-        #[cfg(feature = "sha1")]
-        let (expected, version, object_format) = (gix_hash::Kind::Sha1, 0, None);
-        #[cfg(not(feature = "sha1"))]
-        let (expected, version, object_format) = (gix_hash::Kind::Sha256, 1, Some("sha256"));
-        for options in [
-            gix::create::Options::default(),
-            gix::create::Options {
-                object_hash: None,
-                ..Default::default()
-            },
-        ] {
-            let tmp = tempfile::tempdir()?;
-            let repo = gix::ThreadSafeRepository::init_opts(
-                tmp.path(),
-                gix::create::Kind::Bare,
-                options,
-                gix::open::Options::isolated(),
-            )?
-            .to_thread_local();
-            assert_eq!(repo.kind(), gix::repository::Kind::Common);
-            assert!(
-                repo.workdir().is_none(),
-                "a worktree isn't present in bare repositories"
-            );
-            assert_eq!(
-                repo.git_dir(),
-                tmp.path(),
-                "the repository is placed into the directory itself"
-            );
-            assert_eq!(
-                repo.object_hash(),
-                expected,
-                "initialization uses a supported object hash"
-            );
-            super::object_format::assert_on_disk_format(&repo, version, object_format)?;
-            assert_eq!(
-                gix_testtools::git(repo.git_dir(), "rev-parse --show-object-format")?.trim(),
-                expected.to_string(),
-                "git agrees on the object format"
-            );
-            assert_eq!(gix::open_opts(repo.git_dir(), crate::restricted())?, repo);
-        }
-        Ok(())
+        super::assert_init_into_empty_directory(gix::create::Kind::Bare)
     }
 
     #[test]
@@ -206,7 +164,7 @@ mod non_bare {
             gix::open_opts(repo.workdir().as_ref().expect("non-bare repo"), crate::restricted())?,
             repo
         );
-        Ok(())
+        super::assert_init_into_empty_directory(gix::create::Kind::WithWorktree)
     }
 
     #[test]
@@ -254,126 +212,137 @@ mod non_bare {
     }
 }
 
-mod object_format {
-    use gix_testtools::{TestResult, tempfile};
-
-    fn init(
-        kind: gix::create::Kind,
-        object_hash: Option<gix_hash::Kind>,
-        default_object_format: Option<&str>,
-    ) -> TestResult<(tempfile::TempDir, gix::Repository)> {
-        let tmp = tempfile::tempdir()?;
-        let overrides = default_object_format.map(|format| format!("init.defaultObjectFormat={format}"));
-        let repo: gix::Repository = gix::ThreadSafeRepository::init_opts(
-            tmp.path(),
-            kind,
-            gix::create::Options {
-                object_hash,
-                ..Default::default()
-            },
-            crate::restricted().config_overrides(overrides),
-        )?
-        .into();
-        Ok((tmp, repo))
-    }
-
-    pub(super) fn assert_on_disk_format(
-        repo: &gix::Repository,
-        version: i64,
-        object_format: Option<&str>,
-    ) -> TestResult {
-        let config =
-            gix::config::File::from_path_no_includes(repo.git_dir().join("config"), gix::config::Source::Local)?;
-        assert_eq!(
-            config.integer("core.repositoryFormatVersion")?,
-            Some(version),
-            "the repository format version matches what git writes for this object format"
-        );
-        assert_eq!(
-            config.string("extensions.objectFormat"),
-            object_format.map(Into::into),
-            "only non-SHA-1 object formats are written as extension"
-        );
-        Ok(())
-    }
-
-    #[test]
-    #[cfg(feature = "sha256")]
-    fn sha256_is_written_as_version_1_extension_and_understood_by_git() -> TestResult {
-        for kind in [gix::create::Kind::WithWorktree, gix::create::Kind::Bare] {
-            let (_tmp, repo) = init(kind, Some(gix_hash::Kind::Sha256), None)?;
-            assert_eq!(
-                repo.object_hash(),
-                gix_hash::Kind::Sha256,
-                "the requested object format is used"
+#[test]
+fn invalid_default_object_format_is_an_error_unless_explicitly_overridden() -> gix_testtools::TestResult {
+    for repo_kind in [gix::create::Kind::Bare, gix::create::Kind::WithWorktree] {
+        for &requested_object_hash in OBJECT_FORMATS {
+            let tmp = gix_testtools::tempfile::tempdir()?;
+            let result = gix::ThreadSafeRepository::init_opts(
+                tmp.path(),
+                repo_kind,
+                gix::create::Options {
+                    object_hash: requested_object_hash,
+                    ..Default::default()
+                },
+                crate::restricted().config_overrides(["init.defaultObjectFormat=invalid"]),
             );
-            assert_on_disk_format(&repo, 1, Some("sha256"))?;
-            assert_eq!(
-                gix::open_opts(repo.git_dir(), crate::restricted())?.object_hash(),
-                gix_hash::Kind::Sha256,
-                "the format survives reopening"
-            );
-            assert_eq!(
-                gix_testtools::git(repo.git_dir(), "rev-parse --show-object-format")?.trim(),
-                "sha256",
-                "git agrees on the object format"
-            );
+            if let Some(expected_object_hash) = requested_object_hash {
+                assert_eq!(
+                    result?.to_thread_local().object_hash(),
+                    expected_object_hash,
+                    "an explicit hash bypasses an invalid configured default for {repo_kind:?}"
+                );
+            } else {
+                let err = result.expect_err("an unknown default hash must fail initialization");
+                assert!(err.is_validation());
+                assert_eq!(
+                    err.metadata_merged().get("key"),
+                    Some(&gix_error::MetadataValue::from("init.defaultObjectFormat")),
+                    "the error identifies the invalid configuration key"
+                );
+                assert!(
+                    !tmp.path().join("HEAD").exists() && !tmp.path().join(".git").exists(),
+                    "invalid defaults are rejected before creating a repository"
+                );
+            }
         }
-        Ok(())
     }
+    Ok(())
+}
 
-    #[test]
+const OBJECT_FORMATS: &[Option<gix_hash::Kind>] = &[
+    None,
     #[cfg(feature = "sha1")]
-    fn sha1_is_written_like_git_without_extension() -> TestResult {
-        let (_tmp, repo) = init(gix::create::Kind::Bare, Some(gix_hash::Kind::Sha1), None)?;
-        assert_eq!(
-            repo.object_hash(),
-            gix_hash::Kind::Sha1,
-            "the requested object format is used"
-        );
-        assert_on_disk_format(&repo, 0, None)?;
-        assert_eq!(
-            gix_testtools::git(repo.git_dir(), "rev-parse --show-object-format")?.trim(),
-            "sha1",
-            "git agrees on the object format"
-        );
-        Ok(())
-    }
+    Some(gix_hash::Kind::Sha1),
+    #[cfg(feature = "sha256")]
+    Some(gix_hash::Kind::Sha256),
+];
 
-    #[test]
-    #[cfg(all(feature = "sha1", feature = "sha256"))]
-    fn default_object_format_is_used_if_none_is_requested() -> TestResult {
-        for kind in [gix::create::Kind::WithWorktree, gix::create::Kind::Bare] {
-            let (_tmp, repo) = init(kind, None, Some("sha256"))?;
+fn assert_init_into_empty_directory(repo_kind: gix::create::Kind) -> gix_testtools::TestResult {
+    use gix::config::tree::{Core, Extensions, Init, Key};
+
+    #[cfg(feature = "sha1")]
+    let build_default_hash = gix_hash::Kind::Sha1;
+    #[cfg(not(feature = "sha1"))]
+    let build_default_hash = gix_hash::Kind::Sha256;
+    for &default_object_format in OBJECT_FORMATS {
+        for &requested_object_hash in OBJECT_FORMATS {
+            let case = format!(
+                "repo_kind={repo_kind:?}, requested_object_hash={requested_object_hash:?}, default_object_format={default_object_format:?}"
+            );
+            let tmp = gix_testtools::tempfile::tempdir()?;
+            let overrides = default_object_format
+                .map(|format| Init::DEFAULT_OBJECT_FORMAT.validated_assignment_fmt(&format))
+                .transpose()?;
+            let repo = gix::ThreadSafeRepository::init_opts(
+                tmp.path(),
+                repo_kind,
+                gix::create::Options {
+                    object_hash: requested_object_hash,
+                    ..Default::default()
+                },
+                crate::restricted().config_overrides(overrides),
+            )?
+            .to_thread_local();
+            assert_eq!(repo.kind(), gix::repository::Kind::Common, "{case}");
+            match repo_kind {
+                gix::create::Kind::Bare => {
+                    assert!(repo.workdir().is_none(), "bare repositories have no worktree: {case}");
+                    assert_eq!(
+                        repo.git_dir(),
+                        tmp.path(),
+                        "bare repositories use the directory itself: {case}"
+                    );
+                }
+                gix::create::Kind::WithWorktree => {
+                    assert_eq!(
+                        repo.workdir(),
+                        Some(tmp.path()),
+                        "the worktree uses the destination: {case}"
+                    );
+                    assert_eq!(
+                        repo.git_dir(),
+                        tmp.path().join(".git"),
+                        "the git directory is inside the worktree: {case}"
+                    );
+                }
+            }
+            let expected_object_hash = requested_object_hash
+                .or(default_object_format)
+                .unwrap_or(build_default_hash);
             assert_eq!(
                 repo.object_hash(),
-                gix_hash::Kind::Sha256,
-                "the configured default is used"
+                expected_object_hash,
+                "explicit request, then configured default, then build default: {case}"
             );
-            assert_on_disk_format(&repo, 1, Some("sha256"))?;
+            let (expected_repository_format_version, expected_object_format): (i64, Option<&str>) =
+                match expected_object_hash {
+                    #[cfg(feature = "sha1")]
+                    gix_hash::Kind::Sha1 => (0, None),
+                    #[cfg(feature = "sha256")]
+                    gix_hash::Kind::Sha256 => (1, Some("sha256")),
+                    _ => unreachable!("the cases only use enabled hashes"),
+                };
+            let config =
+                gix::config::File::from_path_no_includes(repo.git_dir().join("config"), gix::config::Source::Local)?;
+            assert_eq!(
+                config.integer(Core::REPOSITORY_FORMAT_VERSION)?,
+                Some(expected_repository_format_version),
+                "the on-disk repository version matches its object format: {case}"
+            );
+            assert_eq!(
+                config.string(Extensions::OBJECT_FORMAT),
+                expected_object_format.map(Into::into),
+                "only SHA-256 needs an object-format extension: {case}"
+            );
+            let reopened = gix::open_opts(repo.git_dir(), crate::restricted())?;
+            assert_eq!(
+                reopened.object_hash(),
+                expected_object_hash,
+                "the object hash survives reopening: {case}"
+            );
+            assert_eq!(reopened, repo, "the repository paths survive reopening: {case}");
         }
-        Ok(())
     }
-
-    #[test]
-    #[cfg(all(feature = "sha1", feature = "sha256"))]
-    fn requested_object_format_overrides_the_default() -> TestResult {
-        let (_tmp, repo) = init(gix::create::Kind::Bare, Some(gix_hash::Kind::Sha1), Some("sha256"))?;
-        assert_eq!(
-            repo.object_hash(),
-            gix_hash::Kind::Sha1,
-            "the requested object format wins over the configured default"
-        );
-        assert_on_disk_format(&repo, 0, None)?;
-        Ok(())
-    }
-
-    #[test]
-    fn invalid_default_object_format_is_an_error() {
-        let err = init(gix::create::Kind::Bare, None, Some("sha3")).expect_err("unknown hash");
-        assert!(
-            format!("{err:?}").contains("init.defaultObjectFormat"),
-            "the key is mentioned: {err:?}"
-        );
-    }
+    Ok(())
 }

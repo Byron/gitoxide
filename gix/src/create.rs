@@ -88,7 +88,7 @@ fn create_dir(p: &Path) -> Result<()> {
 }
 
 /// Options for use in [`into()`];
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Options {
     /// Control whether the destination directory must be empty when creating a repository with a worktree.
     ///
@@ -113,19 +113,9 @@ pub struct Options {
     /// which is interpreted as legacy SHA-1.
     /// In builds without SHA-1 support, `None` means SHA-256.
     ///
-    /// If `None`, [`ThreadSafeRepository::init_opts()`][crate::ThreadSafeRepository::init_opts()]
+    /// If `None` (the default), [`ThreadSafeRepository::init_opts()`][crate::ThreadSafeRepository::init_opts()]
     /// will apply `init.defaultObjectFormat` or `GIT_DEFAULT_HASH` if set.
     pub object_hash: Option<gix_hash::Kind>,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Options {
-            destination_must_be_empty: None,
-            fs_capabilities: None,
-            object_hash: default_object_hash(),
-        }
-    }
 }
 
 fn default_object_hash() -> Option<gix_hash::Kind> {
@@ -310,7 +300,7 @@ fn bool(v: bool) -> &'static str {
 mod tests {
     #[test]
     fn default_object_hash_matches_available_hash_support() {
-        let object_hash = super::Options::default().object_hash;
+        let object_hash = super::default_object_hash();
         #[cfg(feature = "sha1")]
         assert_eq!(
             object_hash, None,

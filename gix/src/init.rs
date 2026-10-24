@@ -48,7 +48,7 @@ impl ThreadSafeRepository {
     ) -> Result<Self> {
         let directory = directory.as_ref();
         if create_options.object_hash.is_none() {
-            create_options.object_hash = default_object_format(directory, kind, &open_options)?;
+            create_options.object_hash = default_object_format(&open_options)?;
         }
         Self::create_and_open(directory, kind, create_options, open_options)
     }
@@ -101,20 +101,19 @@ impl ThreadSafeRepository {
     }
 }
 
-/// Read `init.defaultObjectFormat` from the configuration that a new repository in `directory` would see.
-fn default_object_format(
-    directory: &Path,
-    kind: crate::create::Kind,
-    options: &crate::open::Options,
-) -> Result<Option<gix_hash::Kind>> {
-    let git_dir = match kind {
-        crate::create::Kind::Bare => directory.to_owned(),
-        crate::create::Kind::WithWorktree => directory.join(gix_discover::DOT_GIT_DIR),
-    };
-    let config = crate::config(Some(&git_dir), options)?;
+/// Read `init.defaultObjectFormat` without repository context, like Git's format selection.
+fn default_object_format(options: &crate::open::Options) -> Result<Option<gix_hash::Kind>> {
+    let config = crate::config(None, options)?;
     let key = &Init::DEFAULT_OBJECT_FORMAT;
-    config
-        .string(key)
-        .map(|value| key.try_into_object_format(value.as_bstr()))
+    let filter = options
+        .filter_config_section
+        .unwrap_or(crate::config::section::is_trusted);
+    let value = config.string_implicit_filter(key, filter);
+    value
+        .map(|value| {
+            let value = value
+                .ok_or_else(|| crate::config::key::error(key, "Missing configuration value").validation_error())?;
+            key.try_into_object_format(value.as_bstr())
+        })
         .transpose()
 }

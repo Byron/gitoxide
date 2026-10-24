@@ -10,8 +10,7 @@ impl Extensions {
     pub const RELATIVE_WORKTREES: keys::Boolean =
         keys::Boolean::new_boolean("relativeWorktrees", &config::Tree::EXTENSIONS);
     /// The `extensions.objectFormat` key.
-    pub const OBJECT_FORMAT: ObjectFormat =
-        ObjectFormat::new_with_validate("objectFormat", &config::Tree::EXTENSIONS, validate::ObjectFormat);
+    pub const OBJECT_FORMAT: ObjectFormat = ObjectFormat::new_object_format("objectFormat", &config::Tree::EXTENSIONS);
 }
 
 /// The `extensions.objectFormat` key.

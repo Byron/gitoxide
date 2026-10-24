@@ -1608,12 +1608,12 @@ fn clone_ignores_default_object_format() -> TestResult {
         tmp.path(),
         gix::create::Kind::Bare,
         Default::default(),
-        restricted().config_overrides(["init.defaultObjectFormat=sha256"]),
+        restricted().config_overrides(["init.defaultObjectFormat=invalid-will-not-be-read"]),
     )?
     .persist();
     assert_eq!(
         repo.object_hash(),
-        gix::create::Options::default().object_hash.unwrap_or_default(),
+        gix::hash::Kind::default(),
         "clones adopt the remote's object format later, so the default for new repositories doesn't apply"
     );
     Ok(())
